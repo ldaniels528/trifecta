@@ -423,6 +423,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    * Example2: kavrofields avro/schema2.avsc topics.ldaniels528.test2 9 1799020
    */
   def topicAvroFields(args: String*): Seq[String] = {
+    import java.io.File
     import scala.collection.mutable.Buffer
     import scala.collection.JavaConversions._
     import scala.io.Source
@@ -433,8 +434,14 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
     val offset = extract(args, 3) map (_.toLong)
     val blockSize = extract(args, 4) map (_.toInt)
 
+    // mske sure the file exists
+    val schemaFile = new File(schemaPath)
+    if (!schemaFile.exists()) {
+      throw new IllegalStateException(s"Schema file '${schemaFile.getAbsolutePath()}' not found")
+    }
+
     // retrieve the schema as a string
-    val schemaString = Source.fromFile(schemaPath).getLines() mkString ("\n")
+    val schemaString = Source.fromFile(schemaFile).getLines() mkString ("\n")
     val decoder = new AvroDecoder(schemaString)
     var fields: Seq[String] = Seq.empty
 
@@ -461,6 +468,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    * Example2: kdumpa avro/schema2.avsc topics.ldaniels528.test2 9 1799020 1799029 1024 field1+field2+field3+field4
    */
   def topicDumpAvro(args: String*): Long = {
+    import java.io.File
     import scala.collection.mutable.Buffer
     import scala.io.Source
     import org.apache.avro.generic.GenericRecord
@@ -472,8 +480,14 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
     val blockSize = extract(args, 5) map (_.toInt)
     val fields: Seq[String] = extract(args, 6) map (_.split("[+]")) map (_.toSeq) getOrElse Seq.empty
 
+    // mske sure the file exists
+    val schemaFile = new File(schemaPath)
+    if (!schemaFile.exists()) {
+      throw new IllegalStateException(s"Schema file '${schemaFile.getAbsolutePath()}' not found")
+    }
+
     // retrieve the schema as a string
-    val schemaString = Source.fromFile(schemaPath).getLines() mkString ("\n")
+    val schemaString = Source.fromFile(schemaFile).getLines() mkString ("\n")
     val decoder = new AvroDecoder(schemaString)
     val records = Buffer[GenericRecord]()
 
@@ -1067,7 +1081,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
  * @author lawrence.daniels@gmail.com
  */
 object VerifyShell {
-  val VERSION = "1.02"
+  val VERSION = "1.02.1"
 
   private val logger = org.slf4j.LoggerFactory.getLogger(classOf[KafkaSubscriber])
 
@@ -1081,9 +1095,7 @@ object VerifyShell {
    * @args the given command line arguments
    */
   def main(args: Array[String]) {
-    System.out.println(s"Verify Shell version $VERSION")
-    System.out.println("Copyright (C) 2014 ShockTrade LLC")
-    System.out.println("All rights reserved\n")
+    System.out.println(s"Verify Shell v$VERSION")
 
     // was a host argument passed?
     val host = extract(args, 0) getOrElse ("localhost")
