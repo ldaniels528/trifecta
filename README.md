@@ -21,12 +21,12 @@ Kafka/Storm/ZooKeeper-based.
 <a name="Building-the-code"></a>
 ### Building the code
 
-    $ ./sbt clean package
+    $ sbt clean package
     
 <a name="Testing-the-code"></a>    
 ### Running the tests
 
-    $ ./sbt clean test    
+    $ sbt clean test    
     
 <a name="Usage"></a>
 
