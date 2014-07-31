@@ -6,6 +6,7 @@ Table of Contents
 
 * <a href="#Motivations">Motivations</a>
 * <a href="#Development">Development</a>
+	* <a href="#build-requirements">Build Requirements</a>
 	* <a href="#Building-the-code">Building the code</a>
 	* <a href="#Testing-the-code">Running the tests</a>	
 	* <a href="#Running-the-app">Running the application</a>
@@ -17,7 +18,12 @@ The motivations behind creating `Verify` are simple; testing, verifying and mana
 arduous task. The goal of this project is to ease the pain of developing applications that make use of 
 Kafka/Storm/ZooKeeper-based.
 
-<a name="Development"></a>
+<a name="Development"></a
+<a name="build-requirements"></a>
+### Build Requirements
+
+* SBT 0.13.5+
+
 <a name="Building-the-code"></a>
 ### Building the code
 
@@ -34,8 +40,3 @@ Kafka/Storm/ZooKeeper-based.
 ### Run the application
 
 	$ java -jar verify.jar <zookeperHost>
-
-
-
-    
-    
