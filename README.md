@@ -45,4 +45,13 @@ Kafka/Storm/ZooKeeper-based.
 <a name="usage"></a>
 ### Usage Examples	
 
+	$ kbrokers
+	
 	$ kls
+	
+	$ zls
+	
+	
+	
+	
+		
