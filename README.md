@@ -7,36 +7,42 @@ Table of Contents
 * <a href="#Motivations">Motivations</a>
 * <a href="#Development">Development</a>
 	* <a href="#build-requirements">Build Requirements</a>
-	* <a href="#Building-the-code">Building the code</a>
-	* <a href="#Testing-the-code">Running the tests</a>	
-	* <a href="#Running-the-app">Running the application</a>
+	* <a href="#building-the-code">Building the code</a>
+	* <a href="#testing-the-code">Running the tests</a>	
+	* <a href="#running-the-app">Running the application</a>
+* <a href="#usage">Usage Examples</a>
 
 <a name="Motivations"></a>
-### Motivations
+## Motivations
 
 The motivations behind creating `Verify` are simple; testing, verifying and managing Kafka topics can be an
 arduous task. The goal of this project is to ease the pain of developing applications that make use of 
 Kafka/Storm/ZooKeeper-based.
 
-<a name="Development"></a
+<a name="Development"></a>
+## Development
+
 <a name="build-requirements"></a>
 ### Build Requirements
 
 * SBT 0.13.5+
 
-<a name="Building-the-code"></a>
+<a name="building-the-code"></a>
 ### Building the code
 
     $ sbt clean package
     
-<a name="Testing-the-code"></a>    
+<a name="testing-the-code"></a>    
 ### Running the tests
 
     $ sbt clean test    
-    
-<a name="Usage"></a>
 
 <a name="Running-the-app"></a> 
 ### Run the application
 
 	$ java -jar verify.jar <zookeperHost>
+
+<a name="usage"></a>
+### Usage Examples	
+
+	$ kls
