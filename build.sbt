@@ -11,6 +11,14 @@ name := "verify"
 
 version := "0.1"
 
+packageArchetype.java_application
+
+maintainer in Linux := "Lawrence Daniels <lawrence.daniels@gmail.com>"
+
+packageSummary in Linux := "Swiss-Army-Knife for viewing/managing topics for Kafka"
+
+packageDescription := "Swiss-Army-Knife for viewing/managing topics for Kafka"
+
 scalaVersion := "2.10.4"
 
 scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.6", "-unchecked",
