@@ -46,12 +46,37 @@ Kafka/Storm/ZooKeeper-based.
 ### Usage Examples	
 
 	$ kbrokers
-	
+		+ -------------------------------------------------------------------------------- +
+		| jmx_port  timestamp                host                          version  port   |
+		+ -------------------------------------------------------------------------------- +
+		| 9999      2014-07-31 07:45:23 UTC  dev601.vmx00.ldaniels528.com  1        9092   |
+		| 9999      2014-07-31 07:45:22 UTC  dev602.vmx00.ldaniels528.com  1        9092   |
+		+ -------------------------------------------------------------------------------- +	
+
 	$ kls
-	
+		+ ----------------------------------------------------------------------------- +
+		| name                  partition  leader                             version   |
+		+ ----------------------------------------------------------------------------- +
+		| test.ldaniels.alerts  0          dev601.vmx00.ldaniels528.com:9092  1         |
+		| test.ldaniels.alerts  1          dev602.vmx00.ldaniels528.com:9092  1         |
+		| test.ldaniels.alerts  2          dev601.vmx00.ldaniels528.com:9092  1         |
+		| test.ldaniels.alerts  3          dev602.vmx00.ldaniels528.com:9092  1         |
+		| test.ldaniels.alerts  4          dev601.vmx00.ldaniels528.com:9092  1         |
+		| test.ldaniels.alerts  5          dev602.vmx00.ldaniels528.com:9092  1         |
+		| test.ldaniels.alerts  6          dev601.vmx00.ldaniels528.com:9092  1         |
+		| test.ldaniels.alerts  7          dev602.vmx00.ldaniels528.com:9092  1         |
+		| test.ldaniels.alerts  8          dev601.vmx00.ldaniels528.com:9092  1         |
+		| test.ldaniels.alerts  9          dev602.vmx00.ldaniels528.com:9092  1         |
+		+ ----------------------------------------------------------------------------- +
+
 	$ zls
+		consumers
+		storm
+		controller_epoch
+		admin
+		controller
+		brokers	
 	
-	
-	
+
 	
 		
