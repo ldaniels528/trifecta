@@ -1,6 +1,6 @@
 # Verify
 
-Swiss-Army-Knife Utility for managing Kafka topics and ZooKeeper properties
+Verify is a figurative Swiss-Army-Knife for inspecting/managing Kafka topics and ZooKeeper properties.
 
 Table of Contents
 
@@ -46,60 +46,46 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 ### Usage Examples	
 
 	$ kbrokers
-		+ -------------------------------------------------------------------------------- +
-		| jmx_port  timestamp                host                          version  port   |
-		+ -------------------------------------------------------------------------------- +
-		| 9999      2014-07-31 07:45:23 UTC  dev601.vmx00.ldaniels528.com  1        9092   |
-		| 9999      2014-07-31 07:45:22 UTC  dev602.vmx00.ldaniels528.com  1        9092   |
-		+ -------------------------------------------------------------------------------- +	
+		+ -------------------------------------------------------------------------- +
+		| jmx_port  timestamp          host                          version  port   |
+		+ -------------------------------------------------------------------------- +
+		| 9999      2014-07-31 07:45:23 UTC  dev601.ldaniels528.com  1        9092   |
+		| 9999      2014-07-31 07:45:22 UTC  dev602.ldaniels528.com  1        9092   |
+		+ -------------------------------------------------------------------------- +	
 
 	$ kls
-		+ ----------------------------------------------------------------------------- +
-		| name                  partition  leader                             version   |
-		+ ----------------------------------------------------------------------------- +
-		| test.ldaniels.alerts  0          dev601.vmx00.ldaniels528.com:9092  1         |
-		| test.ldaniels.alerts  1          dev602.vmx00.ldaniels528.com:9092  1         |
-		| test.ldaniels.alerts  2          dev601.vmx00.ldaniels528.com:9092  1         |
-		| test.ldaniels.alerts  3          dev602.vmx00.ldaniels528.com:9092  1         |
-		| test.ldaniels.alerts  4          dev601.vmx00.ldaniels528.com:9092  1         |
-		| test.ldaniels.alerts  5          dev602.vmx00.ldaniels528.com:9092  1         |
-		| test.ldaniels.alerts  6          dev601.vmx00.ldaniels528.com:9092  1         |
-		| test.ldaniels.alerts  7          dev602.vmx00.ldaniels528.com:9092  1         |
-		| test.ldaniels.alerts  8          dev601.vmx00.ldaniels528.com:9092  1         |
-		| test.ldaniels.alerts  9          dev602.vmx00.ldaniels528.com:9092  1         |
-		+ ----------------------------------------------------------------------------- +
+		+ ------------------------------------------------------------------- +
+		| name              partition  leader                       version   |
+		+ ------------------------------------------------------------------- +
+		| test.app1.alerts  0          dev601.ldaniels528.com:9092  1         |
+		| test.app1.alerts  1          dev602.ldaniels528.com:9092  1         |
+		| test.app1.alerts  2          dev601.ldaniels528.com:9092  1         |
+		| app1.messages     0          dev602.ldaniels528.com:9092  1         |
+		| app1.messages     1          dev601.ldaniels528.com:9092  1         |
+		| app1.messages     2          dev602.ldaniels528.com:9092  1         |
+		| app1.messages     3          dev601.ldaniels528.com:9092  1         |
+		| app1.messages     4          dev602.ldaniels528.com:9092  1         |
+		| app1.messages     5          dev601.ldaniels528.com:9092  1         |
+		| app1.messages     6          dev602.ldaniels528.com:9092  1         |
+		+ ------------------------------------------------------------------- +
 
-	$ kls test.ldaniels.alerts
-		+ ----------------------------------------------------------------------------- +
-		| name                  partition  leader                             version   |
-		+ ----------------------------------------------------------------------------- +
-		| test.ldaniels.alerts  0          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
-		| test.ldaniels.alerts  1          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
-		| test.ldaniels.alerts  2          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
-		| test.ldaniels.alerts  3          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
-		| test.ldaniels.alerts  4          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
-		| test.ldaniels.alerts  5          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
-		| test.ldaniels.alerts  6          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
-		| test.ldaniels.alerts  7          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
-		| test.ldaniels.alerts  8          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
-		| test.ldaniels.alerts  9          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
-		+ ----------------------------------------------------------------------------- +
+	$ kls test.app1.alerts
+		+ ------------------------------------------------------------------------- +
+		| name              partition  leader                             version   |
+		+ ------------------------------------------------------------------------- +
+		| test.app1.alerts  0          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
+		| test.app1.alerts  1          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
+		| test.app1.alerts  2          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
+		+ ------------------------------------------------------------------------- +
 
-	$ kstats
-		+ ---------------------------------------------------------------------------- +
-		| name                  partition  startOffset  endOffset  messagesAvailable   |
-		+ ---------------------------------------------------------------------------- +
-		| test.ldaniels.alerts  0          4009955      4009955    0                   |
-		| test.ldaniels.alerts  1          3845895      3845895    0                   |
-		| test.ldaniels.alerts  2          5322551      5322551    0                   |
-		| test.ldaniels.alerts  3          5310126      5310126    0                   |
-		| test.ldaniels.alerts  4          2648876      2648876    0                   |
-		| test.ldaniels.alerts  5          5126782      5126782    0                   |
-		| test.ldaniels.alerts  6          3931333      3931333    0                   |
-		| test.ldaniels.alerts  7          3902933      3902933    0                   |
-		| test.ldaniels.alerts  8          3997279      3997279    0                   |
-		| test.ldaniels.alerts  9          3833760      3833760    0                   |
-		+ ---------------------------------------------------------------------------- +
+	$ kstats test.app1.alerts 0 2
+		+ ------------------------------------------------------------------------ +
+		| name              partition  startOffset  endOffset  messagesAvailable   |
+		+ ------------------------------------------------------------------------ +
+		| test.app1.alerts  0          4009955      4009955    0                   |
+		| test.app1.alerts  1          3845895      3845895    0                   |
+		| test.app1.alerts  2          5322551      5322551    0                   |
+		+ ------------------------------------------------------------------------ +
 
 	$ zls
 		consumers
