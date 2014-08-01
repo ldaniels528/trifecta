@@ -70,12 +70,12 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		+ ------------------------------------------------------------------- +
 
 	$ kls test.app1.alerts
-		+ ------------------------------------------------------------------------- +
-		| name              partition  leader                             version   |
-		+ ------------------------------------------------------------------------- +
-		| test.app1.alerts  0          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
-		| test.app1.alerts  1          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
-		| test.app1.alerts  2          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
+		+ ------------------------------------------------------------------- +
+		| name              partition  leader                       version   |
+		+ ------------------------------------------------------------------- +
+		| test.app1.alerts  0          dev601.ldaniels528.com:9092  1         |
+		| test.app1.alerts  1          dev602.ldaniels528.com:9092  1         |
+		| test.app1.alerts  2          dev601.ldaniels528.com:9092  1         |
 		+ ------------------------------------------------------------------------- +
 
 	$ kstats test.app1.alerts 0 2
