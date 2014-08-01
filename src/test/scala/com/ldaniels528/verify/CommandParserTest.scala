@@ -1,16 +1,31 @@
-package com.ldaniels528.verify.util
+package com.ldaniels528.verify
 
-import org.junit.Test
 import CommandParser._
-import org.junit.Assert
-import org.slf4j.LoggerFactory
 
 /**
  * Verify Command Parser Test
  * @author lawrence.daniels@gmail.com
  */
-class CommandParserTest {
-  val logger = LoggerFactory.getLogger(getClass())
+class CommandParserTest() {
+  import org.junit.{ Assert, Test }
+  import org.slf4j.LoggerFactory
+
+  private val logger = LoggerFactory.getLogger(getClass())
+
+  @Test
+  def testSymbols() {
+    logger.info("")
+    logger.info("Testing line symbols:")
+
+    val line = "!100"
+    val toks = parse(line)
+
+    val output = (1 to toks.size) zip toks
+    output foreach {
+      case (n, tok) =>
+        logger.info(f"[$n%02d] tok: $tok")
+    }
+  }
 
   @Test
   def testSingle() {

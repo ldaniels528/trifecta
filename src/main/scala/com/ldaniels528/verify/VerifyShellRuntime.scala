@@ -12,6 +12,8 @@ import org.apache.zookeeper.{ Watcher, WatchedEvent }
 class VerifyShellRuntime(props: java.util.Properties) {
   // the default state of the console is "alive"
   var alive = true
+  
+  var maxHistory = 100
 
   // get the ZooKeeper host/port
   val zkEndPoint = EndPoint(props.getProperty("zookeeper"))

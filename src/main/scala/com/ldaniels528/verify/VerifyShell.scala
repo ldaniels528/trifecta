@@ -2,12 +2,11 @@ package com.ldaniels528.verify
 
 import VerifyShell._
 import com.ldaniels528.verify.io._
+import com.ldaniels528.verify.io.avro._
 import com.ldaniels528.verify.subsystems.zookeeper._
 import com.ldaniels528.verify.subsystems.kafka._
 import com.ldaniels528.verify.util.VerifyUtils._
 import com.ldaniels528.verify.util.Tabular
-import com.ldaniels528.verify.util.CommandParser
-import com.ldaniels528.verify.io.avro._
 
 /**
  * Verify Console Shell Application
@@ -28,6 +27,10 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
 
   // state variables
   private var debugOn = false
+  private val history = new History(rt.maxHistory)
+
+  // define a custom tabular instance
+  private val tabular = new Tabular() with AvroTables
 
   // global date parser
   private val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
@@ -55,9 +58,6 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
   // get the list of brokers from zookeeper
   private val brokers: Seq[Broker] = KafkaSubscriber.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
-  // define a custom tabular instance
-  private val tabular = new Tabular() with AvroTables
-
   /**
    * Interactive shell
    */
@@ -70,7 +70,9 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
 
       if (line.nonEmpty) {
         Try(interpret(line)) match {
-          case Success(result) => handleResult(result)
+          case Success(result) =>
+            handleResult(result)
+            history += line
           case Failure(e: IllegalArgumentException) =>
             if (debugOn) e.printStackTrace()
             err.println(s"Syntax error: ${e.getMessage}")
@@ -147,6 +149,24 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
       case (name, cmd) =>
         f"$name%-10s ${cmd.help}"
     }
+  }
+
+  def executeHistory(args: String*) {
+    for {
+      index <- args.headOption map (_.toInt)
+      line <- history(index - 1)
+    } {
+      val result = interpret(line)
+      handleResult(result)
+    }
+  }
+
+  def listHistory(args: String*): Seq[String] = {
+    val lines = history.getLines
+    val data = ((1 to lines.size) zip lines) map {
+      case (itemNo, command) => HistoryItem(itemNo, command)
+    }
+    tabular.transform(data)
   }
 
   /**
@@ -1021,52 +1041,56 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    * Pre-define all commands
    */
   private val COMMANDS = Map[String, Command](Seq(
-    Command("exit", exit _, help = "Exits the shell"),
-    Command("?", help _, (Seq.empty, Seq("seach_term")), help = "Provides the list of available commands"),
-    Command("cat", cat _, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
-    Command("class", inspectClass _, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
-    Command("debug", debug _, (Seq.empty, Seq("state")), help = "Switches debugging on/off"),
-    Command("help", help _, help = "Provides the list of available commands"),
-    Command("hostname", hostname _, help = "Returns the name of the current host"),
-    Command("kavrofields", topicAvroFields _, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the fields of an Avro message from a Kafka topic"),
-    Command("kbrokers", topicBrokers _, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
-    Command("kcommit", topicCommit _, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
-    Command("kcount", topicCount _, (Seq("topic", "partition"), Seq.empty), help = "Returns the number of messages available for a given topic"),
-    Command("kdump", topicDumpBinary _, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as binary] to the console"),
-    Command("kdumpa", topicDumpAvro _, (Seq("schemaPath", "topic", "partition"), Seq("startOffset", "endOffset", "blockSize", "fields")), "Dumps the contents of a specific topic [as Avro] to the console"),
-    Command("kdumpr", topicDumpRaw _, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as raw ASCII] to the console"),
-    Command("kdumpf", topicDumpToFile _, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic to a file"),
-    Command("kfetch", topicFetchOffsets _, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
-    Command("kfirst", topicFirstOffset _, (Seq("topic", "partition"), Seq.empty), help = "Returns the first offset for a given topic"),
-    Command("kget", topicGetData _, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves a single record at the specified offset for a given topic"),
-    Command("kimport", topicImport _, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports data into a new/existing topic"),
-    Command("klast", topicLastOffset _, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
-    Command("kls", topicList _, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
-    Command("kmk", topicCreate _, (Seq("topic", "partitions", "replicas"), Seq.empty), "Returns the system time as an EPOC in milliseconds"),
-    Command("koffset", topicOffset _, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
-    Command("kpush", topicPublish _, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
-    Command("krm", topicDelete _, (Seq("topic"), Seq.empty), "Deletes a topic"),
-    Command("kstats", topicStats _, (Seq("topic", "beginPartition", "endPartition"), Seq.empty), help = "Returns the parition details for a given topic"),
-    Command("kwatch", topicWatch _, (Seq("topic", "partition"), Seq("timeout-in-seconds")), "Subscribes to a specific topic"),
-    Command("pkill", processKill _, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
-    Command("ps", processList _, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
-    Command("reconnect", reconnect _, (Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
-    Command("resource", findResource _, (Seq("resource_name"), Seq.empty), help = "Inspects the classpath for the given resource"),
-    Command("storm", stormDeploy _, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server"),
-    Command("systime", systime _, help = "Returns the system time as an EPOC in milliseconds"),
-    Command("time", time _, help = "Returns the system time"),
-    Command("timeutc", timeUTC _, help = "Returns the system time in UTC"),
-    Command("wpost", wPost _, (Seq("file", "url"), Seq("verbose", "throttle")), "Transfers the text data (via HTTP POST) from a file to a web-service end-point"),
-    Command("zcd", zkChangeDir _, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
-    Command("zexists", zkExists _, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
-    Command("zget", zkGet _, (Seq("key", "type"), Seq.empty), "Sets a key-value in ZooKeeper"),
-    Command("zls", zkChildren _, (Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
-    Command("zmk", zkMkdir _, (Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
-    Command("zput", zkPut _, (Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
-    Command("zrm", zkDelete _, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
-    Command("zruok", zkRuok _, help = "Checks the status of a Zookeeper instance"),
-    Command("zsess", zkSession _, help = "Retrieves the Session ID from ZooKeeper"),
-    Command("zstat", zkStat _, help = "Returns the statistics of a Zookeeper instance")) map (c => (c.name, c)): _*)
+    Command("exit", exit, help = "Exits the shell"),
+    Command("!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
+    Command("?", help, (Seq.empty, Seq("seachterm")), help = "Provides the list of available commands"),
+    Command("cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
+    Command("class", inspectClass, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
+    Command("debug", debug, (Seq.empty, Seq("state")), help = "Switches debugging on/off"),
+    Command("help", help, help = "Provides the list of available commands"),
+    Command("history", listHistory, help = "Returns a list of previously issued commands"),
+    Command("hostname", hostname, help = "Returns the name of the current host"),
+    Command("kavrofields", topicAvroFields, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the fields of an Avro message from a Kafka topic"),
+    Command("kbrokers", topicBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
+    Command("kcommit", topicCommit, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
+    Command("kcount", topicCount, (Seq("topic", "partition"), Seq.empty), help = "Returns the number of messages available for a given topic"),
+    Command("kdump", topicDumpBinary, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as binary] to the console"),
+    Command("kdumpa", topicDumpAvro, (Seq("schemaPath", "topic", "partition"), Seq("startOffset", "endOffset", "blockSize", "fields")), "Dumps the contents of a specific topic [as Avro] to the console"),
+    Command("kdumpr", topicDumpRaw, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as raw ASCII] to the console"),
+    Command("kdumpf", topicDumpToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic to a file"),
+    Command("kfetch", topicFetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
+    Command("kfirst", topicFirstOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the first offset for a given topic"),
+    Command("kget", topicGetData, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves a single record at the specified offset for a given topic"),
+    Command("kimport", topicImport, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports data into a new/existing topic"),
+    Command("klast", topicLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
+    Command("kls", topicList, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
+    Command("kmk", topicCreate, (Seq("topic", "partitions", "replicas"), Seq.empty), "Returns the system time as an EPOC in milliseconds"),
+    Command("koffset", topicOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
+    Command("kpush", topicPublish, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
+    Command("krm", topicDelete, (Seq("topic"), Seq.empty), "Deletes a topic"),
+    Command("kstats", topicStats, (Seq("topic", "beginPartition", "endPartition"), Seq.empty), help = "Returns the parition details for a given topic"),
+    Command("kwatch", topicWatch, (Seq("topic", "partition"), Seq("timeout-in-seconds")), "Subscribes to a specific topic"),
+    Command("pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
+    Command("ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
+    Command("reconnect", reconnect, (Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
+    Command("resource", findResource, (Seq("resourcename"), Seq.empty), help = "Inspects the classpath for the given resource"),
+    Command("storm", stormDeploy, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server"),
+    Command("systime", systime, help = "Returns the system time as an EPOC in milliseconds"),
+    Command("time", time, help = "Returns the system time"),
+    Command("timeutc", timeUTC, help = "Returns the system time in UTC"),
+    Command("wpost", wPost, (Seq("file", "url"), Seq("verbose", "throttle")), "Transfers the text data (via HTTP POST) from a file to a web-service end-point"),
+    Command("zcd", zkChangeDir, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
+    Command("zexists", zkExists, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
+    Command("zget", zkGet, (Seq("key", "type"), Seq.empty), "Sets a key-value in ZooKeeper"),
+    Command("zls", zkChildren, (Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
+    Command("zmk", zkMkdir, (Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
+    Command("zput", zkPut, (Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
+    Command("zrm", zkDelete, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
+    Command("zruok", zkRuok, help = "Checks the status of a Zookeeper instance"),
+    Command("zsess", zkSession, help = "Retrieves the Session ID from ZooKeeper"),
+    Command("zstat", zkStat, help = "Returns the statistics of a Zookeeper instance")) map (c => (c.name, c)): _*)
+
+  case class HistoryItem(itemNo: Int, command: String)
 
   case class MessageData(offset: Long, hex: String, chars: String)
 
@@ -1081,7 +1105,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
  * @author lawrence.daniels@gmail.com
  */
 object VerifyShell {
-  val VERSION = "1.02.1"
+  val VERSION = "1.0.3"
 
   private val logger = org.slf4j.LoggerFactory.getLogger(classOf[KafkaSubscriber])
 
