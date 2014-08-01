@@ -15,9 +15,9 @@ Table of Contents
 <a name="Motivations"></a>
 ## Motivations
 
-The motivations behind creating `Verify` are simple; testing, verifying and managing Kafka topics can be an
+The motivations behind creating _Verify_ are simple; testing, verifying and managing Kafka topics can be an
 arduous task. The goal of this project is to ease the pain of developing applications that make use of 
-Kafka/Storm/ZooKeeper-based.
+Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like commands.
 
 <a name="Development"></a>
 ## Development
@@ -69,6 +69,38 @@ Kafka/Storm/ZooKeeper-based.
 		| test.ldaniels.alerts  9          dev602.vmx00.ldaniels528.com:9092  1         |
 		+ ----------------------------------------------------------------------------- +
 
+	$ kls test.ldaniels.alerts
+		+ ----------------------------------------------------------------------------- +
+		| name                  partition  leader                             version   |
+		+ ----------------------------------------------------------------------------- +
+		| test.ldaniels.alerts  0          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
+		| test.ldaniels.alerts  1          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
+		| test.ldaniels.alerts  2          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
+		| test.ldaniels.alerts  3          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
+		| test.ldaniels.alerts  4          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
+		| test.ldaniels.alerts  5          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
+		| test.ldaniels.alerts  6          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
+		| test.ldaniels.alerts  7          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
+		| test.ldaniels.alerts  8          vsccrtc204-brn1.rtc.vrsn.com:9092  1         |
+		| test.ldaniels.alerts  9          vsccrtc205-brn1.rtc.vrsn.com:9092  1         |
+		+ ----------------------------------------------------------------------------- +
+
+	$ kstats
+		+ ---------------------------------------------------------------------------- +
+		| name                  partition  startOffset  endOffset  messagesAvailable   |
+		+ ---------------------------------------------------------------------------- +
+		| test.ldaniels.alerts  0          4009955      4009955    0                   |
+		| test.ldaniels.alerts  1          3845895      3845895    0                   |
+		| test.ldaniels.alerts  2          5322551      5322551    0                   |
+		| test.ldaniels.alerts  3          5310126      5310126    0                   |
+		| test.ldaniels.alerts  4          2648876      2648876    0                   |
+		| test.ldaniels.alerts  5          5126782      5126782    0                   |
+		| test.ldaniels.alerts  6          3931333      3931333    0                   |
+		| test.ldaniels.alerts  7          3902933      3902933    0                   |
+		| test.ldaniels.alerts  8          3997279      3997279    0                   |
+		| test.ldaniels.alerts  9          3833760      3833760    0                   |
+		+ ---------------------------------------------------------------------------- +
+
 	$ zls
 		consumers
 		storm
@@ -76,7 +108,4 @@ Kafka/Storm/ZooKeeper-based.
 		admin
 		controller
 		brokers	
-	
-
-	
 		
