@@ -76,7 +76,7 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		| test.app1.alerts  0          dev601.ldaniels528.com:9092  1         |
 		| test.app1.alerts  1          dev602.ldaniels528.com:9092  1         |
 		| test.app1.alerts  2          dev601.ldaniels528.com:9092  1         |
-		+ ------------------------------------------------------------------------- +
+		+ ------------------------------------------------------------------- +
 
 	$ kstats test.app1.alerts 0 2
 		+ ------------------------------------------------------------------------ +
