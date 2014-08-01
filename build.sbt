@@ -15,9 +15,9 @@ packageArchetype.java_application
 
 maintainer in Linux := "Lawrence Daniels <lawrence.daniels@gmail.com>"
 
-packageSummary in Linux := "Swiss-Army-Knife for viewing/managing topics for Kafka"
+packageSummary in Linux := "Kafka, ZooKeeper and Storm data verification and management utility"
 
-packageDescription := "Swiss-Army-Knife for viewing/managing topics for Kafka"
+packageDescription := "Verify is a figurative Swiss-Army-Knife for inspecting/managing Kafka topics and ZooKeeper properties"
 
 scalaVersion := "2.10.4"
 
