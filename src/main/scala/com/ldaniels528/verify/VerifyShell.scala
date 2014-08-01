@@ -27,7 +27,10 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
 
   // state variables
   private var debugOn = false
+
+  // session history
   private val history = new History(rt.maxHistory)
+  history.load(rt.historyFile)
 
   // define a custom tabular instance
   private val tabular = new Tabular() with AvroTables
@@ -63,6 +66,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    */
   def shell() {
     val userName = scala.util.Properties.userName
+
     do {
       // display the prompt, and get the next line of input
       out.print("%s@%s:%s> ".format(userName, remoteHost, zkcwd))
@@ -104,7 +108,10 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
   /**
    * "exit" command - Exits the shell
    */
-  def exit(args: String*) = rt.alive = false
+  def exit(args: String*) = {
+    rt.alive = false
+    history.store(rt.historyFile)
+  }
 
   /**
    * Inspects the classpath for the given resource by name

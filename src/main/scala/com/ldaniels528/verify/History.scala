@@ -1,10 +1,15 @@
 package com.ldaniels528.verify
 
+import com.ldaniels528.verify.util.VerifyUtils._
+
 /**
  * Command History Container
  * @author ldaniels
  */
 class History(val maxHistory: Int) {
+  import java.io.File
+  import scala.util.Try
+
   private var history: List[String] = Nil
 
   /**
@@ -32,5 +37,32 @@ class History(val maxHistory: Int) {
    * @return the [[Seq]]uence of [[String]]s representing the previously issued commands for this session
    */
   def getLines: Seq[String] = history
+
+  /**
+   * Loads history from a the given file
+   */
+  def load(file: File): Try[Int] = {
+    import scala.io.Source
+
+    Try {
+      val lines = Source.fromFile(file).getLines().toSeq.reverse
+      lines foreach (line => history = line :: history)
+      lines.size
+    }
+  }
+
+  /**
+   * Stores the history as the given file
+   */
+  def store(file: File) {
+    import java.io._
+
+    new BufferedWriter(new FileWriter(file)) use { out =>
+      history foreach { line =>
+        out.write(line)
+        out.newLine()
+      }
+    }
+  }
 
 }

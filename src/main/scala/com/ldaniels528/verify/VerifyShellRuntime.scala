@@ -3,17 +3,20 @@ package com.ldaniels528.verify
 import com.ldaniels528.verify.subsystems.kafka.Broker
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy
-import org.apache.zookeeper.{ Watcher, WatchedEvent }
 
 /**
  * Verify Shell Runtime Context
  * @author lawrence.daniels@gmail.com
  */
 class VerifyShellRuntime(props: java.util.Properties) {
+  import java.io.File
+  import File.separator
+  import scala.util.Properties.userHome
+
   // the default state of the console is "alive"
   var alive = true
-  
   var maxHistory = 100
+  var historyFile = new File(s"$userHome${separator}vfyhistory.txt")
 
   // get the ZooKeeper host/port
   val zkEndPoint = EndPoint(props.getProperty("zookeeper"))
