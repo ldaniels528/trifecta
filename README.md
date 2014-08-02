@@ -25,7 +25,7 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 <a name="build-requirements"></a>
 ### Build Requirements
 
-* SBT 0.13.5+
+* SBT 0.13.0+
 
 <a name="building-the-code"></a>
 ### Building the code
@@ -35,7 +35,7 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 <a name="testing-the-code"></a>    
 ### Running the tests
 
-    $ sbt clean test    
+    $ sbt test    
 
 <a name="Running-the-app"></a> 
 ### Run the application
