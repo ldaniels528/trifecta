@@ -9,7 +9,7 @@ assemblySettings
 
 name := "verify"
 
-version := "0.1"
+version := "0.1.1"
 
 packageArchetype.java_application
 
@@ -44,28 +44,27 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
 
 // General Dependencies
 libraryDependencies ++= Seq(
-	"com.google.code.gson" % "gson" % "2.2.4",
 	"com.twitter" %% "bijection-core" % "0.6.2",
-  	"com.twitter" %% "bijection-avro" % "0.6.2",	
+	"com.twitter" %% "bijection-avro" % "0.6.2",
 //	"com.typesafe.akka" % "akka-actor_2.10" % "2.3.2",
 	"commons-beanutils" % "commons-beanutils" % "1.9.1",
 	"commons-httpclient" % "commons-httpclient" % "3.1",	
 	"commons-io" % "commons-io" % "2.1",
-//	"joda-time" % "joda-time" % "2.3",
-//	"org.joda" % "joda-convert" % "1.6",
 	"log4j" % "log4j" % "1.2.17",
+ 	"net.liftweb" %% "lift-json" % "2.5.1",
 	"org.apache.avro" % "avro" % "1.7.6",	
 	"org.apache.kafka" % "kafka_2.10" % "0.8.1.1",
 	"org.apache.storm" % "storm-core" % "0.9.2-incubating" % "provided"
-)           
+)
             
 // Testing Dependencies
 libraryDependencies ++= Seq(
 	"junit" % "junit" % "4.11" % "test"
 )
 
+// define the resolvers
 resolvers ++= Seq(
-    "Clojars" at "http://clojars.org/repo/",
+  "Clojars" at "http://clojars.org/repo/",
 	"Clojure-Releases" at "http://build.clojure.org/releases/",
  	"Java Net" at "http://download.java.net/maven/2/",
 	"Maven Central Server" at "http://repo1.maven.org/maven2",

@@ -7,6 +7,7 @@ import com.ldaniels528.verify.subsystems.zookeeper._
 import com.ldaniels528.verify.subsystems.kafka._
 import com.ldaniels528.verify.util.VerifyUtils._
 import com.ldaniels528.verify.util.Tabular
+import java.io.DataOutputStream
 
 /**
  * Verify Console Shell Application
@@ -196,7 +197,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
 
     // parse the process and port mapping data
     val outcome = for {
-      // retrieve the process and port map data
+    // retrieve the process and port map data
       (psdata, portmap) <- remoteData(node)
 
       // process the raw output
@@ -567,16 +568,18 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
     val Seq(file, name, partition, _*) = args
     val startOffset = extract(args, 3) map (_.toLong)
     val endOffset = extract(args, 4) map (_.toLong)
-    val blockSize = extract(args, 5) map (_.toInt)
+    val counts = extract(args, 5) map(_.toLowerCase) map(s => s == "-c") getOrElse false
+    val blockSize = extract(args, 6) map (_.toInt)
 
     // output the output file
     var count = 0L
-    new PrintStream(new FileOutputStream(file)) use { fos =>
+    new DataOutputStream( new FileOutputStream(file)) use { fos =>
       // perform the action
       new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
         _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
           override def consume(offset: Long, message: Array[Byte]) {
-            fos.println(new String(deflate(message), "UTF-8"))
+            if(counts) fos.writeInt(message.length)
+            fos.write(message)
             count += 1
           }
         })
@@ -1064,7 +1067,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
     Command("kdump", topicDumpBinary, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as binary] to the console"),
     Command("kdumpa", topicDumpAvro, (Seq("schemaPath", "topic", "partition"), Seq("startOffset", "endOffset", "blockSize", "fields")), "Dumps the contents of a specific topic [as Avro] to the console"),
     Command("kdumpr", topicDumpRaw, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as raw ASCII] to the console"),
-    Command("kdumpf", topicDumpToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic to a file"),
+    Command("kdumpf", topicDumpToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Dumps the contents of a specific topic to a file"),
     Command("kfetch", topicFetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command("kfirst", topicFirstOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the first offset for a given topic"),
     Command("kget", topicGetData, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves a single record at the specified offset for a given topic"),

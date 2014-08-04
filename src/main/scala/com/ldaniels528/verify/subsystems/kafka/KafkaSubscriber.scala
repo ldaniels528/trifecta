@@ -1,8 +1,7 @@
 package com.ldaniels528.verify.subsystems.kafka
 
-import KafkaSubscriber._
+import com.ldaniels528.verify.subsystems.kafka.KafkaSubscriber._
 import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy
-import com.ldaniels528.verify.util.VerifyJson
 import com.ldaniels528.verify.util.VerifyUtils._
 
 /**
@@ -10,14 +9,14 @@ import com.ldaniels528.verify.util.VerifyUtils._
  * @author lawrence.daniels@gmail.com
  */
 class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
-  import scala.collection.JavaConversions._
-  import scala.concurrent.duration._
-  import scala.util.{ Try, Success, Failure }
+
+  import kafka.api.OffsetRequest.LatestTime
   import kafka.api._
-  import OffsetRequest.{ EarliestTime, LatestTime }
   import kafka.common._
-  import kafka.consumer.SimpleConsumer
   import kafka.message.MessageAndOffset
+
+  import scala.concurrent.duration._
+  import scala.util.{ Failure, Success, Try }
 
   // generate the client ID
   private val clientID = s"Client_${topic.name}_${topic.partition}_${System.currentTimeMillis()}"
@@ -190,13 +189,13 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
  * @author lawrence.daniels@gmail.com
  */
 object KafkaSubscriber {
-  import scala.concurrent.duration._
-  import scala.util.{ Try, Success, Failure }
+
   import kafka.api._
-  import OffsetRequest.{ EarliestTime, LatestTime }
   import kafka.common._
   import kafka.consumer.SimpleConsumer
-  import kafka.message.MessageAndOffset
+  import scala.concurrent.duration._
+  import scala.util.{ Failure, Success, Try }
+  import net.liftweb.json._
 
   private val logger = org.slf4j.LoggerFactory.getLogger(classOf[KafkaSubscriber])
 
@@ -204,11 +203,10 @@ object KafkaSubscriber {
   private val correlationId = 1
   private val DEFAULT_FETCH_SIZE = 1024
 
-  // create the JSON parser
-  private val gson = VerifyJson.getJsonParser
-
   // define a date parser
   private val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
+
+  implicit val formats = DefaultFormats
 
   /**
    * Retrieves the list of defined brokers from Zookeeper
@@ -217,7 +215,7 @@ object KafkaSubscriber {
     val basePath = "/brokers/ids"
     zk.getChildren(basePath, false) flatMap { brokerId =>
       zk.readString(s"$basePath/$brokerId") map { json =>
-        val details = gson.fromJson(json, classOf[BrokerDetails])
+        val details = parse(json).extract[BrokerDetails]
         Try(details.timestamp = sdf.format(new java.util.Date(details.timestamp.toLong)))
         details
       }
@@ -318,7 +316,7 @@ object KafkaSubscriber {
 
   /**
    * Establishes a connection with the specified broker
-   * @param broker the specified {@link Broker broker}
+   * @param broker the specified { @link Broker broker}
    */
   private def connect(broker: Broker, clientID: String): SimpleConsumer = {
     new SimpleConsumer(broker.host, broker.port, DEFAULT_FETCH_SIZE, 63356, clientID)
@@ -391,15 +389,7 @@ object KafkaSubscriber {
    * Object representation of the broker information JSON
    * {"jmx_port":9999,"timestamp":"1405818758964","host":"vsccrtc204-brn1.rtc.vrsn.com","version":1,"port":9092}
    */
-  case class BrokerDetails() {
-    import scala.beans.BeanProperty
-
-    @BeanProperty var jmx_port: Integer = _
-    @BeanProperty var timestamp: String = _
-    @BeanProperty var host: String = _
-    @BeanProperty var version: Integer = _
-    @BeanProperty var port: Integer = _
-  }
+  case class BrokerDetails(jmx_port: Int, var timestamp: String, host: String, version: Int, port: Int)
 
   class KafkaFetchException(val code: Short) extends RuntimeException(ERROR_CODES.get(code) getOrElse ("UnrecognizedErrorCode"))
 
@@ -407,7 +397,9 @@ object KafkaSubscriber {
    * Kafka Error Codes
    * @see https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol
    */
-  import ErrorMapping._
+
+  import kafka.common.ErrorMapping._
+
   val ERROR_CODES = Map(
     BrokerNotAvailableCode -> "BrokerNotAvailableCode",
     InvalidFetchSizeCode -> "InvalidFetchSizeCode",
