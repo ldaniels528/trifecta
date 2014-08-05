@@ -29,8 +29,8 @@ class KafkaPublisher() {
   /**
    * Transports a message to the messaging server
    * @param topic the given topic name (e.g. "flights")
-   * @param key the given message {@link K key}
-   * @param value the given message {@link V value}
+   * @param key the given message key
+   * @param value the given message value
    */
   def publish(topic: String, key: String, value: Array[Byte]) {
     Option(producer) foreach (_.send(new KeyedMessage(topic, key, value)))

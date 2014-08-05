@@ -54,7 +54,7 @@ trait VerifyStormJob {
   /**
    * Retrieves the configuration corresponding to the given configuration file
    * @param configFile the given configuration file
-   * @return the {@link VerifyStormJobConfig configuration}
+   * @return the [[VerifyStormJobConfig]] configuration
    */
   def loadConfig(configFile: String): VerifyStormJobConfig = {
     val p = new Properties()
@@ -64,8 +64,8 @@ trait VerifyStormJob {
 
   /**
    * Loads the server configuration
-   * @param p the given {@link Properties properties}
-   * @return the {@link VerifyStormJobConfig configuration}
+   * @param p the given [[Properties]]
+   * @return the [[VerifyStormJobConfig]] configuration
    */
   def loadConfig(p: Properties): VerifyStormJobConfig = {
     // get the ZooKeeper end-point
@@ -88,18 +88,14 @@ trait VerifyStormJob {
     import org.apache.zookeeper.{ Watcher, WatchedEvent }
 
     // get the web service reactive push value
-    val zkProxy = ZKProxy(zkEndPoint, new Watcher {
-      override def process(event: WatchedEvent) {
-        // do nothing
-      }
-    })
+    val zkProxy = ZKProxy(zkEndPoint)
 
     // get the Play server end-points
     val serverList = for {
-      // read the Play server list
+    // read the Play server list
       pairs <- zkProxy.readString(key)
 
-      // parse the host:port pairs
+    // parse the host:port pairs
     } yield pairs.split(",") map (EndPoint(_))
 
     serverList.getOrElse(throw new IllegalStateException(s"Could not deterine server end-points ($key)"))

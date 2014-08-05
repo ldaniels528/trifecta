@@ -1,41 +1,45 @@
 package com.ldaniels528.verify.subsystems.zookeeper
 
-import ZKProxy._
-import ZKProxy.Implicits._
-import org.apache.zookeeper.Watcher
+import java.nio.ByteBuffer
+import java.util.ArrayList
+
 import com.ldaniels528.verify.io.EndPoint
+import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy.Implicits._
+import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy._
+import org.apache.zookeeper.{WatchedEvent, Watcher}
+
+import scala.collection.JavaConversions._
+import scala.language.implicitConversions
+import scala.util.Try
 
 /**
  * Verify ZooKeeper Proxy
  * @author lawrence.daniels@gmail.com
  */
-class ZKProxy(host: String, port: Int, watcher: Watcher) {
-  import java.util.ArrayList
-  import java.nio.ByteBuffer
-  import scala.util.{ Try, Success, Failure }
-  import scala.collection.JavaConversions._
-  import scala.language.implicitConversions
-  import org.slf4j.LoggerFactory
-  import org.apache.zookeeper._
+class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None) {
+
+  import org.apache.zookeeper.AsyncCallback.StringCallback
+  import org.apache.zookeeper.CreateMode.PERSISTENT
   import org.apache.zookeeper.ZooDefs.Ids
-  import org.apache.zookeeper.ZooKeeper
-  import org.apache.zookeeper.data.{ ACL, Stat }
-  import AsyncCallback.{ StatCallback, StringCallback }
-  import CreateMode.PERSISTENT
+  import org.apache.zookeeper._
+  import org.apache.zookeeper.data.{ACL, Stat}
+  import org.slf4j.LoggerFactory
 
   private val logger = LoggerFactory.getLogger(getClass())
-  private var zk = new ZooKeeper(host, port, watcher)
   var acl: ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
   var mode: CreateMode = PERSISTENT
   var encoding: String = "UTF8"
 
-  def batch(ops: Op*): Seq[OpResult] = zk.multi(ops)
+  logger.info(s"Connecting to ZooKeeper at '$host:$port'...")
+  private var zk = new ZooKeeper(host, port, new MyWatcher(callback))
+
+  //def batch(ops: Op*): Seq[OpResult] = zk.multi(ops)
 
   def client: ZooKeeper = zk
 
   def reconnect() {
     Try(zk.close())
-    zk = new ZooKeeper(host, port, watcher)
+    zk = new ZooKeeper(host, port, new MyWatcher(callback))
   }
 
   def create(tuples: (String, Array[Byte])*): Iterable[String] = {
@@ -174,14 +178,22 @@ class ZKProxy(host: String, port: Int, watcher: Watcher) {
 object ZKProxy {
   private val NO_DATA = new Array[Byte](0)
 
-  def apply(ep: EndPoint, watcher: Watcher) = new ZKProxy(ep.host, ep.port, watcher)
+  def apply(ep: EndPoint, callback: Option[ZkProxyCallBack] = None) = new ZKProxy(ep.host, ep.port, callback)
+
+  /**
+   * My ZooKeeper Watcher Callback
+   * @param callback the [[ZkProxyCallBack]]
+   */
+  class MyWatcher(callback: Option[ZkProxyCallBack]) extends Watcher {
+    override def process(event: WatchedEvent) = callback.foreach(_.process(event))
+  }
 
   /**
    * All implicit definitions are declared here
    */
   object Implicits {
+
     import java.nio.ByteBuffer
-    import scala.language.implicitConversions
 
     implicit def byteBuffer2ByteArray(buf: ByteBuffer): Array[Byte] = {
       val bytes = new Array[Byte](buf.limit())
@@ -202,5 +214,7 @@ object ZKProxy {
       }
 
     }
+
   }
+
 }

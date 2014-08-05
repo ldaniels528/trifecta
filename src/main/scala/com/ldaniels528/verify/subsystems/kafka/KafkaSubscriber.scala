@@ -3,25 +3,25 @@ package com.ldaniels528.verify.subsystems.kafka
 import com.ldaniels528.verify.subsystems.kafka.KafkaSubscriber._
 import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.VerifyUtils._
+import kafka.api.OffsetRequest.LatestTime
+import kafka.api._
+import kafka.common._
+import kafka.consumer.SimpleConsumer
+import kafka.message.MessageAndOffset
+import net.liftweb.json._
+
+import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 /**
  * Verify Kafka Message Subscriber
  * @author lawrence.daniels@gmail.com
  */
 class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
-
-  import kafka.api.OffsetRequest.LatestTime
-  import kafka.api._
-  import kafka.common._
-  import kafka.message.MessageAndOffset
-
-  import scala.concurrent.duration._
-  import scala.util.{ Failure, Success, Try }
-
   // generate the client ID
   private val clientID = s"Client_${topic.name}_${topic.partition}_${System.currentTimeMillis()}"
 
-  // get the meta data and replica brokers
+  // get the leader, meta data and replica brokers
   private val (leader, metadata, replicas) = getLeaderPartitionMetaDataAndReplicas(topic, seedBrokers)
     .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for $topic"))
 
@@ -29,7 +29,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
   private var broker = leader
 
   // get the connection (topic consumer)
-  private var consumer = connect(broker, clientID)
+  private val consumer = connect(broker, clientID)
 
   /**
    * Closes the underlying consumer instance
@@ -91,20 +91,46 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
     } yield code
   }
 
+  /**
+   * Returns the earliest or latest offset for the given consumer ID
+   * @param consumerId the given consumer ID
+   * @param timeInMillis the given time in milliseconds
+   * @return the earliest or latest offset
+   */
   def earliestOrLatestOffset(consumerId: Int, timeInMillis: Long): Long = {
     val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
     consumer.earliestOrLatestOffset(topicAndPartition, timeInMillis, consumerId)
   }
 
-  def fetch(offset: Long, fetchSize: Int): Seq[MessageData] = {
+  /**
+   * Retrieves the message for the given corresponding offset
+   * @param offset the given offset
+   * @param fetchSize the fetch size
+   * @return the response messages
+   */
+  def fetch(offset: Long, fetchSize: Int): Iterable[MessageData] = fetch(Seq(offset), fetchSize)
+
+  /**
+   * Retrieves messages for the given corresponding offsets
+   * @param offsets the given offsets
+   * @param fetchSize the fetch size
+   * @return the response messages
+   */
+  def fetch(offsets: Seq[Long], fetchSize: Int): Iterable[MessageData] = {
+    // build the request
+    val request = offsets.foldLeft(new FetchRequestBuilder().clientId(clientID)) {
+      (builder, offset) =>
+        builder.addFetch(topic.name, topic.partition, offset, fetchSize)
+        builder
+    }.build()
+
     // submit the request, and process the response
-    val request = new FetchRequestBuilder().clientId(clientID).addFetch(topic.name, topic.partition, offset, fetchSize).build()
     val response = consumer.fetch(request)
     if (response.hasError) throw new KafkaFetchException(response.errorCode(topic.name, topic.partition))
     else {
       (response.messageSet(topic.name, topic.partition) map { msgAndOffset =>
         MessageData(msgAndOffset.offset, msgAndOffset.nextOffset, getMessagePayload(msgAndOffset))
-      }).toSeq
+      })
     }
   }
 
@@ -143,7 +169,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
       response.partitionErrorAndOffsets map {
         case (tap, por) =>
           val code = por.error
-          System.err.println(s"Error fetching data Offset Data the Broker. Reason: $code - ${ERROR_CODES.get(code) getOrElse s"UNKNOWN - $code"}")
+          logger.error(s"Error fetching data Offset Data the Broker. Reason: $code - ${ERROR_CODES.get(code) getOrElse s"UNKNOWN - $code"}")
       }
       None
     } else {
@@ -190,14 +216,9 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
  */
 object KafkaSubscriber {
 
-  import kafka.api._
-  import kafka.common._
-  import kafka.consumer.SimpleConsumer
-  import scala.concurrent.duration._
-  import scala.util.{ Failure, Success, Try }
   import net.liftweb.json._
 
-  private val logger = org.slf4j.LoggerFactory.getLogger(classOf[KafkaSubscriber])
+  private val logger = org.slf4j.LoggerFactory.getLogger(getClass)
 
   // setup defaults
   private val correlationId = 1
@@ -378,6 +399,12 @@ object KafkaSubscriber {
     }
   }
 
+  /**
+   * Represents a message and offset
+   * @param offset the offset of the message within the topic partition
+   * @param nextOffset the next available offset
+   * @param message the message
+   */
   case class MessageData(offset: Long, nextOffset: Long, message: Array[Byte])
 
   /**
@@ -391,7 +418,11 @@ object KafkaSubscriber {
    */
   case class BrokerDetails(jmx_port: Int, var timestamp: String, host: String, version: Int, port: Int)
 
-  class KafkaFetchException(val code: Short) extends RuntimeException(ERROR_CODES.get(code) getOrElse ("UnrecognizedErrorCode"))
+  /**
+   * Represents a class of exceptions that occur while attempting to fetch data from a Kafka broker
+   * @param code the status/error code
+   */
+  case class KafkaFetchException(code: Short) extends RuntimeException(ERROR_CODES.get(code) getOrElse ("Unrecognized Error Code"))
 
   /**
    * Kafka Error Codes
@@ -401,20 +432,20 @@ object KafkaSubscriber {
   import kafka.common.ErrorMapping._
 
   val ERROR_CODES = Map(
-    BrokerNotAvailableCode -> "BrokerNotAvailableCode",
-    InvalidFetchSizeCode -> "InvalidFetchSizeCode",
-    InvalidMessageCode -> "InvalidMessageCode",
-    LeaderNotAvailableCode -> "LeaderNotAvailableCode",
-    MessageSizeTooLargeCode -> "MessageSizeTooLargeCode",
-    NoError -> "NoError",
-    NotLeaderForPartitionCode -> "NotLeaderForPartitionCode",
-    OffsetMetadataTooLargeCode -> "OffsetMetadataTooLargeCode",
-    OffsetOutOfRangeCode -> "OffsetOutOfRangeCode",
-    ReplicaNotAvailableCode -> "ReplicaNotAvailableCode",
-    RequestTimedOutCode -> "RequestTimedOutCode",
-    StaleControllerEpochCode -> "StaleControllerEpochCode",
-    StaleLeaderEpochCode -> "StaleLeaderEpochCode",
-    UnknownCode -> "UnknownCode",
-    UnknownTopicOrPartitionCode -> "UnknownTopicOrPartitionCode")
+    BrokerNotAvailableCode -> "Broker Not Available",
+    InvalidFetchSizeCode -> "Invalid Fetch Size",
+    InvalidMessageCode -> "Invalid Message",
+    LeaderNotAvailableCode -> "Leader Not Available",
+    MessageSizeTooLargeCode -> "Message Size Too Large",
+    NoError -> "No Error",
+    NotLeaderForPartitionCode -> "Not Leader For Partition",
+    OffsetMetadataTooLargeCode -> "Offset Metadata Too Large",
+    OffsetOutOfRangeCode -> "Offset Out Of Range",
+    ReplicaNotAvailableCode -> "Replica Not Available",
+    RequestTimedOutCode -> "Request Timed Out",
+    StaleControllerEpochCode -> "Stale Controller Epoch",
+    StaleLeaderEpochCode -> "Stale Leader Epoch",
+    UnknownCode -> "Unknown Code",
+    UnknownTopicOrPartitionCode -> "Unknown Topic-Or-Partition")
 
 }

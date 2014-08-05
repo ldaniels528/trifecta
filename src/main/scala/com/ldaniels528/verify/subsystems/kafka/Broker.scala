@@ -6,11 +6,13 @@ import com.ldaniels528.verify.io.EndPoint
  * Type-safe Broker definition
  * @author lawrence.daniels@gmail.com
  */
-class Broker(host: String, port: Int) extends EndPoint(host, port)
+case class Broker(host: String, port: Int) extends EndPoint
 
+/**
+ * Broker Companion Object
+ * @author lawrence.daniels@gmail.com
+ */
 object Broker {
-
-  def apply(host: String, port: Int = -1) = new Broker(host, port)
 
   def apply(pair: String): Broker = {
     pair.split(":").toList match {
@@ -20,6 +22,5 @@ object Broker {
     }
   }
 
-  def unapply(e: Broker) = (e.host, e.port)
 
 }

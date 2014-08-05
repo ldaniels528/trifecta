@@ -1,37 +1,45 @@
 package com.ldaniels528.verify
 
-import VerifyShell._
+import java.io.{ByteArrayOutputStream, DataOutputStream, File, FileOutputStream, PrintStream}
+import java.nio.ByteBuffer
+import java.text.SimpleDateFormat
+import java.util.{Date, TimeZone}
+
+import com.ldaniels528.verify.VerifyShell._
 import com.ldaniels528.verify.io._
 import com.ldaniels528.verify.io.avro._
-import com.ldaniels528.verify.subsystems.zookeeper._
 import com.ldaniels528.verify.subsystems.kafka._
-import com.ldaniels528.verify.util.VerifyUtils._
+import com.ldaniels528.verify.subsystems.zookeeper._
 import com.ldaniels528.verify.util.Tabular
-import java.io.DataOutputStream
+import com.ldaniels528.verify.util.VerifyUtils._
+import org.slf4j.LoggerFactory
+
+import scala.collection.mutable.Buffer
+import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future, future}
+import scala.io.Source
+import scala.language.postfixOps
+import scala.util.{Failure, Success, Try}
 
 /**
  * Verify Console Shell Application
  * @author lawrence.daniels@gmail.com
  */
-class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResource with Compression {
-  import java.io.{ ByteArrayOutputStream, FileOutputStream, PrintStream }
-  import java.nio.ByteBuffer
-  import java.text.SimpleDateFormat
-  import java.util.{ Calendar, Date, TimeZone }
-  import scala.concurrent.{ Await, Future, future }
-  import scala.concurrent.duration._
-  import scala.concurrent.ExecutionContext.Implicits._
-  import scala.language.postfixOps
-  import scala.io.Source
-  import scala.util.{ Try, Success, Failure }
-  import org.apache.zookeeper.{ Watcher, WatchedEvent }
+class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compression {
+  // logger instance
+  private val logger = LoggerFactory.getLogger(getClass)
 
   // state variables
   private var debugOn = false
+  private var defaultFetchSize = 1024
 
   // session history
   private val history = new History(rt.maxHistory)
   history.load(rt.historyFile)
+
+  // schedule session history file updates
+  SessionManagement.setupHistoryUpdates(history, rt.historyFile, 5 minutes)
 
   // define a custom tabular instance
   private val tabular = new Tabular() with AvroTables
@@ -49,14 +57,14 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
   private var zkcwd = "/"
 
   // create the ZooKeeper proxy
-  out.println(s"Connecting to ZooKeeper at '${rt.zkEndPoint}'...")
-  private val zk = ZKProxy(rt.zkEndPoint, new Watcher {
-    override def process(event: WatchedEvent) = ()
-  })
+  private val zk = ZKProxy(rt.zkEndPoint)
 
   // make sure we shutdown the ZooKeeper connection
   Runtime.getRuntime().addShutdownHook(new Thread {
-    override def run() = zk.close
+    override def run() {
+      // shutdown the ZooKeeper instance
+      zk.close()
+    }
   })
 
   // get the list of brokers from zookeeper
@@ -77,7 +85,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
         Try(interpret(line)) match {
           case Success(result) =>
             handleResult(result)
-            history += line
+            if (line != "history" && !line.startsWith("!")) history += line
           case Failure(e: IllegalArgumentException) =>
             if (debugOn) e.printStackTrace()
             err.println(s"Syntax error: ${e.getMessage}")
@@ -401,8 +409,8 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    * "kmk" - Creates a new topic
    */
   def topicCreate(args: String*) {
-    import org.I0Itec.zkclient.ZkClient
     import _root_.kafka.admin.AdminUtils
+    import org.I0Itec.zkclient.ZkClient
 
     val Seq(topic, partitions, replicas, _*) = args
     val topicConfig = new java.util.Properties()
@@ -414,8 +422,8 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    * "krm" - Deletes a new topic
    */
   def topicDelete(args: String*) {
-    import org.I0Itec.zkclient.ZkClient
     import _root_.kafka.admin.AdminUtils
+    import org.I0Itec.zkclient.ZkClient
 
     val Seq(topic, _*) = args
 
@@ -451,11 +459,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    * Example2: kavrofields avro/schema2.avsc topics.ldaniels528.test2 9 1799020
    */
   def topicAvroFields(args: String*): Seq[String] = {
-    import java.io.File
-    import scala.collection.mutable.Buffer
     import scala.collection.JavaConversions._
-    import scala.io.Source
-    import org.apache.avro.generic.GenericRecord
 
     // get the arguments
     val Seq(schemaPath, name, partition, _*) = args
@@ -496,9 +500,6 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    * Example2: kdumpa avro/schema2.avsc topics.ldaniels528.test2 9 1799020 1799029 1024 field1+field2+field3+field4
    */
   def topicDumpAvro(args: String*): Long = {
-    import java.io.File
-    import scala.collection.mutable.Buffer
-    import scala.io.Source
     import org.apache.avro.generic.GenericRecord
 
     // get the arguments
@@ -568,17 +569,17 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
     val Seq(file, name, partition, _*) = args
     val startOffset = extract(args, 3) map (_.toLong)
     val endOffset = extract(args, 4) map (_.toLong)
-    val counts = extract(args, 5) map(_.toLowerCase) map(s => s == "-c") getOrElse false
+    val counts = extract(args, 5) map (_.toLowerCase) map (s => s == "-c") getOrElse false
     val blockSize = extract(args, 6) map (_.toInt)
 
     // output the output file
     var count = 0L
-    new DataOutputStream( new FileOutputStream(file)) use { fos =>
+    new DataOutputStream(new FileOutputStream(file)) use { fos =>
       // perform the action
       new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
         _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
           override def consume(offset: Long, message: Array[Byte]) {
-            if(counts) fos.writeInt(message.length)
+            if (counts) fos.writeInt(message.length)
             fos.write(message)
             count += 1
           }
@@ -617,11 +618,8 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
   }
 
   private def topicImportAvroFile(publisher: KafkaPublisher, filePath: String) {
-    import java.io.File
-    import org.apache.avro.Schema
     import org.apache.avro.file.DataFileReader
-    import org.apache.avro.generic.{ GenericDatumReader, GenericDatumWriter, GenericRecord }
-    import org.apache.avro.io.{ BinaryDecoder, DecoderFactory, EncoderFactory }
+    import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 
     val reader = new DataFileReader[GenericRecord](new File(filePath), new GenericDatumReader[GenericRecord]())
     while (reader.hasNext()) {
@@ -662,20 +660,64 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
   }
 
   /**
-   * "kget" - Returns the offsets for a given topic and group ID
+   * "kget" - Returns the message for a given topic partition and offset
    */
   def topicGetMessage(args: String*) {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
-    val fetchSize = extract(args, 3) map (_.toInt) getOrElse 1024
+    val fetchSize = extract(args, 3) map (_.toInt) getOrElse defaultFetchSize
 
     // perform the action
     new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
-      _.fetch(offset.toLong, fetchSize).headOption map { m =>
+      _.fetch(offset.toLong, fetchSize).headOption foreach { m =>
         m.message.sliding(40, 40) foreach { bytes =>
           out.println("[%04d] %-80s %-40s".format(m.offset, asHexString(bytes), asChars(bytes)))
         }
       }
+    }
+  }
+
+  /**
+   * "kgetsize" - Returns the size of the message for a given topic partition and offset
+   */
+  def topicGetMessageSize(args: String*): Option[Int] = {
+    // get the arguments
+    val Seq(name, partition, offset, _*) = args
+    val fetchSize = extract(args, 3) map (_.toInt) getOrElse defaultFetchSize
+
+    // perform the action
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
+      _.fetch(offset.toLong, fetchSize).headOption map (_.message.length)
+    }
+  }
+
+  /**
+   * "kgetmaxsize" - Returns the largest message size for a given topic partition and offset range
+   */
+  def topicGetMaxMessageSize(args: String*): Int = {
+    // get the arguments
+    val Seq(name, partition, startOffset, endOffset, _*) = args
+    val fetchSize = extract(args, 4) map (_.toInt) getOrElse defaultFetchSize
+
+    // perform the action
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
+      val offsets = (startOffset.toLong to endOffset.toLong)
+      _.fetch(offsets, fetchSize).map(_.message.length).max
+    }
+  }
+
+  /**
+   * "kgetminsize" - Returns the smallest message size for a given topic partition and offset range
+   */
+  def topicGetMinMessageSize(args: String*): Int = {
+    // get the arguments
+    val Seq(name, partition, startOffset, endOffset, _*) = args
+    val fetchSize = extract(args, 4) map (_.toInt) getOrElse defaultFetchSize
+
+    // perform the action
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
+      val offsets = (startOffset.toLong to endOffset.toLong)
+      _.fetch(offsets, fetchSize).map(_.message.length).min
     }
   }
 
@@ -736,8 +778,6 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    * "kwatch" - Subscribes to a specific topic
    */
   def topicWatch(args: String*): Long = {
-    import scala.concurrent.duration.FiniteDuration._
-
     // get the arguments
     val Seq(name, partition, _*) = args
     val duration = (extract(args, 2) map (_.toInt) getOrElse 60).seconds
@@ -760,8 +800,6 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    * "kwatchgroup" - Subscribes to a specific topic
    */
   def topicWatchGroup(args: String*): Long = {
-    import scala.concurrent.duration.FiniteDuration._
-
     // get the arguments
     val Seq(name, partition, groupId, _*) = args
     val duration = (extract(args, 3) map (_.toInt) getOrElse 60).seconds
@@ -785,31 +823,6 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
    * @return the application version
    */
   def version(args: String*) = VERSION
-
-  /**
-   * "wpost" - Transfers the text data (via HTTP POST) from a file to a web-service end-point
-   * (e.g. 'wpost flights.txt http://localhost:9000/stream/api/flights/publish')
-   * (e.g. 'wpost events.txt http://localhost:9000/stream/api/events/publish')
-   */
-  def wPost(args: String*): Long = {
-    val Seq(file, url, _*) = args
-    val verbose = (args.length > 2)
-    val throttle = extract(args, 3) map (_.toLong)
-
-    // transfer the file's contents
-    var count = 0L
-    Source.fromFile(file).getLines foreach { line =>
-      if (line.trim.length > 0) {
-        count += 1
-        if (verbose) {
-          out.println("[%04d] %s".format(count, line))
-        }
-        httpPost(url, line)
-        throttle foreach (Thread.sleep)
-      }
-    }
-    count
-  }
 
   /**
    * "zruok" - Checks the status of a Zookeeper instance
@@ -880,7 +893,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
   }
 
   /**
-   * "zexists" - Removes a key-value from ZooKeeper
+   * "zexists" - Returns the status of a Zookeeper key if it exists
    */
   def zkExists(args: String*): Seq[String] = {
     // get the argument
@@ -1043,8 +1056,9 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
   }
 
   private def toBytes(value: String, typeName: String): Array[Byte] = {
-    import ZKProxy.Implicits._
-    import ByteBuffer.allocate
+    import java.nio.ByteBuffer.allocate
+
+    import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy.Implicits._
     typeName match {
       case "hex" => value.getBytes()
       case "int" => allocate(4).putInt(value.toInt)
@@ -1078,7 +1092,10 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
     Command("kdumpf", topicDumpToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Dumps the contents of a specific topic to a file"),
     Command("kfetch", topicFetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command("kfirst", topicFirstOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the first offset for a given topic"),
-    Command("kget", topicGetMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves a single record at the specified offset for a given topic"),
+    Command("kget", topicGetMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
+    Command("kgetsize", topicGetMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
+    Command("kgetmaxsize", topicGetMaxMessageSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the largest message for the specified range of offsets for a given topic partition"),
+    Command("kgetminsize", topicGetMinMessageSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the smallest message for the specified range of offsets for a given topic partition"),
     Command("kimport", topicImport, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports data into a new/existing topic"),
     Command("klast", topicLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
     Command("kls", topicList, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
@@ -1097,7 +1114,6 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
     Command("time", time, help = "Returns the system time"),
     Command("timeutc", timeUTC, help = "Returns the system time in UTC"),
     Command("version", version, help = "Returns the Verify application version"),
-    Command("wpost", wPost, (Seq("file", "url"), Seq("verbose", "throttle")), "Transfers the text data (via HTTP POST) from a file to a web-service end-point"),
     Command("zcd", zkChangeDir, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
     Command("zexists", zkExists, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
     Command("zget", zkGet, (Seq("key", "type"), Seq.empty), "Sets a key-value in ZooKeeper"),
@@ -1109,14 +1125,6 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
     Command("zsess", zkSession, help = "Retrieves the Session ID from ZooKeeper"),
     Command("zstat", zkStat, help = "Returns the statistics of a Zookeeper instance")) map (c => (c.name, c)): _*)
 
-  case class HistoryItem(itemNo: Int, command: String)
-
-  case class MessageData(offset: Long, hex: String, chars: String)
-
-  case class TopicDetail(name: String, partition: Int, leader: String, version: Int)
-
-  case class TopicOffsets(name: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
-
 }
 
 /**
@@ -1126,7 +1134,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
 object VerifyShell {
   val VERSION = "1.0.4"
 
-  private val logger = org.slf4j.LoggerFactory.getLogger(classOf[KafkaSubscriber])
+  private val logger = org.slf4j.LoggerFactory.getLogger(getClass)
 
   // define the process parsing regular expression
   val PID_MacOS_r = "^\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
@@ -1149,6 +1157,9 @@ object VerifyShell {
     // start the shell
     val console = new VerifyShell(host, rt)
     console.shell()
+
+    // make sure all threads die
+    sys.exit(0)
   }
 
   private def extract(args: Seq[String], index: Int): Option[String] = {
@@ -1167,5 +1178,13 @@ object VerifyShell {
       s"$name $required ${if (optional.nonEmpty) s"[$optional]" else ""}"
     }
   }
+
+  case class HistoryItem(itemNo: Int, command: String)
+
+  case class MessageData(offset: Long, hex: String, chars: String)
+
+  case class TopicDetail(name: String, partition: Int, leader: String, version: Int)
+
+  case class TopicOffsets(name: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
 
 }
