@@ -664,15 +664,17 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
   /**
    * "kget" - Returns the offsets for a given topic and group ID
    */
-  def topicGetData(args: String*): Option[String] = {
+  def topicGetMessage(args: String*) {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
     val fetchSize = extract(args, 3) map (_.toInt) getOrElse 1024
 
     // perform the action
     new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
-      _.fetch(offset.toLong, fetchSize).headOption map { msg =>
-        f"[${msg.offset}%05d] ${new String(deflate(msg.message), "UTF-8")}"
+      _.fetch(offset.toLong, fetchSize).headOption map { m =>
+        m.message.sliding(40, 40) foreach { bytes =>
+          out.println("[%04d] %-80s %-40s".format(m.offset, asHexString(bytes), asChars(bytes)))
+        }
       }
     }
   }
@@ -777,6 +779,12 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
       })
     count
   }
+
+  /**
+   * "version" - Returns the application version
+   * @return the application version
+   */
+  def version(args: String*) = VERSION
 
   /**
    * "wpost" - Transfers the text data (via HTTP POST) from a file to a web-service end-point
@@ -1053,7 +1061,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
   private val COMMANDS = Map[String, Command](Seq(
     Command("exit", exit, help = "Exits the shell"),
     Command("!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
-    Command("?", help, (Seq.empty, Seq("seachterm")), help = "Provides the list of available commands"),
+    Command("?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
     Command("cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
     Command("class", inspectClass, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
     Command("debug", debug, (Seq.empty, Seq("state")), help = "Switches debugging on/off"),
@@ -1070,7 +1078,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
     Command("kdumpf", topicDumpToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Dumps the contents of a specific topic to a file"),
     Command("kfetch", topicFetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command("kfirst", topicFirstOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the first offset for a given topic"),
-    Command("kget", topicGetData, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves a single record at the specified offset for a given topic"),
+    Command("kget", topicGetMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves a single record at the specified offset for a given topic"),
     Command("kimport", topicImport, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports data into a new/existing topic"),
     Command("klast", topicLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
     Command("kls", topicList, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
@@ -1088,6 +1096,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
     Command("systime", systime, help = "Returns the system time as an EPOC in milliseconds"),
     Command("time", time, help = "Returns the system time"),
     Command("timeutc", timeUTC, help = "Returns the system time in UTC"),
+    Command("version", version, help = "Returns the Verify application version"),
     Command("wpost", wPost, (Seq("file", "url"), Seq("verbose", "throttle")), "Transfers the text data (via HTTP POST) from a file to a web-service end-point"),
     Command("zcd", zkChangeDir, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
     Command("zexists", zkExists, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
@@ -1115,7 +1124,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends HttpResour
  * @author lawrence.daniels@gmail.com
  */
 object VerifyShell {
-  val VERSION = "1.0.3"
+  val VERSION = "1.0.4"
 
   private val logger = org.slf4j.LoggerFactory.getLogger(classOf[KafkaSubscriber])
 
@@ -1126,7 +1135,7 @@ object VerifyShell {
 
   /**
    * Application entry point
-   * @args the given command line arguments
+   * @param args the given command line arguments
    */
   def main(args: Array[String]) {
     System.out.println(s"Verify Shell v$VERSION")
