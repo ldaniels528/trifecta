@@ -1011,6 +1011,11 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     }
   }
 
+  private def zkKeyToPath(parent: String, child: String): String = {
+    val s1 = if (parent.endsWith("/")) parent else parent + "/"
+    return s1 + child
+  }
+
   private def zkKeyToPath(key: String): String = {
     key match {
       case s if s.startsWith("/") => key
