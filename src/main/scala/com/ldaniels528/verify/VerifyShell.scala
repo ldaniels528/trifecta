@@ -8,6 +8,7 @@ import java.util.{Date, TimeZone}
 import com.ldaniels528.verify.VerifyShell._
 import com.ldaniels528.verify.io._
 import com.ldaniels528.verify.io.avro._
+import com.ldaniels528.verify.subsystems.kafka.KafkaSubscriber.MessageData
 import com.ldaniels528.verify.subsystems.kafka._
 import com.ldaniels528.verify.subsystems.zookeeper._
 import com.ldaniels528.verify.util.Tabular
