@@ -466,7 +466,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
    * Example2: kavrofields avro/schema2.avsc topics.ldaniels528.test2 9 1799020
    */
   def topicAvroFields(args: String*): Seq[String] = {
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     // get the arguments
     val Seq(schemaPath, name, partition, _*) = args
@@ -483,9 +483,9 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
         override def consume(offset: Long, message: Array[Byte]) {
           decoder.decode(message) match {
             case Success(record) =>
-              fields = record.getSchema().getFields().map(_.name.trim).toSeq
+              fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
             case Failure(e) =>
-              out.println("[%04d] %s".format(offset, e.getMessage()))
+              out.println("[%04d] %s".format(offset, e.getMessage))
           }
         }
       })
