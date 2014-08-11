@@ -39,6 +39,8 @@ class History(val maxHistory: Int) {
    */
   def getLines: Seq[String] = history
 
+  def last: Option[String] = history.headOption
+
   /**
    * Loads history from a the given file
    */
