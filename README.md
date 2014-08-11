@@ -7,6 +7,8 @@ Table of Contents
 * <a href="#Motivations">Motivations</a>
 * <a href="#Development">Development</a>
 	* <a href="#build-requirements">Build Requirements</a>
+	* <a href="#getting-the-code">Getting the code</a>
+	* <a href="#configuring-your-ide">Configuring the project for your IDE</a>
 	* <a href="#building-the-code">Building the code</a>
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#running-the-app">Running the application</a>
@@ -25,12 +27,26 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 <a name="build-requirements"></a>
 ### Build Requirements
 
-* SBT 0.13.0+
+* SBT 0.13+
+
+<a name="getting-the-code"></a>
+### Getting the code
+
+    $ git clone git@github.com:ldaniels528/verify.git
+
+<a name="configuring-your-ide"></a>
+### Configuring the project for your IDE
+
+#### Eclipse project
+    $ sbt update eclipse
+    
+#### Intellij Idea project
+    $ sbt update gen-idea
 
 <a name="building-the-code"></a>
 ### Building the code
 
-    $ sbt clean package
+    $ sbt clean assembly
     
 <a name="testing-the-code"></a>    
 ### Running the tests
