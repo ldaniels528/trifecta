@@ -473,15 +473,8 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     val offset = extract(args, 3) map (_.toLong)
     val blockSize = extract(args, 4) map (_.toInt)
 
-    // mske sure the file exists
-    val schemaFile = new File(schemaPath)
-    if (!schemaFile.exists()) {
-      throw new IllegalStateException(s"Schema file '${schemaFile.getAbsolutePath()}' not found")
-    }
-
-    // retrieve the schema as a string
-    val schemaString = Source.fromFile(schemaFile).getLines() mkString ("\n")
-    val decoder = new AvroDecoder(schemaString)
+    // get the decoder
+    val decoder = getAvroDecoder(schemaPath)
     var fields: Seq[String] = Seq.empty
 
     // perform the action
@@ -560,15 +553,8 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     val blockSize = extract(args, 5) map (_.toInt)
     val fields: Seq[String] = extract(args, 6) map (_.split("[+]")) map (_.toSeq) getOrElse Seq.empty
 
-    // mske sure the file exists
-    val schemaFile = new File(schemaPath)
-    if (!schemaFile.exists()) {
-      throw new IllegalStateException(s"Schema file '${schemaFile.getAbsolutePath()}' not found")
-    }
-
-    // retrieve the schema as a string
-    val schemaString = Source.fromFile(schemaFile).getLines() mkString ("\n")
-    val decoder = new AvroDecoder(schemaString)
+    // get the decoder
+    val decoder = getAvroDecoder(schemaPath)
     val records = Buffer[GenericRecord]()
 
     // perform the action
