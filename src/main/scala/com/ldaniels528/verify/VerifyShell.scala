@@ -348,7 +348,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
   /**
    * "systime" command - Returns the system time as an EPOC in milliseconds
    */
-  def systime(args: String*) = System.currentTimeMillis.toString()
+  def systemTime(args: String*) = System.currentTimeMillis.toString
 
   /**
    * "time" command - Returns the time in the local time zone
@@ -1161,7 +1161,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     Command("reconnect", reconnect, (Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
     Command("resource", findResource, (Seq("resourcename"), Seq.empty), help = "Inspects the classpath for the given resource"),
     Command("storm", stormDeploy, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server"),
-    Command("systime", systime, help = "Returns the system time as an EPOC in milliseconds"),
+    Command("systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
     Command("time", time, help = "Returns the system time"),
     Command("timeutc", timeUTC, help = "Returns the system time in UTC"),
     Command("version", version, help = "Returns the Verify application version"),
