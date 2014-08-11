@@ -47,6 +47,9 @@ class History(val maxHistory: Int) {
   def load(file: File): Try[Int] = {
     import scala.io.Source
 
+    // ensure that the parent directory exists
+    ensureParentDirectory(file)
+
     Try {
       val lines = Source.fromFile(file).getLines().toSeq.reverse
       lines foreach (line => history = line :: history)
@@ -59,6 +62,9 @@ class History(val maxHistory: Int) {
    */
   def store(file: File) {
     import java.io._
+
+    // ensure that the parent directory exists
+    ensureParentDirectory(file)
 
     new BufferedWriter(new FileWriter(file)) use { out =>
       history foreach { line =>
