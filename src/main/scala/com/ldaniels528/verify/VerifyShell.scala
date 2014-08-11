@@ -479,7 +479,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
     // perform the action
     new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
-      _.consume(offset, offset map (_ + 1), blockSize, new MessageConsumer {
+      _.consume(offset, offset map (_ + 1), blockSize, listener = new MessageConsumer {
         override def consume(offset: Long, message: Array[Byte]) {
           decoder.decode(message) match {
             case Success(record) =>
