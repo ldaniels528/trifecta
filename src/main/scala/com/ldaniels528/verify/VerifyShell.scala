@@ -1138,7 +1138,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
  * @author lawrence.daniels@gmail.com
  */
 object VerifyShell {
-  val VERSION = "1.0.4"
+  val VERSION = "1.0.5"
 
   private val logger = org.slf4j.LoggerFactory.getLogger(getClass)
 
