@@ -238,8 +238,8 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
   def processKill(args: String*): String = {
     import scala.sys.process._
 
-    // get the PIDs
-    val pids = args
+    // get the PIDs -- ensure they are integers
+    val pidList = args map (_.toInt)
 
     // kill the processes
     s"kill ${pids mkString (" ")}".!!
