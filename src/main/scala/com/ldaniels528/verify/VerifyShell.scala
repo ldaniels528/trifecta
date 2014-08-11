@@ -667,6 +667,33 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
   }
 
   /**
+   * "kfind" - Returns the message for a given topic partition by its message ID
+   */
+  def topicFindMessage(args: String*) {
+    // get the arguments
+    val Seq(name, partition, messageID, _*) = args
+    val fetchSize = extract(args, 3) map (_.toInt) getOrElse 8192
+
+    // perform the action
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers) use { subscriber =>
+      // get the start and end offsets for the topic partition
+      val startOffset = subscriber.getFirstOffset getOrElse (throw new IllegalStateException("Could not determine start of partition"))
+      val endOffset = subscriber.getLastOffset getOrElse (throw new IllegalStateException("Could not determine end of partition"))
+      findMessage(subscriber, startOffset, endOffset, fetchSize)
+    }
+  }
+
+  private def findMessage(subscriber: KafkaSubscriber, startOffset: Long, endOffset: Long, fetchSize: Int): Option[MessageData] = {
+    // search for the message key
+    (startOffset to endOffset).sliding(10, 10) foreach { offsets =>
+      subscriber.fetch(offsets, fetchSize) foreach { m =>
+
+      }
+    }
+    None
+  }
+
+  /**
    * "kget" - Returns the message for a given topic partition and offset
    */
   def topicGetMessage(args: String*) {
