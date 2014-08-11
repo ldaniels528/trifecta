@@ -16,7 +16,7 @@ class VerifyShellRuntime(props: java.util.Properties) {
   // the default state of the console is "alive"
   var alive = true
   var maxHistory = 100
-  var historyFile = new File(s"$userHome${separator}vfyhistory.txt")
+  var historyFile = new File(s"$userHome${separator}.verify${separator}history.txt")
 
   // get the ZooKeeper host/port
   val zkEndPoint = EndPoint(props.getProperty("zookeeper"))
