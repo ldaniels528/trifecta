@@ -1184,9 +1184,9 @@ object VerifyShell {
     }
   }
 
-  case class HistoryItem(itemNo: Int, command: String)
+  case class AvroVerification(verified: Int, failed: Int)
 
-  case class MessageData(offset: Long, hex: String, chars: String)
+  case class HistoryItem(itemNo: Int, command: String)
 
   case class TopicDetail(name: String, partition: Int, leader: String, version: Int)
 
