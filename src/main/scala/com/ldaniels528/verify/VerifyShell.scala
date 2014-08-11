@@ -502,6 +502,50 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
   }
 
   /**
+   * kavrochk - Verifies that a set of messages (specific offset range) can be read by the specified schema
+   * Example: kavrochk avro/schema1.avsc topics.ldaniels528.test1 0 1000 2000
+   */
+  def topicAvroVerify(args: String*) = {
+    // get the arguments
+    val Seq(schemaPath, name, partition, startOffset, endOffset, _*) = args
+    val batchSize = extract(args, 5) map (_.toInt) getOrElse 10
+    val blockSize = extract(args, 6) map (_.toInt) getOrElse 8192
+
+    // get the decoder
+    val decoder = getAvroDecoder(schemaPath)
+
+    // check all records within the range
+    var verified = 0
+    var errors = 0
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers) use { subscriber =>
+      (startOffset.toLong to endOffset.toLong).sliding(batchSize, batchSize) foreach { offsets =>
+        subscriber.fetch(offsets, blockSize) foreach { m =>
+          Try(decoder.decode(m.message)) match {
+            case Success(_) => verified += 1
+            case Failure(e) =>
+              out.println("[%04d] %s".format(m.offset, e.getMessage))
+              errors += 1
+          }
+        }
+      }
+    }
+
+    tabular.transform(Seq(AvroVerification(verified, errors)))
+  }
+
+  private def getAvroDecoder(schemaPath: String): AvroDecoder = {
+    // ensure the file exists
+    val schemaFile = new File(schemaPath)
+    if (!schemaFile.exists()) {
+      throw new IllegalStateException(s"Schema file '${schemaFile.getAbsolutePath()}' not found")
+    }
+
+    // retrieve the schema as a string
+    val schemaString = Source.fromFile(schemaFile).getLines() mkString ("\n")
+    new AvroDecoder(schemaString)
+  }
+
+  /**
    * "kdumpa" - Dumps the contents of a specific topic to the console [as AVRO]
    * Example1: kdumpa avro/schema1.avsc topics.ldaniels528.test1 0 58500700 58500724
    * Example2: kdumpa avro/schema2.avsc topics.ldaniels528.test2 9 1799020 1799029 1024 field1+field2+field3+field4
@@ -1133,6 +1177,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     Command("help", help, help = "Provides the list of available commands"),
     Command("history", listHistory, help = "Returns a list of previously issued commands"),
     Command("hostname", hostname, help = "Returns the name of the current host"),
+    Command("kavrochk", topicAvroVerify, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
     Command("kavrofields", topicAvroFields, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the fields of an Avro message from a Kafka topic"),
     Command("kbrokers", topicBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
     Command("kcommit", topicCommit, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
