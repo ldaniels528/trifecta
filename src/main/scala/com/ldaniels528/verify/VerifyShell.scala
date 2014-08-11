@@ -1219,7 +1219,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     Command("zrm", zkDelete, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
     Command("zruok", zkRuok, help = "Checks the status of a Zookeeper instance"),
     Command("zsess", zkSession, help = "Retrieves the Session ID from ZooKeeper"),
-    Command("zstat", zkStat, help = "Returns the statistics of a Zookeeper instance")) map (c => (c.name, c)): _*)
+    Command("zstat", zkStat, help = "Returns the statistics of a Zookeeper instance"),
     Command("ztree", zkTree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure")) map (c => (c.name, c)): _*)
 
 }
