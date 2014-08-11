@@ -61,7 +61,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
   private val zk = ZKProxy(rt.zkEndPoint)
 
   // make sure we shutdown the ZooKeeper connection
-  Runtime.getRuntime().addShutdownHook(new Thread {
+  Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() {
       // shutdown the ZooKeeper instance
       zk.close()
@@ -80,7 +80,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     do {
       // display the prompt, and get the next line of input
       out.print("%s@%s:%s> ".format(userName, remoteHost, zkcwd))
-      val line = Console.readLine.trim()
+      val line = Console.readLine().trim
 
       if (line.nonEmpty) {
         Try(interpret(line)) match {
@@ -135,7 +135,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     logger.info(s"resource path is '$resourceName'")
 
     // determine the resource
-    val classLoader = VerifyShell.getClass.getClassLoader()
+    val classLoader = VerifyShell.getClass.getClassLoader
     val resource = classLoader.getResource(resourceName)
     String.valueOf(resource)
   }
@@ -146,13 +146,13 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
    */
   def inspectClass(args: String*): Seq[String] = {
     val className = extract(args, 0).getOrElse(getClass.getName).replace('/', '.')
-    val action = extract(args, 1) getOrElse ("-m")
+    val action = extract(args, 1) getOrElse "-m"
     val beanClass = Class.forName(className)
 
     action match {
-      case "-m" => beanClass.getDeclaredMethods() map (_.toString)
-      case "-f" => beanClass.getDeclaredFields() map (_.toString)
-      case _ => beanClass.getDeclaredMethods() map (_.toString)
+      case "-m" => beanClass.getDeclaredMethods map (_.toString)
+      case "-f" => beanClass.getDeclaredFields map (_.toString)
+      case _ => beanClass.getDeclaredMethods map (_.toString)
     }
   }
 
@@ -196,7 +196,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
    * "hostname" command - Returns the name of the current host
    */
   def hostname(args: String*): String = {
-    java.net.InetAddress.getLocalHost().getHostName()
+    java.net.InetAddress.getLocalHost.getHostName
   }
 
   /**
@@ -293,16 +293,16 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
       Source.fromString((node match {
         case "." => "ps -ef"
         case host => s"ssh -i /home/ubuntu/dev.pem ubuntu@$host ps -ef"
-      }).!!).getLines.toSeq
+      }).!!).getLines().toSeq
     }
 
     // asynchronously get the port mapping
     val portmapF: Future[Map[String, String]] = future {
       // get the lines of data from 'netstat'
-      val netstat = (Source.fromString((node match {
+      val netStat = Source.fromString((node match {
         case "." => "netstat -ptln"
         case host => s"ssh -i /home/ubuntu/dev.pem ubuntu@$host netstat -ptln"
-      }).!!)).getLines.toSeq.tail
+      }).!!).getLines.toSeq.tail
 
       // build the port mapping
       netstat flatMap {
@@ -316,9 +316,9 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
           case _ => None
         }
       } map {
-        case (port, pid, cmd) => (pid -> port)
+        case (port, pid, cmd) => pid -> port
       } groupBy (_._1) map {
-        case (pid, seq) => (pid, seq.sortBy(_._2).reverse map (_._2) mkString (", "))
+        case (pid, seq) => (pid, seq.sortBy(_._2).reverse map (_._2) mkString ", ")
       }
     }
 
@@ -406,7 +406,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
     // determine the difference between the first and last offsets
     for {
-      partition <- (beginPartition.toInt to endPartition.toInt)
+      partition <- beginPartition.toInt to endPartition.toInt
       first <- topicFirstOffset(name, partition.toString)
       last <- topicLastOffset(name, partition.toString)
     } yield TopicOffsets(name, partition, first, last, last - first)
@@ -708,7 +708,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
     // perform the action
     new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
-      val offsets = (startOffset.toLong to endOffset.toLong)
+      val offsets = startOffset.toLong to endOffset.toLong
       _.fetch(offsets, fetchSize).map(_.message.length).max
     }
   }
@@ -723,7 +723,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
     // perform the action
     new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
-      val offsets = (startOffset.toLong to endOffset.toLong)
+      val offsets = startOffset.toLong to endOffset.toLong
       _.fetch(offsets, fetchSize).map(_.message.length).min
     }
   }
@@ -772,12 +772,12 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
     out.println("Type the message and press ENTER:")
     out.print(">> ")
-    val message = Console.readLine.trim()
+    val message = Console.readLine().trim
 
     // publish the message
     new KafkaPublisher() use { publisher =>
       publisher.open(brokers)
-      publisher.publish(name, key, message.getBytes())
+      publisher.publish(name, key, message.getBytes)
     }
   }
 
@@ -993,12 +993,10 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
   private def handleResult(result: Any) {
     result match {
-      case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach (out.println)
-      case t: scala.collection.GenTraversableOnce[_] => t foreach (out.println)
-      case o: Option[_] => o foreach (out.println)
-      case x => if (x != null && !x.isInstanceOf[Unit]) {
-        out.println(x)
-      }
+      case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach out.println
+      case t: scala.collection.GenTraversableOnce[_] => t foreach out.println
+      case o: Option[_] => o foreach out.println
+      case x => if (x != null && !x.isInstanceOf[Unit]) out.println(x)
     }
   }
 
@@ -1044,7 +1042,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     mainMethod.invoke(null, args.toArray)
 
     // return the iteration of lines
-    Source.fromBytes(baos.toByteArray()).getLines
+    Source.fromBytes(baos.toByteArray).getLines()
   }
 
   private def asChars(bytes: Array[Byte]): String = {
@@ -1053,10 +1051,10 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
   private def fromBytes(bytes: Array[Byte], typeName: String): String = {
     typeName match {
-      case "hex" => bytes map (b => "%02x".format(b)) mkString (".")
-      case "int" => ByteBuffer.wrap(bytes).getInt().toString
-      case "long" => ByteBuffer.wrap(bytes).getLong().toString
-      case "dec" | "double" => ByteBuffer.wrap(bytes).getDouble().toString
+      case "hex" => bytes map (b => "%02x".format(b)) mkString "."
+      case "int" => ByteBuffer.wrap(bytes).getInt.toString
+      case "long" => ByteBuffer.wrap(bytes).getLong.toString
+      case "dec" | "double" => ByteBuffer.wrap(bytes).getDouble.toString
       case "string" | "text" => new String(bytes)
       case _ => throw new IllegalArgumentException(s"Invalid type '$typeName'")
     }
@@ -1067,11 +1065,11 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
     import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy.Implicits._
     typeName match {
-      case "hex" => value.getBytes()
+      case "hex" => value.getBytes
       case "int" => allocate(4).putInt(value.toInt)
       case "long" => allocate(8).putLong(value.toLong)
       case "dec" | "double" => allocate(8).putDouble(value.toDouble)
-      case "string" | "text" => value.getBytes()
+      case "string" | "text" => value.getBytes
       case _ => throw new IllegalArgumentException(s"Invalid type '$typeName'")
     }
   }
@@ -1156,7 +1154,7 @@ object VerifyShell {
     System.out.println(s"Verify Shell v$VERSION")
 
     // was a host argument passed?
-    val host = extract(args, 0) getOrElse ("localhost")
+    val host: String = extract(args, 0) getOrElse "localhost"
 
     // create the runtime context
     val rt = VerifyShellRuntime.getInstance(host)
