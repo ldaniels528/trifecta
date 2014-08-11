@@ -1,15 +1,16 @@
 package com.ldaniels528.verify
 
+import java.io.File
+
 import com.ldaniels528.verify.util.VerifyUtils._
+
+import scala.util.Try
 
 /**
  * Command History Container
  * @author ldaniels
  */
 class History(val maxHistory: Int) {
-  import java.io.File
-  import scala.util.Try
-
   private var history: List[String] = Nil
 
   /**
