@@ -242,7 +242,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     val pidList = args map (_.toInt)
 
     // kill the processes
-    s"kill ${pids mkString (" ")}".!!
+    s"""kill ${pidList mkString " "}""".!!
   }
 
   /**
@@ -694,7 +694,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     val prefix = args.headOption
 
     KafkaSubscriber.listTopics(zk, brokers) flatMap { t =>
-      val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse ("N/A"), t.replicas.size)
+      val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size)
       if (prefix.isEmpty || prefix.map(t.topic.startsWith(_)).getOrElse(false)) Some(detail) else None
     }
   }
@@ -984,11 +984,11 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     zk.exists(path) match {
       case Some(stat) =>
         Seq(
-          s"Aversion: ${stat.getAversion()}",
-          s"version: ${stat.getVersion()}",
-          s"data length: ${stat.getDataLength()}",
-          s"children: ${stat.getNumChildren()}",
-          s"change time: ${new Date(stat.getCtime())}")
+          s"Aversion: ${stat.getAversion}",
+          s"version: ${stat.getVersion}",
+          s"data length: ${stat.getDataLength}",
+          s"children: ${stat.getNumChildren}",
+          s"change time: ${new Date(stat.getCtime)}")
       case None =>
         Seq.empty
     }
@@ -1041,7 +1041,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
     // perform the action
     zk.exists(path) foreach (zk.delete(path, _))
-    zk.ensureParents(path).create(path -> toBytes(value, typeName))
+    (zk ensureParents path).create(path -> toBytes(value, typeName))
   }
 
   /**
@@ -1167,7 +1167,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
   /**
    * Pre-define all commands
    */
-  private val COMMANDS = Map[String, Command](Seq(
+  private val COMMANDS: Map[String, Command] = Map(Seq(
     Command("exit", exit, help = "Exits the shell"),
     Command("!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
     Command("?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
