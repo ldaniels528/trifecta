@@ -978,6 +978,25 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
    */
   def zkSession(args: String*) = zk.getSessionId().toString
 
+  /**
+   * "ztree" - Retrieves ZooKeeper key hierarchy
+   * @param args
+   * @return
+   */
+  def zkTree(args: String*): Seq[String] = {
+
+    def recurse(path: String): List[String] = {
+      val children = Option(zk.getChildren(path, watch = false)) getOrElse Seq.empty
+      path :: (children flatMap (child => recurse(zkKeyToPath(path, child)))).toList
+    }
+
+    // get the optional path argument
+    val path = if (args.nonEmpty) zkKeyToPath(args(0)) else zkcwd
+
+    // perform the action
+    recurse(path)
+  }
+
   private def checkArgs(command: Command, args: Seq[String]): Seq[String] = {
     // determine the minimum and maximum number of parameters
     val minimum = command.params._1.size
@@ -1129,6 +1148,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     Command("zruok", zkRuok, help = "Checks the status of a Zookeeper instance"),
     Command("zsess", zkSession, help = "Retrieves the Session ID from ZooKeeper"),
     Command("zstat", zkStat, help = "Returns the statistics of a Zookeeper instance")) map (c => (c.name, c)): _*)
+    Command("ztree", zkTree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure")) map (c => (c.name, c)): _*)
 
 }
 
