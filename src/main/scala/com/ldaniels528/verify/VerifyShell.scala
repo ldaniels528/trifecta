@@ -169,10 +169,16 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
   def executeHistory(args: String*) {
     for {
-      index <- args.headOption map (_.toInt)
-      line <- history(index - 1)
+      index <- args.headOption
+      command <- index match {
+        case s if s == "?" => Some("history")
+        case s if s == "!" => history.last
+        case s if s.matches("\\d+") => history (index.toInt - 1)
+        case _ => None
+      }
     } {
-      val result = interpret(line)
+      out.println(s">> $command")
+      val result = interpret(command)
       handleResult(result)
     }
   }
