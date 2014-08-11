@@ -28,7 +28,7 @@ class History(val maxHistory: Int) {
   def +=(line: String) {
     history = line :: history
     if (history.size > maxHistory) {
-      history = history.tail
+      history = history.init
     }
   }
 
