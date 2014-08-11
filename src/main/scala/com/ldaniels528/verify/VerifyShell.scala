@@ -953,7 +953,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     val path = if (args.nonEmpty) zkKeyToPath(args(0)) else zkcwd
 
     // perform the action
-    zk.getChildren(path, false)
+    zk.getChildren(path, watch = false)
   }
 
   /**
