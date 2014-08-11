@@ -336,7 +336,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
 
   /**
    * "storm" command - Deploys a topology to the Storm server
-   * Example: storm Verify-stream-server.jar org.Verify.stream.oooi.VerifyStreamFlights oooi-config.properties
+   * Example: storm mytopology.jar myconfig.properties
    */
   def stormDeploy(args: String*): String = {
     import scala.sys.process._
