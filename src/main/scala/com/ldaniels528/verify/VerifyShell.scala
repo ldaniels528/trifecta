@@ -213,16 +213,16 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
     // parse the process and port mapping data
     val outcome = for {
     // retrieve the process and port map data
-      (psdata, portmap) <- remoteData(node)
+      (psData, portMap) <- remoteData(node)
 
       // process the raw output
-      lines = psdata map (seq => if (Properties.isMac) seq.tail else seq)
+      lines = psData map (seq => if (Properties.isMac) seq.tail else seq)
 
       // filter the data, and produce the results
       result = lines filter (s => s.contains("mysqld") || s.contains("java") || s.contains("python")) flatMap { s =>
         s match {
-          case PID_MacOS_r(user, pid, _, _, time1, _, time2, cmd, args) => Some(parsePSData(pid, cmd, args, portmap.get(pid)))
-          case PID_Linux_r(user, pid, _, _, time1, _, time2, cmd, args) => Some(parsePSData(pid, cmd, args, portmap.get(pid)))
+          case PID_MacOS_r(user, pid, _, _, time1, _, time2, cmd, args) => Some(parsePSData(pid, cmd, args, portMap.get(pid)))
+          case PID_Linux_r(user, pid, _, _, time1, _, time2, cmd, args) => Some(parsePSData(pid, cmd, args, portMap.get(pid)))
           case _ => None
         }
       }
@@ -305,7 +305,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
       }).!!).getLines.toSeq.tail
 
       // build the port mapping
-      netstat flatMap {
+      netStat flatMap {
         _ match {
           case NETSTAT_r(_, _, _, rawport, _, _, pidcmd, _*) =>
             if (pidcmd.contains("java")) {
@@ -361,7 +361,7 @@ class VerifyShell(remoteHost: String, rt: VerifyShellRuntime) extends Compressio
   def timeUTC(args: String*): String = {
     import java.text.SimpleDateFormat
 
-    val fmt = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy");
+    val fmt = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy")
     fmt.setTimeZone(TimeZone.getTimeZone("GMT"))
     fmt.format(new Date())
   }
