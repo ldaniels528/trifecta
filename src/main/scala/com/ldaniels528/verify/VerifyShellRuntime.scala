@@ -1,18 +1,17 @@
 package com.ldaniels528.verify
 
-import com.ldaniels528.verify.subsystems.kafka.Broker
+import java.io.File
+import java.io.File.separator
+
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy
+
+import scala.util.Properties.userHome
 
 /**
  * Verify Shell Runtime Context
  * @author lawrence.daniels@gmail.com
  */
-class VerifyShellRuntime(props: java.util.Properties) {
-  import java.io.File
-  import File.separator
-  import scala.util.Properties.userHome
-
+class VerifyShellRuntime(val props: java.util.Properties) {
   // the default state of the console is "alive"
   var alive = true
   var maxHistory = 100
