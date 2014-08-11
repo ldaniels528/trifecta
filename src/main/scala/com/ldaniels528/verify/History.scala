@@ -65,4 +65,16 @@ class History(val maxHistory: Int) {
     }
   }
 
+  /**
+   * Ensures that the directory, containing the given file, exists
+   * @param file the given [[File]]
+   */
+  private def ensureParentDirectory(file: File) {
+    // does the parent directory exist?
+    val parentFile = file.getParentFile
+    if (!parentFile.exists) {
+      parentFile.mkdirs()
+    }
+  }
+
 }
