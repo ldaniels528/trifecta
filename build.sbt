@@ -9,6 +9,8 @@ assemblySettings
 
 name := "verify"
 
+organization := "com.ldaniels528"
+
 version := "1.0.7"
 
 packageArchetype.java_application
@@ -31,16 +33,19 @@ mainClass in assembly := Some("com.ldaniels528.verify.VerifyShell")
 jarName in assembly := "verify.jar"
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
-{
-  case PathList("commons-beanutils", xs @ _*) => MergeStrategy.first
-  case PathList("org", "fusesource", "jansi", xs @ _*) => MergeStrategy.first
-  case PathList("stax", "stax-api", xs @ _*) => MergeStrategy.first
-  case PathList("log4j-over-slf4j", xs @ _*) => MergeStrategy.discard
-  case PathList("log4j-over-slf4j", xs @ _*) => MergeStrategy.discard
-  case PathList("META-INF", "MANIFEST.MF", xs @ _*) => MergeStrategy.discard
-  case x => MergeStrategy.first
+  {
+    case PathList("stax", "stax-api", xs @ _*) => MergeStrategy.first
+    case PathList("log4j-over-slf4j", xs @ _*) => MergeStrategy.discard
+    case PathList("log4j-over-slf4j", xs @ _*) => MergeStrategy.discard
+    case PathList("META-INF", "MANIFEST.MF", xs @ _*) => MergeStrategy.discard
+    case x => MergeStrategy.first
+  }
 }
-}
+
+// Local Dependencies
+libraryDependencies ++= Seq(
+  "com.ldaniels528" %% "tabular" % "0.01"
+)
 
 // General Dependencies
 libraryDependencies ++= Seq(
@@ -72,4 +77,4 @@ resolvers ++= Seq(
   "Typesafe Snapshots Repository" at "http://repo.typesafe.com/typesafe/snapshots/"
 )
 
-resolvers += Resolver.url("artifactory", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"))(Resolver.ivyStylePatterns)
+resolvers += Resolver.file("Local repo", file(System.getProperty("user.home") + "/.ivy2/local"))(Resolver.ivyStylePatterns)
