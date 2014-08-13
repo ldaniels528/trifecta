@@ -74,6 +74,8 @@ class History(val maxHistory: Int) {
     }
   }
 
+  def size = history.size
+
   /**
    * Ensures that the directory, containing the given file, exists
    * @param file the given [[File]]
@@ -84,6 +86,7 @@ class History(val maxHistory: Int) {
     if (!parentFile.exists) {
       parentFile.mkdirs()
     }
+    ()
   }
 
 }
