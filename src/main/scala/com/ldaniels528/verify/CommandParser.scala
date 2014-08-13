@@ -32,11 +32,11 @@ object CommandParser {
     var inQuotes = false
 
     // extract the tokens
-    val list = input.foldLeft[List[String]](Nil) { (list, c) =>
-      val result: Option[String] = c match {
+    val list = input.foldLeft[List[String]](Nil) { (list, ch) =>
+      val result: Option[String] = ch match {
         // symbol (unquoted)?
         case c if SYMBOLS.contains(c) && !inQuotes =>
-          val s = sb.toString
+          val s = sb.toString()
           sb.clear()
           if (s.isEmpty) Some(String.valueOf(c))
           else {
@@ -52,7 +52,7 @@ object CommandParser {
         // space (unquoted)?
         case c if c == ' ' && !inQuotes =>
           if (sb.nonEmpty) {
-            val s = sb.toString
+            val s = sb.toString()
             sb.clear()
             Some(s)
           } else None
