@@ -3,9 +3,9 @@ package com.ldaniels528.verify.modules.unix
 import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
+import com.ldaniels528.verify.VerifyShellRuntime
 import com.ldaniels528.verify.modules.Module
 import com.ldaniels528.verify.modules.Module.Command
-import com.ldaniels528.verify.{VerifyShell, VerifyShellRuntime}
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
