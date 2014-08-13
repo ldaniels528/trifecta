@@ -285,6 +285,21 @@ class VerifyShell(rt: VerifyShellRuntime) {
       }
       tabular.transform(data)
     }
+
+    /**
+     * "use" command - Switches the active module
+     * Example: use kafka
+     * @param args the given command line arguments
+     */
+    def useModule(args: String*) = {
+      val moduleName = args.head
+      modules.find(_.name == moduleName) match {
+        case Some(module) => activeModule = module
+        case None =>
+          throw new IllegalArgumentException(s"Module '$moduleName' not found")
+      }
+    }
+
   }
 
   case class HistoryItem(itemNo: Int, command: String)
