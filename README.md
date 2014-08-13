@@ -1,4 +1,5 @@
-# Verify
+Verify
+=======
 
 Verify is a figurative Swiss-Army-Knife for inspecting/managing Kafka topics and ZooKeeper properties.
 
@@ -27,7 +28,8 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 <a name="build-requirements"></a>
 ### Build Requirements
 
-* SBT 0.13+
+* [Tabular] (https://github.com/ldaniels528/tabular)
+* [SBT 0.13+] (http://www.scala-sbt.org/download.html)
 
 <a name="getting-the-code"></a>
 ### Getting the code
