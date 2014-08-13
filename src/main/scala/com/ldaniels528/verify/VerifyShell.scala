@@ -267,10 +267,9 @@ class VerifyShell(rt: VerifyShellRuntime) {
      */
     def help(args: String*): Seq[CommandItem] = {
       commandSet.toSeq filter {
-        case (name, cmd) => args.isEmpty || name.startsWith(args.head)
+        case (nameA, _) => args.isEmpty || nameA.startsWith(args.head)
       } sortBy (_._1) map {
-        case (name, cmd) =>
-          CommandItem(name, cmd.module.name, cmd.help)
+        case (nameB, cmdB) => CommandItem(nameB, cmdB.module.name, cmdB.help)
       }
     }
 
