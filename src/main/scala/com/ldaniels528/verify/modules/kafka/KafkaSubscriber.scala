@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 /**
- * Verify Kafka Message Subscriber
+ * Kafka Subscriber
  * @author lawrence.daniels@gmail.com
  */
 class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {

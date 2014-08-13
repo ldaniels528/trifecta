@@ -13,18 +13,38 @@ trait Module {
   // logger instance
   protected val logger = LoggerFactory.getLogger(getClass)
 
+  /**
+   * Returns the name of the module (e.g. "kafka")
+   * @return the name of the module
+   */
   def name: String
 
+  /**
+   * Returns the commands that are bound to the module
+   * @return the commands that are bound to the module
+   */
   def getCommands: Seq[Command]
 
+  /**
+   * Returns the the information that is to be displayed while the module is active
+   * @return the the information that is to be displayed while the module is active
+   */
   def prompt: String = s"$name$$"
 
+  /**
+   * Called when the application is shutting down
+   */
   def shutdown(): Unit
 
   protected def asChars(bytes: Array[Byte]): String = {
     String.valueOf(bytes map (b => if (b >= 32 && b <= 126) b.toChar else '.'))
   }
 
+  /**
+   * Expands the UNIX path into a JVM-safe value
+   * @param path the UNIX path (e.g. "~/ldaniels")
+   * @return a JVM-safe value (e.g. "/home/ldaniels")
+   */
   protected def expandPath(path: String): String = {
     path.replaceFirst("[~/]", scala.util.Properties.userHome)
   }
@@ -34,9 +54,10 @@ trait Module {
   }
 
   /**
-   * Converts the given long value into a byte array
-   * @param value the given long value
-   * @return a byte array
+   * Attempts to extract the value from the sequence at the given index
+   * @param values the given sequence of values
+   * @param index the given index
+   * @return the option of the value
    */
   protected def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
 

@@ -7,7 +7,7 @@ import kafka.javaapi.producer.Producer
 import kafka.producer.{KeyedMessage, ProducerConfig}
 
 /**
- * Verify Kafka Publisher
+ * Kafka Publisher
  * @author lawrence.daniels@gmail.com
  */
 class KafkaPublisher(config: ProducerConfig) {

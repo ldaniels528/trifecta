@@ -3,7 +3,7 @@ package com.ldaniels528.verify.modules.kafka
 import com.ldaniels528.verify.io.EndPoint
 
 /**
- * Type-safe Broker definition
+ * Type-safe Broker implementation
  * @author lawrence.daniels@gmail.com
  */
 case class Broker(host: String, port: Int) extends EndPoint
