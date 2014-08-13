@@ -204,6 +204,11 @@ class VerifyShell(rt: VerifyShellRuntime) {
       }
     }
 
+    /**
+     * Toggles the current debug state
+     * @param args the given command line arguments
+     * @return the current state ("On" or "Off")
+     */
     def debug(args: String*): String = {
       if (args.isEmpty) rt.debugOn = !rt.debugOn else rt.debugOn = args.head.toBoolean
       s"debugging is ${if (rt.debugOn) "On" else "Off"}"
