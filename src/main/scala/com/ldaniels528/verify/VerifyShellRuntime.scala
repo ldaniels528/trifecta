@@ -4,6 +4,7 @@ import java.io.File
 import java.io.File.separator
 
 import com.ldaniels528.verify.io.EndPoint
+import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy
 
 import scala.util.Properties.userHome
 
@@ -11,27 +12,26 @@ import scala.util.Properties.userHome
  * Verify Shell Runtime Context
  * @author lawrence.daniels@gmail.com
  */
-class VerifyShellRuntime(val props: java.util.Properties) {
+case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
+  val remoteHost = s"$zkHost:$zkPort"
+
   // the default state of the console is "alive"
   var alive = true
+  var debugOn = false
+  var defaultFetchSize = 1024
+  var encoding = "UTF-8"
+
+  // define the history properties
   var maxHistory = 100
-  var historyFile = new File(s"$userHome${separator}.verify${separator}history.txt")
+  var historyFile = new File(s"$userHome$separator.verify${separator}history.txt")
+
+  // ZooKeeper current working directory
+  var zkcwd = "/"
 
   // get the ZooKeeper host/port
-  val zkEndPoint = EndPoint(props.getProperty("zookeeper"))
+  val zkEndPoint = EndPoint(zkHost, zkPort)
 
-}
-
-/**
- * Verify Shell Runtime Singleton
- * @author lawrence.daniels@gmail.com
- */
-object VerifyShellRuntime {
-
-  def getInstance(host: String): VerifyShellRuntime = {
-    val p = new java.util.Properties()
-    p.setProperty("zookeeper", s"$host:2181")
-    new VerifyShellRuntime(p)
-  }
+  // create the ZooKeeper proxy
+  val zkProxy = ZKProxy(zkEndPoint)
 
 }
