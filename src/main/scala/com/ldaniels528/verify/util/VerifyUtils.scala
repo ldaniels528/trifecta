@@ -74,6 +74,8 @@ import scala.collection.JavaConversions.mapAsJavaMap
 
     def ??(opB: Option[T]) = if (opA.isDefined) opA else opB
 
+    def ??(opB: T) = if (opA.isDefined) opA else Option(opB)
+
   }
 
   /**
