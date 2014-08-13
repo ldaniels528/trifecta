@@ -16,18 +16,23 @@ import scala.language.postfixOps
  * UNIX Systems Module
  * @author lawrence.daniels@gmail.com
  */
-class UnixModule(rt: VerifyShellRuntime, out: PrintStream)
-  extends Module {
+class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
 
   // define the process parsing regular expression
-  val PID_MacOS_r = "^\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
-  val PID_Linux_r = "^\\s*(\\S+)\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
-  val NETSTAT_r = "^\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
+  private val PID_MacOS_r = "^\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
+  private val PID_Linux_r = "^\\s*(\\S+)\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
+  private val NETSTAT_r = "^\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
+
+  // current working directory
+  private var cwd = "."
 
   val name = "unix"
 
+  override def prompt: String = cwd
+
   val getCommands: Seq[Command] = Seq(
     Command(this, "cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
+    Command(this, "cd", changeDir, (Seq("key"), Seq.empty), help = "Changes the current file system path/directory") ,
     Command(this, "hostname", hostname, help = "Returns the name of the current host"),
     Command(this, "pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
     Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
