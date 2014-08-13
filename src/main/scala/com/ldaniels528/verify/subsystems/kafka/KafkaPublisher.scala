@@ -1,29 +1,30 @@
 package com.ldaniels528.verify.subsystems.kafka
 
+import java.util.Properties
+
+import com.ldaniels528.verify.util.VerifyUtils._
 import kafka.javaapi.producer.Producer
-import kafka.producer.KeyedMessage
-import kafka.producer.ProducerConfig
+import kafka.producer.{KeyedMessage, ProducerConfig}
 
 /**
- * Verify Kafka Message Publisher
+ * Verify Kafka Publisher
  * @author lawrence.daniels@gmail.com
  */
-class KafkaPublisher() {
-  private var producer: Producer[String, Array[Byte]] = _
+class KafkaPublisher(config: ProducerConfig) {
+  private var producer: Option[Producer[Array[Byte], Array[Byte]]] = None
 
   /**
    * Opens the connection to the message publisher
    */
-  def open(brokers: Seq[Broker], partitionerClass: Option[String] = None) {
-    producer = new Producer(mkConfig(brokers, partitionerClass));
+  def open() {
+    producer = Some(new Producer(config))
   }
 
   /**
    * Shuts down the connection to the message publisher
    */
   def close() {
-    Option(producer) foreach (_.close)
-    producer = null
+    producer.foreach(_.close)
   }
 
   /**
@@ -32,29 +33,34 @@ class KafkaPublisher() {
    * @param key the given message key
    * @param value the given message value
    */
-  def publish(topic: String, key: String, value: Array[Byte]) {
-    Option(producer) foreach (_.send(new KeyedMessage(topic, key, value)))
+  def publish(topic: String, key: Array[Byte], value: Array[Byte]) {
+    producer.foreach(_.send(new KeyedMessage(topic, key, value)))
   }
 
-  /**
-   * Creates a new producer configuration instance
-   * @param partitionerClass
-   * @param brokers
-   * @return
-   */
-  def mkConfig(brokers: Seq[Broker], partitionerClass: Option[String] = None): ProducerConfig = {
-    val props = new java.util.Properties()
-    props.put("metadata.broker.list", mkBrokerList(brokers))
-    //props.put("serializer.class", "kafka.serializer.StringEncoder")
-    props.put("serializer.class", "kafka.serializer.DefaultEncoder");
-    partitionerClass foreach (props.put("partitioner.class", _))
-    props.put("key.serializer.class", "kafka.serializer.StringEncoder")
-    props.put("request.required.acks", "1")
-    new ProducerConfig(props)
+}
+
+/**
+ * Verify Kafka Publisher
+ * @author lawrence.daniels@gmail.com
+ */
+object KafkaPublisher {
+
+  def apply(brokers: Seq[Broker]): KafkaPublisher = {
+    val m = Map("metadata.broker.list" -> mkBrokerList(brokers),
+      "key.serializer.class" -> "kafka.serializer.DefaultEncoder",
+      "serializer.class" -> "kafka.serializer.DefaultEncoder",
+      "partitioner.class" -> "kafka.producer.DefaultPartitioner",
+      "request.required.acks" -> "1",
+      "compression.codec" -> "none")
+    new KafkaPublisher(new ProducerConfig(m.toProps))
+  }
+
+  def apply(brokers: Seq[Broker], p: Properties): KafkaPublisher = {
+    new KafkaPublisher(new ProducerConfig(p))
   }
 
   private def mkBrokerList(brokers: Seq[Broker]): String = {
-    brokers map (b => s"${b.host}:${b.port}") mkString (",")
+    brokers map (b => s"${b.host}:${b.port}") mkString ","
   }
 
 }
