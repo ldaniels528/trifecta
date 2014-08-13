@@ -284,13 +284,13 @@ object KafkaSubscriber {
       // watch until the timeout is reached
       while (timeout >= System.currentTimeMillis()) {
         offset = Option(subscriber.consume(offset, None, listener = consumer))
-        Thread.sleep(100)
+        Thread.sleep(100.millis)
       }
 
       // if the offset changed, report it.
       for {
         last <- offset
-        start <- startingOffset ?? Some(0)
+        start <- startingOffset ?? 0L
       } yield if (last > start) {
         logger.info(s"$topic: Ended watch at offset $last (started at $start)...")
       }
@@ -309,7 +309,7 @@ object KafkaSubscriber {
       val timeout = System.currentTimeMillis() + duration.toMillis
 
       // get the offset for which to start watching 
-      val startingOffset = subscriber.fetchOffsets(groupId) ?? Some(0)
+      val startingOffset = subscriber.fetchOffsets(groupId) ?? 0L
       var offset = startingOffset
 
       // poll the topic until the timeout is reached
@@ -319,7 +319,7 @@ object KafkaSubscriber {
           case Some(myOffset) => subscriber.commitOffsets(groupId, myOffset, "")
           case _ =>
         }
-        Thread.sleep(100)
+        Thread.sleep(100.millis)
       }
 
       // if the offset changed, report it.
@@ -421,7 +421,8 @@ object KafkaSubscriber {
    * Represents a class of exceptions that occur while attempting to fetch data from a Kafka broker
    * @param code the status/error code
    */
-  case class KafkaFetchException(code: Short) extends RuntimeException(ERROR_CODES.getOrElse(code, "Unrecognized Error Code"))
+  class KafkaFetchException(val code: Short)
+    extends RuntimeException(ERROR_CODES.getOrElse(code, "Unrecognized Error Code"))
 
   /**
    * Kafka Error Codes
