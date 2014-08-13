@@ -39,4 +39,10 @@ object EndPoint {
 
   def unapply(e: EndPoint) = (e.host, e.port)
 
+  /**
+   * Simple end-point implementation
+   * @author lawrence.daniels@gmail.com
+   */
+  case class SimpleEndPoint(host: String, port: Int) extends EndPoint
+
 }
