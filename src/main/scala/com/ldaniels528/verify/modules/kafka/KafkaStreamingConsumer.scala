@@ -2,18 +2,15 @@ package com.ldaniels528.verify.modules.kafka
 
 import com.ldaniels528.verify.io.{Compression, EndPoint}
 import com.ldaniels528.verify.util.VerifyUtils._
+import kafka.consumer.{Consumer, ConsumerConfig}
 
-import scala.concurrent.{ExecutionContext, future}
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
- * Verify Kafka Message Streamer
+ * Kafka Streaming Consumer
  * @author lawrence.daniels@gmail.com
  */
-class KafkaStream(zkEndPoint: EndPoint, groupId: String) extends Compression {
-
-  import kafka.consumer._
-
-  // create the consumer instance
+class KafkaStreamingConsumer(zkEndPoint: EndPoint, groupId: String) extends Compression {
   private val consumer = Consumer.create(createConsumerConfig(zkEndPoint, groupId))
 
   /**
@@ -27,17 +24,23 @@ class KafkaStream(zkEndPoint: EndPoint, groupId: String) extends Compression {
     // now create an object to consume the messages
     streamMap.get(topic) foreach { streams =>
       streams foreach { stream =>
-        future {
+        Future {
           val it = stream.iterator()
           while (it.hasNext()) {
-            val mam = it.next
-            listener.consume(mam.offset, mam.message)
+            val mam = it.next()
+            listener.consume(mam.offset, mam.message())
           }
         }
       }
     }
   }
 
+  /**
+   * Creates a new consumer configuration
+   * @param zkEndPoint the given Zookeeper end-point
+   * @param groupId the given consumer group ID
+   * @return a new consumer configuration
+   */
   private def createConsumerConfig(zkEndPoint: EndPoint, groupId: String): ConsumerConfig = {
     new ConsumerConfig(
       Map("zookeeper.connect" -> zkEndPoint.host,
