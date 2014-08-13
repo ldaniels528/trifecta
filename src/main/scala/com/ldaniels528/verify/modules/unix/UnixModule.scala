@@ -40,8 +40,7 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
     Command(this, "storm", stormDeploy, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server"),
     Command(this, "systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
     Command(this, "time", time, help = "Returns the system time"),
-    Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"),
-    Command(this, "version", version, help = "Returns the Verify application version"))
+    Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"))
 
   override def shutdown() = ()
 
@@ -55,6 +54,34 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
     // get the file path
     val path = expandPath(args.head)
     Source.fromFile(path).getLines().toSeq
+  }
+
+  /**
+   * "cd" - Changes the local file system path/directory
+   */
+  def changeDir(args: String*): String = {
+    // get the argument
+    val key = args.head
+
+    // perform the action
+    cwd = key match {
+      case s if s == ".." =>
+        cwd.split("[/]") match {
+          case a if a.length <= 1 => "/"
+          case a =>
+            val newpath = a.init.mkString("/")
+            if (newpath.trim.length == 0) "/" else newpath
+        }
+      case s => setupPath(s)
+    }
+    cwd
+  }
+
+  private def setupPath(key: String): String = {
+    key match {
+      case s if s.startsWith("/") => key
+      case s => (if (cwd.endsWith("/")) cwd else cwd + "/") + s
+    }
   }
 
   /**
@@ -148,7 +175,7 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
    * @return the current working directory
    */
   def printWorkingDirectory(args: String*) = {
-    new File(".").getCanonicalPath
+    new File(cwd).getCanonicalPath
   }
 
   /**
