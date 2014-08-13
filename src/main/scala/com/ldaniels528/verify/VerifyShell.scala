@@ -42,12 +42,12 @@ class VerifyShell(rt: VerifyShellRuntime) {
 
   // define the modules
   private val modules: Seq[Module] = Seq(
-    new BuiltinModule(),
+    new CoreModule(),
     new KafkaModule(rt, out),
     new UnixModule(rt, out),
     new ZookeeperModule(rt, out))
 
-  // set the active module (zookeeper by default)
+  // set the active module ("zookeeper" by default)
   private var activeModule: Module = modules.find(_.name == "zookeeper") getOrElse modules.head
 
   // load the commands from the modules
@@ -172,12 +172,12 @@ class VerifyShell(rt: VerifyShellRuntime) {
   }
 
   /**
-   * Verify Built-in Module
+   * Core Module
    * @author lawrence.daniels@gmail.com
    */
-  class BuiltinModule() extends Module {
+  class CoreModule() extends Module {
 
-    val name = "main"
+    val name = "core"
 
     override def prompt = history.size.toString
 
@@ -190,6 +190,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
       Command("exit", exit, help = "Exits the shell"),
       Command("help", help, help = "Provides the list of available commands"),
       Command("history", listHistory, help = "Returns a list of previously issued commands"),
+      Command("modules", listModules, help = "Returns a list of previously issued commands"),
       Command("resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
       Command("use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"))
 
@@ -295,6 +296,17 @@ class VerifyShell(rt: VerifyShellRuntime) {
     }
 
     /**
+     * "modules" command - Displays the list of modules
+     * Example: modules
+     * @param args the given command line arguments
+     * @return
+     */
+    def listModules(args: String*): Seq[String] = {
+      val list = modules.map(m => ModuleItem(m.name, m.getClass.getName, "loaded"))
+      tabular.transform(list)
+    }
+
+    /**
      * "use" command - Switches the active module
      * Example: use kafka
      * @param args the given command line arguments
@@ -311,6 +323,8 @@ class VerifyShell(rt: VerifyShellRuntime) {
   }
 
   case class HistoryItem(itemNo: Int, command: String)
+
+  case class ModuleItem(name:String, className:String, status:String)
 
 }
 
