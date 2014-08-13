@@ -333,7 +333,8 @@ class VerifyShell(rt: VerifyShellRuntime) {
      * @return the list of modules
      */
     def listModules(args: String*): Seq[ModuleItem] = {
-      modules.map(m => ModuleItem(m.name, m.getClass.getName, "loaded"))
+      def moduleName(m: Module) = if (m == activeModule) m.name + "*" else m.name
+      modules.map(m => ModuleItem(moduleName(m), m.getClass.getName, "loaded"))
     }
 
     /**
