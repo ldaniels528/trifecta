@@ -32,7 +32,7 @@ object SessionManagement {
     def receive = {
       case SaveHistory(history, file) =>
         if(history.isDirty) {
-          logger.info("Saving history file...")
+          logger.debug("Saving history file...")
           history.store(file)
           history.isDirty = false
         }
