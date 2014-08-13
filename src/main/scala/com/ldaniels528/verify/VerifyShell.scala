@@ -163,6 +163,11 @@ class VerifyShell(rt: VerifyShellRuntime) {
     Map(commands.map(c => c.name -> c): _*)
   }
 
+  /**
+   * Parses a line of input into a tuple consisting of the command and its arguments
+   * @param input the given line of input
+   * @return an option of a tuple consisting of the command and its arguments
+   */
   private def parseInput(input: String): Option[(String, Seq[String])] = {
     // parse the user input
     val pcs = CommandParser.parse(input)
@@ -285,7 +290,14 @@ class VerifyShell(rt: VerifyShellRuntime) {
       }
     }
 
-    def executeHistory(args: String*) {
+    /**
+     * "!" command - History execution command. This command can either executed a
+     * previously executed command by its unique identifier, or list (!?) all previously
+     * executed commands.
+     * Example 1: !123
+     * Example 2: !?
+     */
+    def executeHistory(args: String*) = {
       for {
         index <- args.headOption
         command <- index match {
@@ -366,7 +378,7 @@ object VerifyShell {
   def main(args: Array[String]) {
     System.out.println(s"Verify Shell v$VERSION")
 
-    // was a host argument passed?
+    // were host and port argument passed?
     val host: String = args.headOption getOrElse "localhost"
     val port: Int = if (args.length > 1) args(1).toInt else 2181
 
