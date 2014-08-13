@@ -218,7 +218,8 @@ class VerifyShell(rt: VerifyShellRuntime) {
       Command(this, "history", listHistory, help = "Returns a list of previously issued commands"),
       Command(this, "modules", listModules, help = "Returns a list of configured modules"),
       Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
-      Command(this, "use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"))
+      Command(this, "use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"),
+      Command(this, "version", version, help = "Returns the Verify application version"))
 
     override def shutdown() = ()
 
@@ -348,6 +349,13 @@ class VerifyShell(rt: VerifyShellRuntime) {
           throw new IllegalArgumentException(s"Module '$moduleName' not found")
       }
     }
+
+    /**
+     * "version" - Returns the application version
+     * @return the application version
+     */
+    def version(args: String*): String = VerifyShell.VERSION
+
 
   }
 
