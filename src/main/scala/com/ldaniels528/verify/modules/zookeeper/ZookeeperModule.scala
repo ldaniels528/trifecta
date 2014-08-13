@@ -26,18 +26,18 @@ class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream)
   override def prompt: String = zkcwd
 
   val getCommands = Seq(
-    Command("zcd", zkChangeDir, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
-    Command("zexists", zkExists, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
-    Command("zget", zkGet, (Seq("key", "type"), Seq.empty), "Sets a key-value in ZooKeeper"),
-    Command("zls", zkList, (Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
-    Command("zmk", zkMkdir, (Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
-    Command("zput", zkPut, (Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
-    Command("zreconnect", zReconnect, (Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
-    Command("zrm", zkDelete, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
-    Command("zruok", zkRuok, help = "Checks the status of a Zookeeper instance"),
-    Command("zsess", zkSession, help = "Retrieves the Session ID from ZooKeeper"),
-    Command("zstat", zkStat, help = "Returns the statistics of a Zookeeper instance"),
-    Command("ztree", zkTree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
+    Command(this, "zcd", zkChangeDir, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
+    Command(this, "zexists", zkExists, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
+    Command(this, "zget", zkGet, (Seq("key", "type"), Seq.empty), "Sets a key-value in ZooKeeper"),
+    Command(this, "zls", zkList, (Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
+    Command(this, "zmk", zkMkdir, (Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
+    Command(this, "zput", zkPut, (Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
+    Command(this, "zreconnect", zReconnect, (Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
+    Command(this, "zrm", zkDelete, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
+    Command(this, "zruok", zkRuok, help = "Checks the status of a Zookeeper instance"),
+    Command(this, "zsess", zkSession, help = "Retrieves the Session ID from ZooKeeper"),
+    Command(this, "zstat", zkStat, help = "Returns the statistics of a Zookeeper instance"),
+    Command(this, "ztree", zkTree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
   override def shutdown() = ()
 

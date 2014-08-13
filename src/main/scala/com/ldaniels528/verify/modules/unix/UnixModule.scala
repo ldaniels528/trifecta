@@ -27,16 +27,16 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream)
   val name = "unix"
 
   val getCommands: Seq[Command] = Seq(
-    Command("cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
-    Command("hostname", hostname, help = "Returns the name of the current host"),
-    Command("pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
-    Command("ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
-    Command("pwd", printWorkingDirectory, (Seq.empty, Seq.empty), help = "Display current working directory"),
-    Command("storm", stormDeploy, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server"),
-    Command("systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
-    Command("time", time, help = "Returns the system time"),
-    Command("timeutc", timeUTC, help = "Returns the system time in UTC"),
-    Command("version", version, help = "Returns the Verify application version"))
+    Command(this, "cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
+    Command(this, "hostname", hostname, help = "Returns the name of the current host"),
+    Command(this, "pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
+    Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
+    Command(this, "pwd", printWorkingDirectory, (Seq.empty, Seq.empty), help = "Display current working directory"),
+    Command(this, "storm", stormDeploy, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server"),
+    Command(this, "systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
+    Command(this, "time", time, help = "Returns the system time"),
+    Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"),
+    Command(this, "version", version, help = "Returns the Verify application version"))
 
   override def shutdown() = ()
 
