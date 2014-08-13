@@ -1,19 +1,23 @@
-package com.ldaniels528.verify.subsystems
+package com.ldaniels528.verify.modules
 
 import java.nio.ByteBuffer._
 
-import com.ldaniels528.verify.subsystems.Module._
+import com.ldaniels528.verify.modules.Module._
 import org.slf4j.LoggerFactory
 
 /**
- * Represents a dynamically loaded module
+ * Represents a dynamically loadable module
  * @author lawrence.daniels@gmail.com
  */
 trait Module {
   // logger instance
   protected val logger = LoggerFactory.getLogger(getClass)
 
+  def name: String
+
   def getCommands: Seq[Command]
+
+  def prompt: String = s"$name$$"
 
   def shutdown(): Unit
 

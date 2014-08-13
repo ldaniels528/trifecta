@@ -1,13 +1,13 @@
-package com.ldaniels528.verify.subsystems.kafka
+package com.ldaniels528.verify.modules.kafka
 
 import java.io.{DataOutputStream, File, FileOutputStream, PrintStream}
 import java.text.SimpleDateFormat
 
 import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.io.avro.{AvroDecoder, AvroTables}
-import com.ldaniels528.verify.subsystems.Module
-import com.ldaniels528.verify.subsystems.Module.Command
-import com.ldaniels528.verify.subsystems.kafka.KafkaSubscriber.MessageData
+import com.ldaniels528.verify.modules.Module
+import com.ldaniels528.verify.modules.Module.Command
+import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
 import com.ldaniels528.verify.util.Tabular
 import com.ldaniels528.verify.util.VerifyUtils._
 import com.ldaniels528.verify.{CommandParser, VerifyShellRuntime}
@@ -34,6 +34,8 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
 
   // define a custom tabular instance
   protected val tabular = new Tabular() with AvroTables
+
+  val name = "kafka"
 
   val getCommands = Seq(
     Command("kavrochk", topicAvroVerify, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
@@ -411,7 +413,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   /**
    * "kfind" - Returns the message for a given topic partition by its message ID
    */
-  def topicFindMessage(args: String*) {
+  def topicFindMessage(args: String*) = {
     // get the arguments
     val Seq(name, partition, messageID, _*) = args
     val fetchSize = extract(args, 3) map (_.toInt) getOrElse 8192

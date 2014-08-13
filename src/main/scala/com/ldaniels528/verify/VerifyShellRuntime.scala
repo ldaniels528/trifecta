@@ -4,7 +4,7 @@ import java.io.File
 import java.io.File.separator
 
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy
+import com.ldaniels528.verify.modules.zookeeper.ZKProxy
 
 import scala.util.Properties.userHome
 

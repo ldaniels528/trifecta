@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.subsystems.zookeeper
+package com.ldaniels528.verify.modules.zookeeper
 
 import org.apache.zookeeper.WatchedEvent
 

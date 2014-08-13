@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.subsystems.kafka
+package com.ldaniels528.verify.modules.kafka
 
 import com.ldaniels528.verify.io.{Compression, EndPoint}
 import com.ldaniels528.verify.util.VerifyUtils._

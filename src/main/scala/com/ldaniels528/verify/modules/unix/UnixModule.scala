@@ -1,15 +1,16 @@
-package com.ldaniels528.verify.subsystems.unix
+package com.ldaniels528.verify.modules.unix
 
 import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
-import com.ldaniels528.verify.subsystems.Module
-import com.ldaniels528.verify.subsystems.Module.Command
+import com.ldaniels528.verify.modules.Module
+import com.ldaniels528.verify.modules.Module.Command
 import com.ldaniels528.verify.{VerifyShell, VerifyShellRuntime}
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.language.postfixOps
 
 /**
  * UNIX Systems Module
@@ -22,6 +23,8 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream)
   val PID_MacOS_r = "^\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
   val PID_Linux_r = "^\\s*(\\S+)\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
   val NETSTAT_r = "^\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
+
+  val name = "unix"
 
   val getCommands: Seq[Command] = Seq(
     Command("cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),

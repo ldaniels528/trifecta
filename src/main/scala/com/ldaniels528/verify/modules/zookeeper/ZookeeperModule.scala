@@ -1,13 +1,13 @@
-package com.ldaniels528.verify.subsystems.zookeeper
+package com.ldaniels528.verify.modules.zookeeper
 
 import java.io.PrintStream
 import java.nio.ByteBuffer
 import java.util.Date
 
 import com.ldaniels528.verify.VerifyShellRuntime
-import com.ldaniels528.verify.subsystems.Module
-import com.ldaniels528.verify.subsystems.Module.Command
-import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy.Implicits._
+import com.ldaniels528.verify.modules.Module
+import com.ldaniels528.verify.modules.Module.Command
+import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
 
 /**
  * Zookeeper Module
@@ -17,6 +17,13 @@ class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream)
   extends Module {
   // create the ZooKeeper proxy
   private val zk = rt.zkProxy
+
+  val name = "zookeeper"
+
+  // ZooKeeper current working directory
+  var zkcwd = "/"
+
+  override def prompt: String = zkcwd
 
   val getCommands = Seq(
     Command("zcd", zkChangeDir, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
@@ -64,9 +71,9 @@ class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream)
     val key = args.head
 
     // perform the action
-    rt.zkcwd = key match {
+    zkcwd = key match {
       case s if s == ".." =>
-        rt.zkcwd.split("[/]") match {
+        zkcwd.split("[/]") match {
           case a if a.length <= 1 => "/"
           case a =>
             val newpath = a.init.mkString("/")
@@ -74,7 +81,7 @@ class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream)
         }
       case s => zkKeyToPath(s)
     }
-    rt.zkcwd
+    zkcwd
   }
 
   /**
@@ -82,7 +89,7 @@ class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream)
    */
   def zkList(args: String*): Seq[String] = {
     // get the argument
-    val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkcwd
+    val path = if (args.nonEmpty) zkKeyToPath(args.head) else zkcwd
 
     // perform the action
     zk.getChildren(path, watch = false)
@@ -151,7 +158,7 @@ class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream)
   private def zkKeyToPath(key: String): String = {
     key match {
       case s if s.startsWith("/") => key
-      case s => (if (rt.zkcwd.endsWith("/")) rt.zkcwd else rt.zkcwd + "/") + s
+      case s => (if (zkcwd.endsWith("/")) zkcwd else zkcwd + "/") + s
     }
   }
 
@@ -189,7 +196,7 @@ class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream)
   /**
    * "zsession" - Retrieves the Session ID from ZooKeeper
    */
-  def zkSession(args: String*) = zk.getSessionId().toString
+  def zkSession(args: String*) = zk.getSessionId.toString
 
   /**
    * "ztree" - Retrieves ZooKeeper key hierarchy
@@ -204,7 +211,7 @@ class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream)
     }
 
     // get the optional path argument
-    val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkcwd
+    val path = if (args.nonEmpty) zkKeyToPath(args.head) else zkcwd
 
     // perform the action
     recurse(path)

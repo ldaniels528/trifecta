@@ -1,12 +1,17 @@
-package com.ldaniels528.verify.subsystems.zookeeper
+package com.ldaniels528.verify.modules.zookeeper
 
 import java.nio.ByteBuffer
-import java.util.ArrayList
+import java.util
 
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy.Implicits._
-import com.ldaniels528.verify.subsystems.zookeeper.ZKProxy._
-import org.apache.zookeeper.{WatchedEvent, Watcher}
+import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
+import com.ldaniels528.verify.modules.zookeeper.ZKProxy._
+import org.apache.zookeeper.AsyncCallback.StringCallback
+import org.apache.zookeeper.CreateMode.PERSISTENT
+import org.apache.zookeeper.ZooDefs.Ids
+import org.apache.zookeeper.data.{ACL, Stat}
+import org.apache.zookeeper.{WatchedEvent, Watcher, _}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 import scala.language.implicitConversions
@@ -17,16 +22,8 @@ import scala.util.Try
  * @author lawrence.daniels@gmail.com
  */
 class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None) {
-
-  import org.apache.zookeeper.AsyncCallback.StringCallback
-  import org.apache.zookeeper.CreateMode.PERSISTENT
-  import org.apache.zookeeper.ZooDefs.Ids
-  import org.apache.zookeeper._
-  import org.apache.zookeeper.data.{ACL, Stat}
-  import org.slf4j.LoggerFactory
-
-  private val logger = LoggerFactory.getLogger(getClass())
-  var acl: ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
+  private val logger = LoggerFactory.getLogger(getClass)
+  var acl: util.ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
   var mode: CreateMode = PERSISTENT
   var encoding: String = "UTF8"
 
@@ -55,7 +52,7 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
 
   def ensurePath(path: String): ZKProxy = {
     val tuples = path.splitNodes map (p => (p, NO_DATA))
-    logger.info(s"create parent paths: ${tuples map (_._1) mkString (",")}")
+    logger.info(s"create parent paths: ${tuples map (_._1) mkString ","}")
     tuples foreach {
       case (node, data) =>
         if (exists(node).isEmpty) zk.create(node, data, acl, mode)
@@ -65,7 +62,7 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
 
   def ensureParents(path: String): ZKProxy = {
     val tuples = path.splitNodes.init map (p => (p, NO_DATA))
-    logger.info(s"create parent paths: ${tuples map (_._1) mkString (",")}")
+    logger.info(s"create parent paths: ${tuples map (_._1) mkString ","}")
     tuples foreach {
       case (node, data) =>
         if (exists(node).isEmpty) zk.create(node, data, acl, mode)
@@ -74,7 +71,7 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
   }
 
   def delete(path: String, stat: Stat) {
-    zk.delete(path, stat.getVersion())
+    zk.delete(path, stat.getVersion)
   }
 
   def exists(path: String, watch: Boolean = false): Option[Stat] = {
@@ -85,9 +82,9 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
     zk.getChildren(path, watch)
   }
 
-  def getSessionId() = zk.getSessionId()
+  def getSessionId = zk.getSessionId
 
-  def getState() = zk.getState()
+  def getState = zk.getState
 
   def read(path: String, stat: Stat): Array[Byte] = {
     zk.getData(path, false, stat)
@@ -100,32 +97,32 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
   }
 
   def readDouble(path: String, stat: Stat): Double = {
-    ByteBuffer.wrap(zk.getData(path, false, stat)).getDouble()
+    ByteBuffer.wrap(zk.getData(path, false, stat)).getDouble
   }
 
   def readDouble(path: String): Option[Double] = {
     exists(path) map { stat =>
-      ByteBuffer.wrap(zk.getData(path, false, stat)).getDouble()
+      ByteBuffer.wrap(zk.getData(path, false, stat)).getDouble
     }
   }
 
   def readInt(path: String, stat: Stat): Int = {
-    ByteBuffer.wrap(zk.getData(path, false, stat)).getInt()
+    ByteBuffer.wrap(zk.getData(path, false, stat)).getInt
   }
 
   def readInt(path: String): Option[Int] = {
     exists(path) map { stat =>
-      ByteBuffer.wrap(zk.getData(path, false, stat)).getInt()
+      ByteBuffer.wrap(zk.getData(path, false, stat)).getInt
     }
   }
 
   def readLong(path: String, stat: Stat): Long = {
-    ByteBuffer.wrap(zk.getData(path, false, stat)).getLong()
+    ByteBuffer.wrap(zk.getData(path, false, stat)).getLong
   }
 
   def readLong(path: String): Option[Long] = {
     exists(path) map { stat =>
-      ByteBuffer.wrap(zk.getData(path, false, stat)).getLong()
+      ByteBuffer.wrap(zk.getData(path, false, stat)).getLong
     }
   }
 
