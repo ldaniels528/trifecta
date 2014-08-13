@@ -231,10 +231,4 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
     fmt.format(new Date())
   }
 
-  /**
-   * "version" - Returns the application version
-   * @return the application version
-   */
-  def version(args: String*) = VerifyShell.VERSION
-
 }
