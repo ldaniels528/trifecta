@@ -8,7 +8,6 @@ import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
 import kafka.message.MessageAndOffset
-import net.liftweb.json._
 
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
@@ -60,7 +59,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
               readOffset = getOffsetsBefore(LatestTime)
                 .getOrElse(throw new IllegalStateException("The appropriate offset could not be determined"))
             case _ =>
-              logger.warn(s"consume: Unhandled error code ${e.code}-${ERROR_CODES.get(e.code) getOrElse ("UNKNOWN")}... Reconnecting...")
+              logger.warn(s"consume: Unhandled error code ${e.code}-${ERROR_CODES.getOrElse(e.code, "UNKNOWN")}... Reconnecting...")
               consumer.close()
               broker = findNewLeader(broker)
                 .getOrElse(throw new IllegalStateException("Unable to find new leader after Broker failure."))
@@ -128,9 +127,9 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
     val response = consumer.fetch(request)
     if (response.hasError) throw new KafkaFetchException(response.errorCode(topic.name, topic.partition))
     else {
-      (response.messageSet(topic.name, topic.partition) map { msgAndOffset =>
+      response.messageSet(topic.name, topic.partition) map { msgAndOffset =>
         MessageData(msgAndOffset.offset, msgAndOffset.nextOffset, getMessagePayload(msgAndOffset))
-      })
+      }
     }
   }
 
@@ -150,9 +149,9 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
     } yield ome.offset
   }
 
-  def getFirstOffset() = getOffsetsBefore(OffsetRequest.EarliestTime)
+  def getFirstOffset = getOffsetsBefore(OffsetRequest.EarliestTime)
 
-  def getLastOffset() = getOffsetsBefore(OffsetRequest.LatestTime)
+  def getLastOffset = getOffsetsBefore(OffsetRequest.LatestTime)
 
   def getOffsetsBefore(time: Long): Option[Long] = {
     // create the topic/partition and request information
@@ -169,7 +168,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
       response.partitionErrorAndOffsets map {
         case (tap, por) =>
           val code = por.error
-          logger.error(s"Error fetching data Offset Data the Broker. Reason: $code - ${ERROR_CODES.get(code) getOrElse s"UNKNOWN - $code"}")
+          logger.error(s"Error fetching data Offset Data the Broker. Reason: $code - ${ERROR_CODES.getOrElse(code, s"UNKNOWN - $code")}")
       }
       None
     } else {
@@ -234,7 +233,7 @@ object KafkaSubscriber {
    */
   def getBrokerList(zk: ZKProxy): Seq[BrokerDetails] = {
     val basePath = "/brokers/ids"
-    zk.getChildren(basePath, false) flatMap { brokerId =>
+    zk.getChildren(basePath, watch = false) flatMap { brokerId =>
       zk.readString(s"$basePath/$brokerId") map { json =>
         val details = parse(json).extract[BrokerDetails]
         Try(details.timestamp = sdf.format(new java.util.Date(details.timestamp.toLong)))
@@ -248,7 +247,7 @@ object KafkaSubscriber {
    */
   def listTopics(zk: ZKProxy, brokers: Seq[Broker]): Seq[TopicDetails] = {
     // get the list of topics
-    val topics = zk.getChildren("/brokers/topics", false)
+    val topics = zk.getChildren("/brokers/topics", watch = false)
 
     // capture the meta data for all topics
     getTopicMetadata(brokers(0), topics) flatMap { tmd =>
@@ -293,7 +292,7 @@ object KafkaSubscriber {
         last <- offset
         start <- startingOffset ?? Some(0)
       } yield if (last > start) {
-        logger.info(s"${topic}: Ended watch at offset $last (started at $start)...")
+        logger.info(s"$topic: Ended watch at offset $last (started at $start)...")
       }
 
       offset
@@ -317,7 +316,7 @@ object KafkaSubscriber {
       while (timeout >= System.currentTimeMillis()) {
         offset = Option(subscriber.consume(offset, None, listener = consumer))
         offset match {
-          case Some(offset) => subscriber.commitOffsets(groupId, offset, "")
+          case Some(myOffset) => subscriber.commitOffsets(groupId, myOffset, "")
           case _ =>
         }
         Thread.sleep(100)
@@ -328,7 +327,7 @@ object KafkaSubscriber {
         last <- offset
         start <- startingOffset
       } yield if (last > start) {
-        logger.info(s"${topic}: Ended watch at offset $last (started at $start)...")
+        logger.info(s"$topic: Ended watch at offset $last (started at $start)...")
       }
 
       offset
@@ -422,7 +421,7 @@ object KafkaSubscriber {
    * Represents a class of exceptions that occur while attempting to fetch data from a Kafka broker
    * @param code the status/error code
    */
-  case class KafkaFetchException(code: Short) extends RuntimeException(ERROR_CODES.get(code) getOrElse ("Unrecognized Error Code"))
+  case class KafkaFetchException(code: Short) extends RuntimeException(ERROR_CODES.getOrElse(code, "Unrecognized Error Code"))
 
   /**
    * Kafka Error Codes
