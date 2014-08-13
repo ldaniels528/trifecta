@@ -1,10 +1,11 @@
 package com.ldaniels528.verify.modules.kafka
 
 import java.io.{DataOutputStream, File, FileOutputStream, PrintStream}
+import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 
 import com.ldaniels528.verify.io.Compression
-import com.ldaniels528.verify.io.avro.{AvroTables, AvroDecoder}
+import com.ldaniels528.verify.io.avro.{AvroDecoder, AvroTables}
 import com.ldaniels528.verify.modules.Module
 import com.ldaniels528.verify.modules.Module.Command
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
@@ -35,8 +36,10 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   // get the list of brokers from zookeeper
   private val brokers: Seq[Broker] = KafkaSubscriber.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
+  // the name of the module
   val name = "kafka"
 
+  // the bound commands
   val getCommands = Seq(
     Command(this, "kavrochk", topicAvroVerify, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
     Command(this, "kavrofields", topicAvroFields, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the fields of an Avro message from a Kafka topic"),
@@ -610,6 +613,17 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
       })
     count
   }
+
+  private def asChars(bytes: Array[Byte]): String = {
+    String.valueOf(bytes map (b => if (b >= 32 && b <= 126) b.toChar else '.'))
+  }
+
+  /**
+   * Converts the given long value into a byte array
+   * @param value the given long value
+   * @return a byte array
+   */
+  private def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
 
   case class AvroVerification(verified: Int, failed: Int)
 

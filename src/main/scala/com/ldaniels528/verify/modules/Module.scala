@@ -1,7 +1,5 @@
 package com.ldaniels528.verify.modules
 
-import java.nio.ByteBuffer._
-
 import com.ldaniels528.verify.modules.Module._
 import org.slf4j.LoggerFactory
 
@@ -36,10 +34,6 @@ trait Module {
    */
   def shutdown(): Unit
 
-  protected def asChars(bytes: Array[Byte]): String = {
-    String.valueOf(bytes map (b => if (b >= 32 && b <= 126) b.toChar else '.'))
-  }
-
   /**
    * Expands the UNIX path into a JVM-safe value
    * @param path the UNIX path (e.g. "~/ldaniels")
@@ -49,17 +43,15 @@ trait Module {
     path.replaceFirst("[~/]", scala.util.Properties.userHome)
   }
 
-  protected def extract(args: Seq[String], index: Int): Option[String] = {
-    if (args.length > index) Some(args(index)) else None
-  }
-
   /**
    * Attempts to extract the value from the sequence at the given index
    * @param values the given sequence of values
    * @param index the given index
    * @return the option of the value
    */
-  protected def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
+  protected def extract[T](values: Seq[T], index: Int): Option[T] = {
+    if (values.length > index) Some(values(index)) else None
+  }
 
 }
 
