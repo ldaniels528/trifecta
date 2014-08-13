@@ -26,14 +26,14 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   // date parser instance
   private val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 
+  // define a custom tabular instance
+  private val tabular = new Tabular() with AvroTables
+
   // create the ZooKeeper proxy
   private val zk = rt.zkProxy
 
   // get the list of brokers from zookeeper
   private val brokers: Seq[Broker] = KafkaSubscriber.getBrokerList(zk) map (b => Broker(b.host, b.port))
-
-  // define a custom tabular instance
-  protected val tabular = new Tabular() with AvroTables
 
   val name = "kafka"
 
