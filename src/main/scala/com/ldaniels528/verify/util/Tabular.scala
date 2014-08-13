@@ -1,19 +1,12 @@
 package com.ldaniels528.verify.util
 
-import Tabular._
+import scala.language.postfixOps
 
 /**
  * Tabular
  * @author lawrence.daniels@gmail.com
- * @date 11/27/2013
  */
 class Tabular() {
-  import java.lang.Math.max
-  import java.text.SimpleDateFormat
-  import java.util.Date
-  import scala.collection.JavaConversions._
-  import scala.language.postfixOps
-  import scala.util.{ Failure, Success, Try }
 
   /**
    * Transforms the given sequence of objects into a sequence of string that
@@ -36,7 +29,7 @@ class Tabular() {
     else {
       // get the headers, data rows, and column widths
       val headers = Seq("values")
-      val rows = values map (v => Map(("values" -> asString(v))))
+      val rows = values map (v => Map("values" -> asString(v)))
 
       // create the table
       makeTable(headers, rows)
@@ -51,8 +44,8 @@ class Tabular() {
     if (values.isEmpty) Nil
     else {
       // get the headers, data rows, and column widths
-      val headers = values map (_._1) toSeq
-      val rows = Seq(values) map (_ map { case (k, v) => (k, asString(v)) })
+      val headers = (values map (_._1)).toSeq
+      val rows = Seq(values) map (_ map { case (k, v) => (k, asString(v))})
 
       // create the table
       makeTable(headers, rows)
@@ -67,8 +60,8 @@ class Tabular() {
     if (values.isEmpty) Nil
     else {
       // get the headers, data rows, and column widths
-      val headers = values map (_._1) toSeq
-      val rows = Seq(Map(values: _*)) map (_ map { case (k, v) => (k, asString(v)) })
+      val headers = (values map (_._1)).toSeq
+      val rows = Seq(Map(values: _*)) map (_ map { case (k, v) => (k, asString(v))})
 
       // create the table
       makeTable(headers, rows)
@@ -78,13 +71,13 @@ class Tabular() {
   protected def makeTable(headers: Seq[String], rows: Seq[Map[String, String]]): List[String] = {
     // create the horizontal border, header and compute column widths
     val widths = columnWidths(headers, rows)
-    val borderLine = s"+ ${"-" * (widths.sum)} +"
-    val headerLine = s"| ${constructRow(headers zip (widths))} |"
+    val borderLine = s"+ ${"-" * widths.sum} +"
+    val headerLine = s"| ${constructRow(headers zip widths)} |"
 
     // create the data grid
     val datagrid = (rows map { row =>
-      val data = headers map (row.get(_) getOrElse " ")
-      s"| ${constructRow(data zip (widths))} |"
+      val data = headers map (row.getOrElse(_, " "))
+      s"| ${constructRow(data zip widths)} |"
     }).toList
 
     // create the table  
@@ -97,12 +90,12 @@ class Tabular() {
   }
 
   protected def invokeMethod[A](v: A, f: String) = {
-    import scala.util.{ Try, Success, Failure }
+    import scala.util.{Failure, Success, Try}
     val beanClass = v.getClass
     Try(beanClass.getMethod(f).invoke(v)) match {
       case Success(result) => result
       case Failure(e) =>
-        System.err.println(s"Failed to invoke $f on ${beanClass.getName} - ${e.getMessage()}")
+        System.err.println(s"Failed to invoke $f on ${beanClass.getName} - ${e.getMessage}")
         ""
     }
   }
@@ -110,7 +103,7 @@ class Tabular() {
   protected def asString(value: Any): String = {
     import java.text.SimpleDateFormat
     import java.util.Date
-    
+
     value match {
       case v if v == null => ""
       case b: Boolean => if (b) "Y" else "N"
@@ -121,18 +114,18 @@ class Tabular() {
   }
 
   protected def getHeaders[A](value: A): Seq[String] = {
-    value.getClass.getDeclaredFields() map (_.getName()) filterNot (unwantedFields)
+    value.getClass.getDeclaredFields map (_.getName) filterNot unwantedFields
   }
 
   protected def constructRow(values: Seq[(String, Int)]): String = {
-    (values map { case (data, width) => data + " " * Math.abs(width - data.length) }).mkString
+    (values map { case (data, width) => data + " " * Math.abs(width - data.length)}).mkString
   }
 
   /**
    * Computes the width of each column
    */
   protected def columnWidths(headers: Seq[String], rows: Seq[Map[String, String]]) = {
-    import Math.max
+    import java.lang.Math.max
 
     // define a function to compute the maximum length of the key-value pair
     def smash(k: String, v: String, currentMax: Int) = max(max(k.length, v.length), currentMax)
@@ -140,7 +133,7 @@ class Tabular() {
     // reduce the rows to a mapping of column to max width
     val result = rows.foldLeft[Map[String, Int]](Map.empty) {
       (res, row) =>
-        res ++ (row map { case (k, v) => (k, smash(k, v, res.get(k) map (max(k.length, _)) getOrElse k.length)) })
+        res ++ (row map { case (k, v) => (k, smash(k, v, res.get(k) map (max(k.length, _)) getOrElse k.length))})
     }
 
     // return just the column widths in the appropriate order

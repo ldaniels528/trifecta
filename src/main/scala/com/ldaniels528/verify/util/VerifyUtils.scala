@@ -1,15 +1,14 @@
 package com.ldaniels528.verify.util
 
-import java.util.Properties
+import scala.concurrent.duration.FiniteDuration
+import scala.language._
+import scala.util.{Failure, Success, Try}
 
 /**
  * Verify Utilities
  * @author lawrence.daniels@gmail.com
  */
 object VerifyUtils {
-  import scala.concurrent.duration.FiniteDuration
-  import scala.language._
-  import scala.util.{ Try, Success, Failure }
 
   /**
    * Returns the byte array as a hex string
@@ -17,7 +16,7 @@ object VerifyUtils {
    * @return a hex string representing the given byte array
    */
   def asHexString(bytes: Array[Byte]): String = {
-    bytes map ("%02x".format(_)) mkString ("")
+    bytes map ("%02x".format(_)) mkString ""
   }
 
   /**
@@ -55,8 +54,10 @@ object VerifyUtils {
    * @author lawrence.daniels@gmail.com
    */
   implicit class PropertiesConversion[T <: Object](m: Map[String, T]) {
-    import scala.collection.JavaConversions.mapAsJavaMap
+
     import java.util.Properties
+
+import scala.collection.JavaConversions.mapAsJavaMap
 
     def toProps: Properties = {
       val p = new Properties()
@@ -79,33 +80,30 @@ object VerifyUtils {
    * Automatically closes a resource after completion of a code block
    * @author lawrence.daniels@gmail.com
    */
-  implicit class AutoClose[T <: { def close() }](resource: T) {
+  implicit class AutoClose[T <: {def close()}](resource: T) {
 
-    def use[S](block: T => S): S = {
-      try { return block(resource) } finally { resource.close() }
-    }
+    def use[S](block: T => S): S = try block(resource) finally resource.close()
+
   }
 
   /**
    * Automatically closes a resource after completion of a code block
    * @author lawrence.daniels@gmail.com
    */
-  implicit class AutoDisconnect[T <: { def disconnect() }](resource: T) {
+  implicit class AutoDisconnect[T <: {def disconnect()}](resource: T) {
 
-    def use[S](block: T => S): S = {
-      try { return block(resource) } finally { resource.disconnect() }
-    }
+    def use[S](block: T => S): S = try block(resource) finally resource.disconnect()
+
   }
 
   /**
    * Automatically closes a resource after completion of a code block
    * @author lawrence.daniels@gmail.com
    */
-  implicit class AutoShutdown[T <: { def shutdown() }](resource: T) {
+  implicit class AutoShutdown[T <: {def shutdown()}](resource: T) {
 
-    def use[S](block: T => S): S = {
-      try { return block(resource) } finally { resource.shutdown() }
-    }
+    def use[S](block: T => S): S = try block(resource) finally resource.shutdown()
+
   }
 
 }

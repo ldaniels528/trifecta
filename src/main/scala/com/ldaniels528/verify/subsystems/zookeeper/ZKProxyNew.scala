@@ -1,18 +1,19 @@
 package com.ldaniels528.verify.subsystems.zookeeper
 
-import ZKProxy._
-import ZKProxy.Implicits._
+import java.nio.ByteBuffer
+
 import com.ldaniels528.verify.io.EndPoint
+import org.I0Itec.zkclient.ZkClient
+import org.slf4j.LoggerFactory
+
+import scala.language.implicitConversions
 
 /**
  * Verify ZooKeeper Proxy
  * @author lawrence.daniels@gmail.com
  */
 class ZKProxyNew(host: String, port: Int) {
-  import org.slf4j.LoggerFactory
-  import org.I0Itec.zkclient.ZkClient
-
-  private val logger = LoggerFactory.getLogger(getClass())
+  private val logger = LoggerFactory.getLogger(getClass)
   private var zk = new ZkClient(s"$host:$port")
 
   def client: ZkClient = zk
@@ -42,8 +43,6 @@ object ZKProxyNew {
    * All implicit definitions are declared here
    */
   object Implicits {
-    import java.nio.ByteBuffer
-    import scala.language.implicitConversions
 
     implicit def byteBuffer2ByteArray(buf: ByteBuffer): Array[Byte] = {
       val bytes = new Array[Byte](buf.limit())
@@ -64,5 +63,7 @@ object ZKProxyNew {
       }
 
     }
+
   }
+
 }
