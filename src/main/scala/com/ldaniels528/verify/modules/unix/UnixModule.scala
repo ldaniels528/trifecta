@@ -32,7 +32,7 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
 
   val getCommands: Seq[Command] = Seq(
     Command(this, "cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
-    Command(this, "cd", changeDir, (Seq("key"), Seq.empty), help = "Changes the local file system path/directory"),
+    Command(this, "cd", changeDir, (Seq("path"), Seq.empty), help = "Changes the local file system path/directory"),
     Command(this, "hostname", hostname, help = "Returns the name of the current host"),
     Command(this, "ls", listFiles, (Seq.empty, Seq("path")), help = "Retrieves the files from the current directory"),
     Command(this, "pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
