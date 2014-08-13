@@ -28,8 +28,6 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
 
   val name = "unix"
 
-  override def prompt: String = cwd
-
   val getCommands: Seq[Command] = Seq(
     Command(this, "cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
     Command(this, "cd", changeDir, (Seq("path"), Seq.empty), help = "Changes the local file system path/directory"),
@@ -42,6 +40,8 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
     Command(this, "systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
     Command(this, "time", time, help = "Returns the system time"),
     Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"))
+
+  override def prompt: String = cwd
 
   override def shutdown() = ()
 
