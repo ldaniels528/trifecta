@@ -21,7 +21,7 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
   // define the process parsing regular expression
   private val PID_MacOS_r = "^\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
   private val PID_Linux_r = "^\\s*(\\S+)\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
-  private val NETSTAT_r = "^\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
+  private val NET_STAT_r = "^\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
 
   // current working directory
   private var cwd = "."
@@ -178,7 +178,7 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
 
       // build the port mapping
       netStat flatMap {
-        case NETSTAT_r(_, _, _, rawport, _, _, pidcmd, _*) =>
+        case NET_STAT_r(_, _, _, rawport, _, _, pidcmd, _*) =>
           if (pidcmd.contains("java")) {
             val port = rawport.substring(rawport.lastIndexOf(':') + 1)
             val Array(pid, cmd) = pidcmd.trim.split("[/]")
