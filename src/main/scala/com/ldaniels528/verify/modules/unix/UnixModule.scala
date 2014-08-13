@@ -24,7 +24,7 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
   private val NET_STAT_r = "^\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
 
   // current working directory
-  private var cwd = "."
+  private var cwd: String = new File(".").getCanonicalPath
 
   val name = "unix"
 
@@ -32,7 +32,7 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
 
   val getCommands: Seq[Command] = Seq(
     Command(this, "cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
-    Command(this, "cd", changeDir, (Seq("key"), Seq.empty), help = "Changes the local file system path/directory") ,
+    Command(this, "cd", changeDir, (Seq("key"), Seq.empty), help = "Changes the local file system path/directory"),
     Command(this, "hostname", hostname, help = "Returns the name of the current host"),
     Command(this, "pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
     Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
