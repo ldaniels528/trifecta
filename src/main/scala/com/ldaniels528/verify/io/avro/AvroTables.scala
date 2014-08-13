@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.io.avro
 
-import com.ldaniels528.verify.util.Tabular
+import com.ldaniels528.tabular.Tabular
 
 /**
  * Adds Avro table capabilities to a Tabular instance

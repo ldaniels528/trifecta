@@ -4,12 +4,12 @@ import java.io.{DataOutputStream, File, FileOutputStream, PrintStream}
 import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 
+import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.io.avro.{AvroDecoder, AvroTables}
 import com.ldaniels528.verify.modules.Module
 import com.ldaniels528.verify.modules.Module.Command
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
-import com.ldaniels528.verify.util.Tabular
 import com.ldaniels528.verify.util.VerifyUtils._
 import com.ldaniels528.verify.{CommandParser, VerifyShellRuntime}
 

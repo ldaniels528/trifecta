@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.vscript
 
-import com.ldaniels528.verify.util.Tabular
+import com.ldaniels528.tabular.Tabular
 
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits._
