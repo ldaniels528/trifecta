@@ -80,7 +80,7 @@ class Tabular() {
       s"| ${constructRow(data zip widths)} |"
     }).toList
 
-    // create the table  
+    // create the table
     borderLine :: headerLine :: borderLine :: datagrid ::: borderLine :: Nil
   }
 
@@ -159,7 +159,7 @@ object Tabular {
   def isPrimitives[A](values: Seq[A]) = {
     if (values.isEmpty) true
     else {
-      values(0) match {
+      values.head match {
         case d: Double => true
         case f: Float => true
         case i: Int => true
