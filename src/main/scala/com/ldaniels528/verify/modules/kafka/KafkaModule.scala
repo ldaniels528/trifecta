@@ -4,7 +4,7 @@ import java.io.{DataOutputStream, File, FileOutputStream, PrintStream}
 import java.text.SimpleDateFormat
 
 import com.ldaniels528.verify.io.Compression
-import com.ldaniels528.verify.io.avro.{AvroDecoder, AvroTables}
+import com.ldaniels528.verify.io.avro.{AvroTables, AvroDecoder}
 import com.ldaniels528.verify.modules.Module
 import com.ldaniels528.verify.modules.Module.Command
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
@@ -198,7 +198,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
    * kavrochk - Verifies that a set of messages (specific offset range) can be read by the specified schema
    * Example: kavrochk avro/schema1.avsc topics.ldaniels528.test1 0 1000 2000
    */
-  def topicAvroVerify(args: String*) = {
+  def topicAvroVerify(args: String*): Seq[AvroVerification] = {
     // get the arguments
     val Seq(schemaPath, name, partition, startOffset, endOffset, _*) = args
     val batchSize = extract(args, 5) map (_.toInt) getOrElse 10
@@ -223,7 +223,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
       }
     }
 
-    tabular.transform(Seq(AvroVerification(verified, errors)))
+    Seq(AvroVerification(verified, errors))
   }
 
   private def getAvroDecoder(schemaPath: String): AvroDecoder = {
