@@ -106,6 +106,8 @@ class VerifyShell(rt: VerifyShellRuntime) {
 
   private def handleResult(result: Any) {
     result match {
+      case Some(v) => handleResult(v)
+      case Success(v) => handleResult(v)
       case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach out.println
       case t: scala.collection.GenTraversableOnce[_] => t foreach out.println
       case o: Option[_] => o foreach out.println
