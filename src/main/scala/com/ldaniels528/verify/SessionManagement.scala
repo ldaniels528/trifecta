@@ -10,7 +10,7 @@ import scala.concurrent.duration.FiniteDuration
 
 /**
  * Session Management
- * @author ldaniels
+ * @author lawrence.daniels@gmail.com
  */
 object SessionManagement {
   private[this] lazy val logger = LoggerFactory.getLogger(getClass)
@@ -31,8 +31,11 @@ object SessionManagement {
   class HistoryActor() extends Actor {
     def receive = {
       case SaveHistory(history, file) =>
-        logger.info("Saving history file...")
-        history.store(file)
+        if(history.isDirty) {
+          logger.info("Saving history file...")
+          history.store(file)
+          history.isDirty = false
+        }
       case unknown => unhandled(unknown)
     }
   }

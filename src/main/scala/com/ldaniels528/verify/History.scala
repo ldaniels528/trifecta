@@ -8,10 +8,11 @@ import scala.util.Try
 
 /**
  * Command History Container
- * @author ldaniels
+ * @author lawrence.daniels@gmail.com
  */
 class History(val maxHistory: Int) {
   private var history: List[String] = Nil
+  protected [verify] var isDirty: Boolean = _
 
   /**
    * Returns the previously issued command for the given index
@@ -31,6 +32,7 @@ class History(val maxHistory: Int) {
     if (history.size > maxHistory) {
       history = history.init
     }
+    isDirty = true
   }
 
   /**
