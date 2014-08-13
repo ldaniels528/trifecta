@@ -11,6 +11,7 @@ import com.ldaniels528.verify.modules.zookeeper._
 import com.ldaniels528.verify.util.Tabular
 import org.slf4j.LoggerFactory
 
+import scala.collection.GenTraversableOnce
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
@@ -106,11 +107,31 @@ class VerifyShell(rt: VerifyShellRuntime) {
 
   private def handleResult(result: Any) {
     result match {
-      case Some(v) => handleResult(v)
-      case Success(v) => handleResult(v)
+      // handle lists and sequences of case classes
       case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach out.println
-      case t: scala.collection.GenTraversableOnce[_] => t foreach out.println
-      case o: Option[_] => o foreach out.println
+
+      // handle Either cases
+      case e: Either[_, _] => e match {
+        case Left(v) => handleResult(v)
+        case Right(v) => handleResult(v)
+      }
+
+      // handle Option cases
+      case o: Option[_] => o match {
+        case Some(v) => handleResult(v)
+        case None =>
+      }
+
+      // handle Try cases
+      case t: Try[_] => t match {
+        case Success(v) => handleResult(v)
+        case Failure(e) => throw e
+      }
+
+      // handle lists and sequences of primitives
+      case g: GenTraversableOnce[_] => g foreach out.println
+
+      // anything else ...
       case x => if (x != null && !x.isInstanceOf[Unit]) out.println(x)
     }
   }
