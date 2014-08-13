@@ -51,7 +51,9 @@ libraryDependencies ++= Seq(
   "net.liftweb" %% "lift-json" % "2.5.1",
   "org.apache.avro" % "avro" % "1.7.6",
   "org.apache.kafka" % "kafka_2.10" % "0.8.1.1",
-  "org.apache.storm" % "storm-core" % "0.9.2-incubating" % "provided"
+  "org.apache.storm" % "storm-core" % "0.9.2-incubating" % "provided",
+  "org.slf4j" % "slf4j-api" % "1.7.7",
+  "org.slf4j" % "slf4j-log4j12" % "1.7.7"
 )
 
 // Testing Dependencies
