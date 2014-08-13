@@ -24,6 +24,7 @@ class VScriptParserTest {
       	println a2
       """,
       debug = true)
+    ()
   }
 
   @Test
@@ -37,6 +38,7 @@ class VScriptParserTest {
         println doAdd(x,y)
     """,
     debug = true)
+    ()
   }
 
 }

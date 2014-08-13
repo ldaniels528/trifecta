@@ -46,6 +46,7 @@ class VScriptByteCodesTest {
 
     logger.info("Executing decompiled code...")
     decomped.eval(RootScope())
+    ()
   }
 
   @Test

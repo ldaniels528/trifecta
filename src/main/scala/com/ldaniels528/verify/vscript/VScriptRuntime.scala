@@ -2,6 +2,7 @@ package com.ldaniels528.verify.vscript
 
 import com.ldaniels528.verify.util.Tabular
 
+import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, future}

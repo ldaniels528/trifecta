@@ -8,6 +8,8 @@ import com.ldaniels528.verify.vscript.VScriptRuntime._
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 
+import scala.language.postfixOps
+
 /**
  * VScript ByteCode Generator
  * @author lawrence.daniels@gmail.com
