@@ -47,6 +47,9 @@ class VerifyShell(rt: VerifyShellRuntime) {
     new UnixModule(rt, out),
     new ZookeeperModule(rt, out))
 
+  // set the active module (zookeeper by default)
+  private var activeModule: Module = modules.find(_.name == "zookeeper") getOrElse modules.head
+
   // load the commands from the modules
   private val commandSet: Map[String, Command] = loadModules(modules)
 
@@ -69,7 +72,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
 
     do {
       // display the prompt, and get the next line of input
-      out.print("%s@%s:%s> ".format(userName, rt.remoteHost, rt.zkcwd))
+      out.print("%s@%s:%s> ".format(userName, rt.remoteHost, activeModule.prompt))
       val line = Console.readLine().trim
 
       if (line.nonEmpty) {
