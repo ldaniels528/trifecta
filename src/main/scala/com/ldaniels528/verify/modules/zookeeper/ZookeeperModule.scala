@@ -13,15 +13,14 @@ import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
  * Zookeeper Module
  * @author lawrence.daniels@gmail.com
  */
-class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream)
-  extends Module {
+class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
   // create the ZooKeeper proxy
   private val zk = rt.zkProxy
 
-  val name = "zookeeper"
-
   // ZooKeeper current working directory
-  var zkcwd = "/"
+  private var zkcwd = "/"
+
+  val name = "zookeeper"
 
   override def prompt: String = zkcwd
 
