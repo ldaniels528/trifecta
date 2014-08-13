@@ -38,15 +38,15 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 ### Configuring the project for your IDE
 
 #### Eclipse project
-    $ sbt update eclipse
+    $ sbt eclipse
     
 #### Intellij Idea project
-    $ sbt update gen-idea
+    $ sbt gen-idea
 
 <a name="building-the-code"></a>
 ### Building the code
 
-    $ sbt clean assembly
+    $ sbt assembly
     
 <a name="testing-the-code"></a>    
 ### Running the tests
