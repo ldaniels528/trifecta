@@ -188,7 +188,8 @@ class VerifyShell(rt: VerifyShellRuntime) {
       Command("exit", exit, help = "Exits the shell"),
       Command("help", help, help = "Provides the list of available commands"),
       Command("history", listHistory, help = "Returns a list of previously issued commands"),
-      Command("resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"))
+      Command("resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
+      Command("use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"))
 
     override def shutdown() = ()
 
