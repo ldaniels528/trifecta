@@ -39,7 +39,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
   history.load(rt.historyFile)
 
   // schedule session history file updates
-  SessionManagement.setupHistoryUpdates(history, rt.historyFile, 5 minutes)
+  SessionManagement.setupHistoryUpdates(history, rt.historyFile, 60 seconds)
 
   // define the modules
   private val modules: Seq[Module] = Seq(
