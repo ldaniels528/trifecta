@@ -65,7 +65,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
                 .getOrElse(throw new IllegalStateException("Unable to find new leader after Broker failure."))
           }
         case Failure(e) =>
-
+          throw new IllegalStateException("An unexpected error occurred", e)
       }
     }
     readOffset
