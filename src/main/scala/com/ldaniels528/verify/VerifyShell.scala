@@ -155,7 +155,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
   private def loadModules(modules: Seq[Module]): Map[String, Command] = {
     // gather all of the commands
     val commands = modules flatMap { module =>
-      logger.info(s"Loading module '${module.getClass.getSimpleName}'...")
+      logger.info(s"Loading ${module.name} module...")
       module.getCommands
     }
 
