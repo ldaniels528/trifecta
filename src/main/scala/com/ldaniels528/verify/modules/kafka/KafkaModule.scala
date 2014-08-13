@@ -226,7 +226,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
               }
             }
           case Failure(e) =>
-            throw new IllegalStateException(s"%s between offsets %d and %d".format(e.getMessage, offsets.min, offsets.max), e)
+            out.println(s"!!! %s between offsets %d and %d".format(e.getMessage, offsets.min, offsets.max))
         }
       }
     }
