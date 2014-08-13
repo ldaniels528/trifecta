@@ -215,13 +215,18 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     var errors = 0
     new KafkaSubscriber(Topic(name, partition.toInt), brokers) use { subscriber =>
       (startOffset.toLong to endOffset.toLong).sliding(batchSize, batchSize) foreach { offsets =>
-        subscriber.fetch(offsets, blockSize) foreach { m =>
-          Try(decoder.decode(m.message)) match {
-            case Success(_) => verified += 1
-            case Failure(e) =>
-              out.println("[%04d] %s".format(m.offset, e.getMessage))
-              errors += 1
-          }
+        Try(subscriber.fetch(offsets, blockSize)) match {
+          case Success(messages) =>
+            messages foreach { m =>
+              Try(decoder.decode(m.message)) match {
+                case Success(_) => verified += 1
+                case Failure(e) =>
+                  out.println("[%04d] %s".format(m.offset, e.getMessage))
+                  errors += 1
+              }
+            }
+          case Failure(e) =>
+            throw new IllegalStateException(s"%s between offsets %d and %d".format(e.getMessage, offsets.min, offsets.max), e)
         }
       }
     }
