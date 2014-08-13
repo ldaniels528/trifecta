@@ -264,14 +264,13 @@ class VerifyShell(rt: VerifyShellRuntime) {
     /**
      * "help" command - Provides the list of available commands
      */
-    def help(args: String*): Seq[String] = {
-      val list = commandSet.toSeq filter {
+    def help(args: String*): Seq[CommandItem] = {
+      commandSet.toSeq filter {
         case (name, cmd) => args.isEmpty || name.startsWith(args.head)
       } sortBy (_._1) map {
         case (name, cmd) =>
           CommandItem(name, cmd.module.name, cmd.help)
       }
-      tabular.transform(list)
     }
 
     /**
@@ -321,29 +320,25 @@ class VerifyShell(rt: VerifyShellRuntime) {
       history.store(rt.historyFile)
     }
 
-    def listHistory(args: String*): Seq[String] = {
+    def listHistory(args: String*): Seq[HistoryItem] = {
       val lines = history.getLines
-      val data = ((1 to lines.size) zip lines) map {
+      ((1 to lines.size) zip lines) map {
         case (itemNo, command) => HistoryItem(itemNo, command)
       }
-      tabular.transform(data)
     }
 
     /**
-     * "modules" command - Displays the list of modules
+     * "modules" command - Returns the list of modules
      * Example: modules
-     * @param args the given command line arguments
-     * @return
+     * @return the list of modules
      */
-    def listModules(args: String*): Seq[String] = {
-      val list = modules.map(m => ModuleItem(m.name, m.getClass.getName, "loaded"))
-      tabular.transform(list)
+    def listModules(args: String*): Seq[ModuleItem] = {
+      modules.map(m => ModuleItem(m.name, m.getClass.getName, "loaded"))
     }
 
     /**
      * "use" command - Switches the active module
      * Example: use kafka
-     * @param args the given command line arguments
      */
     def useModule(args: String*) = {
       val moduleName = args.head
@@ -358,7 +353,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
 
   case class CommandItem(command: String, module: String, description: String)
 
-  case class HistoryItem(itemNo: Int, command: String)
+  case class HistoryItem(uid: Int, command: String)
 
   case class ModuleItem(name: String, className: String, status: String)
 
