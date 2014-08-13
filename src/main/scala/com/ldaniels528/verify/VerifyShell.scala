@@ -22,10 +22,10 @@ import scala.util.{Failure, Success, Try}
  */
 class VerifyShell(rt: VerifyShellRuntime) {
   // logger instance
-  protected val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(getClass)
 
   // define a custom tabular instance
-  protected val tabular = new Tabular() with AvroTables
+  private val tabular = new Tabular() with AvroTables
 
   // redirect standard output and error to my own buffers
   private val out = System.out
