@@ -61,6 +61,8 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 <a name="usage"></a>
 ### Usage Examples	
 
+To list the replica brokers that Zookeeper is aware of:
+
 	ldaniels@localhost:2181:/> kbrokers
 		+ -------------------------------------------------------------------------- +
 		| jmx_port  timestamp          host                          version  port   |
@@ -68,6 +70,8 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		| 9999      2014-07-31 07:45:23 UTC  dev601.ldaniels528.com  1        9092   |
 		| 9999      2014-07-31 07:45:22 UTC  dev602.ldaniels528.com  1        9092   |
 		+ -------------------------------------------------------------------------- +	
+
+To list all of the Kafka topics that Zookeeper is aware of:
 
 	ldaniels@localhost:2181:/> kls
 		+ ------------------------------------------------------------------- +
@@ -85,6 +89,8 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		| app1.messages     6          dev602.ldaniels528.com:9092  1         |
 		+ ------------------------------------------------------------------- +
 
+To see a subset of the topics (matches any topic that starts with the given search term):
+
 	ldaniels@localhost:2181:/> kls test.app1.alerts
 		+ ------------------------------------------------------------------- +
 		| name              partition  leader                       version   |
@@ -93,6 +99,8 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		| test.app1.alerts  1          dev602.ldaniels528.com:9092  1         |
 		| test.app1.alerts  2          dev601.ldaniels528.com:9092  1         |
 		+ ------------------------------------------------------------------- +
+
+To retrieve the start and end offsets and number of messages available for a topic across any number of partitions:
 
 	ldaniels@localhost:2181:/> kstats test.app1.alerts 0 2
 		+ ------------------------------------------------------------------------ +
@@ -103,6 +111,8 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		| test.app1.alerts  2          5322551      5322551    0                   |
 		+ ------------------------------------------------------------------------ +
 
+To view the Zookeeper keys at the current hierarchy level:
+
 	ldaniels@localhost:2181:/> zls
 		consumers
 		storm
@@ -111,12 +121,18 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		controller
 		brokers	
 			
+To change the current Zookeeper hierarchy level:			
+			
 	ldaniels@localhost:2181:/> zcd brokers
         /brokers
+        
+Now view the keys at this level:        
     
     ldaniels@localhost:2181:/brokers> zls
         topics
         ids	
+        
+To list of commands that start with "k":
 			
 	ldaniels@localhost:2181:/> ?k
         + -------------------------------------------------------------------------------------------------------------------------------- +
