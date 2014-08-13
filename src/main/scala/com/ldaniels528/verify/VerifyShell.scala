@@ -175,6 +175,10 @@ class VerifyShell(rt: VerifyShellRuntime) {
    */
   class BuiltinModule() extends Module {
 
+    val name = "main"
+
+    override def prompt = history.size.toString
+
     val getCommands: Seq[Command] = Seq(
       Command("!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
       Command("?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
