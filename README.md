@@ -61,7 +61,7 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 <a name="usage"></a>
 ### Usage Examples	
 
-	$ kbrokers
+	ldaniels@localhost:2181:/> kbrokers
 		+ -------------------------------------------------------------------------- +
 		| jmx_port  timestamp          host                          version  port   |
 		+ -------------------------------------------------------------------------- +
@@ -69,7 +69,7 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		| 9999      2014-07-31 07:45:22 UTC  dev602.ldaniels528.com  1        9092   |
 		+ -------------------------------------------------------------------------- +	
 
-	$ kls
+	ldaniels@localhost:2181:/> kls
 		+ ------------------------------------------------------------------- +
 		| name              partition  leader                       version   |
 		+ ------------------------------------------------------------------- +
@@ -85,7 +85,7 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		| app1.messages     6          dev602.ldaniels528.com:9092  1         |
 		+ ------------------------------------------------------------------- +
 
-	$ kls test.app1.alerts
+	ldaniels@localhost:2181:/> kls test.app1.alerts
 		+ ------------------------------------------------------------------- +
 		| name              partition  leader                       version   |
 		+ ------------------------------------------------------------------- +
@@ -94,7 +94,7 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		| test.app1.alerts  2          dev601.ldaniels528.com:9092  1         |
 		+ ------------------------------------------------------------------- +
 
-	$ kstats test.app1.alerts 0 2
+	ldaniels@localhost:2181:/> kstats test.app1.alerts 0 2
 		+ ------------------------------------------------------------------------ +
 		| name              partition  startOffset  endOffset  messagesAvailable   |
 		+ ------------------------------------------------------------------------ +
@@ -103,11 +103,47 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 		| test.app1.alerts  2          5322551      5322551    0                   |
 		+ ------------------------------------------------------------------------ +
 
-	$ zls
+	ldaniels@localhost:2181:/> zls
 		consumers
 		storm
 		controller_epoch
 		admin
 		controller
 		brokers	
-		
+			
+	ldaniels@localhost:2181:/> zcd brokers
+        /brokers
+    
+    ldaniels@localhost:2181:/brokers> zls
+        topics
+        ids	
+			
+	ldaniels@localhost:2181:/> ?k
+        + -------------------------------------------------------------------------------------------------------------------------------- +
+        | command      module  description                                                                                                 |
+        + -------------------------------------------------------------------------------------------------------------------------------- +
+        | kavrochk     kafka   Verifies that a set of messages (specific offset range) can be read by the specified schema                 |
+        | kavrofields  kafka   Returns the fields of an Avro message from a Kafka topic                                                    |
+        | kbrokers     kafka   Returns a list of the registered brokers from ZooKeeper                                                     |
+        | kcommit      kafka   Commits the offset for a given topic and group                                                              |
+        | kcount       kafka   Returns the number of messages available for a given topic                                                  |
+        | kdump        kafka   Dumps the contents of a specific topic [as binary] to the console                                           |
+        | kdumpa       kafka   Dumps the contents of a specific topic [as Avro] to the console                                             |
+        | kdumpf       kafka   Dumps the contents of a specific topic to a file                                                            |
+        | kdumpr       kafka   Dumps the contents of a specific topic [as raw ASCII] to the console                                        |
+        | kfetch       kafka   Retrieves the offset for a given topic and group                                                            |
+        | kfetchsize   kafka   Retrieves or sets the default fetch size for all Kafka queries                                              |
+        | kfirst       kafka   Returns the first offset for a given topic                                                                  |
+        | kget         kafka   Retrieves the message at the specified offset for a given topic partition                                   |
+        | kgetmaxsize  kafka   Retrieves the size of the largest message for the specified range of offsets for a given topic partition    |
+        | kgetminsize  kafka   Retrieves the size of the smallest message for the specified range of offsets for a given topic partition   |
+        | kgetsize     kafka   Retrieves the size of the message at the specified offset for a given topic partition                       |
+        | kimport      kafka   Imports data into a new/existing topic                                                                      |
+        | klast        kafka   Returns the last offset for a given topic                                                                   |
+        | kls          kafka   Lists all existing topics                                                                                   |
+        | kmk          kafka   Returns the system time as an EPOC in milliseconds                                                          |
+        | koffset      kafka   Returns the offset at a specific instant-in-time for a given topic                                          |
+        | kpush        kafka   Publishes a message to a topic                                                                              |
+        | krm          kafka   Deletes a topic                                                                                             |
+        | kstats       kafka   Returns the parition details for a given topic                                                              |
+        + -------------------------------------------------------------------------------------------------------------------------------- +
