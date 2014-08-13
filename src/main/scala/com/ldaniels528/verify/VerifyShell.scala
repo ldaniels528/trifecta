@@ -205,8 +205,6 @@ class VerifyShell(rt: VerifyShellRuntime) {
 
     val name = "core"
 
-    override def prompt = history.size.toString
-
     val getCommands: Seq[Command] = Seq(
       Command(this, "!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
       Command(this, "?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
@@ -220,6 +218,8 @@ class VerifyShell(rt: VerifyShellRuntime) {
       Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
       Command(this, "use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"),
       Command(this, "version", version, help = "Returns the Verify application version"))
+
+    override def prompt = history.size.toString
 
     override def shutdown() = ()
 
