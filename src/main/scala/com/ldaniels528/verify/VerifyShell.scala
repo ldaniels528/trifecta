@@ -182,17 +182,17 @@ class VerifyShell(rt: VerifyShellRuntime) {
     override def prompt = history.size.toString
 
     val getCommands: Seq[Command] = Seq(
-      Command("!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
-      Command("?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
-      Command("charset", charSet, (Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
-      Command("class", inspectClass, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
-      Command("debug", debug, (Seq.empty, Seq("state")), help = "Switches debugging on/off"),
-      Command("exit", exit, help = "Exits the shell"),
-      Command("help", help, help = "Provides the list of available commands"),
-      Command("history", listHistory, help = "Returns a list of previously issued commands"),
-      Command("modules", listModules, help = "Returns a list of previously issued commands"),
-      Command("resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
-      Command("use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"))
+      Command(this, "!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
+      Command(this, "?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
+      Command(this, "charset", charSet, (Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
+      Command(this, "class", inspectClass, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
+      Command(this, "debug", debug, (Seq.empty, Seq("state")), help = "Switches debugging on/off"),
+      Command(this, "exit", exit, help = "Exits the shell"),
+      Command(this, "help", help, help = "Provides the list of available commands"),
+      Command(this, "history", listHistory, help = "Returns a list of previously issued commands"),
+      Command(this, "modules", listModules, help = "Returns a list of previously issued commands"),
+      Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
+      Command(this, "use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"))
 
     override def shutdown() = ()
 
@@ -239,12 +239,13 @@ class VerifyShell(rt: VerifyShellRuntime) {
      * "help" command - Provides the list of available commands
      */
     def help(args: String*): Seq[String] = {
-      commandSet.toSeq filter {
+      val list = commandSet.toSeq filter {
         case (name, cmd) => args.isEmpty || name.startsWith(args.head)
       } sortBy (_._1) map {
         case (name, cmd) =>
-          f"$name%-10s ${cmd.help}"
+          CommandItem(name, cmd.module.name, cmd.help)
       }
+      tabular.transform(list)
     }
 
     /**
@@ -322,9 +323,11 @@ class VerifyShell(rt: VerifyShellRuntime) {
 
   }
 
+  case class CommandItem(command: String, module: String, description: String)
+
   case class HistoryItem(itemNo: Int, command: String)
 
-  case class ModuleItem(name:String, className:String, status:String)
+  case class ModuleItem(name: String, className: String, status: String)
 
 }
 
