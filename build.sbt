@@ -9,7 +9,7 @@ assemblySettings
 
 name := "verify"
 
-version := "0.1"
+version := "1.0.7"
 
 packageArchetype.java_application
 

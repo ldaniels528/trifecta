@@ -372,7 +372,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
  * @author lawrence.daniels@gmail.com
  */
 object VerifyShell {
-  val VERSION = "1.0.6"
+  val VERSION = "1.0.7"
 
   /**
    * Application entry point
