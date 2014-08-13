@@ -216,7 +216,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
       Command(this, "exit", exit, help = "Exits the shell"),
       Command(this, "help", help, help = "Provides the list of available commands"),
       Command(this, "history", listHistory, help = "Returns a list of previously issued commands"),
-      Command(this, "modules", listModules, help = "Returns a list of previously issued commands"),
+      Command(this, "modules", listModules, help = "Returns a list of configured modules"),
       Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
       Command(this, "use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"))
 
