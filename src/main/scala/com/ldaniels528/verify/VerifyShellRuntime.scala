@@ -25,9 +25,6 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
   var maxHistory = 100
   var historyFile = new File(s"$userHome$separator.verify${separator}history.txt")
 
-  // ZooKeeper current working directory
-  var zkcwd = "/"
-
   // get the ZooKeeper host/port
   val zkEndPoint = EndPoint(zkHost, zkPort)
 
