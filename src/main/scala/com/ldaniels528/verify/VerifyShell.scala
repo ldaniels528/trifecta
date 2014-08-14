@@ -3,6 +3,7 @@ package com.ldaniels528.verify
 import java.io.{ByteArrayOutputStream, PrintStream}
 
 import com.ldaniels528.tabular.Tabular
+import com.ldaniels528.tabular.formatters._
 import com.ldaniels528.verify.io.avro._
 import com.ldaniels528.verify.modules.Module
 import com.ldaniels528.verify.modules.Module.Command
@@ -26,7 +27,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
   private val logger = LoggerFactory.getLogger(getClass)
 
   // define a custom tabular instance
-  private val tabular = new Tabular() with AvroTables
+  private val tabular = new Tabular() with NumberFormatHandler with AvroTables
 
   // redirect standard output and error to my own buffers
   private val out = System.out
