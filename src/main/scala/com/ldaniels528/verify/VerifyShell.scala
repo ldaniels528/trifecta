@@ -27,7 +27,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
   private val logger = LoggerFactory.getLogger(getClass)
 
   // define a custom tabular instance
-  private val tabular = new Tabular() with NumberFormatHandler with AvroTables
+  private val tabular = new Tabular() /*with NumberFormatHandler*/ with AvroTables
 
   // redirect standard output and error to my own buffers
   private val out = System.out
