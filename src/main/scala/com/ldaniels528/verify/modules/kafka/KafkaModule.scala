@@ -42,7 +42,6 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   // the bound commands
   val getCommands = Seq(
     Command(this, "kavrochk", topicAvroVerify, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
-    Command(this, "kavrofields", topicAvroFields, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the fields of an Avro message from a Kafka topic"),
     Command(this, "kbrokers", topicBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
     Command(this, "kcommit", topicCommit, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kcount", topicCount, (Seq("topic", "partition"), Seq.empty), help = "Returns the number of messages available for a given topic"),
@@ -54,6 +53,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     Command(this, "kfetchsize", topicFetchSize, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfirst", topicFirstOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the first offset for a given topic"),
     Command(this, "kget", topicGetMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
+    Command(this, "kgeta", topicGetAvro, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
     Command(this, "kgetsize", topicGetMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetmaxsize", topicGetMaxMessageSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the largest message for the specified range of offsets for a given topic partition"),
     Command(this, "kgetminsize", topicGetMinMessageSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the smallest message for the specified range of offsets for a given topic partition"),
@@ -161,40 +161,6 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     val topicConfig = new java.util.Properties()
 
     new ZkClient(rt.remoteHost) use (AdminUtils.createTopic(_, topic, partitions.toInt, replicas.toInt, topicConfig))
-  }
-
-  /**
-   * "kavrofields" - Returns the fields of an Avro message from a Kafka topic
-   * Example1: kavrofields avro/schema1.avsc topics.ldaniels528.test1 0 58500700
-   * Example2: kavrofields avro/schema2.avsc topics.ldaniels528.test2 9 1799020
-   */
-  def topicAvroFields(args: String*): Seq[String] = {
-    import scala.collection.JavaConverters._
-
-    // get the arguments
-    val Seq(schemaPath, name, partition, _*) = args
-    val offset = extract(args, 3) map (_.toLong)
-    val blockSize = extract(args, 4) map (_.toInt)
-
-    // get the decoder
-    val decoder = getAvroDecoder(schemaPath)
-    var fields: Seq[String] = Seq.empty
-
-    // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
-      _.consume(offset, offset map (_ + 1), blockSize, listener = new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) {
-          decoder.decode(message) match {
-            case Success(record) =>
-              fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
-            case Failure(e) =>
-              out.println("[%04d] %s".format(offset, e.getMessage))
-          }
-        }
-      })
-    }
-
-    fields
   }
 
   /**
@@ -446,6 +412,44 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
+   * "kgeta" - Returns the key-value pairs of an Avro message from a Kafka partition
+   * Example1: kavrofields avro/schema1.avsc topics.ldaniels528.test1 0 58500700
+   * Example2: kavrofields avro/schema2.avsc topics.ldaniels528.test2 9 1799020
+   */
+  def topicGetAvro(args: String*): Seq[AvroData] = {
+    import scala.collection.JavaConverters._
+
+    // get the arguments
+    val Seq(schemaPath, name, partition, _*) = args
+    val offset = extract(args, 3) map (_.toLong)
+    val blockSize = extract(args, 4) map (_.toInt)
+
+    // get the decoder
+    val decoder = getAvroDecoder(schemaPath)
+
+    // perform the action
+    var results: Seq[AvroData] = Nil
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers) use {
+      _.consume(offset, offset map (_ + 1), blockSize, listener = new MessageConsumer {
+        override def consume(offset: Long, message: Array[Byte]) {
+          decoder.decode(message) match {
+            case Success(record) =>
+              val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
+              results = fields map { f =>
+                val v = record.get(f)
+                AvroData(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
+              }
+            case Failure(e) =>
+              out.println("[%04d] %s".format(offset, e.getMessage))
+          }
+        }
+      })
+    }
+
+    results
+  }
+
+  /**
    * "kget" - Returns the message for a given topic partition and offset
    */
   def topicGetMessage(args: String*) {
@@ -630,6 +634,8 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
    */
   private def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
 
+  case class AvroData(field: String, value: Any, `type`: String)
+  
   case class AvroVerification(verified: Int, failed: Int)
 
   case class TopicDetail(name: String, partition: Int, leader: String, version: Int)
