@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.modules.kafka
 
-import java.io.{DataOutputStream, File, FileOutputStream, PrintStream}
+import java.io.{File, PrintStream}
 import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 
