@@ -45,6 +45,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   // the bound commands
   val getCommands = Seq(
     Command(this, "kavrochk", topicAvroVerify, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
+    Command(this, "kchka", topicAvroVerify, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
     Command(this, "kbrokers", topicBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
     Command(this, "kcommit", topicCommit, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kcount", topicCount, (Seq("topic", "partition"), Seq.empty), help = "Returns the number of messages available for a given topic"),
@@ -167,8 +168,8 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
-   * kavrochk - Verifies that a set of messages (specific offset range) can be read by the specified schema
-   * Example: kavrochk avro/schema1.avsc topics.ldaniels528.test1 0 1000 2000
+   * kchka - Verifies that a set of messages (specific offset range) can be read by the specified schema
+   * Example: kchka avro/schema1.avsc topics.ldaniels528.test1 0 1000 2000
    */
   def topicAvroVerify(args: String*): Seq[AvroVerification] = {
     // get the arguments
