@@ -355,7 +355,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
    * "kget" - Returns the message for a given topic partition and offset
    * @example {{{ kget com.shocktrade.alerts 0 45913975 }}}
    */
-  def getMessage(args: String*) {
+  def getMessage(args: String*): Option[Int] = {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
     val fetchSize = extract(args, 3) map (_.toInt) getOrElse rt.defaultFetchSize
@@ -364,7 +364,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     val width1 = columns * 3
     val width2 = columns * 2
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
-      _.fetch(offset.toLong, fetchSize).headOption foreach { m =>
+      _.fetch(offset.toLong, fetchSize).headOption map { m =>
         var index = 0
         val length1 = 1 + Math.log10(m.offset).toInt
         val length2 = 1 + Math.log10(m.message.length).toInt
@@ -373,6 +373,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
           out.println(myFormat.format(m.offset, index, asHexString(bytes), asChars(bytes)))
           index += columns
         }
+        m.message.length
       }
     }
   }
