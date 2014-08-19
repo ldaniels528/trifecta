@@ -656,6 +656,15 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
+   * Returns the byte array as a hex string
+   * @param bytes the byte array
+   * @return a hex string representing the given byte array
+   */
+  private def asHexString(bytes: Array[Byte]): String = {
+    bytes map ("%02x".format(_)) mkString "."
+  }
+
+  /**
    * Converts the given long value into a byte array
    * @param value the given long value
    * @return a byte array
