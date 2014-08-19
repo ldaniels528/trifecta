@@ -9,7 +9,7 @@ import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.io.avro.{AvroDecoder, AvroTables}
 import com.ldaniels528.verify.modules.Module
 import com.ldaniels528.verify.modules.Module.Command
-import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
+import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
 import com.ldaniels528.verify.util.VerifyUtils._
 import com.ldaniels528.verify.{CommandParser, VerifyShellRuntime}
 
@@ -45,56 +45,39 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
 
   // the bound commands
   val getCommands = Seq(
-    Command(this, "kchka", topicAvroVerify, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
-    Command(this, "kcolumns", messageColumns, (Seq.empty, Seq("columns")), help = "Retrieves or sets the column width for message output"),
-    Command(this, "kbrokers", topicBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
-    Command(this, "kcommit", topicCommit, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
-    Command(this, "kcount", topicCount, (Seq("topic", "partition"), Seq.empty), help = "Returns the number of messages available for a given topic"),
-    Command(this, "kdump", topicDumpBinary, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as binary] to the console"),
-    Command(this, "kdumpa", topicDumpAvro, (Seq("schemaPath", "topic", "partition"), Seq("startOffset", "endOffset", "blockSize", "fields")), "Dumps the contents of a specific topic [as Avro] to the console"),
-    Command(this, "kdumpr", topicDumpRaw, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as raw ASCII] to the console"),
-    Command(this, "kdumpf", topicDumpToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Dumps the contents of a specific topic to a file"),
-    Command(this, "kfetch", topicFetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
-    Command(this, "kfetchsize", topicFetchSize, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
-    Command(this, "kfirst", topicFirstOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the first offset for a given topic"),
-    Command(this, "kget", topicGetMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
-    Command(this, "kgeta", topicGetAvro, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
-    Command(this, "kgetsize", topicGetMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
-    Command(this, "kgetmaxsize", topicGetMaxMessageSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the largest message for the specified range of offsets for a given topic partition"),
-    Command(this, "kgetminsize", topicGetMinMessageSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the smallest message for the specified range of offsets for a given topic partition"),
-    Command(this, "kimport", topicImport, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports data into a new/existing topic"),
-    Command(this, "klast", topicLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
-    Command(this, "kls", topicList, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
-    Command(this, "kmk", topicMake, (Seq("topic", "partitions", "replicas"), Seq.empty), "Returns the system time as an EPOC in milliseconds"),
-    Command(this, "koffset", topicOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
-    Command(this, "kpush", topicPublish, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
-    Command(this, "krm", topicDelete, (Seq("topic"), Seq.empty), "Deletes a topic"),
-    Command(this, "kstats", topicStats, (Seq("topic", "beginPartition", "endPartition"), Seq.empty), help = "Returns the parition details for a given topic"))
+    Command(this, "kchka", verifyTopicAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
+    Command(this, "kcolumns", messageColumnsGetOrSet, (Seq.empty, Seq("columns")), help = "Retrieves or sets the column width for message output"),
+    Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
+    Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
+    Command(this, "kcount", countMessages, (Seq("topic", "partition"), Seq.empty), help = "Returns the number of messages available for a given topic"),
+    Command(this, "kdump", dumpBinary, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as binary] to the console"),
+    Command(this, "kdumpa", dumpAvro, (Seq("schemaPath", "topic", "partition"), Seq("startOffset", "endOffset", "blockSize", "fields")), "Dumps the contents of a specific topic [as Avro] to the console"),
+    Command(this, "kdumpr", dumpRaw, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as raw ASCII] to the console"),
+    Command(this, "kdumpf", dumpToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Dumps the contents of a specific topic to a file"),
+    Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
+    Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
+    Command(this, "kfirst", getFirstOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the first offset for a given topic"),
+    Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
+    Command(this, "kgeta", getMessageAvro, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
+    Command(this, "kgetsize", getMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
+    Command(this, "kgetmaxsize", getMessageMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the largest message for the specified range of offsets for a given topic partition"),
+    Command(this, "kgetminsize", getMessageMinSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the smallest message for the specified range of offsets for a given topic partition"),
+    Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports data into a new/existing topic"),
+    Command(this, "klast", getLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
+    Command(this, "kls", listTopics, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
+    Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Returns the system time as an EPOC in milliseconds"),
+    Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
+    Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
+    Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic"),
+    Command(this, "kstats", getStatistics, (Seq("topic", "beginPartition", "endPartition"), Seq.empty), help = "Returns the parition details for a given topic"))
 
   override def shutdown() = ()
 
   /**
-   * "kcolumns" - Retrieves or sets the column width for message output
-   * @example {{{
-   *               kcolumns 30
-   *          }}}
-   */
-  def messageColumns(args: String*): Any = {
-    args.headOption match {
-      case Some(arg) => columns = arg.toInt
-      case None => columns
-    }
-  }
-
-  /**
-   * "kbrokers" - Retrieves the list of Kafka brokers
-   */
-  def topicBrokers(args: String*) = KafkaSubscriber.getBrokerList(zk)
-
-  /**
    * "kcommit" - Commits the offset for a given topic and group ID
+   * @example {{{ kcommit com.shocktrade.alerts 0 devc0 123678 }}}
    */
-  def topicCommit(args: String*): Option[Short] = {
+  def commitOffset(args: String*): Option[Short] = {
     // get the arguments
     val Seq(name, partition, groupId, offset, _*) = args
     val metadata = extract(args, 4) getOrElse ""
@@ -106,72 +89,21 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   /**
    * "kcount" - Returns the number of available messages for a given topic
    */
-  def topicCount(args: String*): Option[Long] = {
+  def countMessages(args: String*): Option[Long] = {
     // get the arguments
     val Seq(name, partition, _*) = args
 
     // determine the difference between the first and last offsets
     for {
-      first <- topicFirstOffset(name, partition)
-      last <- topicLastOffset(name, partition)
+      first <- getFirstOffset(name, partition)
+      last <- getLastOffset(name, partition)
     } yield last - first
-  }
-
-  /**
-   * "kfetchsize" - Retrieves or sets the default fetch size for all Kafka queries
-   * @param args the given command line arguments
-   * @return
-   */
-  def topicFetchSize(args: String*) = {
-    args.headOption match {
-      case Some(fetchSize) => rt.defaultFetchSize = fetchSize.toInt
-      case None => rt.defaultFetchSize
-    }
-  }
-
-  /**
-   * "krm" - Deletes a new topic
-   */
-  def topicDelete(args: String*) {
-    import _root_.kafka.admin.AdminUtils
-    import org.I0Itec.zkclient.ZkClient
-
-    val Seq(topic, _*) = args
-
-    new ZkClient(rt.remoteHost) use (AdminUtils.deleteTopic(_, topic))
-  }
-
-  /**
-   * "kdump" - Dumps the contents of a specific topic to the console [as binary]
-   * Example: kdump topics.ldaniels528.test1 0 58500700 58500724
-   */
-  def topicDumpBinary(args: String*): Long = {
-    // convert the tokens into a parameter list
-    val params = CommandParser.parseArgs(args)
-
-    // get the arguments
-    val Seq(name, partition, _*) = args
-    val startOffset = extract(args, 2) map (_.toLong)
-    val endOffset = extract(args, 3) map (_.toLong)
-    val blockSize = extract(args, 4) map (_.toInt)
-    //val outputFile = params.
-
-    // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
-      _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) {
-          message.sliding(40, 40) foreach { bytes =>
-            out.println("[%04d] %-80s %-40s".format(offset, asHexString(bytes), asChars(bytes)))
-          }
-        }
-      })
-    }
   }
 
   /**
    * "kmk" - Creates a new topic
    */
-  def topicMake(args: String*) {
+  def createTopic(args: String*) {
     import _root_.kafka.admin.AdminUtils
     import org.I0Itec.zkclient.ZkClient
 
@@ -182,60 +114,23 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
-   * kchka - Verifies that a set of messages (specific offset range) can be read by the specified schema
-   * Example: kchka avro/schema1.avsc topics.ldaniels528.test1 0 1000 2000
+   * "krm" - Deletes a new topic
    */
-  def topicAvroVerify(args: String*): Seq[AvroVerification] = {
-    // get the arguments
-    val Seq(schemaPath, name, partition, startOffset, endOffset, _*) = args
-    val batchSize = extract(args, 5) map (_.toInt) getOrElse 10
-    val blockSize = extract(args, 6) map (_.toInt) getOrElse 8192
+  def deleteTopic(args: String*) {
+    import _root_.kafka.admin.AdminUtils
+    import org.I0Itec.zkclient.ZkClient
 
-    // get the decoder
-    val decoder = getAvroDecoder(schemaPath)
+    val Seq(topic, _*) = args
 
-    // check all records within the range
-    var verified = 0
-    var errors = 0
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use { subscriber =>
-      (startOffset.toLong to endOffset.toLong).sliding(batchSize, batchSize) foreach { offsets =>
-        Try(subscriber.fetch(offsets, blockSize)) match {
-          case Success(messages) =>
-            messages foreach { m =>
-              Try(decoder.decode(m.message)) match {
-                case Success(_) => verified += 1
-                case Failure(e) =>
-                  out.println("[%04d] %s".format(m.offset, e.getMessage))
-                  errors += 1
-              }
-            }
-          case Failure(e) =>
-            out.println(s"!!! %s between offsets %d and %d".format(e.getMessage, offsets.min, offsets.max))
-        }
-      }
-    }
-
-    Seq(AvroVerification(verified, errors))
-  }
-
-  private def getAvroDecoder(schemaPath: String): AvroDecoder = {
-    // ensure the file exists
-    val schemaFile = new File(schemaPath)
-    if (!schemaFile.exists()) {
-      throw new IllegalStateException(s"Schema file '${schemaFile.getAbsolutePath}' not found")
-    }
-
-    // retrieve the schema as a string
-    val schemaString = Source.fromFile(schemaFile).getLines() mkString "\n"
-    new AvroDecoder(schemaString)
+    new ZkClient(rt.remoteHost) use (AdminUtils.deleteTopic(_, topic))
   }
 
   /**
    * "kdumpa" - Dumps the contents of a specific topic to the console [as AVRO]
-   * Example1: kdumpa avro/schema1.avsc topics.ldaniels528.test1 0 58500700 58500724
-   * Example2: kdumpa avro/schema2.avsc topics.ldaniels528.test2 9 1799020 1799029 1024 field1+field2+field3+field4
+   * @example {{{ kdumpa avro/schema1.avsc com.shocktrade.alerts 0 58500700 58500724 }}}
+   * @example {{{ kdumpa avro/schema2.avsc com.shocktrade.alerts 9 1799020 1799029 1024 field1+field2+field3+field4 }}}
    */
-  def topicDumpAvro(args: String*): Long = {
+  def dumpAvro(args: String*): Long = {
     import org.apache.avro.generic.GenericRecord
 
     // get the arguments
@@ -271,9 +166,36 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
+   * "kdump" - Dumps the contents of a specific topic to the console [as binary]
+   * @example {{{ kdump com.shocktrade.alerts 0 58500700 58500724 }}}
+   */
+  def dumpBinary(args: String*): Long = {
+    // convert the tokens into a parameter list
+    val params = CommandParser.parseArgs(args)
+
+    // get the arguments
+    val Seq(name, partition, _*) = args
+    val startOffset = extract(args, 2) map (_.toLong)
+    val endOffset = extract(args, 3) map (_.toLong)
+    val blockSize = extract(args, 4) map (_.toInt)
+    //val outputFile = params.
+
+    // perform the action
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
+      _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
+        override def consume(offset: Long, message: Array[Byte]) {
+          message.sliding(40, 40) foreach { bytes =>
+            out.println("[%04d] %-80s %-40s".format(offset, asHexString(bytes), asChars(bytes)))
+          }
+        }
+      })
+    }
+  }
+
+  /**
    * "kdumpr" - Dumps the contents of a specific topic to the console [as raw ASCII]
    */
-  def topicDumpRaw(args: String*): Long = {
+  def dumpRaw(args: String*): Long = {
     // get the arguments
     val Seq(name, partition, _*) = args
     val startOffset = extract(args, 2) map (_.toLong)
@@ -293,7 +215,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   /**
    * "kdumpf" - Dumps the contents of a specific topic to a file
    */
-  def topicDumpToFile(args: String*): Long = {
+  def dumpToFile(args: String*): Long = {
     // get the arguments
     val Seq(file, name, partition, _*) = args
     val startOffset = extract(args, 3) map (_.toLong)
@@ -318,83 +240,11 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     count
   }
 
-  def topicFindMessage(subscriber: KafkaSubscriber, startOffset: Long, endOffset: Long, fetchSize: Int): Option[MessageData] = {
-    // search for the message key
-    (startOffset to endOffset).sliding(10, 10) foreach { offsets =>
-      subscriber.fetch(offsets, fetchSize) foreach { m =>
-
-      }
-    }
-    None
-  }
-
-  def topicImport(args: String*) = {
-    // get the arguments
-    val Seq(topic, fileType, rawFilePath, _*) = args
-
-    // expand the file path
-    val filePath = expandPath(rawFilePath)
-
-    KafkaPublisher(brokers) use { publisher =>
-      publisher.open()
-
-      // process based on file type
-      fileType.toLowerCase match {
-        // import text file
-        case "text" =>
-          topicImportTextFile(publisher, topic, filePath)
-        case "avro" =>
-          topicImportAvroFile(publisher, filePath)
-        case unknown =>
-          throw new IllegalArgumentException(s"Unrecognized file type '$unknown'")
-      }
-    }
-  }
-
-  private def topicImportTextFile(publisher: KafkaPublisher, topic: String, filePath: String) {
-    import scala.io.Source
-
-    Source.fromFile(filePath).getLines() foreach { message =>
-      publisher.publish(topic, toBytes(System.currentTimeMillis()), message.getBytes(rt.encoding))
-    }
-  }
-
-  private def topicImportAvroFile(publisher: KafkaPublisher, filePath: String) {
-    import org.apache.avro.file.DataFileReader
-    import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
-
-    val reader = new DataFileReader[GenericRecord](new File(filePath), new GenericDatumReader[GenericRecord]())
-    while (reader.hasNext) {
-      val record = reader.next()
-      (Option(record.get("topic")) map (_.toString)).foreach { case topic =>
-        for {
-          partition <- Option(record.get("partition"))
-          offset <- Option(record.get("offset")) map (v => toBytes(v.asInstanceOf[Long]))
-          buf <- Option(record.get("message")) map (_.asInstanceOf[java.nio.Buffer])
-          message = buf.array().asInstanceOf[Array[Byte]]
-        } {
-          publisher.publish(topic, offset, message)
-        }
-      }
-    }
-  }
-
-  /**
-   * "kls" - Lists all existing topicList
-   */
-  def topicList(args: String*): Seq[TopicDetail] = {
-    val prefix = args.headOption
-
-    KafkaSubscriber.listTopics(zk, brokers, correlationId) flatMap { t =>
-      val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size)
-      if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(detail) else None
-    }
-  }
-
   /**
    * "kfetch" - Returns the offsets for a given topic and group ID
+   * @example {{{ kfetch com.shocktrade.alerts 0 devc  }}}
    */
-  def topicFetchOffsets(args: String*): Option[Long] = {
+  def fetchOffsets(args: String*): Option[Long] = {
     // get the arguments
     val Seq(name, partition, groupId, _*) = args
 
@@ -403,9 +253,21 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
+   * "kfetchsize" - Retrieves or sets the default fetch size for all Kafka queries
+   * @param args the given command line arguments
+   * @return
+   */
+  def fetchSizeGetOrSet(args: String*) = {
+    args.headOption match {
+      case Some(fetchSize) => rt.defaultFetchSize = fetchSize.toInt
+      case None => rt.defaultFetchSize
+    }
+  }
+
+  /**
    * "kfind" - Returns the message for a given topic partition by its message ID
    */
-  def topicFindMessage(args: String*) = {
+  def findMessage(args: String*): Option[MessageData] = {
     // get the arguments
     val Seq(name, partition, messageID, _*) = args
     val fetchSize = extract(args, 3) map (_.toInt) getOrElse 8192
@@ -430,11 +292,33 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
-   * "kgeta" - Returns the key-value pairs of an Avro message from a Kafka partition
-   * Example1: kavrofields avro/schema1.avsc topics.ldaniels528.test1 0 58500700
-   * Example2: kavrofields avro/schema2.avsc topics.ldaniels528.test2 9 1799020
+   * "kfirst" - Returns the first offset for a given topic
    */
-  def topicGetAvro(args: String*): Seq[AvroData] = {
+  def getFirstOffset(args: String*): Option[Long] = {
+    // get the arguments
+    val Seq(name, partition, _*) = args
+
+    // perform the action
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use (_.getFirstOffset)
+  }
+
+  /**
+   * "klast" - Returns the last offset for a given topic
+   */
+  def getLastOffset(args: String*): Option[Long] = {
+    // get the arguments
+    val Seq(name, partition, _*) = args
+
+    // perform the action
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use (_.getLastOffset)
+  }
+
+  /**
+   * "kgeta" - Returns the key-value pairs of an Avro message from a Kafka partition
+   * @example {{{ kavrofields avro/schema1.avsc com.shocktrade.alerts 0 58500700 }}}
+   * @example {{{ kavrofields avro/schema2.avsc com.shocktrade.alerts 9 1799020 }}}
+   */
+  def getMessageAvro(args: String*): Seq[AvroData] = {
     import scala.collection.JavaConverters._
 
     // get the arguments
@@ -469,11 +353,9 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
 
   /**
    * "kget" - Returns the message for a given topic partition and offset
-   * @example {{{
-   *  kget com.shocktrade.alerts  0 45913975
-   * }}}
+   * @example {{{ kget com.shocktrade.alerts 0 45913975 }}}
    */
-  def topicGetMessage(args: String*) {
+  def getMessage(args: String*) {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
     val fetchSize = extract(args, 3) map (_.toInt) getOrElse rt.defaultFetchSize
@@ -497,8 +379,9 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
 
   /**
    * "kgetsize" - Returns the size of the message for a given topic partition and offset
+   * @example {{{ kgetsize com.shocktrade.alerts 0 45913975 }}}
    */
-  def topicGetMessageSize(args: String*): Option[Int] = {
+  def getMessageSize(args: String*): Option[Int] = {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
     val fetchSize = extract(args, 3) map (_.toInt) getOrElse rt.defaultFetchSize
@@ -511,8 +394,9 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
 
   /**
    * "kgetmaxsize" - Returns the largest message size for a given topic partition and offset range
+   * @example {{{ kgetmaxsize com.shocktrade.alerts 0 45913900 45913975 }}}
    */
-  def topicGetMaxMessageSize(args: String*): Int = {
+  def getMessageMaxSize(args: String*): Int = {
     // get the arguments
     val Seq(name, partition, startOffset, endOffset, _*) = args
     val fetchSize = extract(args, 4) map (_.toInt) getOrElse rt.defaultFetchSize
@@ -526,8 +410,9 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
 
   /**
    * "kgetminsize" - Returns the smallest message size for a given topic partition and offset range
+   * @example {{{ kgetminsize com.shocktrade.alerts 0 45913900 45913975 }}}
    */
-  def topicGetMinMessageSize(args: String*): Int = {
+  def getMessageMinSize(args: String*): Int = {
     // get the arguments
     val Seq(name, partition, startOffset, endOffset, _*) = args
     val fetchSize = extract(args, 4) map (_.toInt) getOrElse rt.defaultFetchSize
@@ -540,32 +425,10 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
-   * "kfirst" - Returns the first offset for a given topic
-   */
-  def topicFirstOffset(args: String*): Option[Long] = {
-    // get the arguments
-    val Seq(name, partition, _*) = args
-
-    // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use (_.getFirstOffset)
-  }
-
-  /**
-   * "klast" - Returns the last offset for a given topic
-   */
-  def topicLastOffset(args: String*): Option[Long] = {
-    // get the arguments
-    val Seq(name, partition, _*) = args
-
-    // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use (_.getLastOffset)
-  }
-
-  /**
    * "koffset" - Returns the offset at a specific instant-in-time for a given topic
    * Example: koffset flights 0 2014-05-14T14:30:11
    */
-  def topicOffset(args: String*): Option[Long] = {
+  def getOffset(args: String*): Option[Long] = {
     // get the arguments
     val Seq(name, partition, _*) = args
     val sysTimeMillis = extract(args, 2) map (sdf.parse(_).getTime) getOrElse -1L
@@ -575,9 +438,103 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
+   * "kstats" - Returns the number of available messages for a given topic
+   */
+  def getStatistics(args: String*): Seq[TopicOffsets] = {
+    // get the arguments
+    val Seq(name, beginPartition, endPartition, _*) = args
+
+    // determine the difference between the first and last offsets
+    for {
+      partition <- beginPartition.toInt to endPartition.toInt
+      first <- getFirstOffset(name, partition.toString)
+      last <- getLastOffset(name, partition.toString)
+    } yield TopicOffsets(name, partition, first, last, last - first)
+  }
+
+  def importMessages(args: String*) = {
+    // get the arguments
+    val Seq(topic, fileType, rawFilePath, _*) = args
+
+    // expand the file path
+    val filePath = expandPath(rawFilePath)
+
+    KafkaPublisher(brokers) use { publisher =>
+      publisher.open()
+
+      // process based on file type
+      fileType.toLowerCase match {
+        // import text file
+        case "text" =>
+          importTextFile(publisher, topic, filePath)
+        case "avro" =>
+          importAvroFile(publisher, filePath)
+        case unknown =>
+          throw new IllegalArgumentException(s"Unrecognized file type '$unknown'")
+      }
+    }
+  }
+
+  private def importAvroFile(publisher: KafkaPublisher, filePath: String) {
+    import org.apache.avro.file.DataFileReader
+    import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
+
+    val reader = new DataFileReader[GenericRecord](new File(filePath), new GenericDatumReader[GenericRecord]())
+    while (reader.hasNext) {
+      val record = reader.next()
+      (Option(record.get("topic")) map (_.toString)).foreach { case topic =>
+        for {
+          partition <- Option(record.get("partition"))
+          offset <- Option(record.get("offset")) map (v => toBytes(v.asInstanceOf[Long]))
+          buf <- Option(record.get("message")) map (_.asInstanceOf[java.nio.Buffer])
+          message = buf.array().asInstanceOf[Array[Byte]]
+        } {
+          publisher.publish(topic, offset, message)
+        }
+      }
+    }
+  }
+
+  private def importTextFile(publisher: KafkaPublisher, topic: String, filePath: String) {
+    import scala.io.Source
+
+    Source.fromFile(filePath).getLines() foreach { message =>
+      publisher.publish(topic, toBytes(System.currentTimeMillis()), message.getBytes(rt.encoding))
+    }
+  }
+
+  /**
+   * "kbrokers" - Retrieves the list of Kafka brokers
+   */
+  def listBrokers(args: String*): Seq[BrokerDetails] = KafkaSubscriber.getBrokerList(zk)
+
+  /**
+   * "kls" - Lists all existing topicList
+   */
+  def listTopics(args: String*): Seq[TopicDetail] = {
+    val prefix = args.headOption
+
+    KafkaSubscriber.listTopics(zk, brokers, correlationId) flatMap { t =>
+      val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size)
+      if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(detail) else None
+    }
+  }
+
+  /**
+   * "kcolumns" - Retrieves or sets the column width for message output
+   * @example {{{ kcolumns 30 }}}
+   */
+  def messageColumnsGetOrSet(args: String*): Any = {
+    args.headOption match {
+      case Some(arg) => columns = arg.toInt
+      case None => columns
+    }
+  }
+
+  /**
    * "kpush" - Returns the EOF offset for a given topic
    */
-  def topicPublish(args: String*): Unit = {
+  def publishMessage(args: String*): Unit = {
     // get the arguments
     val Seq(name, key, _*) = args
 
@@ -593,24 +550,46 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
-   * "kstats" - Returns the number of available messages for a given topic
+   * kchka - Verifies that a set of messages (specific offset range) can be read by the specified schema
+   * @example {{{ kchka avro/schema1.avsc com.shocktrade.alerts 0 1000 2000 }}}
    */
-  def topicStats(args: String*): Seq[TopicOffsets] = {
+  def verifyTopicAvro(args: String*): Seq[AvroVerification] = {
     // get the arguments
-    val Seq(name, beginPartition, endPartition, _*) = args
+    val Seq(schemaPath, name, partition, startOffset, endOffset, _*) = args
+    val batchSize = extract(args, 5) map (_.toInt) getOrElse 10
+    val blockSize = extract(args, 6) map (_.toInt) getOrElse 8192
 
-    // determine the difference between the first and last offsets
-    for {
-      partition <- beginPartition.toInt to endPartition.toInt
-      first <- topicFirstOffset(name, partition.toString)
-      last <- topicLastOffset(name, partition.toString)
-    } yield TopicOffsets(name, partition, first, last, last - first)
+    // get the decoder
+    val decoder = getAvroDecoder(schemaPath)
+
+    // check all records within the range
+    var verified = 0
+    var errors = 0
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use { subscriber =>
+      (startOffset.toLong to endOffset.toLong).sliding(batchSize, batchSize) foreach { offsets =>
+        Try(subscriber.fetch(offsets, blockSize)) match {
+          case Success(messages) =>
+            messages foreach { m =>
+              Try(decoder.decode(m.message)) match {
+                case Success(_) => verified += 1
+                case Failure(e) =>
+                  out.println("[%04d] %s".format(m.offset, e.getMessage))
+                  errors += 1
+              }
+            }
+          case Failure(e) =>
+            out.println(s"!!! %s between offsets %d and %d".format(e.getMessage, offsets.min, offsets.max))
+        }
+      }
+    }
+
+    Seq(AvroVerification(verified, errors))
   }
 
   /**
    * "kwatch" - Subscribes to a specific topic
    */
-  def topicWatch(args: String*): Long = {
+  def watchTopic(args: String*): Long = {
     // get the arguments
     val Seq(name, partition, _*) = args
     val duration = (extract(args, 2) map (_.toInt) getOrElse 60).seconds
@@ -630,9 +609,9 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   }
 
   /**
-   * "kwatchgroup" - Subscribes to a specific topic
+   * "kwatchgroup" - Subscribes to a specific topic using a consumer group ID
    */
-  def topicWatchGroup(args: String*): Long = {
+  def watchTopicWithConsumerGroup(args: String*): Long = {
     // get the arguments
     val Seq(name, partition, groupId, _*) = args
     val duration = (extract(args, 3) map (_.toInt) getOrElse 60).seconds
@@ -651,6 +630,11 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     count
   }
 
+  /**
+   * Returns the ASCII array as a character string
+   * @param bytes the byte array
+   * @return a character string representing the given byte array
+   */
   private def asChars(bytes: Array[Byte]): String = {
     String.valueOf(bytes map (b => if (b >= 32 && b <= 126) b.toChar else '.'))
   }
@@ -664,6 +648,18 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     bytes map ("%02x".format(_)) mkString "."
   }
 
+  private def getAvroDecoder(schemaPath: String): AvroDecoder = {
+    // ensure the file exists
+    val schemaFile = new File(schemaPath)
+    if (!schemaFile.exists()) {
+      throw new IllegalStateException(s"Schema file '${schemaFile.getAbsolutePath}' not found")
+    }
+
+    // retrieve the schema as a string
+    val schemaString = Source.fromFile(schemaFile).getLines() mkString "\n"
+    new AvroDecoder(schemaString)
+  }
+  
   /**
    * Converts the given long value into a byte array
    * @param value the given long value
@@ -672,7 +668,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   private def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
 
   case class AvroData(field: String, value: Any, `type`: String)
-  
+
   case class AvroVerification(verified: Int, failed: Int)
 
   case class TopicDetail(name: String, partition: Int, leader: String, version: Int)
