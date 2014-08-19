@@ -469,6 +469,9 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
 
   /**
    * "kget" - Returns the message for a given topic partition and offset
+   * @example {{{
+   *           kget com.shocktrade.alerts  0 45913975
+   *          }}}
    */
   def topicGetMessage(args: String*) {
     // get the arguments
