@@ -318,7 +318,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
    * @example {{{ kavrofields avro/schema1.avsc com.shocktrade.alerts 0 58500700 }}}
    * @example {{{ kavrofields avro/schema2.avsc com.shocktrade.alerts 9 1799020 }}}
    */
-  def getMessageAvro(args: String*): Seq[AvroData] = {
+  def getMessageAvro(args: String*): Seq[AvroRecord] = {
     import scala.collection.JavaConverters._
 
     // get the arguments
@@ -330,7 +330,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     val decoder = getAvroDecoder(schemaPath)
 
     // perform the action
-    var results: Seq[AvroData] = Nil
+    var results: Seq[AvroRecord] = Nil
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
       _.consume(offset, offset map (_ + 1), blockSize, listener = new MessageConsumer {
         override def consume(offset: Long, message: Array[Byte]) {
@@ -339,7 +339,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
               val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
               results = fields map { f =>
                 val v = record.get(f)
-                AvroData(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
+                AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
               }
             case Failure(e) =>
               out.println("[%04d] %s".format(offset, e.getMessage))
@@ -710,7 +710,7 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
    */
   private def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
 
-  case class AvroData(field: String, value: Any, `type`: String)
+  case class AvroRecord(field: String, value: Any, `type`: String)
 
   case class AvroVerification(verified: Int, failed: Int)
 
