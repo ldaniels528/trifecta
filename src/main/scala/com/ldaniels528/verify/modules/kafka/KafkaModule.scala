@@ -45,9 +45,9 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
 
   // the bound commands
   val getCommands = Seq(
+    Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
     Command(this, "kchka", verifyTopicAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
     Command(this, "kcolumns", messageColumnsGetOrSet, (Seq.empty, Seq("columns")), help = "Retrieves or sets the column width for message output"),
-    Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kcount", countMessages, (Seq("topic", "partition"), Seq.empty), help = "Returns the number of messages available for a given topic"),
     Command(this, "kdump", dumpBinary, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as binary] to the console"),
