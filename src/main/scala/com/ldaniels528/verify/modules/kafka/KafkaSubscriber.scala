@@ -404,7 +404,7 @@ object KafkaSubscriber {
    * @param nextOffset the next available offset
    * @param message the message
    */
-  case class MessageData(offset: Long, nextOffset: Long, message: Array[Byte])
+  case class MessageData(offset: Long, nextOffset: Long, lastOffset: Long, message: Array[Byte])
 
   /**
    * Represents the details for a Kafka topic
