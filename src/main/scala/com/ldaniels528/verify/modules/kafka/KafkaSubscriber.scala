@@ -16,12 +16,12 @@ import scala.util.{Failure, Success, Try}
  * Kafka Subscriber
  * @author lawrence.daniels@gmail.com
  */
-class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
+class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int) {
   // generate the client ID
   private val clientID = s"Client_${topic.name}_${topic.partition}_${System.currentTimeMillis()}"
 
   // get the leader, meta data and replica brokers
-  private val (leader, metadata, replicas) = getLeaderPartitionMetaDataAndReplicas(topic, seedBrokers)
+  private val (leader, metadata, replicas) = getLeaderPartitionMetaDataAndReplicas(topic, seedBrokers, correlationId)
     .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for $topic"))
 
   // get the initial broker (topic leader)
@@ -61,7 +61,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
             case _ =>
               logger.warn(s"consume: Unhandled error code ${e.code}-${ERROR_CODES.getOrElse(e.code, "UNKNOWN")}... Reconnecting...")
               consumer.close()
-              broker = findNewLeader(broker)
+              broker = findNewLeader(broker, correlationId)
                 .getOrElse(throw new IllegalStateException("Unable to find new leader after Broker failure."))
           }
         case Failure(e) =>
@@ -188,9 +188,9 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker]) {
     bytes
   }
 
-  private def findNewLeader(oldLeader: Broker): Option[Broker] = {
+  private def findNewLeader(oldLeader: Broker, correlationId: Int): Option[Broker] = {
     def f() = for {
-      (leader, metadata, replicas) <- getLeaderPartitionMetaDataAndReplicas(topic, replicas)
+      (leader, metadata, replicas) <- getLeaderPartitionMetaDataAndReplicas(topic, replicas, correlationId)
     } yield leader
     untilTimeout(5.seconds, 1.second, f)
   }
@@ -220,7 +220,6 @@ object KafkaSubscriber {
   private val logger = org.slf4j.LoggerFactory.getLogger(getClass)
 
   // setup defaults
-  private val correlationId = 1
   private val DEFAULT_FETCH_SIZE = 1024
 
   // define a date parser
@@ -245,12 +244,12 @@ object KafkaSubscriber {
   /**
    * Returns the list of topics for the given brokers
    */
-  def listTopics(zk: ZKProxy, brokers: Seq[Broker]): Seq[TopicDetails] = {
+  def listTopics(zk: ZKProxy, brokers: Seq[Broker], correlationId: Int): Seq[TopicDetails] = {
     // get the list of topics
     val topics = zk.getChildren("/brokers/topics", watch = false)
 
     // capture the meta data for all topics
-    getTopicMetadata(brokers(0), topics) flatMap { tmd =>
+    getTopicMetadata(brokers(0), topics, correlationId) flatMap { tmd =>
       // check for errors
       if (tmd.errorCode != 0) throw new KafkaFetchException(tmd.errorCode)
 
@@ -272,9 +271,9 @@ object KafkaSubscriber {
   /**
    * Watches a topic starting at the given offset
    */
-  def watch(topic: Topic, brokers: Seq[Broker], startingOffset: Option[Long], duration: FiniteDuration, consumer: MessageConsumer): Option[Long] = {
+  def watch(topic: Topic, brokers: Seq[Broker], startingOffset: Option[Long], duration: FiniteDuration, correlationId: Int, consumer: MessageConsumer): Option[Long] = {
     // create the subscriber
-    new KafkaSubscriber(topic, brokers) use { subscriber =>
+    new KafkaSubscriber(topic, brokers, correlationId) use { subscriber =>
       // compute the time-out
       val timeout = System.currentTimeMillis() + duration.toMillis
 
@@ -302,9 +301,9 @@ object KafkaSubscriber {
   /**
    * Watches a topic starting at the offset for the given consumer group
    */
-  def watchGroup(topic: Topic, brokers: Seq[Broker], groupId: String, duration: FiniteDuration, consumer: MessageConsumer): Option[Long] = {
+  def watchGroup(topic: Topic, brokers: Seq[Broker], groupId: String, duration: FiniteDuration, correlationId: Int,  consumer: MessageConsumer): Option[Long] = {
     // create the subscriber
-    new KafkaSubscriber(topic, brokers) use { subscriber =>
+    new KafkaSubscriber(topic, brokers, correlationId) use { subscriber =>
       // compute the time-out
       val timeout = System.currentTimeMillis() + duration.toMillis
 
@@ -345,9 +344,9 @@ object KafkaSubscriber {
   /**
    * Retrieves the partition meta data and replicas for the lead broker
    */
-  private def getLeaderPartitionMetaDataAndReplicas(topic: Topic, brokers: Seq[Broker]): Option[(Broker, PartitionMetadata, Seq[Broker])] = {
+  private def getLeaderPartitionMetaDataAndReplicas(topic: Topic, brokers: Seq[Broker], correlationId: Int): Option[(Broker, PartitionMetadata, Seq[Broker])] = {
     for {
-      pmd <- brokers.foldLeft[Option[PartitionMetadata]](None)((result, broker) => result ?? getPartitionMetadata(broker, topic))
+      pmd <- brokers.foldLeft[Option[PartitionMetadata]](None)((result, broker) => result ?? getPartitionMetadata(broker, topic, correlationId))
       leader <- pmd.leader map (r => Broker(r.host, r.port))
       replicas = pmd.replicas map (r => Broker(r.host, r.port))
     } yield (leader, pmd, replicas)
@@ -356,7 +355,7 @@ object KafkaSubscriber {
   /**
    * Retrieves the partition meta data for the given broker
    */
-  private def getPartitionMetadata(broker: Broker, topic: Topic): Option[PartitionMetadata] = {
+  private def getPartitionMetadata(broker: Broker, topic: Topic, correlationId: Int): Option[PartitionMetadata] = {
     connect(broker, s"pmdLookup_${System.currentTimeMillis()}") use { consumer =>
       Try {
         // submit the request and retrieve the response
@@ -379,7 +378,7 @@ object KafkaSubscriber {
   /**
    * Retrieves the partition meta data for the given broker
    */
-  private def getTopicMetadata(broker: Broker, topics: Seq[String]): Seq[TopicMetadata] = {
+  private def getTopicMetadata(broker: Broker, topics: Seq[String], correlationId: Int): Seq[TopicMetadata] = {
     connect(broker, s"tmdLookup_${System.currentTimeMillis()}") use { consumer =>
       Try {
         // submit the request and retrieve the response
