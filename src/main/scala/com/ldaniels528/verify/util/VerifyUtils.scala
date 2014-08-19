@@ -11,15 +11,6 @@ import scala.util.{Failure, Success, Try}
 object VerifyUtils {
 
   /**
-   * Returns the byte array as a hex string
-   * @param bytes the byte array
-   * @return a hex string representing the given byte array
-   */
-  def asHexString(bytes: Array[Byte]): String = {
-    bytes map ("%02x".format(_)) mkString ""
-  }
-
-  /**
    * Indicates whether the string is blank (null or empty or whitespace)
    */
   def isBlank(s: String) = (s == null) || (s.trim.length == 0)
