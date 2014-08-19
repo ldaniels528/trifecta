@@ -452,7 +452,11 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     } yield TopicOffsets(name, partition, first, last, last - first)
   }
 
-  def importMessages(args: String*) = {
+  /**
+   * "kimport" - Imports a message into a new/existing topic
+   * @example {{{ kimport com.shocktrade.alerts -text messages/mymessage.txt }}}
+   */
+  def importMessages(args: String*): Int = {
     // get the arguments
     val Seq(topic, fileType, rawFilePath, _*) = args
 
@@ -462,23 +466,30 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     KafkaPublisher(brokers) use { publisher =>
       publisher.open()
 
-      // process based on file type
+      // import the messages based on file type
       fileType.toLowerCase match {
-        // import text file
-        case "text" =>
-          importTextFile(publisher, topic, filePath)
-        case "avro" =>
-          importAvroFile(publisher, filePath)
+        case "-avro" | "-a" =>
+          importMessagesFromAvroFile(publisher, filePath)
+        case "-binary" | "-b" =>
+          importMessagesFromBinaryFile(publisher, topic, filePath)
+        case "-text" | "-t" =>
+          importMessagesFromTextFile(publisher, topic, filePath)
         case unknown =>
           throw new IllegalArgumentException(s"Unrecognized file type '$unknown'")
       }
     }
   }
 
-  private def importAvroFile(publisher: KafkaPublisher, filePath: String) {
+  /**
+   * Imports Avro messages from the given file path
+   * @param publisher the given Kafka publisher
+   * @param filePath the given file path
+   */
+  private def importMessagesFromAvroFile(publisher: KafkaPublisher, filePath: String): Int = {
     import org.apache.avro.file.DataFileReader
     import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 
+    var messages = 0
     val reader = new DataFileReader[GenericRecord](new File(filePath), new GenericDatumReader[GenericRecord]())
     while (reader.hasNext) {
       val record = reader.next()
@@ -490,17 +501,49 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
           message = buf.array().asInstanceOf[Array[Byte]]
         } {
           publisher.publish(topic, offset, message)
+          messages += 1
         }
       }
     }
+    messages
   }
 
-  private def importTextFile(publisher: KafkaPublisher, topic: String, filePath: String) {
+  /**
+   * Imports text messages from the given file path
+   * @param publisher the given Kafka publisher
+   * @param filePath the given file path
+   */
+  private def importMessagesFromBinaryFile(publisher: KafkaPublisher, topic: String, filePath: String): Int = {
+    import java.io.{DataInputStream, FileInputStream}
+
+    var messages = 0
+    new DataInputStream(new FileInputStream(filePath)) use { in =>
+      // get the next message length and retrieve the message
+      val messageLength = in.readInt()
+      val message = new Array[Byte](messageLength)
+      in.read(message, 0, message.length)
+
+      // publish the message
+      publisher.publish(topic, toBytes(System.currentTimeMillis()), message)
+      messages += 1
+    }
+    messages
+  }
+
+  /**
+   * Imports text messages from the given file path
+   * @param publisher the given Kafka publisher
+   * @param filePath the given file path
+   */
+  private def importMessagesFromTextFile(publisher: KafkaPublisher, topic: String, filePath: String): Int = {
     import scala.io.Source
 
+    var messages = 0
     Source.fromFile(filePath).getLines() foreach { message =>
       publisher.publish(topic, toBytes(System.currentTimeMillis()), message.getBytes(rt.encoding))
+      messages += 1
     }
+    messages
   }
 
   /**
