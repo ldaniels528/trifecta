@@ -76,8 +76,8 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
   /**
    * "kcolumns" - Retrieves or sets the column width for message output
    * @example {{{
-   *     kcolumns 30
-   * }}}
+   *               kcolumns 30
+   *          }}}
    */
   def messageColumns(args: String*): Any = {
     args.headOption match {
