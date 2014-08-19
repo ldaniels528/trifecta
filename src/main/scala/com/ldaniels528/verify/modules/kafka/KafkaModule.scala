@@ -479,10 +479,17 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
     val fetchSize = extract(args, 3) map (_.toInt) getOrElse rt.defaultFetchSize
 
     // perform the action
+    val width1 = columns * 3
+    val width2 = columns * 2
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
       _.fetch(offset.toLong, fetchSize).headOption foreach { m =>
-        m.message.sliding(40, 40) foreach { bytes =>
-          out.println("[%04d] %-80s %-40s".format(m.offset, asHexString(bytes), asChars(bytes)))
+        var index = 0
+        val length1 = 1 + Math.log10(m.offset).toInt
+        val length2 = 1 + Math.log10(m.message.length).toInt
+        val myFormat = s"[%0${length1}d:%0${length2}d] %-${width1}s %-${width2}s"
+        m.message.sliding(columns, columns) foreach { bytes =>
+          out.println(myFormat.format(m.offset, index, asHexString(bytes), asChars(bytes)))
+          index += columns
         }
       }
     }
