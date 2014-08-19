@@ -302,7 +302,7 @@ object KafkaSubscriber {
   /**
    * Watches a topic starting at the offset for the given consumer group
    */
-  def watchGroup(topic: Topic, brokers: Seq[Broker], groupId: String, duration: FiniteDuration, correlationId: Int,  consumer: MessageConsumer): Option[Long] = {
+  def watchGroup(topic: Topic, brokers: Seq[Broker], groupId: String, duration: FiniteDuration, correlationId: Int, consumer: MessageConsumer): Option[Long] = {
     // create the subscriber
     new KafkaSubscriber(topic, brokers, correlationId) use { subscriber =>
       // compute the time-out
