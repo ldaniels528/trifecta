@@ -216,6 +216,8 @@ class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
    * "kdumpf" - Dumps the contents of a specific topic to a file
    */
   def dumpToFile(args: String*): Long = {
+    import java.io.{DataOutputStream, FileOutputStream}
+
     // get the arguments
     val Seq(file, name, partition, _*) = args
     val startOffset = extract(args, 3) map (_.toLong)
