@@ -127,8 +127,9 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
     val response = consumer.fetch(request)
     if (response.hasError) throw new KafkaFetchException(response.errorCode(topic.name, topic.partition))
     else {
+      val lastOffset = response.highWatermark(topic.name, topic.partition)
       response.messageSet(topic.name, topic.partition) map { msgAndOffset =>
-        MessageData(msgAndOffset.offset, msgAndOffset.nextOffset, getMessagePayload(msgAndOffset))
+        MessageData(msgAndOffset.offset, msgAndOffset.nextOffset, lastOffset, getMessagePayload(msgAndOffset))
       }
     }
   }
