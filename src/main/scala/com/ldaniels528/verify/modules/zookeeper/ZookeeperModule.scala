@@ -13,7 +13,9 @@ import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
  * Zookeeper Module
  * @author lawrence.daniels@gmail.com
  */
-class ZookeeperModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
+class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
+  private implicit val out: PrintStream = rt.out
+
   // create the ZooKeeper proxy
   private val zk = rt.zkProxy
 

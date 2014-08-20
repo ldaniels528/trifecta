@@ -5,6 +5,7 @@ import java.io.File.separator
 
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy
+import com.ldaniels528.verify.modules.{CoreModule, ModuleManager}
 
 import scala.util.Properties.userHome
 
@@ -14,6 +15,12 @@ import scala.util.Properties.userHome
  */
 case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
   val remoteHost = s"$zkHost:$zkPort"
+
+  // redirect standard output and error to my own buffers
+  val out = System.out
+  val err = System.err
+  val buffer = new ByteArrayOutputStream(16384)
+  System.setOut(new PrintStream(buffer))
 
   // the default state of the console is "alive"
   var alive = true
@@ -29,5 +36,14 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
 
   // create the ZooKeeper proxy
   val zkProxy = ZKProxy(zkEndPoint)
+
+  // create the module manager
+  val moduleManager = new ModuleManager()
+
+  // load the modules
+  moduleManager ++= Seq(
+    new CoreModule(this),
+    new KafkaModule(this),
+    new ZookeeperModule(this))
 
 }

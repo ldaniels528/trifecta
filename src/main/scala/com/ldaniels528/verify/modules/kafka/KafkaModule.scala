@@ -22,8 +22,9 @@ import scala.util.{Failure, Success, Try}
  * Kafka Module
  * @author lawrence.daniels@gmail.com
  */
-class KafkaModule(rt: VerifyShellRuntime, out: PrintStream)
-  extends Module with Compression {
+class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
+  private implicit val out: PrintStream = rt.out
+
   // date parser instance
   private val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 

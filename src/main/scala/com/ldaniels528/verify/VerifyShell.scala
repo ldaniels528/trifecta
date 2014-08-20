@@ -23,25 +23,9 @@ import scala.util.{Failure, Success, Try}
  * @author lawrence.daniels@gmail.com
  */
 class VerifyShell(rt: VerifyShellRuntime) {
-  // logger instance
-  private val logger = LoggerFactory.getLogger(getClass)
-
-  // define a custom tabular instance
-  private val tabular = new Tabular() /*with NumberFormatHandler*/ with AvroTables
-
-  // redirect standard output and error to my own buffers
-  private val out = System.out
-  private val err = System.err
-  private val buffer = new ByteArrayOutputStream(16384)
-  System.setOut(new PrintStream(buffer))
-
-
-  // define the modules
-  private val modules: Seq[Module] = Seq(
-    new CoreModule(),
-    new KafkaModule(rt, out),
-    new UnixModule(rt, out),
-    new ZookeeperModule(rt, out))
+  val out: PrintStream = rt.out
+  val err: PrintStream = rt.err
+  val buffer: ByteArrayOutputStream = rt.buffer
 
   // load the history, then schedule session history file updates
   SessionManagement.history.load(rt.historyFile)
@@ -69,7 +53,8 @@ class VerifyShell(rt: VerifyShellRuntime) {
 
     do {
       // display the prompt, and get the next line of input
-      out.print("%s@%s:%s> ".format(userName, rt.remoteHost, activeModule.prompt))
+      val module = rt.moduleManager.activeModule ?? rt.moduleManager.modules.values.head
+      out.print("%s@%s:%s> ".format(userName, rt.remoteHost, module map (_.prompt) getOrElse "$"))
       val line = Console.readLine().trim
 
       if (line.nonEmpty) {
