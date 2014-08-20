@@ -225,8 +225,8 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
    */
   def listModules(args: String*): Seq[ModuleItem] = {
     val activeModule = rt.moduleManager.activeModule
-    def moduleName(m: Module) = if (Some(m) == activeModule) m.name + "*" else m.name
-    rt.moduleManager.modules.values.toSeq.map(m => ModuleItem(moduleName(m), m.getClass.getName, "loaded"))
+    rt.moduleManager.modules.values.toSeq.map(m =>
+      ModuleItem(m.name, m.getClass.getName, loaded = true, activeModule.exists(_.name == m.name)))
   }
 
   /**
@@ -426,7 +426,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
 
   case class HistoryItem(uid: Int, command: String)
 
-  case class ModuleItem(name: String, className: String, status: String)
+  case class ModuleItem(name: String, className: String, loaded: Boolean, active: Boolean)
 
 }
 

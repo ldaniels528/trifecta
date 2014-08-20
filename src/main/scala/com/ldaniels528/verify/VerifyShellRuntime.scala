@@ -47,4 +47,9 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
     new KafkaModule(this),
     new ZookeeperModule(this))
 
+  // set the zookeeper module as the "active" module
+  moduleManager.findModuleByName("zookeeper") map { module =>
+    moduleManager.setActiveModule(module)
+  }
+
 }

@@ -65,6 +65,14 @@ class ModuleManager() {
   }
 
   /**
+   * Sets the active module
+   * @param module the given module
+   */
+  def setActiveModule(module: Module): Unit = {
+    activeModule = Some(module)
+  }
+
+  /**
    * Shuts down all modules
    */
   def shutdown() {
