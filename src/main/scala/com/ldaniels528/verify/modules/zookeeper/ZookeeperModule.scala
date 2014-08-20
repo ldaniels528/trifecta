@@ -6,7 +6,7 @@ import java.util.Date
 
 import com.ldaniels528.verify.VerifyShellRuntime
 import com.ldaniels528.verify.modules.Module
-import com.ldaniels528.verify.modules.Module.Command
+import com.ldaniels528.verify.modules.Command
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
 
 /**

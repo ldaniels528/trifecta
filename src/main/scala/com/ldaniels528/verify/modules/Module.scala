@@ -1,15 +1,10 @@
 package com.ldaniels528.verify.modules
 
-import com.ldaniels528.verify.modules.Module._
-import org.slf4j.LoggerFactory
-
 /**
  * Represents a dynamically loadable module
  * @author lawrence.daniels@gmail.com
  */
 trait Module {
-  // logger instance
-  protected val logger = LoggerFactory.getLogger(getClass)
 
   /**
    * Returns the name of the module (e.g. "kafka")
@@ -51,27 +46,6 @@ trait Module {
    */
   protected def extract[T](values: Seq[T], index: Int): Option[T] = {
     if (values.length > index) Some(values(index)) else None
-  }
-
-}
-
-/**
- * Module Companion Object
- * @author lawrence.daniels@gmail.com
- */
-object Module {
-
-  /**
-   * Represents an Verify Shell command
-   * @author lawrence.daniels@gmail.com
-   */
-  case class Command(module:Module, name: String, fx: Seq[String] => Any, params: (Seq[String], Seq[String]) = (Seq.empty, Seq.empty), help: String = "") {
-
-    def prototype = {
-      val required = (params._1 map (s => s"<$s>")).mkString(" ")
-      val optional = (params._2 map (s => s"<$s>")).mkString(" ")
-      s"$name $required ${if (optional.nonEmpty) s"[$optional]" else ""}"
-    }
   }
 
 }

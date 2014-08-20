@@ -8,7 +8,7 @@ import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.io.avro.{AvroDecoder, AvroTables}
 import com.ldaniels528.verify.modules.Module
-import com.ldaniels528.verify.modules.Module.Command
+import com.ldaniels528.verify.modules.Command
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
 import com.ldaniels528.verify.util.VerifyUtils._
 import com.ldaniels528.verify.{CommandParser, VerifyShellRuntime}

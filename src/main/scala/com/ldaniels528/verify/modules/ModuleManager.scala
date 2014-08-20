@@ -1,14 +1,10 @@
 package com.ldaniels528.verify.modules
 
-import com.ldaniels528.verify.modules.Module.Command
-import org.slf4j.LoggerFactory
-
 /**
  * Module Manager
  * @author lawrence.daniels@gmail.com
  */
 class ModuleManager() {
-  private val logger = LoggerFactory.getLogger(getClass)
   private var commands = Map[String, Command]()
   var modules = Map[String, Module]()
   var activeModule: Option[Module] = None

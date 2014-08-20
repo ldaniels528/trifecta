@@ -4,7 +4,6 @@ import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
 import com.ldaniels528.verify.VerifyShell.{handleResult, interpret}
-import com.ldaniels528.verify.modules.Module.Command
 import com.ldaniels528.verify.{SessionManagement, VerifyShell, VerifyShellRuntime}
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -125,7 +124,6 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     val path = args.head
     val index = path.lastIndexOf('.')
     val resourceName = path.substring(0, index).replace('.', '/') + path.substring(index)
-    logger.info(s"resource path is '$resourceName'")
 
     // determine the resource
     val classLoader = VerifyShell.getClass.getClassLoader
