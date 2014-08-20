@@ -1,12 +1,12 @@
 package com.ldaniels528.verify
 
-import java.io.{PrintStream, ByteArrayOutputStream, File}
 import java.io.File.separator
+import java.io.{ByteArrayOutputStream, File, PrintStream}
 
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.kafka.KafkaModule
+import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
 import com.ldaniels528.verify.modules.{CoreModule, ModuleManager}
-import com.ldaniels528.verify.modules.zookeeper.{ZookeeperModule, ZKProxy}
 
 import scala.util.Properties.userHome
 

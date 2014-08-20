@@ -1,15 +1,15 @@
 package com.ldaniels528.verify.modules
 
 import java.io.{File, PrintStream}
-import java.util.{TimeZone, Date}
+import java.util.{Date, TimeZone}
 
 import com.ldaniels528.verify.VerifyShell.{handleResult, interpret}
 import com.ldaniels528.verify.modules.Module.Command
 import com.ldaniels528.verify.{SessionManagement, VerifyShell, VerifyShellRuntime}
 
 import scala.concurrent.ExecutionContext.Implicits._
-import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 /**
@@ -207,7 +207,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
 
     // perform the action
     new File(path).list map { file =>
-      if(file.startsWith(path)) file.substring(path.length) else file
+      if (file.startsWith(path)) file.substring(path.length) else file
     }
   }
 
