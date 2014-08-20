@@ -1,22 +1,23 @@
-package com.ldaniels528.verify.modules.unix
+package com.ldaniels528.verify.modules
 
 import java.io.{File, PrintStream}
-import java.util.{Date, TimeZone}
+import java.util.{TimeZone, Date}
 
-import com.ldaniels528.verify.VerifyShellRuntime
-import com.ldaniels528.verify.modules.Module
+import com.ldaniels528.verify.VerifyShell.{handleResult, interpret}
 import com.ldaniels528.verify.modules.Module.Command
+import com.ldaniels528.verify.{SessionManagement, VerifyShell, VerifyShellRuntime}
 
 import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 /**
- * UNIX Systems Module
+ * Core Module
  * @author lawrence.daniels@gmail.com
  */
-class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
+class CoreModule(rt: VerifyShellRuntime) extends Module {
+  private implicit val out: PrintStream = rt.out
 
   // define the process parsing regular expression
   private val PID_MacOS_r = "^\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
@@ -26,24 +27,39 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
   // current working directory
   private var cwd: String = new File(".").getCanonicalPath
 
-  val name = "unix"
+  val name = "core"
 
   val getCommands: Seq[Command] = Seq(
+    Command(this, "!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
+    Command(this, "?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
     Command(this, "cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
     Command(this, "cd", changeDir, (Seq("path"), Seq.empty), help = "Changes the local file system path/directory"),
+    Command(this, "charset", charSet, (Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
+    Command(this, "class", inspectClass, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
+    Command(this, "debug", debug, (Seq.empty, Seq("state")), help = "Switches debugging on/off"),
+    Command(this, "exit", exit, help = "Exits the shell"),
+    Command(this, "help", help, help = "Provides the list of available commands"),
+    Command(this, "history", listHistory, help = "Returns a list of previously issued commands"),
     Command(this, "hostname", hostname, help = "Returns the name of the current host"),
     Command(this, "ls", listFiles, (Seq.empty, Seq("path")), help = "Retrieves the files from the current directory"),
+    Command(this, "modules", listModules, help = "Returns a list of configured modules"),
     Command(this, "pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
     Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
     Command(this, "pwd", printWorkingDirectory, (Seq.empty, Seq.empty), help = "Display current working directory"),
+    Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
     Command(this, "storm", stormDeploy, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server"),
     Command(this, "systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
     Command(this, "time", time, help = "Returns the system time"),
-    Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"))
+    Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"),
+    Command(this, "use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"),
+    Command(this, "version", version, help = "Returns the Verify application version"))
 
   override def prompt: String = cwd
 
   override def shutdown() = ()
+
+  // load the commands from the modules
+  private def commandSet: Map[String, Command] = rt.moduleManager.commandSet
 
   /**
    * Displays the contents of the given file
@@ -79,22 +95,52 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
   }
 
   /**
-   * "ls" - Retrieves the files from the current directory
+   * Retrieves or sets the character encoding
+   * Example: charset UTF-8
+   * @param args the given arguments
    */
-  def listFiles(args: String*): Seq[String] = {
-    // get the argument
-    val path = if (args.nonEmpty) setupPath(args.head) else cwd
-
-    // perform the action
-    new File(path).list map { file =>
-        if(file.startsWith(path)) file.substring(path.length) else file
+  def charSet(args: String*) = {
+    args.headOption match {
+      case Some(newEncoding) => rt.encoding = newEncoding
+      case None => rt.encoding
     }
   }
 
-  private def setupPath(key: String): String = {
-    key match {
-      case s if s.startsWith("/") => key
-      case s => (if (cwd.endsWith("/")) cwd else cwd + "/") + s
+  /**
+   * Toggles the current debug state
+   * @param args the given command line arguments
+   * @return the current state ("On" or "Off")
+   */
+  def debug(args: String*): String = {
+    if (args.isEmpty) rt.debugOn = !rt.debugOn else rt.debugOn = args.head.toBoolean
+    s"debugging is ${if (rt.debugOn) "On" else "Off"}"
+  }
+
+  /**
+   * Inspects the classpath for the given resource by name
+   * Example: resource org/apache/http/message/BasicLineFormatter.class
+   */
+  def findResource(args: String*): String = {
+    // get the class name (with slashes)
+    val path = args.head
+    val index = path.lastIndexOf('.')
+    val resourceName = path.substring(0, index).replace('.', '/') + path.substring(index)
+    logger.info(s"resource path is '$resourceName'")
+
+    // determine the resource
+    val classLoader = VerifyShell.getClass.getClassLoader
+    val resource = classLoader.getResource(resourceName)
+    String.valueOf(resource)
+  }
+
+  /**
+   * "help" command - Provides the list of available commands
+   */
+  def help(args: String*): Seq[CommandItem] = {
+    commandSet.toSeq filter {
+      case (nameA, _) => args.isEmpty || nameA.startsWith(args.head)
+    } sortBy (_._1) map {
+      case (nameB, cmdB) => CommandItem(nameB, cmdB.module.name, cmdB.help)
     }
   }
 
@@ -106,9 +152,87 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
   }
 
   /**
+   * Inspects a class using reflection
+   * Example: class org.apache.commons.io.IOUtils -m
+   */
+  def inspectClass(args: String*): Seq[String] = {
+    val className = extract(args, 0).getOrElse(getClass.getName).replace('/', '.')
+    val action = extract(args, 1) getOrElse "-m"
+    val beanClass = Class.forName(className)
+
+    action match {
+      case "-m" => beanClass.getDeclaredMethods map (_.toString)
+      case "-f" => beanClass.getDeclaredFields map (_.toString)
+      case _ => beanClass.getDeclaredMethods map (_.toString)
+    }
+  }
+
+  /**
+   * "!" command - History execution command. This command can either executed a
+   * previously executed command by its unique identifier, or list (!?) all previously
+   * executed commands.
+   * Example 1: !123
+   * Example 2: !?
+   */
+  def executeHistory(args: String*)(implicit out: PrintStream) = {
+    for {
+      index <- args.headOption
+      command <- index match {
+        case s if s == "?" => Some("history")
+        case s if s == "!" => SessionManagement.history.last
+        case s if s.matches("\\d+") => SessionManagement.history(index.toInt - 1)
+        case _ => None
+      }
+    } {
+      out.println(s">> $command")
+      val result = interpret(commandSet, command)
+      handleResult(result)(out)
+    }
+  }
+
+  /**
+   * "exit" command - Exits the shell
+   */
+  def exit(args: String*) = {
+    rt.alive = false
+    SessionManagement.history.store(rt.historyFile)
+  }
+
+  /**
+   * "ls" - Retrieves the files from the current directory
+   */
+  def listFiles(args: String*): Seq[String] = {
+    // get the argument
+    val path = if (args.nonEmpty) setupPath(args.head) else cwd
+
+    // perform the action
+    new File(path).list map { file =>
+      if(file.startsWith(path)) file.substring(path.length) else file
+    }
+  }
+
+  def listHistory(args: String*): Seq[HistoryItem] = {
+    val lines = SessionManagement.history.getLines
+    ((1 to lines.size) zip lines) map {
+      case (itemNo, command) => HistoryItem(itemNo, command)
+    }
+  }
+
+  /**
+   * "modules" command - Returns the list of modules
+   * Example: modules
+   * @return the list of modules
+   */
+  def listModules(args: String*): Seq[ModuleItem] = {
+    val activeModule = rt.moduleManager.activeModule
+    def moduleName(m: Module) = if (Some(m) == activeModule) m.name + "*" else m.name
+    rt.moduleManager.modules.values.toSeq.map(m => ModuleItem(moduleName(m), m.getClass.getName, "loaded"))
+  }
+
+  /**
    * "ps" command - Display a list of "configured" running processes
    */
-  def processList(args: String*): Seq[String] = {
+  def processList(args: String*)(implicit out: PrintStream): Seq[String] = {
     import scala.util.Properties
 
     // get the node
@@ -272,4 +396,38 @@ class UnixModule(rt: VerifyShellRuntime, out: PrintStream) extends Module {
     fmt.format(new Date())
   }
 
+  /**
+   * "use" command - Switches the active module
+   * Example: use kafka
+   */
+  def useModule(args: String*) = {
+    val moduleName = args.head
+    rt.moduleManager.findModuleByName(moduleName) match {
+      case Some(module) => rt.moduleManager.activeModule = Some(module)
+      case None =>
+        throw new IllegalArgumentException(s"Module '$moduleName' not found")
+    }
+  }
+
+  private def setupPath(key: String): String = {
+    key match {
+      case s if s.startsWith("/") => key
+      case s => (if (cwd.endsWith("/")) cwd else cwd + "/") + s
+    }
+  }
+
+  /**
+   * "version" - Returns the application version
+   * @return the application version
+   */
+  def version(args: String*): String = VerifyShell.VERSION
+
+  case class CommandItem(command: String, module: String, description: String)
+
+  case class HistoryItem(uid: Int, command: String)
+
+  case class ModuleItem(name: String, className: String, status: String)
+
 }
+
+
