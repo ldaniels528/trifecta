@@ -58,7 +58,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
       val line = Console.readLine().trim
 
       if (line.nonEmpty) {
-        interpret(line) match {
+        interpret(commandSet, line) match {
           case Success(result) =>
             handleResult(result)(out)
             if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
@@ -73,20 +73,75 @@ class VerifyShell(rt: VerifyShellRuntime) {
     } while (rt.alive)
   }
 
-  private def checkArgs(command: Command, args: Seq[String]): Seq[String] = {
-    // determine the minimum and maximum number of parameters
-    val minimum = command.params._1.size
-    val maximum = minimum + command.params._2.size
+  /**
+   * Executes a Java application via its "main" method
+   * @param className the name of the class to invoke
+   * @param args the arguments to pass to the application
+   */
+  private def runJava(className: String, args: String*): Iterator[String] = {
+    // reset the buffer
+    buffer.reset()
 
-    // make sure the arguments are within bounds
-    if (args.length < minimum || args.length > maximum) {
-      throw new IllegalArgumentException(s"Usage: ${command.prototype}")
-    }
+    // execute the command
+    val commandClass = Class.forName(className)
+    val mainMethod = commandClass.getMethod("main", classOf[Array[String]])
+    mainMethod.invoke(null, args.toArray)
 
-    args
+    // return the iteration of lines
+    Source.fromBytes(buffer.toByteArray).getLines()
   }
 
-  private def handleResult(result: Any) {
+}
+
+/**
+ * Verify Console Shell Singleton
+ * @author lawrence.daniels@gmail.com
+ */
+object VerifyShell {
+  val VERSION = "1.0.7"
+
+  // create the table generator
+  private val tabular = new Tabular() with AvroTables
+
+  /**
+   * Application entry point
+   * @param args the given command line arguments
+   */
+  def main(args: Array[String]) {
+    System.out.println(s"Verify Shell v$VERSION")
+
+    // were host and port argument passed?
+    val host: String = args.headOption getOrElse "localhost"
+    val port: Int = if (args.length > 1) args(1).toInt else 2181
+
+    // create the runtime context
+    val rt = VerifyShellRuntime(host, port)
+
+    // start the shell
+    val console = new VerifyShell(rt)
+    console.shell()
+
+    // make sure all threads die
+    sys.exit(0)
+  }
+
+  def interpret(commandSet: Map[String, Command], input: String): Try[Any] = {
+    // parse & evaluate the user input
+    Try(parseInput(input) match {
+      case Some((cmd, args)) =>
+        // match the command
+        commandSet.get(cmd) match {
+          case Some(command) =>
+            checkArgs(command, args)
+            command.fx(args)
+          case _ =>
+            throw new IllegalArgumentException(s"'$input' not recognized")
+        }
+      case _ =>
+    })
+  }
+
+  def handleResult(result: Any)(implicit out: PrintStream) {
     result match {
       // handle lists and sequences of case classes
       case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach out.println
@@ -117,24 +172,17 @@ class VerifyShell(rt: VerifyShellRuntime) {
     }
   }
 
-  private def interpret(input: String): Try[Any] = {
-    // parse & evaluate the user input
-    Try(parseInput(input) match {
-      case Some((cmd, args)) =>
-        // match the command
-        commandSet.get(cmd) match {
-          case Some(command) =>
-            checkArgs(command, args)
-            command.fx(args)
-          case _ =>
-            throw new IllegalArgumentException(s"'$input' not recognized")
-        }
-      case _ =>
-    })
-  }
+  private def checkArgs(command: Command, args: Seq[String]): Seq[String] = {
+    // determine the minimum and maximum number of parameters
+    val minimum = command.params._1.size
+    val maximum = minimum + command.params._2.size
 
+    // make sure the arguments are within bounds
+    if (args.length < minimum || args.length > maximum) {
+      throw new IllegalArgumentException(s"Usage: ${command.prototype}")
     }
 
+    args
   }
 
   /**
