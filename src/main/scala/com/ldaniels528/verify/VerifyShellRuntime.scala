@@ -22,7 +22,6 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
   var encoding = "UTF-8"
 
   // define the history properties
-  var maxHistory = 100
   var historyFile = new File(s"$userHome$separator.verify${separator}history.txt")
 
   // get the ZooKeeper host/port

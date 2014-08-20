@@ -15,10 +15,15 @@ import scala.concurrent.duration.FiniteDuration
 object SessionManagement {
   private[this] lazy val logger = LoggerFactory.getLogger(getClass)
   private[this] val system = ActorSystem("SessionManagement")
+
+  // create the history persistence actor
   val historyActor = system.actorOf(Props[HistoryActor], name = "historyActor")
 
-  def setupHistoryUpdates(history: History, file: File, frequency: FiniteDuration): Cancellable = {
-    system.scheduler.schedule(frequency, frequency, historyActor, SaveHistory(history, file))
+  // create the history collection
+  val history = new History(100)
+
+  def setupHistoryUpdates(file: File, frequency: FiniteDuration): Cancellable = {
+    system.scheduler.schedule(frequency, frequency, historyActor, SaveHistory(file))
   }
 
   def shutdown() {
@@ -30,8 +35,8 @@ object SessionManagement {
    */
   class HistoryActor() extends Actor {
     def receive = {
-      case SaveHistory(history, file) =>
-        if(history.isDirty) {
+      case SaveHistory(file) =>
+        if (history.isDirty) {
           logger.debug("Saving history file...")
           history.store(file)
           history.isDirty = false
@@ -42,9 +47,8 @@ object SessionManagement {
 
   /**
    * Save History to disk message
-   * @param history the given [[History]] instance
    * @param file the file for which to save the history
    */
-  case class SaveHistory(history: History, file: File)
+  case class SaveHistory(file: File)
 
 }

@@ -35,12 +35,6 @@ class VerifyShell(rt: VerifyShellRuntime) {
   private val buffer = new ByteArrayOutputStream(16384)
   System.setOut(new PrintStream(buffer))
 
-  // session history
-  private val history = new History(rt.maxHistory)
-  history.load(rt.historyFile)
-
-  // schedule session history file updates
-  SessionManagement.setupHistoryUpdates(history, rt.historyFile, 60 seconds)
 
   // define the modules
   private val modules: Seq[Module] = Seq(
@@ -51,6 +45,9 @@ class VerifyShell(rt: VerifyShellRuntime) {
 
   // set the active module ("zookeeper" by default)
   private var activeModule: Module = modules.find(_.name == "zookeeper") getOrElse modules.head
+  // load the history, then schedule session history file updates
+  SessionManagement.history.load(rt.historyFile)
+  SessionManagement.setupHistoryUpdates(rt.historyFile, 60 seconds)
 
   // load the commands from the modules
   private val commandSet: Map[String, Command] = loadModules(modules)
@@ -80,8 +77,8 @@ class VerifyShell(rt: VerifyShellRuntime) {
       if (line.nonEmpty) {
         interpret(line) match {
           case Success(result) =>
-            handleResult(result)
-            if (line != "history" && !line.startsWith("!")) history += line
+            handleResult(result)(out)
+            if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
           case Failure(e: IllegalArgumentException) =>
             if (rt.debugOn) e.printStackTrace()
             err.println(s"Syntax error: ${e.getMessage}")
