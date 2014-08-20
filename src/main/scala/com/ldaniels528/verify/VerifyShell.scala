@@ -3,14 +3,10 @@ package com.ldaniels528.verify
 import java.io.{ByteArrayOutputStream, PrintStream}
 
 import com.ldaniels528.tabular.Tabular
-import com.ldaniels528.tabular.formatters._
+import com.ldaniels528.verify.VerifyShell._
 import com.ldaniels528.verify.io.avro._
-import com.ldaniels528.verify.modules.Module
 import com.ldaniels528.verify.modules.Module.Command
-import com.ldaniels528.verify.modules.kafka._
-import com.ldaniels528.verify.modules.unix.UnixModule
-import com.ldaniels528.verify.modules.zookeeper._
-import org.slf4j.LoggerFactory
+import com.ldaniels528.verify.util.VerifyUtils._
 
 import scala.collection.GenTraversableOnce
 import scala.concurrent.duration._
