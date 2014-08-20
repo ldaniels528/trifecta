@@ -131,7 +131,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
    * @example {{{ kdumpa avro/schema1.avsc com.shocktrade.alerts 0 58500700 58500724 }}}
    * @example {{{ kdumpa avro/schema2.avsc com.shocktrade.alerts 9 1799020 1799029 1024 field1+field2+field3+field4 }}}
    */
-  def dumpAvro(args: String*): Long = {
+  def dumpAvro(args: String*)(implicit out: PrintStream): Long = {
     import org.apache.avro.generic.GenericRecord
 
     // get the arguments
@@ -170,7 +170,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
    * "kdump" - Dumps the contents of a specific topic to the console [as binary]
    * @example {{{ kdump com.shocktrade.alerts 0 58500700 58500724 }}}
    */
-  def dumpBinary(args: String*): Long = {
+  def dumpBinary(args: String*)(implicit out: PrintStream): Long = {
     // convert the tokens into a parameter list
     val params = CommandParser.parseArgs(args)
 
@@ -196,7 +196,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   /**
    * "kdumpr" - Dumps the contents of a specific topic to the console [as raw ASCII]
    */
-  def dumpRaw(args: String*): Long = {
+  def dumpRaw(args: String*)(implicit out: PrintStream): Long = {
     // get the arguments
     val Seq(name, partition, _*) = args
     val startOffset = extract(args, 2) map (_.toLong)
@@ -321,7 +321,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
    * @example {{{ kavrofields avro/schema1.avsc com.shocktrade.alerts 0 58500700 }}}
    * @example {{{ kavrofields avro/schema2.avsc com.shocktrade.alerts 9 1799020 }}}
    */
-  def getMessageAvro(args: String*): Seq[AvroRecord] = {
+  def getMessageAvro(args: String*)(implicit out: PrintStream): Seq[AvroRecord] = {
     import scala.collection.JavaConverters._
 
     // get the arguments
@@ -358,7 +358,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
    * "kget" - Returns the message for a given topic partition and offset
    * @example {{{ kget com.shocktrade.alerts 0 45913975 }}}
    */
-  def getMessage(args: String*): Option[Int] = {
+  def getMessage(args: String*)(implicit out: PrintStream): Option[Int] = {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
     val fetchSize = extract(args, 3) map (_.toInt) getOrElse rt.defaultFetchSize
@@ -581,7 +581,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   /**
    * "kpush" - Returns the EOF offset for a given topic
    */
-  def publishMessage(args: String*): Unit = {
+  def publishMessage(args: String*)(implicit out: PrintStream): Unit = {
     // get the arguments
     val Seq(name, key, _*) = args
 
@@ -600,7 +600,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
    * kchka - Verifies that a set of messages (specific offset range) can be read by the specified schema
    * @example {{{ kchka avro/schema1.avsc com.shocktrade.alerts 0 1000 2000 }}}
    */
-  def verifyTopicAvro(args: String*): Seq[AvroVerification] = {
+  def verifyTopicAvro(args: String*)(implicit out: PrintStream): Seq[AvroVerification] = {
     // get the arguments
     val Seq(schemaPath, name, partition, startOffset, endOffset, _*) = args
     val batchSize = extract(args, 5) map (_.toInt) getOrElse 10
@@ -636,7 +636,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   /**
    * "kwatch" - Subscribes to a specific topic
    */
-  def watchTopic(args: String*): Long = {
+  def watchTopic(args: String*)(implicit out: PrintStream): Long = {
     // get the arguments
     val Seq(name, partition, _*) = args
     val duration = (extract(args, 2) map (_.toInt) getOrElse 60).seconds
@@ -658,7 +658,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   /**
    * "kwatchgroup" - Subscribes to a specific topic using a consumer group ID
    */
-  def watchTopicWithConsumerGroup(args: String*): Long = {
+  def watchTopicWithConsumerGroup(args: String*)(implicit out: PrintStream): Long = {
     // get the arguments
     val Seq(name, partition, groupId, _*) = args
     val duration = (extract(args, 3) map (_.toInt) getOrElse 60).seconds
@@ -706,7 +706,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val schemaString = Source.fromFile(schemaFile).getLines() mkString "\n"
     new AvroDecoder(schemaString)
   }
-  
+
   /**
    * Converts the given long value into a byte array
    * @param value the given long value
