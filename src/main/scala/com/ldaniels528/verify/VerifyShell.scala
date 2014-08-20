@@ -43,14 +43,12 @@ class VerifyShell(rt: VerifyShellRuntime) {
     new UnixModule(rt, out),
     new ZookeeperModule(rt, out))
 
-  // set the active module ("zookeeper" by default)
-  private var activeModule: Module = modules.find(_.name == "zookeeper") getOrElse modules.head
   // load the history, then schedule session history file updates
   SessionManagement.history.load(rt.historyFile)
   SessionManagement.setupHistoryUpdates(rt.historyFile, 60 seconds)
 
   // load the commands from the modules
-  private val commandSet: Map[String, Command] = loadModules(modules)
+  private def commandSet: Map[String, Command] = rt.moduleManager.commandSet
 
   // make sure we shutdown the ZooKeeper connection
   Runtime.getRuntime.addShutdownHook(new Thread {
@@ -59,7 +57,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
       rt.zkProxy.close()
 
       // close each module
-      modules.foreach(_.shutdown())
+      rt.moduleManager.shutdown()
     }
   })
 
@@ -150,15 +148,8 @@ class VerifyShell(rt: VerifyShellRuntime) {
     })
   }
 
-  private def loadModules(modules: Seq[Module]): Map[String, Command] = {
-    // gather all of the commands
-    val commands = modules flatMap { module =>
-      logger.info(s"Loading ${module.name} module...")
-      module.getCommands
     }
 
-    // return the command mapping
-    Map(commands.map(c => c.name -> c): _*)
   }
 
   /**
