@@ -7,9 +7,8 @@ import java.text.SimpleDateFormat
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.io.avro.{AvroDecoder, AvroTables}
-import com.ldaniels528.verify.modules.Module
-import com.ldaniels528.verify.modules.Command
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
+import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.VerifyUtils._
 import com.ldaniels528.verify.{CommandParser, VerifyShellRuntime}
 
@@ -185,18 +184,32 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val width2 = columns * 2
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
       _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) {
-          var index = 0
-          val length1 = 1 + Math.log10(offset).toInt
-          val length2 = 1 + Math.log10(message.length).toInt
-          val myFormat = s"[%0${length1}d:%0${length2}d] %-${width1}s %-${width2}s"
-          message.sliding(columns, columns) foreach { bytes =>
-            out.println(myFormat.format(offset, index, asHexString(bytes), asChars(bytes)))
-            index += columns
-          }
-        }
+        override def consume(offset: Long, message: Array[Byte]) = dumpMessage(offset, message)
       })
     }
+  }
+
+  /**
+   * Displays the contents of the given message
+   * @param offset the offset of the given message
+   * @param message the given message
+   * @return the size of the message in bytes
+   */
+  private def dumpMessage(offset: Long, message: Array[Byte]): Int = {
+    // determine the widths for each section: bytes & characters
+    val columns = rt.columns
+    val byteWidth = columns * 3
+
+    // display the message
+    var index = 0
+    val length1 = 1 + Math.log10(offset).toInt
+    val length2 = 1 + Math.log10(message.length).toInt
+    val myFormat = s"[%0${length1}d:%0${length2}d] %-${byteWidth}s| %-${columns}s"
+    message.sliding(columns, columns) foreach { bytes =>
+      out.println(myFormat.format(offset, index, asHexString(bytes), asChars(bytes)))
+      index += columns
+    }
+    message.length
   }
 
   /**
@@ -374,17 +387,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val width1 = columns * 3
     val width2 = columns * 2
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
-      _.fetch(offset.toLong, fetchSize).headOption map { m =>
-        var index = 0
-        val length1 = 1 + Math.log10(m.offset).toInt
-        val length2 = 1 + Math.log10(m.message.length).toInt
-        val myFormat = s"[%0${length1}d:%0${length2}d] %-${width1}s %-${width2}s"
-        m.message.sliding(columns, columns) foreach { bytes =>
-          out.println(myFormat.format(m.offset, index, asHexString(bytes), asChars(bytes)))
-          index += columns
-        }
-        m.message.length
-      }
+      _.fetch(offset.toLong, fetchSize).headOption map (m => dumpMessage(m.offset, m.message))
     }
   }
 
