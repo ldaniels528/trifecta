@@ -26,7 +26,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   override def prompt: String = zkcwd
 
   val getCommands = Seq(
-    Command(this, "zcat", zcat, (Seq("key", "type"), Seq.empty), "Sets a key-value in ZooKeeper"),
+    Command(this, "zcat", zcat, (Seq("key", "type"), Seq.empty), "Retrieves the value of a key from ZooKeeper"),
     Command(this, "zcd", zcd, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
     Command(this, "zexists", zexists, (Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
     Command(this, "zget", zget, (Seq("key"), Seq.empty), "Retrieves the contents of a specific Zookeeper key"),
