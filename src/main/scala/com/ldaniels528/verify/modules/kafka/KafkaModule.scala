@@ -181,11 +181,18 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
     // perform the action
     val columns = rt.columns
+    val width1 = columns * 3
+    val width2 = columns * 2
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
       _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
         override def consume(offset: Long, message: Array[Byte]) {
-          message.sliding(40, 40) foreach { bytes =>
-            out.println("[%04d] %-80s %-40s".format(offset, asHexString(bytes), asChars(bytes)))
+          var index = 0
+          val length1 = 1 + Math.log10(offset).toInt
+          val length2 = 1 + Math.log10(message.length).toInt
+          val myFormat = s"[%0${length1}d:%0${length2}d] %-${width1}s %-${width2}s"
+          message.sliding(columns, columns) foreach { bytes =>
+            out.println(myFormat.format(offset, index, asHexString(bytes), asChars(bytes)))
+            index += columns
           }
         }
       })
