@@ -55,7 +55,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
 
     // perform the action
     val columns = rt.columns
-    zk.exists(path) map (zk.read(path, _)) map { bytes =>
+    zk.exists(path) map (zk.read(path, _)) foreach { bytes =>
       val width1 = columns * 3
       val width2 = columns * 2
       val length = 1 + Math.log10(bytes.length).toInt
