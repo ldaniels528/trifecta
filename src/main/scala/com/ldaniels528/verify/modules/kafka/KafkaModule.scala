@@ -665,24 +665,6 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     count
   }
 
-  /**
-   * Returns the ASCII array as a character string
-   * @param bytes the byte array
-   * @return a character string representing the given byte array
-   */
-  private def asChars(bytes: Array[Byte]): String = {
-    String.valueOf(bytes map (b => if (b >= 32 && b <= 126) b.toChar else '.'))
-  }
-
-  /**
-   * Returns the byte array as a hex string
-   * @param bytes the byte array
-   * @return a hex string representing the given byte array
-   */
-  private def asHexString(bytes: Array[Byte]): String = {
-    bytes map ("%02x".format(_)) mkString "."
-  }
-
   private def getAvroDecoder(schemaPath: String): AvroDecoder = {
     // ensure the file exists
     val schemaFile = new File(schemaPath)

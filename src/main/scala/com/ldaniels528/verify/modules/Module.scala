@@ -30,6 +30,24 @@ trait Module {
   def shutdown(): Unit
 
   /**
+   * Returns the ASCII array as a character string
+   * @param bytes the byte array
+   * @return a character string representing the given byte array
+   */
+  protected def asChars(bytes: Array[Byte]): String = {
+    String.valueOf(bytes map (b => if (b >= 32 && b <= 126) b.toChar else '.'))
+  }
+
+  /**
+   * Returns the byte array as a hex string
+   * @param bytes the byte array
+   * @return a hex string representing the given byte array
+   */
+  protected def asHexString(bytes: Array[Byte]): String = {
+    bytes map ("%02x".format(_)) mkString "."
+  }
+
+  /**
    * Expands the UNIX path into a JVM-safe value
    * @param path the UNIX path (e.g. "~/ldaniels")
    * @return a JVM-safe value (e.g. "/home/ldaniels")
