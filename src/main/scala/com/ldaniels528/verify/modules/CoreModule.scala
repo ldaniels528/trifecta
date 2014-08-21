@@ -35,6 +35,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     Command(this, "cd", changeDir, (Seq("path"), Seq.empty), help = "Changes the local file system path/directory"),
     Command(this, "charset", charSet, (Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
     Command(this, "class", inspectClass, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
+    Command(this, "columns", columnWidthGetOrSet, (Seq.empty, Seq("count")), help = "Retrieves or sets the column width for message output"),
     Command(this, "debug", debug, (Seq.empty, Seq("state")), help = "Switches debugging on/off"),
     Command(this, "exit", exit, help = "Exits the shell"),
     Command(this, "help", help, help = "Provides the list of available commands"),
@@ -102,6 +103,17 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     args.headOption match {
       case Some(newEncoding) => rt.encoding = newEncoding
       case None => rt.encoding
+    }
+  }
+
+  /**
+   * "columns" - Retrieves or sets the column width for message output
+   * @example {{{ columns 30 }}}
+   */
+  def columnWidthGetOrSet(args: String*): Any = {
+    args.headOption match {
+      case Some(arg) => rt.columns = arg.toInt
+      case None => rt.columns
     }
   }
 

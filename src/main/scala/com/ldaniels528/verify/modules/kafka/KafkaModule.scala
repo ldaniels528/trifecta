@@ -39,7 +39,6 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
   // set the default correlation ID
   private var correlationId: Int = (Math.random * Int.MaxValue).toInt
-  private var columns = 25
 
   // the name of the module
   val name = "kafka"
@@ -48,7 +47,6 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   val getCommands = Seq(
     Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
     Command(this, "kchka", verifyTopicAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
-    Command(this, "kcolumns", messageColumnsGetOrSet, (Seq.empty, Seq("columns")), help = "Retrieves or sets the column width for message output"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kcount", countMessages, (Seq("topic", "partition"), Seq.empty), help = "Returns the number of messages available for a given topic"),
     Command(this, "kdump", dumpBinary, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as binary] to the console"),
@@ -182,6 +180,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     //val outputFile = params.
 
     // perform the action
+    val columns = rt.columns
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
       _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
         override def consume(offset: Long, message: Array[Byte]) {
@@ -564,17 +563,6 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     KafkaSubscriber.listTopics(zk, brokers, correlationId) flatMap { t =>
       val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size)
       if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(detail) else None
-    }
-  }
-
-  /**
-   * "kcolumns" - Retrieves or sets the column width for message output
-   * @example {{{ kcolumns 30 }}}
-   */
-  def messageColumnsGetOrSet(args: String*): Any = {
-    args.headOption match {
-      case Some(arg) => columns = arg.toInt
-      case None => columns
     }
   }
 

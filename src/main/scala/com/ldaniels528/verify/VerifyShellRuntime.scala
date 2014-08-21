@@ -29,6 +29,9 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
   var defaultFetchSize = 1024
   var encoding = "UTF-8"
 
+  // the number of columns to display when displaying bytes
+  var columns = 25
+
   // define the history properties
   var historyFile = new File(s"$userHome$separator.verify${separator}history.txt")
 
