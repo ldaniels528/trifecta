@@ -5,8 +5,7 @@ import java.nio.ByteBuffer
 import java.util.Date
 
 import com.ldaniels528.verify.VerifyShellRuntime
-import com.ldaniels528.verify.modules.Module
-import com.ldaniels528.verify.modules.Command
+import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
 
 /**
@@ -27,26 +26,54 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   override def prompt: String = zkcwd
 
   val getCommands = Seq(
-    Command(this, "zcd", zkChangeDir, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
-    Command(this, "zexists", zkExists, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
-    Command(this, "zget", zkGet, (Seq("key", "type"), Seq.empty), "Sets a key-value in ZooKeeper"),
-    Command(this, "zls", zkList, (Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
-    Command(this, "zmk", zkMkdir, (Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
-    Command(this, "zput", zkPut, (Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
-    Command(this, "zreconnect", zReconnect, (Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
-    Command(this, "zrm", zkDelete, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
-    Command(this, "zruok", zkRuok, help = "Checks the status of a Zookeeper instance"),
-    Command(this, "zsess", zkSession, help = "Retrieves the Session ID from ZooKeeper"),
-    Command(this, "zstat", zkStat, help = "Returns the statistics of a Zookeeper instance"),
-    Command(this, "ztree", zkTree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
+    Command(this, "zcat", zcat, (Seq("key", "type"), Seq.empty), "Sets a key-value in ZooKeeper"),
+    Command(this, "zcd", zcd, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
+    Command(this, "zexists", zexists, (Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
+    Command(this, "zget", zget, (Seq("key"), Seq.empty), "Retrieves the contents of a specific Zookeeper key"),
+    Command(this, "zls", zls, (Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
+    Command(this, "zmk", zmkdir, (Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
+    Command(this, "zput", zput, (Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
+    Command(this, "zreconnect", reconnect, (Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
+    Command(this, "zrm", delete, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
+    Command(this, "zruok", ruok, help = "Checks the status of a Zookeeper instance"),
+    Command(this, "zsess", session, help = "Retrieves the Session ID from ZooKeeper"),
+    Command(this, "zstat", stat, help = "Returns the statistics of a Zookeeper instance"),
+    Command(this, "ztree", tree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
   override def shutdown() = ()
+
+  /**
+   * "zdump" - Dumps the contents of a specific Zookeeper key to the console
+   * @example {{{ zdump /storm/workerbeats/my-test-topology-17-1407973634 }}}
+   */
+  def zget(args: String*)(implicit out: PrintStream) {
+    // get the Zookeeper key
+    val key = args.head
+
+    // convert the key to a fully-qualified path
+    val path = zkKeyToPath(key)
+
+    // perform the action
+    val columns = rt.columns
+    zk.exists(path) map (zk.read(path, _)) map { bytes =>
+      val width1 = columns * 3
+      val width2 = columns * 2
+      val length = 1 + Math.log10(bytes.length).toInt
+
+      var offset = 0
+      val myFormat = s"[%0${length}d] %-${width1}s %-${width2}s"
+      bytes.sliding(columns, columns) foreach { bytes =>
+        out.println(myFormat.format(offset, asHexString(bytes), asChars(bytes)))
+        offset += columns
+      }
+    }
+  }
 
   /**
    * "zruok" - Checks the status of a Zookeeper instance
    * (e.g. echo ruok | nc zookeeper 2181)
    */
-  def zkRuok(args: String*): String = {
+  def ruok(args: String*): String = {
     import scala.sys.process._
 
     // echo ruok | nc zookeeper 2181
@@ -57,7 +84,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
    * "zstat" - Returns the statistics of a Zookeeper instance
    * echo stat | nc zookeeper 2181
    */
-  def zkStat(args: String*): String = {
+  def stat(args: String*): String = {
     import scala.sys.process._
 
     // echo stat | nc zookeeper 2181
@@ -67,7 +94,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   /**
    * "zcd" - Changes the current path/directory in ZooKeeper
    */
-  def zkChangeDir(args: String*): String = {
+  def zcd(args: String*): String = {
     // get the argument
     val key = args.head
 
@@ -88,7 +115,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   /**
    * "zls" - Retrieves the child nodes for a key from ZooKeeper
    */
-  def zkList(args: String*): Seq[String] = {
+  def zls(args: String*): Seq[String] = {
     // get the argument
     val path = if (args.nonEmpty) zkKeyToPath(args.head) else zkcwd
 
@@ -99,7 +126,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   /**
    * "zrm" - Removes a key-value from ZooKeeper
    */
-  def zkDelete(args: String*) {
+  def delete(args: String*) {
     // get the argument
     val key = args.head
 
@@ -113,7 +140,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   /**
    * "zexists" - Returns the status of a Zookeeper key if it exists
    */
-  def zkExists(args: String*): Seq[String] = {
+  def zexists(args: String*): Seq[String] = {
     // get the argument
     val key = args.head
 
@@ -135,9 +162,9 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   }
 
   /**
-   * "zget" - Sets a key-value in ZooKeeper
+   * "zcat" - Outputs the value of a key from ZooKeeper
    */
-  def zkGet(args: String*): Option[String] = {
+  def zcat(args: String*): Option[String] = {
     // get the arguments
     val Seq(key, typeName, _*) = args
 
@@ -145,9 +172,8 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
     val path = zkKeyToPath(key)
 
     // perform the action
-    zk.exists(path) map (zk.read(path, _)) match {
-      case Some(bytes) => Some(fromBytes(bytes, typeName))
-      case None => None
+    zk.exists(path) map (zk.read(path, _)) map { bytes =>
+      fromBytes(bytes, typeName)
     }
   }
 
@@ -166,7 +192,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   /**
    * "zmk" - Creates a new ZooKeeper sub-directory (key)
    */
-  def zkMkdir(args: String*) = {
+  def zmkdir(args: String*) = {
     // get the arguments
     val Seq(key, _*) = args
 
@@ -177,7 +203,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   /**
    * "zput" - Retrieves a value from ZooKeeper
    */
-  def zkPut(args: String*) = {
+  def zput(args: String*) = {
     // get the arguments
     val Seq(key, value, typeName, _*) = args
 
@@ -192,19 +218,19 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   /**
    * Re-establishes the connection to Zookeeper
    */
-  def zReconnect(args: String*) = zk.reconnect()
+  def reconnect(args: String*) = zk.reconnect()
 
   /**
    * "zsession" - Retrieves the Session ID from ZooKeeper
    */
-  def zkSession(args: String*) = zk.getSessionId.toString
+  def session(args: String*) = zk.getSessionId.toString
 
   /**
    * "ztree" - Retrieves ZooKeeper key hierarchy
    * @param args the given arguments
    * @return
    */
-  def zkTree(args: String*): Seq[String] = {
+  def tree(args: String*): Seq[String] = {
 
     def recurse(path: String): List[String] = {
       val children = Option(zk.getChildren(path, watch = false)) getOrElse Seq.empty
