@@ -370,6 +370,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val fetchSize = extract(args, 3) map (_.toInt) getOrElse rt.defaultFetchSize
 
     // perform the action
+    val columns = rt.columns
     val width1 = columns * 3
     val width2 = columns * 2
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
