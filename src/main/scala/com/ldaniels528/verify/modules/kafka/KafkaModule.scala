@@ -63,7 +63,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
     Command(this, "klast", getLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
     Command(this, "kls", listTopics, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
-    Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Returns the system time as an EPOC in milliseconds"),
+    Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
     Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic"),
