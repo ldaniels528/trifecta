@@ -13,7 +13,7 @@ trait Compression {
   
   /**
    * Compresses the message 
-   * @param data the given message 
+   * @param message the given message
    * @return the compressed copy of the input message
    * @throws IOException
    */
