@@ -20,7 +20,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
 
   val name = "zookeeper"
 
-  override def prompt: String = rt.zkcwd
+  override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
 
   val getCommands = Seq(
     Command(this, "zcat", zcat, (Seq("key", "type"), Seq.empty), "Retrieves the value of a key from ZooKeeper"),
