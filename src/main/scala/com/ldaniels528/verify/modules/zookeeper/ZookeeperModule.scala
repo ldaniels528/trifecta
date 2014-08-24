@@ -5,8 +5,8 @@ import java.nio.ByteBuffer
 import java.util.Date
 
 import com.ldaniels528.verify.VerifyShellRuntime
-import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
+import com.ldaniels528.verify.modules.{Command, Module}
 
 /**
  * Zookeeper Module
@@ -112,7 +112,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
    */
   def zls(args: String*): Seq[String] = {
     // get the argument
-    val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkcwd
+    val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkCwd
 
     // perform the action
     zk.getChildren(path, watch = false)
@@ -180,7 +180,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   private def zkKeyToPath(key: String): String = {
     key match {
       case s if s.startsWith("/") => key
-      case s => (if (rt.zkcwd.endsWith("/")) rt.zkcwd else rt.zkcwd + "/") + s
+      case s => (if (rt.zkCwd.endsWith("/")) rt.zkCwd else rt.zkCwd + "/") + s
     }
   }
 
@@ -233,7 +233,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
     }
 
     // get the optional path argument
-    val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkcwd
+    val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkCwd
 
     // perform the action
     recurse(path)
