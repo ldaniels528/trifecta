@@ -9,7 +9,7 @@ import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.io.avro.{AvroDecoder, AvroTables}
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
 import com.ldaniels528.verify.modules.{Command, Module}
-import com.ldaniels528.verify.util.VerifyUtils._
+import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.{CommandParser, VerifyShellRuntime}
 
 import scala.collection.mutable
@@ -37,17 +37,17 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   private val brokers: Seq[Broker] = KafkaSubscriber.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
   // set the default correlation ID
-  private var correlationId: Int = (Math.random * Int.MaxValue).toInt
+  private val correlationId: Int = (Math.random * Int.MaxValue).toInt
 
   // the name of the module
   val name = "kafka"
 
-  override def prompt: String = rt.zkcwd
+  override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
 
   // the bound commands
   val getCommands = Seq(
     Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
-    Command(this, "kchka", verifyTopicAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a set of messages (specific offset range) can be read by the specified schema"),
+    Command(this, "kchka", verifyTopicAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a range of messages can be read by a given Avro schema"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kcount", countMessages, (Seq("topic", "partition"), Seq.empty), help = "Returns the number of messages available for a given topic"),
     Command(this, "kdump", dumpBinary, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as binary] to the console"),
@@ -60,8 +60,8 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgeta", getMessageAvro, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
     Command(this, "kgetsize", getMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
-    Command(this, "kgetmaxsize", getMessageMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the largest message for the specified range of offsets for a given topic partition"),
-    Command(this, "kgetminsize", getMessageMinSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the smallest message for the specified range of offsets for a given topic partition"),
+    Command(this, "kgetmaxsize", getMessageMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the largest message for a range of offsets for a given partition"),
+    Command(this, "kgetminsize", getMessageMinSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the smallest message for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
     Command(this, "klast", getLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
     Command(this, "kls", listTopics, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
