@@ -181,12 +181,9 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     //val outputFile = params.
 
     // perform the action
-    val columns = rt.columns
-    val width1 = columns * 3
-    val width2 = columns * 2
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
       _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) = dumpMessage(offset, message)
+        override def consume(offset: Long, message: Array[Byte]) = { dumpMessage(offset, message); () }
       })
     }
   }
@@ -385,9 +382,6 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val fetchSize = extract(args, 3) map (_.toInt) getOrElse rt.defaultFetchSize
 
     // perform the action
-    val columns = rt.columns
-    val width1 = columns * 3
-    val width2 = columns * 2
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
       _.fetch(offset.toLong, fetchSize).headOption map (m => dumpMessage(m.offset, m.message))
     }
