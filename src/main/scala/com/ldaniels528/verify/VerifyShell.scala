@@ -6,6 +6,8 @@ import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.VerifyShell._
 import com.ldaniels528.verify.io.avro._
 import com.ldaniels528.verify.modules.Command
+import org.fusesource.jansi.Ansi.Color._
+import org.fusesource.jansi.Ansi._
 
 import scala.collection.GenTraversableOnce
 import scala.concurrent.duration._
@@ -47,6 +49,9 @@ class VerifyShell(rt: VerifyShellRuntime) {
     val userName = scala.util.Properties.userName
     out.println("Type 'help' (or '?') to see the list of available commands")
     out.println(s"Module auto-switching is ${if(rt.autoSwitching) "On" else "Off"}")
+    VxConsole.wrap {
+      out.println(ansi().fg(WHITE).a("Type '").fg(CYAN).a("help").fg(WHITE).a("' (or '").fg(CYAN).a("?").fg(WHITE).a("') to see the list of available commands").reset())
+    }
 
     do {
       // display the prompt, and get the next line of input
@@ -87,22 +92,26 @@ object VerifyShell {
    * @param args the given command line arguments
    */
   def main(args: Array[String]) {
-    System.out.println(s"Verify Shell v$VERSION")
-    if (args.isEmpty) {
-      System.out.println("Usage: verify <zookeeperHost>")
-      sys.exit(0)
+    // install the ANSI console plugin and display the title line
+    VxConsole.wrap {
+      System.out.println(ansi().fg(RED).a("Ve").fg(GREEN).a("ri").fg(BLUE).a("fy").fg(WHITE).a(s" v$VERSION").reset())
     }
 
-    // were host and port argument passed?
-    val host: String = args.head
-    val port: Int = if (args.length > 1) args(1).toInt else 2181
+    // if arguments were not passed, stop.
+    args.toList match {
+      case Nil => System.out.println("Usage: verify <zookeeperHost>")
+      case params =>
+        // were host and port argument passed?
+        val host: String = params.head
+        val port: Int = if (params.length > 1) params(1).toInt else 2181
 
-    // create the runtime context
-    val rt = VerifyShellRuntime(host, port)
+        // create the runtime context
+        val rt = VerifyShellRuntime(host, port)
 
-    // start the shell
-    val console = new VerifyShell(rt)
-    console.shell()
+        // start the shell
+        val console = new VerifyShell(rt)
+        console.shell()
+    }
 
     // make sure all threads die
     sys.exit(0)
