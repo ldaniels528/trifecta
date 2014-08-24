@@ -72,7 +72,8 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
     import scala.sys.process._
 
     // echo ruok | nc zookeeper 2181
-    ("echo ruok" #> s"nc ${rt.zkEndPoint.host} ${rt.zkEndPoint.port}").!!
+    val (host, port) = rt.zkEndPoint()
+    ("echo ruok" #> s"nc $host $port").!!
   }
 
   /**
@@ -83,7 +84,8 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
     import scala.sys.process._
 
     // echo stat | nc zookeeper 2181
-    ("echo stat" #> s"nc ${rt.zkEndPoint.host} ${rt.zkEndPoint.port}").!!
+    val (host, port) = rt.zkEndPoint()
+    ("echo stat" #> s"nc $host $port").!!
   }
 
   /**
