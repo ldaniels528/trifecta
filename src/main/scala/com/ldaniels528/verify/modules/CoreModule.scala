@@ -41,7 +41,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     Command(this, "exit", exit, help = "Exits the shell"),
     Command(this, "help", help, help = "Provides the list of available commands"),
     Command(this, "history", listHistory, help = "Returns a list of previously issued commands"),
-    Command(this, "hostname", hostname, help = "Returns the name of the current host"),
+    Command(this, "hostname", hostname, help = "Returns the name of the host system"),
     Command(this, "ls", listFiles, (Seq.empty, Seq("path")), help = "Retrieves the files from the current directory"),
     Command(this, "modules", listModules, help = "Returns a list of configured modules"),
     Command(this, "pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
