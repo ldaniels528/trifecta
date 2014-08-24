@@ -107,7 +107,7 @@ object VerifyShell {
    */
   def main(args: Array[String]) {
     System.out.println(s"Verify Shell v$VERSION")
-    if(args.isEmpty) {
+    if (args.isEmpty) {
       System.out.println("Usage: verify <zookeeperHost>")
       sys.exit(0)
     }
