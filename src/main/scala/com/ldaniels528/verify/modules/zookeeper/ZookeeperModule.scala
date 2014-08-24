@@ -40,8 +40,8 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   override def shutdown() = ()
 
   /**
-   * "zdump" - Dumps the contents of a specific Zookeeper key to the console
-   * @example {{{ zdump /storm/workerbeats/my-test-topology-17-1407973634 }}}
+   * "zget" - Dumps the contents of a specific Zookeeper key to the console
+   * @example {{{ zget /storm/workerbeats/my-test-topology-17-1407973634 }}}
    */
   def zget(args: String*)(implicit out: PrintStream) {
     // get the Zookeeper key
