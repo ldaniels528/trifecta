@@ -46,6 +46,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
    */
   def shell() {
     val userName = scala.util.Properties.userName
+    out.println("Type 'help' (or '?') to see the list of available commands")
 
     do {
       // display the prompt, and get the next line of input
