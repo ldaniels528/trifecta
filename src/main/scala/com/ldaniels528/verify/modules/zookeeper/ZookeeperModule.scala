@@ -53,7 +53,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
     // perform the action
     val columns = rt.columns
     val byteWidth = columns * 3
-    zk.exists(path) map (zk.read(path, _)) foreach { bytes =>
+    zk.read(path) foreach { bytes =>
       val length = 1 + Math.log10(bytes.length).toInt
       var offset = 0
       val myFormat = s"[%0${length}d] %-${byteWidth}s| %-${columns}s"
@@ -167,7 +167,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
     val path = zkKeyToPath(key)
 
     // perform the action
-    zk.exists(path) map (zk.read(path, _)) map { bytes =>
+    zk.read(path) map { bytes =>
       fromBytes(bytes, typeName)
     }
   }
