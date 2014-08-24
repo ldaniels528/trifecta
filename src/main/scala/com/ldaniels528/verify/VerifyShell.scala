@@ -6,7 +6,6 @@ import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.VerifyShell._
 import com.ldaniels528.verify.io.avro._
 import com.ldaniels528.verify.modules.Command
-import com.ldaniels528.verify.util.VerifyUtils._
 
 import scala.collection.GenTraversableOnce
 import scala.concurrent.duration._

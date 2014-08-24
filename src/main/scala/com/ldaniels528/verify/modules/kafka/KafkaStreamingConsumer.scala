@@ -1,7 +1,7 @@
 package com.ldaniels528.verify.modules.kafka
 
 import com.ldaniels528.verify.io.{Compression, EndPoint}
-import com.ldaniels528.verify.util.VerifyUtils._
+import com.ldaniels528.verify.util.VxUtils._
 import kafka.consumer.{Consumer, ConsumerConfig}
 
 import scala.concurrent.{ExecutionContext, Future}

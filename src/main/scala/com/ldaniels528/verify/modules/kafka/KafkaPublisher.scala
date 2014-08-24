@@ -2,7 +2,7 @@ package com.ldaniels528.verify.modules.kafka
 
 import java.util.Properties
 
-import com.ldaniels528.verify.util.VerifyUtils._
+import com.ldaniels528.verify.util.VxUtils._
 import kafka.javaapi.producer.Producer
 import kafka.producer.{KeyedMessage, ProducerConfig}
 

@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.io
 
-import com.ldaniels528.verify.util.VerifyUtils._
+import com.ldaniels528.verify.util.VxUtils._
 
 /**
  * Compression/Decompression Capability

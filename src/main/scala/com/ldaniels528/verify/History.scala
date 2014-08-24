@@ -2,7 +2,7 @@ package com.ldaniels528.verify
 
 import java.io.File
 
-import com.ldaniels528.verify.util.VerifyUtils._
+import com.ldaniels528.verify.util.VxUtils._
 
 import scala.util.Try
 

@@ -3,7 +3,7 @@ package com.ldaniels528.verify.vscript
 import java.io.{ByteArrayOutputStream, File, FileInputStream}
 import java.nio.ByteBuffer
 
-import com.ldaniels528.verify.util.VerifyUtils._
+import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime._
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory

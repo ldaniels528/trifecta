@@ -2,7 +2,7 @@ package com.ldaniels528.verify.modules.kafka
 
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber._
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy
-import com.ldaniels528.verify.util.VerifyUtils._
+import com.ldaniels528.verify.util.VxUtils._
 import kafka.api.OffsetRequest.LatestTime
 import kafka.api._
 import kafka.common._
