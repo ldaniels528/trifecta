@@ -105,9 +105,13 @@ object VerifyShell {
    */
   def main(args: Array[String]) {
     System.out.println(s"Verify Shell v$VERSION")
+    if(args.isEmpty) {
+      System.out.println("Usage: verify <zookeeperHost>")
+      sys.exit(0)
+    }
 
     // were host and port argument passed?
-    val host: String = args.headOption getOrElse "localhost"
+    val host: String = args.head
     val port: Int = if (args.length > 1) args(1).toInt else 2181
 
     // create the runtime context
