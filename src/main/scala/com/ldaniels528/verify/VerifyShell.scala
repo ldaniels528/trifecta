@@ -94,7 +94,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
  * @author lawrence.daniels@gmail.com
  */
 object VerifyShell {
-  val VERSION = "1.0.7"
+  val VERSION = "0.1.1"
 
   // create the table generator
   private val tabular = new Tabular() with AvroTables
