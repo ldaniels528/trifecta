@@ -23,10 +23,10 @@ packageDescription := "Swiss-Army-Knife for viewing/managing topics for Kafka"
 
 scalaVersion := "2.10.4"
 
-scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.6", "-unchecked",
+scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
   "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint")
 
-javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.6", "-target", "1.6", "-g:vars")
+javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars")
 
 mainClass in assembly := Some("com.ldaniels528.verify.VerifyShell")
 
@@ -52,11 +52,13 @@ libraryDependencies ++= Seq(
   "com.twitter" %% "bijection-core" % "0.6.2",
   "com.twitter" %% "bijection-avro" % "0.6.2",
   "com.typesafe.akka" % "akka-actor_2.10" % "2.3.4",
+  "jline" % "jline" % "2.12",
   "log4j" % "log4j" % "1.2.17",
   "net.liftweb" %% "lift-json" % "2.5.1",
   "org.apache.avro" % "avro" % "1.7.6",
   "org.apache.kafka" % "kafka_2.10" % "0.8.1.1",
   "org.apache.storm" % "storm-core" % "0.9.2-incubating" % "provided",
+  "org.fusesource.jansi" % "jansi" % "1.11",
   "org.slf4j" % "slf4j-api" % "1.7.7",
   "org.slf4j" % "slf4j-log4j12" % "1.7.7"
 )
@@ -69,6 +71,7 @@ libraryDependencies ++= Seq(
 // define the resolvers
 resolvers ++= Seq(
   "Clojars" at "http://clojars.org/repo/",
+  "Clojars Project" at "http://clojars.org/org.clojars.pepijndevos/jnativehook",
   "Clojure-Releases" at "http://build.clojure.org/releases/",
   "Java Net" at "http://download.java.net/maven/2/",
   "Maven Central Server" at "http://repo1.maven.org/maven2",
