@@ -7,6 +7,12 @@ package com.ldaniels528.verify.io
 trait EndPoint extends java.io.Serializable {
 
   /**
+   * Decomposes the end-point into its host and port components
+   * @return a tuple containing the host and port
+   */
+  def apply(): (String, Int) = (host, port)
+
+  /**
    * Returns the host portion of the end-point
    * @return the host portion of the end-point
    */
