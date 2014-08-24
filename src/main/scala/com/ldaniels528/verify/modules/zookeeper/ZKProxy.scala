@@ -18,7 +18,7 @@ import scala.language.implicitConversions
 import scala.util.Try
 
 /**
- * Verify ZooKeeper Proxy
+ * ZooKeeper Proxy
  * @author lawrence.daniels@gmail.com
  */
 class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None) {
@@ -30,14 +30,9 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
   logger.info(s"Connecting to ZooKeeper at '$host:$port'...")
   private var zk = new ZooKeeper(host, port, new MyWatcher(callback))
 
-  //def batch(ops: Op*): Seq[OpResult] = zk.multi(ops)
+  def batch(ops: Op*): Seq[OpResult] = zk.multi(ops)
 
   def client: ZooKeeper = zk
-
-  def reconnect() {
-    Try(zk.close())
-    zk = new ZooKeeper(host, port, new MyWatcher(callback))
-  }
 
   def create(tuples: (String, Array[Byte])*): Iterable[String] = {
     tuples map {
@@ -86,8 +81,8 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
 
   def getState = zk.getState
 
-  def read(path: String, stat: Stat): Array[Byte] = {
-    zk.getData(path, false, stat)
+  def read(path: String, stat: Stat): Option[Array[Byte]] = {
+    Option(zk.getData(path, false, stat))
   }
 
   def read(path: String): Option[Array[Byte]] = {
@@ -96,55 +91,51 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
     }
   }
 
-  def readDouble(path: String, stat: Stat): Double = {
-    ByteBuffer.wrap(zk.getData(path, false, stat)).getDouble
+  def readDouble(path: String, stat: Stat): Option[Double] = {
+    read(path, stat) map ByteBuffer.wrap map (_.getDouble)
   }
 
   def readDouble(path: String): Option[Double] = {
-    exists(path) map { stat =>
-      ByteBuffer.wrap(zk.getData(path, false, stat)).getDouble
-    }
+    read(path) map ByteBuffer.wrap map (_.getDouble)
   }
 
-  def readInt(path: String, stat: Stat): Int = {
-    ByteBuffer.wrap(zk.getData(path, false, stat)).getInt
+  def readInt(path: String, stat: Stat): Option[Int] = {
+    read(path, stat) map ByteBuffer.wrap map (_.getInt)
   }
 
   def readInt(path: String): Option[Int] = {
-    exists(path) map { stat =>
-      ByteBuffer.wrap(zk.getData(path, false, stat)).getInt
-    }
+    read(path) map ByteBuffer.wrap map (_.getInt)
   }
 
-  def readLong(path: String, stat: Stat): Long = {
-    ByteBuffer.wrap(zk.getData(path, false, stat)).getLong
+  def readLong(path: String, stat: Stat): Option[Long] = {
+    read(path, stat) map ByteBuffer.wrap map (_.getLong)
   }
 
   def readLong(path: String): Option[Long] = {
-    exists(path) map { stat =>
-      ByteBuffer.wrap(zk.getData(path, false, stat)).getLong
-    }
+    read(path) map ByteBuffer.wrap map (_.getLong)
   }
 
-  def readString(path: String, stat: Stat): String = {
-    new String(zk.getData(path, false, stat), encoding)
+  def readString(path: String, stat: Stat): Option[String] = {
+    read(path, stat) map (new String(_, encoding))
   }
 
   def readString(path: String): Option[String] = {
-    exists(path) map { stat =>
-      new String(zk.getData(path, false, stat), encoding)
-    }
+    read(path) map (new String(_, encoding))
+  }
+
+  def reconnect() {
+    Try(zk.close())
+    zk = new ZooKeeper(host, port, new MyWatcher(callback))
   }
 
   /**
    * Updates the given path
-   *
-   * def update(path: String, data: Array[Byte], stat: Stat): Seq[OpResult] = {
-   * batch(
-   * Op.delete(path, stat.getVersion()),
-   * Op.create(path, data, acl, mode))
-   * }
    */
+  def updateAtomic(path: String, data: Array[Byte], stat: Stat): Seq[OpResult] = {
+    batch(
+      Op.delete(path, stat.getVersion),
+      Op.create(path, data, acl, mode))
+  }
 
   def update(path: String, data: Array[Byte], stat: Stat) = {
     exists(path) map { stat =>
