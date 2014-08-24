@@ -15,6 +15,13 @@ object VxConsole {
 
   def uninstall(): Unit = AnsiConsole.systemUninstall()
 
+  def wrap[T](block: => T): T = {
+    install()
+    val result = block
+    uninstall()
+    result
+  }
+
   /**
    * ANSI String Interpolation
    * @param sc the given string context
