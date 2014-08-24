@@ -12,7 +12,7 @@ import scala.util.Try
  */
 class History(val maxHistory: Int) {
   private var history: List[String] = Nil
-  protected [verify] var isDirty: Boolean = _
+  protected[verify] var isDirty: Boolean = _
 
   /**
    * Returns the previously issued command for the given index
@@ -41,6 +41,8 @@ class History(val maxHistory: Int) {
    */
   def getLines: Seq[String] = history
 
+  def isEmpty: Boolean = history.isEmpty
+
   def last: Option[String] = history.headOption
 
   /**
@@ -58,6 +60,8 @@ class History(val maxHistory: Int) {
       lines.size
     }
   }
+
+  def nonEmpty: Boolean = history.nonEmpty
 
   /**
    * Stores the history as the given file
