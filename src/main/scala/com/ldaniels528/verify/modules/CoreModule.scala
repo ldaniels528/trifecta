@@ -31,6 +31,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
   val getCommands: Seq[Command] = Seq(
     Command(this, "!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
     Command(this, "?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
+    Command(this, "autoswitch", autoSwitch, (Seq.empty, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
     Command(this, "cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
     Command(this, "cd", changeDir, (Seq("path"), Seq.empty), help = "Changes the local file system path/directory"),
     Command(this, "charset", charSet, (Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
@@ -62,8 +63,17 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
   private def commandSet: Map[String, Command] = rt.moduleManager.commandSet
 
   /**
+   * Automatically switches to the module of the most recently executed command
+   * @example {{{ autoswitch true }}}
+   */
+  def autoSwitch(args: String*): String = {
+    args.headOption map (_.toBoolean) foreach (rt.autoSwitching = _)
+    s"auto switching is ${if (rt.autoSwitching) "On" else "Off"}"
+  }
+
+  /**
    * Displays the contents of the given file
-   * Example: cat avro/schema1.avsc
+   * @example {{{ cat avro/schema1.avsc }}}
    */
   def cat(args: String*): Seq[String] = {
     import scala.io.Source
@@ -195,7 +205,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
       }
     } {
       out.println(s">> $command")
-      val result = interpret(commandSet, command)
+      val result = interpret(rt, commandSet, command)
       handleResult(result)(out)
     }
   }

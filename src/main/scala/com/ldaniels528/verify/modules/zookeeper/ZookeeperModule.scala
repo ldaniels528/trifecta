@@ -18,12 +18,9 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   // create the ZooKeeper proxy
   private val zk = rt.zkProxy
 
-  // ZooKeeper current working directory
-  private var zkcwd = "/"
-
   val name = "zookeeper"
 
-  override def prompt: String = zkcwd
+  override def prompt: String = rt.zkcwd
 
   val getCommands = Seq(
     Command(this, "zcat", zcat, (Seq("key", "type"), Seq.empty), "Retrieves the value of a key from ZooKeeper"),
@@ -97,9 +94,9 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
     val key = args.head
 
     // perform the action
-    zkcwd = key match {
+    rt.zkcwd = key match {
       case s if s == ".." =>
-        zkcwd.split("[/]") match {
+        rt.zkcwd.split("[/]") match {
           case a if a.length <= 1 => "/"
           case a =>
             val newpath = a.init.mkString("/")
@@ -107,7 +104,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
         }
       case s => zkKeyToPath(s)
     }
-    zkcwd
+    rt.zkcwd
   }
 
   /**
@@ -115,7 +112,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
    */
   def zls(args: String*): Seq[String] = {
     // get the argument
-    val path = if (args.nonEmpty) zkKeyToPath(args.head) else zkcwd
+    val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkcwd
 
     // perform the action
     zk.getChildren(path, watch = false)
@@ -183,7 +180,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   private def zkKeyToPath(key: String): String = {
     key match {
       case s if s.startsWith("/") => key
-      case s => (if (zkcwd.endsWith("/")) zkcwd else zkcwd + "/") + s
+      case s => (if (rt.zkcwd.endsWith("/")) rt.zkcwd else rt.zkcwd + "/") + s
     }
   }
 
@@ -236,7 +233,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
     }
 
     // get the optional path argument
-    val path = if (args.nonEmpty) zkKeyToPath(args.head) else zkcwd
+    val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkcwd
 
     // perform the action
     recurse(path)

@@ -25,9 +25,15 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
 
   // the default state of the console is "alive"
   var alive = true
+
+  // various shared state variables
+  var autoSwitching: Boolean = true
   var debugOn = false
   var defaultFetchSize = 1024
   var encoding = "UTF-8"
+
+  // ZooKeeper current working directory
+  var zkcwd = "/"
 
   // the number of columns to display when displaying bytes
   var columns = 25

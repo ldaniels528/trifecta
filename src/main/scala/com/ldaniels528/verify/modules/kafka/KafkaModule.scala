@@ -42,6 +42,8 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   // the name of the module
   val name = "kafka"
 
+  override def prompt: String = rt.zkcwd
+
   // the bound commands
   val getCommands = Seq(
     Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),

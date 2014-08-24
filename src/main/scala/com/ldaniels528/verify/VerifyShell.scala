@@ -47,6 +47,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
   def shell() {
     val userName = scala.util.Properties.userName
     out.println("Type 'help' (or '?') to see the list of available commands")
+    out.println(s"Module auto-switching is ${if(rt.autoSwitching) "On" else "Off"}")
 
     do {
       // display the prompt, and get the next line of input
@@ -55,7 +56,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
       val line = Console.readLine().trim
 
       if (line.nonEmpty) {
-        interpret(commandSet, line) match {
+        interpret(rt, commandSet, line) match {
           case Success(result) =>
             handleResult(result)(out)
             if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
@@ -126,15 +127,22 @@ object VerifyShell {
     sys.exit(0)
   }
 
-  def interpret(commandSet: Map[String, Command], input: String): Try[Any] = {
+  def interpret(rt: VerifyShellRuntime, commandSet: Map[String, Command], input: String): Try[Any] = {
     // parse & evaluate the user input
     Try(parseInput(input) match {
       case Some((cmd, args)) =>
         // match the command
         commandSet.get(cmd) match {
           case Some(command) =>
+            // verify and execute the command
             checkArgs(command, args)
-            command.fx(args)
+            val result = command.fx(args)
+
+            // auto-switch modules?
+            if (rt.autoSwitching) {
+              rt.moduleManager.setActiveModule(command.module)
+            }
+            result
           case _ =>
             throw new IllegalArgumentException(s"'$input' not recognized")
         }
