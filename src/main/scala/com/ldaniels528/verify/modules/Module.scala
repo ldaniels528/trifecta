@@ -1,5 +1,7 @@
 package com.ldaniels528.verify.modules
 
+import com.ldaniels528.verify.util.VxUtils._
+
 /**
  * Represents a dynamically loadable module
  * @author lawrence.daniels@gmail.com
@@ -64,6 +66,26 @@ trait Module {
    */
   protected def extract[T](values: Seq[T], index: Int): Option[T] = {
     if (values.length > index) Some(values(index)) else None
+  }
+
+  /**
+   * Executes a Java application via its "main" method
+   * @param className the name of the class to invoke
+   * @param args the arguments to pass to the application
+   */
+  protected def runJava(className: String, args: String*): Iterator[String] = {
+    import scala.io.Source
+
+    // reset the buffer
+    val (out, _, _) = sandbox(initialSize = 1024) {
+      // execute the command
+      val commandClass = Class.forName(className)
+      val mainMethod = commandClass.getMethod("main", classOf[Array[String]])
+      mainMethod.invoke(null, args.toArray)
+    }
+
+    // return the iteration of lines
+    Source.fromBytes(out).getLines()
   }
 
 }

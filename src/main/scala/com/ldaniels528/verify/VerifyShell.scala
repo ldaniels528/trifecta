@@ -70,24 +70,6 @@ class VerifyShell(rt: VerifyShellRuntime) {
     } while (rt.alive)
   }
 
-  /**
-   * Executes a Java application via its "main" method
-   * @param className the name of the class to invoke
-   * @param args the arguments to pass to the application
-   */
-  private def runJava(className: String, args: String*): Iterator[String] = {
-    // reset the buffer
-    buffer.reset()
-
-    // execute the command
-    val commandClass = Class.forName(className)
-    val mainMethod = commandClass.getMethod("main", classOf[Array[String]])
-    mainMethod.invoke(null, args.toArray)
-
-    // return the iteration of lines
-    Source.fromBytes(buffer.toByteArray).getLines()
-  }
-
 }
 
 /**
