@@ -96,17 +96,17 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
     val key = args.head
 
     // perform the action
-    rt.zkcwd = key match {
+    rt.zkCwd = key match {
       case s if s == ".." =>
-        rt.zkcwd.split("[/]") match {
+        rt.zkCwd.split("[/]") match {
           case a if a.length <= 1 => "/"
           case a =>
-            val newpath = a.init.mkString("/")
-            if (newpath.trim.length == 0) "/" else newpath
+            val newPath = a.init.mkString("/")
+            if (newPath.trim.length == 0) "/" else newPath
         }
       case s => zkKeyToPath(s)
     }
-    rt.zkcwd
+    rt.zkCwd
   }
 
   /**
