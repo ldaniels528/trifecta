@@ -53,7 +53,7 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 <a name="Running-the-app"></a> 
 ### Run the application
 
-	$ java -jar verify.jar <zookeperHost>
+	$ java -jar verify.jar <zookeeperHost>
 
 <a name="usage"></a>
 ### Usage Examples	
@@ -111,15 +111,23 @@ To retrieve the start and end offsets and number of messages available for a top
 To retrieve the list of topics with new messages (since your last query):
 
     zookeeper@dev501:2181/> kinbound
-    + ---------------------------------------------------------------------- +
-    | topic                      partition  startOffset  endOffset  change   |
-    + ---------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          0            5218       83       |
-    | com.shocktrade.quotes.csv  1          0            5633       100      |
-    | com.shocktrade.quotes.csv  2          0            5780       74       |
-    | com.shocktrade.quotes.csv  3          0            5320       95       |
-    | com.shocktrade.quotes.csv  4          0            4915       105      |
-    + ---------------------------------------------------------------------- +
+    + ---------------------------------------------------------------------------------------------------------------- +
+    | topic                          partition  startOffset  endOffset    change  msgsPerSec  lastCheckTime            |
+    + ---------------------------------------------------------------------------------------------------------------- +
+    | test.app1.alerts               8          14172422286  14181448062  22722   1195.9      08/25/2014 08:00PM UTC   |
+    | test.app1.alerts               2          14152959137  14161960794  19158   1008.4      08/25/2014 08:00PM UTC   |
+    | test.app1.alerts               6          14149557536  14158589929  19079   1004.2      08/25/2014 08:00PM UTC   |
+    | test.app1.alerts               0          14149783268  14158884735  19013   1000.7      08/25/2014 08:00PM UTC   |
+    | test.app1.alerts               3          14149465416  14158650047  18710   984.8       08/25/2014 08:00PM UTC   |
+    | test.app1.alerts               9          14149489857  14158842964  18699   984.2       08/25/2014 08:00PM UTC   |
+    | test.app1.alerts               1          14149397624  14158931725  18343   965.5       08/25/2014 08:00PM UTC   |
+    | test.app1.alerts               7          14149902016  14159677946  18325   964.5       08/25/2014 08:00PM UTC   |
+    | test.app1.alerts               4          14150527623  14159760560  18207   958.3       08/25/2014 08:00PM UTC   |
+    | test.app1.alerts               5          14150738074  14160430877  18132   954.4       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.csv      7          58618400     59195800     7400    389.5       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.csv      6          11504800     13458400     2000    105.3       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.csv      6          9856091      10307108     1200    63.2        08/25/2014 08:00PM UTC   |
+    + ---------------------------------------------------------------------------------------------------------------- +
 
 To view the Zookeeper keys at the current hierarchy level:
 
