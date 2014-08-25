@@ -3,6 +3,7 @@ package com.ldaniels528.verify.modules.kafka
 import java.io.{File, PrintStream}
 import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
+import java.util.Date
 
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.io.Compression
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.io.Source
+import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -43,6 +45,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
   // incoming messages cache
   private var incomingMessageCache = Map[Topic, Inbound]()
+  private var lastInboundCheck: Long = _
 
   // the name of the module
   val name = "kafka"
@@ -568,32 +571,57 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
   /**
    * "kinbound" - Retrieves a list of all topics with new messages (since last query)
+   * @example {{{ kinbound }}}
    */
   def inboundMessages(args: String*): Iterable[Inbound] = {
+    // is this the initial call to this command?
+    if (incomingMessageCache.isEmpty || (System.currentTimeMillis() - lastInboundCheck) >= 15.minutes) {
+      out.println("No recent data available. Sampling data; this may take a few seconds...")
+
+      // generate some data to fill the cache
+      inboundMessagesGeneration()
+
+      // wait 3 second
+      Thread.sleep(3 second)
+    }
+
+    // capture the current time
+    lastInboundCheck = System.currentTimeMillis()
+
+    // get the inbound topic data
+    inboundMessagesGeneration()
+  }
+
+  private def inboundMessagesGeneration(): Iterable[Inbound] = {
+    // start by retrieving a list of all topics
     val topics = KafkaSubscriber.listTopics(zk, brokers, correlationId).groupBy(_.topic)
-    topics flatMap { case (topic, details) =>
+
+    // generate the inbound data
+    val inboundData = (topics flatMap { case (topic, details) =>
       // get the range of partitions for each topic
       val partitions = details.map(_.partitionId)
       val (beginPartition, endPartition) = (partitions.min, partitions.max)
 
       // retrieve the statistics for each topic
-      val inboundData = getStatistics(topic, beginPartition.toString, endPartition.toString) map { o =>
-        val change = incomingMessageCache.get(Topic(o.name, o.partition)) map (o.endOffset - _.endOffset) getOrElse 0L
-        Inbound(o.name, o.partition, o.startOffset, o.endOffset, change)
+      getStatistics(topic, beginPartition.toString, endPartition.toString) map { o =>
+        val prevInbound = incomingMessageCache.get(Topic(o.name, o.partition))
+        val lastCheckTime = prevInbound.map(_.lastCheckTime.getTime) getOrElse System.currentTimeMillis()
+        val currentTime = System.currentTimeMillis()
+        val elapsedTime = 1 + (currentTime - lastCheckTime) / 1000L
+        val change = prevInbound map (o.endOffset - _.endOffset) getOrElse 0L
+        val rate = BigDecimal(change.toDouble / elapsedTime).setScale(1, BigDecimal.RoundingMode.UP).toDouble
+        Inbound(o.name, o.partition, o.startOffset, o.endOffset, change, rate, new Date(currentTime))
       }
+    }).toSeq
 
-      // is this the initial call to this command?
-      val isInitialCall = incomingMessageCache.isEmpty
+    // cache the unfiltered inbound data
+    incomingMessageCache = incomingMessageCache ++ Map(inboundData map (i => Topic(i.topic, i.partition) -> i): _*)
 
-      // update the cache with the data
-      incomingMessageCache = incomingMessageCache ++ Map(inboundData map (i => Topic(i.topic, i.partition) -> i): _*)
-
-      // filter out the non-changed records
-      if (isInitialCall) inboundData else inboundData.filterNot(_.change == 0)
-    }
+    // filter out the non-changed records
+    inboundData.filterNot(_.change == 0) sortBy (-_.change)
   }
 
-  case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long)
+  case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
 
   /**
    * "kbrokers" - Retrieves the list of Kafka brokers
