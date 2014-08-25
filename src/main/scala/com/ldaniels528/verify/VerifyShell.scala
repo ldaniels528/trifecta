@@ -1,6 +1,6 @@
 package com.ldaniels528.verify
 
-import java.io.{ByteArrayOutputStream, PrintStream}
+import java.io.PrintStream
 
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.VerifyShell._
@@ -11,7 +11,6 @@ import org.fusesource.jansi.Ansi._
 
 import scala.collection.GenTraversableOnce
 import scala.concurrent.duration._
-import scala.io.Source
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
@@ -20,12 +19,13 @@ import scala.util.{Failure, Success, Try}
  * @author lawrence.daniels@gmail.com
  */
 class VerifyShell(rt: VerifyShellRuntime) {
+  // redirect standard output
   val out: PrintStream = rt.out
   val err: PrintStream = rt.err
-  val buffer: ByteArrayOutputStream = rt.buffer
 
   // load the history, then schedule session history file updates
-  SessionManagement.history.load(rt.historyFile)
+  val history: History = SessionManagement.history
+  history.load(rt.historyFile)
   SessionManagement.setupHistoryUpdates(rt.historyFile, 60 seconds)
 
   // load the commands from the modules
