@@ -39,6 +39,9 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   // set the default correlation ID
   private val correlationId: Int = (Math.random * Int.MaxValue).toInt
 
+  // incoming messages cache
+  private var incomingMessageCache = Map[Topic, Inbound]()
+
   // the name of the module
   val name = "kafka"
 
@@ -63,6 +66,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     Command(this, "kgetmaxsize", getMessageMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the largest message for a range of offsets for a given partition"),
     Command(this, "kgetminsize", getMessageMinSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the smallest message for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
+    Command(this, "kinbound", inboundMessages, (Seq.empty, Seq.empty), "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
     Command(this, "kls", listTopics, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
     Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
@@ -555,6 +559,32 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     }
     messages
   }
+
+  /**
+   * "kinbound" - Retrieves a list of all topics with new messages (since last query)
+   */
+  def inboundMessages(args: String*): Iterable[Inbound] = {
+    val topics = KafkaSubscriber.listTopics(zk, brokers, correlationId).groupBy(_.topic)
+    topics flatMap { case (topic, details) =>
+      // get the range of partitions for each topic
+      val partitions = details.map(_.partitionId)
+      val (beginPartition, endPartition) = (partitions.min, partitions.max)
+
+      // retrieve the statistics for each topic
+      val inboundData = getStatistics(topic, beginPartition.toString, endPartition.toString) map { o =>
+        val change = incomingMessageCache.get(Topic(o.name, o.partition)) map (o.endOffset - _.endOffset) getOrElse 0L
+        Inbound(o.name, o.partition, o.startOffset, o.endOffset, change)
+      }
+
+      // update the cache with the data
+      incomingMessageCache = incomingMessageCache ++ Map(inboundData map (i => Topic(i.topic, i.partition) -> i): _*)
+
+      // filter out the non-changed records
+      inboundData.filterNot(_.change == 0)
+    }
+  }
+
+  case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long)
 
   /**
    * "kbrokers" - Retrieves the list of Kafka brokers
