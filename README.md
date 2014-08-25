@@ -60,7 +60,7 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 
 To list the replica brokers that Zookeeper is aware of:
 
-	zookeeper@localhost:2181:/> kbrokers
+	zookeeper@dev501:2181:/> kbrokers
     + -------------------------------------------------------------------------- +
     | jmx_port  timestamp          host                          version  port   |
     + -------------------------------------------------------------------------- +
@@ -70,7 +70,7 @@ To list the replica brokers that Zookeeper is aware of:
 
 To list all of the Kafka topics that Zookeeper is aware of:
 
-	zookeeper@localhost:2181:/> kls
+	zookeeper@dev501:2181:/> kls
     + ------------------------------------------------------------------- +
     | name              partition  leader                       version   |
     + ------------------------------------------------------------------- +
@@ -88,7 +88,7 @@ To list all of the Kafka topics that Zookeeper is aware of:
 
 To see a subset of the topics (matches any topic that starts with the given search term):
 
-	zookeeper@localhost:2181:/> kls test.app1.alerts
+	zookeeper@dev501:2181:/> kls test.app1.alerts
     + ------------------------------------------------------------------- +
     | name              partition  leader                       version   |
     + ------------------------------------------------------------------- +
@@ -99,7 +99,7 @@ To see a subset of the topics (matches any topic that starts with the given sear
 
 To retrieve the start and end offsets and number of messages available for a topic across any number of partitions:
 
-	zookeeper@localhost:2181:/> kstats test.app1.alerts 0 2
+	zookeeper@dev501:2181:/> kstats test.app1.alerts 0 2
     + ------------------------------------------------------------------------ +
     | name              partition  startOffset  endOffset  messagesAvailable   |
     + ------------------------------------------------------------------------ +
@@ -108,9 +108,22 @@ To retrieve the start and end offsets and number of messages available for a top
     | test.app1.alerts  2          5322551      5322551    0                   |
     + ------------------------------------------------------------------------ +
 
+To retrieve the list of topics with new messages (since your last query):
+
+    zookeeper@dev501:2181/> kinbound
+    + ---------------------------------------------------------------------- +
+    | topic                      partition  startOffset  endOffset  change   |
+    + ---------------------------------------------------------------------- +
+    | com.shocktrade.quotes.csv  0          0            5218       83       |
+    | com.shocktrade.quotes.csv  1          0            5633       100      |
+    | com.shocktrade.quotes.csv  2          0            5780       74       |
+    | com.shocktrade.quotes.csv  3          0            5320       95       |
+    | com.shocktrade.quotes.csv  4          0            4915       105      |
+    + ---------------------------------------------------------------------- +
+
 To view the Zookeeper keys at the current hierarchy level:
 
-	zookeeper@localhost:2181:/> zls
+	zookeeper@dev501:2181:/> zls
 		consumers
 		storm
 		controller_epoch
@@ -120,18 +133,18 @@ To view the Zookeeper keys at the current hierarchy level:
 			
 To change the current Zookeeper hierarchy level:			
 			
-	zookeeper@localhost:2181:/> zcd brokers
+	zookeeper@dev501:2181:/> zcd brokers
         /brokers
         
 Now view the keys at this level:        
     
-    zookeeper@localhost:2181:/brokers> zls
+    zookeeper@dev501:2181:/brokers> zls
         topics
         ids	
         
 To list of commands that start with "k":
 			
-	zookeeper@localhost:2181:/> ?k
+	zookeeper@dev501:2181:/> ?k
     + -------------------------------------------------------------------------------------------------------------- +
     | command      module  description                                                                               |
     + -------------------------------------------------------------------------------------------------------------- +
