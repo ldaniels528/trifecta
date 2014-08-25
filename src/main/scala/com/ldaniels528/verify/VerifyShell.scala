@@ -46,9 +46,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
    * Interactive shell
    */
   def shell() {
-    val userName = scala.util.Properties.userName
-    out.println("Type 'help' (or '?') to see the list of available commands")
-    out.println(s"Module auto-switching is ${if(rt.autoSwitching) "On" else "Off"}")
+    import jline.console.ConsoleReader
     VxConsole.wrap {
       out.println(ansi().fg(WHITE).a("Type '").fg(CYAN).a("help").fg(WHITE).a("' (or '").fg(CYAN).a("?").fg(WHITE).a("') to see the list of available commands").reset())
     }
@@ -56,23 +54,27 @@ class VerifyShell(rt: VerifyShellRuntime) {
     // display the state variables
     rt.states()
 
+    // define the console reader
+    val console = new ConsoleReader()
+
     do {
       // display the prompt, and get the next line of input
-      val module = rt.moduleManager.activeModule ?? rt.moduleManager.modules.values.head
-      out.print("%s@%s:%s> ".format(userName, rt.remoteHost, module map (_.prompt) getOrElse "$"))
-      val line = Console.readLine().trim
+      val module = rt.moduleManager.activeModule getOrElse rt.moduleManager.modules.values.head
 
-      if (line.nonEmpty) {
-        interpret(rt, commandSet, line) match {
-          case Success(result) =>
-            handleResult(result)(out)
-            if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
-          case Failure(e: IllegalArgumentException) =>
-            if (rt.debugOn) e.printStackTrace()
-            err.println(s"Syntax error: ${e.getMessage}")
-          case Failure(e) =>
-            if (rt.debugOn) e.printStackTrace()
-            err.println(s"Runtime error: ${e.getMessage}")
+      // read a line from the console
+      Option(console.readLine("%s@%s> ".format(module.name, module.prompt))) map (_.trim) foreach { line =>
+        if (line.nonEmpty) {
+          interpret(rt, commandSet, line) match {
+            case Success(result) =>
+              handleResult(result)(out)
+              if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
+            case Failure(e: IllegalArgumentException) =>
+              if (rt.debugOn) e.printStackTrace()
+              err.println(s"Syntax error: ${e.getMessage}")
+            case Failure(e) =>
+              if (rt.debugOn) e.printStackTrace()
+              err.println(s"Runtime error: ${e.getMessage}")
+          }
         }
       }
     } while (rt.alive)
