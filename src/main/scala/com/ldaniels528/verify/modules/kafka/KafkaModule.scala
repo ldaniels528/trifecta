@@ -74,7 +74,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
-    Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic"),
+    Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic (DESTRUCTIVE)"),
     Command(this, "kstats", getStatistics, (Seq("topic", "beginPartition", "endPartition"), Seq.empty), help = "Returns the parition details for a given topic"))
 
   override def shutdown() = ()
