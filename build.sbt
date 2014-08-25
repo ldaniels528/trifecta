@@ -23,10 +23,10 @@ packageDescription := "Swiss-Army-Knife for viewing/managing topics for Kafka"
 
 scalaVersion := "2.10.4"
 
-scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.6", "-unchecked",
   "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint")
 
-javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars")
+javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.6", "-g:vars")
 
 mainClass in assembly := Some("com.ldaniels528.verify.VerifyShell")
 
