@@ -582,11 +582,14 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
         Inbound(o.name, o.partition, o.startOffset, o.endOffset, change)
       }
 
+      // is this the initial call to this command?
+      val isInitialCall = incomingMessageCache.isEmpty
+
       // update the cache with the data
       incomingMessageCache = incomingMessageCache ++ Map(inboundData map (i => Topic(i.topic, i.partition) -> i): _*)
 
       // filter out the non-changed records
-      inboundData.filterNot(_.change == 0)
+      if (isInitialCall) inboundData else inboundData.filterNot(_.change == 0)
     }
   }
 
