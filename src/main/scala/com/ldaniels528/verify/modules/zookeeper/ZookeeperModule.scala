@@ -31,10 +31,10 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
     Command(this, "zmk", zmkdir, (Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
     Command(this, "zput", zput, (Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
     Command(this, "zreconnect", reconnect, (Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
-    Command(this, "zrm", delete, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper"),
-    Command(this, "zruok", ruok, help = "Checks the status of a Zookeeper instance"),
+    Command(this, "zrm", delete, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper (DESTRUCTIVE"),
+    Command(this, "zruok", ruok, help = "Checks the status of a Zookeeper instance (requires netcat)"),
     Command(this, "zsess", session, help = "Retrieves the Session ID from ZooKeeper"),
-    Command(this, "zstat", stat, help = "Returns the statistics of a Zookeeper instance"),
+    Command(this, "zstat", stat, help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
     Command(this, "ztree", tree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
   override def shutdown() = ()
