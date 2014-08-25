@@ -111,6 +111,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
   /**
    * "kmk" - Creates a new topic
+   * @example {{{ kmk com.shocktrade.alerts }}}
    */
   def createTopic(args: String*) {
     import _root_.kafka.admin.AdminUtils
@@ -124,6 +125,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
   /**
    * "krm" - Deletes a new topic
+   * @example {{{ krm com.shocktrade.alerts }}}
    */
   def deleteTopic(args: String*) {
     import _root_.kafka.admin.AdminUtils
