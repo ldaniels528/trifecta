@@ -189,7 +189,10 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     // perform the action
     new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
       _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) = { dumpMessage(offset, message); () }
+        override def consume(offset: Long, message: Array[Byte]) = {
+          dumpMessage(offset, message)
+          ()
+        }
       })
     }
   }
@@ -442,7 +445,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
   /**
    * "koffset" - Returns the offset at a specific instant-in-time for a given topic
-   * Example: koffset flights 0 2014-05-14T14:30:11
+   * @example {{{ koffset com.shocktrade.alerts 0 2014-05-14T14:30:11 }}}
    */
   def getOffset(args: String*): Option[Long] = {
     // get the arguments
@@ -455,6 +458,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
   /**
    * "kstats" - Returns the number of available messages for a given topic
+   * @example {{{ kstats com.shocktrade.alerts 0 4 }}}
    */
   def getStatistics(args: String*): Seq[TopicOffsets] = {
     // get the arguments
