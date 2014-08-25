@@ -8,7 +8,6 @@ Table of Contents
 * <a href="#Motivations">Motivations</a>
 * <a href="#Development">Development</a>
 	* <a href="#build-requirements">Build Requirements</a>
-	* <a href="#getting-the-code">Getting the code</a>
 	* <a href="#configuring-your-ide">Configuring the project for your IDE</a>
 	* <a href="#building-the-code">Building the code</a>
 	* <a href="#testing-the-code">Running the tests</a>	
@@ -30,11 +29,6 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 
 * [Tabular] (https://github.com/ldaniels528/tabular)
 * [SBT 0.13+] (http://www.scala-sbt.org/download.html)
-
-<a name="getting-the-code"></a>
-### Getting the code
-
-    $ git clone git@github.com:ldaniels528/verify.git
 
 <a name="configuring-your-ide"></a>
 ### Configuring the project for your IDE
