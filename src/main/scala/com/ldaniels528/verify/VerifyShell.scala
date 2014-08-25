@@ -148,6 +148,7 @@ object VerifyShell {
   def handleResult(result: Any)(implicit out: PrintStream) {
     result match {
       // handle lists and sequences of case classes
+      case s: Seq[_] if s.isEmpty => out.println("No data returned")
       case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach out.println
 
       // handle Either cases
