@@ -90,6 +90,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
 
   /**
    * "zcd" - Changes the current path/directory in ZooKeeper
+   * @example {{{ zcd brokers }}}
    */
   def zcd(args: String*): String = {
     // get the argument
@@ -122,6 +123,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
 
   /**
    * "zrm" - Removes a key-value from ZooKeeper
+   * @example {{{ zrm brokers }}}
    */
   def delete(args: String*) {
     // get the argument
