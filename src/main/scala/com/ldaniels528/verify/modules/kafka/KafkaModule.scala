@@ -11,6 +11,7 @@ import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, Mess
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.{CommandParser, VerifyShellRuntime}
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -22,6 +23,7 @@ import scala.util.{Failure, Success, Try}
  * @author lawrence.daniels@gmail.com
  */
 class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val out: PrintStream = rt.out
 
   // date parser instance
