@@ -53,6 +53,9 @@ class VerifyShell(rt: VerifyShellRuntime) {
       out.println(ansi().fg(WHITE).a("Type '").fg(CYAN).a("help").fg(WHITE).a("' (or '").fg(CYAN).a("?").fg(WHITE).a("') to see the list of available commands").reset())
     }
 
+    // display the state variables
+    rt.states()
+
     do {
       // display the prompt, and get the next line of input
       val module = rt.moduleManager.activeModule ?? rt.moduleManager.modules.values.head

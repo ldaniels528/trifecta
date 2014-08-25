@@ -61,4 +61,27 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
     moduleManager.setActiveModule(module)
   }
 
+  /**
+   * Displays the loaded configuration properties
+   */
+  def states(): Unit = {
+    val myStates = Seq[(String, Any)](
+      "core:  encoding" -> encoding,
+      "core:  module auto-switching" -> autoSwitching,
+      "core:  debugging" -> debugOn,
+      "kafka: fetch size" -> defaultFetchSize
+    )
+
+    VxConsole.wrap {
+      for ((title, state) <- myStates) {
+        val (value, color) = state match {
+          case v: Boolean => if (v) ("On", GREEN) else ("Off", YELLOW)
+          case v: String => (v, CYAN)
+          case v => (v.toString, MAGENTA)
+        }
+        out.println(ansi().fg(WHITE).a(s"[*] $title is ").fg(color).a(value).reset())
+      }
+    }
+  }
+
 }
