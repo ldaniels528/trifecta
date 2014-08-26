@@ -2,6 +2,8 @@ package com.ldaniels528.verify.modules
 
 import com.ldaniels528.verify.util.VxUtils._
 
+import scala.util.{Failure, Try, Success}
+
 /**
  * Represents a dynamically loadable module
  * @author lawrence.daniels@gmail.com
@@ -66,6 +68,22 @@ trait Module {
    */
   protected def extract[T](values: Seq[T], index: Int): Option[T] = {
     if (values.length > index) Some(values(index)) else None
+  }
+
+  protected def parseInt(label:String, value: String): Int = {
+    Try(value.toInt) match {
+      case Success(v) => v
+      case Failure(e) =>
+        throw new IllegalArgumentException(s"$label: Expected an integer value, found '$value'")
+    }
+  }
+
+  protected def parseLong(label:String, value: String): Long = {
+    Try(value.toLong) match {
+      case Success(v) => v
+      case Failure(e) =>
+        throw new IllegalArgumentException(s"$label: Expected an integer value, found '$value'")
+    }
   }
 
   /**
