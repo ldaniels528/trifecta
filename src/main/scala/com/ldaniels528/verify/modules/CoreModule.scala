@@ -203,7 +203,8 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
         case s if s == "?" => Some("history")
         case s if s == "!" => SessionManagement.history.last
         case s if s.matches("\\d+") => SessionManagement.history(index.toInt - 1)
-        case _ => None
+        case s =>
+          throw new IllegalArgumentException(s"Unrecognized symbol '$s'")
       }
     } {
       out.println(s">> $command")
