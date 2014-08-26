@@ -77,7 +77,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
     Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic (DESTRUCTIVE)"),
-    Command(this, "kstats", getStatistics, (Seq("topic", "beginPartition", "endPartition"), Seq.empty), help = "Returns the parition details for a given topic"))
+    Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the parition details for a given topic"))
 
   override def shutdown() = ()
 
@@ -451,16 +451,34 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
    * "kstats" - Returns the number of available messages for a given topic
    * @example {{{ kstats com.shocktrade.alerts 0 4 }}}
    */
-  def getStatistics(args: String*): Seq[TopicOffsets] = {
-    // get the arguments
-    val Seq(name, beginPartition, endPartition, _*) = args
+  def getStatistics(args: String*): Iterable[TopicOffsets] = {
+    // interpret based on the input arguments
+    val results = args.toList match {
+      case topic :: Nil =>
+        val partitions = KafkaSubscriber.listTopics(zk, brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
+        if (partitions.nonEmpty) Some((topic, partitions.min, partitions.max)) else None
 
-    // determine the difference between the first and last offsets
-    for {
-      partition <- beginPartition.toInt to endPartition.toInt
-      first <- getFirstOffset(name, partition.toString)
-      last <- getLastOffset(name, partition.toString)
-    } yield TopicOffsets(name, partition, first, last, last - first)
+      case topic :: partition :: Nil =>
+        val partitions = KafkaSubscriber.listTopics(zk, brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
+        if (partitions.nonEmpty) Some((topic, partition.toInt, partitions.max)) else None
+
+      case topic :: partitionA :: partitionB :: Nil =>
+        Some((topic, partitionA.toInt, partitionB.toInt))
+
+      case _ =>
+        None
+    }
+
+    results match {
+      case Some((name, partition0, partition1)) =>
+        // determine the difference between the first and last offsets
+        for {
+          partition <- partition0 to partition1
+          first <- getFirstOffset(name, partition.toString)
+          last <- getLastOffset(name, partition.toString)
+        } yield TopicOffsets(name, partition, first, last, last - first)
+      case _ => Seq.empty
+    }
   }
 
   /**
