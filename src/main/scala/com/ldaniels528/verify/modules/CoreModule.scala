@@ -5,6 +5,7 @@ import java.util.{Date, TimeZone}
 
 import com.ldaniels528.verify.VerifyShell.{handleResult, interpret}
 import com.ldaniels528.verify.{SessionManagement, VerifyShell, VerifyShellRuntime}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
@@ -16,6 +17,7 @@ import scala.language.postfixOps
  * @author lawrence.daniels@gmail.com
  */
 class CoreModule(rt: VerifyShellRuntime) extends Module {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val out: PrintStream = rt.out
 
   // define the process parsing regular expression
