@@ -33,7 +33,7 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
   // various shared state variables
   var autoSwitching = false
   var debugOn = false
-  var defaultFetchSize = 1024
+  var defaultFetchSize = 8192
   var encoding = "UTF-8"
 
   // ZooKeeper current working directory
