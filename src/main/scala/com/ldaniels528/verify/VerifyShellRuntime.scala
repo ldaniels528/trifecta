@@ -5,6 +5,7 @@ import java.io.File.separator
 
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.kafka.KafkaModule
+import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
 import com.ldaniels528.verify.modules.{CoreModule, ModuleManager}
 import org.fusesource.jansi.Ansi.Color._
@@ -55,6 +56,7 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
   moduleManager ++= Seq(
     new CoreModule(this),
     new KafkaModule(this),
+    new StormModule(this),
     new ZookeeperModule(this))
 
   // set the zookeeper module as the "active" module
