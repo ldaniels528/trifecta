@@ -70,7 +70,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     Command(this, "kgetsize", getMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
-    Command(this, "kinbound", inboundMessages, (Seq.empty, Seq.empty), "Retrieves a list of topics with new messages (since last query)"),
+    Command(this, "kinbound", inboundMessages, (Seq.empty, Seq("prefix")), "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
     Command(this, "kls", listTopics, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
     Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
@@ -577,15 +577,17 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
   /**
    * "kinbound" - Retrieves a list of all topics with new messages (since last query)
-   * @example {{{ kinbound }}}
+   * @example {{{ kinbound com.shocktrade.quotes }}}
    */
   def inboundMessages(args: String*): Iterable[Inbound] = {
+    val prefix = args.headOption
+
     // is this the initial call to this command?
     if (incomingMessageCache.isEmpty || (System.currentTimeMillis() - lastInboundCheck) >= 15.minutes) {
-      out.println("No recent data available. Sampling data; this may take a few seconds...")
+      out.println("Sampling data; this may take a few seconds...")
 
       // generate some data to fill the cache
-      inboundMessagesGeneration()
+      inboundMessageStatistics()
 
       // wait 3 second
       Thread.sleep(3 second)
@@ -595,12 +597,19 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     lastInboundCheck = System.currentTimeMillis()
 
     // get the inbound topic data
-    inboundMessagesGeneration()
+    inboundMessageStatistics(prefix)
   }
 
-  private def inboundMessagesGeneration(): Iterable[Inbound] = {
+  /**
+   * Generates an iteration of inbound message statistics
+   * @param prefix the given topic prefix (e.g. "myTopic123")
+   * @return an iteration of inbound message statistics
+   */
+  private def inboundMessageStatistics(prefix: Option[String] = None): Iterable[Inbound] = {
     // start by retrieving a list of all topics
-    val topics = KafkaSubscriber.listTopics(zk, brokers, correlationId).groupBy(_.topic)
+    val topics = KafkaSubscriber.listTopics(zk, brokers, correlationId)
+      .filter(t => t.topic == prefix.getOrElse(t.topic))
+      .groupBy(_.topic)
 
     // generate the inbound data
     val inboundData = (topics flatMap { case (topic, details) =>
