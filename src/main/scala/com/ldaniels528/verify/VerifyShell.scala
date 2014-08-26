@@ -55,14 +55,15 @@ class VerifyShell(rt: VerifyShellRuntime) {
     rt.states()
 
     // define the console reader
-    val console = new ConsoleReader()
+    val consoleReader = new ConsoleReader()
+    consoleReader.setExpandEvents(false)
 
     do {
       // display the prompt, and get the next line of input
       val module = rt.moduleManager.activeModule getOrElse rt.moduleManager.modules.values.head
 
       // read a line from the console
-      Option(console.readLine("%s@%s> ".format(module.name, module.prompt))) map (_.trim) foreach { line =>
+      Option(consoleReader.readLine("%s@%s> ".format(module.name, module.prompt))) map (_.trim) foreach { line =>
         if (line.nonEmpty) {
           interpret(rt, commandSet, line) match {
             case Success(result) =>
