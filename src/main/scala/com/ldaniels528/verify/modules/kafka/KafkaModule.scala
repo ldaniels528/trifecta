@@ -68,8 +68,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgeta", getMessageAvro, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
     Command(this, "kgetsize", getMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
-    Command(this, "kgetmaxsize", getMessageMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the largest message for a range of offsets for a given partition"),
-    Command(this, "kgetminsize", getMessageMinSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the size of the smallest message for a range of offsets for a given partition"),
+    Command(this, "kgetminmax", getMessageMinMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
     Command(this, "kinbound", inboundMessages, (Seq.empty, Seq.empty), "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
@@ -417,36 +416,23 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   }
 
   /**
-   * "kgetmaxsize" - Returns the largest message size for a given topic partition and offset range
+   * "kgetminmax" - Returns the minimum and maximum message size for a given topic partition and offset range
    * @example {{{ kgetmaxsize com.shocktrade.alerts 0 45913900 45913975 }}}
    */
-  def getMessageMaxSize(args: String*): Int = {
+  def getMessageMinMaxSize(args: String*): Seq[MessageMaxMin] = {
     // get the arguments
     val Seq(name, partition, startOffset, endOffset, _*) = args
     val fetchSize = extract(args, 4) map (_.toInt) getOrElse rt.defaultFetchSize
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
+    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use { subscriber =>
       val offsets = startOffset.toLong to endOffset.toLong
-      _.fetch(offsets, fetchSize).map(_.message.length).max
+      val messages = subscriber.fetch(offsets, fetchSize).map(_.message.length)
+      if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Seq.empty
     }
   }
 
-  /**
-   * "kgetminsize" - Returns the smallest message size for a given topic partition and offset range
-   * @example {{{ kgetminsize com.shocktrade.alerts 0 45913900 45913975 }}}
-   */
-  def getMessageMinSize(args: String*): Int = {
-    // get the arguments
-    val Seq(name, partition, startOffset, endOffset, _*) = args
-    val fetchSize = extract(args, 4) map (_.toInt) getOrElse rt.defaultFetchSize
-
-    // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
-      val offsets = startOffset.toLong to endOffset.toLong
-      _.fetch(offsets, fetchSize).map(_.message.length).min
-    }
-  }
+  case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
 
   /**
    * "koffset" - Returns the offset at a specific instant-in-time for a given topic
