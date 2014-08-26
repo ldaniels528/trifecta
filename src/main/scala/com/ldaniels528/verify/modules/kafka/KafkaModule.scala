@@ -57,7 +57,6 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
     Command(this, "kchka", verifyTopicAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a range of messages can be read by a given Avro schema"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
-    Command(this, "kcount", countMessages, (Seq("topic", "partition"), Seq.empty), help = "Returns the number of messages available for a given topic"),
     Command(this, "kdump", dumpBinary, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as binary] to the console"),
     Command(this, "kdumpa", dumpAvro, (Seq("schemaPath", "topic", "partition"), Seq("startOffset", "endOffset", "blockSize", "fields")), "Dumps the contents of a specific topic [as Avro] to the console"),
     Command(this, "kdumpr", dumpRaw, (Seq("topic", "partition"), Seq("startOffset", "endOffset", "blockSize")), "Dumps the contents of a specific topic [as raw ASCII] to the console"),
@@ -92,20 +91,6 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
     // perform the action
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.commitOffsets(groupId, offset.toLong, metadata))
-  }
-
-  /**
-   * "kcount" - Returns the number of available messages for a given topic
-   */
-  def countMessages(args: String*): Option[Long] = {
-    // get the arguments
-    val Seq(name, partition, _*) = args
-
-    // determine the difference between the first and last offsets
-    for {
-      first <- getFirstOffset(name, partition)
-      last <- getLastOffset(name, partition)
-    } yield last - first
   }
 
   /**
