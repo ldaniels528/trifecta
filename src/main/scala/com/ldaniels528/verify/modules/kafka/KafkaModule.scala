@@ -91,7 +91,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val metadata = extract(args, 4) getOrElse ""
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use (_.commitOffsets(groupId, offset.toLong, metadata))
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.commitOffsets(groupId, offset.toLong, metadata))
   }
 
   /**
@@ -119,7 +119,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val Seq(topic, partitions, replicas, _*) = args
     val topicConfig = new java.util.Properties()
 
-    new ZkClient(rt.remoteHost) use (AdminUtils.createTopic(_, topic, partitions.toInt, replicas.toInt, topicConfig))
+    new ZkClient(rt.remoteHost) use (AdminUtils.createTopic(_, topic, parseInt("partitions", partitions), parseInt("replicas", replicas), topicConfig))
   }
 
   /**
@@ -145,9 +145,9 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
     // get the arguments
     val Seq(schemaPath, name, partition, _*) = args
-    val startOffset = extract(args, 3) map (_.toLong)
-    val endOffset = extract(args, 4) map (_.toLong)
-    val blockSize = extract(args, 5) map (_.toInt)
+    val startOffset = extract(args, 3) map (parseLong("startOffset", _))
+    val endOffset = extract(args, 4) map (parseLong("endOffset", _))
+    val blockSize = extract(args, 5) map (parseInt("blockSize", _))
     val fields: Seq[String] = extract(args, 6) map (_.split("[+]")) map (_.toSeq) getOrElse Seq.empty
 
     // get the decoder
@@ -155,7 +155,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val records = mutable.Buffer[GenericRecord]()
 
     // perform the action
-    val offset = new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
+    val offset = new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
       _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
         override def consume(offset: Long, message: Array[Byte]) {
           decoder.decode(message) match {
@@ -191,7 +191,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     //val outputFile = params.
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
       _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
         override def consume(offset: Long, message: Array[Byte]) = {
           dumpMessage(offset, message)
@@ -230,12 +230,12 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   def dumpRaw(args: String*)(implicit out: PrintStream): Long = {
     // get the arguments
     val Seq(name, partition, _*) = args
-    val startOffset = extract(args, 2) map (_.toLong)
-    val endOffset = extract(args, 3) map (_.toLong)
-    val blockSize = extract(args, 4) map (_.toInt)
+    val startOffset = extract(args, 2) map (parseLong("startOffset", _))
+    val endOffset = extract(args, 3) map (parseLong("endOffset", _))
+    val blockSize = extract(args, 4) map (parseInt("blockSize", _))
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
       _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
         override def consume(offset: Long, message: Array[Byte]) {
           out.println("[%04d] %s".format(offset, new String(deflate(message), "UTF-8")))
@@ -252,16 +252,16 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
     // get the arguments
     val Seq(file, name, partition, _*) = args
-    val startOffset = extract(args, 3) map (_.toLong)
-    val endOffset = extract(args, 4) map (_.toLong)
+    val startOffset = extract(args, 3) map (parseLong("startOffset", _))
+    val endOffset = extract(args, 4) map (parseLong("endOffset", _))
     val counts = extract(args, 5) map (_.toLowerCase) exists (_ == "-c")
-    val blockSize = extract(args, 6) map (_.toInt)
+    val blockSize = extract(args, 6) map (parseInt("blockSize", _))
 
     // output the output file
     var count = 0L
     new DataOutputStream(new FileOutputStream(file)) use { fos =>
       // perform the action
-      new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
+      new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
         _.consume(startOffset, endOffset, blockSize, listener = new MessageConsumer {
           override def consume(offset: Long, message: Array[Byte]) {
             if (counts) fos.writeInt(message.length)
@@ -283,7 +283,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val Seq(name, partition, groupId, _*) = args
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use (_.fetchOffsets(groupId))
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.fetchOffsets(groupId))
   }
 
   /**
@@ -304,10 +304,10 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   def findMessage(args: String*): Option[MessageData] = {
     // get the arguments
     val Seq(name, partition, messageID, _*) = args
-    val fetchSize = extract(args, 3) map (_.toInt) getOrElse 8192
+    val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse 8192
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use { subscriber =>
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
       // get the start and end offsets for the topic partition
       val startOffset = subscriber.getFirstOffset getOrElse (throw new IllegalStateException("Could not determine start of partition"))
       val endOffset = subscriber.getLastOffset getOrElse (throw new IllegalStateException("Could not determine end of partition"))
@@ -333,7 +333,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val Seq(name, partition, _*) = args
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use (_.getFirstOffset)
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getFirstOffset)
   }
 
   /**
@@ -344,7 +344,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val Seq(name, partition, _*) = args
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use (_.getLastOffset)
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getLastOffset)
   }
 
   /**
@@ -357,15 +357,15 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
     // get the arguments
     val Seq(schemaPath, name, partition, _*) = args
-    val offset = extract(args, 3) map (_.toLong)
-    val blockSize = extract(args, 4) map (_.toInt)
+    val offset = extract(args, 3) map (parseLong("offset", _))
+    val blockSize = extract(args, 4) map (parseInt("blockSize", _))
 
     // get the decoder
     val decoder = getAvroDecoder(schemaPath)
 
     // perform the action
     var results: Seq[AvroRecord] = Nil
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
       _.consume(offset, offset map (_ + 1), blockSize, listener = new MessageConsumer {
         override def consume(offset: Long, message: Array[Byte]) {
           decoder.decode(message) match {
@@ -392,10 +392,10 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   def getMessage(args: String*)(implicit out: PrintStream): Option[Int] = {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
-    val fetchSize = extract(args, 3) map (_.toInt) getOrElse rt.defaultFetchSize
+    val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse rt.defaultFetchSize
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
       _.fetch(offset.toLong, fetchSize).headOption map (m => dumpMessage(m.offset, m.message))
     }
   }
@@ -407,10 +407,10 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   def getMessageSize(args: String*): Option[Int] = {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
-    val fetchSize = extract(args, 3) map (_.toInt) getOrElse rt.defaultFetchSize
+    val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse rt.defaultFetchSize
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use {
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
       _.fetch(offset.toLong, fetchSize).headOption map (_.message.length)
     }
   }
@@ -422,10 +422,10 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   def getMessageMinMaxSize(args: String*): Seq[MessageMaxMin] = {
     // get the arguments
     val Seq(name, partition, startOffset, endOffset, _*) = args
-    val fetchSize = extract(args, 4) map (_.toInt) getOrElse rt.defaultFetchSize
+    val fetchSize = extract(args, 4) map (parseInt("fetchSize", _)) getOrElse rt.defaultFetchSize
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use { subscriber =>
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
       val offsets = startOffset.toLong to endOffset.toLong
       val messages = subscriber.fetch(offsets, fetchSize).map(_.message.length)
       if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Seq.empty
@@ -444,7 +444,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     val sysTimeMillis = extract(args, 2) map (sdf.parse(_).getTime) getOrElse -1L
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use (_.getOffsetsBefore(sysTimeMillis))
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getOffsetsBefore(sysTimeMillis))
   }
 
   /**
@@ -460,7 +460,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
       case topic :: partition :: Nil =>
         val partitions = KafkaSubscriber.listTopics(zk, brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
-        if (partitions.nonEmpty) Some((topic, partition.toInt, partitions.max)) else None
+        if (partitions.nonEmpty) Some((topic, parseInt("partition", partition), partitions.max)) else None
 
       case topic :: partitionA :: partitionB :: Nil =>
         Some((topic, partitionA.toInt, partitionB.toInt))
@@ -671,8 +671,8 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   def verifyTopicAvro(args: String*)(implicit out: PrintStream): Seq[AvroVerification] = {
     // get the arguments
     val Seq(schemaPath, name, partition, startOffset, endOffset, _*) = args
-    val batchSize = extract(args, 5) map (_.toInt) getOrElse 10
-    val blockSize = extract(args, 6) map (_.toInt) getOrElse 8192
+    val batchSize = extract(args, 5) map (parseInt("batchSize", _)) getOrElse 10
+    val blockSize = extract(args, 6) map (parseInt("blockSize", _)) getOrElse 8192
 
     // get the decoder
     val decoder = getAvroDecoder(schemaPath)
@@ -680,7 +680,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     // check all records within the range
     var verified = 0
     var errors = 0
-    new KafkaSubscriber(Topic(name, partition.toInt), brokers, correlationId) use { subscriber =>
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
       (startOffset.toLong to endOffset.toLong).sliding(batchSize, batchSize) foreach { offsets =>
         Try(subscriber.fetch(offsets, blockSize)) match {
           case Success(messages) =>
@@ -707,11 +707,11 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   def watchTopic(args: String*)(implicit out: PrintStream): Long = {
     // get the arguments
     val Seq(name, partition, _*) = args
-    val duration = (extract(args, 2) map (_.toInt) getOrElse 60).seconds
+    val duration = (extract(args, 2) map (parseInt("duration", _)) getOrElse 60).seconds
 
     // perform the action
     var count = 0L
-    KafkaSubscriber.watch(Topic(name, partition.toInt), brokers, None, duration, correlationId,
+    KafkaSubscriber.watch(Topic(name, parseInt("partition", partition)), brokers, None, duration, correlationId,
       new MessageConsumer {
         override def consume(offset: Long, message: Array[Byte]) {
           message.sliding(40, 40) foreach { bytes =>
@@ -729,11 +729,11 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   def watchTopicWithConsumerGroup(args: String*)(implicit out: PrintStream): Long = {
     // get the arguments
     val Seq(name, partition, groupId, _*) = args
-    val duration = (extract(args, 3) map (_.toInt) getOrElse 60).seconds
+    val duration = (extract(args, 3) map (parseInt("duration", _)) getOrElse 60).seconds
 
     // perform the action
     var count = 0L
-    KafkaSubscriber.watchGroup(Topic(name, partition.toInt), brokers, groupId, duration, correlationId,
+    KafkaSubscriber.watchGroup(Topic(name, parseInt("partition", partition)), brokers, groupId, duration, correlationId,
       new MessageConsumer {
         override def consume(offset: Long, message: Array[Byte]) {
           message.sliding(40, 40) foreach { bytes =>
