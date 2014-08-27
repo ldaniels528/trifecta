@@ -11,6 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
+import scala.util.Properties
 
 /**
  * Core Module
@@ -360,6 +361,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     val portmapF: Future[Map[String, String]] = Future {
       // get the lines of data from 'netstat'
       val netStat = Source.fromString((node match {
+        case "." if(Properties.isMac) => "netstat -gilns"
         case "." => "netstat -ptln"
         case host => s"ssh -i /home/ubuntu/dev.pem ubuntu@$host netstat -ptln"
       }).!!).getLines().toSeq.tail
