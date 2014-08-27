@@ -12,6 +12,7 @@ import org.fusesource.jansi.Ansi.Color._
 import org.fusesource.jansi.Ansi._
 
 import scala.util.Properties.userHome
+import scala.util.Try
 
 /**
  * Verify Shell Runtime Context
@@ -45,6 +46,10 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
 
   // define the history properties
   var historyFile = new File(s"$userHome$separator.verify${separator}history.txt")
+
+  // define the configuration file & properties
+  val configFile = new File(s"$userHome$separator.verify${separator}config.properties")
+  val configProps = loadConfiguration(configFile)
 
   // create the ZooKeeper proxy
   val zkProxy = ZKProxy(zkEndPoint)
@@ -85,6 +90,18 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
         out.println(ansi().fg(WHITE).a(s"[*] $title is ").fg(color).a(value).reset())
       }
     }
+  }
+
+  /**
+   * Loads the configuration file
+   * @param configFile the configuration file
+   */
+  def loadConfiguration(configFile: File): Properties = {
+    val p = new Properties()
+    if (configFile.exists()) {
+      Try(p.load(new FileInputStream(configFile)))
+    }
+    p
   }
 
 }
