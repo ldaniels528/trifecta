@@ -1,16 +1,19 @@
 package com.ldaniels528.verify
 
-import java.io.File
 import java.io.File.separator
+import java.io.{File, FileInputStream}
+import java.util.Properties
 
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.kafka.KafkaModule
+import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
 import com.ldaniels528.verify.modules.{CoreModule, ModuleManager}
 import org.fusesource.jansi.Ansi.Color._
 import org.fusesource.jansi.Ansi._
 
 import scala.util.Properties.userHome
+import scala.util.Try
 
 /**
  * Verify Shell Runtime Context
@@ -45,6 +48,10 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
   // define the history properties
   var historyFile = new File(s"$userHome$separator.verify${separator}history.txt")
 
+  // define the configuration file & properties
+  val configFile = new File(s"$userHome$separator.verify${separator}config.properties")
+  val configProps = loadConfiguration(configFile)
+
   // create the ZooKeeper proxy
   val zkProxy = ZKProxy(zkEndPoint)
 
@@ -55,6 +62,7 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
   moduleManager ++= Seq(
     new CoreModule(this),
     new KafkaModule(this),
+    new StormModule(this),
     new ZookeeperModule(this))
 
   // set the zookeeper module as the "active" module
@@ -83,6 +91,18 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
         out.println(ansi().fg(WHITE).a(s"[*] $title is ").fg(color).a(value).reset())
       }
     }
+  }
+
+  /**
+   * Loads the configuration file
+   * @param configFile the configuration file
+   */
+  def loadConfiguration(configFile: File): Properties = {
+    val p = new Properties()
+    if (configFile.exists()) {
+      Try(p.load(new FileInputStream(configFile)))
+    }
+    p
   }
 
 }

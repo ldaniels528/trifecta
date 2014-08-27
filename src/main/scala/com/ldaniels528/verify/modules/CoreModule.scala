@@ -51,7 +51,6 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
     Command(this, "pwd", printWorkingDirectory, (Seq.empty, Seq.empty), help = "Display current working directory"),
     Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
-    Command(this, "storm", stormDeploy, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server"),
     Command(this, "systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
     Command(this, "time", time, help = "Returns the system time"),
     Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"),
@@ -387,17 +386,6 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
       pasdata <- psdataF
       portmap <- portmapF
     } yield (pasdata, portmap)
-  }
-
-  /**
-   * "storm" command - Deploys a topology to the Storm server
-   * Example: storm mytopology.jar myconfig.properties
-   */
-  def stormDeploy(args: String*): String = {
-    import scala.sys.process._
-
-    // deploy the topology
-    s"storm jar ${args mkString " "}".!!
   }
 
   /**
