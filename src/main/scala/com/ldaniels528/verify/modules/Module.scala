@@ -91,14 +91,17 @@ trait Module {
    * @param className the name of the class to invoke
    * @param args the arguments to pass to the application
    */
-  protected def runJava(className: String, args: String*): Iterator[String] = {
+  protected def runJava(jarPath: String, className: String, args: String*): Iterator[String] = {
     import scala.io.Source
+
+    val classUrls = Array(new URL(s"file://./$jarPath"))
+    val classLoader = new URLClassLoader(classUrls)
 
     // reset the buffer
     val (out, _, _) = sandbox(initialSize = 1024) {
       // execute the command
-      val commandClass = Class.forName(className)
-      val mainMethod = commandClass.getMethod("main", classOf[Array[String]])
+      val jarClass = classLoader.loadClass(className)
+      val mainMethod = jarClass.getMethod("main", classOf[Array[String]])
       mainMethod.invoke(null, args.toArray)
     }
 
