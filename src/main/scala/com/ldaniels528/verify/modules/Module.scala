@@ -1,8 +1,10 @@
 package com.ldaniels528.verify.modules
 
+import java.net.{URL, URLClassLoader}
+
 import com.ldaniels528.verify.util.VxUtils._
 
-import scala.util.{Failure, Try, Success}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Represents a dynamically loadable module
@@ -70,7 +72,7 @@ trait Module {
     if (values.length > index) Some(values(index)) else None
   }
 
-  protected def parseInt(label:String, value: String): Int = {
+  protected def parseInt(label: String, value: String): Int = {
     Try(value.toInt) match {
       case Success(v) => v
       case Failure(e) =>
@@ -78,7 +80,7 @@ trait Module {
     }
   }
 
-  protected def parseLong(label:String, value: String): Long = {
+  protected def parseLong(label: String, value: String): Long = {
     Try(value.toLong) match {
       case Success(v) => v
       case Failure(e) =>
