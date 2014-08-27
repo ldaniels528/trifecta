@@ -51,6 +51,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
     Command(this, "pwd", printWorkingDirectory, (Seq.empty, Seq.empty), help = "Display current working directory"),
     Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
+    Command(this, "runjava", executeJavaApp, (Seq("className"), (0 to 20).map(n => s"arg$n")), help = "Executes a Java class' main method"),
     Command(this, "systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
     Command(this, "time", time, help = "Returns the system time"),
     Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"),
@@ -137,6 +138,15 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
   def debug(args: String*): String = {
     if (args.isEmpty) rt.debugOn = !rt.debugOn else rt.debugOn = args.head.toBoolean
     s"debugging is ${if (rt.debugOn) "On" else "Off"}"
+  }
+
+  /**
+   * Executes a Java class' main method
+   * @example {{{ runjava com.shocktrade.test.Tester }}}
+   * @return the program's output
+   */
+  def executeJavaApp(args: String*): Iterator[String] = {
+    runJava(className = args.head, args.tail: _*)
   }
 
   /**
@@ -360,7 +370,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     val portmapF: Future[Map[String, String]] = Future {
       // get the lines of data from 'netstat'
       val netStat = Source.fromString((node match {
-        case "." if(Properties.isMac) => "netstat -gilns"
+        case "." if (Properties.isMac) => "netstat -gilns"
         case "." => "netstat -ptln"
         case host => s"ssh -i /home/ubuntu/dev.pem ubuntu@$host netstat -ptln"
       }).!!).getLines().toSeq.tail
