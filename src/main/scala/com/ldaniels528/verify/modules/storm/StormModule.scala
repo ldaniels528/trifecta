@@ -73,9 +73,11 @@ class StormModule(rt: VerifyShellRuntime) extends Module {
    */
   def listTopologies(args: String*): Seq[TopologyDetails] = {
     client.map(_.getClusterInfo.get_topologies_iterator().toSeq map { t =>
-      TopologyDetails(t.get_name, t.get_status, t.get_num_workers, t.get_uptime_secs)
+      TopologyDetails(t.get_name, t.get_status, t.get_num_workers, t.get_num_executors(), t.get_num_tasks(), t.get_uptime_secs)
     }) getOrElse Seq.empty
   }
+
+  case class TopologyDetails(name: String, status: String, workers: Int, executors: Int, tasks: Int, uptimeSecs: Long)
 
   /**
    * "sconf" - Lists the Storm configuration
@@ -99,7 +101,5 @@ class StormModule(rt: VerifyShellRuntime) extends Module {
   private def connect: Try[Nimbus.Client] = Try(NimbusClient.getConfiguredClient(stormConf).getClient)
 
   case class TopologyConfig(key: String, value: Any)
-
-  case class TopologyDetails(name: String, status: String, workers: Int, uptimeSecs: Long)
 
 }
