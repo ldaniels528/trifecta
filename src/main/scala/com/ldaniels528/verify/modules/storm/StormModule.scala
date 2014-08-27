@@ -68,8 +68,21 @@ class StormModule(rt: VerifyShellRuntime) extends Module {
    * @example {{ sconf }}
    */
   def showConfig(args: String*): Seq[TopologyConfig] = {
-    stormConf.toSeq map { case (k, v) => (k.toString, v)} sortBy (_._1) map { case (k, v) => TopologyConfig(k, v)}
+    args.toList match {
+      case Nil =>
+        stormConf.toSeq map { case (k, v) => (k.toString, v)} sortBy (_._1) map { case (k, v) => TopologyConfig(k, v)}
+      case key :: Nil =>
+        val value = stormConf.get(key)
+        Seq(TopologyConfig(key, value))
+      case key :: value :: Nil =>
+        stormConf.put(key, value)
+        Seq(TopologyConfig(key, value))
+      case _ =>
+        throw new IllegalArgumentException("Usage: sconf [<key> [<value>]]")
+    }
   }
+
+  private def connect: Try[Nimbus.Client] = Try(NimbusClient.getConfiguredClient(stormConf).getClient)
 
   case class TopologyConfig(key: String, value: Any)
 
