@@ -1,7 +1,8 @@
 package com.ldaniels528.verify
 
-import java.io.File
 import java.io.File.separator
+import java.io.{File, FileInputStream}
+import java.util.Properties
 
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.kafka.KafkaModule
