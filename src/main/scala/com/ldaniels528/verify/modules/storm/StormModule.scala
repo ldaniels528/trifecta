@@ -24,6 +24,7 @@ class StormModule(rt: VerifyShellRuntime) extends Module {
   // the bound commands
   val getCommands = Seq(
     Command(this, "sconf", showConfig, (Seq.empty, Seq.empty), help = "Lists the Storm configuration"),
+    Command(this, "sdeploy", deployTopology, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server"),
     Command(this, "skill", killTopology, (Seq.empty, Seq("topologyName")), help = "Kills a running topology"),
     Command(this, "sls", listTopologies, (Seq.empty, Seq("prefix")), help = "Lists available topologies")
   )
@@ -32,6 +33,17 @@ class StormModule(rt: VerifyShellRuntime) extends Module {
    * Called when the application is shutting down
    */
   override def shutdown(): Unit = ()
+
+  /**
+   * "sdeploy" command - Deploys a topology to the Storm server
+   * Example: sdeploy mytopology.jar myconfig.properties
+   */
+  def deployTopology(args: String*): String = {
+    import scala.sys.process._
+
+    // deploy the topology
+    s"storm jar ${args mkString " "}".!!
+  }
 
   /**
    * "skill" - Lists available topologies
