@@ -13,7 +13,6 @@ import scala.collection.JavaConversions._
 class StormModule(rt: VerifyShellRuntime) extends Module {
   private val logger = LoggerFactory.getLogger(getClass)
   private val stormConf = Utils.readStormConfig().asInstanceOf[java.util.Map[String, Any]]
-  stormConf.put("nimbus.host", "dev501")
   private val client = NimbusClient.getConfiguredClient(stormConf).getClient
 
   // the name of the module
