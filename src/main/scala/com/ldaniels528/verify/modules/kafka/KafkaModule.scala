@@ -76,7 +76,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "klast", getLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
     Command(this, "kls", listTopics, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
     Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
-    Command(this, "knext", nextMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the next message"),
+    Command(this, "knext", getNextMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the next message"),
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
@@ -320,13 +320,13 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "knext" - Optionally returns the next message
    * @example {{{ knext }}}
    */
-  def nextMessage(args: String*)(implicit out: PrintStream): Option[Any] = {
-    cursor map { case MessageCursor(topic, partition, offset, encoding) =>
+  def getNextMessage(args: String*)(implicit out: PrintStream): Option[Any] = {
+    cursor map { case MessageCursor(topic, partition, offset, nextOffset, encoding) =>
       encoding match {
         case BINARY =>
-          getMessage(Seq(topic, partition.toString, offset.toString): _*)
+          getMessage(Seq(topic, partition.toString, nextOffset.toString): _*)
         case AVRO =>
-          getMessageAvro(Seq(topic, partition.toString, offset.toString): _*)
+          getMessageAvro(Seq(topic, partition.toString, nextOffset.toString): _*)
         case unknown =>
           throw new IllegalStateException(s"Unrecognized encoding $unknown")
       }
@@ -699,9 +699,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
  */
 object KafkaModule {
 
-  case class MessageEncoding(value: Int) extends AnyVal
+  case class MessageEncoding(value: String) extends AnyVal
 
-  val BINARY = MessageEncoding(0)
-  val AVRO = MessageEncoding(1)
+  val BINARY = MessageEncoding("Binary")
+  val AVRO = MessageEncoding("Avro")
 
 }
