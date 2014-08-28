@@ -372,11 +372,11 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // interpret based on the input arguments
     val results = args.toList match {
       case topic :: Nil =>
-        val partitions = KafkaSubscriber.listTopics(zk, brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
+        val partitions = KafkaSubscriber.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
         if (partitions.nonEmpty) Some((topic, partitions.min, partitions.max)) else None
 
       case topic :: partition :: Nil =>
-        val partitions = KafkaSubscriber.listTopics(zk, brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
+        val partitions = KafkaSubscriber.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
         if (partitions.nonEmpty) Some((topic, parseInt("partition", partition), partitions.max)) else None
 
       case topic :: partitionA :: partitionB :: Nil =>
@@ -566,7 +566,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def listTopics(args: String*): Seq[TopicDetail] = {
     val prefix = args.headOption
 
-    KafkaSubscriber.listTopics(zk, brokers, correlationId) flatMap { t =>
+    KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
       val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size)
       if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(detail) else None
     }
