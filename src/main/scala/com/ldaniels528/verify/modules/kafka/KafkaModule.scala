@@ -30,9 +30,6 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   // date parser instance
   private val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 
-  // define a custom tabular instance
-  private val tabular = new Tabular() with AvroTables
-
   // create the ZooKeeper proxy
   private val zk = rt.zkProxy
 
