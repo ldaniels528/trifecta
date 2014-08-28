@@ -51,7 +51,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
     Command(this, "pwd", printWorkingDirectory, (Seq.empty, Seq.empty), help = "Display current working directory"),
     Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
-    Command(this, "runjava", executeJavaApp, (Seq("className"), (0 to 20).map(n => s"arg$n")), help = "Executes a Java class' main method"),
+    Command(this, "runjava", executeJavaApp, (Seq("jarFile", "className"), (1 to 10).map(n => s"arg$n")), help = "Executes a Java class' main method"),
     Command(this, "systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
     Command(this, "time", time, help = "Returns the system time"),
     Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"),
@@ -142,11 +142,12 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
 
   /**
    * Executes a Java class' main method
-   * @example {{{ runjava com.shocktrade.test.Tester }}}
+   * @example {{{ runjava myJarFile.jar com.shocktrade.test.Tester }}}
    * @return the program's output
    */
   def executeJavaApp(args: String*): Iterator[String] = {
-    runJava(className = args.head, args.tail: _*)
+    val Seq(jarPath, className, _*) = args
+    runJava(jarPath, className, args.drop(2): _*)
   }
 
   /**
