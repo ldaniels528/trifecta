@@ -5,16 +5,16 @@ import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import KafkaModule._
 import com.ldaniels528.tabular.Tabular
+import com.ldaniels528.verify.VerifyShellRuntime
 import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.io.avro.{AvroDecoder, AvroTables}
-import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
+import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.BrokerDetails
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.VxUtils._
-import com.ldaniels528.verify.{CommandParser, VerifyShellRuntime}
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
@@ -22,7 +22,6 @@ import scala.util.{Failure, Success, Try}
 
 /**
  * Kafka Module
- * @author lawrence.daniels@gmail.com
  */
 class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   private lazy val logger = LoggerFactory.getLogger(getClass)
@@ -73,10 +72,11 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     Command(this, "klast", getLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
     Command(this, "kls", listTopics, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
     Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
+    Command(this, "knext", nextMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the next message"),
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
     Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic (DESTRUCTIVE)"),
-    Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the parition details for a given topic"))
+    Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
 
   override def shutdown() = ()
 
@@ -121,118 +121,9 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   }
 
   /**
-   * "kdumpa" - Dumps the contents of a specific topic to the console [as AVRO]
-   * @example {{{ kdumpa avro/schema1.avsc com.shocktrade.alerts 0 58500700 58500724 }}}
-   * @example {{{ kdumpa avro/schema2.avsc com.shocktrade.alerts 9 1799020 1799029 1024 field1+field2+field3+field4 }}}
-   */
-  def dumpAvro(args: String*)(implicit out: PrintStream): Long = {
-    import org.apache.avro.generic.GenericRecord
-
-    // get the arguments
-    val Seq(schemaPath, name, partition, _*) = args
-    val startOffset = extract(args, 3) map (parseLong("startOffset", _))
-    val endOffset = extract(args, 4) map (parseLong("endOffset", _))
-    val blockSize = extract(args, 5) map (parseInt("blockSize", _))
-    val fields: Seq[String] = extract(args, 6) map (_.split("[+]")) map (_.toSeq) getOrElse Seq.empty
-
-    // get the decoder
-    val decoder = getAvroDecoder(schemaPath)
-    val records = mutable.Buffer[GenericRecord]()
-
-    // perform the action
-    val offset = new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
-      _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) {
-          decoder.decode(message) match {
-            case Success(record) =>
-              records += record
-              ()
-            case Failure(e) =>
-              out.println("[%04d] %s".format(offset, e.getMessage))
-          }
-        }
-      })
-    }
-
-    // transform the records into a table
-    tabular.transformAvro(records, fields) foreach out.println
-
-    offset
-  }
-
-  /**
-   * "kdump" - Dumps the contents of a specific topic to the console [as binary]
-   * @example {{{ kdump com.shocktrade.alerts 0 58500700 58500724 }}}
-   */
-  def dumpBinary(args: String*)(implicit out: PrintStream): Long = {
-    // convert the tokens into a parameter list
-    val params = CommandParser.parseArgs(args)
-
-    // get the arguments
-    val Seq(name, partition, _*) = args
-    val startOffset = extract(args, 2) map (_.toLong)
-    val endOffset = extract(args, 3) map (_.toLong)
-    val blockSize = extract(args, 4) map (_.toInt)
-    //val outputFile = params.
-
-    // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
-      _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) = {
-          dumpMessage(offset, message)
-          ()
-        }
-      })
-    }
-  }
-
-  /**
-   * Displays the contents of the given message
-   * @param offset the offset of the given message
-   * @param message the given message
-   * @return the size of the message in bytes
-   */
-  private def dumpMessage(offset: Long, message: Array[Byte]): Int = {
-    // determine the widths for each section: bytes & characters
-    val columns = rt.columns
-    val byteWidth = columns * 3
-
-    // display the message
-    var index = 0
-    val length1 = 1 + Math.log10(offset).toInt
-    val length2 = 1 + Math.log10(message.length).toInt
-    val myFormat = s"[%0${length1}d:%0${length2}d] %-${byteWidth}s| %-${columns}s"
-    message.sliding(columns, columns) foreach { bytes =>
-      out.println(myFormat.format(offset, index, asHexString(bytes), asChars(bytes)))
-      index += columns
-    }
-    message.length
-  }
-
-  /**
-   * "kdumpr" - Dumps the contents of a specific topic to the console [as raw ASCII]
-   */
-  def dumpRaw(args: String*)(implicit out: PrintStream): Long = {
-    // get the arguments
-    val Seq(name, partition, _*) = args
-    val startOffset = extract(args, 2) map (parseLong("startOffset", _))
-    val endOffset = extract(args, 3) map (parseLong("endOffset", _))
-    val blockSize = extract(args, 4) map (parseInt("blockSize", _))
-
-    // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
-      _.consume(startOffset, endOffset, blockSize, new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) {
-          out.println("[%04d] %s".format(offset, new String(deflate(message), "UTF-8")))
-        }
-      })
-    }
-  }
-
-  /**
    * "kdumpf" - Dumps the contents of a specific topic to a file
    */
-  def dumpToFile(args: String*): Long = {
+  def exportToFile(args: String*): Long = {
     import java.io.{DataOutputStream, FileOutputStream}
 
     // get the arguments
@@ -284,33 +175,6 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   }
 
   /**
-   * "kfind" - Returns the message for a given topic partition by its message ID
-   */
-  def findMessage(args: String*): Option[MessageData] = {
-    // get the arguments
-    val Seq(name, partition, messageID, _*) = args
-    val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse 8192
-
-    // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
-      // get the start and end offsets for the topic partition
-      val startOffset = subscriber.getFirstOffset getOrElse (throw new IllegalStateException("Could not determine start of partition"))
-      val endOffset = subscriber.getLastOffset getOrElse (throw new IllegalStateException("Could not determine end of partition"))
-      findMessage(subscriber, startOffset, endOffset, fetchSize)
-    }
-  }
-
-  private def findMessage(subscriber: KafkaSubscriber, startOffset: Long, endOffset: Long, fetchSize: Int): Option[MessageData] = {
-    // search for the message key
-    (startOffset to endOffset).sliding(10, 10) foreach { offsets =>
-      subscriber.fetch(offsets, fetchSize) foreach { m =>
-
-      }
-    }
-    None
-  }
-
-  /**
    * "kfirst" - Returns the first offset for a given topic
    */
   def getFirstOffset(args: String*): Option[Long] = {
@@ -319,17 +183,6 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
 
     // perform the action
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getFirstOffset)
-  }
-
-  /**
-   * "klast" - Returns the last offset for a given topic
-   */
-  def getLastOffset(args: String*): Option[Long] = {
-    // get the arguments
-    val Seq(name, partition, _*) = args
-
-    // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getLastOffset)
   }
 
   /**
@@ -355,6 +208,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
         override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
           decoder.decode(message) match {
             case Success(record) =>
+              cursor = nextOffset map (nextOffset => MessageCursor(name, partition.toInt, nextOffset, AVRO))
               val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
               results = fields map { f =>
                 val v = record.get(f)
@@ -374,16 +228,23 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
    * "kget" - Returns the message for a given topic partition and offset
    * @example {{{ kget com.shocktrade.alerts 0 45913975 }}}
    */
-  def getMessage(args: String*)(implicit out: PrintStream): Option[Int] = {
+  def getMessage(args: String*)(implicit out: PrintStream): Array[Byte] = {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
     val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse rt.defaultFetchSize
 
     // perform the action
+    var bytes: Array[Byte] = Array()
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
-      _.fetch(offset.toLong, fetchSize).headOption map (m => dumpMessage(m.offset, m.message))
+      _.fetch(offset.toLong, fetchSize).headOption map { m =>
+        bytes = m.message
+        cursor = Option(m.nextOffset) map (nextOffset => MessageCursor(name, partition.toInt, nextOffset, BINARY))
+      }
     }
+    bytes
   }
+
+  case class MessageCursor(topic: String, partition: Int, offset: Long, encoding: MessageEncoding)
 
   /**
    * "kgetsize" - Returns the size of the message for a given topic partition and offset
@@ -418,6 +279,34 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   }
 
   case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
+
+  /**
+   * "klast" - Returns the last offset for a given topic
+   */
+  def getLastOffset(args: String*): Option[Long] = {
+    // get the arguments
+    val Seq(name, partition, _*) = args
+
+    // perform the action
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getLastOffset)
+  }
+
+  /**
+   * "knext" - Optionally returns the next message
+   * @example {{{ knext }}}
+   */
+  def nextMessage(args: String*)(implicit out: PrintStream): Option[Any] = {
+    cursor map { case MessageCursor(topic, partition, offset, encoding) =>
+      encoding match {
+        case BINARY =>
+          getMessage(Seq(topic, partition.toString, offset.toString): _*)
+        case AVRO =>
+          getMessageAvro(Seq(topic, partition.toString, offset.toString): _*)
+        case unknown =>
+          throw new IllegalStateException(s"Unrecognized encoding $unknown")
+      }
+    }
+  }
 
   /**
    * "koffset" - Returns the offset at a specific instant-in-time for a given topic
@@ -659,10 +548,10 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   }
 
   /**
-   * kchka - Verifies that a set of messages (specific offset range) can be read by the specified schema
+   * kchka - Scans and verifies that a set of messages (specific offset range) can be read by the specified schema
    * @example {{{ kchka avro/schema1.avsc com.shocktrade.alerts 0 1000 2000 }}}
    */
-  def verifyTopicAvro(args: String*)(implicit out: PrintStream): Seq[AvroVerification] = {
+  def scanTopicAvro(args: String*)(implicit out: PrintStream): Seq[AvroVerification] = {
     // get the arguments
     val Seq(schemaPath, name, partition, startOffset, endOffset, _*) = args
     val batchSize = extract(args, 5) map (parseInt("batchSize", _)) getOrElse 10
@@ -765,5 +654,14 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
   case class TopicDetail(name: String, partition: Int, leader: String, version: Int)
 
   case class TopicOffsets(name: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
+
+}
+
+object KafkaModule {
+
+  case class MessageEncoding(value: Int) extends AnyVal
+
+  val BINARY = MessageEncoding(0)
+  val AVRO = MessageEncoding(1)
 
 }
