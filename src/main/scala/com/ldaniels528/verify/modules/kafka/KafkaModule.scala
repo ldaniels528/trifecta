@@ -59,7 +59,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   // the bound commands
   val getCommands = Seq(
-    Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
+    Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kexport", exportToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Writes the contents of a specific topic to a file"),
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
@@ -557,7 +557,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   /**
    * "kbrokers" - Retrieves the list of Kafka brokers
    */
-  def listBrokers(args: String*): Seq[BrokerDetails] = KafkaSubscriber.getBrokerList(zk)
+  def listBrokers(args: String*): Seq[BrokerDetails] = KafkaSubscriber.getBrokerList
 
   /**
    * "kls" - Lists all existing topicList
