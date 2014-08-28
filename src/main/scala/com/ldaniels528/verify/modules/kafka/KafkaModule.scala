@@ -78,6 +78,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
     Command(this, "knext", nextMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the next message"),
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
+    Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
     Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic (DESTRUCTIVE)"),
     Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
@@ -343,6 +344,23 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // perform the action
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getOffsetsBefore(sysTimeMillis))
+  }
+
+  /**
+   * "kprev" - Optionally returns the previous message
+   * @example {{{ kprev }}}
+   */
+  def getPreviousMessage(args: String*)(implicit out: PrintStream): Option[Any] = {
+    cursor map { case MessageCursor(topic, partition, offset, nextOffset, encoding) =>
+      encoding match {
+        case BINARY =>
+          getMessage(Seq(topic, partition.toString, (offset - 1).toString): _*)
+        case AVRO =>
+          getMessageAvro(Seq(topic, partition.toString, (offset - 1).toString): _*)
+        case unknown =>
+          throw new IllegalStateException(s"Unrecognized encoding $unknown")
+      }
+    }
   }
 
   /**
