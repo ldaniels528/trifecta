@@ -1,17 +1,17 @@
-package com.ldaniels528.verify.io.avro
+package com.ldaniels528.verify.modules.avro
 
 import com.twitter.bijection.Injection
 import com.twitter.bijection.avro.GenericAvroCodecs
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
+import scala.util.Try
+
 /**
  * Apache Avro Decoder
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class AvroDecoder(schemaString: String) {
-  import scala.util.Try
-
+case class AvroDecoder(schemaString: String) {
   val schema = new Schema.Parser().parse(schemaString)
   val converter: Injection[GenericRecord, Array[Byte]] = GenericAvroCodecs.toBinary(schema)
 
@@ -19,5 +19,7 @@ class AvroDecoder(schemaString: String) {
    * Decodes the byte array based on the avro schema
    */
   def decode(bytes: Array[Byte]): Try[GenericRecord] = converter.invert(bytes)
+
+  override def toString = schemaString
 
 }

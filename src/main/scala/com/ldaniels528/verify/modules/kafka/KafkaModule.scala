@@ -221,12 +221,12 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     import scala.collection.JavaConverters._
 
     // get the arguments
-    val Seq(schemaPath, name, partition, _*) = args
+    val Seq(schemaVar, name, partition, _*) = args
     val offset = extract(args, 3) map (parseLong("offset", _))
     val blockSize = extract(args, 4) map (parseInt("blockSize", _))
 
     // get the decoder
-    val decoder = getAvroDecoder(schemaPath)
+    val decoder = getAvroDecoder(schemaVar)
 
     // perform the action
     var results: Seq[AvroRecord] = Nil
@@ -600,7 +600,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val blockSize = extract(args, 6) map (parseInt("blockSize", _)) getOrElse 8192
 
     // get the decoder
-    val decoder = getAvroDecoder(schemaPath)
+    val decoder = getAvroDecoder(schemaVar)
 
     // check all records within the range
     var verified = 0
@@ -662,18 +662,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
         }
       })
     count
-  }
-
-  private def getAvroDecoder(schemaPath: String): AvroDecoder = {
-    // ensure the file exists
-    val schemaFile = new File(schemaPath)
-    if (!schemaFile.exists()) {
-      throw new IllegalStateException(s"Schema file '${schemaFile.getAbsolutePath}' not found")
-    }
-
-    // retrieve the schema as a string
-    val schemaString = Source.fromFile(schemaFile).getLines() mkString "\n"
-    new AvroDecoder(schemaString)
   }
 
   /**

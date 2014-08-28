@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.io.avro
+package com.ldaniels528.verify.modules.avro
 
 import com.ldaniels528.tabular.Tabular
 import org.apache.avro.generic.GenericRecord
@@ -7,7 +7,7 @@ import scala.collection.JavaConversions._
 
 /**
  * Adds Avro table capabilities to a Tabular instance
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait AvroTables {
   self: Tabular =>
