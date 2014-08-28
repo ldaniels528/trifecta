@@ -66,6 +66,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfirst", getFirstOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the first offset for a given topic"),
+    Command(this, "kdelta", getConsumerDeltas, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of deltas between the consumers and topics"),
     Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgeta", getMessageAvro, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
     Command(this, "kgetsize", getMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
@@ -176,6 +177,28 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       case None => rt.defaultFetchSize
     }
   }
+
+  /**
+   * kdelta
+   * @example {{{ kdelta }}}
+   */
+  def getConsumerDeltas(args: String*): Future[Seq[ConsumerLag]] = {
+    val topicPrefix = args.headOption
+    val consumers_f = Future(KafkaSubscriber.getConsumerList(topicPrefix))
+    val stats_f = Future(inboundMessageStatistics(topicPrefix))
+
+    for {
+      consumers <- consumers_f
+      stats <- stats_f
+      statsMap = Map(stats.map(s => Topic(s.topic, s.partition) -> s.endOffset).toSeq: _*)
+    } yield consumers map { c =>
+      val topicOffset = statsMap.get(Topic(c.topic, c.partition))
+      val delta = topicOffset map (_ - c.offset)
+      ConsumerLag(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
+    }
+  }
+
+  case class ConsumerLag(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], delta: Option[Long])
 
   /**
    * "kfirst" - Returns the first offset for a given topic
