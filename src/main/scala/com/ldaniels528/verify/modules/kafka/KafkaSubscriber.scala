@@ -231,9 +231,9 @@ object KafkaSubscriber {
   /**
    * Retrieves the list of defined brokers from Zookeeper
    */
-  def getBrokerList(zk: ZKProxy): Seq[BrokerDetails] = {
+  def getBrokerList(implicit zk: ZKProxy): Seq[BrokerDetails] = {
     val basePath = "/brokers/ids"
-    zk.getChildren(basePath, watch = false) flatMap { brokerId =>
+    zk.getChildren(basePath) flatMap { brokerId =>
       zk.readString(s"$basePath/$brokerId") map { json =>
         val details = parse(json).extract[BrokerDetails]
         Try(details.timestamp = sdf.format(new java.util.Date(details.timestamp.toLong)))
@@ -269,9 +269,9 @@ object KafkaSubscriber {
   /**
    * Returns the list of topics for the given brokers
    */
-  def listTopics(zk: ZKProxy, brokers: Seq[Broker], correlationId: Int): Seq[TopicDetails] = {
+  def getTopicList(brokers: Seq[Broker], correlationId: Int)(implicit zk: ZKProxy): Seq[TopicDetails] = {
     // get the list of topics
-    val topics = zk.getChildren("/brokers/topics", watch = false)
+    val topics = zk.getChildren("/brokers/topics")
 
     // capture the meta data for all topics
     getTopicMetadata(brokers(0), topics, correlationId) flatMap { tmd =>
