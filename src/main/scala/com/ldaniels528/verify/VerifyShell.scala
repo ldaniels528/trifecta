@@ -3,8 +3,8 @@ package com.ldaniels528.verify
 import java.io.PrintStream
 
 import com.ldaniels528.tabular.Tabular
-import com.ldaniels528.verify.io.avro._
 import com.ldaniels528.verify.modules.Command
+import com.ldaniels528.verify.modules.avro.AvroTables
 import org.fusesource.jansi.Ansi.Color._
 import org.fusesource.jansi.Ansi._
 
