@@ -148,9 +148,9 @@ object VerifyShell {
 
   def handleResult(result: Any)(implicit rt: VerifyShellRuntime, out: PrintStream) {
     result match {
-      // handle lists and sequences of case classes
-      case s: Seq[_] if s.isEmpty => out.println("No data returned")
-      case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach out.println
+      // handle byte arrays
+      case message: Array[Byte] if message.isEmpty => out.println("No data returned")
+      case message: Array[Byte] => dumpMessage(message)
 
       // handle Either cases
       case e: Either[_, _] => e match {
@@ -161,7 +161,7 @@ object VerifyShell {
       // handle Option cases
       case o: Option[_] => o match {
         case Some(v) => handleResult(v)
-        case None =>
+        case None => out.println("No data returned")
       }
 
       // handle Try cases
@@ -169,6 +169,10 @@ object VerifyShell {
         case Success(v) => handleResult(v)
         case Failure(e) => throw e
       }
+
+      // handle lists and sequences of case classes
+      case s: Seq[_] if s.isEmpty => out.println("No data returned")
+      case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach out.println
 
       // handle lists and sequences of primitives
       case g: GenTraversableOnce[_] => g foreach out.println
