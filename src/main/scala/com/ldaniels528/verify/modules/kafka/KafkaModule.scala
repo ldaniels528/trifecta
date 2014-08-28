@@ -236,7 +236,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
         override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
           decoder.decode(message) match {
             case Success(record) =>
-              cursor = nextOffset map (nextOffset => MessageCursor(name, partition.toInt, nextOffset, AVRO))
+              cursor = nextOffset map (nextOffset => MessageCursor(name, partition.toInt, offset, nextOffset, AVRO))
               val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
               results = fields map { f =>
                 val v = record.get(f)
@@ -265,12 +265,12 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     var messageData: Option[MessageData] = None
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
       messageData = subscriber.fetch(offset.toLong, fetchSize).headOption
-      cursor = messageData map (m => MessageCursor(name, partition.toInt, m.nextOffset, BINARY))
+      cursor = messageData map (m => MessageCursor(name, partition.toInt, m.offset, m.nextOffset, BINARY))
     }
     messageData
   }
 
-  case class MessageCursor(topic: String, partition: Int, offset: Long, encoding: MessageEncoding)
+  case class MessageCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, encoding: MessageEncoding)
 
   /**
    * "kgetsize" - Returns the size of the message for a given topic partition and offset
