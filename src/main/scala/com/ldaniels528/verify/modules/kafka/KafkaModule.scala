@@ -387,15 +387,18 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     results match {
-      case Some((name, partition0, partition1)) =>
-        // determine the difference between the first and last offsets
-        for {
-          partition <- partition0 to partition1
-          first <- getFirstOffset(name, partition.toString)
-          last <- getLastOffset(name, partition.toString)
-        } yield TopicOffsets(name, partition, first, last, last - first)
+      case Some((topic, partition0, partition1)) =>
+        getStatisticsData(topic, partition0, partition1)
       case _ => Seq.empty
     }
+  }
+
+  private def getStatisticsData(topic: String, partition0: Int, partition1: Int): Iterable[TopicOffsets] = {
+    for {
+      partition <- partition0 to partition1
+      first <- getFirstOffset(topic, partition.toString)
+      last <- getLastOffset(topic, partition.toString)
+    } yield TopicOffsets(topic, partition, first, last, last - first)
   }
 
   /**
