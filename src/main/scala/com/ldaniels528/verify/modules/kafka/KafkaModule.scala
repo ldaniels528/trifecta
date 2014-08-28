@@ -23,7 +23,7 @@ import scala.util.{Failure, Success, Try}
 /**
  * Kafka Module
  */
-class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
+class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging with Compression {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val out: PrintStream = rt.out
 
@@ -594,10 +594,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     KafkaSubscriber.watch(Topic(name, parseInt("partition", partition)), brokers, None, duration, correlationId,
       new MessageConsumer {
         override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
-          message.sliding(rt.columns, rt.columns) foreach { bytes =>
-            out.println("[%04d] %-80s %-40s".format(offset, asHexString(bytes), asChars(bytes)))
-            count += 1
-          }
+          dumpMessage(offset, message)
         }
       })
     count
@@ -616,10 +613,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     KafkaSubscriber.watchGroup(Topic(name, parseInt("partition", partition)), brokers, groupId, duration, correlationId,
       new MessageConsumer {
         override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
-          message.sliding(rt.columns, rt.columns) foreach { bytes =>
-            out.println("[%04d] %-80s %-40s".format(offset, asHexString(bytes), asChars(bytes)))
-            count += 1
-          }
+          dumpMessage(offset, message)
         }
       })
     count
