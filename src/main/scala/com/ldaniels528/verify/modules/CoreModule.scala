@@ -220,7 +220,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     } {
       out.println(s">> $command")
       val result = interpret(rt, commandSet, command)
-      handleResult(result)(out)
+      handleResult(result)(rt, out)
     }
   }
 

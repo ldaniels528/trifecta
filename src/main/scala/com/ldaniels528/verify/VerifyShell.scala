@@ -67,7 +67,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
         if (line.nonEmpty) {
           interpret(rt, commandSet, line) match {
             case Success(result) =>
-              handleResult(result)(out)
+              handleResult(result)(rt, out)
               if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
             case Failure(e: IllegalArgumentException) =>
               if (rt.debugOn) e.printStackTrace()
@@ -146,7 +146,7 @@ object VerifyShell {
     })
   }
 
-  def handleResult(result: Any)(implicit out: PrintStream) {
+  def handleResult(result: Any)(implicit rt: VerifyShellRuntime, out: PrintStream) {
     result match {
       // handle lists and sequences of case classes
       case s: Seq[_] if s.isEmpty => out.println("No data returned")
