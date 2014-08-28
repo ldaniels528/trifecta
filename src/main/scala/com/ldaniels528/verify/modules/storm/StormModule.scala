@@ -37,7 +37,8 @@ class StormModule(rt: VerifyShellRuntime) extends Module {
   // the bound commands
   val getCommands = Seq(
     Command(this, "sconf", showConfig, (Seq.empty, Seq("key", "value")), help = "Lists, retrieves or sets the configuration keys"),
-    Command(this, "sdeploy", deployTopology, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server"),
+    Command(this, "sdeploy", deployTopology, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server (EXPERIMENTAL)"),
+    Command(this, "sget", lookupTopology, (Seq("topologyName"), Seq.empty), help = "Retrieves the information for a topology"),
     Command(this, "skill", killTopology, (Seq.empty, Seq("topologyName")), help = "Kills a running topology"),
     Command(this, "sls", listTopologies, (Seq.empty, Seq("prefix")), help = "Lists available topologies")
   )
@@ -48,8 +49,26 @@ class StormModule(rt: VerifyShellRuntime) extends Module {
   override def shutdown(): Unit = ()
 
   /**
+   * Retrieves the information for a topology
+   * @example {{{ sget myTopology }}}
+   */
+  def lookupTopology(args: String*): Seq[TopologyInfo] = {
+    val topologyName = args.head
+    client.map(_.getTopology(topologyName)) map { t =>
+      Seq(TopologyInfo(topologyName, t.get_bolts_size, t.get_spouts_size))
+      /*
+      val bolts = (t.get_bolts map { case (name, bolt) => TopologyInfo(name, "Bolt")}).toSeq
+      val spouts = (t.get_spouts map { case (name, spout) => TopologyInfo(name, "Spout")}).toSeq
+      bolts ++ spouts
+      */
+    } getOrElse Seq.empty
+  }
+
+  case class TopologyInfo(name: String, bolts: Int, spouts: Int)
+
+  /**
    * "sdeploy" command - Deploys a topology to the Storm server
-   * Example: sdeploy mytopology.jar myconfig.properties
+   * @example {{{ sdeploy mytopology.jar myconfig.properties }}}
    */
   def deployTopology(args: String*): String = {
     import scala.sys.process._
@@ -60,7 +79,7 @@ class StormModule(rt: VerifyShellRuntime) extends Module {
 
   /**
    * "skill" - Lists available topologies
-   * @example {{ skill myTopology }}
+   * @example {{{ skill myTopology }}}
    */
   def killTopology(args: String*): Unit = {
     val topologyName = args.head
@@ -73,11 +92,11 @@ class StormModule(rt: VerifyShellRuntime) extends Module {
    */
   def listTopologies(args: String*): Seq[TopologyDetails] = {
     client.map(_.getClusterInfo.get_topologies_iterator().toSeq map { t =>
-      TopologyDetails(t.get_name, t.get_status, t.get_num_workers, t.get_num_executors(), t.get_num_tasks(), t.get_uptime_secs)
+      TopologyDetails(t.get_name, t.get_id, t.get_status, t.get_num_workers, t.get_num_executors, t.get_num_tasks, t.get_uptime_secs)
     }) getOrElse Seq.empty
   }
 
-  case class TopologyDetails(name: String, status: String, workers: Int, executors: Int, tasks: Int, uptimeSecs: Long)
+  case class TopologyDetails(name: String, id: String, status: String, workers: Int, executors: Int, tasks: Int, uptimeSecs: Long)
 
   /**
    * "sconf" - Lists the Storm configuration
