@@ -536,13 +536,13 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
       // retrieve the statistics for each topic
       getStatistics(topic, beginPartition.toString, endPartition.toString) map { o =>
-        val prevInbound = incomingMessageCache.get(Topic(o.name, o.partition))
+        val prevInbound = incomingMessageCache.get(Topic(o.topic, o.partition))
         val lastCheckTime = prevInbound.map(_.lastCheckTime.getTime) getOrElse System.currentTimeMillis()
         val currentTime = System.currentTimeMillis()
         val elapsedTime = 1 + (currentTime - lastCheckTime) / 1000L
         val change = prevInbound map (o.endOffset - _.endOffset) getOrElse 0L
         val rate = BigDecimal(change.toDouble / elapsedTime).setScale(1, BigDecimal.RoundingMode.UP).toDouble
-        Inbound(o.name, o.partition, o.startOffset, o.endOffset, change, rate, new Date(currentTime))
+        Inbound(o.topic, o.partition, o.startOffset, o.endOffset, change, rate, new Date(currentTime))
       }
     }).toSeq
 
@@ -676,9 +676,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   case class AvroVerification(verified: Int, failed: Int)
 
-  case class TopicDetail(name: String, partition: Int, leader: String, version: Int)
+  case class TopicDetail(topic: String, partition: Int, leader: String, version: Int)
 
-  case class TopicOffsets(name: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
+  case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
 
 }
 
