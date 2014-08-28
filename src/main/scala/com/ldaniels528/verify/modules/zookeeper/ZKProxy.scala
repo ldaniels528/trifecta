@@ -30,7 +30,7 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
   logger.info(s"Connecting to ZooKeeper at '$host:$port'...")
   private var zk = new ZooKeeper(host, port, new MyWatcher(callback))
 
-  def batch(ops: Op*): Seq[OpResult] = zk.multi(ops)
+  //def batch(ops: Op*): Seq[OpResult] = zk.multi(ops)
 
   def client: ZooKeeper = zk
 
@@ -130,12 +130,12 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
 
   /**
    * Updates the given path
-   */
+   *//*
   def updateAtomic(path: String, data: Array[Byte], stat: Stat): Seq[OpResult] = {
     batch(
       Op.delete(path, stat.getVersion),
       Op.create(path, data, acl, mode))
-  }
+  }*/
 
   def update(path: String, data: Array[Byte], stat: Stat) = {
     exists(path) map { stat =>
