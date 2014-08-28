@@ -60,7 +60,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   // the bound commands
   val getCommands = Seq(
     Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the registered brokers from ZooKeeper"),
-    Command(this, "kchka", scanTopicAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Verifies that a range of messages can be read by a given Avro schema"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kexport", exportToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Writes the contents of a specific topic to a file"),
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
@@ -81,6 +80,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
     Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic (DESTRUCTIVE)"),
+    Command(this, "kscana", scanTopicAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
     Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
 
   override def shutdown() = ()
