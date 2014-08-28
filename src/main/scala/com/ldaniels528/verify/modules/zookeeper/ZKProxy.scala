@@ -19,7 +19,7 @@ import scala.util.Try
 
 /**
  * ZooKeeper Proxy
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None) {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -161,7 +161,7 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
 
 /**
  * Zookeeper Proxy Singleton
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object ZKProxy {
   private val NO_DATA = new Array[Byte](0)

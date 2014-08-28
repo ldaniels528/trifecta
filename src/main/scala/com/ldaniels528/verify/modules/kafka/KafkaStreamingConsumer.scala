@@ -8,7 +8,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Kafka Streaming Consumer
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaStreamingConsumer(zkEndPoint: EndPoint, groupId: String) extends Compression {
   private val consumer = Consumer.create(createConsumerConfig(zkEndPoint, groupId))

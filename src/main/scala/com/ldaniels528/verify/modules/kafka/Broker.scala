@@ -4,13 +4,13 @@ import com.ldaniels528.verify.io.EndPoint
 
 /**
  * Type-safe Broker implementation
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class Broker(host: String, port: Int) extends EndPoint
 
 /**
  * Broker Companion Object
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object Broker {
 

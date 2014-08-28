@@ -2,7 +2,7 @@ package com.ldaniels528.verify.vscript
 
 /**
  * Represents a runtime execution scope
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait Scope {
 
@@ -65,7 +65,7 @@ trait Scope {
 
 /**
  * Represents a named entity
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait NamedEntity {
 
@@ -79,7 +79,7 @@ trait NamedEntity {
 
 /**
  * Represents a class definition
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class ClassDef(name: String, params: Seq[String], code: OpCode) extends NamedEntity {
   override def toString = s"$name(${params mkString ", "})"
@@ -87,7 +87,7 @@ case class ClassDef(name: String, params: Seq[String], code: OpCode) extends Nam
 
 /**
  * Represents a function definition
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class Function(name: String, params: Seq[String], code: OpCode) extends NamedEntity {
   override def toString = s"$name(${params mkString ", "})"
@@ -95,7 +95,7 @@ case class Function(name: String, params: Seq[String], code: OpCode) extends Nam
 
 /**
  * Represents a variable definition
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class Variable(name: String, var value: OpCode) extends NamedEntity {
   override def toString = s"$name = $value"

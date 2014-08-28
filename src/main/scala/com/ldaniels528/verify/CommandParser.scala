@@ -2,7 +2,7 @@ package com.ldaniels528.verify
 
 /**
  * Verify Command Parser
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object CommandParser {
   private val SYMBOLS = Set('!', '@', '?', '&')

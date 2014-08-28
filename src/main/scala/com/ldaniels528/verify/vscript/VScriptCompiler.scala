@@ -7,7 +7,7 @@ import scala.collection.mutable
 
 /**
  * VScript Compiler
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VScriptCompiler {
   private[vscript] val OPERATORS = Seq("::", ":+", "+:", "+", "-", "*", "/", "%", "(", "[", ".", "==", "===")

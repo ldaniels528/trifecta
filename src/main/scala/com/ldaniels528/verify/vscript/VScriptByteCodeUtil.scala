@@ -12,7 +12,7 @@ import scala.language.postfixOps
 
 /**
  * VScript ByteCode Generator
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VScriptByteCodeUtil {
   private[this] val logger = LoggerFactory.getLogger(getClass)
@@ -375,7 +375,7 @@ object VScriptByteCodeUtil {
 
   /**
    * Represents a VScript Binary
-   * @author lawrence.daniels@gmail.com
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   class VSBinary(val majorVersion: Byte, val minorVersion: Byte, val cs: ByteBuffer, val ds: ByteBuffer) {
     private val constantPool = scala.collection.mutable.Map[Any, Offset]()
@@ -512,7 +512,7 @@ object VScriptByteCodeUtil {
 
   /**
    * VScript Binary Singleton
-   * @author lawrence.daniels@gmail.com
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   object VSBinary {
 

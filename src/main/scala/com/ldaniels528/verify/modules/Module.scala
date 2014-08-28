@@ -9,7 +9,7 @@ import scala.util.{Failure, Success, Try}
 
 /**
  * Represents a dynamically loadable module
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait Module extends BinaryMessaging {
 

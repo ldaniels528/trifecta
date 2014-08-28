@@ -2,7 +2,7 @@ package com.ldaniels528.verify.vscript
 
 /**
  * VScript Parser
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VScriptParser {
   private[this] val logger = org.apache.log4j.Logger.getLogger(getClass)
@@ -142,7 +142,7 @@ object VScriptParser {
 
   /**
    * Token Iterator
-   * @author lawrence.daniels@gmail.com
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   class TokenIterator(seq: Seq[String]) {
     private var position = 0

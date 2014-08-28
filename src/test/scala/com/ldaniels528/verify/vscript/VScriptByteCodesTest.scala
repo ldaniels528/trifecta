@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 
 /**
  * VScript Byte Codes Test Suite
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class VScriptByteCodesTest {
   private val logger = LoggerFactory.getLogger(getClass())

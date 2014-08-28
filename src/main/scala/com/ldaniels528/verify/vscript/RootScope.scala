@@ -2,13 +2,13 @@ package com.ldaniels528.verify.vscript
 
 /**
  * Represents a root execution scope
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class RootScope(parent: Option[Scope]) extends CascadingScope(parent)
 
 /**
  * Root Scope Singleton
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object RootScope {
 

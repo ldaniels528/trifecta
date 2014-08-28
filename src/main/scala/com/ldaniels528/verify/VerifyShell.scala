@@ -14,7 +14,7 @@ import scala.util.{Failure, Success}
 
 /**
  * Verify Console Shell Application
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class VerifyShell(rt: VerifyShellRuntime) {
   // redirect standard output
@@ -83,7 +83,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
 
 /**
  * Verify Console Shell Singleton
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VerifyShell {
   val VERSION = "0.1.1"

@@ -10,7 +10,7 @@ import com.ldaniels528.verify.modules.{Command, Module}
 
 /**
  * Zookeeper Module
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   private implicit val out: PrintStream = rt.out

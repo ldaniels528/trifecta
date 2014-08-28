@@ -4,7 +4,7 @@ import CommandParser._
 
 /**
  * Verify Command Parser Test
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CommandParserTest() {
   import org.junit.{ Assert, Test }

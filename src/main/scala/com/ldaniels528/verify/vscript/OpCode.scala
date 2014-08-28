@@ -2,7 +2,7 @@ package com.ldaniels528.verify.vscript
 
 /**
  * Represents a VScript instruction (operational code)
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait OpCode {
 

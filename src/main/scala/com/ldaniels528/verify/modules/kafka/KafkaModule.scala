@@ -22,6 +22,7 @@ import scala.util.{Failure, Success, Try}
 
 /**
  * Kafka Module
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging with Compression {
   private lazy val logger = LoggerFactory.getLogger(getClass)
@@ -648,6 +649,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging wi
 
 /**
  * Kafka Module Companion Object
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaModule {
 

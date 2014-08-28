@@ -2,7 +2,7 @@ package com.ldaniels528.verify.io
 
 /**
  * Represents a type-safe remote peer end-point
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait EndPoint extends java.io.Serializable {
 
@@ -30,7 +30,7 @@ trait EndPoint extends java.io.Serializable {
 
 /**
  * End Point Companion Object
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object EndPoint {
 
@@ -47,7 +47,7 @@ object EndPoint {
 
   /**
    * Simple end-point implementation
-   * @author lawrence.daniels@gmail.com
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   case class SimpleEndPoint(host: String, port: Int) extends EndPoint
 

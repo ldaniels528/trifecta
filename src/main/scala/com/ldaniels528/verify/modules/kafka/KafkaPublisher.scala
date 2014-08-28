@@ -8,7 +8,7 @@ import kafka.producer.{KeyedMessage, ProducerConfig}
 
 /**
  * Kafka Publisher
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaPublisher(config: ProducerConfig) {
   private var producer: Option[Producer[Array[Byte], Array[Byte]]] = None
@@ -41,7 +41,7 @@ class KafkaPublisher(config: ProducerConfig) {
 
 /**
  * Verify Kafka Publisher
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaPublisher {
 

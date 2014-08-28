@@ -14,7 +14,7 @@ import scala.util.{Failure, Success, Try}
 
 /**
  * Kafka Subscriber
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int) {
   // generate the client ID
@@ -212,7 +212,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
 
 /**
  * Verify Kafka Message Subscriber Singleton
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaSubscriber {
 

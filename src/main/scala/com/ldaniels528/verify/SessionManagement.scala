@@ -10,7 +10,7 @@ import scala.concurrent.duration.FiniteDuration
 
 /**
  * Session Management
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object SessionManagement {
   private[this] lazy val logger = LoggerFactory.getLogger(getClass)

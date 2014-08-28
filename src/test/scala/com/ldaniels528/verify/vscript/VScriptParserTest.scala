@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 
 /**
  * VScript Parser Test
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class VScriptParserTest {
   private val logger = LoggerFactory.getLogger(getClass)

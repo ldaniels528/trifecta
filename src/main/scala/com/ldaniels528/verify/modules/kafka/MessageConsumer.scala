@@ -3,7 +3,7 @@ package com.ldaniels528.verify.modules.kafka
 /**
  * This trait is implemented by classes that are interested in 
  * consuming Kafka messages.
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait MessageConsumer {
 

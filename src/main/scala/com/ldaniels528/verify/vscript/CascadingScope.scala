@@ -2,7 +2,7 @@ package com.ldaniels528.verify.vscript
 
 /**
  * Represents a cascading scope
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CascadingScope(val parent: Option[Scope]) extends Scope {
   import scala.collection.concurrent.TrieMap
@@ -103,7 +103,7 @@ class CascadingScope(val parent: Option[Scope]) extends Scope {
 
 /**
  * Cascading Scope Singleton
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object CascadingScope {
 

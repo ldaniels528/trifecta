@@ -8,7 +8,7 @@ import scala.util.Try
 
 /**
  * Command History Container
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class History(val maxHistory: Int) {
   private var history: List[String] = Nil

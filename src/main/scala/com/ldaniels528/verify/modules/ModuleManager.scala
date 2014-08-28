@@ -2,7 +2,7 @@ package com.ldaniels528.verify.modules
 
 /**
  * Module Manager
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class ModuleManager() {
   private var commands = Map[String, Command]()

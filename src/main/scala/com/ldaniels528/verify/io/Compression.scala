@@ -4,7 +4,7 @@ import com.ldaniels528.verify.util.VxUtils._
 
 /**
  * Compression/Decompression Capability
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait Compression {
   import java.io._

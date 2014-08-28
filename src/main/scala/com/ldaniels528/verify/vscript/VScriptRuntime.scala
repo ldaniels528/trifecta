@@ -10,7 +10,7 @@ import scala.util.{Failure, Success, Try}
 
 /**
  * VScript Runtime
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VScriptRuntime {
   private[this] val logger = org.apache.log4j.Logger.getLogger(getClass)

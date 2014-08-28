@@ -8,7 +8,7 @@ import scala.util.{Failure, Success, Try}
 
 /**
  * Verify Utilities
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VxUtils {
 
@@ -70,7 +70,7 @@ object VxUtils {
 
   /**
    * Properties Conversion
-   * @author lawrence.daniels@gmail.com
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   implicit class PropertiesConversion[T <: Object](m: Map[String, T]) {
 
@@ -87,7 +87,7 @@ import scala.collection.JavaConversions.mapAsJavaMap
 
   /**
    * Facilitates option chaining
-   * @author lawrence.daniels@gmail.com
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   implicit class OptionalMagic[T](opA: Option[T]) {
 
@@ -99,7 +99,7 @@ import scala.collection.JavaConversions.mapAsJavaMap
 
   /**
    * Automatically closes a resource after completion of a code block
-   * @author lawrence.daniels@gmail.com
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   implicit class AutoClose[T <: {def close()}](resource: T) {
 
@@ -109,7 +109,7 @@ import scala.collection.JavaConversions.mapAsJavaMap
 
   /**
    * Automatically closes a resource after completion of a code block
-   * @author lawrence.daniels@gmail.com
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   implicit class AutoDisconnect[T <: {def disconnect()}](resource: T) {
 
@@ -119,7 +119,7 @@ import scala.collection.JavaConversions.mapAsJavaMap
 
   /**
    * Automatically closes a resource after completion of a code block
-   * @author lawrence.daniels@gmail.com
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   implicit class AutoShutdown[T <: {def shutdown()}](resource: T) {
 

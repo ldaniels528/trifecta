@@ -18,7 +18,7 @@ import scala.util.Try
 
 /**
  * ZooKeeper Proxy (version 1.0)
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = None) {
   private val logger = LoggerFactory.getLogger(getClass)
