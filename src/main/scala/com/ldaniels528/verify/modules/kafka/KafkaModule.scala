@@ -591,12 +591,12 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   }
 
   /**
-   * kchka - Scans and verifies that a set of messages (specific offset range) can be read by the specified schema
-   * @example {{{ kchka avro/schema1.avsc com.shocktrade.alerts 0 1000 2000 }}}
+   * kscana - Scans and verifies that a set of messages (specific offset range) can be read by the specified schema
+   * @example {{{ kscana avro/schema1.avsc com.shocktrade.alerts 0 1000 2000 }}}
    */
   def scanTopicAvro(args: String*)(implicit out: PrintStream): Seq[AvroVerification] = {
     // get the arguments
-    val Seq(schemaPath, name, partition, startOffset, endOffset, _*) = args
+    val Seq(schemaVar, name, partition, startOffset, endOffset, _*) = args
     val batchSize = extract(args, 5) map (parseInt("batchSize", _)) getOrElse 10
     val blockSize = extract(args, 6) map (parseInt("blockSize", _)) getOrElse 8192
 
