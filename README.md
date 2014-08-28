@@ -1,7 +1,8 @@
 Verify
 =======
 
-Verify is a figurative Swiss-Army-Knife for inspecting/managing Kafka topics and ZooKeeper properties.
+Verify is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, publish 
+and verify messages (or data) to Kafka, Storm and Zookeeper.
 
 Table of Contents
 
@@ -27,17 +28,17 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 <a name="build-requirements"></a>
 ### Build Requirements
 
-* Java SDK 1.7
+* [Java SDK 1.7] (http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
 * [Tabular] (https://github.com/ldaniels528/tabular)
 * [SBT 0.13+] (http://www.scala-sbt.org/download.html)
 
 <a name="configuring-your-ide"></a>
 ### Configuring the project for your IDE
 
-#### Eclipse project
+#### Generating an Eclipse project
     $ sbt eclipse
     
-#### Intellij Idea project
+#### Generating an Intellij Idea project
     $ sbt gen-idea
 
 <a name="building-the-code"></a>
@@ -159,7 +160,6 @@ To list of commands that start with "k":
     | kbrokers     kafka   Returns a list of the registered brokers from ZooKeeper                                   |
     | kchka        kafka   Verifies that a range of messages can be read by a given Avro schema                      |
     | kcommit      kafka   Commits the offset for a given topic and group                                            |
-    | kcount       kafka   Returns the number of messages available for a given topic                                |
     | kdump        kafka   Dumps the contents of a specific topic [as binary] to the console                         |
     | kdumpa       kafka   Dumps the contents of a specific topic [as Avro] to the console                           |
     | kdumpf       kafka   Dumps the contents of a specific topic to a file                                          |
@@ -169,8 +169,6 @@ To list of commands that start with "k":
     | kfirst       kafka   Returns the first offset for a given topic                                                |
     | kget         kafka   Retrieves the message at the specified offset for a given topic partition                 |
     | kgeta        kafka   Returns the key-value pairs of an Avro message from a topic partition                     |
-    | kgetmaxsize  kafka   Retrieves the size of the largest message for a range of offsets for a given partition    |
-    | kgetminsize  kafka   Retrieves the size of the smallest message for a range of offsets for a given partition   |
     | kgetsize     kafka   Retrieves the size of the message at the specified offset for a given topic partition     |
     | kimport      kafka   Imports messages into a new/existing topic                                                |
     | kinbound     kafka   Retrieves a list of topics with new messages (since last query)                           |
