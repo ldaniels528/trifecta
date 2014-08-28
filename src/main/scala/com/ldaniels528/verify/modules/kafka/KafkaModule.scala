@@ -61,6 +61,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   val getCommands = Seq(
     Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
+    Command(this, "kconsumers", listConsumers, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kexport", exportToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Writes the contents of a specific topic to a file"),
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
@@ -71,9 +72,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kgetsize", getMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
-    Command(this, "kinbound", inboundMessages, (Seq.empty, Seq("prefix")), "Retrieves a list of topics with new messages (since last query)"),
+    Command(this, "kinbound", inboundMessages, (Seq.empty, Seq("topicPrefix")), "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
-    Command(this, "kls", listTopics, (Seq.empty, Seq("prefix")), help = "Lists all existing topics"),
+    Command(this, "kls", listTopics, (Seq.empty, Seq("topicPrefix")), help = "Lists all existing topics"),
     Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
     Command(this, "knext", getNextMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the next message"),
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
@@ -518,13 +519,13 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * Generates an iteration of inbound message statistics
-   * @param prefix the given topic prefix (e.g. "myTopic123")
+   * @param topicPrefix the given topic prefix (e.g. "myTopic123")
    * @return an iteration of inbound message statistics
    */
-  private def inboundMessageStatistics(prefix: Option[String] = None): Iterable[Inbound] = {
+  private def inboundMessageStatistics(topicPrefix: Option[String] = None): Iterable[Inbound] = {
     // start by retrieving a list of all topics
-    val topics = KafkaSubscriber.listTopics(zk, brokers, correlationId)
-      .filter(t => t.topic == prefix.getOrElse(t.topic))
+    val topics = KafkaSubscriber.getTopicList(brokers, correlationId)
+      .filter(t => t.topic == topicPrefix.getOrElse(t.topic))
       .groupBy(_.topic)
 
     // generate the inbound data
