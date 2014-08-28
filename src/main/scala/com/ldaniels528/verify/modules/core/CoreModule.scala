@@ -1,9 +1,10 @@
-package com.ldaniels528.verify.modules
+package com.ldaniels528.verify.modules.core
 
 import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
-import com.ldaniels528.verify.{SessionManagement, VerifyShell, VerifyShellRuntime}
+import com.ldaniels528.verify.modules.{Command, Module}
+import com.ldaniels528.verify.{SessionManagement, VerifyShell, VxRuntimeContext}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -14,9 +15,9 @@ import scala.util.Properties
 
 /**
  * Core Module
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class CoreModule(rt: VerifyShellRuntime) extends Module {
+class CoreModule(rt: VxRuntimeContext) extends Module {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val out: PrintStream = rt.out
 
