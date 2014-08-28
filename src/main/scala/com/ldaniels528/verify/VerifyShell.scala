@@ -3,17 +3,14 @@ package com.ldaniels528.verify
 import java.io.PrintStream
 
 import com.ldaniels528.tabular.Tabular
-import com.ldaniels528.verify.VerifyShell._
 import com.ldaniels528.verify.io.avro._
 import com.ldaniels528.verify.modules.Command
-import com.ldaniels528.verify.util.BinaryMessaging
 import org.fusesource.jansi.Ansi.Color._
 import org.fusesource.jansi.Ansi._
 
-import scala.collection.GenTraversableOnce
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 /**
  * Verify Console Shell Application
@@ -66,9 +63,9 @@ class VerifyShell(rt: VerifyShellRuntime) {
       // read a line from the console
       Option(consoleReader.readLine("%s@%s> ".format(module.moduleName, module.prompt))) map (_.trim) foreach { line =>
         if (line.nonEmpty) {
-          interpret(rt, commandSet, line) match {
+          rt.interpret(commandSet, line) match {
             case Success(result) =>
-              handleResult(result)(rt, out)
+              rt.handleResult(result)
               if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
             case Failure(e: IllegalArgumentException) =>
               if (rt.debugOn) e.printStackTrace()
@@ -88,7 +85,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
  * Verify Console Shell Singleton
  * @author lawrence.daniels@gmail.com
  */
-object VerifyShell extends BinaryMessaging {
+object VerifyShell {
   val VERSION = "0.1.1"
 
   // create the table generator
@@ -122,94 +119,6 @@ object VerifyShell extends BinaryMessaging {
 
     // make sure all threads die
     sys.exit(0)
-  }
-
-  def interpret(rt: VerifyShellRuntime, commandSet: Map[String, Command], input: String): Try[Any] = {
-    // parse & evaluate the user input
-    Try(parseInput(input) match {
-      case Some((cmd, args)) =>
-        // match the command
-        commandSet.get(cmd) match {
-          case Some(command) =>
-            // verify and execute the command
-            checkArgs(command, args)
-            val result = command.fx(args)
-
-            // auto-switch modules?
-            if (rt.autoSwitching) {
-              rt.moduleManager.setActiveModule(command.module)
-            }
-            result
-          case _ =>
-            throw new IllegalArgumentException(s"'$input' not recognized")
-        }
-      case _ =>
-    })
-  }
-
-  def handleResult(result: Any)(implicit rt: VerifyShellRuntime, out: PrintStream) {
-    result match {
-      // handle byte arrays
-      case message: Array[Byte] if message.isEmpty => out.println("No data returned")
-      case message: Array[Byte] => dumpMessage(message)
-
-      // handle Either cases
-      case e: Either[_, _] => e match {
-        case Left(v) => handleResult(v)
-        case Right(v) => handleResult(v)
-      }
-
-      // handle Option cases
-      case o: Option[_] => o match {
-        case Some(v) => handleResult(v)
-        case None => out.println("No data returned")
-      }
-
-      // handle Try cases
-      case t: Try[_] => t match {
-        case Success(v) => handleResult(v)
-        case Failure(e) => throw e
-      }
-
-      // handle lists and sequences of case classes
-      case s: Seq[_] if s.isEmpty => out.println("No data returned")
-      case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach out.println
-
-      // handle lists and sequences of primitives
-      case g: GenTraversableOnce[_] => g foreach out.println
-
-      // anything else ...
-      case x => if (x != null && !x.isInstanceOf[Unit]) out.println(x)
-    }
-  }
-
-  private def checkArgs(command: Command, args: Seq[String]): Seq[String] = {
-    // determine the minimum and maximum number of parameters
-    val minimum = command.params._1.size
-    val maximum = minimum + command.params._2.size
-
-    // make sure the arguments are within bounds
-    if (args.length < minimum || args.length > maximum) {
-      throw new IllegalArgumentException(s"Usage: ${command.prototype}")
-    }
-
-    args
-  }
-
-  /**
-   * Parses a line of input into a tuple consisting of the command and its arguments
-   * @param input the given line of input
-   * @return an option of a tuple consisting of the command and its arguments
-   */
-  private def parseInput(input: String): Option[(String, Seq[String])] = {
-    // parse the user input
-    val pcs = CommandParser.parse(input)
-
-    // return the command and arguments
-    for {
-      cmd <- pcs.headOption map (_.toLowerCase)
-      args = pcs.tail
-    } yield (cmd, args)
   }
 
 }

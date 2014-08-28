@@ -4,25 +4,33 @@ import java.io.File.separator
 import java.io.{File, FileInputStream}
 import java.util.Properties
 
+import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.io.EndPoint
+import com.ldaniels528.verify.io.avro.AvroTables
 import com.ldaniels528.verify.modules.kafka.KafkaModule
+import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
 import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
-import com.ldaniels528.verify.modules.{CoreModule, ModuleManager}
+import com.ldaniels528.verify.modules.{Command, CoreModule, ModuleManager}
+import com.ldaniels528.verify.util.BinaryMessaging
 import org.fusesource.jansi.Ansi.Color._
 import org.fusesource.jansi.Ansi._
 
+import scala.collection.GenTraversableOnce
 import scala.util.Properties.userHome
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
  * Verify Shell Runtime Context
  * @author lawrence.daniels@gmail.com
  */
-case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
+case class VerifyShellRuntime(zkHost: String, zkPort: Int) extends BinaryMessaging {
   // capture standard output
   val out = System.out
   val err = System.err
+
+  // define the tabular instance
+  val tabular = new Tabular() with AvroTables
 
   // the Zookeeper remote host
   val remoteHost = s"$zkHost:$zkPort"
@@ -103,6 +111,95 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) {
       Try(p.load(new FileInputStream(configFile)))
     }
     p
+  }
+
+  def interpret(commandSet: Map[String, Command], input: String): Try[Any] = {
+    // parse & evaluate the user input
+    Try(parseInput(input) match {
+      case Some((cmd, args)) =>
+        // match the command
+        commandSet.get(cmd) match {
+          case Some(command) =>
+            // verify and execute the command
+            checkArgs(command, args)
+            val result = command.fx(args)
+
+            // auto-switch modules?
+            if (autoSwitching) {
+              moduleManager.setActiveModule(command.module)
+            }
+            result
+          case _ =>
+            throw new IllegalArgumentException(s"'$input' not recognized")
+        }
+      case _ =>
+    })
+  }
+
+  def handleResult(result: Any) {
+    result match {
+      // handle binary data
+      case message: Array[Byte] if message.isEmpty => out.println("No data returned")
+      case message: Array[Byte] => dumpMessage(message)(this, out)
+      case MessageData(offset, _, _, message) => dumpMessage(offset, message)(this, out)
+
+      // handle Either cases
+      case e: Either[_, _] => e match {
+        case Left(v) => handleResult(v)
+        case Right(v) => handleResult(v)
+      }
+
+      // handle Option cases
+      case o: Option[_] => o match {
+        case Some(v) => handleResult(v)
+        case None => out.println("No data returned")
+      }
+
+      // handle Try cases
+      case t: Try[_] => t match {
+        case Success(v) => handleResult(v)
+        case Failure(e) => throw e
+      }
+
+      // handle lists and sequences of case classes
+      case s: Seq[_] if s.isEmpty => out.println("No data returned")
+      case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach out.println
+
+      // handle lists and sequences of primitives
+      case g: GenTraversableOnce[_] => g foreach out.println
+
+      // anything else ...
+      case x => if (x != null && !x.isInstanceOf[Unit]) out.println(x)
+    }
+  }
+
+  private def checkArgs(command: Command, args: Seq[String]): Seq[String] = {
+    // determine the minimum and maximum number of parameters
+    val minimum = command.params._1.size
+    val maximum = minimum + command.params._2.size
+
+    // make sure the arguments are within bounds
+    if (args.length < minimum || args.length > maximum) {
+      throw new IllegalArgumentException(s"Usage: ${command.prototype}")
+    }
+
+    args
+  }
+
+  /**
+   * Parses a line of input into a tuple consisting of the command and its arguments
+   * @param input the given line of input
+   * @return an option of a tuple consisting of the command and its arguments
+   */
+  private def parseInput(input: String): Option[(String, Seq[String])] = {
+    // parse the user input
+    val pcs = CommandParser.parse(input)
+
+    // return the command and arguments
+    for {
+      cmd <- pcs.headOption map (_.toLowerCase)
+      args = pcs.tail
+    } yield (cmd, args)
   }
 
 }

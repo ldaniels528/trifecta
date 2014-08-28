@@ -3,7 +3,6 @@ package com.ldaniels528.verify.modules
 import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
-import com.ldaniels528.verify.VerifyShell.{handleResult, interpret}
 import com.ldaniels528.verify.{SessionManagement, VerifyShell, VerifyShellRuntime}
 import org.slf4j.LoggerFactory
 
@@ -219,8 +218,8 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
       }
     } {
       out.println(s">> $command")
-      val result = interpret(rt, commandSet, command)
-      handleResult(result)(rt, out)
+      val result = rt.interpret(commandSet, command)
+      rt.handleResult(result)
     }
   }
 

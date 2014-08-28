@@ -9,7 +9,7 @@ import com.ldaniels528.verify.VerifyShellRuntime
 import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.io.avro.AvroDecoder
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
-import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.BrokerDetails
+import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
@@ -225,20 +225,18 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging wi
    * "kget" - Returns the message for a given topic partition and offset
    * @example {{{ kget com.shocktrade.alerts 0 45913975 }}}
    */
-  def getMessage(args: String*)(implicit out: PrintStream): Array[Byte] = {
+  def getMessage(args: String*)(implicit out: PrintStream): Option[MessageData] = {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
     val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse rt.defaultFetchSize
 
     // perform the action
-    var bytes: Array[Byte] = Array()
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
-      _.fetch(offset.toLong, fetchSize).headOption map { m =>
-        bytes = m.message
-        cursor = Option(m.nextOffset) map (nextOffset => MessageCursor(name, partition.toInt, nextOffset, BINARY))
-      }
+    var messageData: Option[MessageData] = None
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
+      messageData = subscriber.fetch(offset.toLong, fetchSize).headOption
+      cursor = messageData map (m => MessageCursor(name, partition.toInt, m.nextOffset, BINARY))
     }
-    bytes
+    messageData
   }
 
   case class MessageCursor(topic: String, partition: Int, offset: Long, encoding: MessageEncoding)
@@ -594,7 +592,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging wi
     KafkaSubscriber.watch(Topic(name, parseInt("partition", partition)), brokers, None, duration, correlationId,
       new MessageConsumer {
         override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
-          dumpMessage(offset, message)
+          dumpMessage(offset, message)(rt, out)
         }
       })
     count
@@ -613,7 +611,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging wi
     KafkaSubscriber.watchGroup(Topic(name, parseInt("partition", partition)), brokers, groupId, duration, correlationId,
       new MessageConsumer {
         override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
-          dumpMessage(offset, message)
+          dumpMessage(offset, message)(rt, out)
         }
       })
     count
