@@ -6,6 +6,7 @@ import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.VerifyShell._
 import com.ldaniels528.verify.io.avro._
 import com.ldaniels528.verify.modules.Command
+import com.ldaniels528.verify.util.BinaryMessaging
 import org.fusesource.jansi.Ansi.Color._
 import org.fusesource.jansi.Ansi._
 
@@ -87,7 +88,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
  * Verify Console Shell Singleton
  * @author lawrence.daniels@gmail.com
  */
-object VerifyShell {
+object VerifyShell extends BinaryMessaging {
   val VERSION = "0.1.1"
 
   // create the table generator
@@ -180,45 +181,6 @@ object VerifyShell {
       // anything else ...
       case x => if (x != null && !x.isInstanceOf[Unit]) out.println(x)
     }
-  }
-
-  /**
-   * Displays the contents of the given message
-   * @param message the given message
-   * @return the size of the message in bytes
-   */
-  private def dumpMessage(message: Array[Byte])(implicit rt: VerifyShellRuntime, out: PrintStream): Int = {
-    // determine the widths for each section: bytes & characters
-    val columns = rt.columns
-    val byteWidth = rt.columns * 3
-
-    // display the message
-    var offset = 0
-    val length = 1 + Math.log10(message.length).toInt
-    val myFormat = s"[%0${length}d] %-${byteWidth}s| %-${columns}s"
-    message.sliding(columns, columns) foreach { bytes =>
-      out.println(myFormat.format(offset, asHexString(bytes), asChars(bytes)))
-      offset += columns
-    }
-    message.length
-  }
-
-  /**
-   * Returns the ASCII array as a character string
-   * @param bytes the byte array
-   * @return a character string representing the given byte array
-   */
-  private def asChars(bytes: Array[Byte]): String = {
-    String.valueOf(bytes map (b => if (b >= 32 && b <= 126) b.toChar else '.'))
-  }
-
-  /**
-   * Returns the byte array as a hex string
-   * @param bytes the byte array
-   * @return a hex string representing the given byte array
-   */
-  private def asHexString(bytes: Array[Byte]): String = {
-    bytes map ("%02x".format(_)) mkString "."
   }
 
   private def checkArgs(command: Command, args: Seq[String]): Seq[String] = {
