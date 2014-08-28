@@ -248,7 +248,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
       // perform the action
       new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
         _.consume(startOffset, endOffset, blockSize, listener = new MessageConsumer {
-          override def consume(offset: Long, message: Array[Byte]) {
+          override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
             if (counts) fos.writeInt(message.length)
             fos.write(message)
             count += 1
@@ -352,7 +352,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     var results: Seq[AvroRecord] = Nil
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
       _.consume(offset, offset map (_ + 1), blockSize, listener = new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) {
+        override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
           decoder.decode(message) match {
             case Success(record) =>
               val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
@@ -707,8 +707,8 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     var count = 0L
     KafkaSubscriber.watch(Topic(name, parseInt("partition", partition)), brokers, None, duration, correlationId,
       new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) {
-          message.sliding(40, 40) foreach { bytes =>
+        override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
+          message.sliding(rt.columns, rt.columns) foreach { bytes =>
             out.println("[%04d] %-80s %-40s".format(offset, asHexString(bytes), asChars(bytes)))
             count += 1
           }
@@ -729,8 +729,8 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with Compression {
     var count = 0L
     KafkaSubscriber.watchGroup(Topic(name, parseInt("partition", partition)), brokers, groupId, duration, correlationId,
       new MessageConsumer {
-        override def consume(offset: Long, message: Array[Byte]) {
-          message.sliding(40, 40) foreach { bytes =>
+        override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
+          message.sliding(rt.columns, rt.columns) foreach { bytes =>
             out.println("[%04d] %-80s %-40s".format(offset, asHexString(bytes), asChars(bytes)))
             count += 1
           }

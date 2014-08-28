@@ -12,6 +12,6 @@ trait MessageConsumer {
    * @param offset the message's offset
    * @param message the message as a binary string
    */
-  def consume(offset: Long, message: Array[Byte])
+  def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte])
 
 }

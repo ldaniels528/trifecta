@@ -28,7 +28,7 @@ class KafkaStreamingConsumer(zkEndPoint: EndPoint, groupId: String) extends Comp
           val it = stream.iterator()
           while (it.hasNext()) {
             val mam = it.next()
-            listener.consume(mam.offset, mam.message())
+            listener.consume(mam.offset, None, mam.message())
           }
         }
       }

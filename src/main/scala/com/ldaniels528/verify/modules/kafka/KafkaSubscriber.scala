@@ -49,7 +49,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
       Try(fetch(readOffset, fetchSize)) match {
         case Success(messages) =>
           messages foreach { msg =>
-            listener.consume(msg.offset, msg.message)
+            listener.consume(msg.offset, Option(msg.nextOffset), msg.message)
             readOffset = msg.nextOffset
           }
 
