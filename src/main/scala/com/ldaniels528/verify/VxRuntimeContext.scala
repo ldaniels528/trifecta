@@ -6,28 +6,35 @@ import java.util.Properties
 
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.io.avro.AvroTables
+import com.ldaniels528.verify.modules.avro.{AvroModule, AvroTables}
+import com.ldaniels528.verify.modules.core.CoreModule
 import com.ldaniels528.verify.modules.kafka.KafkaModule
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
 import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
-import com.ldaniels528.verify.modules.{Command, CoreModule, ModuleManager}
+import com.ldaniels528.verify.modules.{Command, ModuleManager}
 import com.ldaniels528.verify.util.BinaryMessaging
+import com.ldaniels528.verify.vscript.RootScope
 import org.fusesource.jansi.Ansi.Color._
 import org.fusesource.jansi.Ansi._
 
 import scala.collection.GenTraversableOnce
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.util.Properties.userHome
 import scala.util.{Failure, Success, Try}
 
 /**
- * Verify Shell Runtime Context
- * @author lawrence.daniels@gmail.com
+ * Verify Runtime Context
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class VerifyShellRuntime(zkHost: String, zkPort: Int) extends BinaryMessaging {
+case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging {
   // capture standard output
   val out = System.out
   val err = System.err
+
+  // create the root-level scope
+  val scope = RootScope()
 
   // define the tabular instance
   val tabular = new Tabular() with AvroTables
@@ -68,6 +75,7 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) extends BinaryMessagi
 
   // load the modules
   moduleManager ++= Seq(
+    new AvroModule(this),
     new CoreModule(this),
     new KafkaModule(this),
     new StormModule(this),
@@ -148,6 +156,9 @@ case class VerifyShellRuntime(zkHost: String, zkPort: Int) extends BinaryMessagi
         case Left(v) => handleResult(v)
         case Right(v) => handleResult(v)
       }
+
+      // handle Future cases
+      case f: Future[_] => handleResult(Await.result(f, 30.seconds))
 
       // handle Option cases
       case o: Option[_] => o match {

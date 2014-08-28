@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
  * Verify Console Shell Application
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class VerifyShell(rt: VerifyShellRuntime) {
+class VerifyShell(rt: VxRuntimeContext) {
   // redirect standard output
   val out: PrintStream = rt.out
   val err: PrintStream = rt.err
@@ -110,7 +110,7 @@ object VerifyShell {
         val port: Int = if (params.length > 1) params(1).toInt else 2181
 
         // create the runtime context
-        val rt = VerifyShellRuntime(host, port)
+        val rt = VxRuntimeContext(host, port)
 
         // start the shell
         val console = new VerifyShell(rt)

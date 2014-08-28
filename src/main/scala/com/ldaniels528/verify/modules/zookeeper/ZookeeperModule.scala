@@ -4,7 +4,7 @@ import java.io.PrintStream
 import java.nio.ByteBuffer
 import java.util.Date
 
-import com.ldaniels528.verify.VerifyShellRuntime
+import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.verify.modules.{Command, Module}
 
@@ -12,7 +12,7 @@ import com.ldaniels528.verify.modules.{Command, Module}
  * Zookeeper Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
+class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   private implicit val out: PrintStream = rt.out
 
   // create the ZooKeeper proxy

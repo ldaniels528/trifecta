@@ -2,7 +2,7 @@ package com.ldaniels528.verify.util
 
 import java.io.PrintStream
 
-import com.ldaniels528.verify.VerifyShellRuntime
+import com.ldaniels528.verify.VxRuntimeContext
 
 /**
  * Provides implementing classes with the capability of displaying binary messages
@@ -15,7 +15,7 @@ trait BinaryMessaging {
    * @param message the given message
    * @return the size of the message in bytes
    */
-  def dumpMessage(offset: Long, message: Array[Byte])(implicit rt: VerifyShellRuntime, out: PrintStream): Int = {
+  def dumpMessage(offset: Long, message: Array[Byte])(implicit rt: VxRuntimeContext, out: PrintStream): Int = {
     // determine the widths for each section: bytes & characters
     val columns = rt.columns
     val byteWidth = columns * 3
@@ -37,7 +37,7 @@ trait BinaryMessaging {
    * @param message the given message
    * @return the size of the message in bytes
    */
-  def dumpMessage(message: Array[Byte])(implicit rt: VerifyShellRuntime, out: PrintStream): Int = {
+  def dumpMessage(message: Array[Byte])(implicit rt: VxRuntimeContext, out: PrintStream): Int = {
     // determine the widths for each section: bytes & characters
     val columns = rt.columns
     val byteWidth = rt.columns * 3

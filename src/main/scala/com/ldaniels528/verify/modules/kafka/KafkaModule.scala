@@ -5,18 +5,18 @@ import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import com.ldaniels528.verify.VerifyShellRuntime
+import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.io.Compression
-import com.ldaniels528.verify.io.avro.AvroDecoder
+import com.ldaniels528.verify.modules.avro.AvroReading
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
-import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
+import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, ConsumerDetails, MessageData}
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.io.Source
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
@@ -24,15 +24,20 @@ import scala.util.{Failure, Success, Try}
  * Kafka Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging with Compression {
+class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with AvroReading with Compression {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val out: PrintStream = rt.out
+  private implicit val rtc = rt
+
+  // create a thread pool
+
+  import scala.concurrent.ExecutionContext.Implicits._
 
   // date parser instance
   private val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 
   // create the ZooKeeper proxy
-  private val zk = rt.zkProxy
+  private implicit val zk = rt.zkProxy
 
   // get the list of brokers from zookeeper
   private val brokers: Seq[Broker] = KafkaSubscriber.getBrokerList(zk) map (b => Broker(b.host, b.port))

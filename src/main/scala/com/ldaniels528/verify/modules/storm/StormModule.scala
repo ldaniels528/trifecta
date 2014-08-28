@@ -2,7 +2,7 @@ package com.ldaniels528.verify.modules.storm
 
 import backtype.storm.generated.Nimbus
 import backtype.storm.utils.{NimbusClient, Utils}
-import com.ldaniels528.verify.VerifyShellRuntime
+import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.{Command, Module}
 import org.slf4j.LoggerFactory
 
@@ -12,7 +12,7 @@ import scala.util.{Failure, Success, Try}
 /**
  * Apache Storm Module
  */
-class StormModule(rt: VerifyShellRuntime) extends Module {
+class StormModule(rt: VxRuntimeContext) extends Module {
   private val logger = LoggerFactory.getLogger(getClass)
   private val stormConf = Utils.readStormConfig().asInstanceOf[java.util.Map[String, Any]]
   private var client: Option[Nimbus.Client] = None
