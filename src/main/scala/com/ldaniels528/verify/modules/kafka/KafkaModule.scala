@@ -564,6 +564,12 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def listBrokers(args: String*): Seq[BrokerDetails] = KafkaSubscriber.getBrokerList
 
   /**
+   * "kconsumers" - Retrieves the list of Kafka consumers
+   */
+  def listConsumers(args: String*): Seq[ConsumerDetails] =
+    KafkaSubscriber.getConsumerList(args.headOption).sortBy(c => (c.consumerId, c.topic, c.partition))
+
+  /**
    * "kls" - Lists all existing topicList
    */
   def listTopics(args: String*): Seq[TopicDetail] = {
