@@ -30,7 +30,7 @@ class StormModule(rt: VerifyShellRuntime) extends Module {
     case Failure(e) =>
   }
 
-  val name = "storm"
+  val moduleName = "storm"
 
   override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
 

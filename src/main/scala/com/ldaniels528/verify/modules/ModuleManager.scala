@@ -15,7 +15,7 @@ class ModuleManager() {
    * @return the module manager instance
    */
   def +=(module: Module) = {
-    modules += module.name -> module
+    modules += module.moduleName -> module
 
     // reset the commands collection
     commands = Map(modules.values.toSeq flatMap (_.getCommands) map (c => (c.name, c)): _*)
@@ -29,7 +29,7 @@ class ModuleManager() {
    */
   def ++=(moduleSet: Seq[Module]) = {
     // import the modules
-    moduleSet.foreach(m => modules += m.name -> m)
+    moduleSet.foreach(m => modules += m.moduleName -> m)
 
     // reset the commands collection
     commands = Map(modules.values.toSeq flatMap (_.getCommands) map (c => (c.name, c)): _*)
@@ -37,7 +37,7 @@ class ModuleManager() {
     // if no active module is set,
     // set the active module ("zookeeper" by default)
     if (activeModule.isEmpty) {
-      modules.values.find(_.name == "zookeeper") match {
+      modules.values.find(_.moduleName == "zookeeper") match {
         case Some(module) => Some(module)
         case None => modules.headOption
       }
@@ -57,7 +57,7 @@ class ModuleManager() {
    * @return an option of a module
    */
   def findModuleByName(name: String): Option[Module] = {
-    modules.values.find(_.name == name)
+    modules.values.find(_.moduleName == name)
   }
 
   /**

@@ -29,7 +29,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
   // current working directory
   private var cwd: String = new File(".").getCanonicalPath
 
-  val name = "core"
+  val moduleName = "core"
 
   val getCommands: Seq[Command] = Seq(
     Command(this, "!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
@@ -173,7 +173,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
     commandSet.toSeq filter {
       case (nameA, _) => args.isEmpty || nameA.startsWith(args.head)
     } sortBy (_._1) map {
-      case (nameB, cmdB) => CommandItem(nameB, cmdB.module.name, cmdB.help)
+      case (nameB, cmdB) => CommandItem(nameB, cmdB.module.moduleName, cmdB.help)
     }
   }
 
@@ -260,7 +260,7 @@ class CoreModule(rt: VerifyShellRuntime) extends Module {
   def listModules(args: String*): Seq[ModuleItem] = {
     val activeModule = rt.moduleManager.activeModule
     rt.moduleManager.modules.values.toSeq.map(m =>
-      ModuleItem(m.name, m.getClass.getName, loaded = true, activeModule.exists(_.name == m.name)))
+      ModuleItem(m.moduleName, m.getClass.getName, loaded = true, activeModule.exists(_.moduleName == m.moduleName)))
   }
 
   /**

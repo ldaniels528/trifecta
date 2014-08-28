@@ -16,7 +16,7 @@ trait Module {
    * Returns the name of the module (e.g. "kafka")
    * @return the name of the module
    */
-  def name: String
+  def moduleName: String
 
   /**
    * Returns the commands that are bound to the module
@@ -28,7 +28,7 @@ trait Module {
    * Returns the the information that is to be displayed while the module is active
    * @return the the information that is to be displayed while the module is active
    */
-  def prompt: String = s"$name$$"
+  def prompt: String = s"$moduleName$$"
 
   /**
    * Called when the application is shutting down

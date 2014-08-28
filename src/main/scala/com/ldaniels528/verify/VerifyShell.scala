@@ -63,7 +63,7 @@ class VerifyShell(rt: VerifyShellRuntime) {
       val module = rt.moduleManager.activeModule getOrElse rt.moduleManager.modules.values.head
 
       // read a line from the console
-      Option(consoleReader.readLine("%s@%s> ".format(module.name, module.prompt))) map (_.trim) foreach { line =>
+      Option(consoleReader.readLine("%s@%s> ".format(module.moduleName, module.prompt))) map (_.trim) foreach { line =>
         if (line.nonEmpty) {
           interpret(rt, commandSet, line) match {
             case Success(result) =>

@@ -18,7 +18,7 @@ class ZookeeperModule(rt: VerifyShellRuntime) extends Module {
   // create the ZooKeeper proxy
   private val zk = rt.zkProxy
 
-  val name = "zookeeper"
+  val moduleName = "zookeeper"
 
   override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
 
