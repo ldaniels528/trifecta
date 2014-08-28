@@ -5,13 +5,13 @@ import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import KafkaModule._
-import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.VerifyShellRuntime
 import com.ldaniels528.verify.io.Compression
-import com.ldaniels528.verify.io.avro.{AvroDecoder, AvroTables}
+import com.ldaniels528.verify.io.avro.AvroDecoder
+import com.ldaniels528.verify.modules.kafka.KafkaModule._
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.BrokerDetails
 import com.ldaniels528.verify.modules.{Command, Module}
+import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import org.slf4j.LoggerFactory
 
@@ -118,7 +118,8 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging wi
   }
 
   /**
-   * "kdumpf" - Dumps the contents of a specific topic to a file
+   * "kexport" - Dumps the contents of a specific topic to a file
+   * @example {{{ kexport quotes.txt com.shocktrade.quotes.csv 12388 16235 }}}
    */
   def exportToFile(args: String*): Long = {
     import java.io.{DataOutputStream, FileOutputStream}
@@ -127,8 +128,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging wi
     val Seq(file, name, partition, _*) = args
     val startOffset = extract(args, 3) map (parseLong("startOffset", _))
     val endOffset = extract(args, 4) map (parseLong("endOffset", _))
-    val counts = extract(args, 5) map (_.toLowerCase) exists (_ == "-c")
-    val blockSize = extract(args, 6) map (parseInt("blockSize", _))
+    val blockSize = extract(args, 5) map (parseInt("blockSize", _))
 
     // output the output file
     var count = 0L
@@ -137,7 +137,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging wi
       new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
         _.consume(startOffset, endOffset, blockSize, listener = new MessageConsumer {
           override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
-            if (counts) fos.writeInt(message.length)
+            fos.writeInt(message.length)
             fos.write(message)
             count += 1
           }
@@ -149,7 +149,7 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging wi
 
   /**
    * "kfetch" - Returns the offsets for a given topic and group ID
-   * @example {{{ kfetch com.shocktrade.alerts 0 devc  }}}
+   * @example {{{ kfetch com.shocktrade.alerts 0 devc }}}
    */
   def fetchOffsets(args: String*): Option[Long] = {
     // get the arguments
@@ -648,6 +648,9 @@ class KafkaModule(rt: VerifyShellRuntime) extends Module with BinaryMessaging wi
 
 }
 
+/**
+ * Kafka Module Companion Object
+ */
 object KafkaModule {
 
   case class MessageEncoding(value: Int) extends AnyVal
