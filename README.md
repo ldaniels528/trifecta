@@ -187,28 +187,28 @@ To list of commands that start with "k":
 To see the current offsets for all consumer IDs:
 
     zookeeper@vsccrtc201-brn1:2181/> kconsumers
-    + -------------------------------------------------------------------------------------------------------------------------- +
-    | consumerId                                               topic                                      partition  offset      |
-    + -------------------------------------------------------------------------------------------------------------------------- +
-    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  0          26006370    |
-    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  1          23751039    |
-    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  2          22611530    |
-    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  3          24462662    |
-    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  4          25603795    |
-    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  5          23941687    |
-    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  6          25435327    |
-    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  7          23741720    |
-    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  8          21999410    |
-    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  9          24762782    |
-    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  0          26006370    |
-    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  1          23751039    |
-    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  2          22611530    |
-    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  3          24462662    |
-    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  4          25603795    |
-    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  5          23941687    |
-    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  6          25435327    |
-    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  7          23766520    |
-    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  8          22205610    |
-    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  9          24762782    |
-    + -------------------------------------------------------------------------------------------------------------------------- +
+    + ---------------------------------------------------------------------------------------------------------- +
+    | consumerId                                               topic                      partition  offset      |
+    + ---------------------------------------------------------------------------------------------------------- +
+    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  0          26006370    |
+    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  1          23751039    |
+    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  2          22611530    |
+    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  3          24462662    |
+    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  4          25603795    |
+    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  5          23941687    |
+    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  6          25435327    |
+    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  7          23741720    |
+    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  8          21999410    |
+    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  9          24762782    |
+    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  0          26006370    |
+    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  1          23751039    |
+    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  2          22611530    |
+    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  3          24462662    |
+    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  4          25603795    |
+    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  5          23941687    |
+    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  6          25435327    |
+    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  7          23766520    |
+    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  8          22205610    |
+    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  9          24762782    |
+    + ---------------------------------------------------------------------------------------------------------- +
 
