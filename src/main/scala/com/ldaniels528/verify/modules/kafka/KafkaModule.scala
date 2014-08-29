@@ -9,7 +9,7 @@ import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.modules.avro.AvroReading
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
-import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{ConsumerDetails, BrokerDetails, MessageData}
+import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, ConsumerDetails, MessageData}
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
@@ -27,8 +27,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val out: PrintStream = rt.out
   private implicit val rtc = rt
-
-  // create a thread pool
 
   // date parser instance
   private val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
@@ -189,7 +187,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     out.println("Retrieving consumer data; this may take a few seconds...")
     val consumers = KafkaSubscriber.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition))
     consumers map { c =>
-      val topicOffset = getLastOffset(c.topic, c.partition.toString)
+      val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (_ - c.offset)
       ConsumerLag(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
     }
@@ -420,8 +418,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private def getStatisticsData(topic: String, partition0: Int, partition1: Int): Iterable[TopicOffsets] = {
     for {
       partition <- partition0 to partition1
-      first <- getFirstOffset(topic, partition.toString)
-      last <- getLastOffset(topic, partition.toString)
+      first <- getFirstOffset(topic, partition)
+      last <- getLastOffset(topic, partition)
     } yield TopicOffsets(topic, partition, first, last, last - first)
   }
 
@@ -595,7 +593,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val topicPrefix = args.headOption
 
     // generate the list of consumers
-     KafkaSubscriber.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition))
+    KafkaSubscriber.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition))
   }
 
   /**
