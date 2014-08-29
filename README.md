@@ -154,29 +154,61 @@ Now view the keys at this level:
 To list of commands that start with "k":
 			
 	zookeeper@dev501:2181:/> ?k
-    + -------------------------------------------------------------------------------------------------------------- +
-    | command      module  description                                                                               |
-    + -------------------------------------------------------------------------------------------------------------- +
-    | kbrokers     kafka   Returns a list of the registered brokers from ZooKeeper                                   |
-    | kchka        kafka   Verifies that a range of messages can be read by a given Avro schema                      |
-    | kcommit      kafka   Commits the offset for a given topic and group                                            |
-    | kdump        kafka   Dumps the contents of a specific topic [as binary] to the console                         |
-    | kdumpa       kafka   Dumps the contents of a specific topic [as Avro] to the console                           |
-    | kdumpf       kafka   Dumps the contents of a specific topic to a file                                          |
-    | kdumpr       kafka   Dumps the contents of a specific topic [as raw ASCII] to the console                      |
-    | kfetch       kafka   Retrieves the offset for a given topic and group                                          |
-    | kfetchsize   kafka   Retrieves or sets the default fetch size for all Kafka queries                            |
-    | kfirst       kafka   Returns the first offset for a given topic                                                |
-    | kget         kafka   Retrieves the message at the specified offset for a given topic partition                 |
-    | kgeta        kafka   Returns the key-value pairs of an Avro message from a topic partition                     |
-    | kgetsize     kafka   Retrieves the size of the message at the specified offset for a given topic partition     |
-    | kimport      kafka   Imports messages into a new/existing topic                                                |
-    | kinbound     kafka   Retrieves a list of topics with new messages (since last query)                           |
-    | klast        kafka   Returns the last offset for a given topic                                                 |
-    | kls          kafka   Lists all existing topics                                                                 |
-    | kmk          kafka   Creates a new topic                                                                       |
-    | koffset      kafka   Returns the offset at a specific instant-in-time for a given topic                        |
-    | kpush        kafka   Publishes a message to a topic                                                            |
-    | krm          kafka   Deletes a topic (DESTRUCTIVE)                                                             |
-    | kstats       kafka   Returns the parition details for a given topic                                            |
-    + -------------------------------------------------------------------------------------------------------------- +
+    + ------------------------------------------------------------------------------------------------------------------- +
+    | command     module  description                                                                                     |
+    + ------------------------------------------------------------------------------------------------------------------- +
+    | kbrokers    kafka   Returns a list of the brokers from ZooKeeper                                                    |
+    | kcommit     kafka   Commits the offset for a given topic and group                                                  |
+    | kconsumers  kafka   Returns a list of the consumers from ZooKeeper                                                  |
+    | kcursor     kafka   Displays the current message cursor                                                             |
+    | kdelta      kafka   Returns a list of deltas between the consumers and topics                                       |
+    | kexport     kafka   Writes the contents of a specific topic to a file                                               |
+    | kfetch      kafka   Retrieves the offset for a given topic and group                                                |
+    | kfetchsize  kafka   Retrieves or sets the default fetch size for all Kafka queries                                  |
+    | kfirst      kafka   Returns the first message for a given topic                                                     |
+    | kget        kafka   Retrieves the message at the specified offset for a given topic partition                       |
+    | kgeta       kafka   Returns the key-value pairs of an Avro message from a topic partition                           |
+    | kgetminmax  kafka   Retrieves the smallest and largest message sizes for a range of offsets for a given partition   |
+    | kgetsize    kafka   Retrieves the size of the message at the specified offset for a given topic partition           |
+    | kimport     kafka   Imports messages into a new/existing topic                                                      |
+    | kinbound    kafka   Retrieves a list of topics with new messages (since last query)                                 |
+    | klast       kafka   Returns the last message for a given topic                                                      |
+    | kls         kafka   Lists all existing topics                                                                       |
+    | kmk         kafka   Creates a new topic                                                                             |
+    | knext       kafka   Attempts to retrieve the next message                                                           |
+    | koffset     kafka   Returns the offset at a specific instant-in-time for a given topic                              |
+    | kprev       kafka   Attempts to retrieve the message at the previous offset                                         |
+    | kpush       kafka   Publishes a message to a topic                                                                  |
+    | krm         kafka   Deletes a topic (DESTRUCTIVE)                                                                   |
+    | kscana      kafka   Scans a range of messages verifying conformance to an Avro schema                               |
+    | kstats      kafka   Returns the partition details for a given topic                                                 |
+    + ------------------------------------------------------------------------------------------------------------------- +
+
+To see the current offsets for all consumer IDs:
+
+    zookeeper@vsccrtc201-brn1:2181/> kconsumers
+    + -------------------------------------------------------------------------------------------------------------------------- +
+    | consumerId                                               topic                                      partition  offset      |
+    + -------------------------------------------------------------------------------------------------------------------------- +
+    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  0          26006370    |
+    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  1          23751039    |
+    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  2          22611530    |
+    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  3          24462662    |
+    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  4          25603795    |
+    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  5          23941687    |
+    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  6          25435327    |
+    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  7          23741720    |
+    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  8          21999410    |
+    | kafka-to-file-1407952872635-1811322114                   Verisign.test.iota.rtc.listener.all.hydra  9          24762782    |
+    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  0          26006370    |
+    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  1          23751039    |
+    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  2          22611530    |
+    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  3          24462662    |
+    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  4          25603795    |
+    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  5          23941687    |
+    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  6          25435327    |
+    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  7          23766520    |
+    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  8          22205610    |
+    | kafka-to-file-1407953236905-602150863                    Verisign.test.iota.rtc.listener.all.hydra  9          24762782    |
+    + -------------------------------------------------------------------------------------------------------------------------- +
+
