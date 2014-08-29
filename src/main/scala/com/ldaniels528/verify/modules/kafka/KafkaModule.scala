@@ -59,6 +59,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", listConsumers, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
+    Command(this, "kcursor", getCursor, (Seq.empty, Seq.empty), help = "Displays the current message cursor"),
     Command(this, "kexport", exportToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Writes the contents of a specific topic to a file"),
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
