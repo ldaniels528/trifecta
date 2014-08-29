@@ -62,7 +62,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kexport", exportToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Writes the contents of a specific topic to a file"),
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
-    Command(this, "kfirst", getFirstOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the first offset for a given topic"),
+    Command(this, "kfirst", getFirstMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
     Command(this, "kdelta", getConsumerDeltas, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of deltas between the consumers and topics"),
     Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgeta", getMessageAvro, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
@@ -70,7 +70,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kgetminmax", getMessageMinMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
     Command(this, "kinbound", inboundMessages, (Seq.empty, Seq("topicPrefix")), "Retrieves a list of topics with new messages (since last query)"),
-    Command(this, "klast", getLastOffset, (Seq("topic", "partition"), Seq.empty), help = "Returns the last offset for a given topic"),
+    Command(this, "klast", getLastMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the last message for a given topic"),
     Command(this, "kls", listTopics, (Seq.empty, Seq("topicPrefix")), help = "Lists all existing topics"),
     Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
     Command(this, "knext", getNextMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the next message"),
@@ -196,15 +196,55 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   case class ConsumerLag(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], delta: Option[Long])
 
+  def getCursor(args: String*): Seq[MessageCursor] = cursor.map(c => Seq(c)) getOrElse Seq.empty
+
   /**
-   * "kfirst" - Returns the first offset for a given topic
+   * "kfirst" - Returns the first message for a given topic
+   * @example {{{ kfirst com.shocktrade.quotes.csv 0 }}}
    */
-  def getFirstOffset(args: String*): Option[Long] = {
+  def getFirstMessage(args: String*): Option[MessageData] = {
     // get the arguments
-    val Seq(name, partition, _*) = args
+    val (topic, partition) = getTopicAndPartition(args)
 
     // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getFirstOffset)
+    new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subscriber =>
+      subscriber.getFirstOffset flatMap { offset =>
+        val messageData = subscriber.fetch(offset, rt.defaultFetchSize).headOption
+        cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, BINARY))
+        messageData
+      }
+    }
+  }
+
+  /**
+   * Returns the first offset for a given topic
+   */
+  def getFirstOffset(topic: String, partition: Int): Option[Long] = {
+    new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use (_.getFirstOffset)
+  }
+
+  /**
+   * "klast" - Returns the last offset for a given topic
+   */
+  def getLastMessage(args: String*): Option[MessageData] = {
+    // get the arguments
+    val (topic, partition) = getTopicAndPartition(args)
+
+    // perform the action
+    new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subscriber =>
+      subscriber.getLastOffset flatMap { offset =>
+        val messageData = subscriber.fetch(offset, rt.defaultFetchSize).headOption
+        cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, BINARY))
+        messageData
+      }
+    }
+  }
+
+  /**
+   * Returns the last offset for a given topic
+   */
+  def getLastOffset(topic: String, partition: Int): Option[Long] = {
+    new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use (_.getLastOffset)
   }
 
   /**
@@ -299,17 +339,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   }
 
   case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
-
-  /**
-   * "klast" - Returns the last offset for a given topic
-   */
-  def getLastOffset(args: String*): Option[Long] = {
-    // get the arguments
-    val Seq(name, partition, _*) = args
-
-    // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getLastOffset map(_ - 1))
-  }
 
   /**
    * "knext" - Optionally returns the next message
