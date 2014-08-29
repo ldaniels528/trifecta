@@ -703,6 +703,21 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   }
 
   private def die[S](message: String): S = throw new IllegalArgumentException(message)
+
+  /**
+   * Retrieves the topic and partition from the given arguments
+   * @param args the given arguments
+   * @return a tuple containing the topic and partition
+   */
+  private def getTopicAndPartition(args: Seq[String]): (String, Int) = {
+    args.toList match {
+      case Nil => cursor map (c => (c.topic, c.partition)) getOrElse die("No cursor exists")
+      case topicArg :: Nil => (topicArg, 0)
+      case topicArg :: partitionArg :: Nil => (topicArg, parseInt("partition", partitionArg))
+      case _ => die("Invalid arguments")
+    }
+  }
+
   /**
    * Converts the given long value into a byte array
    * @param value the given long value
