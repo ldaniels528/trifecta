@@ -78,7 +78,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
     Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic (DESTRUCTIVE)"),
-    Command(this, "kscana", scanTopicAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
+    Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
     Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
 
   override def shutdown() = ()
@@ -631,11 +631,11 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * kscana - Scans and verifies that a set of messages (specific offset range) can be read by the specified schema
    * @example {{{ kscana avro/schema1.avsc com.shocktrade.alerts 0 1000 2000 }}}
    */
-  def scanTopicAvro(args: String*)(implicit out: PrintStream): Seq[AvroVerification] = {
+  def scanMessagesAvro(args: String*)(implicit out: PrintStream): Seq[AvroVerification] = {
     // get the arguments
     val Seq(schemaVar, name, partition, startOffset, endOffset, _*) = args
     val batchSize = extract(args, 5) map (parseInt("batchSize", _)) getOrElse 10
-    val blockSize = extract(args, 6) map (parseInt("blockSize", _)) getOrElse 8192
+    val blockSize = extract(args, 6) map (parseInt("blockSize", _)) getOrElse rt.defaultFetchSize
 
     // get the decoder
     val decoder = getAvroDecoder(schemaVar)
