@@ -18,13 +18,14 @@ trait BinaryMessaging {
   def dumpMessage(offset: Long, message: Array[Byte])(implicit rt: VxRuntimeContext, out: PrintStream): Int = {
     // determine the widths for each section: bytes & characters
     val columns = rt.columns
-    val byteWidth = columns * 3
+    val byteWidth = rt.columns * 3
+    val charWidth = rt.columns + 1
 
     // display the message
     var index = 0
-    val length1 = 1 + Math.log10(offset).toInt
-    val length2 = 1 + Math.log10(message.length).toInt
-    val myFormat = s"[%0${length1}d:%0${length2}d] %-${byteWidth}s| %-${columns}s"
+    val length1 = Math.max(4, 1 + Math.log10(offset).toInt)
+    val length2 = Math.max(3, 1 + Math.log10(message.length).toInt)
+    val myFormat = s"[%0${length1}d:%0${length2}d] %-${byteWidth}s| %-${charWidth}s|"
     message.sliding(columns, columns) foreach { bytes =>
       out.println(myFormat.format(offset, index, asHexString(bytes), asChars(bytes)))
       index += columns
@@ -41,11 +42,12 @@ trait BinaryMessaging {
     // determine the widths for each section: bytes & characters
     val columns = rt.columns
     val byteWidth = rt.columns * 3
+    val charWidth = rt.columns + 1
 
     // display the message
     var offset = 0
-    val length = 1 + Math.log10(message.length).toInt
-    val myFormat = s"[%0${length}d] %-${byteWidth}s| %-${columns}s"
+    val length = Math.max(3, 1 + Math.log10(message.length).toInt)
+    val myFormat = s"[%0${length}d] %-${byteWidth}s| %-${charWidth}s|"
     message.sliding(columns, columns) foreach { bytes =>
       out.println(myFormat.format(offset, asHexString(bytes), asChars(bytes)))
       offset += columns
