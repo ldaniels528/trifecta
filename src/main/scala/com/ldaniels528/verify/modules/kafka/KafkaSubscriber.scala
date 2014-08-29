@@ -245,13 +245,13 @@ object KafkaSubscriber {
   /**
    * Retrieves the list of consumers from Zookeeper
    */
-  def getConsumerList(prefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
-    // start with the lisot of consumer IDs
+  def getConsumerList(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
+    // start with the list of consumer IDs
     val basePath = "/consumers"
     zk.getChildren(basePath) flatMap { consumerId =>
       // get the list of topics
       val offsetPath = s"$basePath/$consumerId/offsets"
-      val topics = zk.getChildren(offsetPath).distinct filter (t => prefix.isEmpty || prefix.exists(t.startsWith))
+      val topics = zk.getChildren(offsetPath).distinct filter (t => topicPrefix.isEmpty || topicPrefix.exists(t.startsWith))
 
       // get the list of partitions
       topics flatMap { topic =>
