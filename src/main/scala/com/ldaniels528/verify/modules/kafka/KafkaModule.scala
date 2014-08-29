@@ -9,13 +9,12 @@ import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.modules.avro.AvroReading
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
-import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, ConsumerDetails, MessageData}
+import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{ConsumerDetails, BrokerDetails, MessageData}
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
@@ -30,8 +29,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private implicit val rtc = rt
 
   // create a thread pool
-
-  import scala.concurrent.ExecutionContext.Implicits._
 
   // date parser instance
   private val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
@@ -184,17 +181,14 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * kdelta
    * @example {{{ kdelta }}}
    */
-  def getConsumerDeltas(args: String*): Future[Seq[ConsumerLag]] = {
+  def getConsumerDeltas(args: String*): Seq[ConsumerLag] = {
     val topicPrefix = args.headOption
-    val consumers_f = Future(KafkaSubscriber.getConsumerList(topicPrefix))
-    val stats_f = Future(inboundMessageStatistics(topicPrefix))
 
-    for {
-      consumers <- consumers_f
-      stats <- stats_f
-      statsMap = Map(stats.map(s => Topic(s.topic, s.partition) -> s.endOffset).toSeq: _*)
-    } yield consumers map { c =>
-      val topicOffset = statsMap.get(Topic(c.topic, c.partition))
+    // retrieve the data
+    out.println("Retrieving consumer data; this may take a few seconds...")
+    val consumers = KafkaSubscriber.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition))
+    consumers map { c =>
+      val topicOffset = getLastOffset(c.topic, c.partition.toString)
       val delta = topicOffset map (_ - c.offset)
       ConsumerLag(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
     }
