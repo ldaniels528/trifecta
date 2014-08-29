@@ -51,7 +51,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   // various shared state variables
   var autoSwitching = false
   var debugOn = false
-  var defaultFetchSize = 8192
+  var defaultFetchSize = 65536
   var encoding = "UTF-8"
 
   // ZooKeeper current working directory
