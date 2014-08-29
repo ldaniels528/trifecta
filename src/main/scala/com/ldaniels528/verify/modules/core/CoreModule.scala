@@ -4,7 +4,9 @@ import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
 import com.ldaniels528.verify.modules.{Command, Module}
+import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.{SessionManagement, VerifyShell, VxRuntimeContext}
+import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -56,7 +58,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "time", time, help = "Returns the system time"),
     Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"),
     Command(this, "use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"),
-    Command(this, "version", version, help = "Returns the Verify application version"))
+    Command(this, "version", version, help = "Returns the Verify application version"),
+    Command(this, "wget", httpGet, Seq("url") -> Seq.empty, help = "Retrieves remote content via HTTP"))
 
   override def prompt: String = cwd
 
@@ -182,6 +185,27 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    */
   def hostname(args: String*): String = {
     java.net.InetAddress.getLocalHost.getHostName
+  }
+
+  /**
+   * "wget" command - Retrieves remote content via HTTP
+   * @example {{{ wget http://www.example.com/ }}}
+   */
+  def httpGet(args: String*): Array[Byte] = {
+    import java.io.ByteArrayOutputStream
+    import java.net._
+
+    // get the URL string
+    val urlString = args.head
+
+    // download the content
+    new URL(urlString).openConnection().asInstanceOf[HttpURLConnection] use { conn =>
+      conn.getInputStream use { in =>
+        val out = new ByteArrayOutputStream(1024)
+        IOUtils.copy(in, out)
+        out.toByteArray
+      }
+    }
   }
 
   /**
