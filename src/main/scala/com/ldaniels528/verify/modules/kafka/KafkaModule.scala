@@ -702,6 +702,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     count
   }
 
+  private def die[S](message: String): S = throw new IllegalArgumentException(message)
   /**
    * Converts the given long value into a byte array
    * @param value the given long value
