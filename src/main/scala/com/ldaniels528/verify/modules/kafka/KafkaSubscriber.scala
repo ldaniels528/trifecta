@@ -152,7 +152,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
 
   def getFirstOffset = getOffsetsBefore(OffsetRequest.EarliestTime)
 
-  def getLastOffset = getOffsetsBefore(OffsetRequest.LatestTime)
+  def getLastOffset = getOffsetsBefore(OffsetRequest.LatestTime) map (_ - 1)
 
   def getOffsetsBefore(time: Long): Option[Long] = {
     // create the topic/partition and request information
