@@ -50,7 +50,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "ls", listFiles, (Seq.empty, Seq("path")), help = "Retrieves the files from the current directory"),
     Command(this, "modules", listModules, help = "Returns a list of configured modules"),
     Command(this, "pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
-    Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes"),
+    Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes (EXPERIMENTAL)"),
     Command(this, "pwd", printWorkingDirectory, (Seq.empty, Seq.empty), help = "Display current working directory"),
     Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
     Command(this, "runjava", executeJavaApp, (Seq("jarFile", "className"), (1 to 10).map(n => s"arg$n")), help = "Executes a Java class' main method"),
