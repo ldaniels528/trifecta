@@ -308,7 +308,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val Seq(name, partition, _*) = args
 
     // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getLastOffset)
+    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getLastOffset map(_ - 1))
   }
 
   /**
