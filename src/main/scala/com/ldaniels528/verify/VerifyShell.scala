@@ -7,6 +7,7 @@ import com.ldaniels528.verify.VxConsole._
 import com.ldaniels528.verify.modules.Command
 import com.ldaniels528.verify.modules.avro.AvroTables
 import org.fusesource.jansi.Ansi.Color._
+import org.fusesource.jansi.Ansi._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -45,8 +46,10 @@ class VerifyShell(rt: VxRuntimeContext) {
    */
   def shell() {
     import jline.console.ConsoleReader
+
+    // use the ANSI console plugin to display the title line
     vxAnsi {
-      out.println(a"${WHITE}Type '${CYAN}help$WHITE' (or '$CYAN?$WHITE') to see the list of available commands")
+      System.out.println(ansi().fg(RED).a("Ve").fg(GREEN).a("ri").fg(BLUE).a("fy").fg(WHITE).a(s" v${VerifyShell.VERSION}").reset())
     }
 
     // display the state variables
@@ -96,12 +99,6 @@ object VerifyShell {
    * @param args the given command line arguments
    */
   def main(args: Array[String]) {
-
-    // install the ANSI console plugin and display the title line
-    vxAnsi {
-      System.out.println(a"${RED}Ve${GREEN}ri${BLUE}fy ${WHITE}v$VERSION")
-    }
-
     // if arguments were not passed, stop.
     args.toList match {
       case Nil => System.out.println("Usage: verify <zookeeperHost>")
