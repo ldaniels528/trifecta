@@ -15,6 +15,8 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class VerifyShell(rt: VxRuntimeContext) {
+  implicit val scope = rt.scope
+
   // redirect standard output
   val out: PrintStream = rt.out
   val err: PrintStream = rt.err
@@ -42,7 +44,6 @@ class VerifyShell(rt: VxRuntimeContext) {
    * Interactive shell
    */
   def shell() {
-    import com.ldaniels528.verify.VxRuntimeContext.StateMapping
     import jline.console.ConsoleReader
 
     // use the ANSI console plugin to display the title line
@@ -51,12 +52,15 @@ class VerifyShell(rt: VxRuntimeContext) {
       out.println(a"${WHITE}Type '${CYAN}help$WHITE' (or '$CYAN?$WHITE') to see the list of available commands")
 
       // display the state variables
-      for (StateMapping(module, name, state) <- rt.getStateMappings) {
-        val (value, color) = state match {
-          case v: Boolean => if (v) ("On", GREEN) else ("Off", YELLOW)
-          case v: String => (v, CYAN)
-          case v => (v.toString, MAGENTA)
+      for (mv <- rt.moduleManager.variableSet) {
+        val (value, color) = mv.variable.eval match {
+          case Some(v: Boolean) => if (v) ("On", GREEN) else ("Off", YELLOW)
+          case Some(v: String) => (v, CYAN)
+          case Some(v) => (v.toString, MAGENTA)
+          case None => ("(undefined)", RED)
         }
+        val module = mv.moduleName
+        val name = mv.variable.name
         out.println(a"$WHITE[*] $CYAN$module: $WHITE$name is $color$value")
       }
     }
@@ -67,7 +71,7 @@ class VerifyShell(rt: VxRuntimeContext) {
 
     do {
       // display the prompt, and get the next line of input
-      val module = rt.moduleManager.activeModule getOrElse rt.moduleManager.modules.values.head
+      val module = rt.moduleManager.activeModule getOrElse rt.moduleManager.modules.head
 
       // read a line from the console
       Option(consoleReader.readLine("%s@%s> ".format(module.moduleName, module.prompt))) map (_.trim) foreach { line =>
