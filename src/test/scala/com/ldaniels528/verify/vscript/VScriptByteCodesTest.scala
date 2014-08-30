@@ -30,7 +30,7 @@ class VScriptByteCodesTest {
         println a2
         getContestByName("Millionaire's Club")
                  """
-    logger.info(s"script[${script.length} / ${compress(script.getBytes()).length} compressed] => $script")
+    logger.info(s"script[${script.length} / ${compress(script.getBytes).length} compressed] => $script")
 
     // compile the code
     val code = compile(script)
