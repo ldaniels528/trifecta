@@ -3,13 +3,13 @@ package com.ldaniels528.verify.modules.core
 import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
+import com.ldaniels528.verify.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
-import com.ldaniels528.verify.vscript.Variable
+import com.ldaniels528.verify.vscript.{Scope, Variable}
 import com.ldaniels528.verify.{SessionManagement, VerifyShell, VxRuntimeContext}
 import org.apache.commons.io.IOUtils
-import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
@@ -22,16 +22,13 @@ import scala.util.Properties
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CoreModule(rt: VxRuntimeContext) extends Module {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
+  private implicit val scope: Scope = rt.scope
   private implicit val out: PrintStream = rt.out
 
   // define the process parsing regular expression
   private val PID_MacOS_r = "^\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
   private val PID_Linux_r = "^\\s*(\\S+)\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
   private val NET_STAT_r = "^\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
-
-  // current working directory
-  private var cwd: String = new File(".").getCanonicalPath
 
   override def moduleName = "core"
 
@@ -65,6 +62,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("autoSwitching", ConstantValue(Option(false))),
+    Variable("cwd", ConstantValue(Option(new File(".").getCanonicalPath))),
     Variable("debugOn", ConstantValue(Option(false))),
     Variable("encoding", ConstantValue(Option("UTF8")))
   )
@@ -75,6 +73,17 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
 
   // load the commands from the modules
   private def commandSet: Map[String, Command] = rt.moduleManager.commandSet
+
+  /**
+   * Retrieves the current working directory
+   */
+  def cwd: String = scope.getValue[String]("cwd") getOrElse "."
+
+  /**
+   * Sets the current working directory
+   * @param path the path to set
+   */
+  def cwd_=(path: String) = scope.setValue("cwd", Option(path))
 
   /**
    * Automatically switches to the module of the most recently executed command

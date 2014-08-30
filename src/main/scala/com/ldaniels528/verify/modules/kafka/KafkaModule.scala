@@ -14,7 +14,7 @@ import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
-import com.ldaniels528.verify.vscript.Variable
+import com.ldaniels528.verify.vscript.{RootScope, Variable}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
@@ -29,6 +29,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val out: PrintStream = rt.out
   private implicit val rtc = rt
+
+  // create the root-level scope
+  implicit val scope = RootScope()
 
   // date parser instance
   private val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
@@ -48,6 +51,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   // define the offset for kget/knext
   private var cursor: Option[MessageCursor] = None
+
+  def defaultFetchSize = scope.getValue[Int]("defaultFetchSize") getOrElse 65536
+
+  def defaultFetchSize_=(sizeInBytes: Int) = scope.setValue("defaultFetchSize", Option(sizeInBytes))
 
   // the name of the module
   val moduleName = "kafka"
@@ -177,8 +184,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def fetchSizeGetOrSet(args: String*) = {
     args.headOption match {
-      case Some(fetchSize) => rt.defaultFetchSize = fetchSize.toInt
-      case None => rt.defaultFetchSize
+      case Some(fetchSize) => defaultFetchSize = fetchSize.toInt
+      case None => defaultFetchSize
     }
   }
 
@@ -214,7 +221,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // perform the action
     new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subscriber =>
       subscriber.getFirstOffset flatMap { offset =>
-        val messageData = subscriber.fetch(offset, rt.defaultFetchSize).headOption
+        val messageData = subscriber.fetch(offset, defaultFetchSize).headOption
         cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, BINARY))
         messageData
       }
@@ -238,7 +245,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // perform the action
     new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subscriber =>
       subscriber.getLastOffset flatMap { offset =>
-        val messageData = subscriber.fetch(offset, rt.defaultFetchSize).headOption
+        val messageData = subscriber.fetch(offset, defaultFetchSize).headOption
         cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, BINARY))
         messageData
       }
@@ -298,7 +305,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getMessage(args: String*)(implicit out: PrintStream): Option[MessageData] = {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
-    val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse rt.defaultFetchSize
+    val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
 
     // perform the action
     var messageData: Option[MessageData] = None
@@ -318,7 +325,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getMessageSize(args: String*): Option[Int] = {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
-    val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse rt.defaultFetchSize
+    val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
 
     // perform the action
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
@@ -333,7 +340,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getMessageMinMaxSize(args: String*): Seq[MessageMaxMin] = {
     // get the arguments
     val Seq(name, partition, startOffset, endOffset, _*) = args
-    val fetchSize = extract(args, 4) map (parseInt("fetchSize", _)) getOrElse rt.defaultFetchSize
+    val fetchSize = extract(args, 4) map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
 
     // perform the action
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
@@ -640,7 +647,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // get the arguments
     val Seq(schemaVar, name, partition, startOffset, endOffset, _*) = args
     val batchSize = extract(args, 5) map (parseInt("batchSize", _)) getOrElse 10
-    val blockSize = extract(args, 6) map (parseInt("blockSize", _)) getOrElse rt.defaultFetchSize
+    val blockSize = extract(args, 6) map (parseInt("blockSize", _)) getOrElse defaultFetchSize
 
     // get the decoder
     val decoder = getAvroDecoder(schemaVar)

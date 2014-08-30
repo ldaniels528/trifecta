@@ -1,6 +1,5 @@
 package com.ldaniels528.verify
 
-import VxRuntimeContext._
 import java.io.File.separator
 import java.io.{File, FileInputStream}
 import java.util.Properties
@@ -33,7 +32,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   val err = System.err
 
   // create the root-level scope
-  val scope = RootScope()
+  implicit val scope = RootScope()
 
   // define the tabular instance
   val tabular = new Tabular() with AvroTables
@@ -48,10 +47,17 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   var alive = true
 
   // various shared state variables
-  var autoSwitching = false
-  var debugOn = false
-  var defaultFetchSize = 65536
-  var encoding = "UTF-8"
+  def autoSwitching = scope.getValue[Boolean]("autoSwitching") getOrElse false
+
+  def autoSwitching_=(enabled: Boolean) = scope.setValue("autoSwitching", Option(enabled))
+
+  def debugOn = scope.getValue[Boolean]("debugOn") getOrElse false
+
+  def debugOn_=(enabled: Boolean) = scope.setValue("debugOn", Option(enabled))
+
+  def encoding = scope.getValue[String]("encoding") getOrElse "UTF-8"
+
+  def encoding_=(charSet: String) = scope.setValue("encoding", Option(charSet))
 
   // ZooKeeper current working directory
   var zkCwd = "/"
@@ -70,7 +76,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   val zkProxy = ZKProxy(zkEndPoint)
 
   // create the module manager
-  val moduleManager = new ModuleManager()
+  val moduleManager = new ModuleManager(scope)
 
   // load the modules
   moduleManager ++= Seq(
@@ -81,19 +87,9 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
     new ZookeeperModule(this))
 
   // set the zookeeper module as the "active" module
-  moduleManager.findModuleByName("zookeeper") map { module =>
+  moduleManager.findModuleByName("zookeeper") foreach { module =>
     moduleManager.setActiveModule(module)
   }
-
-  /**
-   * Displays the loaded configuration properties
-   */
-  def getStateMappings: Seq[StateMapping] = Seq(
-    StateMapping("core", "encoding", encoding),
-    StateMapping("core", "module auto-switching", autoSwitching),
-    StateMapping("core", "debugging", debugOn),
-    StateMapping("kafka", "fetch size", defaultFetchSize)
-  )
 
   /**
    * Loads the configuration file

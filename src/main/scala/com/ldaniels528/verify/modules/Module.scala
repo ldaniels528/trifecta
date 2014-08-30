@@ -4,6 +4,7 @@ import java.net.{URL, URLClassLoader}
 
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
+import com.ldaniels528.verify.vscript.Variable
 
 import scala.util.{Failure, Success, Try}
 
@@ -24,6 +25,12 @@ trait Module extends BinaryMessaging {
    * @return the commands that are bound to the module
    */
   def getCommands: Seq[Command]
+
+  /**
+   * Returns the variables that are bound to the module
+   * @return the variables that are bound to the module
+   */
+  def getVariables: Seq[Variable]
 
   /**
    * Returns the the information that is to be displayed while the module is active

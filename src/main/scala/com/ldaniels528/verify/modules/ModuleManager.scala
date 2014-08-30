@@ -1,13 +1,18 @@
 package com.ldaniels528.verify.modules
 
+import com.ldaniels528.verify.modules.ModuleManager.ModuleVariable
+import com.ldaniels528.verify.util.VxUtils._
+import com.ldaniels528.verify.vscript.{Scope, Variable}
+
 /**
  * Module Manager
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ModuleManager() {
+class ModuleManager(scope: Scope) {
   private var commands = Map[String, Command]()
-  var modules = Map[String, Module]()
-  var activeModule: Option[Module] = None
+  private var variables = Seq[ModuleVariable]()
+  private var moduleSet = Set[Module]()
+  private var currentModule: Option[Module] = None
 
   /**
    * Adds a module to this manager
@@ -15,35 +20,31 @@ class ModuleManager() {
    * @return the module manager instance
    */
   def +=(module: Module) = {
-    modules += module.moduleName -> module
+    moduleSet += module
 
-    // reset the commands collection
-    commands = Map(modules.values.toSeq flatMap (_.getCommands) map (c => (c.name, c)): _*)
+    // reset the commands & variables collections
+    updateCollections()
     this
   }
 
   /**
    * Adds a module to this manager
-   * @param moduleSet the given collection of module
+   * @param modules the given collection of module
    * @return the module manager instance
    */
-  def ++=(moduleSet: Seq[Module]) = {
-    // import the modules
-    moduleSet.foreach(m => modules += m.moduleName -> m)
+  def ++=(modules: Seq[Module]) = {
+    moduleSet ++= modules
 
-    // reset the commands collection
-    commands = Map(modules.values.toSeq flatMap (_.getCommands) map (c => (c.name, c)): _*)
-
-    // if no active module is set,
-    // set the active module ("zookeeper" by default)
-    if (activeModule.isEmpty) {
-      modules.values.find(_.moduleName == "zookeeper") match {
-        case Some(module) => Some(module)
-        case None => modules.headOption
-      }
-    }
+    // reset the commands & variables collections
+    updateCollections()
     this
   }
+
+  def activeModule: Option[Module] = {
+    currentModule ?? moduleSet.find(_.moduleName == "zookeeper") ?? moduleSet.headOption
+  }
+
+  def activeModule_=(module: Module) = currentModule = Option(module)
 
   /**
    * Returns a mapping of commands
