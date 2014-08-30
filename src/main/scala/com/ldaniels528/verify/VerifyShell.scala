@@ -50,19 +50,6 @@ class VerifyShell(rt: VxRuntimeContext) {
     vxAnsi {
       // display the welcome message
       out.println(a"${WHITE}Type '${CYAN}help$WHITE' (or '$CYAN?$WHITE') to see the list of available commands")
-
-      // display the state variables
-      for (mv <- rt.moduleManager.variableSet) {
-        val (value, color) = mv.variable.eval match {
-          case Some(v: Boolean) => if (v) ("On", GREEN) else ("Off", YELLOW)
-          case Some(v: String) => (v, CYAN)
-          case Some(v) => (v.toString, MAGENTA)
-          case None => ("(undefined)", RED)
-        }
-        val module = mv.moduleName
-        val name = mv.variable.name
-        out.println(a"$WHITE[*] $CYAN$module: $WHITE$name is $color$value")
-      }
     }
 
     // define the console reader

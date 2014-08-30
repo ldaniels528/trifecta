@@ -196,14 +196,3 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   }
 
 }
-
-/**
- * Verify Runtime Context Singleton Object
- * @author Lawrence Daniels <lawrence.daniels@gmail.com>
- */
-case
-object VxRuntimeContext {
-
-  case class StateMapping(module: String, name: String, value: Any)
-
-}
