@@ -15,7 +15,7 @@ trait BinaryMessaging {
    * @param message the given message
    * @return the size of the message in bytes
    */
-  def dumpMessage(offset: Long, message: Array[Byte])(implicit rt: VxRuntimeContext, out: PrintStream): Int = {
+  def dumpMessage(offset: Long, message: Array[Byte])(implicit rt: VxRuntimeContext, out: PrintStream) {
     // determine the widths for each section: bytes & characters
     val columns = rt.columns
     val byteWidth = rt.columns * 3
@@ -30,7 +30,6 @@ trait BinaryMessaging {
       out.println(myFormat.format(offset, index, asHexString(bytes), asChars(bytes)))
       index += columns
     }
-    message.length
   }
 
   /**
@@ -38,7 +37,7 @@ trait BinaryMessaging {
    * @param message the given message
    * @return the size of the message in bytes
    */
-  def dumpMessage(message: Array[Byte])(implicit rt: VxRuntimeContext, out: PrintStream): Int = {
+  def dumpMessage(message: Array[Byte])(implicit rt: VxRuntimeContext, out: PrintStream) {
     // determine the widths for each section: bytes & characters
     val columns = rt.columns
     val byteWidth = rt.columns * 3
@@ -52,7 +51,6 @@ trait BinaryMessaging {
       out.println(myFormat.format(offset, asHexString(bytes), asChars(bytes)))
       offset += columns
     }
-    message.length
   }
 
   /**
