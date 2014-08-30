@@ -2,23 +2,17 @@ package com.ldaniels528.verify
 
 import org.fusesource.jansi.Ansi._
 import org.fusesource.jansi.{Ansi, AnsiConsole}
-import org.slf4j.LoggerFactory
 
 /**
- * Verify Console
+ * Verify ANSI Console
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VxConsole {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
-  val out = System.out
 
-  def install(): Unit = AnsiConsole.systemInstall()
-
-  def uninstall(): Unit = AnsiConsole.systemUninstall()
-
-  def wrap[T](block: => T): T = {
-    install()
+  def vxAnsi[T](block: => T): T = {
+    AnsiConsole.systemInstall()
     val result = block
-    uninstall()
+    AnsiConsole.systemUninstall()
     result
   }
 
@@ -29,14 +23,23 @@ object VxConsole {
   implicit class AnsiInterpolation(val sc: StringContext) extends AnyVal {
 
     def a(args: Any*): Ansi = {
-      val items = sc.parts.iterator
-      val expressions = args.iterator
+      // generate the ANSI string
+      getParameterList(args).foldLeft[Ansi](ansi()) { case (results, arg) =>
+        arg match {
+          case color: Color => results.fg(color)
+          case elem => results.a(elem)
+        }
+      }.reset()
+    }
 
-      val result = (items zip expressions).foldLeft[Ansi](ansi()) { case (results, (s, expr)) =>
-        logger.info(s"a: s = $s, expr = $expr")
-        results
+    private def getParameterList(args: Any*): List[Any] = {
+      val (textIt, exprIt) = (sc.parts.iterator, args.toIterator)
+      var params: List[Any] = Nil
+      while (textIt.hasNext || exprIt.hasNext) {
+        if (textIt.hasNext) params = textIt.next() :: params
+        if (exprIt.hasNext) params = exprIt.next() :: params
       }
-      result.reset()
+      params.reverse
     }
   }
 
