@@ -314,7 +314,7 @@ object KafkaSubscriber {
       // if the offset changed, report it.
       for {
         last <- offset
-        start <- startingOffset ?? 0L
+        start <- startingOffset ?? Option(0L)
       } yield if (last > start) {
         logger.info(s"$topic: Ended watch at offset $last (started at $start)...")
       }
@@ -333,7 +333,7 @@ object KafkaSubscriber {
       val timeout = System.currentTimeMillis() + duration.toMillis
 
       // get the offset for which to start watching 
-      val startingOffset = subscriber.fetchOffsets(groupId) ?? 0L
+      val startingOffset = subscriber.fetchOffsets(groupId) ?? Option(0L)
       var offset = startingOffset
 
       // poll the topic until the timeout is reached
