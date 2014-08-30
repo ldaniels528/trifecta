@@ -55,10 +55,14 @@ class VScriptParserTest {
   }
 
   private def checkLine(items: Seq[String], nth: String)(implicit tok: TokenIterator) = {
-    logger.info(s"The $nth line should match expected results: ${items.map(mapper).mkString(", ")}")
+    logger.info(s"The $nth line should match expected results: [ ${items.map(mapper).mkString(", ")} ]")
     items foreach (Assert.assertEquals(_, tok.next))
   }
 
-  private def mapper(s:String): String = if(s == "\n") "<CR>" else s"'$s'"
+  private def mapper(token: String): String = token match {
+    case "\n" => "<LF>"
+    case "\r" => "<CR>"
+    case s => s"'$s'"
+  }
 
 }
