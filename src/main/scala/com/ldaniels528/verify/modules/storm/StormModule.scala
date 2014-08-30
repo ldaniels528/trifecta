@@ -12,6 +12,7 @@ import scala.util.{Failure, Success, Try}
 
 /**
  * Apache Storm Module
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class StormModule(rt: VxRuntimeContext) extends Module {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -29,11 +30,9 @@ class StormModule(rt: VxRuntimeContext) extends Module {
   connect match {
     case Success(c) => client = Some(c)
     case Failure(e) =>
+      val nimbusHost = Option(stormConf.get("nimbus.host")) map(_.asInstanceOf[String])
+      logger.debug(s"Error connecting to Storm nimbus host ${if(nimbusHost.isDefined) s"(host: $nimbusHost)" else ""}", e)
   }
-
-  override def moduleName = "storm"
-
-  override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
 
   // the bound commands
   override def getCommands = Seq(
@@ -46,9 +45,10 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   override def getVariables: Seq[Variable] = Seq.empty
 
-  /**
-   * Called when the application is shutting down
-   */
+  override def moduleName = "storm"
+
+  override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
+
   override def shutdown(): Unit = ()
 
   /**
