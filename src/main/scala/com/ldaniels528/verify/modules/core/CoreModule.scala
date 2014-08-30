@@ -40,8 +40,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "cd", changeDir, (Seq("path"), Seq.empty), help = "Changes the local file system path/directory"),
     Command(this, "charset", charSet, (Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
     Command(this, "class", inspectClass, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
-    Command(this, "columns", columnWidthGetOrSet, (Seq.empty, Seq("count")), help = "Retrieves or sets the column width for message output"),
-    Command(this, "debug", debug, (Seq.empty, Seq("state")), help = "Switches debugging on/off"),
+    Command(this, "columns", columnWidthGetOrSet, (Seq.empty, Seq("columnWidth")), help = "Retrieves or sets the column width for message output"),
+    Command(this, "debug", debug, (Seq.empty, Seq("enabled")), help = "Switches debugging on/off"),
     Command(this, "exit", exit, help = "Exits the shell"),
     Command(this, "help", help, help = "Provides the list of available commands"),
     Command(this, "history", listHistory, help = "Returns a list of previously issued commands"),
@@ -63,6 +63,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("autoSwitching", ConstantValue(Option(false))),
+    Variable("columns", ConstantValue(Option(25))),
     Variable("cwd", ConstantValue(Option(new File(".").getCanonicalPath))),
     Variable("debugOn", ConstantValue(Option(false))),
     Variable("encoding", ConstantValue(Option("UTF8")))
@@ -120,8 +121,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
         cwd.split("[/]") match {
           case a if a.length <= 1 => "/"
           case a =>
-            val newpath = a.init.mkString("/")
-            if (newpath.trim.length == 0) "/" else newpath
+            val newPath = a.init.mkString("/")
+            if (newPath.trim.length == 0) "/" else newPath
         }
       case s => setupPath(s)
     }
@@ -146,7 +147,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    */
   def columnWidthGetOrSet(args: String*): Any = {
     args.headOption match {
-      case Some(arg) => rt.columns = arg.toInt
+      case Some(arg) => rt.columns = parseInt("columnWidth", arg)
       case None => rt.columns
     }
   }

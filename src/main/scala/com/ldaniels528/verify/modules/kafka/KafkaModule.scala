@@ -14,8 +14,7 @@ import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
-import com.ldaniels528.verify.vscript.{RootScope, Variable}
-import org.slf4j.LoggerFactory
+import com.ldaniels528.verify.vscript.{Scope, Variable}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -26,12 +25,9 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with AvroReading with Compression {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val out: PrintStream = rt.out
-  private implicit val rtc = rt
-
-  // create the root-level scope
-  implicit val scope = RootScope()
+  private implicit val scope: Scope = rt.scope
+  private implicit val rtc: VxRuntimeContext = rt
 
   // date parser instance
   private val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
@@ -55,11 +51,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def defaultFetchSize = scope.getValue[Int]("defaultFetchSize") getOrElse 65536
 
   def defaultFetchSize_=(sizeInBytes: Int) = scope.setValue("defaultFetchSize", Option(sizeInBytes))
-
-  // the name of the module
-  val moduleName = "kafka"
-
-  override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
 
   // the bound commands
   override def getCommands = Seq(
@@ -90,8 +81,13 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
 
   override def getVariables: Seq[Variable] = Seq(
-    Variable("defaultFetchSize", ConstantValue(Option(65536)))
+    Variable("defaultFetchSize", ConstantValue(Option(65536))),
+    Variable("zkCwd", ConstantValue(Option("/")))
   )
+
+  override def moduleName = "kafka"
+
+  override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
 
   override def shutdown() = ()
 

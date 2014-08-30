@@ -11,7 +11,7 @@ import com.ldaniels528.verify.modules.core.CoreModule
 import com.ldaniels528.verify.modules.kafka.KafkaModule
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
 import com.ldaniels528.verify.modules.storm.StormModule
-import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
+import com.ldaniels528.verify.modules.zookeeper.{ZookeeperModule, ZKProxy}
 import com.ldaniels528.verify.modules.{Command, ModuleManager}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.vscript.RootScope
@@ -46,25 +46,6 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   // the default state of the application is "alive"
   var alive = true
 
-  // various shared state variables
-  def autoSwitching = scope.getValue[Boolean]("autoSwitching") getOrElse false
-
-  def autoSwitching_=(enabled: Boolean) = scope.setValue("autoSwitching", Option(enabled))
-
-  def debugOn = scope.getValue[Boolean]("debugOn") getOrElse false
-
-  def debugOn_=(enabled: Boolean) = scope.setValue("debugOn", Option(enabled))
-
-  def encoding = scope.getValue[String]("encoding") getOrElse "UTF-8"
-
-  def encoding_=(charSet: String) = scope.setValue("encoding", Option(charSet))
-
-  // ZooKeeper current working directory
-  var zkCwd = "/"
-
-  // the number of columns to display when displaying bytes
-  var columns = 25
-
   // define the history properties
   var historyFile = new File(s"$userHome$separator.verify${separator}history.txt")
 
@@ -78,7 +59,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   // create the module manager
   val moduleManager = new ModuleManager(scope)
 
-  // load the modules
+  // load the built-in modules
   moduleManager ++= Seq(
     new AvroModule(this),
     new CoreModule(this),
@@ -90,6 +71,29 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   moduleManager.findModuleByName("zookeeper") foreach { module =>
     moduleManager.setActiveModule(module)
   }
+
+  // various shared state variables
+  def autoSwitching: Boolean = scope.getValue[Boolean]("autoSwitching") getOrElse false
+
+  def autoSwitching_=(enabled: Boolean) = scope.setValue("autoSwitching", Option(enabled))
+
+  // the number of columns to display when displaying bytes
+  def columns: Int = scope.getValue[Int]("columns") getOrElse 25
+
+  def columns_=(width: Int) = scope.setValue("columns", Option(width))
+
+  def debugOn: Boolean = scope.getValue[Boolean]("debugOn") getOrElse false
+
+  def debugOn_=(enabled: Boolean) = scope.setValue("debugOn", Option(enabled))
+
+  def encoding: String = scope.getValue[String]("encoding") getOrElse "UTF-8"
+
+  def encoding_=(charSet: String) = scope.setValue("encoding", Option(charSet))
+
+  // ZooKeeper current working directory
+  def zkCwd: String = scope.getValue[String]("zkCwd") getOrElse "/"
+
+  def zkCwd_=(path: String) = scope.setValue("zkCwd", Option(path))
 
   /**
    * Loads the configuration file

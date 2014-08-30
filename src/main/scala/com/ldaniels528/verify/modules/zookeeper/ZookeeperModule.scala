@@ -15,13 +15,7 @@ import com.ldaniels528.verify.vscript.Variable
  */
 class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   private implicit val out: PrintStream = rt.out
-
-  // create the ZooKeeper proxy
-  private val zk = rt.zkProxy
-
-  override def moduleName = "zookeeper"
-
-  override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
+  private val zk: ZKProxy = rt.zkProxy
 
   override def getCommands = Seq(
     Command(this, "zcat", zcat, (Seq("key", "type"), Seq.empty), "Retrieves the value of a key from ZooKeeper"),
@@ -39,6 +33,10 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     Command(this, "ztree", tree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
   override def getVariables: Seq[Variable] = Seq.empty
+
+  override def moduleName = "zookeeper"
+
+  override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
 
   override def shutdown() = ()
 
