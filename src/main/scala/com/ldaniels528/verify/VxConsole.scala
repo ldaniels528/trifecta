@@ -23,7 +23,7 @@ object VxConsole {
    * ANSI String Interpolation
    * @param sc the given string context
    */
-  implicit class AnsiInterpolation(sc: StringContext) {
+  implicit class AnsiInterpolation(val sc: StringContext) extends AnyVal {
 
     def a(args: Any*): Ansi = {
       // generate the ANSI string
