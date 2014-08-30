@@ -93,7 +93,7 @@ class VScriptCompilerTest() {
     logger.info("=" * 40)
   }
 
-  private def exec(script: => String, debug: Boolean = false) = {
+  private def exec(script: => String, debug: Boolean = false): Option[Any] = {
     import com.ldaniels528.verify.vscript.VScriptCompiler._
 
     // compile the code
@@ -105,6 +105,8 @@ class VScriptCompilerTest() {
     val result = code.eval(RootScope())
     if (debug) logger.info(s"result = $result")
     println()
+
+    result
   }
 
 }
