@@ -1,15 +1,13 @@
 package com.ldaniels528.verify.vscript
 
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
+import scala.collection.concurrent.TrieMap
 
 /**
  * Represents a cascading scope
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CascadingScope(val parent: Option[Scope]) extends Scope {
-
-  import scala.collection.concurrent.TrieMap
-
   private val classes = TrieMap[String, ClassDef]()
   private val functions = TrieMap[String, Function]()
   private val variables = TrieMap[String, Variable]()

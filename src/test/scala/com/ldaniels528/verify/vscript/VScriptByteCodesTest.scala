@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class VScriptByteCodesTest {
-  private val logger = LoggerFactory.getLogger(getClass())
+  private val logger = LoggerFactory.getLogger(getClass)
 
   //@Test
   def compileDecompile() {
