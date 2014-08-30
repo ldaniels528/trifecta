@@ -2,10 +2,8 @@ package com.ldaniels528.verify
 
 import java.io.PrintStream
 
-import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.VxConsole._
 import com.ldaniels528.verify.modules.Command
-import com.ldaniels528.verify.modules.avro.AvroTables
 import org.fusesource.jansi.Ansi.Color._
 
 import scala.concurrent.duration._
@@ -46,11 +44,21 @@ class VerifyShell(rt: VxRuntimeContext) {
   def shell() {
     import jline.console.ConsoleReader
     vxAnsi {
+      // display the welcome message
       out.println(a"${WHITE}Type '${CYAN}help$WHITE' (or '$CYAN?$WHITE') to see the list of available commands")
     }
 
     // display the state variables
-    rt.states()
+    for ((title, state) <- rt.getStateMappings) {
+      val (value, color) = state match {
+        case v: Boolean => if (v) ("On", GREEN) else ("Off", YELLOW)
+        case v: String => (v, CYAN)
+        case v => (v.toString, MAGENTA)
+      }
+      vxAnsi {
+        out.println(a"$WHITE[*] $title is $color$value")
+      }
+    }
 
     // define the console reader
     val consoleReader = new ConsoleReader()
@@ -88,16 +96,14 @@ class VerifyShell(rt: VxRuntimeContext) {
 object VerifyShell {
   val VERSION = "0.1.1"
 
-  // create the table generator
-  private val tabular = new Tabular() with AvroTables
-
   /**
    * Application entry point
    * @param args the given command line arguments
    */
   def main(args: Array[String]) {
+    import org.fusesource.jansi.Ansi.Color._
 
-    // install the ANSI console plugin and display the title line
+    // use the ANSI console plugin to display the title line
     vxAnsi {
       System.out.println(a"${RED}Ve${GREEN}ri${BLUE}fy ${WHITE}v$VERSION")
     }
