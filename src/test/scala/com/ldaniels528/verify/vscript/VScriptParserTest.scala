@@ -1,6 +1,7 @@
 package com.ldaniels528.verify.vscript
 
-import org.junit.Test
+import com.ldaniels528.verify.vscript.VScriptParser.TokenIterator
+import org.junit.{Assert, Test}
 import org.slf4j.LoggerFactory
 
 /**
@@ -12,7 +13,7 @@ class VScriptParserTest {
 
   @Test
   def lists(): Unit = {
-    VScriptParser.parse(
+    implicit val tok = VScriptParser.parse(
       """
       	val a0 = [2, 3, 4]
       	println a0
@@ -24,21 +25,40 @@ class VScriptParserTest {
       	println a2
       """,
       debug = true)
+
+    checkLine(Seq("val", "a0", "=", "[", "2", ",", "3", ",", "4", "]", "\n"), "1st")
+    checkLine(Seq("println", "a0", "\n"), "2nd")
+    checkLine(Seq("val", "a1", "=", "a0", ":+", "5", "\n"), "3rd")
+    checkLine(Seq("println", "a1", "\n"), "4th")
+    checkLine(Seq("val", "a2", "=", "a1", "+:", "1", "\n"), "5th")
+    checkLine(Seq("println", "a2", "\n"), "6th")
     ()
   }
 
   @Test
   def test1(): Unit = {
-    VScriptParser.parse(
-    """
+    implicit val tok = VScriptParser.parse(
+      """
       	def doAdd(a, b) { a + b }
 
       	val y = 3
         val x = 2 * y + 5
         println doAdd(x,y)
-    """,
-    debug = true)
+      """,
+      debug = true)
+
+    checkLine(Seq("def", "doAdd", "(", "a", ",", "b", ")", "{", "a", "+", "b", "}", "\n"), "1st")
+    checkLine(Seq("val", "y", "=", "3", "\n"), "2nd")
+    checkLine(Seq("val", "x", "=", "2", "*", "y", "+", "5", "\n"), "3rd")
+    checkLine(Seq("println", "doAdd", "(", "x", ",", "y", ")", "\n"), "4th")
     ()
   }
+
+  private def checkLine(items: Seq[String], nth: String)(implicit tok: TokenIterator) = {
+    logger.info(s"The $nth line should match expected results: ${items.map(mapper).mkString(", ")}")
+    items foreach (Assert.assertEquals(_, tok.next))
+  }
+
+  private def mapper(s:String): String = if(s == "\n") "<CR>" else s"'$s'"
 
 }
