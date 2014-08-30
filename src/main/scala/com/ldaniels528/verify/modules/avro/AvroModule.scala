@@ -26,6 +26,8 @@ class AvroModule(rt: VxRuntimeContext) extends Module with AvroReading {
     Command(this, "avload", loadSchema, (Seq("variable", "schemaPath"), Seq.empty), help = "Loads an Avro schema into memory")
   )
 
+  override def getVariables: Seq[Variable] = Seq.empty
+
   def cat(args: String*): String = {
     val name = args.head
 

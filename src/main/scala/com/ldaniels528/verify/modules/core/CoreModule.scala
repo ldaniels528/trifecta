@@ -5,6 +5,8 @@ import java.util.{Date, TimeZone}
 
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.VxUtils._
+import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
+import com.ldaniels528.verify.vscript.Variable
 import com.ldaniels528.verify.{SessionManagement, VerifyShell, VxRuntimeContext}
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
@@ -31,9 +33,9 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   // current working directory
   private var cwd: String = new File(".").getCanonicalPath
 
-  val moduleName = "core"
+  override def moduleName = "core"
 
-  val getCommands: Seq[Command] = Seq(
+  override def getCommands: Seq[Command] = Seq(
     Command(this, "!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
     Command(this, "?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, (Seq.empty, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
@@ -60,6 +62,12 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"),
     Command(this, "version", version, help = "Returns the Verify application version"),
     Command(this, "wget", httpGet, Seq("url") -> Seq.empty, help = "Retrieves remote content via HTTP"))
+
+  override def getVariables: Seq[Variable] = Seq(
+    Variable("autoSwitching", ConstantValue(Option(false))),
+    Variable("debugOn", ConstantValue(Option(false))),
+    Variable("encoding", ConstantValue(Option("UTF8")))
+  )
 
   override def prompt: String = cwd
 
@@ -283,7 +291,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    */
   def listModules(args: String*): Seq[ModuleItem] = {
     val activeModule = rt.moduleManager.activeModule
-    rt.moduleManager.modules.values.toSeq.map(m =>
+    rt.moduleManager.modules.map(m =>
       ModuleItem(m.moduleName, m.getClass.getName, loaded = true, activeModule.exists(_.moduleName == m.moduleName)))
   }
 
@@ -395,7 +403,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     val portmapF: Future[Map[String, String]] = Future {
       // get the lines of data from 'netstat'
       val netStat = Source.fromString((node match {
-        case "." if (Properties.isMac) => "netstat -gilns"
+        case "." if Properties.isMac => "netstat -gilns"
         case "." => "netstat -ptln"
         case host => s"ssh -i /home/ubuntu/dev.pem ubuntu@$host netstat -ptln"
       }).!!).getLines().toSeq.tail
@@ -451,7 +459,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   def useModule(args: String*) = {
     val moduleName = args.head
     rt.moduleManager.findModuleByName(moduleName) match {
-      case Some(module) => rt.moduleManager.activeModule = Some(module)
+      case Some(module) => rt.moduleManager.activeModule = module
       case None =>
         throw new IllegalArgumentException(s"Module '$moduleName' not found")
     }

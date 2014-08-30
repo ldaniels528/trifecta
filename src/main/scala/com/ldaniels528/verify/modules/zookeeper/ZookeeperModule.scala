@@ -7,6 +7,7 @@ import java.util.Date
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.verify.modules.{Command, Module}
+import com.ldaniels528.verify.vscript.Variable
 
 /**
  * Zookeeper Module
@@ -18,11 +19,11 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   // create the ZooKeeper proxy
   private val zk = rt.zkProxy
 
-  val moduleName = "zookeeper"
+  override def moduleName = "zookeeper"
 
   override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
 
-  val getCommands = Seq(
+  override def getCommands = Seq(
     Command(this, "zcat", zcat, (Seq("key", "type"), Seq.empty), "Retrieves the value of a key from ZooKeeper"),
     Command(this, "zcd", zcd, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
     Command(this, "zexists", zexists, (Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
@@ -36,6 +37,8 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     Command(this, "zsess", session, help = "Retrieves the Session ID from ZooKeeper"),
     Command(this, "zstat", stat, help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
     Command(this, "ztree", tree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
+
+  override def getVariables: Seq[Variable] = Seq.empty
 
   override def shutdown() = ()
 

@@ -13,6 +13,8 @@ import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, Cons
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
+import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
+import com.ldaniels528.verify.vscript.Variable
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
@@ -53,7 +55,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
 
   // the bound commands
-  val getCommands = Seq(
+  override def getCommands = Seq(
     Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", listConsumers, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
@@ -79,6 +81,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic (DESTRUCTIVE)"),
     Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
     Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
+
+  override def getVariables: Seq[Variable] = Seq(
+    Variable("defaultFetchSize", ConstantValue(Option(65536)))
+  )
 
   override def shutdown() = ()
 
