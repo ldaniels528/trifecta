@@ -53,27 +53,56 @@ class ModuleManager(scope: Scope) {
   def commandSet = commands
 
   /**
+   * Returns a collection of modules
+   * @return a collection of modules
+   */
+  def modules: Seq[Module] = moduleSet.toSeq
+
+  /**
+   * Returns a collection of module variables
+   * @return a collection of module variables
+   */
+  def variableSet = variables
+
+  /**
    * Retrieves a module by name
    * @param name the name of the desired module
    * @return an option of a module
    */
-  def findModuleByName(name: String): Option[Module] = {
-    modules.values.find(_.moduleName == name)
-  }
+  def findModuleByName(name: String): Option[Module] = moduleSet.find(_.moduleName == name)
 
   /**
    * Sets the active module
    * @param module the given module
    */
-  def setActiveModule(module: Module): Unit = {
-    activeModule = Some(module)
-  }
+  def setActiveModule(module: Module): Unit = currentModule = Option(module)
 
   /**
    * Shuts down all modules
    */
-  def shutdown() {
-    modules.values.foreach(_.shutdown())
+  def shutdown(): Unit = moduleSet.foreach(_.shutdown())
+
+  private def updateCollections(): Unit = {
+    // update the command collection
+    commands = Map(moduleSet.toSeq flatMap (_.getCommands map (c => (c.name, c))): _*)
+
+    // update the variable collection
+    variables = moduleSet.toSeq flatMap { m =>
+      m.getVariables map (v => ModuleVariable(m.moduleName, v))
+    }
+
+    // put the variables in the scope
+    variables foreach (scope += _.variable)
   }
+
+}
+
+/**
+ * Module Manager
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+object ModuleManager {
+
+  case class ModuleVariable(moduleName: String, variable: Variable)
 
 }
