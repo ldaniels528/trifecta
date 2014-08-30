@@ -232,16 +232,16 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
    */
   def tree(args: String*): Seq[String] = {
 
-    def recurse(path: String): List[String] = {
+    def unwind(path: String): List[String] = {
       val children = Option(zk.getChildren(path, watch = false)) getOrElse Seq.empty
-      path :: (children flatMap (child => recurse(zkKeyToPath(path, child)))).toList
+      path :: (children flatMap (child => unwind(zkKeyToPath(path, child)))).toList
     }
 
     // get the optional path argument
     val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkCwd
 
     // perform the action
-    recurse(path)
+    unwind(path)
   }
 
   private def fromBytes(bytes: Array[Byte], typeName: String): String = {
