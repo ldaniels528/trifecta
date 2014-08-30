@@ -17,7 +17,7 @@ class VxConsoleTest {
   @Test
   def testAnsiStringInterpolation(): Unit = {
     val string = a"${RED}Ve${GREEN}ri${BLUE}fy ${WHITE}v$VERSION"
-    logger.info(s"string should an instance of ${classOf[Ansi].getName} (It is ${string.getClass.getName})")
+    logger.info(s"string should an instance of ${classOf[Ansi].getName} (It's a ${string.getClass.getName})")
     Assert.assertTrue(string.isInstanceOf[Ansi])
   }
 
