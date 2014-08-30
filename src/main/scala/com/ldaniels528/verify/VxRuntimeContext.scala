@@ -37,11 +37,9 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   // define the tabular instance
   val tabular = new Tabular() with AvroTables
 
-  // the Zookeeper remote host
-  val remoteHost = s"$zkHost:$zkPort"
-
   // get the ZooKeeper end-point
   val zkEndPoint = EndPoint(zkHost, zkPort)
+  val remoteHost = zkEndPoint.toString
 
   // the default state of the application is "alive"
   var alive = true
