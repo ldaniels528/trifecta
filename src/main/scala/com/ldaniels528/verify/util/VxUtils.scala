@@ -91,9 +91,7 @@ import scala.collection.JavaConversions.mapAsJavaMap
    */
   implicit class OptionalMagic[T](opA: Option[T]) {
 
-    def ??(opB: Option[T]) = if (opA.isDefined) opA else opB
-
-    def ??(opB: T) = if (opA.isDefined) opA else Option(opB)
+    def ??(opB: => Option[T]) = if (opA.isDefined) opA else opB
 
   }
 
