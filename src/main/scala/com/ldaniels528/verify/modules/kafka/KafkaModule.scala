@@ -112,10 +112,12 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     import _root_.kafka.admin.AdminUtils
     import org.I0Itec.zkclient.ZkClient
 
-    val Seq(topic, partitions, replicas, _*) = args
+    val Seq(topic, partitionString, replicaString, _*) = args
     val topicConfig = new java.util.Properties()
 
-    new ZkClient(rt.remoteHost) use (AdminUtils.createTopic(_, topic, parseInt("partitions", partitions), parseInt("replicas", replicas), topicConfig))
+    val partitions = parseInt("partitions", partitions)
+    val replicas = parseInt("replicas", replicas)
+    new ZkClient(rt.remoteHost) use (AdminUtils.createTopic(_, topic, partitions, replicas, topicConfig))
   }
 
   /**
