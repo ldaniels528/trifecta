@@ -53,6 +53,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "pwd", printWorkingDirectory, (Seq.empty, Seq.empty), help = "Display current working directory"),
     Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
     Command(this, "runjava", executeJavaApp, (Seq("jarFile", "className"), (1 to 10).map(n => s"arg$n")), help = "Executes a Java class' main method"),
+    Command(this, "scope", listScope, help = "Returns the contents of the current scope"),
     Command(this, "systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
     Command(this, "time", time, help = "Returns the system time"),
     Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"),
@@ -303,6 +304,22 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     rt.moduleManager.modules.map(m =>
       ModuleItem(m.moduleName, m.getClass.getName, loaded = true, activeModule.exists(_.moduleName == m.moduleName)))
   }
+
+  def listScope(args: String*): Seq[ScopeItem] = {
+    // get the variables (filter out duplicates)
+    val varsA: Seq[ModuleVariable] = rt.moduleManager.variableSet
+    val varsB: Seq[Variable] = {
+      val names: Set[String] = varsA.map(_.variable.name).toSet
+      scope.getVariables filterNot (v => names.contains(v.name))
+    }
+
+    // build the list of functions, variables, etc.
+    (varsA map (v => ScopeItem(v.variable.name, v.moduleName, "variable", v.variable.eval))) ++
+      (varsB map (v => ScopeItem(v.name, "", "variable", v.eval))) ++
+      (scope.getFunctions map (f => ScopeItem(f.name, "", "function"))) sortBy (_.name)
+  }
+
+  case class ScopeItem(name: String, module: String, `type`: String, value: Option[_] = None)
 
   /**
    * "ps" command - Display a list of "configured" running processes
