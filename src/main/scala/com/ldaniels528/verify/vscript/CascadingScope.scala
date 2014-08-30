@@ -81,11 +81,11 @@ class CascadingScope(val parent: Option[Scope]) extends Scope {
   }
 
   override def setValue(name: String, value: OpCode) {
-    getVariable(name) map (_.value = value)
+    getVariable(name) foreach (_.value = value)
   }
 
   override def setValue[T](name: String, value: Option[T]) {
-    getVariable(name) map (_.value = ConstantValue(value))
+    getVariable(name) foreach (_.value = ConstantValue(value))
   }
 
   override def getVariable(name: String): Option[Variable] = {
