@@ -42,23 +42,21 @@ class VerifyShell(rt: VxRuntimeContext) {
    * Interactive shell
    */
   def shell() {
+    import com.ldaniels528.verify.VxRuntimeContext.StateMapping
     import jline.console.ConsoleReader
-    import VxRuntimeContext.StateMapping
 
     // use the ANSI console plugin to display the title line
     vxAnsi {
       // display the welcome message
       out.println(a"${WHITE}Type '${CYAN}help$WHITE' (or '$CYAN?$WHITE') to see the list of available commands")
-    }
 
-    // display the state variables
-    for (StateMapping(module, name, state) <- rt.getStateMappings) {
-      val (value, color) = state match {
-        case v: Boolean => if (v) ("On", GREEN) else ("Off", YELLOW)
-        case v: String => (v, CYAN)
-        case v => (v.toString, MAGENTA)
-      }
-      vxAnsi {
+      // display the state variables
+      for (StateMapping(module, name, state) <- rt.getStateMappings) {
+        val (value, color) = state match {
+          case v: Boolean => if (v) ("On", GREEN) else ("Off", YELLOW)
+          case v: String => (v, CYAN)
+          case v => (v.toString, MAGENTA)
+        }
         out.println(a"$WHITE[*] $CYAN$module: $WHITE$name is $color$value")
       }
     }
@@ -108,7 +106,7 @@ object VerifyShell {
 
     // use the ANSI console plugin to display the title line
     vxAnsi {
-      System.out.println(a"${RED}Ve${GREEN}ri${BLUE}fy ${WHITE}v$VERSION")
+      System.out.println(a"${RED}Ve${GREEN}ri${CYAN}fy ${YELLOW}v$VERSION")
     }
 
     // if arguments were not passed, stop.
