@@ -43,6 +43,7 @@ class VerifyShell(rt: VxRuntimeContext) {
    */
   def shell() {
     import jline.console.ConsoleReader
+    import VxRuntimeContext.StateMapping
 
     // use the ANSI console plugin to display the title line
     vxAnsi {
@@ -51,14 +52,14 @@ class VerifyShell(rt: VxRuntimeContext) {
     }
 
     // display the state variables
-    for ((title, state) <- rt.getStateMappings) {
+    for (StateMapping(module, name, state) <- rt.getStateMappings) {
       val (value, color) = state match {
         case v: Boolean => if (v) ("On", GREEN) else ("Off", YELLOW)
         case v: String => (v, CYAN)
         case v => (v.toString, MAGENTA)
       }
       vxAnsi {
-        out.println(a"$WHITE[*] $title is $color$value")
+        out.println(a"$WHITE[*] $CYAN$module: $WHITE$name is $color$value")
       }
     }
 

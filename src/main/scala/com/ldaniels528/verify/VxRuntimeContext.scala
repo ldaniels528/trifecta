@@ -1,5 +1,6 @@
 package com.ldaniels528.verify
 
+import VxRuntimeContext._
 import java.io.File.separator
 import java.io.{File, FileInputStream}
 import java.util.Properties
@@ -87,13 +88,12 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   /**
    * Displays the loaded configuration properties
    */
-  def getStateMappings: Seq[(String, Any)] = {
-    Seq[(String, Any)](
-      "core:  encoding" -> encoding,
-      "core:  module auto-switching" -> autoSwitching,
-      "core:  debugging" -> debugOn,
-      "kafka: fetch size" -> defaultFetchSize)
-  }
+  def getStateMappings: Seq[StateMapping] = Seq(
+    StateMapping("core", "encoding", encoding),
+    StateMapping("core", "module auto-switching", autoSwitching),
+    StateMapping("core", "debugging", debugOn),
+    StateMapping("kafka", "fetch size", defaultFetchSize)
+  )
 
   /**
    * Loads the configuration file
@@ -198,5 +198,16 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
       args = pcs.tail
     } yield (cmd, args)
   }
+
+}
+
+/**
+ * Verify Runtime Context Singleton Object
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+case
+object VxRuntimeContext {
+
+  case class StateMapping(module: String, name: String, value: Any)
 
 }
