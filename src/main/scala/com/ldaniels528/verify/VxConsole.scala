@@ -9,18 +9,21 @@ import org.fusesource.jansi.{Ansi, AnsiConsole}
  */
 object VxConsole {
 
-  def vxAnsi[T](block: => T): T = {
-    AnsiConsole.systemInstall()
-    val result = block
-    AnsiConsole.systemUninstall()
-    result
+  def vxAnsi(block: => Unit): Unit = {
+    try {
+      AnsiConsole.systemInstall()
+      block
+    }
+    finally {
+      AnsiConsole.systemUninstall()
+    }
   }
 
   /**
    * ANSI String Interpolation
    * @param sc the given string context
    */
-  implicit class AnsiInterpolation(val sc: StringContext) extends AnyVal {
+  implicit class AnsiInterpolation(sc: StringContext) {
 
     def a(args: Any*): Ansi = {
       // generate the ANSI string
@@ -32,7 +35,7 @@ object VxConsole {
       }.reset()
     }
 
-    private def getParameterList(args: Any*): List[Any] = {
+    private def getParameterList(args: Seq[Any]): List[Any] = {
       val (textIt, exprIt) = (sc.parts.iterator, args.toIterator)
       var params: List[Any] = Nil
       while (textIt.hasNext || exprIt.hasNext) {
