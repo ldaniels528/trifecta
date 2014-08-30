@@ -42,6 +42,28 @@ trait Scope {
   def +=(v: Variable): Scope
 
   /**
+   * Returns the value of a variable by name
+   * @param name the name of the desired variable
+   * @tparam T the return type
+   * @return the typed value
+   */
+  def getValue[T](name: String)(implicit scope: Scope): Option[T]
+
+  /**
+   * Convenience method to set the value of a variable by name
+   * @param name the name of the desired variable
+   * @param value the opCode representing the value
+   */
+  def setValue(name: String, value: OpCode): Unit
+
+  /**
+   * Convenience method to set the value of a variable by name
+   * @param name the name of the desired variable
+   * @param value the option of a the value
+   */
+  def setValue[T](name: String, value: Option[T])
+
+  /**
    * Attempts to retrieve a variable from the scope
    */
   def getVariable(name: String): Option[Variable]
@@ -98,6 +120,8 @@ case class Function(name: String, params: Seq[String], code: OpCode) extends Nam
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class Variable(name: String, var value: OpCode) extends NamedEntity {
+  def eval(implicit scope: Scope) = value.eval(scope)
+
   override def toString = s"$name = $value"
 }
 

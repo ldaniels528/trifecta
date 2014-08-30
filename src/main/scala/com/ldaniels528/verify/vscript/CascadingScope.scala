@@ -1,11 +1,15 @@
 package com.ldaniels528.verify.vscript
 
+import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
+
 /**
  * Represents a cascading scope
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CascadingScope(val parent: Option[Scope]) extends Scope {
+
   import scala.collection.concurrent.TrieMap
+
   private val classes = TrieMap[String, ClassDef]()
   private val functions = TrieMap[String, Function]()
   private val variables = TrieMap[String, Variable]()
@@ -70,6 +74,18 @@ class CascadingScope(val parent: Option[Scope]) extends Scope {
   override def +=(v: Variable) = {
     variables += (v.name -> v)
     this
+  }
+
+  override def getValue[T](name: String)(implicit scope: Scope): Option[T] = {
+    getVariable(name) flatMap (_.eval) map (_.asInstanceOf[T])
+  }
+
+  override def setValue(name: String, value: OpCode) {
+    getVariable(name) map (_.value = value)
+  }
+
+  override def setValue[T](name: String, value: Option[T]) {
+    getVariable(name) map (_.value = ConstantValue(value))
   }
 
   override def getVariable(name: String): Option[Variable] = {
