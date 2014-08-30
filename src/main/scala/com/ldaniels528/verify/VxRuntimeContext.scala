@@ -15,8 +15,6 @@ import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
 import com.ldaniels528.verify.modules.{Command, ModuleManager}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.vscript.RootScope
-import org.fusesource.jansi.Ansi.Color._
-import org.fusesource.jansi.Ansi._
 
 import scala.collection.GenTraversableOnce
 import scala.concurrent.duration._
@@ -89,24 +87,12 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   /**
    * Displays the loaded configuration properties
    */
-  def states(): Unit = {
-    val myStates = Seq[(String, Any)](
+  def getStateMappings: Seq[(String, Any)] = {
+    Seq[(String, Any)](
       "core:  encoding" -> encoding,
       "core:  module auto-switching" -> autoSwitching,
       "core:  debugging" -> debugOn,
-      "kafka: fetch size" -> defaultFetchSize
-    )
-
-    VxConsole.vxAnsi {
-      for ((title, state) <- myStates) {
-        val (value, color) = state match {
-          case v: Boolean => if (v) ("On", GREEN) else ("Off", YELLOW)
-          case v: String => (v, CYAN)
-          case v => (v.toString, MAGENTA)
-        }
-        out.println(ansi().fg(WHITE).a(s"[*] $title is ").fg(color).a(value).reset())
-      }
-    }
+      "kafka: fetch size" -> defaultFetchSize)
   }
 
   /**
