@@ -3,10 +3,10 @@ package com.ldaniels528.verify
 import java.io.PrintStream
 
 import com.ldaniels528.tabular.Tabular
+import com.ldaniels528.verify.VxConsole._
 import com.ldaniels528.verify.modules.Command
 import com.ldaniels528.verify.modules.avro.AvroTables
 import org.fusesource.jansi.Ansi.Color._
-import org.fusesource.jansi.Ansi._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -45,8 +45,8 @@ class VerifyShell(rt: VxRuntimeContext) {
    */
   def shell() {
     import jline.console.ConsoleReader
-    VxConsole.wrap {
-      out.println(ansi().fg(WHITE).a("Type '").fg(CYAN).a("help").fg(WHITE).a("' (or '").fg(CYAN).a("?").fg(WHITE).a("') to see the list of available commands").reset())
+    vxAnsi {
+      out.println(a"${WHITE}Type '${CYAN}help$WHITE' (or '$CYAN?$WHITE') to see the list of available commands")
     }
 
     // display the state variables
@@ -96,9 +96,10 @@ object VerifyShell {
    * @param args the given command line arguments
    */
   def main(args: Array[String]) {
+
     // install the ANSI console plugin and display the title line
-    VxConsole.wrap {
-      System.out.println(ansi().fg(RED).a("Ve").fg(GREEN).a("ri").fg(BLUE).a("fy").fg(WHITE).a(s" v$VERSION").reset())
+    vxAnsi {
+      System.out.println(a"${RED}Ve${GREEN}ri${BLUE}fy ${WHITE}v$VERSION")
     }
 
     // if arguments were not passed, stop.

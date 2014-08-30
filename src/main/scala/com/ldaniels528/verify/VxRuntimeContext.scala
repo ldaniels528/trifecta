@@ -97,7 +97,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
       "kafka: fetch size" -> defaultFetchSize
     )
 
-    VxConsole.wrap {
+    VxConsole.vxAnsi {
       for ((title, state) <- myStates) {
         val (value, color) = state match {
           case v: Boolean => if (v) ("On", GREEN) else ("Off", YELLOW)
