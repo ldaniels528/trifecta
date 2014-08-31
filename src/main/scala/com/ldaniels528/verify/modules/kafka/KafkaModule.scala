@@ -688,6 +688,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       new MessageConsumer {
         override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
           dumpMessage(offset, message)(rt, out)
+          count += 1
         }
       })
     count
@@ -707,6 +708,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       new MessageConsumer {
         override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
           dumpMessage(offset, message)(rt, out)
+          count += 1
         }
       })
     count
