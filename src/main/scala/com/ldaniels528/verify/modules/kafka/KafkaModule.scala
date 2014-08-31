@@ -69,7 +69,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kgetminmax", getMessageMinMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
     Command(this, "kinbound", inboundMessages, (Seq.empty, Seq("topicPrefix")), "Retrieves a list of topics with new messages (since last query)"),
-    Command(this, "kisr", listInSyncReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of in-sync replicas for specified topics"),
     Command(this, "klast", getLastMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the last message for a given topic"),
     Command(this, "kls", listTopics, (Seq.empty, Seq("topicPrefix")), help = "Lists all existing topics"),
     Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
@@ -621,27 +620,21 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
   }
 
-  def listInSyncReplicas(args: String*): Seq[TopicReplicas] = {
-    val prefix = args.headOption
-
-    KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
-      t.isr map { replica =>
-        TopicReplicas(t.topic, t.partitionId, replica.toString)
-      } filter (t => prefix.isEmpty || prefix.exists(t.topic.startsWith))
-    }
-  }
-
+  /**
+   * "kreplicas" - Lists all replicas for all or a subset of topics
+   * @example {{{ kreplicas com.shocktrade.quotes.realtime  }}}
+   */
   def listReplicas(args: String*): Seq[TopicReplicas] = {
     val prefix = args.headOption
 
     KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
       t.replicas map { replica =>
-        TopicReplicas(t.topic, t.partitionId, replica.toString)
+        TopicReplicas(t.topic, t.partitionId, replica.toString, t.isr.contains(replica))
       } filter (t => prefix.isEmpty || prefix.exists(t.topic.startsWith))
     }
   }
 
-  case class TopicReplicas(topic: String, partition: Int, replicaBroker: String)
+  case class TopicReplicas(topic: String, partition: Int, replicaBroker: String, inSync:Boolean)
 
   /**
    * "kpush" - Returns the EOF offset for a given topic
