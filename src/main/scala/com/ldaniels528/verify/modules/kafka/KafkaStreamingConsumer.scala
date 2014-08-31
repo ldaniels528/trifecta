@@ -1,7 +1,7 @@
 package com.ldaniels528.verify.modules.kafka
 
 import akka.actor.ActorRef
-import com.ldaniels528.verify.io.{Compression, EndPoint}
+import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.{StreamedMessage, StreamingMessageConsumer}
 import com.ldaniels528.verify.util.VxUtils._
 import kafka.consumer.{Consumer, ConsumerConfig}
@@ -12,14 +12,14 @@ import scala.concurrent.{ExecutionContext, Future}
  * Kafka Streaming Consumer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) extends Compression {
+class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
   private val consumer = Consumer.create(consumerConfig)
 
   /**
-   * Streams data from a Kafka source
+   * Streams data from a Kafka topic to an observer
    * @param topic the given topic name
    * @param parallelism the given number of processing threads
-   * @param listener the observer to call back upon receipt of a new message
+   * @param listener the observer to callback upon receipt of a new message
    */
   def observe(topic: String, parallelism: Int, listener: StreamingMessageConsumer)(implicit ec: ExecutionContext) {
     val streamMap = consumer.createMessageStreams(Map(topic -> parallelism))
