@@ -4,6 +4,7 @@ import java.io.PrintStream
 
 import com.ldaniels528.verify.VxConsole._
 import com.ldaniels528.verify.modules.Command
+import com.ldaniels528.verify.vscript.Scope
 import org.fusesource.jansi.Ansi.Color._
 
 import scala.concurrent.duration._
@@ -15,7 +16,7 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class VerifyShell(rt: VxRuntimeContext) {
-  implicit val scope = rt.scope
+  implicit val scope: Scope = rt.scope
 
   // redirect standard output
   val out: PrintStream = rt.out
