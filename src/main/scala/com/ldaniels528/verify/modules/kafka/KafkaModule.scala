@@ -87,7 +87,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   override def moduleName = "kafka"
 
-  override def prompt: String = cursor map(c => s"${c.topic}/${c.partition}:${c.offset}") getOrElse super.prompt
+  override def prompt: String = cursor map(c => s"${c.topic}/${c.partition}:${c.offset}") getOrElse "/"
 
   override def shutdown() = ()
 

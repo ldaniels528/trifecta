@@ -47,9 +47,11 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   override def moduleName = "storm"
 
-  override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
+  override def prompt: String = nimbusHost getOrElse super.prompt
 
   override def shutdown(): Unit = ()
+
+  def nimbusHost: Option[String] = Option(stormConf.get("nimbus.host"))  map(_.asInstanceOf[String])
 
   /**
    * Retrieves the information for a topology
