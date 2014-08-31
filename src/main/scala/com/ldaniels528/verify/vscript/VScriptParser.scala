@@ -1,11 +1,13 @@
 package com.ldaniels528.verify.vscript
 
+import org.slf4j.LoggerFactory
+
 /**
  * VScript Parser
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VScriptParser {
-  private[this] val logger = org.apache.log4j.Logger.getLogger(getClass)
+  private[this] val logger = LoggerFactory.getLogger(getClass)
   private[this] val compoundSymbols = Seq("===", "==", "::", ":+", "+:", "++", "--", "+=", "-=", "*=", "/=")
   private[this] val parsers = Seq[(Array[Char], Int) => (Option[String], Int)](
     skipWhiteSpace, parseEOL, parseDQuotes, parseSQuotes, parseComments,
