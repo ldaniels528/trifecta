@@ -69,6 +69,12 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) extends Compression
  */
 object KafkaStreamingConsumer {
 
+  /**
+   * Convenience method for creating Streaming Consumer instances
+   * @param zkEndPoint the given Zookeeper endpoint
+   * @param groupId the given consumer group ID
+   * @return a new Streaming Consumer instance
+   */
   def apply(zkEndPoint: EndPoint, groupId: String): KafkaStreamingConsumer = {
     val consumerConfig = new ConsumerConfig(
       Map("zookeeper.connect" -> zkEndPoint.host,
@@ -79,12 +85,14 @@ object KafkaStreamingConsumer {
     new KafkaStreamingConsumer(consumerConfig)
   }
 
+  /**
+   * Represents a stream message
+   */
   case class StreamedMessage(topic: String, partition: Int, offset: Long, key: Array[Byte], message: Array[Byte])
 
   /**
    * This trait is implemented by classes that are interested in
    * consuming Kafka messages.
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   trait StreamingMessageConsumer {
 
