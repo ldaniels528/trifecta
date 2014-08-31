@@ -36,8 +36,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
     Command(this, "?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, (Seq.empty, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
-    Command(this, "cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file"),
-    Command(this, "cd", changeDir, (Seq("path"), Seq.empty), help = "Changes the local file system path/directory"),
+    Command(this, "cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file", promptAware = true),
+    Command(this, "cd", changeDir, (Seq("path"), Seq.empty), help = "Changes the local file system path/directory", promptAware = true),
     Command(this, "charset", charSet, (Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
     Command(this, "class", inspectClass, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
     Command(this, "columns", columnWidthGetOrSet, (Seq.empty, Seq("columnWidth")), help = "Retrieves or sets the column width for message output"),
@@ -46,7 +46,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "help", help, help = "Provides the list of available commands"),
     Command(this, "history", listHistory, help = "Returns a list of previously issued commands"),
     Command(this, "hostname", hostname, help = "Returns the name of the host system"),
-    Command(this, "ls", listFiles, (Seq.empty, Seq("path")), help = "Retrieves the files from the current directory"),
+    Command(this, "ls", listFiles, (Seq.empty, Seq("path")), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "modules", listModules, help = "Returns a list of configured modules"),
     Command(this, "pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
     Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes (EXPERIMENTAL)"),
@@ -62,7 +62,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "wget", httpGet, Seq("url") -> Seq.empty, help = "Retrieves remote content via HTTP"))
 
   override def getVariables: Seq[Variable] = Seq(
-    Variable("autoSwitching", ConstantValue(Option(false))),
+    Variable("autoSwitching", ConstantValue(Option(true))),
     Variable("columns", ConstantValue(Option(25))),
     Variable("cwd", ConstantValue(Option(new File(".").getCanonicalPath))),
     Variable("debugOn", ConstantValue(Option(false))),
