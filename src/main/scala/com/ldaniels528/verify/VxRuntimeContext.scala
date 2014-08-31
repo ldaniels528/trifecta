@@ -11,7 +11,7 @@ import com.ldaniels528.verify.modules.core.CoreModule
 import com.ldaniels528.verify.modules.kafka.KafkaModule
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
 import com.ldaniels528.verify.modules.storm.StormModule
-import com.ldaniels528.verify.modules.zookeeper.{ZookeeperModule, ZKProxy}
+import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
 import com.ldaniels528.verify.modules.{Command, ModuleManager}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.vscript.RootScope
@@ -117,7 +117,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
             val result = command.fx(args)
 
             // auto-switch modules?
-            if (autoSwitching) {
+            if (autoSwitching && (command.promptAware || command.module.moduleName != "core")) {
               moduleManager.setActiveModule(command.module)
             }
             result
