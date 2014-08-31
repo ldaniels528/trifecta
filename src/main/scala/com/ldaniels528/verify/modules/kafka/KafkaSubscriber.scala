@@ -288,6 +288,7 @@ object KafkaSubscriber {
           pmd.partitionId,
           pmd.leader map (b => Broker(b.host, b.port)),
           pmd.replicas map (b => Broker(b.host, b.port)),
+          pmd.isr map (b => Broker(b.host, b.port)),
           tmd.sizeInBytes)
       }
     }
@@ -433,7 +434,7 @@ object KafkaSubscriber {
   /**
    * Represents the details for a Kafka topic
    */
-  case class TopicDetails(topic: String, partitionId: Int, leader: Option[Broker], replicas: Seq[Broker], sizeInBytes: Int)
+  case class TopicDetails(topic: String, partitionId: Int, leader: Option[Broker], replicas: Seq[Broker], isr: Seq[Broker], sizeInBytes: Int)
 
   /**
    * Object representation of the broker information JSON
