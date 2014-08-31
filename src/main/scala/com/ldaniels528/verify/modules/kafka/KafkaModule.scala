@@ -69,6 +69,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kgetminmax", getMessageMinMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
     Command(this, "kinbound", inboundMessages, (Seq.empty, Seq("topicPrefix")), "Retrieves a list of topics with new messages (since last query)"),
+    Command(this, "kisr", listInSyncReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of in-sync replicas for specified topics"),
     Command(this, "klast", getLastMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the last message for a given topic"),
     Command(this, "kls", listTopics, (Seq.empty, Seq("topicPrefix")), help = "Lists all existing topics"),
     Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
@@ -77,6 +78,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
     Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic (DESTRUCTIVE)"),
+    Command(this, "kreplicas", listReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
     Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
 
@@ -619,6 +621,28 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
   }
 
+  def listInSyncReplicas(args: String*): Seq[TopicReplicas] = {
+    val prefix = args.headOption
+
+    KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
+      t.isr map { replica =>
+        TopicReplicas(t.topic, t.partitionId, replica.toString)
+      } filter (t => prefix.isEmpty || prefix.exists(t.topic.startsWith))
+    }
+  }
+
+  def listReplicas(args: String*): Seq[TopicReplicas] = {
+    val prefix = args.headOption
+
+    KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
+      t.replicas map { replica =>
+        TopicReplicas(t.topic, t.partitionId, replica.toString)
+      } filter (t => prefix.isEmpty || prefix.exists(t.topic.startsWith))
+    }
+  }
+
+  case class TopicReplicas(topic: String, partition: Int, replicaBroker: String)
+
   /**
    * "kpush" - Returns the EOF offset for a given topic
    */
@@ -741,7 +765,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   case class AvroVerification(verified: Int, failed: Int)
 
-  case class TopicDetail(topic: String, partition: Int, leader: String, version: Int)
+  case class TopicDetail(topic: String, partition: Int, leader: String, replicas: Int)
 
   case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
 
