@@ -123,6 +123,14 @@ import scala.collection.JavaConversions.mapAsJavaMap
 
     def use[S](block: T => S): S = try block(resource) finally resource.shutdown()
 
+  /**
+   * Syntactic Sugar for Properties object
+   */
+  implicit class PropertiesMagic(props: Properties) {
+
+    def asOpt[T](key: String): Option[T] = {
+      Option(props.get(key)) map (_.asInstanceOf[T])
+    }
   }
 
 }
