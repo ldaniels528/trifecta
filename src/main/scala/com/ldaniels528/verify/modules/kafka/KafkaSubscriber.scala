@@ -221,7 +221,7 @@ object KafkaSubscriber {
   private val logger = org.slf4j.LoggerFactory.getLogger(getClass)
 
   // setup defaults
-  private val DEFAULT_FETCH_SIZE = 1024
+  private val DEFAULT_FETCH_SIZE: Int = 65536
 
   // define a date parser
   private val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
