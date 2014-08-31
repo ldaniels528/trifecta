@@ -54,6 +54,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
     Command(this, "runjava", executeJavaApp, (Seq("jarFile", "className"), (1 to 10).map(n => s"arg$n")), help = "Executes a Java class' main method"),
     Command(this, "scope", listScope, help = "Returns the contents of the current scope"),
+    Command(this, "syntax", syntax, (Seq("command"), Seq.empty), help = "Returns the syntax/usage for a given command"),
     Command(this, "systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
     Command(this, "time", time, help = "Returns the system time"),
     Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"),
@@ -456,6 +457,16 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
       pasdata <- psdataF
       portmap <- portmapF
     } yield (pasdata, portmap)
+  }
+
+  def syntax(args: String*): Seq[String] = {
+    val commandName = args.head
+
+    rt.moduleManager.findCommandByName(commandName) match {
+      case Some(command) => Seq(s"Description: ${command.help}", s"Usage: ${command.prototype}")
+      case None =>
+        throw new IllegalStateException( s"Command '$commandName' not found")
+    }
   }
 
   /**

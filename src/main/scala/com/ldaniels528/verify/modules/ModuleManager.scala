@@ -65,6 +65,13 @@ class ModuleManager(scope: Scope) {
   def variableSet = variables
 
   /**
+   * Retrieves a command by name
+   * @param name the name of the desired module
+   * @return an option of a command
+   */
+  def findCommandByName(name: String): Option[Command] = commandSet.get(name.toLowerCase)
+
+  /**
    * Retrieves a module by name
    * @param name the name of the desired module
    * @return an option of a module
