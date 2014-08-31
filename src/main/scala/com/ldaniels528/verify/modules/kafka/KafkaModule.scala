@@ -71,12 +71,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kinbound", inboundMessages, (Seq.empty, Seq("topicPrefix")), "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the last message for a given topic"),
     Command(this, "kls", listTopics, (Seq.empty, Seq("topicPrefix")), help = "Lists all existing topics"),
-    Command(this, "kmk", createTopic, (Seq("topic", "partitions", "replicas"), Seq.empty), "Creates a new topic"),
     Command(this, "knext", getNextMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the next message"),
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
-    Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic (DESTRUCTIVE)"),
     Command(this, "kreplicas", listReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
     Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
@@ -103,35 +101,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // perform the action
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.commitOffsets(groupId, offset.toLong, metadata))
-  }
-
-  /**
-   * "kmk" - Creates a new topic
-   * @example {{{ kmk com.shocktrade.alerts }}}
-   */
-  def createTopic(args: String*) {
-    import _root_.kafka.admin.AdminUtils
-    import org.I0Itec.zkclient.ZkClient
-
-    val Seq(topic, partitionString, replicaString, _*) = args
-    val topicConfig = new java.util.Properties()
-
-    val partitions = parseInt("partitions", partitionString)
-    val replicas = parseInt("replicas", replicaString)
-    new ZkClient(rt.remoteHost) use (AdminUtils.createTopic(_, topic, partitions, replicas, topicConfig))
-  }
-
-  /**
-   * "krm" - Deletes a new topic
-   * @example {{{ krm com.shocktrade.alerts }}}
-   */
-  def deleteTopic(args: String*) {
-    import _root_.kafka.admin.AdminUtils
-    import org.I0Itec.zkclient.ZkClient
-
-    val Seq(topic, _*) = args
-
-    new ZkClient(rt.remoteHost) use (AdminUtils.deleteTopic(_, topic))
   }
 
   /**
