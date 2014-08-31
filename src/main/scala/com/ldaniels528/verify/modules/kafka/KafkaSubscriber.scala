@@ -25,10 +25,10 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
     .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for $topic"))
 
   // get the initial broker (topic leader)
-  private var broker = leader
+  private var broker: Broker = leader
 
   // get the connection (topic consumer)
-  private val consumer = connect(broker, clientID)
+  private val consumer: SimpleConsumer = connect(broker, clientID)
 
   /**
    * Closes the underlying consumer instance
@@ -96,9 +96,9 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
    * @param timeInMillis the given time in milliseconds
    * @return the earliest or latest offset
    */
-  def earliestOrLatestOffset(consumerId: Int, timeInMillis: Long): Long = {
+  def earliestOrLatestOffset(consumerId: Int, timeInMillis: Long): Option[Long] = {
     val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
-    consumer.earliestOrLatestOffset(topicAndPartition, timeInMillis, consumerId)
+    Option(consumer.earliestOrLatestOffset(topicAndPartition, timeInMillis, consumerId))
   }
 
   /**
@@ -150,9 +150,9 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
     } yield ome.offset
   }
 
-  def getFirstOffset = getOffsetsBefore(OffsetRequest.EarliestTime)
+  def getFirstOffset: Option[Long] = getOffsetsBefore(OffsetRequest.EarliestTime)
 
-  def getLastOffset = getOffsetsBefore(OffsetRequest.LatestTime) map (_ - 1)
+  def getLastOffset: Option[Long] = getOffsetsBefore(OffsetRequest.LatestTime) map (_ - 1)
 
   def getOffsetsBefore(time: Long): Option[Long] = {
     // create the topic/partition and request information
