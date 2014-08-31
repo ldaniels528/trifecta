@@ -7,6 +7,7 @@ import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.{StreamedMess
 import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumerTest._
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.VxUtils._
+import org.junit.{After, Before, Test}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -17,36 +18,26 @@ import scala.concurrent.duration._
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaStreamingConsumerTest {
+  // setup our Zookeeper connection
+  private val zkEndPoint = EndPoint("dev501", 2181)
+  private implicit val zk = ZKProxy(zkEndPoint)
 
-  //@Test
+  @Before
+  def setup(): Unit = resetOffsets("com.shocktrade.quotes.csv", 4, "dev")
+
+  @Test
   def actorPatternTest(): Unit = {
     // setup the actor
     val system = ActorSystem("StreamingMessageSystem")
     val streamingActor = system.actorOf(Props[StreamingMessageActor], name = "streamingActor")
 
-    // setup our Zookeeper connection
-    val zkEndPoint = EndPoint("dev501", 2181)
-    implicit val zk = ZKProxy(zkEndPoint)
-
-    // reset the Kafka offsets
-    resetOffsets("com.shocktrade.quotes.csv", "dev")
-
     // start streaming the data
     val consumer = KafkaStreamingConsumer(zkEndPoint, "dev")
     consumer.stream("com.shocktrade.quotes.csv", 4, streamingActor)
-
-    Thread.sleep(15.seconds)
   }
 
-  //@Test
+  @Test
   def observerPatternTest(): Unit = {
-    // setup our Zookeeper connection
-    val zkEndPoint = EndPoint("dev501", 2181)
-    implicit val zk = ZKProxy(zkEndPoint)
-
-    // reset the Kafka offsets
-    resetOffsets("com.shocktrade.quotes.csv", "dev")
-
     // start streaming the data
     val consumer = KafkaStreamingConsumer(zkEndPoint, "dev")
     consumer.observe("com.shocktrade.quotes.csv", 4, new StreamingMessageConsumer {
@@ -54,20 +45,34 @@ class KafkaStreamingConsumerTest {
         tabular.transform(Seq(message)) foreach logger.info
       }
     })
-
-    Thread.sleep(15.seconds)
   }
 
-  private def resetOffsets(topic: String, groupId: String)(implicit zk: ZKProxy): Unit = {
-    val brokers = KafkaSubscriber.getBrokerList map (b => Broker(b.host, b.port))
-    (0 to 3) foreach { partition =>
+  @After
+  def waitForTestToComplete(): Unit = Thread.sleep(30.seconds)
+
+  /**
+   * Resets the offset for each partition of a topic
+   */
+  private def resetOffsets(topic: String, partitions: Int, groupId: String)(implicit zk: ZKProxy): Unit = {
+    logger.info("Retrieving Kafka brokers...")
+    val brokerDetails = KafkaSubscriber.getBrokerList
+    tabular.transform(brokerDetails) foreach logger.info
+
+    // extract just the broker objects
+    val brokers = brokerDetails map (b => Broker(b.host, b.port))
+
+    // reset each partitions
+    (0 to (partitions - 1)) foreach { partition =>
       new KafkaSubscriber(Topic(topic, partition), brokers, 1) use (_.commitOffsets(groupId, 0L, "Development offset"))
     }
   }
 
-
 }
 
+/**
+ * Kafka Streaming Consumer Test Companion Object
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
 object KafkaStreamingConsumerTest {
   private val logger = LoggerFactory.getLogger(getClass)
   private val tabular = new Tabular()
