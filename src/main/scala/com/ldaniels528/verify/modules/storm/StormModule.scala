@@ -36,11 +36,11 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   // the bound commands
   override def getCommands = Seq(
-    Command(this, "sconf", showConfig, (Seq.empty, Seq("key", "value")), help = "Lists, retrieves or sets the configuration keys"),
-    Command(this, "sdeploy", deployTopology, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server (EXPERIMENTAL)"),
-    Command(this, "sget", lookupTopology, (Seq("topologyName"), Seq.empty), help = "Retrieves the information for a topology"),
-    Command(this, "skill", killTopology, (Seq.empty, Seq("topologyName")), help = "Kills a running topology"),
-    Command(this, "sls", listTopologies, (Seq.empty, Seq("prefix")), help = "Lists available topologies")
+    Command(this, "sconf", showConfig, (Seq.empty, Seq("key", "value")), help = "Lists, retrieves or sets the configuration keys", promptAware = true),
+    Command(this, "sdeploy", deployTopology, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server (EXPERIMENTAL)", promptAware = true),
+    Command(this, "sget", lookupTopology, (Seq("topologyName"), Seq.empty), help = "Retrieves the information for a topology", promptAware = true),
+    Command(this, "skill", killTopology, (Seq.empty, Seq("topologyName")), help = "Kills a running topology", promptAware = true),
+    Command(this, "sls", listTopologies, (Seq.empty, Seq("prefix")), help = "Lists available topologies", promptAware = true)
   )
 
   override def getVariables: Seq[Variable] = Seq.empty
