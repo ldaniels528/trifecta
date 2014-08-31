@@ -75,7 +75,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "knext", getNextMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the next message"),
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
-    Command(this, "kpush", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
+    Command(this, "kpublish", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
     Command(this, "krm", deleteTopic, (Seq("topic"), Seq.empty), "Deletes a topic (DESTRUCTIVE)"),
     Command(this, "kreplicas", listReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
@@ -637,7 +637,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   case class TopicReplicas(topic: String, partition: Int, replicaBroker: String, inSync:Boolean)
 
   /**
-   * "kpush" - Returns the EOF offset for a given topic
+   * "kpublish" - Returns the EOF offset for a given topic
    */
   def publishMessage(args: String*)(implicit out: PrintStream): Unit = {
     // get the arguments
