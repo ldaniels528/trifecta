@@ -1,6 +1,7 @@
 package com.ldaniels528.verify.util
 
 import java.io.{ByteArrayOutputStream, PrintStream}
+import java.util.Properties
 
 import scala.concurrent.duration.FiniteDuration
 import scala.language._
@@ -69,35 +70,7 @@ object VxUtils {
   implicit def duration2Long(d: FiniteDuration): Long = d.toMillis
 
   /**
-   * Properties Conversion
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
-   */
-  implicit class PropertiesConversion[T <: Object](m: Map[String, T]) {
-
-    import java.util.Properties
-
-import scala.collection.JavaConversions.mapAsJavaMap
-
-    def toProps: Properties = {
-      val p = new Properties()
-      p.putAll(mapAsJavaMap(m))
-      p
-    }
-  }
-
-  /**
-   * Facilitates option chaining
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
-   */
-  implicit class OptionalMagic[T](opA: Option[T]) {
-
-    def ??(opB: => Option[T]) = if (opA.isDefined) opA else opB
-
-  }
-
-  /**
    * Automatically closes a resource after completion of a code block
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   implicit class AutoClose[T <: {def close()}](resource: T) {
 
@@ -117,11 +90,37 @@ import scala.collection.JavaConversions.mapAsJavaMap
 
   /**
    * Automatically closes a resource after completion of a code block
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   implicit class AutoShutdown[T <: {def shutdown()}](resource: T) {
 
     def use[S](block: T => S): S = try block(resource) finally resource.shutdown()
+
+  }
+
+  /**
+   * Facilitates option chaining
+   */
+  implicit class OptionalMagic[T](opA: Option[T]) {
+
+    def ??(opB: => Option[T]) = if (opA.isDefined) opA else opB
+
+  }
+
+  /**
+   * Properties Conversion
+   */
+  implicit class PropertiesConversion[T <: Object](m: Map[String, T]) {
+
+    import java.util.Properties
+
+import scala.collection.JavaConversions.mapAsJavaMap
+
+    def toProps: Properties = {
+      val p = new Properties()
+      p.putAll(mapAsJavaMap(m))
+      p
+    }
+  }
 
   /**
    * Syntactic Sugar for Properties object
