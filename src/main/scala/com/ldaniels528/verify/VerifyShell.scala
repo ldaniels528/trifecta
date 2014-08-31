@@ -87,7 +87,7 @@ class VerifyShell(rt: VxRuntimeContext) {
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VerifyShell {
-  val VERSION = "0.1.1"
+  val VERSION = "0.1.2"
 
   /**
    * Application entry point

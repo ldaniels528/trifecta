@@ -11,7 +11,7 @@ name := "verify"
 
 organization := "com.ldaniels528"
 
-version := "0.1.1"
+version := "0.1.2"
 
 packageArchetype.java_application
 
