@@ -115,8 +115,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val Seq(topic, partitionString, replicaString, _*) = args
     val topicConfig = new java.util.Properties()
 
-    val partitions = parseInt("partitions", partitions)
-    val replicas = parseInt("replicas", replicas)
+    val partitions = parseInt("partitions", partitionString)
+    val replicas = parseInt("replicas", replicaString)
     new ZkClient(rt.remoteHost) use (AdminUtils.createTopic(_, topic, partitions, replicas, topicConfig))
   }
 
