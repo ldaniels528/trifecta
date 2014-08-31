@@ -616,7 +616,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val prefix = args.headOption
 
     KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
-      val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size)
+      val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size, t.isr.size)
       if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(detail) else None
     }
   }
@@ -765,7 +765,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   case class AvroVerification(verified: Int, failed: Int)
 
-  case class TopicDetail(topic: String, partition: Int, leader: String, replicas: Int)
+  case class TopicDetail(topic: String, partition: Int, leader: String, replicas: Int, isr: Int)
 
   case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
 
