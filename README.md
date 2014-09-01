@@ -254,6 +254,130 @@ To view all of the Storm commands, which all begin with the letter "s":
     | sls      storm   Lists available topologies                              |
     + ------------------------------------------------------------------------ +
 
+Let's view the currently running topologies:
+
+    storm:localhost> sls
+    + ---------------------------------------------------------------------------------------------------------------------------------------------- +
+    | name                                     id                                                    status  workers  executors  tasks  uptimeSecs   |
+    + ---------------------------------------------------------------------------------------------------------------------------------------------- +
+    | nm-traffic-rate-aggregation-sdmiller     nm-traffic-rate-aggregation-sdmiller-17-1407973634    ACTIVE  4        22         22     1619957      |
+    | EDNS0-Traffic-Categorizer                EDNS0-Traffic-Categorizer-8-1408969694                ACTIVE  4        125        125    623897       |
+    | NetworkMonitoringTrafficRateAggregation  NetworkMonitoringTrafficRateAggregation-9-1409160151  ACTIVE  4        22         22     433440       |
+    | Hydra-Listener-Traffic-Rates             Hydra-Listener-Traffic-Rates-13-1407867259            ACTIVE  4        30         30     1726332      |
+    | nm-traffic-rate-aggregation              nm-traffic-rate-aggregation-10-1407854552             ACTIVE  4        22         22     1739039      |
+    + ---------------------------------------------------------------------------------------------------------------------------------------------- +
+
+Next, let's look at the details of one of the topologies:
+
+    storm:localhost> sget nm-traffic-rate-aggregation-sdmiller-17-1407973634
+    + ------------------------------------------------------------------- +
+    | name                                                bolts  spouts   |
+    + ------------------------------------------------------------------- +
+    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  5      1        |
+    + ------------------------------------------------------------------- +
+
+Finally, let's take a look at the connection properties for this session:
+
+    storm:localhost> sconf
+    + ---------------------------------------------------------------------------------------------------------- +
+    | key                                            value                                                       |
+    + ---------------------------------------------------------------------------------------------------------- +
+    | dev.zookeeper.path                             /tmp/dev-storm-zookeeper                                    |
+    | drpc.childopts                                 -Xmx768m                                                    |
+    | drpc.invocations.port                          3773                                                        |
+    | drpc.port                                      3772                                                        |
+    | drpc.queue.size                                128                                                         |
+    | drpc.request.timeout.secs                      600                                                         |
+    | drpc.worker.threads                            64                                                          |
+    | java.library.path                              /usr/local/lib:/opt/local/lib:/usr/lib                      |
+    | logviewer.appender.name                        A1                                                          |
+    | logviewer.childopts                            -Xmx128m                                                    |
+    | logviewer.port                                 8000                                                        |
+    | nimbus.childopts                               -Xmx1024m                                                   |
+    | nimbus.cleanup.inbox.freq.secs                 600                                                         |
+    | nimbus.file.copy.expiration.secs               600                                                         |
+    | nimbus.host                                    localhost                                                   |
+    | nimbus.inbox.jar.expiration.secs               3600                                                        |
+    | nimbus.monitor.freq.secs                       10                                                          |
+    | nimbus.reassign                                true                                                        |
+    | nimbus.supervisor.timeout.secs                 60                                                          |
+    | nimbus.task.launch.secs                        120                                                         |
+    | nimbus.task.timeout.secs                       30                                                          |
+    | nimbus.thrift.max_buffer_size                  1048576                                                     |
+    | nimbus.thrift.port                             6627                                                        |
+    | nimbus.topology.validator                      backtype.storm.nimbus.DefaultTopologyValidator              |
+    | storm.cluster.mode                             distributed                                                 |
+    | storm.local.dir                                storm-local                                                 |
+    | storm.local.mode.zmq                           false                                                       |
+    | storm.messaging.netty.buffer_size              5242880                                                     |
+    | storm.messaging.netty.client_worker_threads    1                                                           |
+    | storm.messaging.netty.flush.check.interval.ms  10                                                          |
+    | storm.messaging.netty.max_retries              30                                                          |
+    | storm.messaging.netty.max_wait_ms              1000                                                        |
+    | storm.messaging.netty.min_wait_ms              100                                                         |
+    | storm.messaging.netty.server_worker_threads    1                                                           |
+    | storm.messaging.netty.transfer.batch.size      262144                                                      |
+    | storm.messaging.transport                      backtype.storm.messaging.netty.Context                      |
+    | storm.thrift.transport                         backtype.storm.security.auth.SimpleTransportPlugin          |
+    | storm.zookeeper.connection.timeout             15000                                                       |
+    | storm.zookeeper.port                           2181                                                        |
+    | storm.zookeeper.retry.interval                 1000                                                        |
+    | storm.zookeeper.retry.intervalceiling.millis   30000                                                       |
+    | storm.zookeeper.retry.times                    5                                                           |
+    | storm.zookeeper.root                           /storm                                                      |
+    | storm.zookeeper.servers                        [localhost]                                                 |
+    | storm.zookeeper.session.timeout                20000                                                       |
+    | supervisor.childopts                           -Xmx256m                                                    |
+    | supervisor.enable                              true                                                        |
+    | supervisor.heartbeat.frequency.secs            5                                                           |
+    | supervisor.monitor.frequency.secs              3                                                           |
+    | supervisor.slots.ports                         [6700, 6701, 6702, 6703]                                    |
+    | supervisor.worker.start.timeout.secs           120                                                         |
+    | supervisor.worker.timeout.secs                 30                                                          |
+    | task.heartbeat.frequency.secs                  3                                                           |
+    | task.refresh.poll.secs                         10                                                          |
+    | topology.acker.executors                                                                                   |
+    | topology.builtin.metrics.bucket.size.secs      60                                                          |
+    | topology.debug                                 false                                                       |
+    | topology.disruptor.wait.strategy               com.lmax.disruptor.BlockingWaitStrategy                     |
+    | topology.enable.message.timeouts               true                                                        |
+    | topology.error.throttle.interval.secs          10                                                          |
+    | topology.executor.receive.buffer.size          1024                                                        |
+    | topology.executor.send.buffer.size             1024                                                        |
+    | topology.fall.back.on.java.serialization       true                                                        |
+    | topology.kryo.factory                          backtype.storm.serialization.DefaultKryoFactory             |
+    | topology.max.error.report.per.interval         5                                                           |
+    | topology.max.spout.pending                                                                                 |
+    | topology.max.task.parallelism                                                                              |
+    | topology.message.timeout.secs                  30                                                          |
+    | topology.multilang.serializer                  backtype.storm.multilang.JsonSerializer                     |
+    | topology.receiver.buffer.size                  8                                                           |
+    | topology.skip.missing.kryo.registrations       false                                                       |
+    | topology.sleep.spout.wait.strategy.time.ms     1                                                           |
+    | topology.spout.wait.strategy                   backtype.storm.spout.SleepSpoutWaitStrategy                 |
+    | topology.state.synchronization.timeout.secs    60                                                          |
+    | topology.stats.sample.rate                     0.05                                                        |
+    | topology.tasks                                                                                             |
+    | topology.tick.tuple.freq.secs                                                                              |
+    | topology.transfer.buffer.size                  1024                                                        |
+    | topology.trident.batch.emit.interval.millis    500                                                         |
+    | topology.tuple.serializer                      backtype.storm.serialization.types.ListDelegateSerializer   |
+    | topology.worker.childopts                                                                                  |
+    | topology.worker.receiver.thread.count          1                                                           |
+    | topology.worker.shared.thread.pool.size        4                                                           |
+    | topology.workers                               1                                                           |
+    | transactional.zookeeper.port                                                                               |
+    | transactional.zookeeper.root                   /transactional                                              |
+    | transactional.zookeeper.servers                                                                            |
+    | ui.childopts                                   -Xmx768m                                                    |
+    | ui.port                                        8080                                                        |
+    | worker.childopts                               -Xmx768m                                                    |
+    | worker.heartbeat.frequency.secs                1                                                           |
+    | zmq.hwm                                        0                                                           |
+    | zmq.linger.millis                              5000                                                        |
+    | zmq.threads                                    1                                                           |
+    + ---------------------------------------------------------------------------------------------------------- +
+
 <a name="zookeeper-module"></a>
 #### Zookeeper Module
 
