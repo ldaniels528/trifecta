@@ -244,15 +244,18 @@ To retrieve the list of topics with new messages (since your last query):
 To view all of the Storm commands, which all begin with the letter "s":
 
     storm:localhost> ?s
-    + ------------------------------------------------------------------------ +
-    | command  module  description                                             |
-    + ------------------------------------------------------------------------ +
-    | sconf    storm   Lists, retrieves or sets the configuration keys         |
-    | sdeploy  storm   Deploys a topology to the Storm server (EXPERIMENTAL)   |
-    | sget     storm   Retrieves the information for a topology                |
-    | skill    storm   Kills a running topology                                |
-    | sls      storm   Lists available topologies                              |
-    + ------------------------------------------------------------------------ +
+    + --------------------------------------------------------------------------- +
+    | command   module  description                                               |
+    + --------------------------------------------------------------------------- +
+    | sbolts    storm   Retrieves the list of bolts for s given topology by ID    |
+    | sconf     storm   Lists, retrieves or sets the configuration keys           |
+    | sconnect  storm   Lists, retrieves or sets the configuration keys           |
+    | sdeploy   storm   Deploys a topology to the Storm server (EXPERIMENTAL)     |
+    | sget      storm   Retrieves the information for a topology                  |
+    | skill     storm   Kills a running topology                                  |
+    | sls       storm   Lists available topologies                                |
+    | spouts    storm   Retrieves the list of spouts for a given topology by ID   |
+    + --------------------------------------------------------------------------- +
 
 Let's view the currently running topologies:
 
