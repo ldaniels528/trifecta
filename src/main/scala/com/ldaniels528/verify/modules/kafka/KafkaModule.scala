@@ -9,7 +9,7 @@ import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.modules.avro.AvroReading
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
-import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, ConsumerDetails, MessageData}
+import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
@@ -56,15 +56,14 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   // the bound commands
   override def getCommands: Seq[Command] = Seq(
-    Command(this, "kbrokers", listBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the brokers from ZooKeeper"),
+    Command(this, "kbrokers", getBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
-    Command(this, "kconsumers", listConsumers, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
+    Command(this, "kconsumers", getConsumers, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcursor", getCursor, (Seq.empty, Seq.empty), help = "Displays the current message cursor"),
     Command(this, "kexport", exportToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Writes the contents of a specific topic to a file"),
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfirst", getFirstMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
-    Command(this, "kdelta", getConsumerDeltas, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of deltas between the consumers and topics"),
     Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgeta", getMessageAvro, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
     Command(this, "kgetsize", getMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
@@ -72,15 +71,15 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
     Command(this, "kinbound", inboundMessages, (Seq.empty, Seq("topicPrefix")), "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the last message for a given topic"),
-    Command(this, "kls", listTopics, (Seq.empty, Seq("topicPrefix")), help = "Lists all existing topics"),
+    Command(this, "kls", getTopics, (Seq.empty, Seq("topicPrefix")), help = "Lists all existing topics"),
     Command(this, "knext", getNextMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the next message"),
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
-    Command(this, "kreplicas", listReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
+    Command(this, "kreplicas", getReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
     Command(this, "ksearch", findMessageByKey, (Seq.empty, Seq("topic", "groupId", "keyVariable")), help = "Scans a topic for a message with a given key"),
-    Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
+    Command(this, "kstats", getStatistics, (Seq.empty, Seq("topic", "beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("defaultFetchSize", ConstantValue(Option(65536)))
@@ -193,24 +192,32 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   }
 
   /**
-   * kdelta
-   * @example {{{ kdelta }}}
+   * "kbrokers" - Retrieves the list of Kafka brokers
    */
-  def getConsumerDeltas(args: String*): Seq[ConsumerLag] = {
+  def getBrokers(args: String*): Seq[BrokerDetails] = KafkaSubscriber.getBrokerList
+
+  /**
+   * "kconsumers" - Retrieves the list of Kafka consumers
+   */
+  def getConsumers(args: String*): Seq[ConsumerDelta] = {
+    // get the optional topic prefix
     val topicPrefix = args.headOption
 
     // retrieve the data
-    out.println("Retrieving consumer data; this may take a few seconds...")
     val consumers = KafkaSubscriber.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition))
     consumers map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
-      val delta = topicOffset map (_ - c.offset)
-      ConsumerLag(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
+      val delta = topicOffset map (offset => Math.max(0, offset - c.offset))
+      ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
     }
   }
 
-  case class ConsumerLag(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], delta: Option[Long])
+  case class ConsumerDelta(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], messagesLeft: Option[Long])
 
+  /**
+   * "kcursor" - Displays the current message cursor
+   * @example {{{ kcursor }}}
+   */
   def getCursor(args: String*): Seq[MessageCursor] = cursor.map(c => Seq(c)) getOrElse Seq.empty
 
   /**
@@ -409,16 +416,21 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getStatistics(args: String*): Iterable[TopicOffsets] = {
     // interpret based on the input arguments
     val results = args.toList match {
+      case Nil =>
+        val topic = cursor map (_.topic) getOrElse die("No cursor exists")
+        val partitions = KafkaSubscriber.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
+        if (partitions.nonEmpty) Some((topic, partitions.min, partitions.max)) else None
+
       case topic :: Nil =>
         val partitions = KafkaSubscriber.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
         if (partitions.nonEmpty) Some((topic, partitions.min, partitions.max)) else None
 
       case topic :: partition :: Nil =>
         val partitions = KafkaSubscriber.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
-        if (partitions.nonEmpty) Some((topic, parseInt("partition", partition), partitions.max)) else None
+        if (partitions.nonEmpty) Some((topic, parsePartition(partition), partitions.max)) else None
 
       case topic :: partitionA :: partitionB :: Nil =>
-        Some((topic, partitionA.toInt, partitionB.toInt))
+        Some((topic, parsePartition(partitionA), parsePartition(partitionB)))
 
       case _ =>
         None
@@ -437,6 +449,18 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       first <- getFirstOffset(topic, partition)
       last <- getLastOffset(topic, partition)
     } yield TopicOffsets(topic, partition, first, last, last - first)
+  }
+
+  /**
+   * "kls" - Lists all existing topicList
+   */
+  def getTopics(args: String*): Seq[TopicDetail] = {
+    val prefix = args.headOption
+
+    KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
+      val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size, t.isr.size)
+      if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(detail) else None
+    }
   }
 
   /**
@@ -597,38 +621,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
 
   /**
-   * "kbrokers" - Retrieves the list of Kafka brokers
-   */
-  def listBrokers(args: String*): Seq[BrokerDetails] = KafkaSubscriber.getBrokerList
-
-  /**
-   * "kconsumers" - Retrieves the list of Kafka consumers
-   */
-  def listConsumers(args: String*): Seq[ConsumerDetails] = {
-    // get the optional topic prefix
-    val topicPrefix = args.headOption
-
-    // generate the list of consumers
-    KafkaSubscriber.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition))
-  }
-
-  /**
-   * "kls" - Lists all existing topicList
-   */
-  def listTopics(args: String*): Seq[TopicDetail] = {
-    val prefix = args.headOption
-
-    KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
-      val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size, t.isr.size)
-      if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(detail) else None
-    }
-  }
-
-  /**
    * "kreplicas" - Lists all replicas for all or a subset of topics
    * @example {{{ kreplicas com.shocktrade.quotes.realtime  }}}
    */
-  def listReplicas(args: String*): Seq[TopicReplicas] = {
+  def getReplicas(args: String*): Seq[TopicReplicas] = {
     val prefix = args.headOption
 
     KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
@@ -695,7 +691,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Seq(AvroVerification(verified, errors))
   }
 
-  private def parsePartition(partition: String): Long = parseInt("partition", partition)
+  private def parsePartition(partition: String): Int = parseInt("partition", partition)
 
   private def parseOffset(offset: String): Long = parseLong("offset", offset)
 
