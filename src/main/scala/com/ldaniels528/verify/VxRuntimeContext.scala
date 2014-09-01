@@ -142,7 +142,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
       }
 
       // handle Future cases
-      case f: Future[_] => handleResult(Await.result(f, 30.seconds))
+      case f: Future[_] => handleResult(Await.result(f, 60.seconds))
 
       // handle Option cases
       case o: Option[_] => o match {
