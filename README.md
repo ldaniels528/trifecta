@@ -258,7 +258,7 @@ Let's view the currently running topologies:
 
     storm:localhost> sls
     + ---------------------------------------------------------------------------------------------------------------------------------------------- +
-    | name                                     id                                                    status  workers  executors  tasks  uptimeSecs   |
+    | name                                     topologyId                                            status  workers  executors  tasks  uptimeSecs   |
     + ---------------------------------------------------------------------------------------------------------------------------------------------- +
     | nm-traffic-rate-aggregation-sdmiller     nm-traffic-rate-aggregation-sdmiller-17-1407973634    ACTIVE  4        22         22     1619957      |
     | EDNS0-Traffic-Categorizer                EDNS0-Traffic-Categorizer-8-1408969694                ACTIVE  4        125        125    623897       |
@@ -267,14 +267,36 @@ Let's view the currently running topologies:
     | nm-traffic-rate-aggregation              nm-traffic-rate-aggregation-10-1407854552             ACTIVE  4        22         22     1739039      |
     + ---------------------------------------------------------------------------------------------------------------------------------------------- +
 
-Next, let's look at the details of one of the topologies:
+Next, let's look at the details of one of the topologies by ID:
 
     storm:localhost> sget nm-traffic-rate-aggregation-sdmiller-17-1407973634
     + ------------------------------------------------------------------- +
-    | name                                                bolts  spouts   |
+    | topologyId                                          bolts  spouts   |
     + ------------------------------------------------------------------- +
     | nm-traffic-rate-aggregation-sdmiller-17-1407973634  5      1        |
     + ------------------------------------------------------------------- +
+
+Let's look at the Topology's bolts:
+
+    zookeeper:vsccrtc201-brn1:2181/> sbolts nm-traffic-rate-aggregation-sdmiller-17-1407973634
+    + ------------------------------------------------------------------------------------ +
+    | topologyId                                          name                             |
+    + ------------------------------------------------------------------------------------ +
+    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  nm-aggregation-kafka-sink-bolt   |
+    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  nm-aggregation-tuple-bolt        |
+    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  __acker                          |
+    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  __system                         |
+    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  nm-aggregation-reporting-bolt    |
+    + ------------------------------------------------------------------------------------ +
+
+Let's look at the Topology's spouts:
+
+    storm:localhost> spouts nm-traffic-rate-aggregation-sdmiller-17-1407973634
+    + -------------------------------------------------------------------------- +
+    | topologyId                                          name                   |
+    + -------------------------------------------------------------------------- +
+    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  nm-aggregation-spout   |
+    + -------------------------------------------------------------------------- +
 
 Finally, let's take a look at the connection properties for this session:
 
