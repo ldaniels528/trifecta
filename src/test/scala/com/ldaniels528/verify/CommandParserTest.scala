@@ -25,6 +25,8 @@ class CommandParserTest() {
       case (n, tok) =>
         logger.info(f"[$n%02d] tok: $tok")
     }
+
+    Assert.assertTrue(toks.size == 2)
   }
 
   @Test
