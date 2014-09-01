@@ -695,6 +695,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Seq(AvroVerification(verified, errors))
   }
 
+  private def parsePartition(partition: String): Long = parseInt("partition", partition)
+
+  private def parseOffset(offset: String): Long = parseLong("offset", offset)
+
   /**
    * "kwatch" - Subscribes to a specific topic
    */
