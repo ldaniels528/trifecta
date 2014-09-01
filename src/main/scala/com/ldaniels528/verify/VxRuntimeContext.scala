@@ -109,11 +109,14 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   }
 
   def interpret(input: String): Try[Any] = {
-    interpretLegacy(input) match {
-      case s @ Success(v) => s
-      case Failure(e) =>
-        interpretVScript(input)
-    }
+    interpretLegacy(input) /*match {
+      case s1 @ Success(v) => s1
+      case f1 @ Failure(e1) =>
+        interpretVScript(input) match {
+          case s2 @ Success(v) => s2
+          case Failure(_) => f1
+        }
+    } */
   }
 
   def interpretLegacy(input: String): Try[Any] = {
