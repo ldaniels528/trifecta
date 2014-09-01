@@ -14,6 +14,8 @@ Table of Contents
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
+    * <a href="#kafka-module">Kafka Module</a>
+    * <a href="#zookeeper-module">Zookeeper Module</a>
 
 <a name="Motivations"></a>
 ## Motivations
@@ -59,6 +61,7 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 <a name="usage"></a>
 ### Usage Examples	
 
+<a name="kafka-module"></a>
 #### Kakfa Module
 
 To view all of the Kafka commands, which all begin with the letter "k":
@@ -234,6 +237,7 @@ To retrieve the list of topics with new messages (since your last query):
     | com.shocktrade.quotes.csv      3          9856091      10307108     1200    63.2        08/25/2014 08:00PM UTC   |
     + ---------------------------------------------------------------------------------------------------------------- +
 
+<a name="zookeeper-module"></a>
 #### Zookeeper Module
 
 To view all of the Zookeeper commands, which all begin with the letter "z":
