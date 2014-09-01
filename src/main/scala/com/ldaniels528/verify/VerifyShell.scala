@@ -64,7 +64,7 @@ class VerifyShell(rt: VxRuntimeContext) {
       // read a line from the console
       Option(consoleReader.readLine("%s:%s> ".format(module.moduleName, module.prompt))) map (_.trim) foreach { line =>
         if (line.nonEmpty) {
-          rt.interpret(commandSet, line) match {
+          rt.interpret(line) match {
             case Success(result) =>
               rt.handleResult(result)
               if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line

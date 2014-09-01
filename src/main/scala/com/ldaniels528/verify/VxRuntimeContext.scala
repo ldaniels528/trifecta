@@ -105,7 +105,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
     p
   }
 
-  def interpret(commandSet: Map[String, Command], input: String): Try[Any] = {
+  def interpret(input: String): Try[Any] = {
     // parse & evaluate the user input
     Try(parseInput(input) match {
       case Some((cmd, args)) =>

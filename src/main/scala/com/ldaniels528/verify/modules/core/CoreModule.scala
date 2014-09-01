@@ -263,7 +263,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
       }
     } {
       out.println(s">> $command")
-      val result = rt.interpret(commandSet, command)
+      val result = rt.interpret(command)
       rt.handleResult(result)
     }
   }
