@@ -147,7 +147,7 @@ To retrieve the first message of a topic partition:
     [0000:075] 2c.31.30.2e.39.35.2c.31.30.2e.39.39.2c.31.30.2e.39.33.2c.34.36.36.30.35.2c | ,10.95,10.99,10.93,46605, |
     [0000:100] 4e.2f.41.2c.22.4e.2f.41.22                                                 | N/A,"N/A"                 |    
 
-The previous command resulted in the creation of a message cursor (notice our prompt changed). 
+The previous command resulted in the creation of a message cursor (notice below our prompt changed). 
 Let's view the cursor:
 
     kafka:com.shocktrade.quotes.csv/0:0> kcursor
@@ -200,6 +200,19 @@ To retrieve the start and end offsets and number of messages available for a top
 **NOTE**: Above "kstats" is equivalent to "kstats com.shocktrade.quotes.csv" or "kstats com.shocktrade.quotes.csv 0 4".
 However, because of the cursor we previously established, those arguments could be omitted.
 
+To see the current offsets for all consumer group IDs:
+
+    kafka:com.shocktrade.quotes.csv/0:9580> kconsumers
+    + ------------------------------------------------------------------------------------- +
+    | consumerId  topic                      partition  offset  topicOffset  messagesLeft   |
+    + ------------------------------------------------------------------------------------- +
+    | dev         com.shocktrade.quotes.csv  0          4259    9580         5321           |
+    | dev         com.shocktrade.quotes.csv  1          0       10445        10445          |
+    | dev         com.shocktrade.quotes.csv  2          3352    10973        7621           |
+    | dev         com.shocktrade.quotes.csv  3          3781    9994         6213           |
+    | dev         com.shocktrade.quotes.csv  4          9081    9080         0              |
+    + ------------------------------------------------------------------------------------- +
+
 To retrieve the list of topics with new messages (since your last query):
 
     kafka:com.shocktrade.quotes.csv/0:9580> kinbound
@@ -220,19 +233,6 @@ To retrieve the list of topics with new messages (since your last query):
     | com.shocktrade.quotes.csv      2          11504800     13458400     2000    105.3       08/25/2014 08:00PM UTC   |
     | com.shocktrade.quotes.csv      3          9856091      10307108     1200    63.2        08/25/2014 08:00PM UTC   |
     + ---------------------------------------------------------------------------------------------------------------- +
-
-To see the current offsets for all consumer IDs:
-
-    kafka:com.shocktrade.quotes.csv/0:9580> kconsumers
-    + ------------------------------------------------------------------------------------- +
-    | consumerId  topic                      partition  offset  topicOffset  messagesLeft   |
-    + ------------------------------------------------------------------------------------- +
-    | dev         com.shocktrade.quotes.csv  0          4259    9580         5321           |
-    | dev         com.shocktrade.quotes.csv  1          0       10445        10445          |
-    | dev         com.shocktrade.quotes.csv  2          3352    10973        7621           |
-    | dev         com.shocktrade.quotes.csv  3          3781    9994         6213           |
-    | dev         com.shocktrade.quotes.csv  4          9081    9080         0              |
-    + ------------------------------------------------------------------------------------- +
 
 #### Zookeeper Module
 
@@ -315,11 +315,15 @@ Let's look at the entire Zookeeper hierarchy recursively from our current path:
     /brokers/ids/5
     /brokers/ids/4        
         
-Finally, let's view the contents of one of the keys:        
+Let's view the contents of one of the keys:        
         
     zookeeper:localhost:2181/brokers> zget topics/com.shocktrade.quotes.csv/partitions/4/state
     [00] 7b.22.63.6f.6e.74.72.6f.6c.6c.65.72.5f.65.70.6f.63.68.22.3a.31.2c.22.6c.65 | {"controller_epoch":1,"le
     [25] 61.64.65.72.22.3a.35.2c.22.76.65.72.73.69.6f.6e.22.3a.31.2c.22.6c.65.61.64 | ader":5,"version":1,"lead
     [50] 65.72.5f.65.70.6f.63.68.22.3a.30.2c.22.69.73.72.22.3a.5b.35.5d.7d          | er_epoch":0,"isr":[5]}         
 
+Since we now know the contents of the key is text-based (JSON in this case), let's look at the plain-text value:
+**NOTE:** This command comes in handy when you want to copy/paste the value of a key
 
+    zookeeper:localhost:2181/brokers> zcat topics/com.shocktrade.quotes.csv/partitions/4/state text
+    {"controller_epoch":1,"leader":5,"version":1,"leader_epoch":0,"isr":[5]}
