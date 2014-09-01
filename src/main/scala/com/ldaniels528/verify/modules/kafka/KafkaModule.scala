@@ -77,11 +77,11 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kpublish", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
     Command(this, "kreplicas", listReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
+    Command(this, "ksearch", findMessageByKey, (Seq.empty, Seq("topic", "groupId", "keyVariable")), help = "Scans a topic for a message with a given key"),
     Command(this, "kstats", getStatistics, (Seq("topic"), Seq("beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
 
   override def getVariables: Seq[Variable] = Seq(
-    Variable("defaultFetchSize", ConstantValue(Option(65536))),
-    Variable("zkCwd", ConstantValue(Option("/")))
+    Variable("defaultFetchSize", ConstantValue(Option(65536)))
   )
 
   override def moduleName = "kafka"

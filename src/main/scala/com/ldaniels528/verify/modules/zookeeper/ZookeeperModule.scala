@@ -32,7 +32,8 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     Command(this, "zstat", stat, help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
     Command(this, "ztree", tree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
-  override def getVariables: Seq[Variable] = Seq.empty
+  override def getVariables: Seq[Variable] = Seq(
+    Variable("zkCwd", ConstantValue(Option("/"))))
 
   override def moduleName = "zookeeper"
 
