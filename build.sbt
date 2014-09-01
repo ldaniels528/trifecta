@@ -59,8 +59,8 @@ libraryDependencies ++= Seq(
   "org.apache.kafka" % "kafka_2.10" % "0.8.1.1",
   "org.apache.storm" % "storm-core" % "0.9.2-incubating",
   "org.fusesource.jansi" % "jansi" % "1.11",
-  "org.slf4j" % "slf4j-api" % "1.7.7",
-  "org.slf4j" % "slf4j-log4j12" % "1.7.7"
+  "org.slf4j" % "slf4j-api" % "1.7.7"
+//"org.slf4j" % "slf4j-log4j12" % "1.7.7"
 )
 
 // Testing Dependencies
