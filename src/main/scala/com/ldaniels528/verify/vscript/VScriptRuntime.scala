@@ -16,7 +16,7 @@ object VScriptRuntime {
   private[this] val logger = org.apache.log4j.Logger.getLogger(getClass)
   private[this] val nativeOps = collection.concurrent.TrieMap[String, OpCode]()
   private[this] val tabular = new Tabular()
-  private[vscript] val CLASS_EXT = ".qsc"
+  private[vscript] val CLASS_EXT = ".vfc"
 
   private def asNamedEntity(entity: OpCode)(implicit scope: Scope): NamedEntity = {
     entity.eval match {
