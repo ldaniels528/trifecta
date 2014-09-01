@@ -41,7 +41,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "charset", charSet, (Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
     Command(this, "class", inspectClass, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
     Command(this, "columns", columnWidthGetOrSet, (Seq.empty, Seq("columnWidth")), help = "Retrieves or sets the column width for message output"),
-    Command(this, "debug", debug, (Seq.empty, Seq("enabled")), help = "Switches debugging on/off"),
+    Command(this, "debug", debug, (Seq.empty, Seq("enabled")), help = "Switches debugging on/off", undocumented = true),
     Command(this, "exit", exit, help = "Exits the shell"),
     Command(this, "help", help, help = "Provides the list of available commands"),
     Command(this, "history", listHistory, help = "Returns a list of previously issued commands"),
