@@ -249,7 +249,7 @@ To view all of the Storm commands, which all begin with the letter "s":
     + --------------------------------------------------------------------------- +
     | sbolts    storm   Retrieves the list of bolts for s given topology by ID    |
     | sconf     storm   Lists, retrieves or sets the configuration keys           |
-    | sconnect  storm   Lists, retrieves or sets the configuration keys           |
+    | sconnect  storm   Establishes a connect to the Storm Nimbus Host            |
     | sdeploy   storm   Deploys a topology to the Storm server (EXPERIMENTAL)     |
     | sget      storm   Retrieves the information for a topology                  |
     | skill     storm   Kills a running topology                                  |
