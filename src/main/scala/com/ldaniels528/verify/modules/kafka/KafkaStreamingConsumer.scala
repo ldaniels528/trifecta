@@ -16,12 +16,17 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
   private val consumer = Consumer.create(consumerConfig)
 
   /**
+   * Closes the consumer's connection
+   */
+  def close(): Unit = consumer.shutdown()
+
+  /**
    * Streams data from a Kafka topic to an observer
    * @param topic the given topic name
    * @param parallelism the given number of processing threads
    * @param listener the observer to callback upon receipt of a new message
    */
-  def observe(topic: String, parallelism: Int, listener: StreamingMessageConsumer)(implicit ec: ExecutionContext) {
+  def observe(topic: String, parallelism: Int, listener: StreamingMessageObserver)(implicit ec: ExecutionContext) {
     val streamMap = consumer.createMessageStreams(Map(topic -> parallelism))
 
     // now create an object to consume the messages
