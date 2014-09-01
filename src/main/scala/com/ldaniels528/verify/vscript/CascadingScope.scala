@@ -2,6 +2,7 @@ package com.ldaniels528.verify.vscript
 
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import scala.collection.concurrent.TrieMap
+import scala.util.{Failure, Try, Success}
 
 /**
  * Represents a cascading scope
@@ -75,7 +76,12 @@ class CascadingScope(val parent: Option[Scope]) extends Scope {
   }
 
   override def getValue[T](name: String)(implicit scope: Scope): Option[T] = {
-    getVariable(name) flatMap (_.eval) map (_.asInstanceOf[T])
+    Try(getVariable(name) flatMap (_.eval[T])) match {
+      case Success(v) => v
+      case Failure(e) =>
+        val value: Option[T] = getVariable(name) flatMap (_.eval[T])
+        throw new IllegalStateException(s"Error retrieving variable $name ($value)", e)
+    }
   }
 
   override def setValue(name: String, value: OpCode) {
