@@ -15,6 +15,7 @@ import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
 import com.ldaniels528.verify.modules.{Command, ModuleManager}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.vscript.RootScope
+import org.slf4j.LoggerFactory
 
 import scala.collection.GenTraversableOnce
 import scala.concurrent.duration._
@@ -27,6 +28,8 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging {
+  private val logger = LoggerFactory.getLogger(getClass)
+
   // capture standard output
   val out = System.out
   val err = System.err
