@@ -2,11 +2,12 @@ package com.ldaniels528.verify.modules.kafka
 
 import akka.actor.ActorRef
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.{StreamedMessage, StreamingMessageConsumer}
+import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.{StreamedMessage, StreamingMessageObserver}
 import com.ldaniels528.verify.util.VxUtils._
 import kafka.consumer.{Consumer, ConsumerConfig}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.util.{Failure, Success}
 
 /**
  * Kafka Streaming Consumer
@@ -112,7 +113,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
 object KafkaStreamingConsumer {
 
   /**
-   * Convenience method for creating Streaming Consumer instances
+   * Convenience method   for creating Streaming Consumer instances
    * @param zkEndPoint the given Zookeeper endpoint
    * @param groupId the given consumer group ID
    * @return a new Streaming Consumer instance
@@ -134,15 +135,15 @@ object KafkaStreamingConsumer {
 
   /**
    * This trait is implemented by classes that are interested in
-   * consuming Kafka messages.
+   * consuming streaming Kafka messages.
    */
-  trait StreamingMessageConsumer {
+  trait StreamingMessageObserver {
 
     /**
      * Called when data is ready to be consumed
      * @param message the message as a binary string
      */
-    def consume(message: StreamedMessage)
+    def consume(message: StreamedMessage): Unit
 
   }
 
