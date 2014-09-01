@@ -139,8 +139,8 @@ object VScriptCompiler {
         case "println" => Println(nextExpression(ti))
         case "val" => VariableNew(expectName(ti, "="), nextExpression(ti))
         case "while" => WhileDo(nextExpression(ti), nextExpression(ti))
-        case a if isQuoted(s) => ConstantValue(Some(unquote(a)))
-        case DECIMAL_r(b) => ConstantValue(Some(b.toDouble))
+        case a if isQuoted(s) => ConstantValue(Option(unquote(a)))
+        case DECIMAL_r(b) => ConstantValue(Option(b.toDouble))
         case name =>
           if (isValidIdentifier(name)) encoreVariableRef(name, ti)
           else throw new IllegalArgumentException(s"Syntax error: invalid identifier or symbol '$name'")

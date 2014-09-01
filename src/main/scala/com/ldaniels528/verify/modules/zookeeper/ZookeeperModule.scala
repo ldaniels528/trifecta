@@ -7,6 +7,7 @@ import java.util.Date
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.verify.modules.{Command, Module}
+import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.Variable
 
 /**

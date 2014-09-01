@@ -638,7 +638,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
   }
 
-  case class TopicReplicas(topic: String, partition: Int, replicaBroker: String, inSync:Boolean)
+  case class TopicReplicas(topic: String, partition: Int, replicaBroker: String, inSync: Boolean)
 
   /**
    * "kpublish" - Returns the EOF offset for a given topic
