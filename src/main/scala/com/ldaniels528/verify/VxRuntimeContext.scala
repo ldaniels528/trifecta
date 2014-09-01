@@ -14,7 +14,7 @@ import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
 import com.ldaniels528.verify.modules.{Command, ModuleManager}
 import com.ldaniels528.verify.util.BinaryMessaging
-import com.ldaniels528.verify.vscript.RootScope
+import com.ldaniels528.verify.vscript.{RootScope, VScriptCompiler}
 import org.slf4j.LoggerFactory
 
 import scala.collection.GenTraversableOnce
@@ -109,10 +109,19 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   }
 
   def interpret(input: String): Try[Any] = {
+    interpretLegacy(input) match {
+      case s @ Success(v) => s
+      case Failure(e) =>
+        interpretVScript(input)
+    }
+  }
+
+  def interpretLegacy(input: String): Try[Any] = {
     // parse & evaluate the user input
     Try(parseInput(input) match {
       case Some((cmd, args)) =>
         // match the command
+        val commandSet = moduleManager.commandSet
         commandSet.get(cmd) match {
           case Some(command) =>
             // verify and execute the command
@@ -129,6 +138,14 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
         }
       case _ =>
     })
+  }
+
+  def interpretVScript(line:String): Try[Any] = Try {
+    val opCode = VScriptCompiler.compile(line, debugOn)
+    if(debugOn) {
+      logger.info(s"opCode = $opCode (${opCode.getClass.getName}})")
+    }
+    opCode.eval
   }
 
   def handleResult(result: Any) {
