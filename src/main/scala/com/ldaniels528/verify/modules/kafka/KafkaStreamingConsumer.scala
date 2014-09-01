@@ -44,6 +44,43 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
   }
 
   /**
+   * Scans a Kafka topic for the first message containing the given key
+   * @param topic the given topic name
+   * @param parallelism the given number of processing threads
+   * @param key the given message key
+   * @return a promise of an option of a streamed message
+   */
+  def scan(topic: String, parallelism: Int, key: Array[Byte])(implicit ec: ExecutionContext): Future[Option[StreamedMessage]] = {
+    val streamMap = consumer.createMessageStreams(Map(topic -> parallelism))
+    var completed: Boolean = false
+    val promise = Promise[Option[StreamedMessage]]()
+
+    // now create an object to consume the messages
+    val tasks = (streamMap.get(topic) map { streams =>
+      (streams map { stream =>
+        Future {
+          val it = stream.iterator()
+          while (!completed && it.hasNext()) {
+            val mam = it.next()
+            if (mam.key sameElements key) {
+              promise.success(Option(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message())))
+              completed = true
+            }
+          }
+        }
+      }).toSeq
+    }).toSeq
+
+    // check for the failure to find the message by key
+    Future.sequence(tasks.flatten).onComplete {
+      case Success(v) => if(!completed) promise.success(None)
+      case Failure(e) => promise.failure(e)
+    }
+
+    promise.future
+  }
+
+  /**
    * Streams data from a Kafka topic to an Akka actor
    * @param topic the given topic name
    * @param parallelism the given number of processing threads
