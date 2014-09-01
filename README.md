@@ -220,23 +220,15 @@ To see the current offsets for all consumer group IDs:
 To retrieve the list of topics with new messages (since your last query):
 
     kafka:com.shocktrade.quotes.csv/0:9580> kinbound
-    + ---------------------------------------------------------------------------------------------------------------- +
-    | topic                          partition  startOffset  endOffset    change  msgsPerSec  lastCheckTime            |
-    + ---------------------------------------------------------------------------------------------------------------- +
-    | com.shocktrade.quotes.rt       8          14172422286  14181448062  22722   1195.9      08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.rt       2          14152959137  14161960794  19158   1008.4      08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.rt       6          14149557536  14158589929  19079   1004.2      08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.rt       0          14149783268  14158884735  19013   1000.7      08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.rt       3          14149465416  14158650047  18710   984.8       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.rt       9          14149489857  14158842964  18699   984.2       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.rt       1          14149397624  14158931725  18343   965.5       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.rt       7          14149902016  14159677946  18325   964.5       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.rt       4          14150527623  14159760560  18207   958.3       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.rt       5          14150738074  14160430877  18132   954.4       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.csv      1          58618400     59195800     7400    389.5       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.csv      2          11504800     13458400     2000    105.3       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.csv      3          9856091      10307108     1200    63.2        08/25/2014 08:00PM UTC   |
-    + ---------------------------------------------------------------------------------------------------------------- +
+    + --------------------------------------------------------------------------------------------------------- +
+    | topic                      partition  startOffset  endOffset  change  msgsPerSec  lastCheckTime           |
+    + --------------------------------------------------------------------------------------------------------- +
+    | com.shocktrade.quotes.csv  4          0            9138       36      12.0        09/01/14 01:51:30 PDT   |
+    | com.shocktrade.quotes.csv  0          0            9624       32      10.7        09/01/14 01:51:30 PDT   |
+    | com.shocktrade.quotes.csv  1          0            10492      32      10.7        09/01/14 01:51:30 PDT   |
+    | com.shocktrade.quotes.csv  2          0            11018      32      10.7        09/01/14 01:51:30 PDT   |
+    | com.shocktrade.quotes.csv  3          0            10031      27      9.0         09/01/14 01:51:30 PDT   |
+    + --------------------------------------------------------------------------------------------------------- +
 
 <a name="storm-module"></a>
 #### Storm Module
