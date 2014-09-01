@@ -16,6 +16,8 @@ import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
 
+import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
@@ -155,6 +157,39 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       case Some(fetchSize) => defaultFetchSize = fetchSize.toInt
       case None => defaultFetchSize
     }
+  }
+
+  /**
+   * "ksearch" - Scans a topic for a message with a given key
+   * @example {{{ ksearch com.shocktrade.quotes.csv devGroup myKey }}}
+   */
+  def findMessageByKey(args: String*): Future[Option[MessageData]] = {
+    // get the topic and partition arguments
+    val (topic, groupId, keyVar) = args.toList match {
+      case groupIdArg :: keyArg :: Nil =>
+        cursor map (c => (c.topic, groupIdArg, keyArg)) getOrElse die("No cursor exists")
+      case topicArg :: groupIdArg :: keyArg :: Nil => (topicArg, groupIdArg, keyArg)
+      case _ => die( s"""Invalid arguments - use "syntax ksearch" to see usage""")
+    }
+
+    // get the binary key
+    val variable = scope.getVariable(keyVar) getOrElse die(s"Variable '$keyVar' not found")
+    val key = variable.eval[Array[Byte]] getOrElse die(s"$keyVar is undefined")
+
+    // get the consumer instance
+    val consumer = KafkaStreamingConsumer(rt.zkEndPoint, groupId)
+
+    // perform the search
+    val result = consumer.scan(topic, parallelism = 4, key) map (_ map { msg =>
+      val lastOffset: Long = getLastOffset(msg.topic, msg.partition) getOrElse -1L
+      val nextOffset: Long = msg.offset + 1
+      cursor = Option(MessageCursor(msg.topic, msg.partition, msg.offset, nextOffset, BINARY))
+      MessageData(msg.offset, nextOffset, lastOffset, msg.message)
+    })
+
+    // close the consumer once a response is available
+    result.foreach(msg_? => consumer.close())
+    result
   }
 
   /**
