@@ -27,20 +27,18 @@ class StormModule(rt: VxRuntimeContext) extends Module {
   }
 
   // connect to the server
-  connect match {
-    case Success(c) => client = Some(c)
-    case Failure(e) =>
-      val nimbusHost = Option(stormConf.get("nimbus.host")) map(_.asInstanceOf[String])
-      logger.debug(s"Error connecting to Storm nimbus host ${if(nimbusHost.isDefined) s"(host: $nimbusHost)" else ""}", e)
-  }
+  createConnection()
 
   // the bound commands
-  override def getCommands = Seq(
+  override def getCommands: Seq[Command] = Seq(
+    Command(this, "sbolts", getTopologyBolts, (Seq("topologyID"), Seq.empty), help = "Retrieves the list of bolts for s given topology by ID", promptAware = true),
     Command(this, "sconf", showConfig, (Seq.empty, Seq("key", "value")), help = "Lists, retrieves or sets the configuration keys", promptAware = true),
+    Command(this, "sconnect", createConnection, (Seq.empty, Seq("nimbusHost")), help = "Lists, retrieves or sets the configuration keys", promptAware = true),
     Command(this, "sdeploy", deployTopology, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server (EXPERIMENTAL)", promptAware = true),
-    Command(this, "sget", lookupTopology, (Seq("topologyName"), Seq.empty), help = "Retrieves the information for a topology", promptAware = true),
-    Command(this, "skill", killTopology, (Seq.empty, Seq("topologyName")), help = "Kills a running topology", promptAware = true),
-    Command(this, "sls", listTopologies, (Seq.empty, Seq("prefix")), help = "Lists available topologies", promptAware = true)
+    Command(this, "sget", getTopologyInfo, (Seq("topologyID"), Seq.empty), help = "Retrieves the information for a topology", promptAware = true),
+    Command(this, "skill", killTopology, (Seq("topologyID"), Seq.empty), help = "Kills a running topology", promptAware = true),
+    Command(this, "sls", listTopologies, (Seq.empty, Seq("prefix")), help = "Lists available topologies", promptAware = true),
+    Command(this, "spouts", getTopologySpouts, (Seq("topologyID"), Seq.empty), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true)
   )
 
   override def getVariables: Seq[Variable] = Seq.empty
@@ -51,25 +49,70 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   override def shutdown(): Unit = ()
 
-  def nimbusHost: Option[String] = Option(stormConf.get("nimbus.host"))  map(_.asInstanceOf[String])
+  def nimbusHost: Option[String] = Option(stormConf.get("nimbus.host")) map (_.asInstanceOf[String])
+
+  def nimbusHost_=(host: String) = stormConf.put("nimbus.host", host)
 
   /**
-   * Retrieves the information for a topology
-   * @example {{{ sget myTopology }}}
+   * Establishes (or re-establishes) a connect to the Storm Nimbus Host
+   * @example {{{ sconnect }}}
    */
-  def lookupTopology(args: String*): Seq[TopologyInfo] = {
-    val topologyName = args.head
-    client.map(_.getTopology(topologyName)) map { t =>
-      Seq(TopologyInfo(topologyName, t.get_bolts_size, t.get_spouts_size))
-      /*
-      val bolts = (t.get_bolts map { case (name, bolt) => TopologyInfo(name, "Bolt")}).toSeq
-      val spouts = (t.get_spouts map { case (name, spout) => TopologyInfo(name, "Spout")}).toSeq
-      bolts ++ spouts
-      */
+  def createConnection(args: String*) = {
+    val myNimbusHost = args.headOption
+
+    // optionally set the Nimus host
+    myNimbusHost.foreach(nimbusHost = _)
+
+    // establish the connection
+    connect match {
+      case Success(c) => client = Some(c)
+      case Failure(e) =>
+        logger.debug(s"Error connecting to Storm nimbus host ${if (nimbusHost.isDefined) s"(host: $nimbusHost)" else ""}", e)
+    }
+  }
+
+  /**
+   * "sget" - Retrieves the information for a topology by ID
+   * @example {{{ sget nm-traffic-rate-aggregation-17-1407973634 }}}
+   */
+  def getTopologyInfo(args: String*): Seq[TopologyInfo] = {
+    // get the topology ID
+    val topologyId = args.head
+
+    client.map(_.getTopology(topologyId)) map { t =>
+      Seq(TopologyInfo(topologyId, t.get_bolts_size, t.get_spouts_size))
     } getOrElse Seq.empty
   }
 
-  case class TopologyInfo(name: String, bolts: Int, spouts: Int)
+  case class TopologyInfo(topologyId: String, bolts: Int, spouts: Int)
+
+  /**
+   * "sbolts" - Retrieves the list of bolts for a given topology by ID
+   * @example {{{ sbolts nm-traffic-rate-aggregation-17-1407973634 }}}
+   */
+  def getTopologyBolts(args: String*): Seq[BoltSpoutInfo] = {
+    // get the topology ID
+    val topologyId = args.head
+
+    client.map(_.getTopology(topologyId)) map { t =>
+      t.get_bolts.toSeq map { case (name, bolt) => BoltSpoutInfo(topologyId, name)}
+    } getOrElse Seq.empty
+  }
+
+  /**
+   * "spouts" - Retrieves the list of spouts for a given topology by ID
+   * @example {{{ sbolts nm-traffic-rate-aggregation-17-1407973634 }}}
+   */
+  def getTopologySpouts(args: String*): Seq[BoltSpoutInfo] = {
+    // get the topology ID
+    val topologyId = args.head
+
+    client.map(_.getTopology(topologyId)) map { t =>
+      t.get_spouts.toSeq map { case (name, spout) => BoltSpoutInfo(topologyId, name)}
+    } getOrElse Seq.empty
+  }
+
+  case class BoltSpoutInfo(topologyId: String, name: String)
 
   /**
    * "sdeploy" command - Deploys a topology to the Storm server
@@ -87,8 +130,11 @@ class StormModule(rt: VxRuntimeContext) extends Module {
    * @example {{{ skill myTopology }}}
    */
   def killTopology(args: String*): Unit = {
-    val topologyName = args.head
-    client.foreach(_.killTopology(topologyName))
+    // get the topology ID
+    val topologyID = args.head
+
+    // kill the topology
+    client.foreach(_.killTopology(topologyID))
   }
 
   /**
@@ -101,7 +147,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
     }) getOrElse Seq.empty
   }
 
-  case class TopologyDetails(name: String, id: String, status: String, workers: Int, executors: Int, tasks: Int, uptimeSecs: Long)
+  case class TopologyDetails(name: String, topologyId: String, status: String, workers: Int, executors: Int, tasks: Int, uptimeSecs: Long)
 
   /**
    * "sconf" - Lists the Storm configuration
