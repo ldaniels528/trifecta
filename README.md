@@ -15,7 +15,8 @@ Table of Contents
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#kafka-module">Kafka Module</a>
-    * <a href="#zookeeper-module">Zookeeper Module</a>
+    * <a href="#storm-module">Storm Module</a>     
+    * <a href="#zookeeper-module">Zookeeper Module</a>   
 
 <a name="Motivations"></a>
 ## Motivations
@@ -236,6 +237,22 @@ To retrieve the list of topics with new messages (since your last query):
     | com.shocktrade.quotes.csv      2          11504800     13458400     2000    105.3       08/25/2014 08:00PM UTC   |
     | com.shocktrade.quotes.csv      3          9856091      10307108     1200    63.2        08/25/2014 08:00PM UTC   |
     + ---------------------------------------------------------------------------------------------------------------- +
+
+<a name="storm-module"></a>
+#### Storm Module
+
+To view all of the Storm commands, which all begin with the letter "s":
+
+    storm:localhost> ?s
+    + ------------------------------------------------------------------------ +
+    | command  module  description                                             |
+    + ------------------------------------------------------------------------ +
+    | sconf    storm   Lists, retrieves or sets the configuration keys         |
+    | sdeploy  storm   Deploys a topology to the Storm server (EXPERIMENTAL)   |
+    | sget     storm   Retrieves the information for a topology                |
+    | skill    storm   Kills a running topology                                |
+    | sls      storm   Lists available topologies                              |
+    + ------------------------------------------------------------------------ +
 
 <a name="zookeeper-module"></a>
 #### Zookeeper Module
