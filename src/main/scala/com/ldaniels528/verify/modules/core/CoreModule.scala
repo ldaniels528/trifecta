@@ -465,7 +465,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     rt.moduleManager.findCommandByName(commandName) match {
       case Some(command) => Seq(s"Description: ${command.help}", s"Usage: ${command.prototype}")
       case None =>
-        throw new IllegalStateException( s"Command '$commandName' not found")
+        throw new IllegalStateException(s"Command '$commandName' not found")
     }
   }
 
