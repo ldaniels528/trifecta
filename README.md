@@ -322,8 +322,8 @@ Let's view the contents of one of the keys:
     [25] 61.64.65.72.22.3a.35.2c.22.76.65.72.73.69.6f.6e.22.3a.31.2c.22.6c.65.61.64 | ader":5,"version":1,"lead
     [50] 65.72.5f.65.70.6f.63.68.22.3a.30.2c.22.69.73.72.22.3a.5b.35.5d.7d          | er_epoch":0,"isr":[5]}         
 
-Since we now know the contents of the key is text-based (JSON in this case), let's look at the plain-text value:
-**NOTE:** This command comes in handy when you want to copy/paste the value of a key
+Since we now know the contents of the key is text-based (JSON in this case), let's look at the plain-text value.
+**NOTE:** This command comes in handy when you want to copy/paste the value of a key.
 
     zookeeper:localhost:2181/brokers> zcat topics/com.shocktrade.quotes.csv/partitions/4/state text
     {"controller_epoch":1,"leader":5,"version":1,"leader_epoch":0,"isr":[5]}
