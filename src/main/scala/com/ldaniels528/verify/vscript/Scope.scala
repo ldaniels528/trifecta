@@ -120,7 +120,7 @@ case class Function(name: String, params: Seq[String], code: OpCode) extends Nam
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class Variable(name: String, var value: OpCode) extends NamedEntity {
-  def eval(implicit scope: Scope) = value.eval(scope)
+  def eval[T](implicit scope: Scope) = value.eval(scope) map(_.asInstanceOf[T])
 
   override def toString = s"$name = $value"
 }
