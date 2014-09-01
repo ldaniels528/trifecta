@@ -9,7 +9,8 @@ case class Command(module: Module,
                    fx: Seq[String] => Any,
                    params: (Seq[String], Seq[String]) = (Seq.empty, Seq.empty),
                    help: String = "",
-                   promptAware: Boolean = false) {
+                   promptAware: Boolean = false,
+                   undocumented: Boolean = false) {
 
   def prototype = {
     val required = (params._1 map (s => s"<$s>")).mkString(" ")

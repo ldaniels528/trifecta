@@ -194,7 +194,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    */
   def help(args: String*): Seq[CommandItem] = {
     commandSet.toSeq filter {
-      case (nameA, _) => args.isEmpty || nameA.startsWith(args.head)
+      case (nameA, cmdA) => !cmdA.undocumented && (args.isEmpty || nameA.startsWith(args.head))
     } sortBy (_._1) map {
       case (nameB, cmdB) => CommandItem(nameB, cmdB.module.moduleName, cmdB.help)
     }
