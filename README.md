@@ -59,76 +59,203 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 <a name="usage"></a>
 ### Usage Examples	
 
+#### Kakfa Module
+
+To view all of the Kafka commands, which all begin with the letter "k":
+			
+    kafka:/> ?k
+    + ------------------------------------------------------------------------------------------------------------------- +
+    | command     module  description                                                                                     |
+    + ------------------------------------------------------------------------------------------------------------------- +
+    | kbrokers    kafka   Returns a list of the brokers from ZooKeeper                                                    |
+    | kcommit     kafka   Commits the offset for a given topic and group                                                  |
+    | kconsumers  kafka   Returns a list of the consumers from ZooKeeper                                                  |
+    | kcursor     kafka   Displays the current message cursor                                                             |
+    | kexport     kafka   Writes the contents of a specific topic to a file                                               |
+    | kfetch      kafka   Retrieves the offset for a given topic and group                                                |
+    | kfetchsize  kafka   Retrieves or sets the default fetch size for all Kafka queries                                  |
+    | kfirst      kafka   Returns the first message for a given topic                                                     |
+    | kget        kafka   Retrieves the message at the specified offset for a given topic partition                       |
+    | kgeta       kafka   Returns the key-value pairs of an Avro message from a topic partition                           |
+    | kgetminmax  kafka   Retrieves the smallest and largest message sizes for a range of offsets for a given partition   |
+    | kgetsize    kafka   Retrieves the size of the message at the specified offset for a given topic partition           |
+    | kimport     kafka   Imports messages into a new/existing topic                                                      |
+    | kinbound    kafka   Retrieves a list of topics with new messages (since last query)                                 |
+    | klast       kafka   Returns the last message for a given topic                                                      |
+    | kls         kafka   Lists all existing topics                                                                       |
+    | knext       kafka   Attempts to retrieve the next message                                                           |
+    | koffset     kafka   Returns the offset at a specific instant-in-time for a given topic                              |
+    | kprev       kafka   Attempts to retrieve the message at the previous offset                                         |
+    | kpublish    kafka   Publishes a message to a topic                                                                  |
+    | kreplicas   kafka   Returns a list of replicas for specified topics                                                 |
+    | kscana      kafka   Scans a range of messages verifying conformance to an Avro schema                               |
+    | ksearch     kafka   Scans a topic for a message with a given key                                                    |
+    | kstats      kafka   Returns the partition details for a given topic                                                 |
+    + ------------------------------------------------------------------------------------------------------------------- +
+
 To list the replica brokers that Zookeeper is aware of:
 
-	zookeeper@dev501:2181:/> kbrokers
-    + -------------------------------------------------------------------------- +
-    | jmx_port  timestamp          host                          version  port   |
-    + -------------------------------------------------------------------------- +
-    | 9999      2014-07-31 07:45:23 UTC  dev601.ldaniels528.com  1        9092   |
-    | 9999      2014-07-31 07:45:22 UTC  dev602.ldaniels528.com  1        9092   |
-    + -------------------------------------------------------------------------- +	
+    kafka:/> kbrokers
+    + ---------------------------------------------------------- +
+    | jmx_port  timestamp                host    version  port   |
+    + ---------------------------------------------------------- +
+    | 9999      2014-08-23 19:33:01 PDT  dev501  1        9093   |
+    | 9999      2014-08-23 18:41:07 PDT  dev501  1        9092   |
+    | 9999      2014-08-23 18:41:07 PDT  dev501  1        9091   |
+    | 9999      2014-08-23 20:05:17 PDT  dev502  1        9093   |
+    | 9999      2014-08-23 20:05:17 PDT  dev502  1        9092   |
+    | 9999      2014-08-23 20:05:17 PDT  dev502  1        9091   |
+    + ---------------------------------------------------------- +
 
 To list all of the Kafka topics that Zookeeper is aware of:
 
-	zookeeper@dev501:2181:/> kls
-    + ------------------------------------------------------------------- +
-    | name              partition  leader                       version   |
-    + ------------------------------------------------------------------- +
-    | test.app1.alerts  0          dev601.ldaniels528.com:9092  1         |
-    | test.app1.alerts  1          dev602.ldaniels528.com:9092  1         |
-    | test.app1.alerts  2          dev601.ldaniels528.com:9092  1         |
-    | app1.messages     0          dev602.ldaniels528.com:9092  1         |
-    | app1.messages     1          dev601.ldaniels528.com:9092  1         |
-    | app1.messages     2          dev602.ldaniels528.com:9092  1         |
-    | app1.messages     3          dev601.ldaniels528.com:9092  1         |
-    | app1.messages     4          dev602.ldaniels528.com:9092  1         |
-    | app1.messages     5          dev601.ldaniels528.com:9092  1         |
-    | app1.messages     6          dev602.ldaniels528.com:9092  1         |
-    + ------------------------------------------------------------------- +
+    kafka:/> kls
+    + ------------------------------------------------------------------ +
+    | topic                      partition  leader       replicas  isr   |
+    + ------------------------------------------------------------------ +
+    | com.shocktrade.quotes.rt   0          dev502:9093  1         1     |
+    | com.shocktrade.quotes.rt   1          dev501:9091  1         1     |
+    | com.shocktrade.quotes.rt   2          dev501:9092  1         1     |
+    | com.shocktrade.quotes.rt   3          dev501:9093  1         1     |
+    | com.shocktrade.quotes.rt   4          dev502:9091  1         1     |
+    | com.shocktrade.quotes.csv  0          dev501:9091  1         1     |
+    | com.shocktrade.quotes.csv  1          dev501:9092  1         1     |
+    | com.shocktrade.quotes.csv  2          dev501:9093  1         1     |
+    | com.shocktrade.quotes.csv  3          dev502:9091  1         1     |
+    | com.shocktrade.quotes.csv  4          dev502:9092  1         1     |
+    + ------------------------------------------------------------------ +
 
 To see a subset of the topics (matches any topic that starts with the given search term):
 
-	zookeeper@dev501:2181:/> kls test.app1.alerts
-    + ------------------------------------------------------------------- +
-    | name              partition  leader                       version   |
-    + ------------------------------------------------------------------- +
-    | test.app1.alerts  0          dev601.ldaniels528.com:9092  1         |
-    | test.app1.alerts  1          dev602.ldaniels528.com:9092  1         |
-    | test.app1.alerts  2          dev601.ldaniels528.com:9092  1         |
-    + ------------------------------------------------------------------- +
+    kafka:/> kls com.shocktrade.quotes.csv
+    + ------------------------------------------------------------------ +
+    | topic                      partition  leader       replicas  isr   |
+    + ------------------------------------------------------------------ +
+    | com.shocktrade.quotes.csv  0          dev501:9091  1         1     |
+    | com.shocktrade.quotes.csv  1          dev501:9092  1         1     |
+    | com.shocktrade.quotes.csv  2          dev501:9093  1         1     |
+    | com.shocktrade.quotes.csv  3          dev502:9091  1         1     |
+    | com.shocktrade.quotes.csv  4          dev502:9092  1         1     |
+    + ------------------------------------------------------------------ +
+
+To retrieve the first message of a topic partition:
+
+    kafka:/> kfirst com.shocktrade.quotes.csv 0
+    [0000:000] 22.47.44.46.22.2c.31.30.2e.39.35.2c.22.38.2f.32.32.2f.32.30.31.34.22.2c.22 | "GDF",10.95,"8/22/2014"," |
+    [0000:025] 34.3a.30.30.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.30.32.2c.22.2d.30 | 4:00pm",N/A,N/A,-0.02,"-0 |
+    [0000:050] 2e.30.32.20.2d.20.2d.30.2e.31.38.25.22.2c.31.30.2e.39.37.2c.31.30.2e.39.37 | .02 - -0.18%",10.97,10.97 |
+    [0000:075] 2c.31.30.2e.39.35.2c.31.30.2e.39.39.2c.31.30.2e.39.33.2c.34.36.36.30.35.2c | ,10.95,10.99,10.93,46605, |
+    [0000:100] 4e.2f.41.2c.22.4e.2f.41.22                                                 | N/A,"N/A"                 |    
+
+The previous command resulted in the creation of a message cursor (notice our prompt changed). 
+Let's view the cursor:
+
+    kafka:com.shocktrade.quotes.csv/0:0> kcursor
+    + -------------------------------------------------------------------- +
+    | topic                      partition  offset  nextOffset  encoding   |
+    + -------------------------------------------------------------------- +
+    | com.shocktrade.quotes.csv  0          0       1           Binary     |
+    + -------------------------------------------------------------------- +
+    
+Let's view the next message for this topic partition:
+    
+    kafka:com.shocktrade.quotes.csv/0:0> knext
+    [0001:000] 22.47.46.41.22.2c.32.2e.37.39.2c.22.38.2f.32.32.2f.32.30.31.34.22.2c.22.34 | "GFA",2.79,"8/22/2014","4 |
+    [0001:025] 3a.30.33.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.30.37.2c.22.2d.30.2e | :03pm",N/A,N/A,-0.07,"-0. |
+    [0001:050] 30.37.20.2d.20.2d.32.2e.34.35.25.22.2c.32.2e.38.36.2c.32.2e.38.34.2c.32.2e | 07 - -2.45%",2.86,2.84,2. |
+    [0001:075] 37.39.2c.32.2e.38.35.2c.32.2e.37.39.2c.36.32.36.33.34.30.2c.35.36.34.2e.36 | 79,2.85,2.79,626340,564.6 |
+    [0001:100] 4d.2c.22.4e.2f.41.22                                                       | M,"N/A"                   |    
+    
+Let's view the last message for this topic partition: 
+
+    kafka:com.shocktrade.quotes.csv/0:0> klast
+    [9580:000] 22.52.57.46.43.45.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "RWFCE",0.00,"N/A","N/A", |
+    [9580:025] 4e.2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.22.30.2e.30.30.20.2d.20.30.2e.30.30 | N/A,N/A,0.00,"0.00 - 0.00 |
+    [9580:050] 25.22.2c.4e.2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.30 | %",N/A,N/A,0.00,N/A,N/A,0 |
+    [9580:075] 2c.4e.2f.41.2c.22.4e.2f.41.22                                              | ,N/A,"N/A"                |
+
+Notice above we didn't have to specify the topic or partition because it's defined in our cursor. 
+Let's view the cursor again:
+
+    kafka:com.shocktrade.quotes.csv/0:9580> kcursor
+    + -------------------------------------------------------------------- +
+    | topic                      partition  offset  nextOffset  encoding   |
+    + -------------------------------------------------------------------- +
+    | com.shocktrade.quotes.csv  0          9580    9581        Binary     |
+    + -------------------------------------------------------------------- +
 
 To retrieve the start and end offsets and number of messages available for a topic across any number of partitions:
 
-	zookeeper@dev501:2181:/> kstats test.app1.alerts 0 2
-    + ------------------------------------------------------------------------ +
-    | name              partition  startOffset  endOffset  messagesAvailable   |
-    + ------------------------------------------------------------------------ +
-    | test.app1.alerts  0          4009955      4009955    0                   |
-    | test.app1.alerts  1          3845895      3845895    0                   |
-    | test.app1.alerts  2          5322551      5322551    0                   |
-    + ------------------------------------------------------------------------ +
+    kafka:com.shocktrade.quotes.csv/0:9580> kstats
+    + --------------------------------------------------------------------------------- +
+    | topic                      partition  startOffset  endOffset  messagesAvailable   |
+    + --------------------------------------------------------------------------------- +
+    | com.shocktrade.quotes.csv  0          0            9580       9580                |
+    | com.shocktrade.quotes.csv  1          0            10445      10445               |
+    | com.shocktrade.quotes.csv  2          0            10973      10973               |
+    | com.shocktrade.quotes.csv  3          0            9994       9994                |
+    | com.shocktrade.quotes.csv  4          0            9080       9080                |
+    + --------------------------------------------------------------------------------- +
+
+**NOTE**: Above "kstats" is equivalent to "kstats com.shocktrade.quotes.csv" or "kstats com.shocktrade.quotes.csv 0 4".
+However, because of the cursor we previously established, those arguments could be omitted.
 
 To retrieve the list of topics with new messages (since your last query):
 
-    zookeeper@dev501:2181/> kinbound
+    kafka:com.shocktrade.quotes.csv/0:9580> kinbound
     + ---------------------------------------------------------------------------------------------------------------- +
     | topic                          partition  startOffset  endOffset    change  msgsPerSec  lastCheckTime            |
     + ---------------------------------------------------------------------------------------------------------------- +
-    | test.app1.alerts               8          14172422286  14181448062  22722   1195.9      08/25/2014 08:00PM UTC   |
-    | test.app1.alerts               2          14152959137  14161960794  19158   1008.4      08/25/2014 08:00PM UTC   |
-    | test.app1.alerts               6          14149557536  14158589929  19079   1004.2      08/25/2014 08:00PM UTC   |
-    | test.app1.alerts               0          14149783268  14158884735  19013   1000.7      08/25/2014 08:00PM UTC   |
-    | test.app1.alerts               3          14149465416  14158650047  18710   984.8       08/25/2014 08:00PM UTC   |
-    | test.app1.alerts               9          14149489857  14158842964  18699   984.2       08/25/2014 08:00PM UTC   |
-    | test.app1.alerts               1          14149397624  14158931725  18343   965.5       08/25/2014 08:00PM UTC   |
-    | test.app1.alerts               7          14149902016  14159677946  18325   964.5       08/25/2014 08:00PM UTC   |
-    | test.app1.alerts               4          14150527623  14159760560  18207   958.3       08/25/2014 08:00PM UTC   |
-    | test.app1.alerts               5          14150738074  14160430877  18132   954.4       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.csv      7          58618400     59195800     7400    389.5       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.csv      6          11504800     13458400     2000    105.3       08/25/2014 08:00PM UTC   |
-    | com.shocktrade.quotes.csv      6          9856091      10307108     1200    63.2        08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.rt       8          14172422286  14181448062  22722   1195.9      08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.rt       2          14152959137  14161960794  19158   1008.4      08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.rt       6          14149557536  14158589929  19079   1004.2      08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.rt       0          14149783268  14158884735  19013   1000.7      08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.rt       3          14149465416  14158650047  18710   984.8       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.rt       9          14149489857  14158842964  18699   984.2       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.rt       1          14149397624  14158931725  18343   965.5       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.rt       7          14149902016  14159677946  18325   964.5       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.rt       4          14150527623  14159760560  18207   958.3       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.rt       5          14150738074  14160430877  18132   954.4       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.csv      1          58618400     59195800     7400    389.5       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.csv      2          11504800     13458400     2000    105.3       08/25/2014 08:00PM UTC   |
+    | com.shocktrade.quotes.csv      3          9856091      10307108     1200    63.2        08/25/2014 08:00PM UTC   |
     + ---------------------------------------------------------------------------------------------------------------- +
+
+To see the current offsets for all consumer IDs:
+
+    kafka:com.shocktrade.quotes.csv/0:9580> kconsumers
+    + ------------------------------------------------------------------------------------- +
+    | consumerId  topic                      partition  offset  topicOffset  messagesLeft   |
+    + ------------------------------------------------------------------------------------- +
+    | dev         com.shocktrade.quotes.csv  0          4259    9580         5321           |
+    | dev         com.shocktrade.quotes.csv  1          0       10445        10445          |
+    | dev         com.shocktrade.quotes.csv  2          3352    10973        7621           |
+    | dev         com.shocktrade.quotes.csv  3          3781    9994         6213           |
+    | dev         com.shocktrade.quotes.csv  4          9081    9080         0              |
+    + ------------------------------------------------------------------------------------- +
+
+#### Zookeeper Module
+
+To view all of the Zookeeper commands, which all begin with the letter "z":
+
+    zookeeper:localhost:2181/> ?z
+    + ----------------------------------------------------------------------------------------- +
+    | command     module     description                                                        |
+    + ----------------------------------------------------------------------------------------- +
+    | zcat        zookeeper  Retrieves the value of a key from ZooKeeper                        |
+    | zcd         zookeeper  Changes the current path/directory in ZooKeeper                    |
+    | zexists     zookeeper  Verifies the existence of a ZooKeeper key                          |
+    | zget        zookeeper  Retrieves the contents of a specific Zookeeper key                 |
+    | zls         zookeeper  Retrieves the child nodes for a key from ZooKeeper                 |
+    | zmk         zookeeper  Creates a new ZooKeeper sub-directory (key)                        |
+    | zput        zookeeper  Retrieves a value from ZooKeeper                                   |
+    | zreconnect  zookeeper  Re-establishes the connection to Zookeeper                         |
+    | zrm         zookeeper  Removes a key-value from ZooKeeper (DESTRUCTIVE)                   |
+    | zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)        |
+    | zsess       zookeeper  Retrieves the Session ID from ZooKeeper                            |
+    | zstat       zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)   |
+    | ztree       zookeeper  Retrieves Zookeeper directory structure                            |
+    + ----------------------------------------------------------------------------------------- +
 
 To view the Zookeeper keys at the current hierarchy level:
 
@@ -142,73 +269,57 @@ To view the Zookeeper keys at the current hierarchy level:
 			
 To change the current Zookeeper hierarchy level:			
 			
-	zookeeper@dev501:2181:/> zcd brokers
+    zookeeper:localhost:2181:/> zcd brokers
         /brokers
         
 Now view the keys at this level:        
     
-    zookeeper@dev501:2181:/brokers> zls
+    zookeeper:localhost:2181:/brokers> zls
         topics
         ids	
         
-To list of commands that start with "k":
-			
-	zookeeper@dev501:2181:/> ?k
-    + ------------------------------------------------------------------------------------------------------------------- +
-    | command     module  description                                                                                     |
-    + ------------------------------------------------------------------------------------------------------------------- +
-    | kbrokers    kafka   Returns a list of the brokers from ZooKeeper                                                    |
-    | kcommit     kafka   Commits the offset for a given topic and group                                                  |
-    | kconsumers  kafka   Returns a list of the consumers from ZooKeeper                                                  |
-    | kcursor     kafka   Displays the current message cursor                                                             |
-    | kdelta      kafka   Returns a list of deltas between the consumers and topics                                       |
-    | kexport     kafka   Writes the contents of a specific topic to a file                                               |
-    | kfetch      kafka   Retrieves the offset for a given topic and group                                                |
-    | kfetchsize  kafka   Retrieves or sets the default fetch size for all Kafka queries                                  |
-    | kfirst      kafka   Returns the first message for a given topic                                                     |
-    | kget        kafka   Retrieves the message at the specified offset for a given topic partition                       |
-    | kgeta       kafka   Returns the key-value pairs of an Avro message from a topic partition                           |
-    | kgetminmax  kafka   Retrieves the smallest and largest message sizes for a range of offsets for a given partition   |
-    | kgetsize    kafka   Retrieves the size of the message at the specified offset for a given topic partition           |
-    | kimport     kafka   Imports messages into a new/existing topic                                                      |
-    | kinbound    kafka   Retrieves a list of topics with new messages (since last query)                                 |
-    | klast       kafka   Returns the last message for a given topic                                                      |
-    | kls         kafka   Lists all existing topics                                                                       |
-    | kmk         kafka   Creates a new topic                                                                             |
-    | knext       kafka   Attempts to retrieve the next message                                                           |
-    | koffset     kafka   Returns the offset at a specific instant-in-time for a given topic                              |
-    | kprev       kafka   Attempts to retrieve the message at the previous offset                                         |
-    | kpush       kafka   Publishes a message to a topic                                                                  |
-    | krm         kafka   Deletes a topic (DESTRUCTIVE)                                                                   |
-    | kscana      kafka   Scans a range of messages verifying conformance to an Avro schema                               |
-    | kstats      kafka   Returns the partition details for a given topic                                                 |
-    + ------------------------------------------------------------------------------------------------------------------- +
+Let's look at the entire Zookeeper hierarchy recursively from our current path:
+        
+    zookeeper:localhost:2181/brokers> ztree
+    /brokers
+    /brokers/topics
+    /brokers/topics/csvQuotes
+    /brokers/topics/csvQuotes/partitions
+    /brokers/topics/csvQuotes/partitions/3
+    /brokers/topics/csvQuotes/partitions/3/state
+    /brokers/topics/csvQuotes/partitions/2
+    /brokers/topics/csvQuotes/partitions/2/state
+    /brokers/topics/csvQuotes/partitions/1
+    /brokers/topics/csvQuotes/partitions/1/state
+    /brokers/topics/csvQuotes/partitions/0
+    /brokers/topics/csvQuotes/partitions/0/state
+    /brokers/topics/csvQuotes/partitions/4
+    /brokers/topics/csvQuotes/partitions/4/state
+    /brokers/topics/com.shocktrade.quotes.csv
+    /brokers/topics/com.shocktrade.quotes.csv/partitions
+    /brokers/topics/com.shocktrade.quotes.csv/partitions/3
+    /brokers/topics/com.shocktrade.quotes.csv/partitions/3/state
+    /brokers/topics/com.shocktrade.quotes.csv/partitions/2
+    /brokers/topics/com.shocktrade.quotes.csv/partitions/2/state
+    /brokers/topics/com.shocktrade.quotes.csv/partitions/1
+    /brokers/topics/com.shocktrade.quotes.csv/partitions/1/state
+    /brokers/topics/com.shocktrade.quotes.csv/partitions/0
+    /brokers/topics/com.shocktrade.quotes.csv/partitions/0/state
+    /brokers/topics/com.shocktrade.quotes.csv/partitions/4
+    /brokers/topics/com.shocktrade.quotes.csv/partitions/4/state
+    /brokers/ids
+    /brokers/ids/3
+    /brokers/ids/2
+    /brokers/ids/1
+    /brokers/ids/6
+    /brokers/ids/5
+    /brokers/ids/4        
+        
+Finally, let's view the contents of one of the keys:        
+        
+    zookeeper:localhost:2181/brokers> zget topics/com.shocktrade.quotes.csv/partitions/4/state
+    [00] 7b.22.63.6f.6e.74.72.6f.6c.6c.65.72.5f.65.70.6f.63.68.22.3a.31.2c.22.6c.65 | {"controller_epoch":1,"le
+    [25] 61.64.65.72.22.3a.35.2c.22.76.65.72.73.69.6f.6e.22.3a.31.2c.22.6c.65.61.64 | ader":5,"version":1,"lead
+    [50] 65.72.5f.65.70.6f.63.68.22.3a.30.2c.22.69.73.72.22.3a.5b.35.5d.7d          | er_epoch":0,"isr":[5]}         
 
-To see the current offsets for all consumer IDs:
-
-    zookeeper@vsccrtc201-brn1:2181/> kconsumers
-    + ---------------------------------------------------------------------------------------------------------- +
-    | consumerId                                               topic                      partition  offset      |
-    + ---------------------------------------------------------------------------------------------------------- +
-    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  0          26006370    |
-    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  1          23751039    |
-    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  2          22611530    |
-    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  3          24462662    |
-    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  4          25603795    |
-    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  5          23941687    |
-    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  6          25435327    |
-    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  7          23741720    |
-    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  8          21999410    |
-    | kafka-to-file-1407952872635-1811322114                   com.shocktrade.quotes.csv  9          24762782    |
-    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  0          26006370    |
-    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  1          23751039    |
-    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  2          22611530    |
-    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  3          24462662    |
-    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  4          25603795    |
-    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  5          23941687    |
-    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  6          25435327    |
-    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  7          23766520    |
-    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  8          22205610    |
-    | kafka-to-file-1407953236905-602150863                    com.shocktrade.quotes.csv  9          24762782    |
-    + ---------------------------------------------------------------------------------------------------------- +
 
