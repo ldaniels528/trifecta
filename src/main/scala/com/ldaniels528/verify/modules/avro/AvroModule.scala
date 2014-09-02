@@ -36,7 +36,7 @@ class AvroModule(rt: VxRuntimeContext) extends Module with AvroReading {
     decoder.schemaString
   }
 
-  def loadSchema(args: String*) = {
+  def loadSchema(args: String*): Unit = {
     val Seq(name, schemaPath, _*) = args
 
     // get the decoder
@@ -48,6 +48,7 @@ class AvroModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
       override def eval(implicit scope: Scope): Option[Any] = value
     })
+    ()
   }
 
   /**
