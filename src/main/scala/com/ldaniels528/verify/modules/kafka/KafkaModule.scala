@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.modules.kafka
 
-import java.io.{File, PrintStream}
+import java.io.{BufferedOutputStream, File, PrintStream}
 import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -117,14 +117,14 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // export the data to the file
     var count = 0L
-    new DataOutputStream(new FileOutputStream(file)) use { fos =>
+    new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file), 65535)) use { fos =>
       KafkaStreamingConsumer(rt.zkEndPoint, groupId) use { consumer =>
         for (record <- consumer.iterate(topic, parallelism)) {
           val message = record.message
           fos.writeInt(message.length)
           fos.write(message)
           count += 1
-          if(count % 10000 == 0) {
+          if (count % 10000 == 0) {
             out.println(s"$count messages written so far...")
             fos.flush()
           }
@@ -734,7 +734,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   case class AvroVerification(verified: Int, failed: Int)
 
-  case class TopicDetail(topic: String, partition: Int, leader: String, replicas: Int, isr: Int)
+  case class TopicDetail(topic: String, partition: Int, leader: String, replicas: Int, inSync: Int)
 
   case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
 
