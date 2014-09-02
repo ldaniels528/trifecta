@@ -179,7 +179,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val result = consumer.scan(topic, parallelism = 4, key) map (_ map { msg =>
       val lastOffset: Long = getLastOffset(msg.topic, msg.partition) getOrElse -1L
       val nextOffset: Long = msg.offset + 1
-      cursor = Option(MessageCursor(msg.topic, msg.partition, msg.offset, nextOffset, BINARY))
+      cursor = Option(MessageCursor(msg.topic, msg.partition, msg.offset, nextOffset, BinaryMessageEncoding))
       MessageData(msg.offset, nextOffset, lastOffset, msg.message)
     })
 
@@ -229,7 +229,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subscriber =>
       subscriber.getFirstOffset flatMap { offset =>
         val messageData = subscriber.fetch(offset, defaultFetchSize).headOption
-        cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, BINARY))
+        cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, BinaryMessageEncoding))
         messageData
       }
     }
@@ -253,7 +253,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subscriber =>
       subscriber.getLastOffset flatMap { offset =>
         val messageData = subscriber.fetch(offset, defaultFetchSize).headOption
-        cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, BINARY))
+        cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, BinaryMessageEncoding))
         messageData
       }
     }
@@ -289,7 +289,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
         override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
           decoder.decode(message) match {
             case Success(record) =>
-              cursor = nextOffset map (nextOffset => MessageCursor(name, partition.toInt, offset, nextOffset, AVRO))
+              cursor = nextOffset map (nextOffset => MessageCursor(name, partition.toInt, offset, nextOffset, AvroMessageEncoding(schemaVar)))
               val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
               results = fields map { f =>
                 val v = record.get(f)
@@ -318,7 +318,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     var messageData: Option[MessageData] = None
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
       messageData = subscriber.fetch(offset.toLong, fetchSize).headOption
-      cursor = messageData map (m => MessageCursor(name, partition.toInt, m.offset, m.nextOffset, BINARY))
+      cursor = messageData map (m => MessageCursor(name, partition.toInt, m.offset, m.nextOffset, BinaryMessageEncoding))
     }
     messageData
   }
@@ -366,10 +366,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getNextMessage(args: String*)(implicit out: PrintStream): Option[Any] = {
     cursor map { case MessageCursor(topic, partition, offset, nextOffset, encoding) =>
       encoding match {
-        case BINARY =>
-          getMessage(Seq(topic, partition.toString, nextOffset.toString): _*)
-        case AVRO =>
-          getMessageAvro(Seq(topic, partition.toString, nextOffset.toString): _*)
+        case BinaryMessageEncoding =>
+          getMessage(topic, partition.toString, nextOffset.toString)
+        case AvroMessageEncoding(schemaVar) =>
+          getAvroMessage(schemaVar, topic, partition.toString, nextOffset.toString)
         case unknown =>
           throw new IllegalStateException(s"Unrecognized encoding $unknown")
       }
@@ -399,10 +399,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getPreviousMessage(args: String*)(implicit out: PrintStream): Option[Any] = {
     cursor map { case MessageCursor(topic, partition, offset, nextOffset, encoding) =>
       encoding match {
-        case BINARY =>
-          getMessage(Seq(topic, partition.toString, (offset - 1).toString): _*)
-        case AVRO =>
-          getMessageAvro(Seq(topic, partition.toString, (offset - 1).toString): _*)
+        case BinaryMessageEncoding =>
+          getMessage(topic, partition.toString, (offset - 1).toString)
+        case AvroMessageEncoding(schemaVar) =>
+          getAvroMessage(schemaVar, topic, partition.toString, (Math.max(0, offset - 1)).toString)
         case unknown =>
           throw new IllegalStateException(s"Unrecognized encoding $unknown")
       }
@@ -781,9 +781,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
  */
 object KafkaModule {
 
-  case class MessageEncoding(value: String) extends AnyVal
-
-  val BINARY = MessageEncoding("Binary")
-  val AVRO = MessageEncoding("Avro")
+  sealed trait MessageEncoding
+  case class AvroMessageEncoding(schemaVarName: String) extends MessageEncoding
+  case object BinaryMessageEncoding extends MessageEncoding
 
 }
