@@ -21,10 +21,11 @@ class KafkaStreamingConsumerTest {
   // setup our Zookeeper connection
   private val zkEndPoint = EndPoint("dev501", 2181)
   private implicit val zk = ZKProxy(zkEndPoint)
+  private val consumerId = "dev"
   private val parallelism = 4
 
   @Before
-  def setup(): Unit = resetOffsets("com.shocktrade.quotes.csv", partitions = 4, "dev")
+  def setup(): Unit = resetOffsets("com.shocktrade.quotes.csv", partitions = 4, consumerId)
 
   @Test
   def actorPatternTest(): Unit = {
@@ -33,13 +34,13 @@ class KafkaStreamingConsumerTest {
     val streamingActor = system.actorOf(Props[StreamingMessageActor], name = "streamingActor")
 
     // start streaming the data
-    val consumer = KafkaStreamingConsumer(zkEndPoint, "dev")
+    val consumer = KafkaStreamingConsumer(zkEndPoint, consumerId)
     consumer.stream("com.shocktrade.quotes.csv", parallelism, streamingActor)
   }
 
   @Test
   def iteratePatternTest(): Unit = {
-    val consumer = KafkaStreamingConsumer(zkEndPoint, "dev")
+    val consumer = KafkaStreamingConsumer(zkEndPoint, consumerId)
     for (message <- consumer.iterate("com.shocktrade.quotes.csv", parallelism)) {
       tabular.transform(Seq(message)) foreach logger.info
     }
@@ -48,7 +49,7 @@ class KafkaStreamingConsumerTest {
   @Test
   def observerPatternTest(): Unit = {
     // start streaming the data
-    val consumer = KafkaStreamingConsumer(zkEndPoint, "dev")
+    val consumer = KafkaStreamingConsumer(zkEndPoint, consumerId)
     consumer.observe("com.shocktrade.quotes.csv", parallelism, new StreamingMessageObserver {
       override def consume(message: StreamedMessage) = {
         tabular.transform(Seq(message)) foreach logger.info
