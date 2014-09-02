@@ -707,46 +707,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   private def parseOffset(offset: String): Long = parseLong("offset", offset)
 
-  /**
-   * "kwatch" - Subscribes to a specific topic
-   */
-  def watchTopic(args: String*)(implicit out: PrintStream): Long = {
-    // get the arguments
-    val Seq(name, partition, _*) = args
-    val duration = (extract(args, 2) map (parseInt("duration", _)) getOrElse 60).seconds
-
-    // perform the action
-    var count = 0L
-    KafkaSubscriber.watch(Topic(name, parseInt("partition", partition)), brokers, None, duration, correlationId,
-      new MessageConsumer {
-        override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
-          dumpMessage(offset, message)(rt, out)
-          count += 1
-        }
-      })
-    count
-  }
-
-  /**
-   * "kwatchgroup" - Subscribes to a specific topic using a consumer group ID
-   */
-  def watchTopicWithConsumerGroup(args: String*)(implicit out: PrintStream): Long = {
-    // get the arguments
-    val Seq(name, partition, groupId, _*) = args
-    val duration = (extract(args, 3) map (parseInt("duration", _)) getOrElse 60).seconds
-
-    // perform the action
-    var count = 0L
-    KafkaSubscriber.watchGroup(Topic(name, parseInt("partition", partition)), brokers, groupId, duration, correlationId,
-      new MessageConsumer {
-        override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
-          dumpMessage(offset, message)(rt, out)
-          count += 1
-        }
-      })
-    count
-  }
-
   private def die[S](message: String): S = throw new IllegalArgumentException(message)
 
   /**

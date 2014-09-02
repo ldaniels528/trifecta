@@ -3,7 +3,6 @@ package com.ldaniels528.verify.modules.kafka
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber._
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.VxUtils._
-import kafka.api.OffsetRequest.LatestTime
 import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
@@ -25,7 +24,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
     .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for $topic"))
 
   // get the initial broker (topic leader)
-  private var broker: Broker = leader
+  private val broker: Broker = leader
 
   // get the connection (topic consumer)
   private val consumer: SimpleConsumer = connect(broker, clientID)
@@ -34,42 +33,6 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
    * Closes the underlying consumer instance
    */
   def close(): Unit = consumer.close()
-
-  /**
-   * Listens to the topic for new messages
-   */
-  def consume(startingOffset: Option[Long] = None, endingOffset: Option[Long] = None, blockSize: Option[Int] = None, listener: MessageConsumer): Long = {
-    // attempt to determine the EOF offset
-    val offsetEOF = endingOffset.getOrElse(getOffsetsBefore(-1L).getOrElse(0L))
-    val fetchSize = blockSize.getOrElse(DEFAULT_FETCH_SIZE)
-    var readOffset = startingOffset.getOrElse(0L)
-
-    while (readOffset < offsetEOF) {
-      // submit the request, and retrieve the response
-      Try(fetch(readOffset, fetchSize)) match {
-        case Success(messages) =>
-          messages foreach { msg =>
-            listener.consume(msg.offset, Option(msg.nextOffset), msg.message)
-            readOffset = msg.nextOffset
-          }
-
-        case Failure(e: KafkaFetchException) =>
-          e.code match {
-            case ErrorMapping.OffsetOutOfRangeCode =>
-              readOffset = getOffsetsBefore(LatestTime)
-                .getOrElse(throw new IllegalStateException("The appropriate offset could not be determined"))
-            case _ =>
-              logger.warn(s"consume: Unhandled error code ${e.code}-${ERROR_CODES.getOrElse(e.code, "UNKNOWN")}... Reconnecting...")
-              consumer.close()
-              broker = findNewLeader(broker, correlationId)
-                .getOrElse(throw new IllegalStateException("Unable to find new leader after Broker failure."))
-          }
-        case Failure(e) =>
-          throw new IllegalStateException("An unexpected error occurred", e)
-      }
-    }
-    readOffset
-  }
 
   /**
    * Commits an offset for the given consumer group
@@ -291,71 +254,6 @@ object KafkaSubscriber {
           pmd.isr map (b => Broker(b.host, b.port)),
           tmd.sizeInBytes)
       }
-    }
-  }
-
-  /**
-   * Watches a topic starting at the given offset
-   */
-  def watch(topic: Topic, brokers: Seq[Broker], startingOffset: Option[Long], duration: FiniteDuration, correlationId: Int, consumer: MessageConsumer): Option[Long] = {
-    // create the subscriber
-    new KafkaSubscriber(topic, brokers, correlationId) use { subscriber =>
-      // compute the time-out
-      val timeout = System.currentTimeMillis() + duration.toMillis
-
-      // get the offset for which to start watching 
-      var offset = startingOffset ?? subscriber.getOffsetsBefore(-1)
-
-      // watch until the timeout is reached
-      while (timeout >= System.currentTimeMillis()) {
-        offset = Option(subscriber.consume(offset, None, listener = consumer))
-        Thread.sleep(100.millis)
-      }
-
-      // if the offset changed, report it.
-      for {
-        last <- offset
-        start <- startingOffset ?? Option(0L)
-      } yield if (last > start) {
-        logger.info(s"$topic: Ended watch at offset $last (started at $start)...")
-      }
-
-      offset
-    }
-  }
-
-  /**
-   * Watches a topic starting at the offset for the given consumer group
-   */
-  def watchGroup(topic: Topic, brokers: Seq[Broker], groupId: String, duration: FiniteDuration, correlationId: Int, consumer: MessageConsumer): Option[Long] = {
-    // create the subscriber
-    new KafkaSubscriber(topic, brokers, correlationId) use { subscriber =>
-      // compute the time-out
-      val timeout = System.currentTimeMillis() + duration.toMillis
-
-      // get the offset for which to start watching 
-      val startingOffset = subscriber.fetchOffsets(groupId) ?? Option(0L)
-      var offset = startingOffset
-
-      // poll the topic until the timeout is reached
-      while (timeout >= System.currentTimeMillis()) {
-        offset = Option(subscriber.consume(offset, None, listener = consumer))
-        offset match {
-          case Some(myOffset) => subscriber.commitOffsets(groupId, myOffset, "")
-          case _ =>
-        }
-        Thread.sleep(100.millis)
-      }
-
-      // if the offset changed, report it.
-      for {
-        last <- offset
-        start <- startingOffset
-      } yield if (last > start) {
-        logger.info(s"$topic: Ended watch at offset $last (started at $start)...")
-      }
-
-      offset
     }
   }
 
