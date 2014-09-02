@@ -51,6 +51,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   def defaultFetchSize_=(sizeInBytes: Int) = scope.setValue("defaultFetchSize", Option(sizeInBytes))
 
+  def parallelism = scope.getValue[Int]("parallelism") getOrElse 4
+
+  def parallelism_=(parallelism: Int) = scope.setValue("parallelism", Option(parallelism))
+
   // the bound commands
   override def getCommands: Seq[Command] = Seq(
     Command(this, "kbrokers", getBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the brokers from ZooKeeper"),
