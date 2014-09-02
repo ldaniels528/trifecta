@@ -109,17 +109,15 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   }
 
   def interpret(input: String): Try[Any] = {
-    interpretLegacy(input) /*match {
-      case s1 @ Success(v) => s1
-      case f1 @ Failure(e1) =>
-        interpretVScript(input) match {
-          case s2 @ Success(v) => s2
-          case Failure(_) => f1
-        }
-    } */
+    if (input.startsWith("#")) interpretVScript(input.tail) else interpretCommandLine(input)
   }
 
-  def interpretLegacy(input: String): Try[Any] = {
+  /**
+   * Interprets command line input
+   * @param input the given line of input
+   * @return a try-monad wrapped result
+   */
+  private def interpretCommandLine(input: String): Try[Any] = {
     // parse & evaluate the user input
     Try(parseInput(input) match {
       case Some((cmd, args)) =>
@@ -143,9 +141,14 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
     })
   }
 
-  def interpretVScript(line:String): Try[Any] = Try {
+  /**
+   * Interprets VScript input
+   * @param line the given line of input
+   * @return a try-monad wrapped result
+   */
+  private def interpretVScript(line: String): Try[Any] = Try {
     val opCode = VScriptCompiler.compile(line, debugOn)
-    if(debugOn) {
+    if (debugOn) {
       logger.info(s"opCode = $opCode (${opCode.getClass.getName}})")
     }
     opCode.eval
