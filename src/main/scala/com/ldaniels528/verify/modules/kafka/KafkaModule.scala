@@ -31,9 +31,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private implicit val scope: Scope = rt.scope
   private implicit val rtc: VxRuntimeContext = rt
 
-  // date parser instance
-  private val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-
   // create the ZooKeeper proxy
   private implicit val zk = rt.zkProxy
 
@@ -384,6 +381,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example {{{ koffset com.shocktrade.alerts 0 2014-05-14T14:30:11 }}}
    */
   def getOffset(args: String*): Option[Long] = {
+    // date parser instance
+    val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+
     // get the arguments
     val Seq(name, partition, _*) = args
     val sysTimeMillis = extract(args, 2) map (sdf.parse(_).getTime) getOrElse -1L
