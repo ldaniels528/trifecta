@@ -62,7 +62,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfirst", getFirstMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
     Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
-    Command(this, "kgeta", getMessageAvro, (Seq("schemaPath", "topic", "partition"), Seq("offset", "blockSize")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
+    Command(this, "kgeta", getAvroMessage, (Seq("schemaVariable"), Seq("topic", "partition", "offset")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
     Command(this, "kgetsize", getMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
@@ -268,24 +268,32 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kgeta" - Returns the key-value pairs of an Avro message from a Kafka partition
-   * @example {{{ kavrofields avro/schema1.avsc com.shocktrade.alerts 0 58500700 }}}
-   * @example {{{ kavrofields avro/schema2.avsc com.shocktrade.alerts 9 1799020 }}}
+   * @example {{{ kavrofields mySchemaVar com.shocktrade.alerts 0 58500700 }}}
+   * @example {{{ kavrofields mySchemaVar com.shocktrade.alerts 9 1799020 }}}
    */
-  def getMessageAvro(args: String*)(implicit out: PrintStream): Seq[AvroRecord] = {
+  def getAvroMessage(args: String*)(implicit out: PrintStream): Seq[AvroRecord] = {
     import scala.collection.JavaConverters._
 
     // get the arguments
-    val Seq(schemaVar, name, partition, _*) = args
-    val offset = extract(args, 3) map (parseLong("offset", _))
-    val blockSize = extract(args, 4) map (parseInt("blockSize", _))
+    val (schemaVar, name, partition, offset) = args.toList match {
+      case variable :: Nil =>
+        cursor.map(c => (variable, c.topic, c.partition, Option(c.offset)))
+          .getOrElse(die("No cursor defined or topic partition specified"))
+      case variable :: topicArg :: partitionArg :: Nil =>
+        (variable, topicArg, parsePartition(partitionArg), None)
+      case variable :: topicArg :: partitionArg :: offsetArg :: Nil =>
+        (variable, topicArg, parsePartition(partitionArg), Option(parseOffset(offsetArg)))
+      case _ =>
+        throw new IllegalArgumentException("Invalid arguments")
+    }
 
     // get the decoder
     val decoder = getAvroDecoder(schemaVar)
 
     // perform the action
     var results: Seq[AvroRecord] = Nil
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
-      _.consume(offset, offset map (_ + 1), blockSize, listener = new MessageConsumer {
+    new KafkaSubscriber(Topic(name, partition), brokers, correlationId) use {
+      _.consume(offset, offset map (_ + 1), Option(defaultFetchSize), listener = new MessageConsumer {
         override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
           decoder.decode(message) match {
             case Success(record) =>
