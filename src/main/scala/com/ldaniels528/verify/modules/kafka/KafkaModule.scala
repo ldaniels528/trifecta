@@ -225,17 +225,17 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "kfirst" - Returns the first message for a given topic
    * @example {{{ kfirst com.shocktrade.quotes.csv 0 }}}
    */
-  def getFirstMessage(args: String*): Option[MessageData] = {
+  def getFirstMessage(args: String*): Either[Option[MessageData], Seq[AvroRecord]] = {
     // get the arguments
     val (topic, partition) = getTopicAndPartition(args)
 
-    // perform the action
-    new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subscriber =>
-      subscriber.getFirstOffset flatMap { offset =>
-        val messageData = subscriber.fetch(offset, defaultFetchSize).headOption
-        cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, BinaryMessageEncoding))
-        messageData
-      }
+    // return the first record with the cursor's encoding
+    val encoding = cursor map (_.encoding) getOrElse BinaryMessageEncoding
+    encoding match {
+      case BinaryMessageEncoding =>
+        Left(getMessage(topic, partition.toString, "0"))
+      case AvroMessageEncoding(schemaVar) =>
+        Right(getAvroMessage(schemaVar, topic, partition.toString, "0"))
     }
   }
 
@@ -249,16 +249,21 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   /**
    * "klast" - Returns the last offset for a given topic
    */
-  def getLastMessage(args: String*): Option[MessageData] = {
+  def getLastMessage(args: String*): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
     // get the arguments
     val (topic, partition) = getTopicAndPartition(args)
 
     // perform the action
     new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subscriber =>
-      subscriber.getLastOffset flatMap { offset =>
-        val messageData = subscriber.fetch(offset, defaultFetchSize).headOption
-        cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, BinaryMessageEncoding))
-        messageData
+      subscriber.getLastOffset map { lastOffset =>
+        // return the first record with the cursor's encoding
+        val encoding = cursor map (_.encoding) getOrElse BinaryMessageEncoding
+        encoding match {
+          case BinaryMessageEncoding =>
+            Left(getMessage(topic, partition.toString, lastOffset.toString))
+          case AvroMessageEncoding(schemaVar) =>
+            Right(getAvroMessage(schemaVar, topic, partition.toString, lastOffset.toString))
+        }
       }
     }
   }
