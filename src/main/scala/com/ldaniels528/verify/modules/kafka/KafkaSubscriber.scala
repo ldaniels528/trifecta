@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 /**
- * Kafka Subscriber
+ * Low-Level Kafka Consumer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int) {
@@ -97,6 +97,11 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
     }
   }
 
+  /**
+   * Retrieves the offset of a consumer group ID
+   * @param groupId the given consumer group ID (e.g. myConsumerGroup)
+   * @return an option of an offset
+   */
   def fetchOffsets(groupId: String): Option[Long] = {
     // create the topic/partition and request information
     val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
@@ -113,10 +118,23 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
     } yield ome.offset
   }
 
+  /**
+   * Returns the first available offset
+   * @return an option of an offset
+   */
   def getFirstOffset: Option[Long] = getOffsetsBefore(OffsetRequest.EarliestTime)
 
+  /**
+   * Returns the last available offset
+   * @return an option of an offset
+   */
   def getLastOffset: Option[Long] = getOffsetsBefore(OffsetRequest.LatestTime) map (offset => Math.max(0, offset - 1))
 
+  /**
+   * Returns the offset for an instance in time
+   * @param time the given time EPOC in milliseconds
+   * @return an option of an offset
+   */
   def getOffsetsBefore(time: Long): Option[Long] = {
     // create the topic/partition and request information
     val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
@@ -234,10 +252,10 @@ object KafkaSubscriber {
    */
   def getTopicList(brokers: Seq[Broker], correlationId: Int)(implicit zk: ZKProxy): Seq[TopicDetails] = {
     // get the list of topics
-    val topics = zk.getChildren("/brokers/topics")
+    val topics = zk.getChildren(path = "/brokers/topics")
 
     // capture the meta data for all topics
-    getTopicMetadata(brokers(0), topics, correlationId) flatMap { tmd =>
+    getTopicMetadata(brokers.head, topics, correlationId) flatMap { tmd =>
       // check for errors
       if (tmd.errorCode != 0) throw new KafkaFetchException(tmd.errorCode)
 
@@ -280,7 +298,7 @@ object KafkaSubscriber {
    * Retrieves the partition meta data for the given broker
    */
   private def getPartitionMetadata(broker: Broker, topic: Topic, correlationId: Int): Option[PartitionMetadata] = {
-    connect(broker, s"pmdLookup_${System.currentTimeMillis()}") use { consumer =>
+    connect(broker, clientID = s"pmdLookup_${System.currentTimeMillis()}") use { consumer =>
       Try {
         // submit the request and retrieve the response
         val response = consumer.send(new TopicMetadataRequest(Seq(topic.name), correlationId))
@@ -303,7 +321,7 @@ object KafkaSubscriber {
    * Retrieves the partition meta data for the given broker
    */
   private def getTopicMetadata(broker: Broker, topics: Seq[String], correlationId: Int): Seq[TopicMetadata] = {
-    connect(broker, s"tmdLookup_${System.currentTimeMillis()}") use { consumer =>
+    connect(broker, clientID = s"tmdLookup_${System.currentTimeMillis()}") use { consumer =>
       Try {
         // submit the request and retrieve the response
         val response = consumer.send(new TopicMetadataRequest(topics, correlationId))
