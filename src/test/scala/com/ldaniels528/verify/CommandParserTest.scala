@@ -1,5 +1,6 @@
 package com.ldaniels528.verify
 
+import com.ldaniels528.verify.util.CommandParser
 import CommandParser._
 
 /**
