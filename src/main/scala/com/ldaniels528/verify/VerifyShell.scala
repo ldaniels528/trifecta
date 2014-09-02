@@ -83,11 +83,11 @@ class VerifyShell(rt: VxRuntimeContext) {
 }
 
 /**
- * Verify Console Shell Singleton
+ * Verify Console Shell Companion Object
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VerifyShell {
-  val VERSION = "0.1.2"
+  val VERSION = "0.1.3"
 
   /**
    * Application entry point
