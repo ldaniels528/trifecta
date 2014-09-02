@@ -277,12 +277,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // get the arguments
     val (schemaVar, name, partition, offset) = args.toList match {
       case variable :: Nil =>
-        cursor.map(c => (variable, c.topic, c.partition, Option(c.offset)))
+        cursor.map(c => (variable, c.topic, c.partition, c.offset))
           .getOrElse(die("No cursor defined or topic partition specified"))
-      case variable :: topicArg :: partitionArg :: Nil =>
-        (variable, topicArg, parsePartition(partitionArg), None)
       case variable :: topicArg :: partitionArg :: offsetArg :: Nil =>
-        (variable, topicArg, parsePartition(partitionArg), Option(parseOffset(offsetArg)))
+        (variable, topicArg, parsePartition(partitionArg), parseOffset(offsetArg))
       case _ =>
         throw new IllegalArgumentException("Invalid arguments")
     }
@@ -291,26 +289,21 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val decoder = getAvroDecoder(schemaVar)
 
     // perform the action
-    var results: Seq[AvroRecord] = Nil
-    new KafkaSubscriber(Topic(name, partition), brokers, correlationId) use {
-      _.consume(offset, offset map (_ + 1), Option(defaultFetchSize), listener = new MessageConsumer {
-        override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
-          decoder.decode(message) match {
-            case Success(record) =>
-              cursor = nextOffset map (nextOffset => MessageCursor(name, partition.toInt, offset, nextOffset, AvroMessageEncoding(schemaVar)))
-              val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
-              results = fields map { f =>
-                val v = record.get(f)
-                AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
-              }
-            case Failure(e) =>
-              out.println("[%04d] %s".format(offset, e.getMessage))
-          }
+    new KafkaSubscriber(Topic(name, partition), brokers, correlationId) use { subscriber =>
+      (subscriber.fetch(offset, defaultFetchSize).headOption map { md =>
+        decoder.decode(md.message) match {
+          case Success(record) =>
+            cursor = Option(MessageCursor(name, partition, md.offset, md.nextOffset, AvroMessageEncoding(schemaVar)))
+            val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
+            fields map { f =>
+              val v = record.get(f)
+              AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
+            }
+          case Failure(e) =>
+            throw new IllegalStateException(e.getMessage, e)
         }
-      })
+      }).getOrElse(Seq.empty)
     }
-
-    results
   }
 
   /**
@@ -378,8 +371,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
           getMessage(topic, partition.toString, nextOffset.toString)
         case AvroMessageEncoding(schemaVar) =>
           getAvroMessage(schemaVar, topic, partition.toString, nextOffset.toString)
-        case unknown =>
-          throw new IllegalStateException(s"Unrecognized encoding $unknown")
       }
     }
   }
@@ -408,11 +399,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     cursor map { case MessageCursor(topic, partition, offset, nextOffset, encoding) =>
       encoding match {
         case BinaryMessageEncoding =>
-          getMessage(topic, partition.toString, (offset - 1).toString)
+          getMessage(topic, partition.toString, Math.max(0, offset - 1).toString)
         case AvroMessageEncoding(schemaVar) =>
-          getAvroMessage(schemaVar, topic, partition.toString, (Math.max(0, offset - 1)).toString)
-        case unknown =>
-          throw new IllegalStateException(s"Unrecognized encoding $unknown")
+          getAvroMessage(schemaVar, topic, partition.toString, Math.max(0, offset - 1).toString)
       }
     }
   }
