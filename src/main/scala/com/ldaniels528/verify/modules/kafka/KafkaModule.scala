@@ -790,7 +790,11 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 object KafkaModule {
 
   sealed trait MessageEncoding
-  case class AvroMessageEncoding(schemaVarName: String) extends MessageEncoding
-  case object BinaryMessageEncoding extends MessageEncoding
+  case class AvroMessageEncoding(schemaVarName: String) extends MessageEncoding {
+    override def toString = s"Avro:$schemaVarName"
+  }
+  case object BinaryMessageEncoding extends MessageEncoding {
+    override def toString = s"Binary"
+  }
 
 }
