@@ -443,12 +443,19 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
   }
 
+  /**
+   * Generates statistics for the partition range of a given topic
+   * @param topic the given topic (e.g. com.shocktrade.quotes.realtime)
+   * @param partition0 the starting partition
+   * @param partition1 the ending partition
+   * @return an iteration of statistics
+   */
   private def getStatisticsData(topic: String, partition0: Int, partition1: Int): Iterable[TopicOffsets] = {
     for {
       partition <- partition0 to partition1
       first <- getFirstOffset(topic, partition)
       last <- getLastOffset(topic, partition)
-    } yield TopicOffsets(topic, partition, first, last, Math.max(0,  last - first))
+    } yield TopicOffsets(topic, partition, first, last, Math.max(0, last - first))
   }
 
   /**
