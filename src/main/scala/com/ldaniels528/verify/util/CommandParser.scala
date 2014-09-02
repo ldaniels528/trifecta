@@ -1,4 +1,4 @@
-package com.ldaniels528.verify
+package com.ldaniels528.verify.util
 
 /**
  * Verify Command Parser
@@ -44,7 +44,7 @@ object CommandParser {
             Some(s)
           }
 
-        // quote
+        // quoted text
         case '"' =>
           inQuotes = !inQuotes
           None

@@ -13,7 +13,7 @@ import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
 import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
 import com.ldaniels528.verify.modules.{Command, ModuleManager}
-import com.ldaniels528.verify.util.BinaryMessaging
+import com.ldaniels528.verify.util.{CommandParser, BinaryMessaging}
 import com.ldaniels528.verify.vscript.{RootScope, VScriptCompiler}
 import org.slf4j.LoggerFactory
 
