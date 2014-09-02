@@ -61,7 +61,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", getConsumers, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcursor", getCursor, (Seq.empty, Seq.empty), help = "Displays the current message cursor"),
-    Command(this, "kexport", exportToFile, (Seq("file", "topic", "partition"), Seq("startOffset", "endOffset", "flags", "blockSize")), "Writes the contents of a specific topic to a file"),
+    Command(this, "kexport", exportToFile, (Seq("file", "topic", "consumerGroupId"), Seq.empty), "Writes the contents of a specific topic to a file"),
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfirst", getFirstMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
@@ -107,29 +107,28 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kexport" - Dumps the contents of a specific topic to a file
-   * @example {{{ kexport quotes.txt com.shocktrade.quotes.csv 12388 16235 }}}
+   * @example {{{ kexport quotes.txt com.shocktrade.quotes.csv myConsumerId }}}
    */
   def exportToFile(args: String*): Long = {
     import java.io.{DataOutputStream, FileOutputStream}
 
     // get the arguments
-    val Seq(file, name, partition, _*) = args
-    val startOffset = extract(args, 3) map (parseLong("startOffset", _))
-    val endOffset = extract(args, 4) map (parseLong("endOffset", _))
-    val blockSize = extract(args, 5) map (parseInt("blockSize", _))
+    val Seq(file, topic, groupId, _*) = args
 
-    // output the output file
+    // export the data to the file
     var count = 0L
     new DataOutputStream(new FileOutputStream(file)) use { fos =>
-      // perform the action
-      new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
-        _.consume(startOffset, endOffset, blockSize, listener = new MessageConsumer {
-          override def consume(offset: Long, nextOffset: Option[Long], message: Array[Byte]) {
-            fos.writeInt(message.length)
-            fos.write(message)
-            count += 1
+      KafkaStreamingConsumer(rt.zkEndPoint, groupId) use { consumer =>
+        for (record <- consumer.iterate(topic, parallelism)) {
+          val message = record.message
+          fos.writeInt(message.length)
+          fos.write(message)
+          count += 1
+          if(count % 10000 == 0) {
+            out.println(s"$count messages written so far...")
+            fos.flush()
           }
-        })
+        }
       }
     }
     count
