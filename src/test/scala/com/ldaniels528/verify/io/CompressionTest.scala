@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
  * Compression Test Suite
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class CompressionTest extends Compression {
+class CompressionTest {
   private val logger = LoggerFactory.getLogger(getClass)
 
   @Test
