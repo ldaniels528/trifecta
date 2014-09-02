@@ -26,6 +26,14 @@ class KafkaStreamingConsumerTest {
   def setup(): Unit = resetOffsets("com.shocktrade.quotes.csv", 4, "dev")
 
   @Test
+  def iteratePatternTest(): Unit = {
+    val consumer = KafkaStreamingConsumer(zkEndPoint, "dev")
+    for(message <- consumer.iterate("com.shocktrade.quotes.csv", 4)) {
+      tabular.transform(Seq(message)) foreach logger.info
+    }
+  }
+
+  @Test
   def actorPatternTest(): Unit = {
     // setup the actor
     val system = ActorSystem("StreamingMessageSystem")

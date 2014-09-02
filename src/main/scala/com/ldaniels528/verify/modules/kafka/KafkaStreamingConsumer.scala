@@ -21,6 +21,21 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
    */
   def close(): Unit = consumer.shutdown()
 
+  def iterate(topic: String, parallelism: Int): Iterator[StreamedMessage] = {
+    val streamMap = consumer.createMessageStreams(Map(topic -> parallelism))
+    val streams = streamMap.getOrElse(topic, Nil) map (_.iterator())
+    new Iterator[StreamedMessage] {
+      override def hasNext: Boolean = streams.exists(_.hasNext())
+
+      override def next(): StreamedMessage = {
+        (streams.find(_.hasNext()) map { stream =>
+          val mam = stream.next()
+          StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message())
+        }).getOrElse(throw new IllegalStateException("Unexpected end of stream"))
+      }
+    }
+  }
+
   /**
    * Streams data from a Kafka topic to an observer
    * @param topic the given topic name
@@ -37,7 +52,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
           val it = stream.iterator()
           while (it.hasNext()) {
             val mam = it.next()
-            listener.consume(new StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message()))
+            listener.consume(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message()))
           }
         }
       }
@@ -74,7 +89,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
 
     // check for the failure to find the message by key
     Future.sequence(tasks.flatten).onComplete {
-      case Success(v) => if(!completed) promise.success(None)
+      case Success(v) => if (!completed) promise.success(None)
       case Failure(e) => promise.failure(e)
     }
 
