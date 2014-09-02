@@ -448,7 +448,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       partition <- partition0 to partition1
       first <- getFirstOffset(topic, partition)
       last <- getLastOffset(topic, partition)
-    } yield TopicOffsets(topic, partition, first, last, last - first)
+    } yield TopicOffsets(topic, partition, first, last, Math.max(0,  last - first))
   }
 
   /**
