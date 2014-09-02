@@ -21,6 +21,11 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
    */
   def close(): Unit = consumer.shutdown()
 
+  /**
+   * Iterates over messages from a Kafka topic
+   * @param topic the given topic name
+   * @param parallelism the given number of processing threads
+   */
   def iterate(topic: String, parallelism: Int): Iterator[StreamedMessage] = {
     val streamMap = consumer.createMessageStreams(Map(topic -> parallelism))
     val streams = streamMap.getOrElse(topic, Nil) map (_.iterator())
@@ -37,7 +42,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
   }
 
   /**
-   * Streams data from a Kafka topic to an observer
+   * Streams messages from a Kafka topic to an observer
    * @param topic the given topic name
    * @param parallelism the given number of processing threads
    * @param listener the observer to callback upon receipt of a new message
@@ -60,7 +65,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
   }
 
   /**
-   * Scans a Kafka topic for the first message containing the given key
+   * Scans a Kafka topic for the first occurrence of a message containing the given key
    * @param topic the given topic name
    * @param parallelism the given number of processing threads
    * @param key the given message key
