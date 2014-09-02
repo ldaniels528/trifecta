@@ -6,7 +6,7 @@ import java.util.zip._
 import com.ldaniels528.verify.util.VxUtils._
 import org.apache.commons.io.IOUtils
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /**
  * Adds compression/decompression capability to implementing classes
@@ -40,13 +40,9 @@ trait Compression {
   /**
    * Attempts to decompress the message however, if the decompression fails
    * the original message will be returned.
+   * @param data the given message data
    */
-  def deflate(message: Array[Byte]): Array[Byte] = {
-    decompress(message) match {
-      case Success(decompressed) => decompressed
-      case Failure(e) => message
-    }
-  }
+  def deflate(data: Array[Byte]): Array[Byte] = decompress(data) getOrElse data
 
   /**
    * Decompresses the message data
