@@ -99,7 +99,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def commitOffset(args: String*): Option[Short] = {
     // get the arguments
     val Seq(name, partition, groupId, offset, _*) = args
-    val metadata = extract(args, 4) getOrElse ""
+    val metadata = extract(args, index = 4) getOrElse ""
 
     // perform the action
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.commitOffsets(groupId, offset.toLong, metadata))
