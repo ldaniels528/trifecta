@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.modules.kafka
 
-import java.io.{BufferedOutputStream, File, PrintStream}
+import java.io.{File, PrintStream}
 import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -15,6 +15,7 @@ import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
@@ -61,7 +62,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", getConsumers, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcursor", getCursor, (Seq.empty, Seq.empty), help = "Displays the current message cursor"),
-    Command(this, "kexport", exportToFile, (Seq("file", "topic", "consumerGroupId"), Seq.empty), "Writes the contents of a specific topic to a file"),
+    Command(this, "kexport", exportToFile, (Seq("file", "topic", "consumerGroupId"), Seq.empty), "Writes the contents of a specific topic to a file", undocumented = true),
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfirst", getFirstMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
@@ -112,12 +113,14 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def exportToFile(args: String*): Long = {
     import java.io.{DataOutputStream, FileOutputStream}
 
+    val logger = LoggerFactory.getLogger(getClass)
+
     // get the arguments
     val Seq(file, topic, groupId, _*) = args
 
     // export the data to the file
     var count = 0L
-    new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file), 65535)) use { fos =>
+    new DataOutputStream(new FileOutputStream(file)) use { fos =>
       KafkaStreamingConsumer(rt.zkEndPoint, groupId) use { consumer =>
         for (record <- consumer.iterate(topic, parallelism)) {
           val message = record.message
