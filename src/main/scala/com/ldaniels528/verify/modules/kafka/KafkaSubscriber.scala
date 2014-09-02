@@ -20,7 +20,7 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
   private val clientID = s"Client_${topic.name}_${topic.partition}_${System.currentTimeMillis()}"
 
   // get the leader, meta data and replica brokers
-  private val (leader, metadata, replicas) = getLeaderPartitionMetaDataAndReplicas(topic, seedBrokers, correlationId)
+  private val (leader, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topic, seedBrokers, correlationId)
     .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for $topic"))
 
   // get the initial broker (topic leader)
