@@ -47,6 +47,8 @@ class AvroModule(rt: VxRuntimeContext) extends Module with AvroReading {
       val value = Some(decoder)
 
       override def eval(implicit scope: Scope): Option[Any] = value
+
+      override def toString = s"[$name]"
     })
     ()
   }
