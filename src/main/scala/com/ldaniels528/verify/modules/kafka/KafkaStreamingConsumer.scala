@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
 
 /**
- * Kafka Streaming Consumer
+ * High-Level Kafka Consumer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
@@ -137,15 +137,17 @@ object KafkaStreamingConsumer {
    * @param zkEndPoint the given Zookeeper endpoint
    * @param groupId the given consumer group ID
    * @return a new Streaming Consumer instance
+   * @see http://kafka.apache.org/07/configuration.html
    */
-  def apply(zkEndPoint: EndPoint, groupId: String): KafkaStreamingConsumer = {
-    val consumerConfig = new ConsumerConfig(
-      Map("zookeeper.connect" -> zkEndPoint.host,
-        "group.id" -> groupId,
-        "zookeeper.session.timeout.ms" -> "400",
-        "zookeeper.sync.time.ms" -> "200",
-        "auto.commit.interval.ms" -> "1000").toProps)
-    new KafkaStreamingConsumer(consumerConfig)
+  def apply(zkEndPoint: EndPoint, groupId: String, params: (String, Any)*): KafkaStreamingConsumer = {
+    val props = Map(
+      "zookeeper.connect" -> zkEndPoint.toString,
+      "group.id" -> groupId,
+      "zookeeper.session.timeout.ms" -> "400",
+      "zookeeper.sync.time.ms" -> "200",
+      "auto.commit.interval.ms" -> "1000") ++ Map(params.map { case (k, v) => (k, String.valueOf(v))}: _*)
+    System.out.println(s"props = $props")
+    new KafkaStreamingConsumer(new ConsumerConfig(props.toProps))
   }
 
   /**
