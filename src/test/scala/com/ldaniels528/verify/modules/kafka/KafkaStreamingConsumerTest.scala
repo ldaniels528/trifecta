@@ -25,7 +25,7 @@ class KafkaStreamingConsumerTest {
   private val parallelism = 4
 
   @Before
-  def setup(): Unit = resetOffsets("com.shocktrade.quotes.csv", partitions = 4, consumerId)
+  def setup(): Unit = resetOffsets("com.shocktrade.quotes.csv", partitions = 5, consumerId)
 
   @Test
   def actorPatternTest(): Unit = {
@@ -41,7 +41,7 @@ class KafkaStreamingConsumerTest {
   @Test
   def iteratePatternTest(): Unit = {
     val consumer = KafkaStreamingConsumer(zkEndPoint, consumerId)
-    for (message <- consumer.iterate("com.shocktrade.quotes.csv", parallelism)) {
+    for (message <- consumer.iterate("com.shocktrade.quotes.csv", parallelism = 1)) {
       tabular.transform(Seq(message)) foreach logger.info
     }
   }
