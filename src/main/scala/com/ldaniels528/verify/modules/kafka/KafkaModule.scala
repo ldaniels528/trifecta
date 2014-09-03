@@ -15,7 +15,6 @@ import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
-import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
@@ -109,31 +108,35 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kexport" - Dumps the contents of a specific topic to a file
-   * @example {{{ kexport quotes.txt com.shocktrade.quotes.csv myConsumerId }}}
+   * @example {{{  kexport quotes.kafka com.shocktrade.quotes.csv lld3 }}}
    */
   def exportToFile(args: String*): Long = {
     import java.io.{DataOutputStream, FileOutputStream}
-
-    val logger = LoggerFactory.getLogger(getClass)
 
     // get the arguments
     val Seq(file, topic, groupId, _*) = args
 
     // export the data to the file
     var count = 0L
-    new DataOutputStream(new FileOutputStream(file)) use { fos =>
-      KafkaStreamingConsumer(rt.zkEndPoint, groupId) use { consumer =>
-        for (record <- consumer.iterate(topic, parallelism)) {
-          val message = record.message
-          fos.writeInt(message.length)
-          fos.write(message)
-          count += 1
-          if (count % 10000 == 0) {
-            out.println(s"$count messages written so far...")
-            fos.flush()
+    try {
+      new DataOutputStream(new FileOutputStream(file)) use { fos =>
+        KafkaStreamingConsumer(rt.zkEndPoint, groupId, "consumer.timeout.ms" -> 5000) use { consumer =>
+          for (record <- consumer.iterate(topic, parallelism = 1)) {
+            val message = record.message
+            fos.writeInt(message.length)
+            fos.write(message)
+            count += 1
+            if (count % 10000 == 0) {
+              out.println(s"$count messages written so far...")
+              fos.flush()
+            }
           }
         }
       }
+    } catch {
+      case e: kafka.consumer.ConsumerTimeoutException =>
+      case e: Throwable =>
+        throw new IllegalStateException(e.getMessage, e)
     }
     count
   }
