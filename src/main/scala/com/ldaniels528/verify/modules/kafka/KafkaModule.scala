@@ -673,6 +673,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
   }
 
+  /**
+   * "kreset" - Sets a consumer group ID to zero for all partitions
+   * @example {{{ kreset com.shocktrade.quotes.csv lld }}}
+   */
   def resetConsumerGroup(args: String*): Unit = {
     // get the arguments
     val (topic, groupId) = args.toList match {
