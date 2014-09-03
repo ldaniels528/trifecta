@@ -232,7 +232,7 @@ To retrieve the list of topics with new messages (since your last query):
     + --------------------------------------------------------------------------------------------------------- +
 
 <a name="kafka-avro-module"></a>
-##### Kafka &amp; Avro Integration
+#### Kafka &amp; Avro Integration
 
 Verify supports Avro integration for Kafka. The next few examples make use of the following Avro schema:
 
