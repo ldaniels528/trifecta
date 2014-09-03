@@ -146,7 +146,6 @@ object KafkaStreamingConsumer {
       "zookeeper.session.timeout.ms" -> "400",
       "zookeeper.sync.time.ms" -> "200",
       "auto.commit.interval.ms" -> "1000") ++ Map(params.map { case (k, v) => (k, String.valueOf(v))}: _*)
-    System.out.println(s"props = $props")
     new KafkaStreamingConsumer(new ConsumerConfig(props.toProps))
   }
 
