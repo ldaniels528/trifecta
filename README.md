@@ -239,7 +239,7 @@ Verify supports Avro integration for Kafka. The next few examples make use of th
     {
       "type": "record",
       "name": "TopTalkers",
-      "namespace": "com.verisign.ie.styx.avro",
+      "namespace": "com.shocktrade.avro",
       "fields": [
         { "name": "rank", "type": "int", "doc": "The ranking of the entry" },
         { "name": "site", "type": "string", "doc": "The top-level-domain/site" },
