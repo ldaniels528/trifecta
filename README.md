@@ -253,7 +253,7 @@ Let's load the Avro schema into memory as the variable "topTalkers":
  
     kafka:com.shocktrade.quotes.csv/0:9580> avload topTalkers avro/topTalkers.avsc
 
-Next, let's use the variable (containg the Avro schema) to decode a Kafka message:
+Next, let's use the variable (containing the Avro schema) to decode a Kafka message:
 
     avro:avro$> kgeta topTalkers com.shocktrade.topTalkers  0 0
     + ------------------------------- +
