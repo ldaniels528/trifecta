@@ -73,11 +73,15 @@ class VerifyShell(rt: VxRuntimeContext) {
               err.println(s"Syntax error: ${e.getMessage}")
             case Failure(e) =>
               if (rt.debugOn) e.printStackTrace()
-              err.println(s"Runtime error: ${e.getMessage}")
+              err.println(s"Runtime error: ${getErrorMessage(e)}")
           }
         }
       }
     } while (rt.alive)
+  }
+
+  private def getErrorMessage(t: Throwable): String = {
+    Option(t.getMessage) getOrElse t.toString
   }
 
 }
