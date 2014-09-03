@@ -15,6 +15,7 @@ Table of Contents
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#kafka-module">Kafka Module</a>
+    * <a href="#kafka-avro-module">Kafka + Avro Module</a>
     * <a href="#storm-module">Storm Module</a>     
     * <a href="#zookeeper-module">Zookeeper Module</a>   
 
@@ -229,6 +230,52 @@ To retrieve the list of topics with new messages (since your last query):
     | com.shocktrade.quotes.csv  2          0            11018      32      10.7        09/01/14 01:51:30 PDT   |
     | com.shocktrade.quotes.csv  3          0            10031      27      9.0         09/01/14 01:51:30 PDT   |
     + --------------------------------------------------------------------------------------------------------- +
+
+<a name="kafka-avro-module"></a>
+##### Kafka &amp; Avro Integration
+
+Verify supports Avro integration for Kafka. The next few examples make use of the following Avro schema:
+
+    {
+      "type": "record",
+      "name": "TopTalkers",
+      "namespace": "com.verisign.ie.styx.avro",
+      "fields": [
+        { "name": "rank", "type": "int", "doc": "The ranking of the entry" },
+        { "name": "site", "type": "string", "doc": "The top-level-domain/site" },
+        { "name": "srcIP", "type": "string", "doc": "The source IP address" },
+        { "name": "count", "type": "long", "doc": "The number of occurrences of the site and source IP tuple" }
+      ],
+      "doc": "A basic schema for top-talkers messages"
+    }
+
+Let's load the Avro schema into memory as the variable "topTalkers":
+ 
+    kafka:com.shocktrade.quotes.csv/0:9580> avload topTalkers avro/topTalkers.avsc
+
+Next, let's use the variable (containg the Avro schema) to decode a Kafka message:
+
+    avro:avro$> kgeta topTalkers com.shocktrade.topTalkers  0 0
+    + ------------------------------- +
+    | field  value          type      |
+    + ------------------------------- +
+    | rank   1              Integer   |
+    | site   nyc412         Utf8      |
+    | srcIP  69.252.166.217  Utf8     |
+    | count  282            Long      |
+    + ------------------------------- +
+
+The kfirst, klast, kprev and knext commands also work with the Avro integration:
+
+    kafka:com.shocktrade.topTalkers/0:0> knext
+    + ------------------------------ +
+    | field  value         type      |
+    + ------------------------------ +
+    | rank   1             Integer   |
+    | site   nyc412        Utf8      |
+    | srcIP  68.87.73.142  Utf8      |
+    | count  263           Long      |
+    + ------------------------------ +
 
 <a name="storm-module"></a>
 #### Storm Module
