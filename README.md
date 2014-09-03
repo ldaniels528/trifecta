@@ -15,7 +15,7 @@ Table of Contents
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#kafka-module">Kafka Module</a>
-    * <a href="#kafka-avro-module">Kafka + Avro Module</a>
+    * <a href="#kafka-avro-module">Kafka &amp; Avro Integration</a>
     * <a href="#storm-module">Storm Module</a>     
     * <a href="#zookeeper-module">Zookeeper Module</a>   
 
@@ -261,7 +261,7 @@ Next, let's use the variable (containing the Avro schema) to decode a Kafka mess
     + ------------------------------- +
     | rank   1              Integer   |
     | site   nyc412         Utf8      |
-    | srcIP  69.252.166.217  Utf8     |
+    | srcIP  69.252.73.217  Utf8      |
     | count  282            Long      |
     + ------------------------------- +
 
