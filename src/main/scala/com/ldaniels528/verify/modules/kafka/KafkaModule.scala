@@ -747,7 +747,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     args.toList match {
       case Nil => cursor map (c => (c.topic, c.partition)) getOrElse die("No cursor exists")
       case topicArg :: Nil => (topicArg, 0)
-      case topicArg :: partitionArg :: Nil => (topicArg, parseInt("partition", partitionArg))
+      case topicArg :: partitionArg :: Nil => (topicArg, parsePartition(partitionArg))
+      case _ => die("Invalid arguments")
+    }
+  }
       case _ => die("Invalid arguments")
     }
   }
