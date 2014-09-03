@@ -79,6 +79,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
     Command(this, "kreplicas", getReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
+    Command(this, "kreset", resetConsumerGroup, (Seq.empty, Seq("topic", "groupId")), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
     Command(this, "ksearch", findMessageByKey, (Seq.empty, Seq("topic", "groupId", "keyVariable")), help = "Scans a topic for a message with a given key"),
     Command(this, "kstats", getStatistics, (Seq.empty, Seq("topic", "beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
@@ -666,6 +667,28 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     KafkaPublisher(brokers) use { publisher =>
       publisher.open()
       publisher.publish(name, toBytes(key.toLong), message.getBytes)
+    }
+  }
+
+  def resetConsumerGroup(args: String*): Unit = {
+    // get the arguments
+    val (topic, groupId) = args.toList match {
+      case groupIdArg :: Nil => cursor map (c => (c.topic, groupIdArg)) getOrElse die("No cursor exists")
+      case topicArg :: groupIdArg :: Nil => (topicArg, groupIdArg)
+      case _ => die("Invalid arguments")
+    }
+
+    // get the partition range
+    val partitions = KafkaSubscriber.getTopicList(brokers, correlationId) filter (_.topic == topic) map (_.partitionId)
+    if (partitions.isEmpty)
+      throw new IllegalStateException(s"No partitions found for topic $topic")
+    val (start, end) = (partitions.min, partitions.max)
+
+    // reset the consumer group ID for each partition
+    (start to end) foreach { partition =>
+      new KafkaSubscriber(Topic(topic, partition), brokers, correlationId = 0) use { subscriber =>
+        subscriber.commitOffsets(groupId, offset = 0L, "resetting consumer ID")
+      }
     }
   }
 
