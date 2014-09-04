@@ -279,16 +279,21 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   /**
    * "ls" - Retrieves the files from the current directory
    */
-  def listFiles(args: String*): Seq[String] = {
-    // get the argument
-    val path = if (args.nonEmpty) setupPath(args.head) else cwd
+  def listFiles(args: String*): Option[Seq[String]] = {
+    // get the optional path argument
+    val path: String = args.headOption map (expandPath) map (setupPath) getOrElse cwd
 
     // perform the action
-    new File(path).list map { file =>
-      if (file.startsWith(path)) file.substring(path.length) else file
+    Option(new File(path).list) map { files =>
+      files map { file =>
+        if (file.startsWith(path)) file.substring(path.length) else file
+      }
     }
   }
 
+  /**
+   * "history" - Retrieves previously executed commands
+   */
   def listHistory(args: String*): Seq[HistoryItem] = {
     val lines = SessionManagement.history.getLines
     ((1 to lines.size) zip lines) map {

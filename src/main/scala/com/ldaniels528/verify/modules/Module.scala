@@ -49,7 +49,7 @@ trait Module extends BinaryMessaging {
    * @return a JVM-safe value (e.g. "/home/ldaniels")
    */
   protected def expandPath(path: String): String = {
-    path.replaceFirst("[~/]", scala.util.Properties.userHome)
+    path.replaceFirst("[~]", scala.util.Properties.userHome)
   }
 
   /**
