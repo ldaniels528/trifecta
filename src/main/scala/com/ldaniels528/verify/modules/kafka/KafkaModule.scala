@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.modules.kafka
 
-import java.io.{File, PrintStream}
+import java.io.{File, FileOutputStream, PrintStream}
 import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -65,7 +65,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfirst", getFirstMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
-    Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the message at the specified offset for a given topic partition"),
+    Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgeta", getAvroMessage, (Seq("schemaVariable"), Seq("topic", "partition", "offset")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
     Command(this, "kgetsize", getMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
@@ -328,14 +328,25 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getMessage(args: String*)(implicit out: PrintStream): Option[MessageData] = {
     // get the arguments
     val Seq(name, partition, offset, _*) = args
-    val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
+    val outputPath = extract(args, 3) map expandPath
 
     // perform the action
     var messageData: Option[MessageData] = None
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
-      messageData = subscriber.fetch(offset.toLong, fetchSize).headOption
+      messageData = subscriber.fetch(offset.toLong, defaultFetchSize).headOption
       cursor = messageData map (m => MessageCursor(name, partition.toInt, m.offset, m.nextOffset, BinaryMessageEncoding))
     }
+
+    // write the data to an output file?
+    for {
+      path <- outputPath
+      data <- messageData
+    } {
+      new FileOutputStream(expandPath(path)) use { out =>
+        out.write(data.message)
+      }
+    }
+
     messageData
   }
 
