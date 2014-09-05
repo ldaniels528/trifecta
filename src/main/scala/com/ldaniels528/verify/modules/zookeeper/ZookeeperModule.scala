@@ -27,7 +27,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     Command(this, "zmk", zmkdir, (Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
     Command(this, "zput", zput, (Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
     Command(this, "zreconnect", reconnect, (Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
-    Command(this, "zrm", delete, (Seq("key"), Seq.empty), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
+    Command(this, "zrm", delete, (Seq("key"), Seq("-r")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
     Command(this, "zruok", ruok, help = "Checks the status of a Zookeeper instance (requires netcat)"),
     Command(this, "zsess", session, help = "Retrieves the Session ID from ZooKeeper"),
     Command(this, "zstat", stat, help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
@@ -131,6 +131,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   def delete(args: String*) {
     // get the argument
     val key = args.head
+    val recursive = extract(args, 1) map(_ == "-r") getOrElse false
 
     // convert the key to a fully-qualified path
     val path = zkKeyToPath(key)

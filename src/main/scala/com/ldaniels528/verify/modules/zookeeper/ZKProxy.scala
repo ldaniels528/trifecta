@@ -65,7 +65,12 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
     this
   }
 
-  def delete(path: String, stat: Stat) {
+  def delete(path: String, stat: Stat, recursive: Boolean = false) {
+    if (recursive) {
+      getChildren(path) foreach { subPath =>
+        exists(subPath) foreach (delete(subPath, _, recursive))
+      }
+    }
     zk.delete(path, stat.getVersion)
   }
 
