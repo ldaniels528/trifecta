@@ -86,8 +86,8 @@ class ZKProxy(host: String, port: Int, callback: Option[ZkProxyCallBack] = None)
   }
 
   def read(path: String): Option[Array[Byte]] = {
-    exists(path) map { stat =>
-      zk.getData(path, false, stat)
+    exists(path) flatMap { stat =>
+      Option(zk.getData(path, false, stat))
     }
   }
 
