@@ -131,12 +131,25 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   def delete(args: String*) {
     // get the argument
     val key = args.head
-    val recursive = extract(args, 1) map(_ == "-r") getOrElse false
+    val recursive = extract(args, 1) exists(_ == "-r")
 
     // convert the key to a fully-qualified path
     val path = zkKeyToPath(key)
 
-    // perform the action
+    // perform a recursive delete?
+    if(recursive) deleteRecursively(path)
+    else {
+      // perform the action
+      zk.exists(path) foreach (zk.delete(path, _))
+    }
+  }
+
+  def deleteRecursively(path: String): Unit = {
+    zk.getChildren(path) foreach { subPath =>
+      deleteRecursively(zkKeyToPath(path, subPath))
+    }
+
+    out.println(s"Deleting '$path'...")
     zk.exists(path) foreach (zk.delete(path, _))
   }
 
