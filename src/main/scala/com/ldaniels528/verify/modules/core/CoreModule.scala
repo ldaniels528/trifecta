@@ -46,6 +46,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "help", help, help = "Provides the list of available commands"),
     Command(this, "history", listHistory, help = "Returns a list of previously issued commands"),
     Command(this, "hostname", hostname, help = "Returns the name of the host system"),
+    Command(this, "jobs", listJobs, help = "Returns the list of currently running jobs"),
     Command(this, "ls", listFiles, (Seq.empty, Seq("path")), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "modules", listModules, help = "Returns a list of configured modules"),
     Command(this, "pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
@@ -281,7 +282,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    */
   def listFiles(args: String*): Option[Seq[String]] = {
     // get the optional path argument
-    val path: String = args.headOption map (expandPath) map (setupPath) getOrElse cwd
+    val path: String = args.headOption map expandPath map setupPath getOrElse cwd
 
     // perform the action
     Option(new File(path).list) map { files =>
@@ -300,6 +301,20 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
       case (itemNo, command) => HistoryItem(itemNo, command)
     }
   }
+
+  /**
+   * "jobs" - Retrieves the queued jobs
+   */
+  def listJobs(args: String*): Seq[JobDetail] = {
+    rt.jobs map (j =>
+      JobDetail(
+        jobId = j.jobId,
+        status = if (j.task.isCompleted) "Completed" else "Running",
+        started = new Date(j.startTime),
+        elapsedTimeSecs = (System.currentTimeMillis() - j.startTime) / 1000L))
+  }
+
+  case class JobDetail(jobId: Int, status: String, started: Date, elapsedTimeSecs: Long)
 
   /**
    * "modules" command - Returns the list of modules

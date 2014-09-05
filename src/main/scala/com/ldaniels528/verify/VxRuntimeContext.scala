@@ -2,9 +2,11 @@ package com.ldaniels528.verify
 
 import java.io.File.separator
 import java.io.{File, FileInputStream}
-import java.util.Properties
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.{Properties, Random}
 
 import com.ldaniels528.tabular.Tabular
+import com.ldaniels528.verify.VxRuntimeContext.JobItem
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.avro.{AvroModule, AvroTables}
 import com.ldaniels528.verify.modules.core.CoreModule
@@ -13,13 +15,12 @@ import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
 import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
 import com.ldaniels528.verify.modules.{Command, ModuleManager}
-import com.ldaniels528.verify.util.{CommandParser, BinaryMessaging}
+import com.ldaniels528.verify.util.{BinaryMessaging, CommandParser}
 import com.ldaniels528.verify.vscript.{RootScope, VScriptCompiler}
 import org.slf4j.LoggerFactory
 
-import scala.collection.GenTraversableOnce
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.collection.{GenTraversableOnce, mutable}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Properties.userHome
 import scala.util.{Failure, Success, Try}
 
@@ -56,6 +57,10 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
 
   // create the ZooKeeper proxy
   val zkProxy = ZKProxy(zkEndPoint)
+
+  // define the job stack
+  var jobIdGen = new AtomicInteger(new Random().nextInt(1000) + 1000)
+  val jobs = mutable.Buffer[JobItem]()
 
   // create the module manager
   val moduleManager = new ModuleManager(scope)
@@ -154,7 +159,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
     opCode.eval
   }
 
-  def handleResult(result: Any) {
+  def handleResult(result: Any)(implicit ec: ExecutionContext) {
     result match {
       // handle binary data
       case message: Array[Byte] if message.isEmpty => out.println("No data returned")
@@ -168,7 +173,19 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
       }
 
       // handle Future cases
-      case f: Future[_] => handleResult(Await.result(f, 60.seconds))
+      case f: Future[_] =>
+        val job = JobItem(jobIdGen.incrementAndGet(), System.currentTimeMillis(), f)
+        jobs += job
+        f.onComplete {
+          case Success(value) =>
+            out.println(s"Job #${job.jobId} completed")
+            jobs -= job
+            handleResult(value)
+          case Failure(e) =>
+            out.println(s"Job #${job.jobId} failed: ${e.getMessage}")
+            jobs -= job
+        }
+        handleResult(Seq(job))
 
       // handle Option cases
       case o: Option[_] => o match {
@@ -222,5 +239,15 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
       args = pcs.tail
     } yield (cmd, args)
   }
+
+}
+
+/**
+ * Verify Runtime Context Companion Object
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+object VxRuntimeContext {
+
+  case class JobItem(jobId: Int, startTime: Long, task: Future[_])
 
 }
