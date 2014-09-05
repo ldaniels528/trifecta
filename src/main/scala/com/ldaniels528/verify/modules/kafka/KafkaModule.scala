@@ -7,14 +7,16 @@ import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.io.Compression
-import com.ldaniels528.verify.modules.avro.AvroReading
+import com.ldaniels528.verify.modules.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
+import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.Condition
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
 import com.ldaniels528.verify.modules.{Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
+import kafka.message.MessageAndMetadata
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
@@ -77,6 +79,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
+    Command(this, "kquery", query, (Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria", undocumented = true),
     Command(this, "kreplicas", getReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kreset", resetConsumerGroup, (Seq.empty, Seq("topic", "groupId")), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
@@ -685,6 +688,45 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   }
 
   /**
+   * "kquery" - Returns the first message that corresponds to the given criteria
+   * @example {{{ kquery frequency > 5000 }}}
+   */
+  def query(args: String*): Future[Option[MessageData]] = {
+    // get the topic and partition from the cursor
+    val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse die("No cursor exists")
+    val schemaVar = encoding match {
+      case AvroMessageEncoding(schemaVarName) => schemaVarName
+      case _ =>
+        throw new IllegalArgumentException("Raw binary format is not supported")
+    }
+
+    // get the decoder
+    val decoder = getAvroDecoder(schemaVar)
+    val groupId = f"GRP${System.currentTimeMillis()}%016x"
+
+    // get the criteria
+    val Seq(field, operator, value, _*) = args
+    val conditions = operator match {
+      case "==" => Seq(EqCondition(decoder, field, value))
+      case _ =>
+        throw new IllegalArgumentException(s"Illegal condition definition near '$args'")
+    }
+
+    // perform the search
+    val consumer = KafkaStreamingConsumer(rt.zkEndPoint, groupId)
+    val result = consumer.scan(topic, parallelism = 4, conditions) map (_ map { msg =>
+      val lastOffset: Long = getLastOffset(msg.topic, msg.partition) getOrElse -1L
+      val nextOffset: Long = msg.offset + 1
+      cursor = Option(MessageCursor(msg.topic, msg.partition, msg.offset, nextOffset, BinaryMessageEncoding))
+      MessageData(msg.offset, nextOffset, lastOffset, msg.message)
+    })
+
+    // close the consumer once a response is available
+    result.foreach(msg_? => consumer.close())
+    result
+  }
+
+  /**
    * "kreset" - Sets a consumer group ID to zero for all partitions
    * @example {{{ kreset com.shocktrade.quotes.csv lld }}}
    */
@@ -753,6 +795,13 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   private def die[S](message: String): S = throw new IllegalArgumentException(message)
 
+  private def getPartitionRange(topic: String): (Int, Int) = {
+    val partitions = KafkaSubscriber.getTopicList(brokers, correlationId) filter (_.topic == topic) map (_.partitionId)
+    if (partitions.isEmpty)
+      throw new IllegalStateException(s"No partitions found for topic $topic")
+    (partitions.min, partitions.max)
+  }
+
   /**
    * Retrieves the topic and partition from the given arguments
    * @param args the given arguments
@@ -811,6 +860,26 @@ object KafkaModule {
 
   case object BinaryMessageEncoding extends MessageEncoding {
     override def toString = s"Binary"
+  }
+
+  /**
+   * Equals condition
+   */
+  case class EqCondition(decoder: AvroDecoder, field: String, value: String) extends Condition {
+
+    override def satisfies(mam: MessageAndMetadata[Array[Byte], Array[Byte]]): Boolean = {
+      decoder.decode(mam.message()) match {
+        case Success(record) =>
+          val myValue = record.get(field)
+          myValue match {
+            case v: java.lang.Number => v.doubleValue() == value.toDouble
+            case s: String => s == value
+            case _ => false
+          }
+        case Failure(e) => false
+      }
+    }
+
   }
 
 }
