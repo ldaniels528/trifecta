@@ -7,9 +7,10 @@ import com.ldaniels528.verify.modules.Command
 import com.ldaniels528.verify.vscript.Scope
 import org.fusesource.jansi.Ansi.Color._
 
+import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Verify Console Shell Application
@@ -62,18 +63,20 @@ class VerifyShell(rt: VxRuntimeContext) {
       val module = rt.moduleManager.activeModule getOrElse rt.moduleManager.modules.head
 
       // read a line from the console
-      Option(consoleReader.readLine("%s:%s> ".format(module.moduleName, module.prompt))) map (_.trim) foreach { line =>
-        if (line.nonEmpty) {
-          rt.interpret(line) match {
-            case Success(result) =>
-              rt.handleResult(result)
-              if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
-            case Failure(e: IllegalArgumentException) =>
-              if (rt.debugOn) e.printStackTrace()
-              err.println(s"Syntax error: ${e.getMessage}")
-            case Failure(e) =>
-              if (rt.debugOn) e.printStackTrace()
-              err.println(s"Runtime error: ${getErrorMessage(e)}")
+      Try {
+        Option(consoleReader.readLine("%s:%s> ".format(module.moduleName, module.prompt))) map (_.trim) foreach { line =>
+          if (line.nonEmpty) {
+            rt.interpret(line) match {
+              case Success(result) =>
+                rt.handleResult(result)
+                if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
+              case Failure(e: IllegalArgumentException) =>
+                if (rt.debugOn) e.printStackTrace()
+                err.println(s"Syntax error: ${e.getMessage}")
+              case Failure(e) =>
+                if (rt.debugOn) e.printStackTrace()
+                err.println(s"Runtime error: ${getErrorMessage(e)}")
+            }
           }
         }
       }
