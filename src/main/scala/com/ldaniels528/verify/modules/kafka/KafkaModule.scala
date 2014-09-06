@@ -45,7 +45,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private var incomingMessageCache = Map[Topic, Inbound]()
   private var lastInboundCheck: Long = _
 
-  // define the offset for kget/knext
+  // define the offset for message cursor navigation commands
   private var cursor: Option[MessageCursor] = None
 
   def defaultFetchSize = scope.getValue[Int]("defaultFetchSize") getOrElse 65536
