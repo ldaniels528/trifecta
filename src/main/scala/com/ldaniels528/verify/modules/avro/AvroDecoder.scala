@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.modules.avro
 
-import com.ldaniels528.verify.io.MessageDecoder
+import com.ldaniels528.verify.codecs.MessageDecoder
 import com.twitter.bijection.Injection
 import com.twitter.bijection.avro.GenericAvroCodecs
 import org.apache.avro.Schema
