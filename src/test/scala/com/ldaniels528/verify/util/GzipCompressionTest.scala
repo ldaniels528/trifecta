@@ -1,14 +1,14 @@
-package com.ldaniels528.verify.io
+package com.ldaniels528.verify.util
 
-import com.ldaniels528.verify.io.Compression._
-import org.junit._
+import com.ldaniels528.verify.util.GzipCompression._
+import org.junit.{Assert, Test}
 import org.slf4j.LoggerFactory
 
 /**
- * Compression Test Suite
+ * GzipCompression Test Suite
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class CompressionTest {
+class GzipCompressionTest {
   private val logger = LoggerFactory.getLogger(getClass)
 
   @Test

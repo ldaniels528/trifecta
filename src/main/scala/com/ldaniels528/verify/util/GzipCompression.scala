@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.io
+package com.ldaniels528.verify.util
 
 import java.io._
 import java.util.zip._
@@ -9,10 +9,10 @@ import org.apache.commons.io.IOUtils
 import scala.util.Try
 
 /**
- * Adds compression/decompression capability to implementing classes
+ * Adds GZIP compression/decompression capability to implementing classes
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait Compression {
+trait GzipCompression {
 
   /**
    * Compresses the message 
@@ -60,10 +60,10 @@ trait Compression {
 }
 
 /**
- * Compression Companion Object
+ * GzipCompression Companion Object
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object Compression extends Compression {
+object GzipCompression extends GzipCompression {
   val self = this
 
   /**
