@@ -6,7 +6,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.io.Compression
 import com.ldaniels528.verify.modules.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
 import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.Condition
@@ -28,7 +27,7 @@ import scala.util.{Failure, Success, Try}
  * Kafka Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with AvroReading with Compression {
+class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with AvroReading {
   private implicit val out: PrintStream = rt.out
   private implicit val scope: Scope = rt.scope
   private implicit val rtc: VxRuntimeContext = rt
