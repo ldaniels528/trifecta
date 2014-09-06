@@ -144,7 +144,11 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     }
   }
 
-  def deleteRecursively(path: String): Unit = {
+  /**
+   * Performs a recursive delete
+   * @param path the path to delete
+   */
+  private def deleteRecursively(path: String): Unit = {
     zk.getChildren(path) foreach { subPath =>
       deleteRecursively(zkKeyToPath(path, subPath))
     }
