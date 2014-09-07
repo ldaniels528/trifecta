@@ -93,10 +93,12 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
     streamMap.get(topic) foreach { streams =>
       streams foreach { stream =>
         Future {
-          val it = stream.iterator()
-          while (it.hasNext()) {
-            val mam = it.next()
-            listener.consume(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message()))
+          Try {
+            val it = stream.iterator()
+            while (it.hasNext()) {
+              val mam = it.next()
+              listener.consume(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message()))
+            }
           }
         }
       }
@@ -107,32 +109,34 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
    * Scans a Kafka topic for the first occurrence of a message matching the given criteria
    * @param topic the given topic name
    * @param parallelism the given number of processing threads
-   * @param conditions the given criteria
+   * @param conditions the given collection of acceptance criteria
    * @return a promise of an option of a streamed message
    */
-  def scan(topic: String, parallelism: Int, conditions: Seq[Condition])(implicit ec: ExecutionContext): Future[Option[StreamedMessage]] = {
+  def scan(topic: String, parallelism: Int, conditions: Condition*)(implicit ec: ExecutionContext): Future[Option[StreamedMessage]] = {
     val streamMap = consumer.createMessageStreams(Map(topic -> parallelism))
     var completed: Boolean = false
     val promise = Promise[Option[StreamedMessage]]()
 
     // now create an object to consume the messages
     val tasks = (streamMap.get(topic) map { streams =>
-      (streams map { stream =>
+      streams map { stream =>
         Future {
-          val it = stream.iterator()
-          while (!completed && it.hasNext()) {
-            val mam = it.next()
-            if (conditions.forall(_.satisfies(mam))) {
-              promise.success(Option(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message())))
-              completed = true
+          Try {
+            val it = stream.iterator()
+            while (!completed && it.hasNext()) {
+              val mam = it.next()
+              if (conditions.forall(_.satisfies(mam))) {
+                promise.success(Option(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message())))
+                completed = true
+              }
             }
           }
         }
-      }).toSeq
-    }).toSeq
+      }
+    }).toList.flatten
 
     // check for the failure to find the message by key
-    Future.sequence(tasks.flatten).onComplete {
+    Future.sequence(tasks).onComplete {
       case Success(v) => if (!completed) promise.success(None)
       case Failure(e) => promise.failure(e)
     }
@@ -153,10 +157,12 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
     streamMap.get(topic) foreach { streams =>
       streams foreach { stream =>
         Future {
-          val it = stream.iterator()
-          while (it.hasNext()) {
-            val mam = it.next()
-            actor ! StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message())
+          Try {
+            val it = stream.iterator()
+            while (it.hasNext()) {
+              val mam = it.next()
+              actor ! StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message())
+            }
           }
         }
       }
