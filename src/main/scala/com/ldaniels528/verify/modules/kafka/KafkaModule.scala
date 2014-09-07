@@ -862,23 +862,6 @@ object KafkaModule {
   }
 
   /**
-   * Equals condition
-   */
-  case class EqCondition(decoder: AvroDecoder, field: String, value: String) extends Condition {
-
-    override def satisfies(mam: MessageAndMetadata[Array[Byte], Array[Byte]]): Boolean = {
-      decoder.decode(mam.message()) match {
-        case Success(record) =>
-          val myValue = record.get(field)
-          myValue match {
-            case v: java.lang.Number => v.doubleValue() == value.toDouble
-            case s: String => s == value
-            case _ => false
-          }
-        case Failure(e) => false
-      }
-    }
-
   }
 
 }
