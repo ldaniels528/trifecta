@@ -22,8 +22,8 @@ class AvroModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * @return the commands that are bound to the module
    */
   override def getCommands: Seq[Command] = Seq(
-    Command(this, "avcat", cat, (Seq("variable"), Seq.empty), help = "Displays the contents of a schema variable"),
-    Command(this, "avload", loadSchema, (Seq("variable", "schemaPath"), Seq.empty), help = "Loads an Avro schema into memory")
+    Command(this, "avcat", cat, (Seq("variable"), Seq.empty), help = "Displays the contents of a schema variable", promptAware = false),
+    Command(this, "avload", loadSchema, (Seq("variable", "schemaPath"), Seq.empty), help = "Loads an Avro schema into memory", promptAware = false)
   )
 
   override def getVariables: Seq[Variable] = Seq.empty
