@@ -1,5 +1,9 @@
 package com.ldaniels528.verify.modules
 
+import com.ldaniels528.verify.modules.CommandParser._
+
+import scala.language.existentials
+
 /**
  * Represents a Shell command
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
@@ -7,7 +11,7 @@ package com.ldaniels528.verify.modules
 case class Command(module: Module,
                    name: String,
                    fx: Seq[String] => Any,
-                   params: CommandParameters,
+                   params: CommandParameters[_],
                    help: String = "",
                    promptAware: Boolean = false,
                    undocumented: Boolean = false) {
@@ -22,11 +26,13 @@ case class Command(module: Module,
  * Represents the parameters of a Shell command
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-sealed trait CommandParameters {
+sealed trait CommandParameters[T] {
 
   def checkArgs(command: Command, args: Seq[String]): Unit
 
   def prototypeOf(command: Command): String
+
+  def transform(args: Seq[String]): T
 
 }
 
@@ -36,8 +42,8 @@ sealed trait CommandParameters {
  * @param optional the sequence of optional parameters
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class SimpleParams(required: Seq[String] = Seq.empty, optional: Seq[String] = Seq.empty)
-  extends CommandParameters {
+case class SimpleParams(required: Seq[String] = Nil, optional: Seq[String] = Nil)
+  extends CommandParameters[Seq[String]] {
 
   override def checkArgs(command: Command, args: Seq[String]) {
     if (args.length < required.size || args.length > required.size + optional.size) {
@@ -50,6 +56,8 @@ case class SimpleParams(required: Seq[String] = Seq.empty, optional: Seq[String]
     val optionalParams = (optional map (s => s"<$s>")).mkString(" ")
     s"${command.name} $requiredParams ${if (optionalParams.nonEmpty) s"[$optionalParams]" else ""}"
   }
+
+  override def transform(args: Seq[String]): Seq[String] = args
 
 }
 
