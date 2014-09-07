@@ -2,14 +2,12 @@ package com.ldaniels528.verify.modules
 
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
-import org.slf4j.LoggerFactory
 
 /**
  * Command Parser Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CommandParserSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar {
-  private val logger = LoggerFactory.getLogger(getClass)
 
   info("As a Command Parser")
   info("I want to be able to parse command line input into tokens")
@@ -17,13 +15,13 @@ class CommandParserSpec() extends FeatureSpec with GivenWhenThen with MockitoSug
   feature("Ability to distinguish symbols from atoms") {
     scenario("A string contains both symbols and atoms") {
       Given("A string containing symbols and atoms")
-      val line = "!100"
+      val line = "!?100"
 
       When("The string is parsed into tokens")
       val tokens = CommandParser.parse(line)
 
       Then("The arguments should be successfully verified")
-      assert(tokens sameElements Seq("!", "100"))
+      assert(tokens sameElements Seq("!", "?", "100"))
     }
   }
 
