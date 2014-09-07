@@ -378,17 +378,6 @@ Finally, let's take a look at the connection properties for this session:
     + ---------------------------------------------------------------------------------------------------------- +
     | key                                            value                                                       |
     + ---------------------------------------------------------------------------------------------------------- +
-    | dev.zookeeper.path                             /tmp/dev-storm-zookeeper                                    |
-    | drpc.childopts                                 -Xmx768m                                                    |
-    | drpc.invocations.port                          3773                                                        |
-    | drpc.port                                      3772                                                        |
-    | drpc.queue.size                                128                                                         |
-    | drpc.request.timeout.secs                      600                                                         |
-    | drpc.worker.threads                            64                                                          |
-    | java.library.path                              /usr/local/lib:/opt/local/lib:/usr/lib                      |
-    | logviewer.appender.name                        A1                                                          |
-    | logviewer.childopts                            -Xmx128m                                                    |
-    | logviewer.port                                 8000                                                        |
     | nimbus.childopts                               -Xmx1024m                                                   |
     | nimbus.cleanup.inbox.freq.secs                 600                                                         |
     | nimbus.file.copy.expiration.secs               600                                                         |
@@ -423,51 +412,9 @@ Finally, let's take a look at the connection properties for this session:
     | storm.zookeeper.root                           /storm                                                      |
     | storm.zookeeper.servers                        [localhost]                                                 |
     | storm.zookeeper.session.timeout                20000                                                       |
-    | supervisor.childopts                           -Xmx256m                                                    |
-    | supervisor.enable                              true                                                        |
-    | supervisor.heartbeat.frequency.secs            5                                                           |
-    | supervisor.monitor.frequency.secs              3                                                           |
-    | supervisor.slots.ports                         [6700, 6701, 6702, 6703]                                    |
-    | supervisor.worker.start.timeout.secs           120                                                         |
-    | supervisor.worker.timeout.secs                 30                                                          |
-    | task.heartbeat.frequency.secs                  3                                                           |
-    | task.refresh.poll.secs                         10                                                          |
-    | topology.acker.executors                                                                                   |
-    | topology.builtin.metrics.bucket.size.secs      60                                                          |
-    | topology.debug                                 false                                                       |
-    | topology.disruptor.wait.strategy               com.lmax.disruptor.BlockingWaitStrategy                     |
-    | topology.enable.message.timeouts               true                                                        |
-    | topology.error.throttle.interval.secs          10                                                          |
-    | topology.executor.receive.buffer.size          1024                                                        |
-    | topology.executor.send.buffer.size             1024                                                        |
-    | topology.fall.back.on.java.serialization       true                                                        |
-    | topology.kryo.factory                          backtype.storm.serialization.DefaultKryoFactory             |
-    | topology.max.error.report.per.interval         5                                                           |
-    | topology.max.spout.pending                                                                                 |
-    | topology.max.task.parallelism                                                                              |
-    | topology.message.timeout.secs                  30                                                          |
-    | topology.multilang.serializer                  backtype.storm.multilang.JsonSerializer                     |
-    | topology.receiver.buffer.size                  8                                                           |
-    | topology.skip.missing.kryo.registrations       false                                                       |
-    | topology.sleep.spout.wait.strategy.time.ms     1                                                           |
-    | topology.spout.wait.strategy                   backtype.storm.spout.SleepSpoutWaitStrategy                 |
-    | topology.state.synchronization.timeout.secs    60                                                          |
-    | topology.stats.sample.rate                     0.05                                                        |
-    | topology.tasks                                                                                             |
-    | topology.tick.tuple.freq.secs                                                                              |
-    | topology.transfer.buffer.size                  1024                                                        |
-    | topology.trident.batch.emit.interval.millis    500                                                         |
-    | topology.tuple.serializer                      backtype.storm.serialization.types.ListDelegateSerializer   |
-    | topology.worker.childopts                                                                                  |
-    | topology.worker.receiver.thread.count          1                                                           |
-    | topology.worker.shared.thread.pool.size        4                                                           |
-    | topology.workers                               1                                                           |
-    | transactional.zookeeper.port                                                                               |
-    | transactional.zookeeper.root                   /transactional                                              |
-    | transactional.zookeeper.servers                                                                            |
-    | ui.childopts                                   -Xmx768m                                                    |
-    | ui.port                                        8080                                                        |
-    | worker.childopts                               -Xmx768m                                                    |
+    .
+    .
+    .
     | worker.heartbeat.frequency.secs                1                                                           |
     | zmq.hwm                                        0                                                           |
     | zmq.linger.millis                              5000                                                        |
