@@ -1,14 +1,13 @@
-package com.ldaniels528.verify
+package com.ldaniels528.verify.modules
 
-import com.ldaniels528.verify.util.CommandParser
-import CommandParser._
+import com.ldaniels528.verify.modules.CommandParser._
 
 /**
  * Verify Command Parser Test
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CommandParserTest() {
-  import org.junit.{ Assert, Test }
+  import org.junit.{Assert, Test}
   import org.slf4j.LoggerFactory
 
   private val logger = LoggerFactory.getLogger(getClass())

@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.util
+package com.ldaniels528.verify.modules
 
 /**
  * Verify Command Parser
