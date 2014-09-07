@@ -12,7 +12,7 @@ case class Command(module: Module,
                    promptAware: Boolean = false,
                    undocumented: Boolean = false) {
 
-  val prototype: String = params.prototypeOf(this)
+  def prototype: String = params.prototypeOf(this)
 
   override def toString = prototype
 
@@ -24,7 +24,7 @@ case class Command(module: Module,
  */
 sealed trait CommandParameters {
 
-  def checkArgs(command: Command, args: Seq[String]): Seq[String]
+  def checkArgs(command: Command, args: Seq[String]): Unit
 
   def prototypeOf(command: Command): String
 
@@ -39,11 +39,10 @@ sealed trait CommandParameters {
 case class SimpleParams(required: Seq[String] = Seq.empty, optional: Seq[String] = Seq.empty)
   extends CommandParameters {
 
-  override def checkArgs(command: Command, args: Seq[String]): Seq[String] = {
+  override def checkArgs(command: Command, args: Seq[String]) {
     if (args.length < required.size || args.length > required.size + optional.size) {
       throw new IllegalArgumentException(s"Usage: ${command.prototype}")
     }
-    args
   }
 
   override def prototypeOf(command: Command): String = {
