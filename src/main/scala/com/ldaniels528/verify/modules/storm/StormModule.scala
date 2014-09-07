@@ -1,9 +1,11 @@
 package com.ldaniels528.verify.modules.storm
 
+import java.net.{URL, URLClassLoader}
+
 import backtype.storm.generated.Nimbus
 import backtype.storm.utils.{NimbusClient, Utils}
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
+import com.ldaniels528.verify.modules.{Command, Module, SimpleParams}
 import com.ldaniels528.verify.vscript.Variable
 import org.slf4j.LoggerFactory
 
@@ -38,7 +40,8 @@ class StormModule(rt: VxRuntimeContext) extends Module {
     Command(this, "sget", getTopologyInfo, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the information for a topology", promptAware = true),
     Command(this, "skill", killTopology, SimpleParams(Seq("topologyID"), Seq.empty), help = "Kills a running topology", promptAware = true),
     Command(this, "sls", listTopologies, SimpleParams(Seq.empty, Seq("prefix")), help = "Lists available topologies", promptAware = true),
-    Command(this, "spouts", getTopologySpouts, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true)
+    Command(this, "spouts", getTopologySpouts, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true),
+    Command(this, "srun", runTopology, SimpleParams(Seq("jarPath", "className"), Seq("arg0", "arg1", "arg2")), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true, undocumented = true)
   )
 
   override def getVariables: Seq[Variable] = Seq.empty
@@ -148,6 +151,22 @@ class StormModule(rt: VxRuntimeContext) extends Module {
   }
 
   case class TopologyDetails(name: String, topologyId: String, status: String, workers: Int, executors: Int, tasks: Int, uptimeSecs: Long)
+
+  /**
+   * "srun" - Runs as topology in a local cluster
+   * @example {{{ srun shocktrade-etl.jar com.shocktrade.etl.QuotesTopology -local }}}
+   */
+  def runTopology(args: String*): Unit = {
+    // get the parameters
+    val Seq(jarPath, className, _*) = args
+    val params = args.drop(2)
+
+    val classUrls = Array(new URL(s"file://$jarPath"))
+    val classLoader = new URLClassLoader(classUrls)
+    val classWithMain = classLoader.loadClass(className)
+    val mainMethod = classWithMain.getMethod("main", classOf[Array[String]])
+    mainMethod.invoke(null, params: _*)
+  }
 
   /**
    * "sconf" - Lists the Storm configuration
