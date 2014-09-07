@@ -1,5 +1,7 @@
 package com.ldaniels528.verify.modules.kafka
 
+import java.util.concurrent.atomic.AtomicLong
+
 import akka.actor.ActorRef
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.{Condition, StreamedMessage, StreamingMessageObserver}
@@ -8,7 +10,7 @@ import kafka.consumer.{Consumer, ConsumerConfig}
 import kafka.message.MessageAndMetadata
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 /**
  * High-Level Kafka Consumer
@@ -21,6 +23,42 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
    * Closes the consumer's connection
    */
   def close(): Unit = consumer.shutdown()
+
+  /**
+   * Counts the total number of occurrences of messages matching the given criteria for a Kafka topic
+   * @param topic the given topic name
+   * @param parallelism the given number of processing threads
+   * @param conditions the given collection of acceptance criteria
+   * @return a promise of the total message count
+   */
+  def count(topic: String, parallelism: Int, conditions: Condition*)(implicit ec: ExecutionContext): Future[Long] = {
+    val streamMap = consumer.createMessageStreams(Map(topic -> parallelism))
+    val promise = Promise[Long]()
+    val total = new AtomicLong(0L)
+
+    // now create an object to consume the messages
+    val tasks = (streamMap.get(topic) map { streams =>
+      streams map { stream =>
+        Future {
+          Try {
+            val it = stream.iterator()
+            while (it.hasNext()) {
+              val mam = it.next()
+              if (conditions.forall(_.satisfies(mam))) total.incrementAndGet()
+            }
+          }
+        }
+      }
+    }).toList.flatten
+
+    // check for the failure to find the message by key
+    Future.sequence(tasks).onComplete {
+      case Success(v) => promise.success(total.get)
+      case Failure(e) => promise.failure(e)
+    }
+
+    promise.future
+  }
 
   /**
    * Iterates over messages from a Kafka topic
