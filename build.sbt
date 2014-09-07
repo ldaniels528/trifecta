@@ -65,7 +65,9 @@ libraryDependencies ++= Seq(
 
 // Testing Dependencies
 libraryDependencies ++= Seq(
-  "junit" % "junit" % "4.11" % "test"
+  "junit" % "junit" % "4.11" % "test",
+  "org.mockito" % "mockito-all" % "1.9.5" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.1" % "test"
 )
 
 // define the resolvers
