@@ -26,6 +26,14 @@ The motivations behind creating _Verify_ are simple; testing, verifying and mana
 arduous task. The goal of this project is to ease the pain of developing applications that make use of 
 Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like commands.
 
+## Status
+
+I'm currently using _Verify_ as part of my daily development workflow, and the application itself is undergoing heavy 
+ development as I define (and at times redefine) its API and command sets. As such, new commands will appear, and older 
+ commands may be merged with a newer command or disappear altogether. I apologize in advance if a command you were 
+ fond of has been removed, and if there isn't a suitable replacement command, drop me a note, and perhaps I'll re-add 
+ the unit of functionality.
+
 <a name="Development"></a>
 ## Development
 
@@ -75,10 +83,11 @@ To view all of the Kafka commands, which all begin with the letter "k":
     | kbrokers    kafka   Returns a list of the brokers from ZooKeeper                                                    |
     | kcommit     kafka   Commits the offset for a given topic and group                                                  |
     | kconsumers  kafka   Returns a list of the consumers from ZooKeeper                                                  |
+    | kcount      kafka   Counts the messages matching a given condition [references cursor]                              |
     | kcursor     kafka   Displays the current message cursor                                                             |
-    | kexport     kafka   Writes the contents of a specific topic to a file                                               |
     | kfetch      kafka   Retrieves the offset for a given topic and group                                                |
     | kfetchsize  kafka   Retrieves or sets the default fetch size for all Kafka queries                                  |
+    | kfindone    kafka   Returns the first message that corresponds to the given criteria [references cursor]            |
     | kfirst      kafka   Returns the first message for a given topic                                                     |
     | kget        kafka   Retrieves the message at the specified offset for a given topic partition                       |
     | kgeta       kafka   Returns the key-value pairs of an Avro message from a topic partition                           |
@@ -93,7 +102,7 @@ To view all of the Kafka commands, which all begin with the letter "k":
     | kprev       kafka   Attempts to retrieve the message at the previous offset                                         |
     | kpublish    kafka   Publishes a message to a topic                                                                  |
     | kreplicas   kafka   Returns a list of replicas for specified topics                                                 |
-    | kscana      kafka   Scans a range of messages verifying conformance to an Avro schema                               |
+    | kreset      kafka   Sets a consumer group ID to zero for all partitions                                             |
     | ksearch     kafka   Scans a topic for a message with a given key                                                    |
     | kstats      kafka   Returns the partition details for a given topic                                                 |
     + ------------------------------------------------------------------------------------------------------------------- +
@@ -265,7 +274,7 @@ Next, let's use the variable (containing the Avro schema) to decode a Kafka mess
     | count  282            Long      |
     + ------------------------------- +
 
-The kfirst, klast, kprev and knext commands also work with the Avro integration:
+The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro integration:
 
     kafka:com.shocktrade.topTalkers/0:0> knext
     + ------------------------------ +
@@ -276,6 +285,27 @@ The kfirst, klast, kprev and knext commands also work with the Avro integration:
     | srcIP  68.87.73.142  Utf8      |
     | count  263           Long      |
     + ------------------------------ +
+
+Suppose you want to know how many messages contain a frequency greater than 2500, use could issue the `kCount` command:
+
+    kafka:topTalkers.vipSite/7:3> kCount frequency > 2500
+    106
+
+The response was 106, meaning there are 106 messages containing a frequency greater than 2500.
+
+Now suppose you want to view the first message whose frequency is  greater than 2500, use could issue the `kFindOne` command:
+
+    kafka:topTalkers/0:0> kFindOne frequency > 2500
+    + ------------------------------------- +
+    | field           value          type   |
+    + ------------------------------------- +
+    | vip             192.58.128.30  Utf8   |
+    | site            elhkg4         Utf8   |
+    | srcIP           172.16.14.3    Utf8   |
+    | frequency       4150           Long   |
+    | firstTimestamp  1410038836     Long   |
+    | lastTimestamp   1410038896     Long   |
+    + ------------------------------------- +
 
 <a name="storm-module"></a>
 #### Storm Module
