@@ -27,8 +27,10 @@ class GzipCompressionSpec() extends FeatureSpec with GivenWhenThen with MockitoS
         uncompressedData <- compressedData.decompress
       } yield new String(uncompressedData, encoding)
 
-      Then("The original message should be the same as the decompressed message")
+      Then("The operation should have completed without errors")
       assert(result.isSuccess)
+
+      And("The original message should be the same as the decompressed message")
       assert(result.get == originalMessage)
     }
   }
