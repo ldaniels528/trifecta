@@ -188,7 +188,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val consumer = KafkaStreamingConsumer(rt.zkEndPoint, groupId)
 
     // perform the search
-    val result = consumer.scan(topic, parallelism = 4, key) map (_ map { msg =>
+    val result = consumer.scan(topic, parallelism = 4, BinaryKeyEqCondition(key)) map (_ map { msg =>
       val lastOffset: Long = getLastOffset(msg.topic, msg.partition) getOrElse -1L
       val nextOffset: Long = msg.offset + 1
       cursor = Option(MessageCursor(msg.topic, msg.partition, msg.offset, nextOffset, BinaryMessageEncoding))
