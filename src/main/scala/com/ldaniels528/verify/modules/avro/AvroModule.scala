@@ -1,7 +1,7 @@
 package com.ldaniels528.verify.modules.avro
 
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.modules.{Command, Module}
+import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
 import com.ldaniels528.verify.vscript.{OpCode, Scope, Variable}
 
 /**
@@ -22,8 +22,8 @@ class AvroModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * @return the commands that are bound to the module
    */
   override def getCommands: Seq[Command] = Seq(
-    Command(this, "avcat", cat, (Seq("variable"), Seq.empty), help = "Displays the contents of a schema variable", promptAware = false),
-    Command(this, "avload", loadSchema, (Seq("variable", "schemaPath"), Seq.empty), help = "Loads an Avro schema into memory", promptAware = false)
+    Command(this, "avcat", cat, SimpleParams(required = Seq("variable")), help = "Displays the contents of a schema variable", promptAware = false),
+    Command(this, "avload", loadSchema, SimpleParams(required = Seq("variable", "schemaPath")), help = "Loads an Avro schema into memory", promptAware = false)
   )
 
   override def getVariables: Seq[Variable] = Seq.empty

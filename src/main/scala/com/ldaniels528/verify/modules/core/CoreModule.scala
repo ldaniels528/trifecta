@@ -4,7 +4,7 @@ import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
 import com.ldaniels528.verify.modules.ModuleManager.ModuleVariable
-import com.ldaniels528.verify.modules.{Command, Module}
+import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
@@ -33,35 +33,35 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   override def moduleName = "core"
 
   override def getCommands: Seq[Command] = Seq(
-    Command(this, "!", executeHistory, (Seq("index"), Seq.empty), help = "Executes a previously issued command"),
-    Command(this, "?", help, (Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
-    Command(this, "autoswitch", autoSwitch, (Seq.empty, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
-    Command(this, "cat", cat, (Seq("file"), Seq.empty), help = "Dumps the contents of the given file", promptAware = true),
-    Command(this, "cd", changeDir, (Seq("path"), Seq.empty), help = "Changes the local file system path/directory", promptAware = true),
-    Command(this, "charset", charSet, (Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
-    Command(this, "class", inspectClass, (Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
-    Command(this, "columns", columnWidthGetOrSet, (Seq.empty, Seq("columnWidth")), help = "Retrieves or sets the column width for message output"),
-    Command(this, "debug", debug, (Seq.empty, Seq("enabled")), help = "Switches debugging on/off", undocumented = true),
-    Command(this, "exit", exit, help = "Exits the shell"),
-    Command(this, "help", help, help = "Provides the list of available commands"),
-    Command(this, "history", listHistory, help = "Returns a list of previously issued commands"),
-    Command(this, "hostname", hostname, help = "Returns the name of the host system"),
-    Command(this, "jobs", listJobs, help = "Returns the list of currently running jobs"),
-    Command(this, "ls", listFiles, (Seq.empty, Seq("path")), help = "Retrieves the files from the current directory", promptAware = true),
-    Command(this, "modules", listModules, help = "Returns a list of configured modules"),
-    Command(this, "pkill", processKill, (Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
-    Command(this, "ps", processList, (Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes (EXPERIMENTAL)"),
-    Command(this, "pwd", printWorkingDirectory, (Seq.empty, Seq.empty), help = "Display current working directory"),
-    Command(this, "resource", findResource, (Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
-    Command(this, "runjava", executeJavaApp, (Seq("jarFile", "className"), (1 to 10).map(n => s"arg$n")), help = "Executes a Java class' main method"),
-    Command(this, "scope", listScope, help = "Returns the contents of the current scope"),
-    Command(this, "syntax", syntax, (Seq("command"), Seq.empty), help = "Returns the syntax/usage for a given command"),
-    Command(this, "systime", systemTime, help = "Returns the system time as an EPOC in milliseconds"),
-    Command(this, "time", time, help = "Returns the system time"),
-    Command(this, "timeutc", timeUTC, help = "Returns the system time in UTC"),
-    Command(this, "use", useModule, (Seq("module"), Seq.empty), help = "Switches the active module"),
-    Command(this, "version", version, help = "Returns the Verify application version"),
-    Command(this, "wget", httpGet, Seq("url") -> Seq.empty, help = "Retrieves remote content via HTTP"))
+    Command(this, "!", executeHistory, SimpleParams(Seq("index"), Seq.empty), help = "Executes a previously issued command"),
+    Command(this, "?", help, SimpleParams(Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
+    Command(this, "autoswitch", autoSwitch, SimpleParams(Seq.empty, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
+    Command(this, "cat", cat, SimpleParams(Seq("file"), Seq.empty), help = "Dumps the contents of the given file", promptAware = true),
+    Command(this, "cd", changeDir, SimpleParams(Seq("path"), Seq.empty), help = "Changes the local file system path/directory", promptAware = true),
+    Command(this, "charset", charSet, SimpleParams(Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
+    Command(this, "class", inspectClass, SimpleParams(Seq.empty, Seq("action")), help = "Inspects a class using reflection"),
+    Command(this, "columns", columnWidthGetOrSet, SimpleParams(Seq.empty, Seq("columnWidth")), help = "Retrieves or sets the column width for message output"),
+    Command(this, "debug", debug, SimpleParams(Seq.empty, Seq("enabled")), help = "Switches debugging on/off", undocumented = true),
+    Command(this, "exit", exit, SimpleParams(), help = "Exits the shell"),
+    Command(this, "help", help, SimpleParams(), help = "Provides the list of available commands"),
+    Command(this, "history", listHistory, SimpleParams(), help = "Returns a list of previously issued commands"),
+    Command(this, "hostname", hostname, SimpleParams(), help = "Returns the name of the host system"),
+    Command(this, "jobs", listJobs, SimpleParams(), help = "Returns the list of currently running jobs"),
+    Command(this, "ls", listFiles, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves the files from the current directory", promptAware = true),
+    Command(this, "modules", listModules, SimpleParams(), help = "Returns a list of configured modules"),
+    Command(this, "pkill", processKill, SimpleParams(Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
+    Command(this, "ps", processList, SimpleParams(Seq.empty, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes (EXPERIMENTAL)"),
+    Command(this, "pwd", printWorkingDirectory, SimpleParams(Seq.empty, Seq.empty), help = "Display current working directory"),
+    Command(this, "resource", findResource, SimpleParams(Seq("resource-name"), Seq.empty), help = "Inspects the classpath for the given resource"),
+    Command(this, "runjava", executeJavaApp, SimpleParams(Seq("jarFile", "className"), (1 to 10).map(n => s"arg$n")), help = "Executes a Java class' main method"),
+    Command(this, "scope", listScope, SimpleParams(), help = "Returns the contents of the current scope"),
+    Command(this, "syntax", syntax, SimpleParams(Seq("command"), Seq.empty), help = "Returns the syntax/usage for a given command"),
+    Command(this, "systime", systemTime, SimpleParams(), help = "Returns the system time as an EPOC in milliseconds"),
+    Command(this, "time", time, SimpleParams(), help = "Returns the system time"),
+    Command(this, "timeutc", timeUTC, SimpleParams(), help = "Returns the system time in UTC"),
+    Command(this, "use", useModule, SimpleParams(Seq("module"), Seq.empty), help = "Switches the active module"),
+    Command(this, "version", version, SimpleParams(), help = "Returns the Verify application version"),
+    Command(this, "wget", httpGet, SimpleParams(required = Seq("url")), help = "Retrieves remote content via HTTP"))
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("autoSwitching", ConstantValue(Option(true))),

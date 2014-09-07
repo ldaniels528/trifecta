@@ -11,7 +11,7 @@ import com.ldaniels528.verify.modules.avro.AvroReading
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
 import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.Condition
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
-import com.ldaniels528.verify.modules.{Command, Module}
+import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
@@ -58,32 +58,32 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   // the bound commands
   override def getCommands: Seq[Command] = Seq(
-    Command(this, "kbrokers", getBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the brokers from ZooKeeper"),
-    Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
-    Command(this, "kconsumers", getConsumers, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
-    Command(this, "kcount", countMessages, (Seq("field", "operator", "value"), Seq.empty), help = "Counts the messages matching a given condition [references cursor]"),
-    Command(this, "kcursor", getCursor, (Seq.empty, Seq.empty), help = "Displays the current message cursor"),
-    Command(this, "kexport", exportToFile, (Seq("file", "topic", "consumerGroupId"), Seq.empty), "Writes the contents of a specific topic to a file", undocumented = true),
-    Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
-    Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
-    Command(this, "kfindone", findOneMessage, (Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
-    Command(this, "kfirst", getFirstMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
-    Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
-    Command(this, "kgeta", getAvroMessage, (Seq("schemaVariable"), Seq("topic", "partition", "offset")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
-    Command(this, "kgetsize", getMessageSize, (Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
-    Command(this, "kgetminmax", getMessageMinMaxSize, (Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
-    Command(this, "kimport", importMessages, (Seq("topic", "fileType", "filePath"), Seq.empty), "Imports messages into a new/existing topic"),
-    Command(this, "kinbound", inboundMessages, (Seq.empty, Seq("topicPrefix")), "Retrieves a list of topics with new messages (since last query)"),
-    Command(this, "klast", getLastMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the last message for a given topic"),
-    Command(this, "kls", getTopics, (Seq.empty, Seq("topicPrefix")), help = "Lists all existing topics"),
-    Command(this, "knext", getNextMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the next message"),
-    Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
-    Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
-    Command(this, "kpublish", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
-    Command(this, "kreplicas", getReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
-    Command(this, "kreset", resetConsumerGroup, (Seq.empty, Seq("topic", "groupId")), help = "Sets a consumer group ID to zero for all partitions"),
-    Command(this, "ksearch", findMessageByKey, (Seq.empty, Seq("topic", "groupId", "keyVariable")), help = "Scans a topic for a message with a given key (EXPERIMENTAL)", undocumented = true),
-    Command(this, "kstats", getStatistics, (Seq.empty, Seq("topic", "beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
+    Command(this, "kbrokers", getBrokers, SimpleParams(), help = "Returns a list of the brokers from ZooKeeper"),
+    Command(this, "kcommit", commitOffset, SimpleParams(Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), help = "Commits the offset for a given topic and group"),
+    Command(this, "kconsumers", getConsumers, SimpleParams(Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
+    Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Seq.empty), help = "Counts the messages matching a given condition [references cursor]"),
+    Command(this, "kcursor", getCursor, SimpleParams(), help = "Displays the current message cursor"),
+    Command(this, "kexport", exportToFile, SimpleParams(Seq("file", "topic", "consumerGroupId"), Seq.empty), help = "Writes the contents of a specific topic to a file", undocumented = true),
+    Command(this, "kfetch", fetchOffsets, SimpleParams(Seq("topic", "partition", "groupId"), Seq.empty), help = "Retrieves the offset for a given topic and group"),
+    Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
+    Command(this, "kfindone", findOneMessage, SimpleParams(Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
+    Command(this, "kfirst", getFirstMessage, SimpleParams(Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
+    Command(this, "kget", getMessage, SimpleParams(Seq("topic", "partition", "offset"), Seq("outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
+    Command(this, "kgeta", getAvroMessage, SimpleParams(Seq("schemaVariable"), Seq("topic", "partition", "offset")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
+    Command(this, "kgetsize", getMessageSize, SimpleParams(Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
+    Command(this, "kgetminmax", getMessageMinMaxSize, SimpleParams(Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
+    Command(this, "kimport", importMessages, SimpleParams(Seq("topic", "fileType", "filePath"), Seq.empty), help = "Imports messages into a new/existing topic"),
+    Command(this, "kinbound", inboundMessages, SimpleParams(Seq.empty, Seq("topicPrefix")), help = "Retrieves a list of topics with new messages (since last query)"),
+    Command(this, "klast", getLastMessage, SimpleParams(Seq.empty, Seq("topic", "partition")), help = "Returns the last message for a given topic"),
+    Command(this, "kls", getTopics, SimpleParams(Seq.empty, Seq("topicPrefix")), help = "Lists all existing topics"),
+    Command(this, "knext", getNextMessage, SimpleParams(), help = "Attempts to retrieve the next message"),
+    Command(this, "koffset", getOffset, SimpleParams(Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), help = "Returns the offset at a specific instant-in-time for a given topic"),
+    Command(this, "kprev", getPreviousMessage, params = SimpleParams(), help = "Attempts to retrieve the message at the previous offset"),
+    Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Seq.empty), help = "Publishes a message to a topic"),
+    Command(this, "kreplicas", getReplicas, SimpleParams(Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
+    Command(this, "kreset", resetConsumerGroup, SimpleParams(Seq.empty, Seq("topic", "groupId")), help = "Sets a consumer group ID to zero for all partitions"),
+    Command(this, "ksearch", findMessageByKey, SimpleParams(Seq.empty, Seq("topic", "groupId", "keyVariable")), help = "Scans a topic for a message with a given key (EXPERIMENTAL)", undocumented = true),
+    Command(this, "kstats", getStatistics, SimpleParams(Seq.empty, Seq("topic", "beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("defaultFetchSize", ConstantValue(Option(65536)))

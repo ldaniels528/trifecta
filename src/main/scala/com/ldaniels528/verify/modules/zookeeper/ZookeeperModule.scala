@@ -6,7 +6,7 @@ import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
-import com.ldaniels528.verify.modules.{Command, Module}
+import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.Variable
 
@@ -19,19 +19,19 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   private val zk: ZKProxy = rt.zkProxy
 
   override def getCommands = Seq(
-    Command(this, "zcat", zcat, (Seq("key", "type"), Seq.empty), "Retrieves the type-specific value of a key from ZooKeeper"),
-    Command(this, "zcd", zcd, (Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
-    Command(this, "zexists", zexists, (Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
-    Command(this, "zget", zget, (Seq("key"), Seq.empty), "Retrieves the contents of a specific Zookeeper key"),
-    Command(this, "zls", zls, (Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
-    Command(this, "zmk", zmkdir, (Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
-    Command(this, "zput", zput, (Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
-    Command(this, "zreconnect", reconnect, (Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
-    Command(this, "zrm", delete, (Seq("key"), Seq("-r")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
-    Command(this, "zruok", ruok, help = "Checks the status of a Zookeeper instance (requires netcat)"),
-    Command(this, "zsess", session, help = "Retrieves the Session ID from ZooKeeper"),
-    Command(this, "zstat", stat, help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
-    Command(this, "ztree", tree, (Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
+    Command(this, "zcat", zcat, SimpleParams(Seq("key", "type"), Seq.empty), "Retrieves the type-specific value of a key from ZooKeeper"),
+    Command(this, "zcd", zcd, SimpleParams(Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
+    Command(this, "zexists", zexists, SimpleParams(Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
+    Command(this, "zget", zget, SimpleParams(Seq("key"), Seq.empty), "Retrieves the contents of a specific Zookeeper key"),
+    Command(this, "zls", zls, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
+    Command(this, "zmk", zmkdir, SimpleParams(Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
+    Command(this, "zput", zput, SimpleParams(Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
+    Command(this, "zreconnect", reconnect, SimpleParams(Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
+    Command(this, "zrm", delete, SimpleParams(Seq("key"), Seq("-r")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
+    Command(this, "zruok", ruok, SimpleParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
+    Command(this, "zsess", session, SimpleParams(), help = "Retrieves the Session ID from ZooKeeper"),
+    Command(this, "zstat", stat, SimpleParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
+    Command(this, "ztree", tree, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("zkCwd", ConstantValue(Option("/"))))

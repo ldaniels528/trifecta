@@ -129,7 +129,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
         commandSet.get(cmd) match {
           case Some(command) =>
             // verify and execute the command
-            checkArgs(command, args)
+            command.params.checkArgs(command, args)
             val result = command.fx(args)
 
             // auto-switch modules?
@@ -158,19 +158,6 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   }
 
   def handleResult(result: Any)(implicit ec: ExecutionContext) = resultHandler.handleResult(result)
-
-  private def checkArgs(command: Command, args: Seq[String]): Seq[String] = {
-    // determine the minimum and maximum number of parameters
-    val minimum = command.params._1.size
-    val maximum = minimum + command.params._2.size
-
-    // make sure the arguments are within bounds
-    if (args.length < minimum || args.length > maximum) {
-      throw new IllegalArgumentException(s"Usage: ${command.prototype}")
-    }
-
-    args
-  }
 
   /**
    * Parses a line of input into a tuple consisting of the command and its arguments

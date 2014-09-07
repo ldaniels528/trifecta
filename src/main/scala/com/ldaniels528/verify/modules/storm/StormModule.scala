@@ -3,7 +3,7 @@ package com.ldaniels528.verify.modules.storm
 import backtype.storm.generated.Nimbus
 import backtype.storm.utils.{NimbusClient, Utils}
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.modules.{Command, Module}
+import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
 import com.ldaniels528.verify.vscript.Variable
 import org.slf4j.LoggerFactory
 
@@ -31,14 +31,14 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   // the bound commands
   override def getCommands: Seq[Command] = Seq(
-    Command(this, "sbolts", getTopologyBolts, (Seq("topologyID"), Seq.empty), help = "Retrieves the list of bolts for s given topology by ID", promptAware = true),
-    Command(this, "sconf", showConfig, (Seq.empty, Seq("key", "value")), help = "Lists, retrieves or sets the configuration keys", promptAware = true),
-    Command(this, "sconnect", createConnection, (Seq.empty, Seq("nimbusHost")), help = "Establishes (or re-establishes) a connect to the Storm Nimbus Host", promptAware = true),
-    Command(this, "sdeploy", deployTopology, (Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server (EXPERIMENTAL)", promptAware = true, undocumented = true),
-    Command(this, "sget", getTopologyInfo, (Seq("topologyID"), Seq.empty), help = "Retrieves the information for a topology", promptAware = true),
-    Command(this, "skill", killTopology, (Seq("topologyID"), Seq.empty), help = "Kills a running topology", promptAware = true),
-    Command(this, "sls", listTopologies, (Seq.empty, Seq("prefix")), help = "Lists available topologies", promptAware = true),
-    Command(this, "spouts", getTopologySpouts, (Seq("topologyID"), Seq.empty), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true)
+    Command(this, "sbolts", getTopologyBolts, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the list of bolts for s given topology by ID", promptAware = true),
+    Command(this, "sconf", showConfig, SimpleParams(Seq.empty, Seq("key", "value")), help = "Lists, retrieves or sets the configuration keys", promptAware = true),
+    Command(this, "sconnect", createConnection, SimpleParams(Seq.empty, Seq("nimbusHost")), help = "Establishes (or re-establishes) a connect to the Storm Nimbus Host", promptAware = true),
+    Command(this, "sdeploy", deployTopology, SimpleParams(Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server (EXPERIMENTAL)", promptAware = true, undocumented = true),
+    Command(this, "sget", getTopologyInfo, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the information for a topology", promptAware = true),
+    Command(this, "skill", killTopology, SimpleParams(Seq("topologyID"), Seq.empty), help = "Kills a running topology", promptAware = true),
+    Command(this, "sls", listTopologies, SimpleParams(Seq.empty, Seq("prefix")), help = "Lists available topologies", promptAware = true),
+    Command(this, "spouts", getTopologySpouts, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true)
   )
 
   override def getVariables: Seq[Variable] = Seq.empty
