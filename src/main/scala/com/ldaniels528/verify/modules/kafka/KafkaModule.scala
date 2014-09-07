@@ -862,6 +862,10 @@ object KafkaModule {
   }
 
   /**
+   * Binary Key Equality Condition
+   */
+  case class BinaryKeyEqCondition(key: Array[Byte]) extends Condition {
+    override def satisfies(mam: MessageAndMetadata[Array[Byte], Array[Byte]]) = mam.key sameElements key
   }
 
 }
