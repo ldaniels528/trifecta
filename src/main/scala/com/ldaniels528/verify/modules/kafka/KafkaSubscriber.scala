@@ -204,15 +204,13 @@ object KafkaSubscriber {
   // setup defaults
   private val DEFAULT_FETCH_SIZE: Int = 65536
 
-  // define a date parser
-  private val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
-
   implicit val formats = DefaultFormats
 
   /**
    * Retrieves the list of defined brokers from Zookeeper
    */
   def getBrokerList(implicit zk: ZKProxy): Seq[BrokerDetails] = {
+    val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
     val basePath = "/brokers/ids"
     zk.getChildren(basePath) flatMap { brokerId =>
       zk.readString(s"$basePath/$brokerId") map { json =>
