@@ -16,7 +16,6 @@ import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
-import kafka.message.MessageAndMetadata
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
@@ -80,7 +79,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
-    Command(this, "kquery", query, (Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria", undocumented = true),
+    Command(this, "kquery", query, (Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
     Command(this, "kreplicas", getReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kreset", resetConsumerGroup, (Seq.empty, Seq("topic", "groupId")), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
@@ -219,7 +218,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val key = variable.eval[Array[Byte]] getOrElse die(s"$keyVar is undefined")
 
     // get the consumer instance
-    val consumer = KafkaStreamingConsumer(rt.zkEndPoint, groupId)
+    val consumer = KafkaStreamingConsumer(rt.zkEndPoint, groupId, "consumer.timeout.ms" -> 5000)
 
     // perform the search
     val result = consumer.scan(topic, parallelism = 4, BinaryKeyEqCondition(key)) map (_ map { msg =>
@@ -724,18 +723,18 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "kquery" - Returns the first message that corresponds to the given criteria
    * @example {{{ kquery frequency > 5000 }}}
    */
-  def query(args: String*): Future[Option[MessageData]] = {
+  def query(args: String*): Future[Option[Either[Option[MessageData], Seq[AvroRecord]]]] = {
+    import scala.collection.JavaConverters._
+    
     // get the topic and partition from the cursor
     val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse die("No cursor exists")
-    val schemaVar = encoding match {
-      case AvroMessageEncoding(schemaVarName) => schemaVarName
+
+    // get the decoder
+    val decoder = encoding match {
+      case AvroMessageEncoding(schemaVar) => getAvroDecoder(schemaVar)
       case _ =>
         throw new IllegalArgumentException("Raw binary format is not supported")
     }
-
-    // get the decoder
-    val decoder = getAvroDecoder(schemaVar)
-    val groupId = f"GRP${System.currentTimeMillis()}%016x"
 
     // get the criteria
     val Seq(field, operator, value, _*) = args
@@ -751,17 +750,30 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // perform the search
-    val consumer = KafkaStreamingConsumer(rt.zkEndPoint, groupId)
-    val result = consumer.scan(topic, parallelism = 4, conditions: _*) map (_ map { msg =>
-      val lastOffset: Long = getLastOffset(msg.topic, msg.partition) getOrElse -1L
-      val nextOffset: Long = msg.offset + 1L
-      cursor = Option(MessageCursor(msg.topic, msg.partition, msg.offset, nextOffset, BinaryMessageEncoding))
-      MessageData(msg.offset, nextOffset, lastOffset, msg.message)
-    })
-
-    // close the consumer once a response is available
-    result.foreach(msg_? => consumer.close())
-    result
+    val promise = KafkaSubscriber.findOne(topic, brokers, correlationId, conditions: _*)
+    promise.map { optResult =>
+      for {
+        (partition, md) <- optResult
+        encoding <- cursor map (_.encoding)
+      } yield encoding match {
+        case BinaryMessageEncoding =>
+          Left(getMessage(topic, partition.toString, md.lastOffset.toString))
+        case AvroMessageEncoding(schemaVar) =>
+          decoder.decode(md.message) match {
+            case Success(record) =>
+              Right {
+                cursor = Option(MessageCursor(topic, partition, md.offset, md.nextOffset, AvroMessageEncoding(schemaVar)))
+                val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
+                fields map { f =>
+                  val v = record.get(f)
+                  AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
+                }
+              }
+            case Failure(e) =>
+              throw new IllegalStateException(e.getMessage, e)
+          }
+      }
+    }
   }
 
   /**
