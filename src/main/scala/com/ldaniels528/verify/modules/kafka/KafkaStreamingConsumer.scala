@@ -7,7 +7,6 @@ import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.{Condition, StreamedMessage}
 import com.ldaniels528.verify.util.VxUtils._
 import kafka.consumer.{Consumer, ConsumerConfig}
-import kafka.message.MessageAndMetadata
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success, Try}
@@ -44,7 +43,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
             val it = stream.iterator()
             while (it.hasNext()) {
               val mam = it.next()
-              if (conditions.forall(_.satisfies(mam))) total.incrementAndGet()
+              if (conditions.forall(_.satisfies(mam.message(), Option(mam.key())))) total.incrementAndGet()
             }
           }
         }
@@ -114,8 +113,8 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
    */
   def scan(topic: String, parallelism: Int, conditions: Condition*)(implicit ec: ExecutionContext): Future[Option[StreamedMessage]] = {
     val streamMap = consumer.createMessageStreams(Map(topic -> parallelism))
-    var completed: Boolean = false
     val promise = Promise[Option[StreamedMessage]]()
+    var message: Option[StreamedMessage] = None
 
     // now create an object to consume the messages
     val tasks = (streamMap.get(topic) map { streams =>
@@ -123,11 +122,10 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
         Future {
           Try {
             val it = stream.iterator()
-            while (!completed && it.hasNext()) {
+            while (message.isEmpty && it.hasNext()) {
               val mam = it.next()
-              if (conditions.forall(_.satisfies(mam))) {
-                promise.success(Option(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message())))
-                completed = true
+              if (conditions.forall(_.satisfies(mam.message(), Option(mam.key())))) {
+                message = Option(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message()))
               }
             }
           }
@@ -135,9 +133,9 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
       }
     }).toList.flatten
 
-    // check for the failure to find the message by key
+    // check for the failure to find a message
     Future.sequence(tasks).onComplete {
-      case Success(v) => if (!completed) promise.success(None)
+      case Success(v) => promise.success(message)
       case Failure(e) => promise.failure(e)
     }
 
@@ -203,7 +201,9 @@ object KafkaStreamingConsumer {
    * Represents a message matching condition
    */
   trait Condition {
-    def satisfies(mam: MessageAndMetadata[Array[Byte], Array[Byte]]): Boolean
+
+    def satisfies(message: Array[Byte], key: Option[Array[Byte]] = None): Boolean
+
   }
 
 }
