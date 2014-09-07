@@ -196,20 +196,18 @@ class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaSubscriber {
-
-  import net.liftweb.json._
-
   private val logger = org.slf4j.LoggerFactory.getLogger(getClass)
 
   // setup defaults
   private val DEFAULT_FETCH_SIZE: Int = 65536
 
-  implicit val formats = DefaultFormats
 
   /**
    * Retrieves the list of defined brokers from Zookeeper
    */
   def getBrokerList(implicit zk: ZKProxy): Seq[BrokerDetails] = {
+    import net.liftweb.json._
+    implicit val formats = DefaultFormats
     val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
     val basePath = "/brokers/ids"
     zk.getChildren(basePath) flatMap { brokerId =>
