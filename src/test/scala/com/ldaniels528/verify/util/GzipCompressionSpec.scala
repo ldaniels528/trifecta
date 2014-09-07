@@ -3,14 +3,12 @@ package com.ldaniels528.verify.util
 import com.ldaniels528.verify.util.GzipCompression._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
-import org.slf4j.LoggerFactory
 
 /**
- * GzipCompression Specification
+ * GZIP Compression Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class GzipCompressionSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar with GzipCompression {
-  private val logger = LoggerFactory.getLogger(getClass)
 
   info("As a GzipCompression instance")
   info("I want to be able to compress and/or decompress data")
