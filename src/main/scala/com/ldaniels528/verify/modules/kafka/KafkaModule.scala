@@ -706,7 +706,12 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // get the criteria
     val Seq(field, operator, value, _*) = args
     val conditions = operator match {
-      case "==" => Seq(EqCondition(decoder, field, value))
+      case "==" => Seq(AvroEQ(decoder, field, value))
+      case "!=" => Seq(AvroNotEQ(decoder, field, value))
+      case ">" => Seq(AvroGreater(decoder, field, value))
+      case "<" => Seq(AvroLesser(decoder, field, value))
+      case ">=" => Seq(AvroGreaterOrEQ(decoder, field, value))
+      case "<=" => Seq(AvroLesserOrEQ(decoder, field, value))
       case _ =>
         throw new IllegalArgumentException(s"Illegal condition definition near '$args'")
     }
