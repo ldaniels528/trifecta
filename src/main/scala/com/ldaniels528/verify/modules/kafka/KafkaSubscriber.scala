@@ -246,6 +246,13 @@ object KafkaSubscriber {
   case class ConsumerDetails(consumerId: String, topic: String, partition: Int, offset: Long)
 
   /**
+   * Returns the list of partitions for the given topic
+   */
+  def getTopicPartitions(topic: String)(implicit zk: ZKProxy): Seq[Int] = {
+    zk.getChildren(path = s"/brokers/topics/$topic/partitions") map (_.toInt)
+  }
+
+  /**
    * Returns the list of topics for the given brokers
    */
   def getTopicList(brokers: Seq[Broker], correlationId: Int)(implicit zk: ZKProxy): Seq[TopicDetails] = {
