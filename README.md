@@ -250,10 +250,12 @@ Verify supports Avro integration for Kafka. The next few examples make use of th
       "name": "TopTalkers",
       "namespace": "com.shocktrade.avro",
       "fields": [
-        { "name": "rank", "type": "int", "doc": "The ranking of the entry" },
+        { "name": "vip", "type": "string", "doc": "The Internally-issued IP address" },
         { "name": "site", "type": "string", "doc": "The top-level-domain/site" },
         { "name": "srcIP", "type": "string", "doc": "The source IP address" },
-        { "name": "count", "type": "long", "doc": "The number of occurrences of the site and source IP tuple" }
+        { "name": "frequency", "type": "long", "doc": "The number of occurrences of the vip, site and source IP tuple" },
+        { "name": "firstTimestamp", "type": "long", "doc": "The first occurrence of the source IP" },
+        { "name": "lastTimestamp", "type": "long", "doc": "The last occurrence of the source IP" }
       ],
       "doc": "A basic schema for top-talkers messages"
     }
