@@ -24,6 +24,7 @@ class VScriptCompilerTest() {
       println "Result: " :+ result
       """,
       debug = true)
+    ()
   }
 
   @Test
@@ -38,6 +39,7 @@ class VScriptCompilerTest() {
         println doAdd(x,y)
       """,
       debug = true)
+    ()
   }
 
   @Test
@@ -55,6 +57,7 @@ class VScriptCompilerTest() {
       	println a2
       """,
       debug = true)
+    ()
   }
 
   @Test
@@ -67,6 +70,7 @@ class VScriptCompilerTest() {
         println "factorial(" :+ x :+ ") = " :+ factorial(x)
       """,
       debug = true)
+    ()
   }
 
   @Test
@@ -85,6 +89,7 @@ class VScriptCompilerTest() {
       m::add(2,3)
       """,
       debug = true)
+    ()
   }
 
   private def label(text: String) = {
