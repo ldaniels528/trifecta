@@ -267,26 +267,30 @@ Let's load the Avro schema into memory as the variable "topTalkers":
 Next, let's use the variable (containing the Avro schema) to decode a Kafka message:
 
     avro:avro$> kgeta topTalkers com.shocktrade.topTalkers  0 0
-    + ------------------------------- +
-    | field  value          type      |
-    + ------------------------------- +
-    | rank   1              Integer   |
-    | site   nyc412         Utf8      |
-    | srcIP  69.252.73.217  Utf8      |
-    | count  282            Long      |
-    + ------------------------------- +
+    + ------------------------------------ +
+    | field           value         type   |
+    + ------------------------------------ +
+    | vip             192.33.14.30  Utf8   |
+    | site            elsjc3        Utf8   |
+    | srcIP           69.252.96.28  Utf8   |
+    | frequency       1071          Long   |
+    | firstTimestamp  1409979852    Long   |
+    | lastTimestamp   1409979916    Long   |
+    + ------------------------------------ +
 
 The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro integration:
 
     kafka:com.shocktrade.topTalkers/0:0> knext
-    + ------------------------------ +
-    | field  value         type      |
-    + ------------------------------ +
-    | rank   1             Integer   |
-    | site   nyc412        Utf8      |
-    | srcIP  68.87.73.142  Utf8      |
-    | count  263           Long      |
-    + ------------------------------ +
+    + ------------------------------------ +
+    | field           value         type   |
+    + ------------------------------------ +
+    | vip             192.33.14.30  Utf8   |
+    | site            elsjc3        Utf8   |
+    | srcIP           69.252.96.22  Utf8   |
+    | frequency       1085          Long   |
+    | firstTimestamp  1409979852    Long   |
+    | lastTimestamp   1409979916    Long   |
+    + ------------------------------------ +
 
 Suppose you want to know how many messages contain a frequency greater than 2500, use could issue the `kCount` command:
 
