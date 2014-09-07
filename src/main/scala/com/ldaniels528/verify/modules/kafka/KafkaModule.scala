@@ -66,6 +66,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kexport", exportToFile, (Seq("file", "topic", "consumerGroupId"), Seq.empty), "Writes the contents of a specific topic to a file", undocumented = true),
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, (Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
+    Command(this, "kfindone", findOneMessage, (Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
     Command(this, "kfirst", getFirstMessage, (Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
     Command(this, "kget", getMessage, (Seq("topic", "partition", "offset"), Seq("outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgeta", getAvroMessage, (Seq("schemaVariable"), Seq("topic", "partition", "offset")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
@@ -79,10 +80,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "koffset", getOffset, (Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kprev", getPreviousMessage, (Seq.empty, Seq.empty), "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, (Seq("topic", "key"), Seq.empty), "Publishes a message to a topic"),
-    Command(this, "kquery", query, (Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
     Command(this, "kreplicas", getReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kreset", resetConsumerGroup, (Seq.empty, Seq("topic", "groupId")), help = "Sets a consumer group ID to zero for all partitions"),
-    Command(this, "ksearch", findMessageByKey, (Seq.empty, Seq("topic", "groupId", "keyVariable")), help = "Scans a topic for a message with a given key"),
+    Command(this, "ksearch", findMessageByKey, (Seq.empty, Seq("topic", "groupId", "keyVariable")), help = "Scans a topic for a message with a given key (EXPERIMENTAL)", undocumented = true),
     Command(this, "kstats", getStatistics, (Seq.empty, Seq("topic", "beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
 
   override def getVariables: Seq[Variable] = Seq(
@@ -230,6 +230,63 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // close the consumer once a response is available
     result.foreach(msg_? => consumer.close())
     result
+  }
+
+  /**
+   * "kfindone" - Returns the first message that corresponds to the given criteria
+   * @example {{{ kfindone frequency > 5000 }}}
+   */
+  def findOneMessage(args: String*): Future[Option[Either[Option[MessageData], Seq[AvroRecord]]]] = {
+    import scala.collection.JavaConverters._
+
+    // get the topic and partition from the cursor
+    val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse die("No cursor exists")
+
+    // get the decoder
+    val decoder = encoding match {
+      case AvroMessageEncoding(schemaVar) => getAvroDecoder(schemaVar)
+      case _ =>
+        throw new IllegalArgumentException("Raw binary format is not supported")
+    }
+
+    // get the criteria
+    val Seq(field, operator, value, _*) = args
+    val conditions = operator match {
+      case "==" => Seq(AvroEQ(decoder, field, value))
+      case "!=" => Seq(AvroNotEQ(decoder, field, value))
+      case ">" => Seq(AvroGreater(decoder, field, value))
+      case "<" => Seq(AvroLesser(decoder, field, value))
+      case ">=" => Seq(AvroGreaterOrEQ(decoder, field, value))
+      case "<=" => Seq(AvroLesserOrEQ(decoder, field, value))
+      case _ =>
+        throw new IllegalArgumentException(s"Illegal condition definition near '$args'")
+    }
+
+    // perform the search
+    val promise = KafkaSubscriber.findOne(topic, brokers, correlationId, conditions: _*)
+    promise.map { optResult =>
+      for {
+        (partition, md) <- optResult
+        encoding <- cursor map (_.encoding)
+      } yield encoding match {
+        case BinaryMessageEncoding =>
+          Left(getMessage(topic, partition.toString, md.lastOffset.toString))
+        case AvroMessageEncoding(schemaVar) =>
+          decoder.decode(md.message) match {
+            case Success(record) =>
+              Right {
+                cursor = Option(MessageCursor(topic, partition, md.offset, md.nextOffset, AvroMessageEncoding(schemaVar)))
+                val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
+                fields map { f =>
+                  val v = record.get(f)
+                  AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
+                }
+              }
+            case Failure(e) =>
+              throw new IllegalStateException(e.getMessage, e)
+          }
+      }
+    }
   }
 
   /**
@@ -715,63 +772,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     KafkaPublisher(brokers) use { publisher =>
       publisher.open()
       publisher.publish(name, toBytes(key.toLong), message.getBytes)
-    }
-  }
-
-  /**
-   * "kquery" - Returns the first message that corresponds to the given criteria
-   * @example {{{ kquery frequency > 5000 }}}
-   */
-  def query(args: String*): Future[Option[Either[Option[MessageData], Seq[AvroRecord]]]] = {
-    import scala.collection.JavaConverters._
-
-    // get the topic and partition from the cursor
-    val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse die("No cursor exists")
-
-    // get the decoder
-    val decoder = encoding match {
-      case AvroMessageEncoding(schemaVar) => getAvroDecoder(schemaVar)
-      case _ =>
-        throw new IllegalArgumentException("Raw binary format is not supported")
-    }
-
-    // get the criteria
-    val Seq(field, operator, value, _*) = args
-    val conditions = operator match {
-      case "==" => Seq(AvroEQ(decoder, field, value))
-      case "!=" => Seq(AvroNotEQ(decoder, field, value))
-      case ">" => Seq(AvroGreater(decoder, field, value))
-      case "<" => Seq(AvroLesser(decoder, field, value))
-      case ">=" => Seq(AvroGreaterOrEQ(decoder, field, value))
-      case "<=" => Seq(AvroLesserOrEQ(decoder, field, value))
-      case _ =>
-        throw new IllegalArgumentException(s"Illegal condition definition near '$args'")
-    }
-
-    // perform the search
-    val promise = KafkaSubscriber.findOne(topic, brokers, correlationId, conditions: _*)
-    promise.map { optResult =>
-      for {
-        (partition, md) <- optResult
-        encoding <- cursor map (_.encoding)
-      } yield encoding match {
-        case BinaryMessageEncoding =>
-          Left(getMessage(topic, partition.toString, md.lastOffset.toString))
-        case AvroMessageEncoding(schemaVar) =>
-          decoder.decode(md.message) match {
-            case Success(record) =>
-              Right {
-                cursor = Option(MessageCursor(topic, partition, md.offset, md.nextOffset, AvroMessageEncoding(schemaVar)))
-                val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
-                fields map { f =>
-                  val v = record.get(f)
-                  AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
-                }
-              }
-            case Failure(e) =>
-              throw new IllegalStateException(e.getMessage, e)
-          }
-      }
     }
   }
 
