@@ -6,7 +6,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.modules.avro.{AvroDecoder, AvroReading}
+import com.ldaniels528.verify.modules.avro.AvroConditions._
+import com.ldaniels528.verify.modules.avro.AvroReading
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
 import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.Condition
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
@@ -718,9 +719,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // perform the search
     val consumer = KafkaStreamingConsumer(rt.zkEndPoint, groupId)
-    val result = consumer.scan(topic, parallelism = 4, conditions) map (_ map { msg =>
+    val result = consumer.scan(topic, parallelism = 4, conditions: _*) map (_ map { msg =>
       val lastOffset: Long = getLastOffset(msg.topic, msg.partition) getOrElse -1L
-      val nextOffset: Long = msg.offset + 1
+      val nextOffset: Long = msg.offset + 1L
       cursor = Option(MessageCursor(msg.topic, msg.partition, msg.offset, nextOffset, BinaryMessageEncoding))
       MessageData(msg.offset, nextOffset, lastOffset, msg.message)
     })
@@ -758,7 +759,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * kscana - Scans and verifies that a set of messages (specific offset range) can be read by the specified schema
-   * @example {{{ kscana avro/schema1.avsc com.shocktrade.alerts 0 1000 2000 }}}
+   * @example {{{ kscana schemaVar com.shocktrade.alerts 0 1000 2000 }}}
    */
   def scanMessagesAvro(args: String*)(implicit out: PrintStream): Seq[AvroVerification] = {
     // get the arguments
