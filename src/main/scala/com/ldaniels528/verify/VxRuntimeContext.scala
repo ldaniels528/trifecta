@@ -11,7 +11,6 @@ import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.avro.{AvroModule, AvroTables}
 import com.ldaniels528.verify.modules.core.CoreModule
 import com.ldaniels528.verify.modules.kafka.KafkaModule
-import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.MessageData
 import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
 import com.ldaniels528.verify.modules.{Command, ModuleManager}
@@ -19,10 +18,10 @@ import com.ldaniels528.verify.util.{BinaryMessaging, CommandParser}
 import com.ldaniels528.verify.vscript.{RootScope, VScriptCompiler}
 import org.slf4j.LoggerFactory
 
-import scala.collection.{GenTraversableOnce, mutable}
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Properties.userHome
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /**
  * Verify Runtime Context
@@ -37,9 +36,6 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
 
   // create the root-level scope
   implicit val scope = RootScope()
-
-  // define the tabular instance
-  val tabular = new Tabular() with AvroTables
 
   // get the ZooKeeper end-point
   val zkEndPoint = EndPoint(zkHost, zkPort)
@@ -59,11 +55,13 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   val zkProxy = ZKProxy(zkEndPoint)
 
   // define the job stack
-  var jobIdGen = new AtomicInteger(new Random().nextInt(1000) + 1000)
   val jobs = mutable.Buffer[JobItem]()
 
   // create the module manager
   val moduleManager = new ModuleManager(scope)
+
+  // create the result handler
+  val resultHandler = new VxResultHandler(this)
 
   // load the built-in modules
   moduleManager ++= Seq(
@@ -159,57 +157,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
     opCode.eval
   }
 
-  def handleResult(result: Any)(implicit ec: ExecutionContext) {
-    result match {
-      // handle binary data
-      case message: Array[Byte] if message.isEmpty => out.println("No data returned")
-      case message: Array[Byte] => dumpMessage(message)(this, out)
-      case MessageData(offset, _, _, message) => dumpMessage(offset, message)(this, out)
-
-      // handle Either cases
-      case e: Either[_, _] => e match {
-        case Left(v) => handleResult(v)
-        case Right(v) => handleResult(v)
-      }
-
-      // handle Future cases
-      case f: Future[_] =>
-        val job = JobItem(jobIdGen.incrementAndGet(), System.currentTimeMillis(), f)
-        jobs += job
-        f.onComplete {
-          case Success(value) =>
-            out.println(s"Job #${job.jobId} completed")
-            jobs -= job
-            handleResult(value)
-          case Failure(e) =>
-            out.println(s"Job #${job.jobId} failed: ${e.getMessage}")
-            jobs -= job
-        }
-        handleResult(Seq(job))
-
-      // handle Option cases
-      case o: Option[_] => o match {
-        case Some(v) => handleResult(v)
-        case None => out.println("No data returned")
-      }
-
-      // handle Try cases
-      case t: Try[_] => t match {
-        case Success(v) => handleResult(v)
-        case Failure(e) => throw e
-      }
-
-      // handle lists and sequences of case classes
-      case s: Seq[_] if s.isEmpty => out.println("No data returned")
-      case s: Seq[_] if !Tabular.isPrimitives(s) => tabular.transform(s) foreach out.println
-
-      // handle lists and sequences of primitives
-      case g: GenTraversableOnce[_] => g foreach out.println
-
-      // anything else ...
-      case x => if (x != null && !x.isInstanceOf[Unit]) out.println(x)
-    }
-  }
+  def handleResult(result: Any)(implicit ec: ExecutionContext) = resultHandler.handleResult(result)
 
   private def checkArgs(command: Command, args: Seq[String]): Seq[String] = {
     // determine the minimum and maximum number of parameters
@@ -247,7 +195,8 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VxRuntimeContext {
+  private var jobIdGen = new AtomicInteger(new Random().nextInt(1000) + 1000)
 
-  case class JobItem(jobId: Int, startTime: Long, task: Future[_])
+  case class JobItem(jobId: Int = jobIdGen.incrementAndGet(), startTime: Long, task: Future[_])
 
 }
