@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import akka.actor.ActorRef
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.{Condition, StreamedMessage, StreamingMessageObserver}
+import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.{Condition, StreamedMessage}
 import com.ldaniels528.verify.util.VxUtils._
 import kafka.consumer.{Consumer, ConsumerConfig}
 import kafka.message.MessageAndMetadata
@@ -84,9 +84,9 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
    * Streams messages from a Kafka topic to an observer
    * @param topic the given topic name
    * @param parallelism the given number of processing threads
-   * @param listener the observer to callback upon receipt of a new message
+   * @param observer the observer to callback upon receipt of a new message
    */
-  def observe(topic: String, parallelism: Int, listener: StreamingMessageObserver)(implicit ec: ExecutionContext) {
+  def observe(topic: String, parallelism: Int)(observer: StreamedMessage => Unit)(implicit ec: ExecutionContext) {
     val streamMap = consumer.createMessageStreams(Map(topic -> parallelism))
 
     // now create an object to consume the messages
@@ -97,7 +97,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
             val it = stream.iterator()
             while (it.hasNext()) {
               val mam = it.next()
-              listener.consume(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message()))
+              observer(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message()))
             }
           }
         }
@@ -199,22 +199,11 @@ object KafkaStreamingConsumer {
    */
   case class StreamedMessage(topic: String, partition: Int, offset: Long, key: Array[Byte], message: Array[Byte])
 
+  /**
+   * Represents a message matching condition
+   */
   trait Condition {
     def satisfies(mam: MessageAndMetadata[Array[Byte], Array[Byte]]): Boolean
-  }
-
-  /**
-   * This trait is implemented by classes that are interested in
-   * consuming streaming Kafka messages.
-   */
-  trait StreamingMessageObserver {
-
-    /**
-     * Called when data is ready to be consumed
-     * @param message the message as a binary string
-     */
-    def consume(message: StreamedMessage): Unit
-
   }
 
 }

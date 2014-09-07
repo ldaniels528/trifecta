@@ -3,7 +3,7 @@ package com.ldaniels528.verify.modules.kafka
 import akka.actor.{Actor, ActorSystem, Props}
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.{StreamedMessage, StreamingMessageObserver}
+import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.StreamedMessage
 import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumerTest._
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.VxUtils._
@@ -50,12 +50,9 @@ class KafkaStreamingConsumerTest {
   def observerPatternTest(): Unit = {
     // start streaming the data
     val consumer = KafkaStreamingConsumer(zkEndPoint, consumerId)
-    consumer.observe("com.shocktrade.quotes.csv", parallelism, new StreamingMessageObserver {
-      override def consume(message: StreamedMessage) = {
-        tabular.transform(Seq(message)) foreach logger.info
-        false
-      }
-    })
+    consumer.observe("com.shocktrade.quotes.csv", parallelism) { message =>
+      tabular.transform(Seq(message)) foreach logger.info
+    }
   }
 
   @After
