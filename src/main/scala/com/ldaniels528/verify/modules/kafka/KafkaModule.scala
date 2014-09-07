@@ -21,7 +21,7 @@ import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 /**
  * Kafka Module
@@ -82,7 +82,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kquery", query, (Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
     Command(this, "kreplicas", getReplicas, (Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kreset", resetConsumerGroup, (Seq.empty, Seq("topic", "groupId")), help = "Sets a consumer group ID to zero for all partitions"),
-    Command(this, "kscana", scanMessagesAvro, (Seq("schemaPath", "topic", "partition", "startOffset", "endOffset"), Seq("batchSize", "blockSize")), help = "Scans a range of messages verifying conformance to an Avro schema"),
     Command(this, "ksearch", findMessageByKey, (Seq.empty, Seq("topic", "groupId", "keyVariable")), help = "Scans a topic for a message with a given key"),
     Command(this, "kstats", getStatistics, (Seq.empty, Seq("topic", "beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
 
@@ -725,7 +724,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def query(args: String*): Future[Option[Either[Option[MessageData], Seq[AvroRecord]]]] = {
     import scala.collection.JavaConverters._
-    
+
     // get the topic and partition from the cursor
     val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse die("No cursor exists")
 
@@ -800,43 +799,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
         subscriber.commitOffsets(groupId, offset = 0L, "resetting consumer ID")
       }
     }
-  }
-
-  /**
-   * kscana - Scans and verifies that a set of messages (specific offset range) can be read by the specified schema
-   * @example {{{ kscana schemaVar com.shocktrade.alerts 0 1000 2000 }}}
-   */
-  def scanMessagesAvro(args: String*)(implicit out: PrintStream): Seq[AvroVerification] = {
-    // get the arguments
-    val Seq(schemaVar, name, partition, startOffset, endOffset, _*) = args
-    val batchSize = extract(args, 5) map (parseInt("batchSize", _)) getOrElse 10
-    val blockSize = extract(args, 6) map (parseInt("blockSize", _)) getOrElse defaultFetchSize
-
-    // get the decoder
-    val decoder = getAvroDecoder(schemaVar)
-
-    // check all records within the range
-    var verified = 0
-    var errors = 0
-    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
-      (startOffset.toLong to endOffset.toLong).sliding(batchSize, batchSize) foreach { offsets =>
-        Try(subscriber.fetch(offsets, blockSize)) match {
-          case Success(messages) =>
-            messages foreach { m =>
-              Try(decoder.decode(m.message)) match {
-                case Success(_) => verified += 1
-                case Failure(e) =>
-                  out.println("[%04d] %s".format(m.offset, e.getMessage))
-                  errors += 1
-              }
-            }
-          case Failure(e) =>
-            out.println(s"!!! %s between offsets %d and %d".format(e.getMessage, offsets.min, offsets.max))
-        }
-      }
-    }
-
-    Seq(AvroVerification(verified, errors))
   }
 
   private def parsePartition(partition: String): Int = parseInt("partition", partition)
