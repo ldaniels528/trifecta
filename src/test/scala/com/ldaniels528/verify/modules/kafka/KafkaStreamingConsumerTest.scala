@@ -71,7 +71,7 @@ class KafkaStreamingConsumerTest {
 
     // reset each partitions
     (0 to (partitions - 1)) foreach { partition =>
-      new KafkaSubscriber(Topic(topic, partition), brokers, 1) use (_.commitOffsets(groupId, 0L, "Development offset"))
+      new KafkaSubscriber(TopicSlice(topic, partition), brokers, 1) use (_.commitOffsets(groupId, 0L, "Development offset"))
     }
   }
 

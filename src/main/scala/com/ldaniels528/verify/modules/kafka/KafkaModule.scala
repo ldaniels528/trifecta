@@ -42,7 +42,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private val correlationId: Int = (Math.random * Int.MaxValue).toInt
 
   // incoming messages cache
-  private var incomingMessageCache = Map[Topic, Inbound]()
+  private var incomingMessageCache = Map[TopicSlice, Inbound]()
   private var lastInboundCheck: Long = _
 
   // define the offset for message cursor navigation commands
@@ -106,7 +106,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val metadata = extract(args, index = 4) getOrElse ""
 
     // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.commitOffsets(groupId, offset.toLong, metadata))
+    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use (_.commitOffsets(groupId, offset.toLong, metadata))
   }
 
   /**
@@ -185,7 +185,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val Seq(name, partition, groupId, _*) = args
 
     // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.fetchOffsets(groupId))
+    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use (_.fetchOffsets(groupId))
   }
 
   /**
@@ -284,7 +284,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * Returns the first offset for a given topic
    */
   def getFirstOffset(topic: String, partition: Int): Option[Long] = {
-    new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use (_.getFirstOffset)
+    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (_.getFirstOffset)
   }
 
   /**
@@ -295,7 +295,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val (topic, partition) = getTopicAndPartition(args)
 
     // perform the action
-    new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subscriber =>
+    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subscriber =>
       subscriber.getLastOffset map { lastOffset =>
         // return the first record with the cursor's encoding
         val encoding = cursor map (_.encoding) getOrElse BinaryMessageEncoding
@@ -313,7 +313,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * Returns the last offset for a given topic
    */
   def getLastOffset(topic: String, partition: Int): Option[Long] = {
-    new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use (_.getLastOffset)
+    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (_.getLastOffset)
   }
 
   /**
@@ -339,7 +339,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val decoder = getAvroDecoder(schemaVar)
 
     // perform the action
-    new KafkaSubscriber(Topic(name, partition), brokers, correlationId) use { subscriber =>
+    new KafkaSubscriber(TopicSlice(name, partition), brokers, correlationId) use { subscriber =>
       (subscriber.fetch(offset, defaultFetchSize).headOption map { md =>
         decoder.decode(md.message) match {
           case Success(record) =>
@@ -367,7 +367,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // perform the action
     var messageData: Option[MessageData] = None
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
+    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
       messageData = subscriber.fetch(offset.toLong, defaultFetchSize).headOption
       cursor = messageData map (m => MessageCursor(name, partition.toInt, m.offset, m.nextOffset, BinaryMessageEncoding))
     }
@@ -397,7 +397,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
 
     // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use {
+    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use {
       _.fetch(offset.toLong, fetchSize).headOption map (_.message.length)
     }
   }
@@ -412,7 +412,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = extract(args, 4) map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
 
     // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
+    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
       val offsets = startOffset.toLong to endOffset.toLong
       val messages = subscriber.fetch(offsets, fetchSize).map(_.message.length)
       if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Seq.empty
@@ -449,7 +449,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val sysTimeMillis = extract(args, 2) map (sdf.parse(_).getTime) getOrElse -1L
 
     // perform the action
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.getOffsetsBefore(sysTimeMillis))
+    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use (_.getOffsetsBefore(sysTimeMillis))
   }
 
   /**
@@ -666,7 +666,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
       // retrieve the statistics for each topic
       getStatistics(topic, beginPartition.toString, endPartition.toString) map { o =>
-        val prevInbound = incomingMessageCache.get(Topic(o.topic, o.partition))
+        val prevInbound = incomingMessageCache.get(TopicSlice(o.topic, o.partition))
         val lastCheckTime = prevInbound.map(_.lastCheckTime.getTime) getOrElse System.currentTimeMillis()
         val currentTime = System.currentTimeMillis()
         val elapsedTime = 1 + (currentTime - lastCheckTime) / 1000L
@@ -677,7 +677,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }).toSeq
 
     // cache the unfiltered inbound data
-    incomingMessageCache = incomingMessageCache ++ Map(inboundData map (i => Topic(i.topic, i.partition) -> i): _*)
+    incomingMessageCache = incomingMessageCache ++ Map(inboundData map (i => TopicSlice(i.topic, i.partition) -> i): _*)
 
     // filter out the non-changed records
     inboundData.filterNot(_.change == 0) sortBy (-_.change)
@@ -796,7 +796,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // reset the consumer group ID for each partition
     (start to end) foreach { partition =>
-      new KafkaSubscriber(Topic(topic, partition), brokers, correlationId = 0) use { subscriber =>
+      new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId = 0) use { subscriber =>
         subscriber.commitOffsets(groupId, offset = 0L, "resetting consumer ID")
       }
     }
@@ -818,7 +818,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // check all records within the range
     var verified = 0
     var errors = 0
-    new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
+    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
       (startOffset.toLong to endOffset.toLong).sliding(batchSize, batchSize) foreach { offsets =>
         Try(subscriber.fetch(offsets, blockSize)) match {
           case Success(messages) =>

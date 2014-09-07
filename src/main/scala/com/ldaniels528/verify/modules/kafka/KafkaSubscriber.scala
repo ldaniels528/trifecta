@@ -19,7 +19,7 @@ import scala.util.{Failure, Success, Try}
  * Low-Level Kafka Consumer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaSubscriber(topic: Topic, seedBrokers: Seq[Broker], correlationId: Int) {
+class KafkaSubscriber(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId: Int) {
   // generate the client ID
   private val clientID = s"Client_${topic.name}_${topic.partition}_${System.currentTimeMillis()}"
 
@@ -214,13 +214,11 @@ object KafkaSubscriber {
    * @return the promise of the option of a message based on the given search criteria
    */
   def findOne(topic: String, brokers: Seq[Broker], correlationId: Int, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[(Int, MessageData)]] = {
-    import com.ldaniels528.verify.modules.kafka.Topic
-
     val promise = Promise[Option[(Int, MessageData)]]()
     var message: Option[(Int, MessageData)] = None
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
-        new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subs =>
+        new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
           def eof = (for {o <- offset; lo <- lastOffset} yield o > lo) getOrElse true
@@ -229,7 +227,7 @@ object KafkaSubscriber {
               ofs <- offset
               msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
             } {
-              if(conditions.forall(_.satisfies(msg.message))) message = Option((partition, msg))
+              if (conditions.forall(_.satisfies(msg.message))) message = Option((partition, msg))
             }
 
             offset = offset map (_ + 1)
@@ -256,13 +254,11 @@ object KafkaSubscriber {
    * @return the promise of the total number of a messages that the given search criteria
    */
   def count(topic: String, brokers: Seq[Broker], correlationId: Int, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Long] = {
-    import com.ldaniels528.verify.modules.kafka.Topic
-
     val promise = Promise[Long]()
     val counter = new AtomicLong(0)
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
-        new KafkaSubscriber(Topic(topic, partition), brokers, correlationId) use { subs =>
+        new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
           def eof = (for {o <- offset; lo <- lastOffset} yield o > lo) getOrElse true
@@ -271,7 +267,7 @@ object KafkaSubscriber {
               ofs <- offset
               msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
             } {
-              if(conditions.forall(_.satisfies(msg.message))) counter.incrementAndGet()
+              if (conditions.forall(_.satisfies(msg.message))) counter.incrementAndGet()
             }
 
             offset = offset map (_ + 1)
@@ -376,7 +372,7 @@ object KafkaSubscriber {
   /**
    * Retrieves the partition meta data and replicas for the lead broker
    */
-  private def getLeaderPartitionMetaDataAndReplicas(topic: Topic, brokers: Seq[Broker], correlationId: Int): Option[(Broker, PartitionMetadata, Seq[Broker])] = {
+  private def getLeaderPartitionMetaDataAndReplicas(topic: TopicSlice, brokers: Seq[Broker], correlationId: Int): Option[(Broker, PartitionMetadata, Seq[Broker])] = {
     for {
       pmd <- brokers.foldLeft[Option[PartitionMetadata]](None)((result, broker) => result ?? getPartitionMetadata(broker, topic, correlationId))
       leader <- pmd.leader map (r => Broker(r.host, r.port))
@@ -387,7 +383,7 @@ object KafkaSubscriber {
   /**
    * Retrieves the partition meta data for the given broker
    */
-  private def getPartitionMetadata(broker: Broker, topic: Topic, correlationId: Int): Option[PartitionMetadata] = {
+  private def getPartitionMetadata(broker: Broker, topic: TopicSlice, correlationId: Int): Option[PartitionMetadata] = {
     connect(broker, clientID = s"pmdLookup_${System.currentTimeMillis()}") use { consumer =>
       Try {
         // submit the request and retrieve the response
