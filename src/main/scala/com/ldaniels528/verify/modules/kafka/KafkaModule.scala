@@ -62,6 +62,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kbrokers", getBrokers, (Seq.empty, Seq.empty), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, (Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", getConsumers, (Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
+    Command(this, "kcount", countMessages, (Seq("field", "operator", "value"), Seq.empty), help = "Counts the messages matching a given condition [references cursor]"),
     Command(this, "kcursor", getCursor, (Seq.empty, Seq.empty), help = "Displays the current message cursor"),
     Command(this, "kexport", exportToFile, (Seq("file", "topic", "consumerGroupId"), Seq.empty), "Writes the contents of a specific topic to a file", undocumented = true),
     Command(this, "kfetch", fetchOffsets, (Seq("topic", "partition", "groupId"), Seq.empty), "Retrieves the offset for a given topic and group"),
@@ -107,6 +108,38 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // perform the action
     new KafkaSubscriber(Topic(name, parseInt("partition", partition)), brokers, correlationId) use (_.commitOffsets(groupId, offset.toLong, metadata))
+  }
+
+  /**
+   * "kcount" - Counts the messages matching a given condition [references cursor]
+   * @example {{{ kcount frequency >= 1200  }}}
+   */
+  def countMessages(args: String*): Future[Long] = {
+    // get the topic and partition from the cursor
+    val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse die("No cursor exists")
+
+    // get the decoder
+    val decoder = encoding match {
+      case AvroMessageEncoding(schemaVarName) => getAvroDecoder(schemaVarName)
+      case _ =>
+        throw new IllegalArgumentException("Raw binary format is not supported")
+    }
+
+    // get the criteria
+    val Seq(field, operator, value, _*) = args
+    val conditions = operator match {
+      case "==" => Seq(AvroEQ(decoder, field, value))
+      case "!=" => Seq(AvroNotEQ(decoder, field, value))
+      case ">" => Seq(AvroGreater(decoder, field, value))
+      case "<" => Seq(AvroLesser(decoder, field, value))
+      case ">=" => Seq(AvroGreaterOrEQ(decoder, field, value))
+      case "<=" => Seq(AvroLesserOrEQ(decoder, field, value))
+      case _ =>
+        throw new IllegalArgumentException(s"Illegal condition definition near '$args'")
+    }
+
+    // perform the count
+    KafkaSubscriber.count(topic, brokers, correlationId, conditions: _*)
   }
 
   /**
