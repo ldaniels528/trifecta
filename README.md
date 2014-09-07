@@ -71,6 +71,47 @@ I'm currently using _Verify_ as part of my daily development workflow, and the a
 <a name="usage"></a>
 ### Usage Examples	
 
+_Verify_ exposes its commands through modules. At any time to see which modules are available one could issue the `modules` command.
+
+    core:/home/ldaniels> modules
+    + ------------------------------------------------------------------------------------- +
+    | name       className                                                 loaded  active   |
+    + ------------------------------------------------------------------------------------- +
+    | kafka      com.ldaniels528.verify.modules.kafka.KafkaModule          true    false    |
+    | core       com.ldaniels528.verify.modules.core.CoreModule            true    true     |
+    | avro       com.ldaniels528.verify.modules.avro.AvroModule            true    false    |
+    | zookeeper  com.ldaniels528.verify.modules.zookeeper.ZookeeperModule  true    false    |
+    | storm      com.ldaniels528.verify.modules.storm.StormModule          true    false    |
+    + ------------------------------------------------------------------------------------- +
+    
+Additionally, to see all available commands issue the `help` command (`?` is a shortcut):
+
+    core:/home/ldaniels> ?
+    + ---------------------------------------------------------------------------------------------------------------------- +
+    | command     module     description                                                                                     |
+    + ---------------------------------------------------------------------------------------------------------------------- +
+    | !           core       Executes a previously issued command                                                            |
+    | ?           core       Provides the list of available commands                                                         |
+    | autoswitch  core       Automatically switches to the module of the most recently executed command                      |
+    | avcat       avro       Displays the contents of a schema variable                                                      |
+    | avload      avro       Loads an Avro schema into memory                                                                |
+    | cat         core       Dumps the contents of the given file                                                            |
+    | cd          core       Changes the local file system path/directory                                                    |
+    .                                                                                                                        .
+    .                                                                                                                        .
+    | kbrokers    kafka      Returns a list of the brokers from ZooKeeper                                                    |
+    | kcommit     kafka      Commits the offset for a given topic and group                                                  |
+    | kconsumers  kafka      Returns a list of the consumers from ZooKeeper                                                  |
+    | kcount      kafka      Counts the messages matching a given condition [references cursor]                              |
+    | kcursor     kafka      Displays the current message cursor                                                             |
+    .                                                                                                                        .
+    .                                                                                                                        .                                          
+    | zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)                                     |
+    | zsess       zookeeper  Retrieves the Session ID from ZooKeeper                                                         |
+    | zstat       zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)                                |
+    | ztree       zookeeper  Retrieves Zookeeper directory structure                                                         |
+    + ---------------------------------------------------------------------------------------------------------------------- +
+
 <a name="kafka-module"></a>
 #### Kakfa Module
 
