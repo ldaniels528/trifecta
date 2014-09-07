@@ -166,6 +166,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
     val classWithMain = classLoader.loadClass(className)
     val mainMethod = classWithMain.getMethod("main", classOf[Array[String]])
     mainMethod.invoke(null, params: _*)
+    ()
   }
 
   /**
