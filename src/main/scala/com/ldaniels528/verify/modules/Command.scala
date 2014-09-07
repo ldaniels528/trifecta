@@ -52,3 +52,24 @@ case class SimpleParams(required: Seq[String] = Seq.empty, optional: Seq[String]
   }
 
 }
+
+/**
+ * Unix-Style Command Parameters
+ * @param flags the given collection of flag tuple
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+case class UnixLikeParams(required: Seq[String] = Nil, flags: Seq[(String, String)] = Nil)
+  extends CommandParameters[List[(String, List[String])]] {
+
+  override def checkArgs(command: Command, args: Seq[String]) = ()
+
+  override def prototypeOf(command: Command): String = {
+    val params = flags.foldLeft[List[String]](Nil) { case (list, (flag, desc)) =>
+      desc :: flag :: list
+    }
+    params.reverse.mkString(" ")
+  }
+
+  override def transform(args: Seq[String]): List[(String, List[String])] = parseArgs(args)
+
+}
