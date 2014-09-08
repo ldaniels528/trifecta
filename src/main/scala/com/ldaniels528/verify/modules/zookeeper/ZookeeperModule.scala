@@ -5,8 +5,8 @@ import java.nio.ByteBuffer
 import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
+import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
-import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.Variable
 
@@ -27,7 +27,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     Command(this, "zmk", zmkdir, SimpleParams(Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
     Command(this, "zput", zput, SimpleParams(Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
     Command(this, "zreconnect", reconnect, SimpleParams(Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
-    Command(this, "zrm", delete, SimpleParams(Seq("key"), Seq("-r")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
+    Command(this, "zrm", delete, UnixLikeParams(required = Seq("key"), flags = Seq("-r" -> "recursive")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
     Command(this, "zruok", ruok, SimpleParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
     Command(this, "zsess", session, SimpleParams(), help = "Retrieves the Session ID from ZooKeeper"),
     Command(this, "zstat", stat, SimpleParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
@@ -126,21 +126,22 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "zrm" - Removes a key-value from ZooKeeper
-   * @example {{{ zrm brokers }}}
+   * @example {{{ zrm /consumer/GRP000a2ce }}}
+   * @example {{{ zrm -r /consumer/GRP000a2ce }}}
    */
   def delete(args: String*) {
-    // get the argument
-    val key = args.head
-    val recursive = extract(args, 1) exists(_ == "-r")
-
-    // convert the key to a fully-qualified path
-    val path = zkKeyToPath(key)
-
-    // perform a recursive delete?
-    if(recursive) deleteRecursively(path)
-    else {
-      // perform the action
-      zk.exists(path) foreach (zk.delete(path, _))
+    // determine whether to perform a normal delete or recursive
+    val params = CommandParser.parseArgs(args)
+    params.headOption match {
+      case Some((flag, flagArgs)) if params.size == 1 && flagArgs.size == 1 =>
+        val path = flagArgs.head
+        flag match {
+          case "" => zk.delete(path)
+          case "-r" => deleteRecursively(path)
+          case _ => throw new IllegalArgumentException(s"Flag '$flag' not recognized")
+        }
+      case _ =>
+        throw new IllegalArgumentException("Usage: zrm [-r] <path>")
     }
   }
 
