@@ -7,6 +7,8 @@ import org.apache.curator.retry.RetryOneTime
 import org.apache.curator.test.TestingServer
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
 
+import scala.concurrent.duration._
+
 /**
  * Zookeeper Module Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
@@ -45,9 +47,14 @@ class ZookeeperModuleSpec() extends FeatureSpec with BeforeAndAfterEach with Giv
       When("When executing the delete function")
       module.delete("-r", path)
 
-      Then("The path should no longer exist")
+      Then("Wait for a few seconds")
+      // because of the asynchronous nature of Zookeeper, it may needs a few seconds to complete all tasks
+      Thread.sleep(5.seconds)
+
+      And("The path should no longer exist")
       val results = rt.zkProxy.getChildren("/consumers")
       assert(results sameElements Seq("otherTestId"))
+      rt.zkProxy.close()
     }
   }
 
