@@ -39,14 +39,10 @@ class ZookeeperModuleSpec() extends FeatureSpec with BeforeAndAfterEach with Giv
       val module = new ZookeeperModule(rt)
       val path = "/consumers/myTestId"
 
-      When("When executing the delete function")
+      When("When executing the recursive delete function")
       module.delete("-r", path)
 
-      Then("Wait for a few seconds")
-      // because of the asynchronous nature of Zookeeper, it may needs a few seconds to complete all tasks
-      Thread.sleep(5.seconds)
-
-      And("The path should no longer exist")
+      And("The path (and its children) should no longer exist")
       val results = rt.zkProxy.getChildren("/consumers")
       assert(results sameElements Seq("otherTestId"))
       rt.zkProxy.close()
