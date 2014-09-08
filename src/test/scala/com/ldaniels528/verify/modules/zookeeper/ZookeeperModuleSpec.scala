@@ -15,13 +15,9 @@ import scala.concurrent.duration._
  */
 class ZookeeperModuleSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWhenThen {
   private var zkTestServer: Option[TestingServer] = _
-  private var cli: Option[CuratorFramework] = _
 
   override protected def beforeEach() {
     zkTestServer = Option(new TestingServer(2181))
-    cli = zkTestServer.map { zkServer =>
-      CuratorFrameworkFactory.newClient(zkServer.getConnectString, new RetryOneTime(2000))
-    }
 
     // ensure our required zookeeper keys exist
     new ZKProxy("localhost", 2181) use { zk =>
@@ -33,7 +29,6 @@ class ZookeeperModuleSpec() extends FeatureSpec with BeforeAndAfterEach with Giv
 
   override protected def afterEach() {
     // shutdown the Zookeeper instance
-    cli.foreach(_.close())
     zkTestServer.foreach(_.stop())
   }
 
