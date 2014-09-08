@@ -19,7 +19,7 @@ class EndPointSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar {
       val port = 8080
       val endPoint = EndPoint(s"$host:$port")
 
-      When("The end-point instance's unapply function is used")
+      When("The end-point object's unapply function is used")
       val (myHost, myPort) = EndPoint.unapply(endPoint)
 
       Then("The host name should match the original value")
