@@ -72,10 +72,10 @@ case class UnixLikeParams(required: Seq[String] = Nil, flags: Seq[(String, Strin
   override def checkArgs(command: Command, args: Seq[String]) = ()
 
   override def prototypeOf(command: Command): String = {
-    val params = flags.foldLeft[List[String]](Nil) { case (list, (flag, desc)) =>
-      desc :: flag :: list
+    val params = flags.foldLeft[List[String]](List(command.name)) { case (list, (flag, desc)) =>
+      s"[$flag]" :: list
     }
-    params.reverse.mkString(" ")
+    (required.map(s => s"<$s>").toList ::: params).reverse.mkString(" ")
   }
 
   override def transform(args: Seq[String]): List[(String, List[String])] = parseArgs(args)
