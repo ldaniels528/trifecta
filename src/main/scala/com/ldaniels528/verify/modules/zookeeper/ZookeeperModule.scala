@@ -134,7 +134,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     val params = CommandParser.parseArgs(args)
     params.headOption match {
       case Some((flag, flagArgs)) if params.size == 1 && flagArgs.size == 1 =>
-        val path = flagArgs.head
+        val path = zkKeyToPath(flagArgs.head)
         flag match {
           case "" => zk.delete(path)
           case "-r" => deleteRecursively(path)
