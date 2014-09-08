@@ -56,12 +56,12 @@ I'm currently using _Verify_ as part of my daily development workflow, and the a
 <a name="building-the-code"></a>
 ### Building the code
 
-    $ sbt assembly
+    $ sbt clean assembly
     
 <a name="testing-the-code"></a>    
 ### Running the tests
 
-    $ sbt test    
+    $ sbt clean test    
 
 <a name="Running-the-app"></a> 
 ### Run the application
