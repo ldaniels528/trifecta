@@ -49,9 +49,9 @@ libraryDependencies ++= Seq(
 
 // General Dependencies
 libraryDependencies ++= Seq(
-  "com.twitter" %% "bijection-core" % "0.6.2",
-  "com.twitter" %% "bijection-avro" % "0.6.2",
-  "com.typesafe.akka" % "akka-actor_2.10" % "2.3.4",
+  "com.twitter" %% "bijection-core" % "0.7.0",
+  "com.twitter" %% "bijection-avro" % "0.7.0",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.5",
   "jline" % "jline" % "2.12",
   "log4j" % "log4j" % "1.2.17",
   "net.liftweb" %% "lift-json" % "2.5.1",
@@ -68,7 +68,7 @@ libraryDependencies ++= Seq(
   "junit" % "junit" % "4.11" % "test",
   "org.apache.curator" % "curator-test" % "2.6.0" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test",
-  "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+  "org.scalatest" %% "scalatest" % "2.2.2" % "test"
 )
 
 // define the resolvers
