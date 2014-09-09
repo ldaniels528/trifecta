@@ -311,9 +311,9 @@ Next, let's use the variable (containing the Avro schema) to decode a Kafka mess
     + ------------------------------------ +
     | field           value         type   |
     + ------------------------------------ +
-    | vip             192.33.14.30  Utf8   |
-    | site            elsjc3        Utf8   |
-    | srcIP           69.252.96.28  Utf8   |
+    | vip             192.73.24.30  Utf8   |
+    | site            vxfjc3        Utf8   |
+    | srcIP           68.152.96.28  Utf8   |
     | frequency       1071          Long   |
     | firstTimestamp  1409979852    Long   |
     | lastTimestamp   1409979916    Long   |
@@ -325,9 +325,9 @@ The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro inte
     + ------------------------------------ +
     | field           value         type   |
     + ------------------------------------ +
-    | vip             192.33.14.30  Utf8   |
-    | site            elsjc3        Utf8   |
-    | srcIP           69.252.96.22  Utf8   |
+    | vip             191.73.24.30  Utf8   |
+    | site            vxfjc3        Utf8   |
+    | srcIP           69.252.96.17  Utf8   |
     | frequency       1085          Long   |
     | firstTimestamp  1409979852    Long   |
     | lastTimestamp   1409979916    Long   |
@@ -346,9 +346,9 @@ Now suppose you want to view the first message whose frequency is  greater than 
     + ------------------------------------- +
     | field           value          type   |
     + ------------------------------------- +
-    | vip             192.58.128.30  Utf8   |
-    | site            elhkg4         Utf8   |
-    | srcIP           172.16.14.3    Utf8   |
+    | vip             191.78.128.30  Utf8   |
+    | site            vxfjc4         Utf8   |
+    | srcIP           172.16.14.15   Utf8   |
     | frequency       4150           Long   |
     | firstTimestamp  1410038836     Long   |
     | lastTimestamp   1410038896     Long   |
@@ -379,8 +379,8 @@ Let's view the currently running topologies:
     + ---------------------------------------------------------------------------------------------------------------------------------------------- +
     | name                                     topologyId                                            status  workers  executors  tasks  uptimeSecs   |
     + ---------------------------------------------------------------------------------------------------------------------------------------------- +
-    | nm-traffic-rate-aggregation-sdmiller     nm-traffic-rate-aggregation-sdmiller-17-1407973634    ACTIVE  4        22         22     1619957      |
-    | EDNS0-Traffic-Categorizer                EDNS0-Traffic-Categorizer-8-1408969694                ACTIVE  4        125        125    623897       |
+    | nm-traffic-rate-aggregation-xxmyller     nm-traffic-rate-aggregation-xxmyller-17-1407973634    ACTIVE  4        22         22     1619957      |
+    | CTSC0-Traffic-Categorizer                CTSC0-Traffic-Categorizer-8-1408969694                ACTIVE  4        125        125    623897       |
     | NetworkMonitoringTrafficRateAggregation  NetworkMonitoringTrafficRateAggregation-9-1409160151  ACTIVE  4        22         22     433440       |
     | Hydra-Listener-Traffic-Rates             Hydra-Listener-Traffic-Rates-13-1407867259            ACTIVE  4        30         30     1726332      |
     | nm-traffic-rate-aggregation              nm-traffic-rate-aggregation-10-1407854552             ACTIVE  4        22         22     1739039      |
@@ -388,33 +388,33 @@ Let's view the currently running topologies:
 
 Next, let's look at the details of one of the topologies by ID:
 
-    storm:localhost> sget nm-traffic-rate-aggregation-sdmiller-17-1407973634
+    storm:localhost> sget nm-traffic-rate-aggregation-xxmyller-17-1407973634
     + ------------------------------------------------------------------- +
     | topologyId                                          bolts  spouts   |
     + ------------------------------------------------------------------- +
-    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  5      1        |
+    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  5      1        |
     + ------------------------------------------------------------------- +
 
 Let's look at the Topology's bolts:
 
-    zookeeper:vsccrtc201-brn1:2181/> sbolts nm-traffic-rate-aggregation-sdmiller-17-1407973634
+    zookeeper:vsccrtc201-brn1:2181/> sbolts nm-traffic-rate-aggregation-xxmyller-17-1407973634
     + ------------------------------------------------------------------------------------ +
     | topologyId                                          name                             |
     + ------------------------------------------------------------------------------------ +
-    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  nm-aggregation-kafka-sink-bolt   |
-    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  nm-aggregation-tuple-bolt        |
-    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  __acker                          |
-    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  __system                         |
-    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  nm-aggregation-reporting-bolt    |
+    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  nm-aggregation-kafka-sink-bolt   |
+    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  nm-aggregation-tuple-bolt        |
+    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  __acker                          |
+    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  __system                         |
+    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  nm-aggregation-reporting-bolt    |
     + ------------------------------------------------------------------------------------ +
 
 Let's look at the Topology's spouts:
 
-    storm:localhost> spouts nm-traffic-rate-aggregation-sdmiller-17-1407973634
+    storm:localhost> spouts nm-traffic-rate-aggregation-xxmyller-17-1407973634
     + -------------------------------------------------------------------------- +
     | topologyId                                          name                   |
     + -------------------------------------------------------------------------- +
-    | nm-traffic-rate-aggregation-sdmiller-17-1407973634  nm-aggregation-spout   |
+    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  nm-aggregation-spout   |
     + -------------------------------------------------------------------------- +
 
 Finally, let's take a look at the connection properties for this session:
