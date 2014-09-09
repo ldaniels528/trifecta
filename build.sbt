@@ -66,7 +66,7 @@ libraryDependencies ++= Seq(
 // Testing Dependencies
 libraryDependencies ++= Seq(
   "junit" % "junit" % "4.11" % "test",
-  "org.apache.curator" % "curator-test" % "2.2.0-incubating" % "test",
+  "org.apache.curator" % "curator-test" % "2.6.0" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test",
   "org.scalatest" %% "scalatest" % "2.2.1" % "test"
 )
