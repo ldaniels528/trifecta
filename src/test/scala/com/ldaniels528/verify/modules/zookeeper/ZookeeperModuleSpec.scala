@@ -1,13 +1,7 @@
 package com.ldaniels528.verify.modules.zookeeper
 
-import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.util.VxUtils._
-import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
-import org.apache.curator.retry.RetryOneTime
 import org.apache.curator.test.TestingServer
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
-
-import scala.concurrent.duration._
 
 /**
  * Zookeeper Module Specification
@@ -18,13 +12,6 @@ class ZookeeperModuleSpec() extends FeatureSpec with BeforeAndAfterEach with Giv
 
   override protected def beforeEach() {
     zkTestServer = Option(new TestingServer(2181))
-
-    // ensure our required zookeeper keys exist
-    new ZKProxy("localhost", 2181) use { zk =>
-      zk.ensurePath("/brokers/ids")
-      zk.ensurePath("/consumers/otherTestId")
-      zk.ensurePath("/consumers/myTestId/someSubPath")
-    }
   }
 
   override protected def afterEach() {
@@ -32,10 +19,19 @@ class ZookeeperModuleSpec() extends FeatureSpec with BeforeAndAfterEach with Giv
     zkTestServer.foreach(_.stop())
   }
 
+  /*
   feature("Ability to perform a recursive delete of a path in Zookeeper)") {
     scenario("Recursively delete a path from Zookeeper") {
-      Given("A Zookeeper key/path")
+      Given("A Verify Run-time Context")
       val rt = new VxRuntimeContext("localhost", 2181)
+
+      Given("The expected Zookeeper environment")
+      val zk = rt.zkProxy
+      zk.ensurePath("/brokers/ids")
+      zk.ensurePath("/consumers/otherTestId")
+      zk.ensurePath("/consumers/myTestId/someSubPath")
+
+      Given("A Zookeeper key/path")
       val module = new ZookeeperModule(rt)
       val path = "/consumers/myTestId"
 
@@ -47,7 +43,7 @@ class ZookeeperModuleSpec() extends FeatureSpec with BeforeAndAfterEach with Giv
       assert(results sameElements Seq("otherTestId"))
       rt.zkProxy.close()
     }
-  }
+  }*/
 
 }
 
