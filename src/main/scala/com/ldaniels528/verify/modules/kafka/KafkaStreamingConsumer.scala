@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.modules.kafka
 
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import akka.actor.ActorRef
 import com.ldaniels528.verify.io.EndPoint
@@ -114,6 +114,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
   def scan(topic: String, parallelism: Int, conditions: Condition*)(implicit ec: ExecutionContext): Future[Option[StreamedMessage]] = {
     val streamMap = consumer.createMessageStreams(Map(topic -> parallelism))
     val promise = Promise[Option[StreamedMessage]]()
+    val found = new AtomicBoolean(false)
     var message: Option[StreamedMessage] = None
 
     // now create an object to consume the messages
@@ -122,10 +123,12 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
         Future {
           Try {
             val it = stream.iterator()
-            while (message.isEmpty && it.hasNext()) {
+            while (!found.get && it.hasNext()) {
               val mam = it.next()
-              if (conditions.forall(_.satisfies(mam.message(), Option(mam.key())))) {
-                message = Option(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message()))
+              if (!found.get && conditions.forall(_.satisfies(mam.message(), Option(mam.key())))) {
+                if (found.compareAndSet(false, true)) {
+                  message = Option(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message()))
+                }
               }
             }
           }
