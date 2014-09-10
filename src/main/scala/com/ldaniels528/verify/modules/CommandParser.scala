@@ -21,10 +21,10 @@ object CommandParser {
         case c if SYMBOLS.contains(c) && !inQuotes =>
           val s = sb.toString()
           sb.clear()
-          if (s.isEmpty) Some(String.valueOf(c))
+          if (s.isEmpty) Option(String.valueOf(c))
           else {
             sb += c
-            Some(s)
+            Option(s)
           }
 
         // quoted text
@@ -37,7 +37,7 @@ object CommandParser {
           if (sb.nonEmpty) {
             val s = sb.toString()
             sb.clear()
-            Some(s)
+            Option(s)
           } else None
 
         // any other character
