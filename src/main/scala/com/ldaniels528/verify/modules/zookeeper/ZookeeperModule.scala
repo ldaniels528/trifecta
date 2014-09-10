@@ -27,7 +27,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     Command(this, "zmk", zmkdir, SimpleParams(Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
     Command(this, "zput", zput, SimpleParams(Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
     Command(this, "zreconnect", reconnect, SimpleParams(Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
-    Command(this, "zrm", delete, UnixLikeParams(required = Seq("key"), flags = Seq("-r" -> "recursive")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
+    Command(this, "zrm", delete, UnixLikeParams(Seq("key" -> true), flags = Seq("-r" -> "recursive")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
     Command(this, "zruok", ruok, SimpleParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
     Command(this, "zsess", session, SimpleParams(), help = "Retrieves the Session ID from ZooKeeper"),
     Command(this, "zstat", stat, SimpleParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),

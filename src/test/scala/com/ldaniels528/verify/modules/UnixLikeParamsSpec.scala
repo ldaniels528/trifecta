@@ -15,7 +15,7 @@ class UnixLikeParamsSpec() extends FeatureSpec with GivenWhenThen with MockitoSu
   feature("Unix-Like Command Parameter Argument Verification") {
     scenario("The Command Parameter instance should parse and verify command line input into arguments") {
       Given("A Command Parameter Set and command line input")
-      val paramSet = UnixLikeParams(required = Seq("key"), flags = Seq("-r" -> "recursive"))
+      val paramSet = UnixLikeParams(defaults = Seq("key" -> true), flags = Seq("-r" -> "recursive"))
       val commandLineInput = "zrm -r /some/path/to/delete"
       val command = mock[Command]
 

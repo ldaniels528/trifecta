@@ -52,9 +52,8 @@ case class SimpleParams(required: Seq[String] = Nil, optional: Seq[String] = Nil
   }
 
   override def prototypeOf(command: Command): String = {
-    val requiredParams = (required map (s => s"<$s>")).mkString(" ")
-    val optionalParams = (optional map (s => s"<$s>")).mkString(" ")
-    s"${command.name} $requiredParams ${if (optionalParams.nonEmpty) s"[$optionalParams]" else ""}"
+    val items = optional.map(s => s"[$s]").toList ::: required.toList ::: command.name :: Nil
+    items.reverse mkString " "
   }
 
   override def transform(args: Seq[String]): Seq[String] = args
@@ -66,16 +65,15 @@ case class SimpleParams(required: Seq[String] = Nil, optional: Seq[String] = Nil
  * @param flags the given collection of flag tuple
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class UnixLikeParams(required: Seq[String] = Nil, flags: Seq[(String, String)] = Nil)
+case class UnixLikeParams(defaults: Seq[(String, Boolean)] = Nil, flags: Seq[(String, String)] = Nil)
   extends CommandParameters[List[(String, List[String])]] {
 
   override def checkArgs(command: Command, args: Seq[String]) = ()
 
   override def prototypeOf(command: Command): String = {
-    val params = flags.foldLeft[List[String]](List(command.name)) { case (list, (flag, desc)) =>
-      s"[$flag]" :: list
-    }
-    (required.map(s => s"<$s>").toList ::: params).reverse.mkString(" ")
+    val items = defaults.map { case (param, required) => if (required) param else s"[$param]"}.reverse.toList :::
+      (flags.toList map { case (flag, name) => s"[$flag $name]"}) ::: command.name :: Nil
+    items.reverse mkString " "
   }
 
   override def transform(args: Seq[String]): List[(String, List[String])] = parseArgs(args)
