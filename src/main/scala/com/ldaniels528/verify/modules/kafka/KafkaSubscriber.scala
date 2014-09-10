@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.modules.kafka
 
-import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.Condition
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber._
@@ -206,46 +206,6 @@ object KafkaSubscriber {
   private val DEFAULT_FETCH_SIZE: Int = 65536
 
   /**
-   * Returns the promise of the option of a message based on the given search criteria
-   * @param topic the given topic name
-   * @param brokers the given replica brokers
-   * @param correlationId the given correlation ID
-   * @param conditions the given search criteria
-   * @return the promise of the option of a message based on the given search criteria
-   */
-  def findOne(topic: String, brokers: Seq[Broker], correlationId: Int, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[(Int, MessageData)]] = {
-    val promise = Promise[Option[(Int, MessageData)]]()
-    var message: Option[(Int, MessageData)] = None
-    val tasks = getTopicPartitions(topic) map { partition =>
-      Future {
-        new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
-          var offset: Option[Long] = subs.getFirstOffset
-          val lastOffset: Option[Long] = subs.getLastOffset
-          def eof = (for {o <- offset; lo <- lastOffset} yield o > lo) getOrElse true
-          while (message.isEmpty && !eof) {
-            for {
-              ofs <- offset
-              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
-            } {
-              if (conditions.forall(_.satisfies(msg.message))) message = Option((partition, msg))
-            }
-
-            offset = offset map (_ + 1)
-          }
-        }
-      }
-    }
-
-    // check for the failure to find a message
-    Future.sequence(tasks).onComplete {
-      case Success(v) => promise.success(message)
-      case Failure(e) => promise.failure(e)
-    }
-
-    promise.future
-  }
-
-  /**
    * Returns the promise of the total number of a messages that match the given search criteria
    * @param topic the given topic name
    * @param brokers the given replica brokers
@@ -279,6 +239,47 @@ object KafkaSubscriber {
     // check for the failure to complete the count
     Future.sequence(tasks).onComplete {
       case Success(v) => promise.success(counter.get)
+      case Failure(e) => promise.failure(e)
+    }
+
+    promise.future
+  }
+
+  /**
+   * Returns the promise of the option of a message based on the given search criteria
+   * @param topic the given topic name
+   * @param brokers the given replica brokers
+   * @param correlationId the given correlation ID
+   * @param conditions the given search criteria
+   * @return the promise of the option of a message based on the given search criteria
+   */
+  def findOne(topic: String, brokers: Seq[Broker], correlationId: Int, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[(Int, MessageData)]] = {
+    val promise = Promise[Option[(Int, MessageData)]]()
+    val found = new AtomicBoolean(false)
+    var message: Option[(Int, MessageData)] = None
+    val tasks = getTopicPartitions(topic) map { partition =>
+      Future {
+        new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+          var offset: Option[Long] = subs.getFirstOffset
+          val lastOffset: Option[Long] = subs.getLastOffset
+          def eof = (for {o <- offset; lo <- lastOffset} yield o > lo) getOrElse true
+          while (!found.get && !eof) {
+            for {
+              ofs <- offset
+              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
+            } {
+              if (conditions.forall(_.satisfies(msg.message)) && found.compareAndSet(false, true)) message = Option((partition, msg))
+            }
+
+            offset = offset map (_ + 1)
+          }
+        }
+      }
+    }
+
+    // check for the failure to find a message
+    Future.sequence(tasks).onComplete {
+      case Success(v) => promise.success(message)
       case Failure(e) => promise.failure(e)
     }
 
