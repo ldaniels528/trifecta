@@ -5,6 +5,7 @@ import java.net.{URL, URLClassLoader}
 import backtype.storm.generated.Nimbus
 import backtype.storm.utils.{NimbusClient, Utils}
 import com.ldaniels528.verify.VxRuntimeContext
+import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules.{Command, Module, SimpleParams}
 import com.ldaniels528.verify.vscript.Variable
 import org.slf4j.LoggerFactory
@@ -29,7 +30,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
   }
 
   // connect to the server
-  createConnection()
+  createConnection(UnixLikeArgs(Nil))
 
   // the bound commands
   override def getCommands: Seq[Command] = Seq(
@@ -60,8 +61,8 @@ class StormModule(rt: VxRuntimeContext) extends Module {
    * Establishes (or re-establishes) a connect to the Storm Nimbus Host
    * @example {{{ sconnect }}}
    */
-  def createConnection(args: String*) = {
-    val myNimbusHost = args.headOption
+  def createConnection(params: UnixLikeArgs) = {
+    val myNimbusHost = params.args.headOption
 
     // optionally set the Nimus host
     myNimbusHost.foreach(nimbusHost = _)
@@ -78,9 +79,9 @@ class StormModule(rt: VxRuntimeContext) extends Module {
    * "sget" - Retrieves the information for a topology by ID
    * @example {{{ sget nm-traffic-rate-aggregation-17-1407973634 }}}
    */
-  def getTopologyInfo(args: String*): Seq[TopologyInfo] = {
+  def getTopologyInfo(params: UnixLikeArgs): Seq[TopologyInfo] = {
     // get the topology ID
-    val topologyId = args.head
+    val topologyId = params.args.head
 
     client.map(_.getTopology(topologyId)) map { t =>
       Seq(TopologyInfo(topologyId, t.get_bolts_size, t.get_spouts_size))
@@ -93,9 +94,9 @@ class StormModule(rt: VxRuntimeContext) extends Module {
    * "sbolts" - Retrieves the list of bolts for a given topology by ID
    * @example {{{ sbolts nm-traffic-rate-aggregation-17-1407973634 }}}
    */
-  def getTopologyBolts(args: String*): Seq[BoltSpoutInfo] = {
+  def getTopologyBolts(params: UnixLikeArgs): Seq[BoltSpoutInfo] = {
     // get the topology ID
-    val topologyId = args.head
+    val topologyId = params.args.head
 
     client.map(_.getTopology(topologyId)) map { t =>
       t.get_bolts.toSeq map { case (name, bolt) => BoltSpoutInfo(topologyId, name)}
@@ -106,9 +107,9 @@ class StormModule(rt: VxRuntimeContext) extends Module {
    * "spouts" - Retrieves the list of spouts for a given topology by ID
    * @example {{{ sbolts nm-traffic-rate-aggregation-17-1407973634 }}}
    */
-  def getTopologySpouts(args: String*): Seq[BoltSpoutInfo] = {
+  def getTopologySpouts(params: UnixLikeArgs): Seq[BoltSpoutInfo] = {
     // get the topology ID
-    val topologyId = args.head
+    val topologyId = params.args.head
 
     client.map(_.getTopology(topologyId)) map { t =>
       t.get_spouts.toSeq map { case (name, spout) => BoltSpoutInfo(topologyId, name)}
@@ -121,20 +122,20 @@ class StormModule(rt: VxRuntimeContext) extends Module {
    * "sdeploy" command - Deploys a topology to the Storm server
    * @example {{{ sdeploy mytopology.jar myconfig.properties }}}
    */
-  def deployTopology(args: String*): String = {
+  def deployTopology(params: UnixLikeArgs): String = {
     import scala.sys.process._
 
     // deploy the topology
-    s"storm jar ${args mkString " "}".!!
+    s"storm jar ${params.args mkString " "}".!!
   }
 
   /**
    * "skill" - Lists available topologies
    * @example {{{ skill myTopology }}}
    */
-  def killTopology(args: String*): Unit = {
+  def killTopology(params: UnixLikeArgs): Unit = {
     // get the topology ID
-    val topologyID = args.head
+    val topologyID = params.args.head
 
     // kill the topology
     client.foreach(_.killTopology(topologyID))
@@ -144,7 +145,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
    * "sls" - Lists available topologies
    * @example {{ sls }}
    */
-  def listTopologies(args: String*): Seq[TopologyDetails] = {
+  def listTopologies(args: UnixLikeArgs): Seq[TopologyDetails] = {
     client.map(_.getClusterInfo.get_topologies_iterator().toSeq map { t =>
       TopologyDetails(t.get_name, t.get_id, t.get_status, t.get_num_workers, t.get_num_executors, t.get_num_tasks, t.get_uptime_secs)
     }) getOrElse Seq.empty
@@ -156,10 +157,10 @@ class StormModule(rt: VxRuntimeContext) extends Module {
    * "srun" - Runs as topology in a local cluster
    * @example {{{ srun shocktrade-etl.jar com.shocktrade.etl.QuotesTopology -local }}}
    */
-  def runTopology(args: String*): Unit = {
+  def runTopology(args: UnixLikeArgs): Unit = {
     // get the parameters
-    val Seq(jarPath, className, _*) = args
-    val params = args.drop(2)
+    val Seq(jarPath, className, _*) = args.args.toSeq
+    val params = args.args.drop(2)
 
     val classUrls = Array(new URL(s"file://$jarPath"))
     val classLoader = new URLClassLoader(classUrls)
@@ -173,8 +174,8 @@ class StormModule(rt: VxRuntimeContext) extends Module {
    * "sconf" - Lists the Storm configuration
    * @example {{ sconf }}
    */
-  def showConfig(args: String*): Seq[TopologyConfig] = {
-    args.toList match {
+  def showConfig(params: UnixLikeArgs): Seq[TopologyConfig] = {
+    params.args.toList match {
       case Nil =>
         stormConf.toSeq map { case (k, v) => (k.toString, v)} sortBy (_._1) map { case (k, v) => TopologyConfig(k, v)}
       case key :: Nil =>

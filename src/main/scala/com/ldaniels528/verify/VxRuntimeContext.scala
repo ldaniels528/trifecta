@@ -5,15 +5,14 @@ import java.io.{File, FileInputStream}
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Properties, Random}
 
-import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.VxRuntimeContext.JobItem
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.modules.avro.{AvroModule, AvroTables}
+import com.ldaniels528.verify.modules.avro.AvroModule
 import com.ldaniels528.verify.modules.core.CoreModule
 import com.ldaniels528.verify.modules.kafka.KafkaModule
 import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
-import com.ldaniels528.verify.modules.{CommandParser, Command, ModuleManager}
+import com.ldaniels528.verify.modules.{CommandParser, ModuleManager}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.vscript.{RootScope, VScriptCompiler}
 import org.slf4j.LoggerFactory
@@ -128,9 +127,12 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
         val commandSet = moduleManager.commandSet
         commandSet.get(cmd) match {
           case Some(command) =>
+            // parse the args into Unix-style args
+            val unixArgs = CommandParser.parseUnixLikeArgs(args)
+
             // verify and execute the command
             command.params.checkArgs(command, args)
-            val result = command.fx(args)
+            val result = command.fx(unixArgs)
 
             // auto-switch modules?
             if (autoSwitching && (command.promptAware || command.module.moduleName != "core")) {

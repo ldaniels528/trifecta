@@ -5,6 +5,7 @@ import java.nio.ByteBuffer
 import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
+import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
@@ -46,9 +47,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
    * "zget" - Dumps the contents of a specific Zookeeper key to the console
    * @example {{{ zget /storm/workerbeats/my-test-topology-17-1407973634 }}}
    */
-  def zget(args: String*)(implicit out: PrintStream) {
+  def zget(params: UnixLikeArgs)(implicit out: PrintStream) {
     // get the Zookeeper key
-    val key = args.head
+    val key = params.args.head
 
     // convert the key to a fully-qualified path
     val path = zkKeyToPath(key)
@@ -71,7 +72,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
    * "zruok" - Checks the status of a Zookeeper instance
    * (e.g. echo ruok | nc zookeeper 2181)
    */
-  def ruok(args: String*): String = {
+  def ruok(params: UnixLikeArgs): String = {
     import scala.sys.process._
 
     // echo ruok | nc zookeeper 2181
@@ -83,7 +84,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
    * "zstat" - Returns the statistics of a Zookeeper instance
    * echo stat | nc zookeeper 2181
    */
-  def stat(args: String*): String = {
+  def stat(params: UnixLikeArgs): String = {
     import scala.sys.process._
 
     // echo stat | nc zookeeper 2181
@@ -95,9 +96,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
    * "zcd" - Changes the current path/directory in ZooKeeper
    * @example {{{ zcd brokers }}}
    */
-  def zcd(args: String*): String = {
+  def zcd(params: UnixLikeArgs): String = {
     // get the argument
-    val key = args.head
+    val key = params.args.head
 
     // perform the action
     rt.zkCwd = key match {
@@ -116,9 +117,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   /**
    * "zls" - Retrieves the child nodes for a key from ZooKeeper
    */
-  def zls(args: String*): Seq[String] = {
+  def zls(params: UnixLikeArgs): Seq[String] = {
     // get the argument
-    val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkCwd
+    val path = params.args.headOption map zkKeyToPath getOrElse rt.zkCwd
 
     // perform the action
     zk.getChildren(path, watch = false)
@@ -129,10 +130,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
    * @example {{{ zrm /consumer/GRP000a2ce }}}
    * @example {{{ zrm -r /consumer/GRP000a2ce }}}
    */
-  def delete(args: String*) {
-    // determine whether to perform a normal delete or recursive
-    val params = CommandParser.parseUnixLikeArgs(args)
-
+  def delete(params: UnixLikeArgs) {
     // recursive delete?
     params("-r") map { path =>
       deleteRecursively(path)
@@ -157,9 +155,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   /**
    * "zexists" - Returns the status of a Zookeeper key if it exists
    */
-  def zexists(args: String*): Seq[String] = {
+  def zexists(params: UnixLikeArgs): Seq[String] = {
     // get the argument
-    val key = args.head
+    val key = params.args.head
 
     // convert the key to a fully-qualified path
     val path = zkKeyToPath(key)
@@ -181,9 +179,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   /**
    * "zcat" - Outputs the value of a key from ZooKeeper
    */
-  def zcat(args: String*): Option[String] = {
+  def zcat(params: UnixLikeArgs): Option[String] = {
     // get the arguments
-    val Seq(key, typeName, _*) = args
+    val Seq(key, typeName, _*) = params.args
 
     // convert the key to a fully-qualified path
     val path = zkKeyToPath(key)
@@ -209,9 +207,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   /**
    * "zmk" - Creates a new ZooKeeper sub-directory (key)
    */
-  def zmkdir(args: String*) = {
+  def zmkdir(params: UnixLikeArgs) = {
     // get the arguments
-    val Seq(key, _*) = args
+    val Seq(key, _*) = params.args
 
     // perform the action
     zk.ensurePath(zkKeyToPath(key))
@@ -220,9 +218,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   /**
    * "zput" - Retrieves a value from ZooKeeper
    */
-  def zput(args: String*) = {
+  def zput(params: UnixLikeArgs) = {
     // get the arguments
-    val Seq(key, value, typeName, _*) = args
+    val Seq(key, value, typeName, _*) = params.args
 
     // convert the key to a fully-qualified path
     val path = zkKeyToPath(key)
@@ -235,19 +233,18 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   /**
    * Re-establishes the connection to Zookeeper
    */
-  def reconnect(args: String*) = zk.reconnect()
+  def reconnect(params: UnixLikeArgs) = zk.reconnect()
 
   /**
    * "zsession" - Retrieves the Session ID from ZooKeeper
    */
-  def session(args: String*) = zk.getSessionId.toString
+  def session(params: UnixLikeArgs) = zk.getSessionId.toString
 
   /**
    * "ztree" - Retrieves ZooKeeper key hierarchy
-   * @param args the given arguments
-   * @return
+   * @param params the given arguments
    */
-  def tree(args: String*): Seq[String] = {
+  def tree(params: UnixLikeArgs): Seq[String] = {
 
     def unwind(path: String): List[String] = {
       val children = Option(zk.getChildren(path, watch = false)) getOrElse Seq.empty
@@ -255,7 +252,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     }
 
     // get the optional path argument
-    val path = if (args.nonEmpty) zkKeyToPath(args.head) else rt.zkCwd
+    val path = params.args.headOption map zkKeyToPath getOrElse rt.zkCwd
 
     // perform the action
     unwind(path)

@@ -10,7 +10,7 @@ import scala.language.existentials
  */
 case class Command(module: Module,
                    name: String,
-                   fx: Seq[String] => Any,
+                   fx: UnixLikeArgs => Any,
                    params: CommandParameters[_],
                    help: String = "",
                    promptAware: Boolean = false,
@@ -68,7 +68,12 @@ case class SimpleParams(required: Seq[String] = Nil, optional: Seq[String] = Nil
 case class UnixLikeParams(defaults: Seq[(String, Boolean)] = Nil, flags: Seq[(String, String)] = Nil)
   extends CommandParameters[UnixLikeArgs] {
 
-  override def checkArgs(command: Command, args: Seq[String]) = ()
+  override def checkArgs(command: Command, args: Seq[String]) = {
+    val unixArgs = CommandParser.parseUnixLikeArgs(args)
+    unixArgs.flags foreach { case (flag, _) =>
+      if (!flags.contains(flag)) throw new IllegalArgumentException(s"Invalid flag '$flag' - Usage: ${command.prototype}")
+    }
+  }
 
   override def prototypeOf(command: Command): String = {
     val items = defaults.map { case (param, required) => if (required) param else s"[$param]"}.reverse.toList :::

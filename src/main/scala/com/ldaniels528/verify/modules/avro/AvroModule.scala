@@ -1,6 +1,7 @@
 package com.ldaniels528.verify.modules.avro
 
 import com.ldaniels528.verify.VxRuntimeContext
+import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
 import com.ldaniels528.verify.vscript.{OpCode, Scope, Variable}
 
@@ -28,16 +29,16 @@ class AvroModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
   override def getVariables: Seq[Variable] = Seq.empty
 
-  def cat(args: String*): String = {
-    val name = args.head
+  def cat(params: UnixLikeArgs): String = {
+    val name = params.args.head
 
     implicit val scope = rt.scope
     val decoder = getAvroDecoder(name)
     decoder.schemaString
   }
 
-  def loadSchema(args: String*): Unit = {
-    val Seq(name, schemaPath, _*) = args
+  def loadSchema(params: UnixLikeArgs): Unit = {
+    val Seq(name, schemaPath, _*) = params.args
 
     // get the decoder
     val decoder = loadAvroDecoder(schemaPath)

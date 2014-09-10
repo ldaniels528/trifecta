@@ -3,6 +3,7 @@ package com.ldaniels528.verify.modules.core
 import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
+import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
 import com.ldaniels528.verify.util.VxUtils._
@@ -93,8 +94,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * Automatically switches to the module of the most recently executed command
    * @example {{{ autoswitch true }}}
    */
-  def autoSwitch(args: String*): String = {
-    args.headOption map (_.toBoolean) foreach (rt.autoSwitching = _)
+  def autoSwitch(params: UnixLikeArgs): String = {
+    params.args.headOption map (_.toBoolean) foreach (rt.autoSwitching = _)
     s"auto switching is ${if (rt.autoSwitching) "On" else "Off"}"
   }
 
@@ -102,20 +103,20 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * Displays the contents of the given file
    * @example {{{ cat avro/schema1.avsc }}}
    */
-  def cat(args: String*): Seq[String] = {
+  def cat(params: UnixLikeArgs): Seq[String] = {
     import scala.io.Source
 
     // get the file path
-    val path = expandPath(args.head)
+    val path = expandPath(params.args.head)
     Source.fromFile(path).getLines().toSeq
   }
 
   /**
    * "cd" - Changes the local file system path/directory
    */
-  def changeDir(args: String*): String = {
+  def changeDir(params: UnixLikeArgs): String = {
     // get the argument
-    val key = args.head
+    val key = params.args.head
 
     // perform the action
     cwd = key match {
@@ -134,10 +135,10 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   /**
    * Retrieves or sets the character encoding
    * Example: charset UTF-8
-   * @param args the given arguments
+   * @param params the given arguments
    */
-  def charSet(args: String*) = {
-    args.headOption match {
+  def charSet(params: UnixLikeArgs) = {
+    params.args.headOption match {
       case Some(newEncoding) => rt.encoding = newEncoding
       case None => rt.encoding
     }
@@ -147,8 +148,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * "columns" - Retrieves or sets the column width for message output
    * @example {{{ columns 30 }}}
    */
-  def columnWidthGetOrSet(args: String*): Any = {
-    args.headOption match {
+  def columnWidthGetOrSet(params: UnixLikeArgs): Any = {
+    params.args.headOption match {
       case Some(arg) => rt.columns = parseInt("columnWidth", arg)
       case None => rt.columns
     }
@@ -156,11 +157,11 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * Toggles the current debug state
-   * @param args the given command line arguments
+   * @param params the given command line arguments
    * @return the current state ("On" or "Off")
    */
-  def debug(args: String*): String = {
-    if (args.isEmpty) rt.debugOn = !rt.debugOn else rt.debugOn = args.head.toBoolean
+  def debug(params: UnixLikeArgs): String = {
+    if (params.args.isEmpty) rt.debugOn = !rt.debugOn else rt.debugOn = params.args.head.toBoolean
     s"debugging is ${if (rt.debugOn) "On" else "Off"}"
   }
 
@@ -169,18 +170,18 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * @example {{{ runjava myJarFile.jar com.shocktrade.test.Tester }}}
    * @return the program's output
    */
-  def executeJavaApp(args: String*): Iterator[String] = {
-    val Seq(jarPath, className, _*) = args
-    runJava(jarPath, className, args.drop(2): _*)
+  def executeJavaApp(params: UnixLikeArgs): Iterator[String] = {
+    val Seq(jarPath, className, _*) = params.args
+    runJava(jarPath, className, params.args.drop(2): _*)
   }
 
   /**
    * Inspects the classpath for the given resource by name
    * Example: resource org/apache/http/message/BasicLineFormatter.class
    */
-  def findResource(args: String*): String = {
+  def findResource(params: UnixLikeArgs): String = {
     // get the class name (with slashes)
-    val path = args.head
+    val path = params.args.head
     val index = path.lastIndexOf('.')
     val resourceName = path.substring(0, index).replace('.', '/') + path.substring(index)
 
@@ -193,7 +194,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   /**
    * "help" command - Provides the list of available commands
    */
-  def help(args: String*): Seq[CommandItem] = {
+  def help(params: UnixLikeArgs): Seq[CommandItem] = {
+    val args = params.args
     commandSet.toSeq filter {
       case (nameA, cmdA) => !cmdA.undocumented && (args.isEmpty || nameA.startsWith(args.head))
     } sortBy (_._1) map {
@@ -204,7 +206,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   /**
    * "hostname" command - Returns the name of the current host
    */
-  def hostname(args: String*): String = {
+  def hostname(params: UnixLikeArgs): String = {
     java.net.InetAddress.getLocalHost.getHostName
   }
 
@@ -212,12 +214,12 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * "wget" command - Retrieves remote content via HTTP
    * @example {{{ wget http://www.example.com/ }}}
    */
-  def httpGet(args: String*): Array[Byte] = {
+  def httpGet(params: UnixLikeArgs): Array[Byte] = {
     import java.io.ByteArrayOutputStream
     import java.net._
 
     // get the URL string
-    val urlString = args.head
+    val urlString = params.args.head
 
     // download the content
     new URL(urlString).openConnection().asInstanceOf[HttpURLConnection] use { conn =>
@@ -233,7 +235,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * Inspects a class using reflection
    * Example: class org.apache.commons.io.IOUtils -m
    */
-  def inspectClass(args: String*): Seq[String] = {
+  def inspectClass(params: UnixLikeArgs): Seq[String] = {
+    val args = params.args
     val className = extract(args, 0).getOrElse(getClass.getName).replace('/', '.')
     val action = extract(args, 1) getOrElse "-m"
     val beanClass = Class.forName(className)
@@ -252,9 +255,9 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * Example 1: !123
    * Example 2: !?
    */
-  def executeHistory(args: String*)(implicit out: PrintStream) = {
+  def executeHistory(params: UnixLikeArgs)(implicit out: PrintStream) = {
     for {
-      index <- args.headOption
+      index <- params.args.headOption
       command <- index match {
         case s if s == "?" => Some("history")
         case s if s == "!" => SessionManagement.history.last
@@ -272,7 +275,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   /**
    * "exit" command - Exits the shell
    */
-  def exit(args: String*) = {
+  def exit(params: UnixLikeArgs) = {
     rt.alive = false
     SessionManagement.history.store(rt.historyFile)
   }
@@ -280,9 +283,9 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   /**
    * "ls" - Retrieves the files from the current directory
    */
-  def listFiles(args: String*): Option[Seq[String]] = {
+  def listFiles(params: UnixLikeArgs): Option[Seq[String]] = {
     // get the optional path argument
-    val path: String = args.headOption map expandPath map setupPath getOrElse cwd
+    val path: String = params.args.headOption map expandPath map setupPath getOrElse cwd
 
     // perform the action
     Option(new File(path).list) map { files =>
@@ -295,7 +298,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   /**
    * "history" - Retrieves previously executed commands
    */
-  def listHistory(args: String*): Seq[HistoryItem] = {
+  def listHistory(params: UnixLikeArgs): Seq[HistoryItem] = {
     val lines = SessionManagement.history.getLines
     ((1 to lines.size) zip lines) map {
       case (itemNo, command) => HistoryItem(itemNo, command)
@@ -305,7 +308,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   /**
    * "jobs" - Retrieves the queued jobs
    */
-  def listJobs(args: String*): Seq[JobDetail] = {
+  def listJobs(params: UnixLikeArgs): Seq[JobDetail] = {
     rt.jobs map (j =>
       JobDetail(
         jobId = j.jobId,
@@ -321,13 +324,13 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * Example: modules
    * @return the list of modules
    */
-  def listModules(args: String*): Seq[ModuleItem] = {
+  def listModules(params: UnixLikeArgs): Seq[ModuleItem] = {
     val activeModule = rt.moduleManager.activeModule
     rt.moduleManager.modules.map(m =>
       ModuleItem(m.moduleName, m.getClass.getName, loaded = true, activeModule.exists(_.moduleName == m.moduleName)))
   }
 
-  def listScope(args: String*): Seq[ScopeItem] = {
+  def listScope(params: UnixLikeArgs): Seq[ScopeItem] = {
     // get the variables (filter out duplicates)
     val varsA: Seq[ModuleVariable] = rt.moduleManager.variableSet
     val varsB: Seq[Variable] = {
@@ -346,10 +349,11 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   /**
    * "ps" command - Display a list of "configured" running processes
    */
-  def processList(args: String*)(implicit out: PrintStream): Seq[String] = {
+  def processList(params: UnixLikeArgs)(implicit out: PrintStream): Seq[String] = {
     import scala.util.Properties
 
     // get the node
+    val args = params.args
     val node = extract(args, 0) getOrElse "."
     val timeout = extract(args, 1) map (_.toInt) getOrElse 60
     out.println(s"Gathering process info from host: ${if (node == ".") "localhost" else node}")
@@ -371,17 +375,17 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     } yield result
 
     // and let's wait for the result...
-    Await.result(outcome, timeout seconds)
+    Await.result(outcome, timeout.seconds)
   }
 
   /**
    * "pkill" command - Terminates specific running processes
    */
-  def processKill(args: String*): String = {
+  def processKill(params: UnixLikeArgs): String = {
     import scala.sys.process._
 
     // get the PIDs -- ensure they are integers
-    val pidList = args map (_.toInt)
+    val pidList = params.args map (parseInt("PID", _))
 
     // kill the processes
     s"kill ${pidList mkString " "}".!!
@@ -426,7 +430,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * @param args the given arguments
    * @return the current working directory
    */
-  def printWorkingDirectory(args: String*) = {
+  def printWorkingDirectory(args: UnixLikeArgs) = {
     new File(cwd).getCanonicalPath
   }
 
@@ -479,8 +483,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     } yield (pasdata, portmap)
   }
 
-  def syntax(args: String*): Seq[String] = {
-    val commandName = args.head
+  def syntax(params: UnixLikeArgs): Seq[String] = {
+    val commandName = params.args.head
 
     rt.moduleManager.findCommandByName(commandName) match {
       case Some(command) => Seq(s"Description: ${command.help}", s"Usage: ${command.prototype}")
@@ -492,17 +496,17 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   /**
    * "systime" command - Returns the system time as an EPOC in milliseconds
    */
-  def systemTime(args: String*) = System.currentTimeMillis.toString
+  def systemTime(args: UnixLikeArgs) = System.currentTimeMillis.toString
 
   /**
    * "time" command - Returns the time in the local time zone
    */
-  def time(args: String*): Date = new Date()
+  def time(args: UnixLikeArgs): Date = new Date()
 
   /**
    * "timeutc" command - Returns the time in the GMT time zone
    */
-  def timeUTC(args: String*): String = {
+  def timeUTC(args: UnixLikeArgs): String = {
     import java.text.SimpleDateFormat
 
     val fmt = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy")
@@ -514,8 +518,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * "use" command - Switches the active module
    * Example: use kafka
    */
-  def useModule(args: String*) = {
-    val moduleName = args.head
+  def useModule(params: UnixLikeArgs) = {
+    val moduleName = params.args.head
     rt.moduleManager.findModuleByName(moduleName) match {
       case Some(module) => rt.moduleManager.activeModule = module
       case None =>
@@ -534,7 +538,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    * "version" - Returns the application version
    * @return the application version
    */
-  def version(args: String*): String = VerifyShell.VERSION
+  def version(args: UnixLikeArgs): String = VerifyShell.VERSION
 
   case class CommandItem(command: String, module: String, description: String)
 
