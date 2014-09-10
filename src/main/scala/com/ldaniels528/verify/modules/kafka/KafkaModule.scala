@@ -5,18 +5,20 @@ import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import _root_.kafka.consumer.ConsumerTimeoutException
 import com.ldaniels528.verify.VxRuntimeContext
+import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.modules.avro.AvroConditions._
-import com.ldaniels528.verify.modules.avro.AvroReading
+import com.ldaniels528.verify.modules.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
 import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.Condition
 import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
-import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -62,14 +64,13 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kcommit", commitOffset, SimpleParams(Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), help = "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", getConsumers, SimpleParams(Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Seq.empty), help = "Counts the messages matching a given condition [references cursor]"),
-    Command(this, "kcursor", getCursor, SimpleParams(), help = "Displays the current message cursor"),
+    Command(this, "kcursor", showCursor, SimpleParams(), help = "Displays the current message cursor"),
     Command(this, "kexport", exportToFile, SimpleParams(Seq("file", "topic", "consumerGroupId"), Seq.empty), help = "Writes the contents of a specific topic to a file", undocumented = true),
     Command(this, "kfetch", fetchOffsets, SimpleParams(Seq("topic", "partition", "groupId"), Seq.empty), help = "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfindone", findOneMessage, SimpleParams(Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
     Command(this, "kfirst", getFirstMessage, SimpleParams(Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
-    Command(this, "kget", getMessage, SimpleParams(Seq("topic", "partition", "offset"), Seq("outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
-    Command(this, "kgeta", getAvroMessage, SimpleParams(Seq("schemaVariable"), Seq("topic", "partition", "offset")), help = "Returns the key-value pairs of an Avro message from a topic partition"),
+    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> true), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, SimpleParams(Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, SimpleParams(Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, SimpleParams(Seq("topic", "fileType", "filePath"), Seq.empty), help = "Imports messages into a new/existing topic"),
@@ -100,21 +101,31 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example {{{ kcommit com.shocktrade.alerts 0 devc0 123678 }}}
    */
   def commitOffset(args: String*): Option[Short] = {
+    // get the arguments (topic, partition, groupId and offset)
+    val (topic, partition, groupId, offset) = args.toList match {
+      case groupIdArg :: offsetArg :: Nil =>
+        cursor map (c => (c.topic, c.partition, groupIdArg, parseOffset(offsetArg))) getOrElse dieNoCursor
+      case topicArg :: partitionArg :: groupIdArg :: offsetArg :: Nil =>
+        (topicArg, parsePartition(partitionArg), groupIdArg, parseOffset(offsetArg))
+      case _ =>
+        dieSyntax("kcommit")
+    }
+
     // get the arguments
-    val Seq(name, partition, groupId, offset, _*) = args
     val metadata = extract(args, index = 4) getOrElse ""
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use (_.commitOffsets(groupId, offset.toLong, metadata))
+    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (
+      _.commitOffsets(groupId, offset, metadata))
   }
 
   /**
    * "kcount" - Counts the messages matching a given condition [references cursor]
-   * @example {{{ kcount frequency >= 1200  }}}
+   * @example {{{ kcount frequency >= 1200 }}}
    */
   def countMessages(args: String*): Future[Long] = {
     // get the topic and partition from the cursor
-    val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse die("No cursor exists")
+    val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse dieNoCursor
 
     // get the decoder
     val decoder = encoding match {
@@ -168,7 +179,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
         }
       }
     } catch {
-      case e: kafka.consumer.ConsumerTimeoutException =>
+      case e: ConsumerTimeoutException =>
       case e: Throwable =>
         throw new IllegalStateException(e.getMessage, e)
     }
@@ -184,7 +195,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val Seq(name, partition, groupId, _*) = args
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use (_.fetchOffsets(groupId))
+    new KafkaSubscriber(TopicSlice(name, parsePartition(partition)), brokers, correlationId) use (_.fetchOffsets(groupId))
   }
 
   /**
@@ -207,7 +218,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // get the topic and partition arguments
     val (topic, groupId, keyVar) = args.toList match {
       case groupIdArg :: keyArg :: Nil =>
-        cursor map (c => (c.topic, groupIdArg, keyArg)) getOrElse die("No cursor exists")
+        cursor map (c => (c.topic, groupIdArg, keyArg)) getOrElse dieNoCursor
       case topicArg :: groupIdArg :: keyArg :: Nil => (topicArg, groupIdArg, keyArg)
       case _ => die( s"""Invalid arguments - use "syntax ksearch" to see usage""")
     }
@@ -236,11 +247,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "kfindone" - Returns the first message that corresponds to the given criteria
    * @example {{{ kfindone frequency > 5000 }}}
    */
-  def findOneMessage(args: String*): Future[Option[Either[Option[MessageData], Seq[AvroRecord]]]] = {
-    import scala.collection.JavaConverters._
+  def findOneMessage(args: String*): Future[Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]]] = {
 
     // get the topic and partition from the cursor
-    val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse die("No cursor exists")
+    val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse dieNoCursor
 
     // get the decoder
     val decoder = encoding match {
@@ -268,24 +278,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       for {
         (partition, md) <- optResult
         encoding <- cursor map (_.encoding)
-      } yield encoding match {
-        case BinaryMessageEncoding =>
-          Left(getMessage(topic, partition.toString, md.lastOffset.toString))
-        case AvroMessageEncoding(schemaVar) =>
-          decoder.decode(md.message) match {
-            case Success(record) =>
-              Right {
-                cursor = Option(MessageCursor(topic, partition, md.offset, md.nextOffset, AvroMessageEncoding(schemaVar)))
-                val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
-                fields map { f =>
-                  val v = record.get(f)
-                  AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
-                }
-              }
-            case Failure(e) =>
-              throw new IllegalStateException(e.getMessage, e)
-          }
-      }
+      } yield getMessage(topic, partition.toString, md.lastOffset.toString)
     }
   }
 
@@ -315,25 +308,23 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   /**
    * "kcursor" - Displays the current message cursor
    * @example {{{ kcursor }}}
+   * @example {{{ kcursor 5 }}}
+   * @example {{{ kcursor shocktrade.quotes.csv 0 }}}
    */
-  def getCursor(args: String*): Seq[MessageCursor] = cursor.map(c => Seq(c)) getOrElse Seq.empty
+  def showCursor(args: String*): Seq[MessageCursor] = {
+    cursor.map(c => Seq(c)) getOrElse Seq.empty
+  }
 
   /**
    * "kfirst" - Returns the first message for a given topic
    * @example {{{ kfirst com.shocktrade.quotes.csv 0 }}}
    */
-  def getFirstMessage(args: String*): Either[Option[MessageData], Seq[AvroRecord]] = {
+  def getFirstMessage(args: String*) = {
     // get the arguments
     val (topic, partition) = getTopicAndPartition(args)
 
     // return the first record with the cursor's encoding
-    val encoding = cursor map (_.encoding) getOrElse BinaryMessageEncoding
-    encoding match {
-      case BinaryMessageEncoding =>
-        Left(getMessage(topic, partition.toString, "0"))
-      case AvroMessageEncoding(schemaVar) =>
-        Right(getAvroMessage(schemaVar, topic, partition.toString, "0"))
-    }
+    getMessage(topic, partition.toString, "0")
   }
 
   /**
@@ -346,21 +337,14 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   /**
    * "klast" - Returns the last offset for a given topic
    */
-  def getLastMessage(args: String*): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
+  def getLastMessage(args: String*) = {
     // get the arguments
     val (topic, partition) = getTopicAndPartition(args)
 
     // perform the action
     new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subscriber =>
       subscriber.getLastOffset map { lastOffset =>
-        // return the first record with the cursor's encoding
-        val encoding = cursor map (_.encoding) getOrElse BinaryMessageEncoding
-        encoding match {
-          case BinaryMessageEncoding =>
-            Left(getMessage(topic, partition.toString, lastOffset.toString))
-          case AvroMessageEncoding(schemaVar) =>
-            Right(getAvroMessage(schemaVar, topic, partition.toString, lastOffset.toString))
-        }
+        getMessage(topic, partition.toString, lastOffset.toString)
       }
     }
   }
@@ -373,75 +357,70 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   }
 
   /**
-   * "kgeta" - Returns the key-value pairs of an Avro message from a Kafka partition
-   * @example {{{ kavrofields mySchemaVar com.shocktrade.alerts 0 58500700 }}}
-   * @example {{{ kavrofields mySchemaVar com.shocktrade.alerts 9 1799020 }}}
-   */
-  def getAvroMessage(args: String*)(implicit out: PrintStream): Seq[AvroRecord] = {
-    import scala.collection.JavaConverters._
-
-    // get the arguments
-    val (schemaVar, name, partition, offset) = args.toList match {
-      case variable :: Nil =>
-        cursor.map(c => (variable, c.topic, c.partition, c.offset))
-          .getOrElse(die("No cursor defined or topic partition specified"))
-      case variable :: topicArg :: partitionArg :: offsetArg :: Nil =>
-        (variable, topicArg, parsePartition(partitionArg), parseOffset(offsetArg))
-      case _ =>
-        throw new IllegalArgumentException("Invalid arguments")
-    }
-
-    // get the decoder
-    val decoder = getAvroDecoder(schemaVar)
-
-    // perform the action
-    new KafkaSubscriber(TopicSlice(name, partition), brokers, correlationId) use { subscriber =>
-      (subscriber.fetch(offset, defaultFetchSize).headOption map { md =>
-        decoder.decode(md.message) match {
-          case Success(record) =>
-            cursor = Option(MessageCursor(name, partition, md.offset, md.nextOffset, AvroMessageEncoding(schemaVar)))
-            val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
-            fields map { f =>
-              val v = record.get(f)
-              AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
-            }
-          case Failure(e) =>
-            throw new IllegalStateException(e.getMessage, e)
-        }
-      }).getOrElse(Seq.empty)
-    }
-  }
-
-  /**
    * "kget" - Returns the message for a given topic partition and offset
    * @example {{{ kget com.shocktrade.alerts 0 45913975 }}}
+   * @example {{{ kget 0 45913975 }}}
+   * @example {{{ kget 45913975 }}}
    */
-  def getMessage(args: String*)(implicit out: PrintStream): Option[MessageData] = {
+  def getMessage(args: String*)(implicit out: PrintStream): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
+    // get the flag parameters
+    val params = Map(CommandParser.parseArgs(args): _*)
+    validateFlags(params, "-a", "-f")
+
     // get the arguments
-    val Seq(name, partition, offset, _*) = args
-    val outputPath = extract(args, 3) map expandPath
+    val (topic, partition, offset) = params.getOrElse("", Nil) match {
+      case anOffset :: Nil =>
+        (for {
+          topic <- cursor map (_.topic)
+          partition <- cursor map (_.partition)
+          offset = parseOffset(anOffset)
+        } yield (topic, partition, offset)) getOrElse dieSyntax("kget")
+      case aTopic :: aPartition :: anOffset :: Nil =>
+        (aTopic, parsePartition(aPartition), parseOffset(anOffset))
+      case _ =>
+        dieSyntax("kget")
+    }
+
+    // use an Avro decoder?
+    val schemaVar = params.get("-a") flatMap (_.headOption)
+    val avroDecoder = schemaVar map getAvroDecoder
 
     // perform the action
-    var messageData: Option[MessageData] = None
-    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
-      messageData = subscriber.fetch(offset.toLong, defaultFetchSize).headOption
-      cursor = messageData map (m => MessageCursor(name, partition.toInt, m.offset, m.nextOffset, BinaryMessageEncoding))
-    }
+    val messageData = new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (
+      _.fetch(offset.toLong, defaultFetchSize).headOption)
 
     // write the data to an output file?
-    for {
-      path <- outputPath
-      data <- messageData
-    } {
-      new FileOutputStream(expandPath(path)) use { out =>
-        out.write(data.message)
-      }
-    }
+    val outputPath = params.get("-f") flatMap (_.headOption) map expandPath
+    for {path <- outputPath; data <- messageData} new FileOutputStream(expandPath(path)) use (_.write(data.message))
 
-    messageData
+    // decode the message?
+    val decodedMessage = decodeArvoMessage(messageData, schemaVar, avroDecoder)
+
+    // setup the cursor
+    val encoding = schemaVar map AvroMessageEncoding getOrElse BinaryMessageEncoding
+    cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, encoding))
+
+    // return either a binary encoded message or an Avro message
+    if (decodedMessage.isDefined) Right(decodedMessage) else Left(messageData)
   }
 
-  case class MessageCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, encoding: MessageEncoding)
+  private def decodeArvoMessage(messageData: Option[MessageData], schemaVar: Option[String], avroDecoder: Option[AvroDecoder]): Option[Seq[AvroRecord]] = {
+    for {
+      md <- messageData
+      schema <- schemaVar
+      decoder <- avroDecoder
+      rec = decoder.decode(md.message) match {
+        case Success(record) =>
+          val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
+          fields map { f =>
+            val v = record.get(f)
+            AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
+          }
+        case Failure(e) =>
+          throw new IllegalStateException(e.getMessage, e)
+      }
+    } yield rec
+  }
 
   /**
    * "kgetsize" - Returns the size of the message for a given topic partition and offset
@@ -453,7 +432,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = extract(args, 3) map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use {
+    new KafkaSubscriber(TopicSlice(name, parsePartition(partition)), brokers, correlationId) use {
       _.fetch(offset.toLong, fetchSize).headOption map (_.message.length)
     }
   }
@@ -468,7 +447,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = extract(args, 4) map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use { subscriber =>
+    new KafkaSubscriber(TopicSlice(name, parsePartition(partition)), brokers, correlationId) use { subscriber =>
       val offsets = startOffset.toLong to endOffset.toLong
       val messages = subscriber.fetch(offsets, fetchSize).map(_.message.length)
       if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Seq.empty
@@ -481,14 +460,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "knext" - Optionally returns the next message
    * @example {{{ knext }}}
    */
-  def getNextMessage(args: String*)(implicit out: PrintStream): Option[Any] = {
+  def getNextMessage(args: String*)(implicit out: PrintStream) = {
     cursor map { case MessageCursor(topic, partition, offset, nextOffset, encoding) =>
-      encoding match {
-        case BinaryMessageEncoding =>
-          getMessage(topic, partition.toString, nextOffset.toString)
-        case AvroMessageEncoding(schemaVar) =>
-          getAvroMessage(schemaVar, topic, partition.toString, nextOffset.toString)
-      }
+      getMessage(topic, partition.toString, nextOffset.toString)
     }
   }
 
@@ -505,7 +479,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val sysTimeMillis = extract(args, 2) map (sdf.parse(_).getTime) getOrElse -1L
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(name, parseInt("partition", partition)), brokers, correlationId) use (_.getOffsetsBefore(sysTimeMillis))
+    new KafkaSubscriber(TopicSlice(name, parsePartition(partition)), brokers, correlationId) use (_.getOffsetsBefore(sysTimeMillis))
   }
 
   /**
@@ -514,12 +488,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def getPreviousMessage(args: String*)(implicit out: PrintStream): Option[Any] = {
     cursor map { case MessageCursor(topic, partition, offset, nextOffset, encoding) =>
-      encoding match {
-        case BinaryMessageEncoding =>
-          getMessage(topic, partition.toString, Math.max(0, offset - 1).toString)
-        case AvroMessageEncoding(schemaVar) =>
-          getAvroMessage(schemaVar, topic, partition.toString, Math.max(0, offset - 1).toString)
-      }
+      getMessage(topic, partition.toString, Math.max(0, offset - 1).toString)
     }
   }
 
@@ -531,7 +500,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // interpret based on the input arguments
     val results = args.toList match {
       case Nil =>
-        val topic = cursor map (_.topic) getOrElse die("No cursor exists")
+        val topic = cursor map (_.topic) getOrElse dieNoCursor
         val partitions = KafkaSubscriber.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
         if (partitions.nonEmpty) Some((topic, partitions.min, partitions.max)) else None
 
@@ -782,9 +751,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def resetConsumerGroup(args: String*): Unit = {
     // get the arguments
     val (topic, groupId) = args.toList match {
-      case groupIdArg :: Nil => cursor map (c => (c.topic, groupIdArg)) getOrElse die("No cursor exists")
+      case groupIdArg :: Nil => cursor map (c => (c.topic, groupIdArg)) getOrElse dieNoCursor
       case topicArg :: groupIdArg :: Nil => (topicArg, groupIdArg)
-      case _ => die("Invalid arguments")
+      case _ => dieSyntax("kreset")
     }
 
     // get the partition range
@@ -807,6 +776,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   private def die[S](message: String): S = throw new IllegalArgumentException(message)
 
+  private def dieNoCursor[S](): S = die("No cursor exists")
+
+  private def dieSyntax[S](command: String): S = die( s"""Invalid arguments - use "syntax $command" to see usage""")
+
   private def getPartitionRange(topic: String): (Int, Int) = {
     val partitions = KafkaSubscriber.getTopicList(brokers, correlationId) filter (_.topic == topic) map (_.partitionId)
     if (partitions.isEmpty)
@@ -821,22 +794,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   private def getTopicAndPartition(args: Seq[String]): (String, Int) = {
     args.toList match {
-      case Nil => cursor map (c => (c.topic, c.partition)) getOrElse die("No cursor exists")
+      case Nil => cursor map (c => (c.topic, c.partition)) getOrElse dieNoCursor
       case topicArg :: Nil => (topicArg, 0)
       case topicArg :: partitionArg :: Nil => (topicArg, parsePartition(partitionArg))
-      case _ => die("Invalid arguments")
-    }
-  }
-
-  /**
-   * Retrieves the topic and partition from the given arguments
-   * @param args the given arguments
-   * @return a tuple containing the topic and partition
-   */
-  private def getTopicAndPartitionWithArg(args: Seq[String]): (String, Int, String) = {
-    args.toList match {
-      case myArg :: Nil => cursor map (c => (c.topic, c.partition, myArg)) getOrElse die("No cursor exists")
-      case topicArg :: partitionArg :: myArg :: Nil => (topicArg, parsePartition(partitionArg), myArg)
       case _ => die("Invalid arguments")
     }
   }
@@ -848,9 +808,16 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   private def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
 
+  private def validateFlags(params: Map[String, List[String]], flags: String*) = {
+    val myFlags = flags + ""
+    params.foreach { case (flag, _) => if (!myFlags.contains(flag)) die(s"Invalid flag '$flag'")}
+  }
+
   case class AvroRecord(field: String, value: Any, `type`: String)
 
   case class AvroVerification(verified: Int, failed: Int)
+
+  case class MessageCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, encoding: MessageEncoding)
 
   case class TopicDetail(topic: String, partition: Int, leader: String, replicas: Int, inSync: Int)
 
