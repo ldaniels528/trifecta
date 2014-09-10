@@ -1,5 +1,7 @@
 package com.ldaniels528.verify.modules
 
+import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
+import org.scalatest.Matchers._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
@@ -41,32 +43,32 @@ class CommandParserSpec() extends FeatureSpec with GivenWhenThen with MockitoSug
   feature("Ability to parse a string into Unix-style parameters with flags)") {
     scenario("A string contains Unix-style parameters") {
       Given("A string containing Unix-style parameters with flags")
-      val line = "-r /path/to/data"
+      val line = "kget -a schema -f outfile.txt shocktrades.quotes.csv 0 165 -b"
 
       When("The string is parsed into tokens")
       val tokens = CommandParser.parse(line)
 
       Then("The tokens are transformed into Unix-style parameters")
-      val params = CommandParser.parseArgs(tokens)
+      val result = CommandParser.parseUnixLikeArgs(tokens)
 
       And("Finally validate the Unix-style parameters")
-      assert(params sameElements List("-r" -> List("/path/to/data")))
+      result shouldBe UnixLikeArgs(List("kget", "shocktrades.quotes.csv", "0", "165"), Map("-f" -> Some("outfile.txt"), "-a" -> Some("schema"), "-b" -> None))
     }
   }
 
   feature("Ability to parse a string into Unix-style parameters without flags)") {
     scenario("A string contains Unix-style parameters") {
       Given("A string containing Unix-style parameters without flags")
-      val line = "/path/to/data"
+      val line = "kget shocktrades.quotes.csv 0 165"
 
       When("The string is parsed into tokens")
       val tokens = CommandParser.parse(line)
 
       Then("The tokens are transformed into Unix-style parameters")
-      val params = CommandParser.parseArgs(tokens)
+      val result = CommandParser.parseUnixLikeArgs(tokens)
 
       And("Finally validate the Unix-style parameters")
-      assert(params sameElements List("" -> List("/path/to/data")))
+      result shouldBe UnixLikeArgs(List("kget", "shocktrades.quotes.csv", "0", "165"))
     }
   }
 

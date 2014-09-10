@@ -66,7 +66,7 @@ case class SimpleParams(required: Seq[String] = Nil, optional: Seq[String] = Nil
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class UnixLikeParams(defaults: Seq[(String, Boolean)] = Nil, flags: Seq[(String, String)] = Nil)
-  extends CommandParameters[List[(String, List[String])]] {
+  extends CommandParameters[UnixLikeArgs] {
 
   override def checkArgs(command: Command, args: Seq[String]) = ()
 
@@ -76,6 +76,6 @@ case class UnixLikeParams(defaults: Seq[(String, Boolean)] = Nil, flags: Seq[(St
     items.reverse mkString " "
   }
 
-  override def transform(args: Seq[String]): List[(String, List[String])] = parseArgs(args)
+  override def transform(args: Seq[String]): UnixLikeArgs = parseUnixLikeArgs(args)
 
 }

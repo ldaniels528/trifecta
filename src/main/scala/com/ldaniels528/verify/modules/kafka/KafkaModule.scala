@@ -7,6 +7,7 @@ import java.util.Date
 
 import _root_.kafka.consumer.ConsumerTimeoutException
 import com.ldaniels528.verify.VxRuntimeContext
+import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.modules.avro.AvroConditions._
 import com.ldaniels528.verify.modules.avro.{AvroDecoder, AvroReading}
@@ -364,11 +365,11 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def getMessage(args: String*)(implicit out: PrintStream): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
     // get the flag parameters
-    val params = Map(CommandParser.parseArgs(args): _*)
-    validateFlags(params, "-a", "-f")
+    val unixArgs = CommandParser.parseUnixLikeArgs(args)
+    validateFlags(unixArgs, "-a", "-f")
 
     // get the arguments
-    val (topic, partition, offset) = params.getOrElse("", Nil) match {
+    val (topic, partition, offset) = unixArgs.args match {
       case anOffset :: Nil =>
         (for {
           topic <- cursor map (_.topic)
@@ -382,7 +383,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // use an Avro decoder?
-    val schemaVar = params.get("-a") flatMap (_.headOption)
+    val schemaVar = unixArgs("-a")
     val avroDecoder = schemaVar map getAvroDecoder
 
     // perform the action
@@ -390,7 +391,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       _.fetch(offset.toLong, defaultFetchSize).headOption)
 
     // write the data to an output file?
-    val outputPath = params.get("-f") flatMap (_.headOption) map expandPath
+    val outputPath = unixArgs("-f") map expandPath
     for {path <- outputPath; data <- messageData} new FileOutputStream(expandPath(path)) use (_.write(data.message))
 
     // decode the message?
@@ -808,9 +809,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   private def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
 
-  private def validateFlags(params: Map[String, List[String]], flags: String*) = {
-    val myFlags = flags + ""
-    params.foreach { case (flag, _) => if (!myFlags.contains(flag)) die(s"Invalid flag '$flag'")}
+  private def validateFlags(args: UnixLikeArgs, flags: String*) = {
+    args.flags foreach { case (flag, _) => if (!flags.contains(flag)) die(s"Invalid flag '$flag'")}
   }
 
   case class AvroRecord(field: String, value: Any, `type`: String)

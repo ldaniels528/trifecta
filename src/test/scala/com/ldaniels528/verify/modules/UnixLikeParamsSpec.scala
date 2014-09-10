@@ -1,5 +1,7 @@
 package com.ldaniels528.verify.modules
 
+import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
+import org.scalatest.Matchers._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
@@ -24,9 +26,8 @@ class UnixLikeParamsSpec() extends FeatureSpec with GivenWhenThen with MockitoSu
 
       Then("The arguments should be successfully verified")
       val params = args.tail
-      //intercept[IllegalArgumentException]
       paramSet.checkArgs(command, params)
-      assert(paramSet.transform(params) sameElements List("-r" -> List("/some/path/to/delete")))
+      paramSet.transform(params) shouldBe UnixLikeArgs(Nil, Map("-r" -> Some("/some/path/to/delete")))
     }
   }
 

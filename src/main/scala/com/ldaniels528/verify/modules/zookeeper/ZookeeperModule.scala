@@ -131,17 +131,13 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
    */
   def delete(args: String*) {
     // determine whether to perform a normal delete or recursive
-    val params = CommandParser.parseArgs(args)
-    params.headOption match {
-      case Some((flag, flagArgs)) if params.size == 1 && flagArgs.size == 1 =>
-        val path = zkKeyToPath(flagArgs.head)
-        flag match {
-          case "" => zk.delete(path)
-          case "-r" => deleteRecursively(path)
-          case _ => throw new IllegalArgumentException(s"Flag '$flag' not recognized")
-        }
-      case _ =>
-        throw new IllegalArgumentException("Usage: zrm [-r] <path>")
+    val params = CommandParser.parseUnixLikeArgs(args)
+
+    // recursive delete?
+    params("-r") map { path =>
+      deleteRecursively(path)
+    } getOrElse {
+      params.args.headOption foreach (path => zk.delete(path))
     }
   }
 
