@@ -8,6 +8,7 @@ import scala.io.Source
 
 /**
  * Avro Reading Trait
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait AvroReading {
 
