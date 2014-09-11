@@ -8,6 +8,7 @@ import com.ldaniels528.verify.support.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.verify.support.zookeeper.ZKProxyV1._
 import org.apache.zookeeper.AsyncCallback.StringCallback
 import org.apache.zookeeper.CreateMode._
+import org.apache.zookeeper.KeeperException.Code
 import org.apache.zookeeper.ZooDefs.Ids
 import org.apache.zookeeper.ZooKeeper.States
 import org.apache.zookeeper._
@@ -15,6 +16,7 @@ import org.apache.zookeeper.data.{ACL, Stat}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
+import scala.concurrent.{Future, Promise}
 import scala.language.implicitConversions
 import scala.util.Try
 
@@ -35,6 +37,8 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
 
   def client: ZooKeeper = zk
 
+  def close(): Unit = zk.close()
+
   def create(tuples: (String, Array[Byte])*): Iterable[String] = {
     tuples map {
       case (node, data) =>
@@ -42,8 +46,18 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
     }
   }
 
-  def createAsync(path: String, data: Array[Byte], ctx: Any, callback: StringCallback) {
-    zk.create(path, data, acl, mode, callback, ctx)
+  def create(path: String, data: Array[Byte], ctx: Any): Future[Int] = {
+    val promise = Promise[Int]()
+    zk.create(path, data, acl, mode, new StringCallback {
+      override def processResult(rc: Int, path: String, ctx: Any, name: String): Unit = {
+        if (rc != Code.OK.intValue()) {
+          promise.failure(KeeperException.create(KeeperException.Code.get(rc), path))
+        } else {
+          promise.success(rc)
+        }
+      }
+    }, ctx)
+    promise.future
   }
 
   def ensurePath(path: String): ZKProxyV1 = {
@@ -66,67 +80,37 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
     this
   }
 
-  def delete(path: String) {
-    exists(path) foreach (stat => zk.delete(path, stat.getVersion))
-  }
+  def delete(path: String) = exists(path) foreach (stat => zk.delete(path, stat.getVersion))
 
-  def delete(path: String, stat: Stat) {
-    zk.delete(path, stat.getVersion)
-  }
+  def delete(path: String, stat: Stat) = zk.delete(path, stat.getVersion)
 
-  def exists(path: String, watch: Boolean = false): Option[Stat] = {
-    Option(zk.exists(path, watch))
-  }
+  def exists(path: String, watch: Boolean = false): Option[Stat] = Option(zk.exists(path, watch))
 
-  def getChildren(path: String, watch: Boolean = false): Seq[String] = {
-    zk.getChildren(path, watch)
-  }
+  def getChildren(path: String, watch: Boolean = false): Seq[String] = zk.getChildren(path, watch)
 
   def getSessionId: Long = zk.getSessionId
 
   def getState: States = zk.getState
 
-  def read(path: String, stat: Stat): Option[Array[Byte]] = {
-    Option(zk.getData(path, false, stat))
-  }
+  def read(path: String, stat: Stat): Option[Array[Byte]] = Option(zk.getData(path, false, stat))
 
-  def read(path: String): Option[Array[Byte]] = {
-    exists(path) flatMap { stat =>
-      Option(zk.getData(path, false, stat))
-    }
-  }
+  def read(path: String): Option[Array[Byte]] = exists(path) flatMap (stat => Option(zk.getData(path, false, stat)))
 
-  def readDouble(path: String, stat: Stat): Option[Double] = {
-    read(path, stat) map ByteBuffer.wrap map (_.getDouble)
-  }
+  def readDouble(path: String, stat: Stat): Option[Double] = read(path, stat) map ByteBuffer.wrap map (_.getDouble)
 
-  def readDouble(path: String): Option[Double] = {
-    read(path) map ByteBuffer.wrap map (_.getDouble)
-  }
+  def readDouble(path: String): Option[Double] = read(path) map ByteBuffer.wrap map (_.getDouble)
 
-  def readInt(path: String, stat: Stat): Option[Int] = {
-    read(path, stat) map ByteBuffer.wrap map (_.getInt)
-  }
+  def readInt(path: String, stat: Stat): Option[Int] = read(path, stat) map ByteBuffer.wrap map (_.getInt)
 
-  def readInt(path: String): Option[Int] = {
-    read(path) map ByteBuffer.wrap map (_.getInt)
-  }
+  def readInt(path: String): Option[Int] = read(path) map ByteBuffer.wrap map (_.getInt)
 
-  def readLong(path: String, stat: Stat): Option[Long] = {
-    read(path, stat) map ByteBuffer.wrap map (_.getLong)
-  }
+  def readLong(path: String, stat: Stat): Option[Long] = read(path, stat) map ByteBuffer.wrap map (_.getLong)
 
-  def readLong(path: String): Option[Long] = {
-    read(path) map ByteBuffer.wrap map (_.getLong)
-  }
+  def readLong(path: String): Option[Long] = read(path) map ByteBuffer.wrap map (_.getLong)
 
-  def readString(path: String, stat: Stat): Option[String] = {
-    read(path, stat) map (new String(_, encoding))
-  }
+  def readString(path: String, stat: Stat): Option[String] = read(path, stat) map (new String(_, encoding))
 
-  def readString(path: String): Option[String] = {
-    read(path) map (new String(_, encoding))
-  }
+  def readString(path: String): Option[String] = read(path) map (new String(_, encoding))
 
   def reconnect() {
     Try(zk.close())
@@ -142,24 +126,18 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
       Op.create(path, data, acl, mode))
   }
 
-  def update(path: String, data: Array[Byte], stat: Stat): Option[Iterable[String]] = {
-   exists(path) map { stat =>
-      delete(path, stat)
-      create(path -> data)
-    }
+  def update(path: String, data: Array[Byte]): Iterable[String] = {
+    delete(path)
+    create(path -> data)
   }
 
-  def updateLong(path: String, value: Long, stat: Stat): Option[Iterable[String]] = {
+  def updateLong(path: String, value: Long): Iterable[String] = {
     // write the value to a byte array
     val data = new Array[Byte](8)
     ByteBuffer.wrap(data).putLong(value)
 
     // perform the update
-    update(path, data, stat)
-  }
-
-  def close() {
-    zk.close()
+    update(path, data)
   }
 
 }

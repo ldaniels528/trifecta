@@ -150,7 +150,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     }
 
     out.println(s"Deleting '$path'...")
-    zk.exists(path) foreach (zk.delete(path, _))
+    zk.delete(path)
   }
 
   /**
@@ -227,7 +227,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     val path = zkKeyToPath(key)
 
     // perform the action
-    zk.exists(path) foreach (zk.delete(path, _))
+    zk.delete(path)
     (zk ensureParents path).create(path -> toBytes(value, typeName))
   }
 
