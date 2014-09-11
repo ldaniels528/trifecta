@@ -55,6 +55,7 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
         } else {
           promise.success(rc)
         }
+        ()
       }
     }, ctx)
     promise.future
