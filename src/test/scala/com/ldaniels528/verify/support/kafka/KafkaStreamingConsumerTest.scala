@@ -1,11 +1,10 @@
-package com.ldaniels528.verify.modules.kafka
+package com.ldaniels528.verify.support.kafka
 
+import KafkaStreamingConsumerTest._
 import akka.actor.{Actor, ActorSystem, Props}
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.support.kafka.{TopicSlice, KafkaSubscriber, Broker, KafkaStreamingConsumer}
-import KafkaStreamingConsumer.StreamedMessage
-import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumerTest._
+import com.ldaniels528.verify.support.kafka.KafkaStreamingConsumer.StreamedMessage
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.VxUtils._
 import org.junit.{After, Before, Test}

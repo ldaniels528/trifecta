@@ -40,36 +40,5 @@ class CommandParserSpec() extends FeatureSpec with GivenWhenThen with MockitoSug
     }
   }
 
-  feature("Ability to parse a string into Unix-style parameters with flags)") {
-    scenario("A string contains Unix-style parameters") {
-      Given("A string containing Unix-style parameters with flags")
-      val line = "kget -a schema -f outfile.txt shocktrades.quotes.csv 0 165 -b"
-
-      When("The string is parsed into tokens")
-      val tokens = CommandParser.parse(line)
-
-      Then("The tokens are transformed into Unix-style parameters")
-      val result = CommandParser.parseUnixLikeArgs(tokens)
-
-      And("Finally validate the Unix-style parameters")
-      result shouldBe UnixLikeArgs(List("kget", "shocktrades.quotes.csv", "0", "165"), Map("-f" -> Some("outfile.txt"), "-a" -> Some("schema"), "-b" -> None))
-    }
-  }
-
-  feature("Ability to parse a string into Unix-style parameters without flags)") {
-    scenario("A string contains Unix-style parameters") {
-      Given("A string containing Unix-style parameters without flags")
-      val line = "kget shocktrades.quotes.csv 0 165"
-
-      When("The string is parsed into tokens")
-      val tokens = CommandParser.parse(line)
-
-      Then("The tokens are transformed into Unix-style parameters")
-      val result = CommandParser.parseUnixLikeArgs(tokens)
-
-      And("Finally validate the Unix-style parameters")
-      result shouldBe UnixLikeArgs(List("kget", "shocktrades.quotes.csv", "0", "165"))
-    }
-  }
 
 }

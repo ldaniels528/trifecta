@@ -14,20 +14,35 @@ class UnixLikeParamsSpec() extends FeatureSpec with GivenWhenThen with MockitoSu
   info("As a Unix-Like Command Parameter instance")
   info("I want to be able to parse and validate command line input")
 
-  feature("Unix-Like Command Parameter Argument Verification") {
-    scenario("The Command Parameter instance should parse and verify command line input into arguments") {
-      Given("A Command Parameter Set and command line input")
-      val paramSet = UnixLikeParams(defaults = Seq("key" -> true), flags = Seq("-r" -> "recursive"))
-      val commandLineInput = "zrm -r /some/path/to/delete"
-      val command = mock[Command]
+  feature("Ability to parse a string into Unix-style parameters with flags)") {
+    scenario("A string contains Unix-style parameters") {
+      Given("A string containing Unix-style parameters with flags")
+      val line = "kget -a schema -f outfile.txt shocktrades.quotes.csv 0 165 -b"
 
-      When("Parsing command line input into arguments")
-      val args = CommandParser.parse(commandLineInput)
+      When("The string is parsed into tokens")
+      val tokens = CommandParser.parse(line)
 
-      Then("The arguments should be successfully verified")
-      val params = args.tail
-      paramSet.checkArgs(command, params)
-      paramSet.transform(params) shouldBe UnixLikeArgs(Nil, Map("-r" -> Some("/some/path/to/delete")))
+      Then("The tokens are transformed into Unix-style parameters")
+      val result = CommandParser.parseUnixLikeArgs(tokens)
+
+      And("Finally validate the Unix-style parameters")
+      result shouldBe UnixLikeArgs(List("kget", "shocktrades.quotes.csv", "0", "165"), Map("-f" -> Some("outfile.txt"), "-a" -> Some("schema"), "-b" -> None))
+    }
+  }
+
+  feature("Ability to parse a string into Unix-style parameters without flags)") {
+    scenario("A string contains Unix-style parameters") {
+      Given("A string containing Unix-style parameters without flags")
+      val line = "kget shocktrades.quotes.csv 0 165"
+
+      When("The string is parsed into tokens")
+      val tokens = CommandParser.parse(line)
+
+      Then("The tokens are transformed into Unix-style parameters")
+      val result = CommandParser.parseUnixLikeArgs(tokens)
+
+      And("Finally validate the Unix-style parameters")
+      result shouldBe UnixLikeArgs(List("kget", "shocktrades.quotes.csv", "0", "165"))
     }
   }
 
