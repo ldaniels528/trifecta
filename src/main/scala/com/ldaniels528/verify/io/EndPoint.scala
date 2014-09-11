@@ -10,7 +10,7 @@ trait EndPoint extends java.io.Serializable {
    * Decomposes the end-point into its host and port components
    * @return a tuple containing the host and port
    */
-  def apply(): (String, Int) = (host, port)
+  def unapply(): (String, Int) = (host, port)
 
   /**
    * Returns the host portion of the end-point
@@ -34,10 +34,10 @@ trait EndPoint extends java.io.Serializable {
  */
 object EndPoint {
 
-  def apply(pair: String, port: Int = -1): EndPoint = {
+  def apply(pair: String, portNum: Int = -1): EndPoint = {
     pair.split(":").toList match {
       case host :: port :: Nil => new SimpleEndPoint(host, port.toInt)
-      case host :: Nil => new SimpleEndPoint(host, port)
+      case host :: Nil => new SimpleEndPoint(host, portNum)
       case _ =>
         throw new IllegalStateException(s"Invalid end-point '$pair'; Format 'host:port' expected")
     }
