@@ -2,7 +2,6 @@ package com.ldaniels528.verify.modules
 
 import java.net.{URL, URLClassLoader}
 
-import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.Variable
 
@@ -12,7 +11,7 @@ import scala.util.{Failure, Success, Try}
  * Represents a dynamically loadable module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait Module extends BinaryMessaging {
+trait Module {
 
   /**
    * Returns the name of the module (e.g. "kafka")
