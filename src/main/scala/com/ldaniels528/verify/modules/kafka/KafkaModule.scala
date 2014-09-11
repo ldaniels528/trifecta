@@ -7,10 +7,11 @@ import java.util.Date
 
 import _root_.kafka.consumer.ConsumerTimeoutException
 import com.ldaniels528.verify.VxRuntimeContext
+import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
+import com.ldaniels528.verify.modules.avro.AvroConditions._
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
-import com.ldaniels528.verify.support.avro.AvroConditions._
 import com.ldaniels528.verify.support.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.verify.support.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
 import com.ldaniels528.verify.support.kafka.{Condition, _}
@@ -172,7 +173,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     var count = 0L
     try {
       new DataOutputStream(new FileOutputStream(file)) use { fos =>
-        KafkaStreamingConsumer(rt.zkEndPoint, groupId, "consumer.timeout.ms" -> 5000) use { consumer =>
+        KafkaStreamingConsumer(EndPoint(rt.remoteHost), groupId, "consumer.timeout.ms" -> 5000) use { consumer =>
           for (record <- consumer.iterate(topic, parallelism = 1)) {
             val message = record.message
             fos.writeInt(message.length)
@@ -242,7 +243,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val key = variable.eval[Array[Byte]] getOrElse die(s"$keyVar is undefined")
 
     // get the consumer instance
-    val consumer = KafkaStreamingConsumer(rt.zkEndPoint, groupId, "consumer.timeout.ms" -> 5000)
+    val consumer = KafkaStreamingConsumer(EndPoint(zk.remoteHost), groupId, "consumer.timeout.ms" -> 5000)
 
     // perform the search
     val result = consumer.scan(topic, parallelism = 4, BinaryKeyEqCondition(key)) map (_ map { msg =>
@@ -266,10 +267,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse dieNoCursor
 
     // get the decoder
-    val decoder = encoding match {
-      case AvroMessageEncoding(schemaVar) => getAvroDecoder(schemaVar)
+    val (schema, decoder) = encoding match {
+      case AvroMessageEncoding(schemaVar) => (schemaVar, getAvroDecoder(schemaVar))
       case _ =>
-        throw new IllegalArgumentException("Raw binary format is not supported")
+        throw new IllegalArgumentException("Only Avro format is supported")
     }
 
     // get the criteria
@@ -291,7 +292,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       for {
         (partition, md) <- optResult
         encoding <- cursor map (_.encoding)
-      } yield getMessage(topic, partition, md.lastOffset, params)
+      } yield getMessage(topic, partition, md.offset, UnixLikeArgs(Nil, Map("-a" -> Option(schema))))
     }
   }
 
@@ -391,19 +392,19 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   }
 
   def getMessage(topic: String, partition: Int, offset: Long, unixArgs: UnixLikeArgs): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
-    // use an Avro decoder?
-    val schemaVar = unixArgs("-a")
-    val avroDecoder = schemaVar map getAvroDecoder
-
-    // perform the action
+    // retrieve the message
     val messageData = new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (
       _.fetch(offset.toLong, defaultFetchSize).headOption)
 
     // write the data to an output file?
-    val outputPath = unixArgs("-f") map expandPath
-    for {path <- outputPath; data <- messageData} new FileOutputStream(expandPath(path)) use (_.write(data.message))
+    for {
+      path <- unixArgs("-f") map expandPath
+      message <- messageData map(_.message)
+    } new FileOutputStream(path) use (_.write(message))
 
-    // decode the message?
+    // decode the message using an Avro decoder?
+    val schemaVar = unixArgs("-a")
+    val avroDecoder = schemaVar map getAvroDecoder
     val decodedMessage = decodeArvoMessage(messageData, schemaVar, avroDecoder)
 
     // setup the cursor
@@ -852,7 +853,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @param hex the given binary string (e.g. "de.ad.be.ef.00")
    * @return a byte array
    */
-  private def toBinary(hex: String): Array[Byte] = hex.split("[.]") map(Integer.parseInt(_, 16)) map(_.toByte)
+  private def toBinary(hex: String): Array[Byte] = hex.split("[.]") map (Integer.parseInt(_, 16)) map (_.toByte)
 
   /**
    * Converts the given long value into a byte array
