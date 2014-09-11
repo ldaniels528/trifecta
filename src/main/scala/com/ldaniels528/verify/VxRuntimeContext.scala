@@ -27,7 +27,7 @@ import scala.util.Try
  * Verify Runtime Context
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging {
+class VxRuntimeContext(val zkProxy: ZKProxy) extends BinaryMessaging {
   private val logger = LoggerFactory.getLogger(getClass)
 
   // capture standard output
@@ -37,12 +37,11 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   // create the root-level scope
   implicit val scope = RootScope()
 
-  // get the ZooKeeper end-point
-  val zkEndPoint = EndPoint(zkHost, zkPort)
-  val remoteHost = zkEndPoint.toString
-
   // the default state of the application is "alive"
   var alive = true
+
+  // capture the remote host string (e.g. "localhost:2181")
+  val remoteHost: String = zkProxy.remoteHost
 
   // define the history properties
   var historyFile = new File(s"$userHome$separator.verify${separator}history.txt")
@@ -50,9 +49,6 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
   // define the configuration file & properties
   val configFile = new File(s"$userHome$separator.verify${separator}config.properties")
   val configProps = loadConfiguration(configFile)
-
-  // create the ZooKeeper proxy
-  val zkProxy = ZKProxy(zkEndPoint)
 
   // define the job stack
   val jobs = mutable.Buffer[JobItem]()
@@ -185,6 +181,11 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VxRuntimeContext {
+
+  def apply(host: String, port: Int) = new VxRuntimeContext(ZKProxy(EndPoint(host, port)))
+
+  def apply(zk: ZKProxy) = new VxRuntimeContext(zk)
+
   private val jobIdGen = new AtomicInteger(new Random().nextInt(1000) + 1000)
 
   case class JobItem(jobId: Int = jobIdGen.incrementAndGet(), startTime: Long, task: Future[_])
