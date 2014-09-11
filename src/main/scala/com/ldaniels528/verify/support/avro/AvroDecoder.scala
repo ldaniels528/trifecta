@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.modules.avro
+package com.ldaniels528.verify.support.avro
 
 import com.ldaniels528.verify.codecs.MessageDecoder
 import com.twitter.bijection.Injection

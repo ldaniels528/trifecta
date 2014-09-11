@@ -1,10 +1,8 @@
-package com.ldaniels528.verify.modules.kafka
+package com.ldaniels528.verify.support.kafka
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
-
-import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.Condition
-import com.ldaniels528.verify.modules.kafka.KafkaSubscriber._
-import com.ldaniels528.verify.modules.zookeeper.ZKProxy
+import com.ldaniels528.verify.support.kafka.KafkaSubscriber._
+import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.VxUtils._
 import kafka.api._
 import kafka.common._

@@ -11,8 +11,9 @@ import com.ldaniels528.verify.modules.avro.AvroModule
 import com.ldaniels528.verify.modules.core.CoreModule
 import com.ldaniels528.verify.modules.kafka.KafkaModule
 import com.ldaniels528.verify.modules.storm.StormModule
-import com.ldaniels528.verify.modules.zookeeper.{ZKProxy, ZookeeperModule}
+import com.ldaniels528.verify.modules.zookeeper.ZookeeperModule
 import com.ldaniels528.verify.modules.{CommandParser, ModuleManager}
+import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.vscript.{RootScope, VScriptCompiler}
 import org.slf4j.LoggerFactory

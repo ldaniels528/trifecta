@@ -5,6 +5,7 @@ import java.io.PrintStream
 import com.ldaniels528.verify.VxConsole._
 import com.ldaniels528.verify.modules.Command
 import com.ldaniels528.verify.vscript.Scope
+import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -70,6 +71,8 @@ class VerifyShell(rt: VxRuntimeContext) {
               case Success(result) =>
                 rt.handleResult(result)
                 if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
+              case Failure(e: ConnectionLossException) =>
+                err.println("Zookeeper connect loss error - Try: zreconnect")
               case Failure(e: IllegalArgumentException) =>
                 if (rt.debugOn) e.printStackTrace()
                 err.println(s"Syntax error: ${e.getMessage}")

@@ -9,11 +9,11 @@ import _root_.kafka.consumer.ConsumerTimeoutException
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
-import com.ldaniels528.verify.modules.avro.AvroConditions._
-import com.ldaniels528.verify.modules.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
-import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.Condition
-import com.ldaniels528.verify.modules.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
+import com.ldaniels528.verify.support.avro.AvroConditions._
+import com.ldaniels528.verify.support.avro.{AvroDecoder, AvroReading}
+import com.ldaniels528.verify.support.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
+import com.ldaniels528.verify.support.kafka.{Condition, _}
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
@@ -61,31 +61,31 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   // the bound commands
   override def getCommands: Seq[Command] = Seq(
-    Command(this, "kbrokers", getBrokers, SimpleParams(), help = "Returns a list of the brokers from ZooKeeper"),
-    Command(this, "kcommit", commitOffset, SimpleParams(Seq("topic", "partition", "groupId", "offset"), Seq("metadata")), help = "Commits the offset for a given topic and group"),
+    Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
+    Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", getConsumers, SimpleParams(Seq.empty, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Seq.empty), help = "Counts the messages matching a given condition [references cursor]"),
-    Command(this, "kcursor", showCursor, SimpleParams(), help = "Displays the current message cursor"),
-    Command(this, "kexport", exportToFile, SimpleParams(Seq("file", "topic", "consumerGroupId"), Seq.empty), help = "Writes the contents of a specific topic to a file", undocumented = true),
-    Command(this, "kfetch", fetchOffsets, SimpleParams(Seq("topic", "partition", "groupId"), Seq.empty), help = "Retrieves the offset for a given topic and group"),
+    Command(this, "kcursor", showCursor, UnixLikeParams(), help = "Displays the current message cursor"),
+    Command(this, "kexport", exportToFile, UnixLikeParams(Seq("file" -> true, "topic" -> false, "groupId" -> true)), help = "Writes the contents of a specific topic to a file", undocumented = true),
+    Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfindone", findOneMessage, SimpleParams(Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
-    Command(this, "kfirst", getFirstMessage, SimpleParams(Seq.empty, Seq("topic", "partition")), help = "Returns the first message for a given topic"),
+    Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the first message for a given topic"),
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> true), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, SimpleParams(Seq("topic", "partition", "offset"), Seq("fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, SimpleParams(Seq("topic", "partition", "startOffset", "endOffset"), Seq("fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, SimpleParams(Seq("topic", "fileType", "filePath"), Seq.empty), help = "Imports messages into a new/existing topic"),
     Command(this, "kinbound", inboundMessages, SimpleParams(Seq.empty, Seq("topicPrefix")), help = "Retrieves a list of topics with new messages (since last query)"),
-    Command(this, "klast", getLastMessage, SimpleParams(Seq.empty, Seq("topic", "partition")), help = "Returns the last message for a given topic"),
+    Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the last message for a given topic"),
     Command(this, "kls", getTopics, SimpleParams(Seq.empty, Seq("topicPrefix")), help = "Lists all existing topics"),
-    Command(this, "knext", getNextMessage, SimpleParams(), help = "Attempts to retrieve the next message"),
+    Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the next message"),
     Command(this, "koffset", getOffset, SimpleParams(Seq("topic", "partition"), Seq("time=YYYY-MM-DDTHH:MM:SS")), help = "Returns the offset at a specific instant-in-time for a given topic"),
-    Command(this, "kprev", getPreviousMessage, params = SimpleParams(), help = "Attempts to retrieve the message at the previous offset"),
+    Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Seq.empty), help = "Publishes a message to a topic"),
     Command(this, "kreplicas", getReplicas, SimpleParams(Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
-    Command(this, "kreset", resetConsumerGroup, SimpleParams(Seq.empty, Seq("topic", "groupId")), help = "Sets a consumer group ID to zero for all partitions"),
+    Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "ksearch", findMessageByKey, SimpleParams(Seq.empty, Seq("topic", "groupId", "keyVariable")), help = "Scans a topic for a message with a given key (EXPERIMENTAL)", undocumented = true),
-    Command(this, "kstats", getStatistics, SimpleParams(Seq.empty, Seq("topic", "beginPartition", "endPartition")), help = "Returns the partition details for a given topic"))
+    Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"))
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("defaultFetchSize", ConstantValue(Option(65536)))
@@ -104,10 +104,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def commitOffset(params: UnixLikeArgs): Option[Short] = {
     // get the arguments (topic, partition, groupId and offset)
     val (topic, partition, groupId, offset) = params.args match {
-      case groupIdArg :: offsetArg :: Nil =>
-        cursor map (c => (c.topic, c.partition, groupIdArg, parseOffset(offsetArg))) getOrElse dieNoCursor
-      case topicArg :: partitionArg :: groupIdArg :: offsetArg :: Nil =>
-        (topicArg, parsePartition(partitionArg), groupIdArg, parseOffset(offsetArg))
+      case aGroupId :: anOffset :: Nil =>
+        cursor map (c => (c.topic, c.partition, aGroupId, parseOffset(anOffset))) getOrElse dieNoCursor
+      case aTopic :: aPartition :: aGroupId :: anOffset :: Nil =>
+        (aTopic, parsePartition(aPartition), aGroupId, parseOffset(anOffset))
       case _ =>
         dieSyntax("kcommit")
     }
@@ -151,13 +151,21 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kexport" - Dumps the contents of a specific topic to a file
-   * @example {{{  kexport quotes.kafka com.shocktrade.quotes.csv lld3 }}}
+   * @example {{{  kexport com.shocktrade.quotes.csv lld3 -f quotes.bin }}}
    */
   def exportToFile(params: UnixLikeArgs): Long = {
     import java.io.{DataOutputStream, FileOutputStream}
 
-    // get the arguments
-    val Seq(file, topic, groupId, _*) = params.args
+    // get the arguments (topic, groupId)
+    val (topic, groupId) = params.args match {
+      case aGroupId :: Nil => cursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor
+      case aTopic :: aGroupId :: Nil => (aTopic, aGroupId)
+      case _ => dieSyntax("kexport")
+    }
+
+    // get the output source
+    val file = params("-f") getOrElse die("No output source specified")
+    // TODO add additional sources; including Cassandra, MySQL, Kafka topic, Kestrel queue
 
     // export the data to the file
     var count = 0L
@@ -191,10 +199,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def fetchOffsets(params: UnixLikeArgs): Option[Long] = {
     // get the arguments (topic, partition, groupId)
     val (topic, partition, groupId) = params.args match {
-      case groupIdArg :: Nil =>
-        cursor map (c => (c.topic, c.partition, groupIdArg)) getOrElse dieNoCursor
-      case topicArg :: partitionArg :: groupIdArg :: Nil =>
-        (topicArg, parsePartition(partitionArg), groupIdArg)
+      case aGroupId :: Nil =>
+        cursor map (c => (c.topic, c.partition, aGroupId)) getOrElse dieNoCursor
+      case aTopic :: aPartition :: aGroupId :: Nil =>
+        (aTopic, parsePartition(aPartition), aGroupId)
       case _ =>
         dieSyntax("kfetch")
     }
@@ -221,9 +229,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def findMessageByKey(params: UnixLikeArgs): Future[Option[MessageData]] = {
     // get the topic and partition arguments
     val (topic, groupId, keyVar) = params.args match {
-      case groupIdArg :: keyArg :: Nil =>
-        cursor map (c => (c.topic, groupIdArg, keyArg)) getOrElse dieNoCursor
-      case topicArg :: groupIdArg :: keyArg :: Nil => (topicArg, groupIdArg, keyArg)
+      case aGroupId :: keyArg :: Nil =>
+        cursor map (c => (c.topic, aGroupId, keyArg)) getOrElse dieNoCursor
+      case aTopic :: aGroupId :: keyArg :: Nil => (aTopic, aGroupId, keyArg)
       case _ => die( s"""Invalid arguments - use "syntax ksearch" to see usage""")
     }
 
@@ -346,11 +354,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val (topic, partition) = getTopicAndPartition(params.args)
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subscriber =>
-      subscriber.getLastOffset map { lastOffset =>
-        getMessage(topic, partition, lastOffset, params)
-      }
-    }
+    val lastOffset = new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (_.getLastOffset)
+    lastOffset map (getMessage(topic, partition, _, params))
   }
 
   /**
@@ -432,12 +437,21 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example {{{ kgetsize com.shocktrade.alerts 0 45913975 }}}
    */
   def getMessageSize(params: UnixLikeArgs): Option[Int] = {
+    // get the arguments (topic, partition, groupId and offset)
+    val (topic, partition, offset) = params.args match {
+      case anOffset :: Nil =>
+        cursor map (c => (c.topic, c.partition, parseOffset(anOffset))) getOrElse dieNoCursor
+      case aTopic :: aPartition :: anOffset :: Nil =>
+        (aTopic, parsePartition(aPartition), parseOffset(anOffset))
+      case _ =>
+        dieSyntax("kgetsize")
+    }
+
     // get the arguments
-    val Seq(name, partition, offset, _*) = params.args
-    val fetchSize = extract(params.args, 3) map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
+    val fetchSize = params("-s") map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(name, parsePartition(partition)), brokers, correlationId) use {
+    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use {
       _.fetch(offset.toLong, fetchSize).headOption map (_.message.length)
     }
   }
@@ -450,11 +464,11 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val args = params.args
 
     // get the arguments
-    val Seq(name, partition, startOffset, endOffset, _*) = args
+    val Seq(topic, partition, startOffset, endOffset, _*) = args
     val fetchSize = extract(args, 4) map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(name, parsePartition(partition)), brokers, correlationId) use { subscriber =>
+    new KafkaSubscriber(TopicSlice(topic, parsePartition(partition)), brokers, correlationId) use { subscriber =>
       val offsets = startOffset.toLong to endOffset.toLong
       val messages = subscriber.fetch(offsets, fetchSize).map(_.message.length)
       if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Seq.empty
@@ -517,19 +531,23 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
         val partitions = KafkaSubscriber.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
         if (partitions.nonEmpty) Some((topic, partitions.min, partitions.max)) else None
 
-      case topic :: partition :: Nil =>
-        val partitions = KafkaSubscriber.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
-        if (partitions.nonEmpty) Some((topic, parsePartition(partition), partitions.max)) else None
+      case topic :: aPartition :: Nil =>
+        Some((topic, parsePartition(aPartition), parsePartition(aPartition)))
 
       case topic :: partitionA :: partitionB :: Nil =>
         Some((topic, parsePartition(partitionA), parsePartition(partitionB)))
 
       case _ =>
-        None
+        dieSyntax("kstats")
     }
 
     results match {
-      case Some((topic, partition0, partition1)) => getStatisticsData(topic, partition0, partition1)
+      case Some((topic, partition0, partition1)) =>
+        if (cursor.isEmpty) {
+          cursor = getFirstOffset(topic, partition0) ?? getLastOffset(topic, partition0) map (offset =>
+            MessageCursor(topic, partition0, offset, offset + 1, BinaryMessageEncoding))
+        }
+        getStatisticsData(topic, partition0, partition1)
       case _ => Seq.empty
     }
   }
@@ -759,8 +777,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def resetConsumerGroup(params: UnixLikeArgs): Unit = {
     // get the arguments
     val (topic, groupId) = params.args match {
-      case groupIdArg :: Nil => cursor map (c => (c.topic, groupIdArg)) getOrElse dieNoCursor
-      case topicArg :: groupIdArg :: Nil => (topicArg, groupIdArg)
+      case aGroupId :: Nil => cursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor
+      case aTopic :: aGroupId :: Nil => (aTopic, aGroupId)
       case _ => dieSyntax("kreset")
     }
 
@@ -803,8 +821,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private def getTopicAndPartition(args: Seq[String]): (String, Int) = {
     args.toList match {
       case Nil => cursor map (c => (c.topic, c.partition)) getOrElse dieNoCursor
-      case topicArg :: Nil => (topicArg, 0)
-      case topicArg :: partitionArg :: Nil => (topicArg, parsePartition(partitionArg))
+      case aTopic :: Nil => (aTopic, 0)
+      case aTopic :: aPartition :: Nil => (aTopic, parsePartition(aPartition))
       case _ => die("Invalid arguments")
     }
   }

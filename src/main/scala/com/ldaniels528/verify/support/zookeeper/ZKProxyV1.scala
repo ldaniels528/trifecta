@@ -1,18 +1,20 @@
-package com.ldaniels528.verify.modules.zookeeper
+package com.ldaniels528.verify.support.zookeeper
 
 import java.nio.ByteBuffer
 import java.util
 
-import com.ldaniels528.verify.modules.zookeeper.ZKProxy.Implicits._
+import com.ldaniels528.verify.io.EndPoint
+import com.ldaniels528.verify.support.zookeeper.ZKProxy.Implicits._
+import com.ldaniels528.verify.support.zookeeper.ZKProxyV1._
 import org.apache.zookeeper.AsyncCallback.StringCallback
 import org.apache.zookeeper.CreateMode._
 import org.apache.zookeeper.ZooDefs.Ids
+import org.apache.zookeeper.ZooKeeper.States
 import org.apache.zookeeper._
 import org.apache.zookeeper.data.{ACL, Stat}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
 import scala.language.implicitConversions
 import scala.util.Try
 
@@ -20,9 +22,8 @@ import scala.util.Try
  * ZooKeeper Proxy (version 1.0)
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = None) {
+class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = None) extends ZKProxy {
   private val logger = LoggerFactory.getLogger(getClass)
-  private val NO_DATA = new Array[Byte](0)
   var acl: util.ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
   var mode: CreateMode = PERSISTENT
   var encoding: String = "UTF8"
@@ -30,7 +31,7 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
   logger.info(s"Connecting to ZooKeeper at '$host:$port'...")
   private var zk = new ZooKeeper(host, port, new MyWatcher(callback))
 
-  //def batch(ops: Op*): Seq[OpResult] = zk.multi(Iterable(ops: _*).asJava)
+  def batch(ops: Op*): Seq[OpResult] = Seq.empty // zk.multi(ops)
 
   def client: ZooKeeper = zk
 
@@ -45,7 +46,7 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
     zk.create(path, data, acl, mode, callback, ctx)
   }
 
-  def ensurePath(path: String) = {
+  def ensurePath(path: String): ZKProxyV1 = {
     val tuples = path.splitNodes map (p => (p, NO_DATA))
     logger.info(s"create parent paths: ${tuples map (_._1) mkString ","}")
     tuples foreach {
@@ -55,7 +56,7 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
     this
   }
 
-  def ensureParents(path: String) = {
+  def ensureParents(path: String): ZKProxyV1 = {
     val tuples = path.splitNodes.init map (p => (p, NO_DATA))
     logger.info(s"create parent paths: ${tuples map (_._1) mkString ","}")
     tuples foreach {
@@ -63,6 +64,10 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
         if (exists(node).isEmpty) zk.create(node, data, acl, mode)
     }
     this
+  }
+
+  def delete(path: String) {
+    exists(path) foreach (stat => zk.delete(path, stat.getVersion))
   }
 
   def delete(path: String, stat: Stat) {
@@ -77,17 +82,17 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
     zk.getChildren(path, watch)
   }
 
-  def getSessionId = zk.getSessionId
+  def getSessionId: Long = zk.getSessionId
 
-  def getState = zk.getState
+  def getState: States = zk.getState
 
   def read(path: String, stat: Stat): Option[Array[Byte]] = {
     Option(zk.getData(path, false, stat))
   }
 
   def read(path: String): Option[Array[Byte]] = {
-    exists(path) map { stat =>
-      zk.getData(path, false, stat)
+    exists(path) flatMap { stat =>
+      Option(zk.getData(path, false, stat))
     }
   }
 
@@ -130,12 +135,12 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
 
   /**
    * Updates the given path
-   *//*
+   */
   def updateAtomic(path: String, data: Array[Byte], stat: Stat): Seq[OpResult] = {
     batch(
       Op.delete(path, stat.getVersion),
       Op.create(path, data, acl, mode))
-  }*/
+  }
 
   def update(path: String, data: Array[Byte], stat: Stat) = {
     exists(path) map { stat =>
@@ -157,6 +162,17 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
     zk.close()
   }
 
+}
+
+/**
+ * Zookeeper Proxy Singleton
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+object ZKProxyV1 {
+  private val NO_DATA = new Array[Byte](0)
+
+  def apply(ep: EndPoint, callback: Option[ZkProxyCallBack] = None) = new ZKProxyV1(ep.host, ep.port, callback)
+
   /**
    * My ZooKeeper Watcher Callback
    * @param callback the [[ZkProxyCallBack]]
@@ -166,3 +182,4 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
   }
 
 }
+

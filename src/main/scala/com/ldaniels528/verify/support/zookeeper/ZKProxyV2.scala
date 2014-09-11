@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.modules.zookeeper
+package com.ldaniels528.verify.support.zookeeper
 
 import java.nio.ByteBuffer
 

@@ -3,6 +3,7 @@ package com.ldaniels528.verify.modules.avro
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
+import com.ldaniels528.verify.support.avro.AvroReading
 import com.ldaniels528.verify.vscript.{OpCode, Scope, Variable}
 
 /**

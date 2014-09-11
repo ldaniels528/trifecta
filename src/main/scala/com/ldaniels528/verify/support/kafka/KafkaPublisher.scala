@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.modules.kafka
+package com.ldaniels528.verify.support.kafka
 
 import java.util.Properties
 

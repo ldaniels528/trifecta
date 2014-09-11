@@ -1,10 +1,10 @@
-package com.ldaniels528.verify.modules.kafka
+package com.ldaniels528.verify.support.kafka
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import akka.actor.ActorRef
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.{Condition, StreamedMessage}
+import com.ldaniels528.verify.support.kafka.KafkaStreamingConsumer.StreamedMessage
 import com.ldaniels528.verify.util.VxUtils._
 import kafka.consumer.{Consumer, ConsumerConfig}
 
@@ -200,13 +200,6 @@ object KafkaStreamingConsumer {
    */
   case class StreamedMessage(topic: String, partition: Int, offset: Long, key: Array[Byte], message: Array[Byte])
 
-  /**
-   * Represents a message matching condition
-   */
-  trait Condition {
 
-    def satisfies(message: Array[Byte], key: Option[Array[Byte]] = None): Boolean
-
-  }
 
 }

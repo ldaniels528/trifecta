@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.modules.avro
+package com.ldaniels528.verify.support.avro
 
 import java.io.File
 

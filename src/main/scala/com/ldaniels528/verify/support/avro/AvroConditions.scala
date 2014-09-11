@@ -1,6 +1,6 @@
-package com.ldaniels528.verify.modules.avro
+package com.ldaniels528.verify.support.avro
 
-import com.ldaniels528.verify.modules.kafka.KafkaStreamingConsumer.Condition
+import com.ldaniels528.verify.support.kafka.Condition
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success}
