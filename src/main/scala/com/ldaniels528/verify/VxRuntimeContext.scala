@@ -185,7 +185,7 @@ case class VxRuntimeContext(zkHost: String, zkPort: Int) extends BinaryMessaging
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VxRuntimeContext {
-  private var jobIdGen = new AtomicInteger(new Random().nextInt(1000) + 1000)
+  private val jobIdGen = new AtomicInteger(new Random().nextInt(1000) + 1000)
 
   case class JobItem(jobId: Int = jobIdGen.incrementAndGet(), startTime: Long, task: Future[_])
 
