@@ -69,9 +69,10 @@ case class UnixLikeParams(defaults: Seq[(String, Boolean)] = Nil, flags: Seq[(St
   extends CommandParameters[UnixLikeArgs] {
 
   override def checkArgs(command: Command, args: Seq[String]) = {
-    val unixArgs = CommandParser.parseUnixLikeArgs(args)
+    val unixArgs = transform(args)
+    val myFlags = Map(flags: _*)
     unixArgs.flags foreach { case (flag, _) =>
-      if (!flags.contains(flag)) throw new IllegalArgumentException(s"Invalid flag '$flag' - Usage: ${command.prototype}")
+      if (!myFlags.contains(flag)) throw new IllegalArgumentException(s"Invalid flag '$flag' - Usage: ${command.prototype}")
     }
   }
 
