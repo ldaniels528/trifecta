@@ -9,6 +9,7 @@ import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.support.zookeeper.ZKProxy.Implicits._
+import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.Variable
 
@@ -16,7 +17,7 @@ import com.ldaniels528.verify.vscript.Variable
  * Zookeeper Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZookeeperModule(rt: VxRuntimeContext) extends Module {
+class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging {
   private implicit val out: PrintStream = rt.out
   private val zk: ZKProxy = rt.zkProxy
 
