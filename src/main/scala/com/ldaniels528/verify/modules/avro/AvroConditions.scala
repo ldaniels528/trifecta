@@ -1,5 +1,6 @@
-package com.ldaniels528.verify.support.avro
+package com.ldaniels528.verify.modules.avro
 
+import com.ldaniels528.verify.support.avro.AvroDecoder
 import com.ldaniels528.verify.support.kafka.Condition
 import org.slf4j.LoggerFactory
 

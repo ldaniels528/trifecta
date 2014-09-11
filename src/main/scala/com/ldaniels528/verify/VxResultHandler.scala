@@ -4,7 +4,7 @@ import java.io.PrintStream
 
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.VxRuntimeContext.JobItem
-import com.ldaniels528.verify.support.avro.AvroTables
+import com.ldaniels528.verify.modules.avro.AvroTables
 import com.ldaniels528.verify.support.kafka.KafkaSubscriber
 import KafkaSubscriber.MessageData
 import com.ldaniels528.verify.util.BinaryMessaging

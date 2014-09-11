@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.support.avro
+package com.ldaniels528.verify.modules.avro
 
 import com.ldaniels528.tabular.Tabular
 import org.apache.avro.generic.GenericRecord
