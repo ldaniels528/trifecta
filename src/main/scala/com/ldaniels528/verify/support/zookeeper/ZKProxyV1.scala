@@ -3,7 +3,6 @@ package com.ldaniels528.verify.support.zookeeper
 import java.nio.ByteBuffer
 import java.util
 
-import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.support.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.verify.support.zookeeper.ZKProxyV1._
 import org.apache.zookeeper.AsyncCallback.StringCallback
@@ -16,7 +15,7 @@ import org.apache.zookeeper.data.{ACL, Stat}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.implicitConversions
 import scala.util.Try
 
@@ -25,7 +24,7 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = None) extends ZKProxy {
-  private val logger = LoggerFactory.getLogger(getClass)
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   var acl: util.ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
   var mode: CreateMode = PERSISTENT
   var encoding: String = "UTF8"
@@ -46,7 +45,7 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
     }
   }
 
-  def create(path: String, data: Array[Byte], ctx: Any): Future[Int] = {
+  def create(path: String, data: Array[Byte], ctx: Any)(implicit ec: ExecutionContext): Future[Int] = {
     val promise = Promise[Int]()
     zk.create(path, data, acl, mode, new StringCallback {
       override def processResult(rc: Int, path: String, ctx: Any, name: String): Unit = {
@@ -61,24 +60,25 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
     promise.future
   }
 
-  def ensurePath(path: String): ZKProxyV1 = {
-    val tuples = path.splitNodes map (p => (p, NO_DATA))
-    logger.info(s"create parent paths: ${tuples map (_._1) mkString ","}")
-    tuples foreach {
-      case (node, data) =>
-        if (exists(node).isEmpty) zk.create(node, data, acl, mode)
+  def ensurePath(path: String): List[String] = {
+    val items = path.splitNodes map (p => (p, NO_DATA))
+    items flatMap {
+      case (node, data) => Option(zk.create(node, data, acl, mode))
     }
-    this
   }
 
-  def ensureParents(path: String): ZKProxyV1 = {
-    val tuples = path.splitNodes.init map (p => (p, NO_DATA))
-    logger.info(s"create parent paths: ${tuples map (_._1) mkString ","}")
-    tuples foreach {
-      case (node, data) =>
-        if (exists(node).isEmpty) zk.create(node, data, acl, mode)
+  def ensurePath(path: String, ctx: Any)(implicit ec: ExecutionContext): Future[List[Int]] = {
+    val items = path.splitNodes map (p => (p, NO_DATA))
+    Future.sequence(items map {
+      case (node, data) => create(node, data, ctx)
+    })
+  }
+
+  def ensureParents(path: String): List[String] = {
+    val items = path.splitNodes.init map (p => (p, NO_DATA))
+    items flatMap {
+      case (node, data) => Option(zk.create(node, data, acl, mode))
     }
-    this
   }
 
   def delete(path: String) = exists(path) foreach (stat => zk.delete(path, stat.getVersion))
@@ -118,6 +118,8 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
     zk = new ZooKeeper(host, port, new MyWatcher(callback))
   }
 
+  def remoteHost = s"$host:$port"
+
   /**
    * Updates the given path
    */
@@ -149,8 +151,6 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
  */
 object ZKProxyV1 {
   private val NO_DATA = new Array[Byte](0)
-
-  def apply(ep: EndPoint, callback: Option[ZkProxyCallBack] = None) = new ZKProxyV1(ep.host, ep.port, callback)
 
   /**
    * My ZooKeeper Watcher Callback

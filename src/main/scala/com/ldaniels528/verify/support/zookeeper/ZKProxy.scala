@@ -3,7 +3,7 @@ package com.ldaniels528.verify.support.zookeeper
 import com.ldaniels528.verify.io.EndPoint
 import org.apache.zookeeper.data.Stat
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
 /**
@@ -16,11 +16,13 @@ trait ZKProxy {
 
   def create(tuples: (String, Array[Byte])*): Iterable[String]
 
-  def create(path: String, data: Array[Byte], ctx: Any): Future[Int]
+  def create(path: String, data: Array[Byte], ctx: Any)(implicit ec: ExecutionContext): Future[Int]
 
-  def ensurePath(path: String): ZKProxy
+  def ensurePath(path: String): List[String]
 
-  def ensureParents(path: String): ZKProxy
+  def ensurePath(path: String, ctx: Any)(implicit ec: ExecutionContext): Future[List[Int]]
+
+  def ensureParents(path: String): List[String]
 
   def delete(path: String): Unit
 
@@ -42,6 +44,8 @@ trait ZKProxy {
 
   def reconnect(): Unit
 
+  def remoteHost: String
+
   def update(path: String, data: Array[Byte]): Iterable[String]
 
   def updateLong(path: String, value: Long): Iterable[String]
@@ -54,7 +58,13 @@ trait ZKProxy {
  */
 object ZKProxy {
 
-  def apply(ep: EndPoint, callback: Option[ZkProxyCallBack] = None) = new ZKProxyV1(ep.host, ep.port, callback)
+  def apply(host: String, port: Int): ZKProxyV1 = new ZKProxyV1(host, port, None)
+
+  def apply(host: String, port: Int, callback: Option[ZkProxyCallBack]): ZKProxyV1 = new ZKProxyV1(host, port, callback)
+
+  def apply(ep: EndPoint): ZKProxyV1 = new ZKProxyV1(ep.host, ep.port, None)
+
+  def apply(ep: EndPoint, callback: Option[ZkProxyCallBack]): ZKProxyV1 = new ZKProxyV1(ep.host, ep.port, callback)
 
   /**
    * All implicit definitions are declared here

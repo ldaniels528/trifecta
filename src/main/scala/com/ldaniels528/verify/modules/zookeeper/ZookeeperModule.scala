@@ -5,6 +5,7 @@ import java.nio.ByteBuffer
 import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
+import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
@@ -78,7 +79,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
     import scala.sys.process._
 
     // echo ruok | nc zookeeper 2181
-    val (host, port) = rt.zkEndPoint()
+    val (host, port) = EndPoint(zk.remoteHost).unapply()
     ("echo ruok" #> s"nc $host $port").!!
   }
 
@@ -90,7 +91,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
     import scala.sys.process._
 
     // echo stat | nc zookeeper 2181
-    val (host, port) = rt.zkEndPoint()
+    val (host, port) = EndPoint(zk.remoteHost).unapply()
     ("echo stat" #> s"nc $host $port").!!
   }
 
@@ -229,7 +230,8 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
 
     // perform the action
     zk.delete(path)
-    (zk ensureParents path).create(path -> toBytes(value, typeName))
+    zk ensureParents path
+    zk.create(path -> toBytes(value, typeName))
   }
 
   /**
