@@ -62,9 +62,9 @@ trait ZKProxy {
 
   def updateAtomic(path: String, data: Array[Byte], stat: Stat): Seq[OpResult]
 
-  def update(path: String, data: Array[Byte], stat: Stat): Unit
+  def update(path: String, data: Array[Byte], stat: Stat): Option[Iterable[String]]
 
-  def updateLong(path: String, value: Long, stat: Stat): Unit
+  def updateLong(path: String, value: Long, stat: Stat): Option[Iterable[String]]
 
   def close(): Unit
 

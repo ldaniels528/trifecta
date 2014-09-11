@@ -142,14 +142,14 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
       Op.create(path, data, acl, mode))
   }
 
-  def update(path: String, data: Array[Byte], stat: Stat) = {
-    exists(path) map { stat =>
+  def update(path: String, data: Array[Byte], stat: Stat): Option[Iterable[String]] = {
+   exists(path) map { stat =>
       delete(path, stat)
       create(path -> data)
     }
   }
 
-  def updateLong(path: String, value: Long, stat: Stat) = {
+  def updateLong(path: String, value: Long, stat: Stat): Option[Iterable[String]] = {
     // write the value to a byte array
     val data = new Array[Byte](8)
     ByteBuffer.wrap(data).putLong(value)
