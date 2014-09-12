@@ -384,15 +384,16 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // write the data to an output file (or device)?
-    for {
-      path <- params("-f") map expandPath
-      message <- messageData map (_.message)
-    } new FileOutputStream(path) use (_.write(message))
+    for {path <- params("-f") map expandPath; message <- messageData map (_.message)} new FileOutputStream(path) use (_.write(message))
 
-    // decode the message using either the user specified decoder or cursor's decoder
-    val decoderA: Option[MessageDecoder[_]] = params("-a") map getAvroDecoder
-    val decoderB: Option[MessageDecoder[_]] = cursor.flatMap(_.decoder)
-    val decoder = decoderA ?? decoderB
+    // determine whih decoder to use; either the user specified decoder or cursor's decoder
+    val decoder = {
+      val decoderA: Option[MessageDecoder[_]] = params("-a") map getAvroDecoder
+      val decoderB: Option[MessageDecoder[_]] = cursor.flatMap(_.decoder)
+      decoderA ?? decoderB
+    }
+
+    // decode the message
     val decodedMessage = decodeArvoMessage(messageData, decoder)
 
     // capture the message's offset and decoder
