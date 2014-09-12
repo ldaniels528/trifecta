@@ -20,6 +20,7 @@ import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._
@@ -33,6 +34,7 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with AvroReading {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val out: PrintStream = rt.out
   private implicit val scope: Scope = rt.scope
   private implicit val rtc: VxRuntimeContext = rt
@@ -73,15 +75,15 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfindone", findOneMessage, SimpleParams(Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
     Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the first message for a given topic"),
-    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> true), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
-    Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
+    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "date=YYYY-MM-DDTHH:MM:SS", "-f" -> "outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
+    Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, UnixLikeParams(Seq("topic" -> false), Seq("-a" -> "avro", "-b" -> "binary", "-f" -> "inputFile", "-t" -> "fileType")), help = "Imports messages into a new/existing topic"),
     Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the last message for a given topic"),
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Lists all existing topics"),
     Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the next message"),
-    Command(this, "koffset", getOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-d" -> "time=YYYY-MM-DDTHH:MM:SS")), help = "Returns the offset at a specific instant-in-time for a given topic"),
+    Command(this, "koffset", getOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-d" -> "YYYY-MM-DDTHH:MM:SS")), help = "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Seq.empty), help = "Publishes a message to a topic"),
     Command(this, "kreplicas", getReplicas, SimpleParams(Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
@@ -349,31 +351,43 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getMessage(params: UnixLikeArgs): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
     // get the arguments
     val (topic, partition, offset) = params.args match {
-      case anOffset :: Nil =>
-        (for {
-          topic <- cursor map (_.topic)
-          partition <- cursor map (_.partition)
-          offset = parseOffset(anOffset)
-        } yield (topic, partition, offset)) getOrElse dieSyntax("kget")
-      case aTopic :: aPartition :: anOffset :: Nil =>
-        (aTopic, parsePartition(aPartition), parseOffset(anOffset))
-      case _ =>
-        dieSyntax("kget")
+      case Nil => cursor map (c => (c.topic, c.partition, c.offset)) getOrElse dieNoCursor()
+      case anOffset :: Nil => cursor map (c => (c.topic, c.partition, parseOffset(anOffset))) getOrElse dieNoCursor()
+      case aTopic :: aPartition :: anOffset :: Nil => (aTopic, parsePartition(aPartition), parseOffset(anOffset))
+      case _ => dieSyntax("kget")
     }
 
     // generate and return the message
     getMessage(topic, partition, offset, params)
   }
 
-  def getMessage(topic: String, partition: Int, offset: Long, unixArgs: UnixLikeArgs): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
-    // retrieve the message
-    val messageData = new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (
-      _.fetch(offset.toLong, defaultFetchSize).headOption)
+  /**
+   * Retrieves either a binary or decoded message
+   * @param topic the given topic
+   * @param partition the given partition
+   * @param offset the given offset
+   * @param params the given Unix-style argument
+   * @return either a binary or decoded message
+   */
+  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
+    // requesting a message from an instance in time?
+    val instant: Option[Long] = params("-d") map {
+      case s if s.matches("\\d+") => s.toLong
+      case s if s.matches("\\d{4}[-]\\d{2}-\\d{2}[T]\\d{2}[:]\\d{2}[:]\\d{2}") => new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(s).getTime
+      case s => throw die(s"Illegal timestamp format '$s' - expected either EPOC (Long) or yyyy-MM-dd'T'HH:mm:ss format")
+    }
 
-    // write the data to an output file?
+    // retrieve the message
+    val messageData = new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+      val myOffset: Long = instant flatMap subs.getOffsetsBefore getOrElse offset
+      logger.info(s"instant = $instant, offset = $offset, myOffset = $myOffset, ioffset = ${instant map subs.getOffsetsBefore}")
+      subs.fetch(myOffset, defaultFetchSize).headOption
+    }
+
+    // write the data to an output file (or device)?
     for {
-      path <- unixArgs("-f") map expandPath
-      message <- messageData map(_.message)
+      path <- params("-f") map expandPath
+      message <- messageData map (_.message)
     } new FileOutputStream(path) use (_.write(message))
 
     // decode the message using either the user specified decoder or cursor's decoder
@@ -429,6 +443,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getMessageSize(params: UnixLikeArgs): Option[Int] = {
     // get the arguments (topic, partition, groupId and offset)
     val (topic, partition, offset) = params.args match {
+      case Nil =>
+        cursor map (c => (c.topic, c.partition, c.offset)) getOrElse dieNoCursor
       case anOffset :: Nil =>
         cursor map (c => (c.topic, c.partition, parseOffset(anOffset))) getOrElse dieNoCursor
       case aTopic :: aPartition :: anOffset :: Nil =>
@@ -617,7 +633,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
         case "-t" =>
           importMessagesFromTextFile(publisher, topic, filePath)
         case unknown =>
-          throw new IllegalArgumentException(s"Unrecognized file type '$unknown'")
+          throw new IllegalArgumentException(s"Unrecognized file type flag '$unknown'")
       }
     }
   }
@@ -838,10 +854,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * Converts a binary string to a byte array
-   * @param hex the given binary string (e.g. "de.ad.be.ef.00")
+   * @param dottedHex the given binary string (e.g. "de.ad.be.ef.00")
    * @return a byte array
    */
-  private def toBinary(hex: String): Array[Byte] = hex.split("[.]") map (Integer.parseInt(_, 16)) map (_.toByte)
+  private def toBinary(dottedHex: String): Array[Byte] = dottedHex.split("[.]") map (Integer.parseInt(_, 16)) map (_.toByte)
 
   /**
    * Converts the given long value into a byte array
