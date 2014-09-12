@@ -352,8 +352,8 @@ object KafkaSubscriber {
         TopicDetails(
           tmd.topic,
           pmd.partitionId,
-          pmd.leader map (b => Broker(b.host, b.port)),
-          pmd.replicas map (b => Broker(b.host, b.port)),
+          pmd.leader map (b => Broker(b.host, b.port, b.id)),
+          pmd.replicas map (b => Broker(b.host, b.port, b.id)),
           pmd.isr map (b => Broker(b.host, b.port)),
           tmd.sizeInBytes)
       }
