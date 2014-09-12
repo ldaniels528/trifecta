@@ -13,6 +13,18 @@ import scala.util.{Failure, Success}
 object AvroConditions {
   private lazy val logger = LoggerFactory.getLogger(getClass)
 
+  def toCondition(decoder: AvroDecoder, field: String, operator: String, value: String): Condition = {
+    operator match {
+      case "==" => AvroEQ(decoder, field, value)
+      case "!=" => AvroNotEQ(decoder, field, value)
+      case ">" => AvroGreater(decoder, field, value)
+      case "<" => AvroLesser(decoder, field, value)
+      case ">=" => AvroGreaterOrEQ(decoder, field, value)
+      case "<=" => AvroLesserOrEQ(decoder, field, value)
+      case _ => throw new IllegalArgumentException(s"Illegal operator '$operator'")
+    }
+  }
+
   /**
    * Avro Field-Value Equality Condition
    */
