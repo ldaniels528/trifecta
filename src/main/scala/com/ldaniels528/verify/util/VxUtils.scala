@@ -3,6 +3,7 @@ package com.ldaniels528.verify.util
 import java.io.{ByteArrayOutputStream, PrintStream}
 import java.util.Properties
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration.FiniteDuration
 import scala.language._
 import scala.util.{Failure, Success, Try}
@@ -113,11 +114,9 @@ object VxUtils {
 
     import java.util.Properties
 
-import scala.collection.JavaConversions.mapAsJavaMap
-
     def toProps: Properties = {
       val p = new Properties()
-      p.putAll(mapAsJavaMap(m))
+      p.putAll(m.asJava)
       p
     }
   }
