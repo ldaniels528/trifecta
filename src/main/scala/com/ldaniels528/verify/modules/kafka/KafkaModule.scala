@@ -5,13 +5,13 @@ import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import com.ldaniels528.verify.modules.avro.AvroConditions
 import _root_.kafka.consumer.ConsumerTimeoutException
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.codecs.MessageDecoder
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
-import com.ldaniels528.verify.modules.avro.AvroConditions._
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
 import com.ldaniels528.verify.support.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.verify.support.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
@@ -133,7 +133,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
-    val conditions = Seq(toCondition(decoder, field, operator, value))
+    val conditions = Seq(AvroConditions.toCondition(decoder, field, operator, value))
 
     // perform the count
     KafkaSubscriber.count(topic, brokers, correlationId, conditions: _*)
@@ -260,7 +260,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
-    val conditions = Seq(toCondition(decoder, field, operator, value))
+    val conditions = Seq(AvroConditions.toCondition(decoder, field, operator, value))
 
     // perform the search
     KafkaSubscriber.findOne(topic, brokers, correlationId, conditions: _*) map { result_? =>
