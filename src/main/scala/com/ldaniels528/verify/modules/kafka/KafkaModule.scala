@@ -75,7 +75,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfindone", findOneMessage, SimpleParams(Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
     Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the first message for a given topic"),
-    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "date=YYYY-MM-DDTHH:MM:SS", "-f" -> "outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
+    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "YYYY-MM-DDTHH:MM:SS", "-f" -> "outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, UnixLikeParams(Seq("topic" -> false), Seq("-a" -> "avro", "-b" -> "binary", "-f" -> "inputFile", "-t" -> "fileType")), help = "Imports messages into a new/existing topic"),
@@ -284,10 +284,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val topicPrefix = params.args.headOption
 
     // retrieve the data
-    val consumers = KafkaSubscriber.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition))
-    consumers map { c =>
+    KafkaSubscriber.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition)) map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
-      val delta = topicOffset map (offset => Math.max(0, offset - c.offset))
+      val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
       ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
     }
   }
@@ -297,8 +296,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   /**
    * "kcursor" - Displays the current message cursor
    * @example {{{ kcursor }}}
-   * @example {{{ kcursor 5 }}}
-   * @example {{{ kcursor shocktrade.quotes.csv 0 }}}
    */
   def showCursor(params: UnixLikeArgs): Seq[MessageCursor] = {
     cursor.map(c => Seq(c)) getOrElse Seq.empty
@@ -312,8 +309,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // get the arguments
     val (topic, partition) = getTopicAndPartition(params.args)
 
-    // return the first record with the cursor's decoder
-    getMessage(topic, partition, 0L, params)
+    // return the first message for the topic partition
+    getFirstOffset(topic, partition) map (getMessage(topic, partition, _, params))
   }
 
   /**
@@ -330,9 +327,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // get the arguments
     val (topic, partition) = getTopicAndPartition(params.args)
 
-    // perform the action
-    val lastOffset = new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (_.getLastOffset)
-    lastOffset map (getMessage(topic, partition, _, params))
+    // return the last message for the topic partition
+    getLastOffset(topic, partition) map (getMessage(topic, partition, _, params))
   }
 
   /**
@@ -379,14 +375,13 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // retrieve the message
     val messageData = new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
       val myOffset: Long = instant flatMap subs.getOffsetsBefore getOrElse offset
-      logger.info(s"instant = $instant, offset = $offset, myOffset = $myOffset, ioffset = ${instant map subs.getOffsetsBefore}")
       subs.fetch(myOffset, defaultFetchSize).headOption
     }
 
     // write the data to an output file (or device)?
     for {path <- params("-f") map expandPath; message <- messageData map (_.message)} new FileOutputStream(path) use (_.write(message))
 
-    // determine whih decoder to use; either the user specified decoder or cursor's decoder
+    // determine which decoder to use; either the user specified decoder or cursor's decoder
     val decoder = {
       val decoderA: Option[MessageDecoder[_]] = params("-a") map getAvroDecoder
       val decoderB: Option[MessageDecoder[_]] = cursor.flatMap(_.decoder)
@@ -505,7 +500,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "kprev" - Optionally returns the previous message
    * @example {{{ kprev }}}
    */
-  def getPreviousMessage(params: UnixLikeArgs)(implicit out: PrintStream): Option[Any] = {
+  def getPreviousMessage(params: UnixLikeArgs)(implicit out: PrintStream) = {
     cursor map { case MessageCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, Math.max(0, offset - 1), params)
     }
@@ -520,7 +515,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
       t.replicas map { replica =>
-        TopicReplicas(t.topic, t.partitionId, replica.toString, t.isr.contains(replica))
+        TopicReplicas(t.topic, t.partitionId, replica.toString, replica.brokerId, t.isr.contains(replica))
       } filter (t => prefix.isEmpty || prefix.exists(t.topic.startsWith))
     }
   }
@@ -748,7 +743,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
 
-  case class TopicReplicas(topic: String, partition: Int, replicaBroker: String, inSync: Boolean)
+  case class TopicReplicas(topic: String, partition: Int, replicaBroker: String, replicaId: Int, inSync: Boolean)
 
   /**
    * "kpublish" - Returns the EOF offset for a given topic
