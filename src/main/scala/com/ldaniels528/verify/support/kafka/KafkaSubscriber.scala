@@ -9,6 +9,7 @@ import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
 import kafka.message.MessageAndOffset
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -142,11 +143,12 @@ class KafkaSubscriber(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId
     // create the topic/partition and request information
     val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
     val requestInfo = Map(topicAndPartition -> new PartitionOffsetRequestInfo(time, 1))
-    val replicaId = 0
+    val replicaId = replicas.indexOf(broker)
 
     // submit the request, and retrieve the response
     val request = new OffsetRequest(requestInfo, correlationId, replicaId)
     val response = consumer.getOffsetsBefore(request)
+    //logger.info(s"response = $response, offsetsGroupedByTopic = ${response.offsetsGroupedByTopic.get(topic.name)}")
 
     // handle the response
     if (response.hasError) {
@@ -199,6 +201,7 @@ class KafkaSubscriber(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaSubscriber {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
 
   // setup defaults
   private val DEFAULT_FETCH_SIZE: Int = 65536
