@@ -7,6 +7,7 @@ import java.util.Date
 
 import _root_.kafka.consumer.ConsumerTimeoutException
 import com.ldaniels528.verify.VxRuntimeContext
+import com.ldaniels528.verify.codecs.MessageDecoder
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
@@ -124,27 +125,14 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def countMessages(params: UnixLikeArgs): Future[Long] = {
     // get the topic and partition from the cursor
-    val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse dieNoCursor
+    val (topic, aDecoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
 
-    // get the decoder
-    val decoder = encoding match {
-      case AvroMessageEncoding(schemaVarName) => getAvroDecoder(schemaVarName)
-      case _ =>
-        throw new IllegalArgumentException("Raw binary format is not supported")
-    }
+    // get the Avro decoder
+    val decoder = asAvroDecoder(aDecoder)
 
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
-    val conditions = operator match {
-      case "==" => Seq(AvroEQ(decoder, field, value))
-      case "!=" => Seq(AvroNotEQ(decoder, field, value))
-      case ">" => Seq(AvroGreater(decoder, field, value))
-      case "<" => Seq(AvroLesser(decoder, field, value))
-      case ">=" => Seq(AvroGreaterOrEQ(decoder, field, value))
-      case "<=" => Seq(AvroLesserOrEQ(decoder, field, value))
-      case _ =>
-        throw new IllegalArgumentException(s"Illegal operator near '$operator'")
-    }
+    val conditions = Seq(toCondition(decoder, field, operator, value))
 
     // perform the count
     KafkaSubscriber.count(topic, brokers, correlationId, conditions: _*)
@@ -249,7 +237,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val result = consumer.scan(topic, parallelism = 4, BinaryKeyEqCondition(key)) map (_ map { msg =>
       val lastOffset: Long = getLastOffset(msg.topic, msg.partition) getOrElse -1L
       val nextOffset: Long = msg.offset + 1
-      cursor = Option(MessageCursor(msg.topic, msg.partition, msg.offset, nextOffset, BinaryMessageEncoding))
+      cursor = Option(MessageCursor(msg.topic, msg.partition, msg.offset, nextOffset, None))
       MessageData(msg.offset, nextOffset, lastOffset, msg.message)
     })
 
@@ -264,35 +252,21 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def findOneMessage(params: UnixLikeArgs): Future[Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]]] = {
     // get the topic and partition from the cursor
-    val (topic, encoding) = cursor map (c => (c.topic, c.encoding)) getOrElse dieNoCursor
+    val (topic, aDecoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
 
-    // get the decoder
-    val (schema, decoder) = encoding match {
-      case AvroMessageEncoding(schemaVar) => (schemaVar, getAvroDecoder(schemaVar))
-      case _ =>
-        throw new IllegalArgumentException("Only Avro format is supported")
-    }
+    // get the Avro decoder
+    val decoder = asAvroDecoder(aDecoder)
 
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
-    val conditions = operator match {
-      case "==" => Seq(AvroEQ(decoder, field, value))
-      case "!=" => Seq(AvroNotEQ(decoder, field, value))
-      case ">" => Seq(AvroGreater(decoder, field, value))
-      case "<" => Seq(AvroLesser(decoder, field, value))
-      case ">=" => Seq(AvroGreaterOrEQ(decoder, field, value))
-      case "<=" => Seq(AvroLesserOrEQ(decoder, field, value))
-      case _ =>
-        throw new IllegalArgumentException(s"Illegal operator near '$operator'")
-    }
+    val conditions = Seq(toCondition(decoder, field, operator, value))
 
     // perform the search
-    val promise = KafkaSubscriber.findOne(topic, brokers, correlationId, conditions: _*)
-    promise.map { optResult =>
+    KafkaSubscriber.findOne(topic, brokers, correlationId, conditions: _*) map { result_? =>
       for {
-        (partition, md) <- optResult
-        encoding <- cursor map (_.encoding)
-      } yield getMessage(topic, partition, md.offset, UnixLikeArgs(Nil, Map("-a" -> Option(schema))))
+        (partition, md) <- result_?
+        decoder <- cursor map (_.decoder)
+      } yield getMessage(topic, partition, md.offset, UnixLikeArgs(Nil))
     }
   }
 
@@ -337,7 +311,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // get the arguments
     val (topic, partition) = getTopicAndPartition(params.args)
 
-    // return the first record with the cursor's encoding
+    // return the first record with the cursor's decoder
     getMessage(topic, partition, 0L, params)
   }
 
@@ -402,23 +376,37 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       message <- messageData map(_.message)
     } new FileOutputStream(path) use (_.write(message))
 
-    // decode the message using an Avro decoder?
-    val schemaVar = unixArgs("-a")
-    val avroDecoder = schemaVar map getAvroDecoder
-    val decodedMessage = decodeArvoMessage(messageData, schemaVar, avroDecoder)
+    // decode the message using either the user specified decoder or cursor's decoder
+    val decoderA: Option[MessageDecoder[_]] = params("-a") map getAvroDecoder
+    val decoderB: Option[MessageDecoder[_]] = cursor.flatMap(_.decoder)
+    val decoder = decoderA ?? decoderB
+    val decodedMessage = decodeArvoMessage(messageData, decoder)
 
-    // setup the cursor
-    val encoding = schemaVar map AvroMessageEncoding getOrElse BinaryMessageEncoding
-    cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, encoding))
+    // capture the message's offset and decoder
+    cursor = messageData map (m => MessageCursor(topic, partition, m.offset, m.nextOffset, decoder))
 
     // return either a binary encoded message or an Avro message
     if (decodedMessage.isDefined) Right(decodedMessage) else Left(messageData)
   }
 
-  private def decodeArvoMessage(messageData: Option[MessageData], schemaVar: Option[String], avroDecoder: Option[AvroDecoder]): Option[Seq[AvroRecord]] = {
+  private def asAvroDecoder(decoder: Option[MessageDecoder[_]]) = {
+    decoder match {
+      case Some(avro: AvroDecoder) => avro
+      case _ =>
+        throw new IllegalArgumentException("Only Avro decoding is supported")
+    }
+  }
+
+  private def decodeArvoMessage(messageData: Option[MessageData], decoder: Option[MessageDecoder[_]]): Option[Seq[AvroRecord]] = {
+    // only Avro decoders are supported
+    val avroDecoder: Option[AvroDecoder] = decoder match {
+      case Some(avroDecoder: AvroDecoder) => Option(avroDecoder)
+      case _ => throw new IllegalStateException("Only Avro decoding is supported")
+    }
+
+    // decode the message
     for {
       md <- messageData
-      schema <- schemaVar
       decoder <- avroDecoder
       rec = decoder.decode(md.message) match {
         case Success(record) =>
@@ -491,8 +479,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "knext" - Optionally returns the next message
    * @example {{{ knext }}}
    */
-  def getNextMessage(params: UnixLikeArgs)(implicit out: PrintStream) = {
-    cursor map { case MessageCursor(topic, partition, offset, nextOffset, encoding) =>
+  def getNextMessage(params: UnixLikeArgs) = {
+    cursor map { case MessageCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, nextOffset, params)
     }
   }
@@ -521,7 +509,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example {{{ kprev }}}
    */
   def getPreviousMessage(params: UnixLikeArgs)(implicit out: PrintStream): Option[Any] = {
-    cursor map { case MessageCursor(topic, partition, offset, nextOffset, encoding) =>
+    cursor map { case MessageCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, Math.max(0, offset - 1), params)
     }
   }
@@ -571,7 +559,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       case Some((topic, partition0, partition1)) =>
         if (cursor.isEmpty) {
           cursor = getFirstOffset(topic, partition0) ?? getLastOffset(topic, partition0) map (offset =>
-            MessageCursor(topic, partition0, offset, offset + 1, BinaryMessageEncoding))
+            MessageCursor(topic, partition0, offset, offset + 1, None))
         }
         getStatisticsData(topic, partition0, partition1)
       case _ => Seq.empty
@@ -866,7 +854,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   case class AvroVerification(verified: Int, failed: Int)
 
-  case class MessageCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, encoding: MessageEncoding)
+  case class MessageCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, decoder: Option[MessageDecoder[_]])
 
   case class TopicDetail(topic: String, partition: Int, leader: String, replicas: Int, inSync: Int)
 
@@ -879,16 +867,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaModule {
-
-  sealed trait MessageEncoding
-
-  case class AvroMessageEncoding(schemaVarName: String) extends MessageEncoding {
-    override def toString = s"Avro:$schemaVarName"
-  }
-
-  case object BinaryMessageEncoding extends MessageEncoding {
-    override def toString = s"Binary"
-  }
 
   /**
    * Binary Key Equality Condition
