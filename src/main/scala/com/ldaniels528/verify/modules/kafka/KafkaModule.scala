@@ -83,7 +83,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the last message for a given topic"),
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Lists all existing topics"),
     Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the next message"),
-    Command(this, "koffset", getOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-d" -> "YYYY-MM-DDTHH:MM:SS")), help = "Returns the offset at a specific instant-in-time for a given topic"),
     Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Seq.empty), help = "Publishes a message to a topic"),
     Command(this, "kreplicas", getReplicas, SimpleParams(Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
@@ -499,25 +498,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     cursor map { case MessageCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, nextOffset, params)
     }
-  }
-
-  /**
-   * "koffset" - Returns the offset at a specific instant-in-time for a given topic
-   * @example {{{ koffset com.shocktrade.alerts 0 -d 2014-05-14T14:30:11 }}}
-   * @example {{{ koffset -d 2014-05-14T14:30:11 }}}
-   */
-  def getOffset(params: UnixLikeArgs): Option[Long] = {
-    // get the arguments (topic and partition)
-    val (topic, partition) = getTopicAndPartition(params.args)
-
-    // date parser instance
-    val sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-
-    // get the arguments
-    val sysTimeMillis = params("-d") map (sdf.parse(_).getTime) getOrElse -1L
-
-    // perform the action
-    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (_.getOffsetsBefore(sysTimeMillis))
   }
 
   /**
