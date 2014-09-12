@@ -381,10 +381,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
   }
 
-  private def decodeArvoMessage(messageData: Option[MessageData], decoder: Option[MessageDecoder[_]]): Option[Seq[AvroRecord]] = {
+  private def decodeArvoMessage(messageData: Option[MessageData], aDecoder: Option[MessageDecoder[_]]): Option[Seq[AvroRecord]] = {
     // only Avro decoders are supported
-    val avroDecoder: Option[AvroDecoder] = decoder match {
-      case Some(aDecoder: AvroDecoder) => Option(aDecoder)
+    val avroDecoder: Option[AvroDecoder] = aDecoder map {
+      case avroDecoder: AvroDecoder => avroDecoder
       case _ => throw new IllegalStateException("Only Avro decoding is supported")
     }
 
