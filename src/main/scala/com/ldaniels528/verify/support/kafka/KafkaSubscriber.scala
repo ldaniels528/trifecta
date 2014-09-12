@@ -1,6 +1,7 @@
 package com.ldaniels528.verify.support.kafka
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
+
 import com.ldaniels528.verify.support.kafka.KafkaSubscriber._
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.VxUtils._
@@ -152,7 +153,7 @@ class KafkaSubscriber(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId
       response.partitionErrorAndOffsets map {
         case (tap, por) =>
           val code = por.error
-          logger.error(s"Error fetching data Offset Data the Broker. Reason: $code - ${ERROR_CODES.getOrElse(code, s"UNKNOWN - $code")}")
+          throw new RuntimeException(s"Error fetching data Offset Data the Broker. Reason: $code - ${ERROR_CODES.getOrElse(code, s"UNKNOWN - $code")}")
       }
       None
     } else {
@@ -198,7 +199,6 @@ class KafkaSubscriber(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaSubscriber {
-  private val logger = org.slf4j.LoggerFactory.getLogger(getClass)
 
   // setup defaults
   private val DEFAULT_FETCH_SIZE: Int = 65536
@@ -396,8 +396,7 @@ object KafkaSubscriber {
       } match {
         case Success(pmd) => pmd
         case Failure(e) =>
-          logger.error(s"Error communicating with Broker [$broker] to find Leader for [$topic] Reason: ${e.getMessage}")
-          None
+          throw new RuntimeException(s"Error communicating with Broker [$broker] to find Leader for [$topic] Reason: ${e.getMessage}")
       }
     }
   }
@@ -418,8 +417,7 @@ object KafkaSubscriber {
         case Success(tmds) => tmds
         case Failure(e) =>
           e.printStackTrace()
-          logger.error(s"Error communicating with Broker [$broker] Reason: ${e.getMessage}")
-          Seq.empty
+          throw new RuntimeException(s"Error communicating with Broker [$broker] Reason: ${e.getMessage}")
       }
     }
   }
