@@ -42,7 +42,7 @@ class AvroModule(rt: VxRuntimeContext) extends Module with AvroReading {
     val Seq(name, schemaPath, _*) = params.args
 
     // get the decoder
-    val decoder = loadAvroDecoder(schemaPath)
+    val decoder = loadAvroDecoder(name, schemaPath)
 
     // create the variable and attach it to the scope
     rt.scope += Variable(name, new OpCode {

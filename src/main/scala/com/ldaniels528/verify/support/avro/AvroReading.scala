@@ -19,7 +19,7 @@ trait AvroReading {
       .getOrElse(throw new IllegalArgumentException(s"Variable '$schemaVar' not found"))
   }
 
-   def loadAvroDecoder(schemaPath: String): AvroDecoder = {
+  def loadAvroDecoder(label: String, schemaPath: String): AvroDecoder = {
     // ensure the file exists
     val schemaFile = new File(schemaPath)
     if (!schemaFile.exists()) {
@@ -28,7 +28,7 @@ trait AvroReading {
 
     // retrieve the schema as a string
     val schemaString = Source.fromFile(schemaFile).getLines() mkString "\n"
-    new AvroDecoder(schemaString)
+    AvroDecoder(label, schemaString)
   }
 
 }

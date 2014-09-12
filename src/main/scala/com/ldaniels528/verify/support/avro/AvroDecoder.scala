@@ -12,7 +12,7 @@ import scala.util.Try
  * Apache Avro Decoder
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class AvroDecoder(schemaString: String) extends MessageDecoder[GenericRecord] {
+case class AvroDecoder(label: String, schemaString: String) extends MessageDecoder[GenericRecord] {
   val schema = new Schema.Parser().parse(schemaString)
   val converter: Injection[GenericRecord, Array[Byte]] = GenericAvroCodecs.toBinary(schema)
 
@@ -21,6 +21,6 @@ case class AvroDecoder(schemaString: String) extends MessageDecoder[GenericRecor
    */
   override def decode(message: Array[Byte]): Try[GenericRecord] = converter.invert(message)
 
-  override def toString = schemaString
+  override def toString = s"${super.toString}($label)"
 
 }
