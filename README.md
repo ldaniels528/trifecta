@@ -165,33 +165,33 @@ To list the replica brokers that Zookeeper is aware of:
 To list all of the Kafka topics that Zookeeper is aware of:
 
     kafka:/> kls
-    + ------------------------------------------------------------------ +
-    | topic                      partition  leader       replicas  isr   |
-    + ------------------------------------------------------------------ +
-    | com.shocktrade.quotes.rt   0          dev502:9093  1         1     |
-    | com.shocktrade.quotes.rt   1          dev501:9091  1         1     |
-    | com.shocktrade.quotes.rt   2          dev501:9092  1         1     |
-    | com.shocktrade.quotes.rt   3          dev501:9093  1         1     |
-    | com.shocktrade.quotes.rt   4          dev502:9091  1         1     |
-    | com.shocktrade.quotes.csv  0          dev501:9091  1         1     |
-    | com.shocktrade.quotes.csv  1          dev501:9092  1         1     |
-    | com.shocktrade.quotes.csv  2          dev501:9093  1         1     |
-    | com.shocktrade.quotes.csv  3          dev502:9091  1         1     |
-    | com.shocktrade.quotes.csv  4          dev502:9092  1         1     |
-    + ------------------------------------------------------------------ +
+    + ------------------------------------------------------------------- +
+    | topic                      partition  leader       replicas  inSync |
+    + ------------------------------------------------------------------- +
+    | com.shocktrade.quotes.rt   0          dev502:9093  1         true   |
+    | com.shocktrade.quotes.rt   1          dev501:9091  1         true   |
+    | com.shocktrade.quotes.rt   2          dev501:9092  1         true   |
+    | com.shocktrade.quotes.rt   3          dev501:9093  1         true   |
+    | com.shocktrade.quotes.rt   4          dev502:9091  1         true   |
+    | com.shocktrade.quotes.csv  0          dev501:9091  1         true   |
+    | com.shocktrade.quotes.csv  1          dev501:9092  1         true   |
+    | com.shocktrade.quotes.csv  2          dev501:9093  1         true   |
+    | com.shocktrade.quotes.csv  3          dev502:9091  1         true   |
+    | com.shocktrade.quotes.csv  4          dev502:9092  1         true   |
+    + ------------------------------------------------------------------- +
 
 To see a subset of the topics (matches any topic that starts with the given search term):
 
     kafka:/> kls com.shocktrade.quotes.csv
-    + ------------------------------------------------------------------ +
-    | topic                      partition  leader       replicas  isr   |
-    + ------------------------------------------------------------------ +
-    | com.shocktrade.quotes.csv  0          dev501:9091  1         1     |
-    | com.shocktrade.quotes.csv  1          dev501:9092  1         1     |
-    | com.shocktrade.quotes.csv  2          dev501:9093  1         1     |
-    | com.shocktrade.quotes.csv  3          dev502:9091  1         1     |
-    | com.shocktrade.quotes.csv  4          dev502:9092  1         1     |
-    + ------------------------------------------------------------------ +
+    + ------------------------------------------------------------------- +
+    | topic                      partition  leader       replicas  inSync |
+    + ------------------------------------------------------------------- +
+    | com.shocktrade.quotes.csv  0          dev501:9091  1         true   |
+    | com.shocktrade.quotes.csv  1          dev501:9092  1         true   |
+    | com.shocktrade.quotes.csv  2          dev501:9093  1         true   |
+    | com.shocktrade.quotes.csv  3          dev502:9091  1         true   |
+    | com.shocktrade.quotes.csv  4          dev502:9092  1         true   |
+    + ------------------------------------------------------------------- +
 
 To retrieve the first message of a topic partition:
 
@@ -207,9 +207,9 @@ Let's view the cursor:
 
     kafka:com.shocktrade.quotes.csv/0:0> kcursor
     + -------------------------------------------------------------------- +
-    | topic                      partition  offset  nextOffset  encoding   |
+    | topic                      partition  offset  nextOffset  decoder    |
     + -------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          0       1           Binary     |
+    | com.shocktrade.quotes.csv  0          0       1                      |
     + -------------------------------------------------------------------- +
     
 Let's view the next message for this topic partition:
@@ -234,9 +234,9 @@ Let's view the cursor again:
 
     kafka:com.shocktrade.quotes.csv/0:9580> kcursor
     + -------------------------------------------------------------------- +
-    | topic                      partition  offset  nextOffset  encoding   |
+    | topic                      partition  offset  nextOffset  decoder    |
     + -------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          9580    9581        Binary     |
+    | com.shocktrade.quotes.csv  0          9580    9581                   |
     + -------------------------------------------------------------------- +
 
 To retrieve the start and end offsets and number of messages available for a topic across any number of partitions:
