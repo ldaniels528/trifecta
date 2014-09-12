@@ -5,7 +5,6 @@ import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import _root_.kafka.consumer.ConsumerTimeoutException
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.codecs.MessageDecoder
 import com.ldaniels528.verify.io.EndPoint
@@ -103,16 +102,14 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   /**
    * "kcommit" - Commits the offset for a given topic and group ID
    * @example {{{ kcommit com.shocktrade.alerts 0 devc0 123678 }}}
+   * @example {{{ kcommit devc0 123678 }}}
    */
   def commitOffset(params: UnixLikeArgs): Option[Short] = {
     // get the arguments (topic, partition, groupId and offset)
     val (topic, partition, groupId, offset) = params.args match {
-      case aGroupId :: anOffset :: Nil =>
-        cursor map (c => (c.topic, c.partition, aGroupId, parseOffset(anOffset))) getOrElse dieNoCursor
-      case aTopic :: aPartition :: aGroupId :: anOffset :: Nil =>
-        (aTopic, parsePartition(aPartition), aGroupId, parseOffset(anOffset))
-      case _ =>
-        dieSyntax("kcommit")
+      case aGroupId :: anOffset :: Nil => cursor map (c => (c.topic, c.partition, aGroupId, parseOffset(anOffset))) getOrElse dieNoCursor
+      case aTopic :: aPartition :: aGroupId :: anOffset :: Nil => (aTopic, parsePartition(aPartition), aGroupId, parseOffset(anOffset))
+      case _ => dieSyntax("kcommit")
     }
 
     // perform the action
@@ -126,14 +123,11 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def countMessages(params: UnixLikeArgs): Future[Long] = {
     // get the topic and partition from the cursor
-    val (topic, aDecoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
-
-    // get the Avro decoder
-    val decoder = asAvroDecoder(aDecoder)
+    val (topic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
 
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
-    val conditions = Seq(toCondition(decoder, field, operator, value))
+    val conditions = Seq(toCondition(asAvroDecoder(decoder), field, operator, value))
 
     // perform the count
     KafkaSubscriber.count(topic, brokers, correlationId, conditions: _*)
@@ -160,25 +154,17 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // export the data to the file
     var count = 0L
-    try {
-      new DataOutputStream(new FileOutputStream(file)) use { fos =>
-        KafkaStreamingConsumer(EndPoint(rt.remoteHost), groupId, "consumer.timeout.ms" -> 5000) use { consumer =>
-          for (record <- consumer.iterate(topic, parallelism = 1)) {
-            val message = record.message
-            fos.writeInt(message.length)
-            fos.write(message)
-            count += 1
-            if (count % 10000 == 0) {
-              out.println(s"$count messages written so far...")
-              fos.flush()
-            }
-          }
+    new DataOutputStream(new FileOutputStream(file)) use { fos =>
+      KafkaSubscriber.observe(topic, brokers, correlationId) { md =>
+        val message = md.message
+        fos.writeInt(message.length)
+        fos.write(message)
+        count += 1
+        if (count % 10000 == 0) {
+          out.println(s"$count messages written so far...")
+          fos.flush()
         }
       }
-    } catch {
-      case e: ConsumerTimeoutException =>
-      case e: Throwable =>
-        throw new IllegalStateException(e.getMessage, e)
     }
     count
   }
@@ -191,12 +177,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def fetchOffsets(params: UnixLikeArgs): Option[Long] = {
     // get the arguments (topic, partition, groupId)
     val (topic, partition, groupId) = params.args match {
-      case aGroupId :: Nil =>
-        cursor map (c => (c.topic, c.partition, aGroupId)) getOrElse dieNoCursor
-      case aTopic :: aPartition :: aGroupId :: Nil =>
-        (aTopic, parsePartition(aPartition), aGroupId)
-      case _ =>
-        dieSyntax("kfetch")
+      case aGroupId :: Nil => cursor map (c => (c.topic, c.partition, aGroupId)) getOrElse dieNoCursor
+      case aTopic :: aPartition :: aGroupId :: Nil => (aTopic, parsePartition(aPartition), aGroupId)
+      case _ => dieSyntax("kfetch")
     }
 
     // perform the action
@@ -255,12 +238,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // get the topic and partition from the cursor
     val (topic, aDecoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
 
-    // get the Avro decoder
-    val decoder = asAvroDecoder(aDecoder)
-
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
-    val conditions = Seq(toCondition(decoder, field, operator, value))
+    val conditions = Seq(toCondition(asAvroDecoder(aDecoder), field, operator, value))
 
     // perform the search
     KafkaSubscriber.findOne(topic, brokers, correlationId, conditions: _*) map { result_? =>
@@ -307,7 +287,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def getFirstMessage(params: UnixLikeArgs) = {
     // get the arguments
-    val (topic, partition) = getTopicAndPartition(params.args)
+    val (topic, partition) = extractTopicAndPartition(params.args)
 
     // return the first message for the topic partition
     getFirstOffset(topic, partition) map (getMessage(topic, partition, _, params))
@@ -325,7 +305,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def getLastMessage(params: UnixLikeArgs) = {
     // get the arguments
-    val (topic, partition) = getTopicAndPartition(params.args)
+    val (topic, partition) = extractTopicAndPartition(params.args)
 
     // return the last message for the topic partition
     getLastOffset(topic, partition) map (getMessage(topic, partition, _, params))
@@ -345,12 +325,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def getMessage(params: UnixLikeArgs): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
     // get the arguments
-    val (topic, partition, offset) = params.args match {
-      case Nil => cursor map (c => (c.topic, c.partition, c.offset)) getOrElse dieNoCursor()
-      case anOffset :: Nil => cursor map (c => (c.topic, c.partition, parseOffset(anOffset))) getOrElse dieNoCursor()
-      case aTopic :: aPartition :: anOffset :: Nil => (aTopic, parsePartition(aPartition), parseOffset(anOffset))
-      case _ => dieSyntax("kget")
-    }
+    val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
     // generate and return the message
     getMessage(topic, partition, offset, params)
@@ -381,7 +356,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // write the data to an output file (or device)?
     for {path <- params("-f") map expandPath; message <- messageData map (_.message)} new FileOutputStream(path) use (_.write(message))
 
-    // determine which decoder to use; either the user specified decoder or cursor's decoder
+    // determine which decoder to use; either the user specified decoder, cursor's decoder or none
     val decoder = {
       val decoderA: Option[MessageDecoder[_]] = params("-a") map getAvroDecoder
       val decoderB: Option[MessageDecoder[_]] = cursor.flatMap(_.decoder)
@@ -409,7 +384,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private def decodeArvoMessage(messageData: Option[MessageData], decoder: Option[MessageDecoder[_]]): Option[Seq[AvroRecord]] = {
     // only Avro decoders are supported
     val avroDecoder: Option[AvroDecoder] = decoder match {
-      case Some(avroDecoder: AvroDecoder) => Option(avroDecoder)
+      case Some(aDecoder: AvroDecoder) => Option(aDecoder)
       case _ => throw new IllegalStateException("Only Avro decoding is supported")
     }
 
@@ -437,16 +412,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   def getMessageSize(params: UnixLikeArgs): Option[Int] = {
     // get the arguments (topic, partition, groupId and offset)
-    val (topic, partition, offset) = params.args match {
-      case Nil =>
-        cursor map (c => (c.topic, c.partition, c.offset)) getOrElse dieNoCursor
-      case anOffset :: Nil =>
-        cursor map (c => (c.topic, c.partition, parseOffset(anOffset))) getOrElse dieNoCursor
-      case aTopic :: aPartition :: anOffset :: Nil =>
-        (aTopic, parsePartition(aPartition), parseOffset(anOffset))
-      case _ =>
-        dieSyntax("kgetsize")
-    }
+    val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
     // get the optional arguments
     val fetchSize = params("-s") map (parseInt("fetchSize", _)) getOrElse defaultFetchSize
@@ -465,12 +431,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getMessageMinMaxSize(params: UnixLikeArgs): Seq[MessageMaxMin] = {
     // get the arguments (topic, partition, startOffset and endOffset)
     val (topic, partition, startOffset, endOffset) = params.args match {
-      case aStartOffset :: anEndOffset :: Nil =>
-        cursor map (c => (c.topic, c.partition, parseOffset(aStartOffset), parseOffset(anEndOffset))) getOrElse dieNoCursor
-      case aTopic :: aPartition :: aStartOffset :: anEndOffset :: Nil =>
-        (aTopic, parsePartition(aPartition), parseOffset(aStartOffset), parseOffset(anEndOffset))
-      case _ =>
-        dieSyntax("kgetminmax")
+      case offset0 :: offset1 :: Nil => cursor map (c => (c.topic, c.partition, parseOffset(offset0), parseOffset(offset1))) getOrElse dieNoCursor
+      case aTopic :: aPartition :: aStartOffset :: anEndOffset :: Nil => (aTopic, parsePartition(aPartition), parseOffset(aStartOffset), parseOffset(anEndOffset))
+      case _ => dieSyntax("kgetminmax")
     }
 
     // get the optional arguments
@@ -803,6 +766,34 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   private def dieSyntax[S](command: String): S = die( s"""Invalid arguments - use "syntax $command" to see usage""")
 
+  /**
+   * Retrieves the topic and partition from the given arguments
+   * @param args the given arguments
+   * @return a tuple containing the topic and partition
+   */
+  private def extractTopicAndPartition(args: List[String]): (String, Int) = {
+    args match {
+      case Nil => cursor map (c => (c.topic, c.partition)) getOrElse dieNoCursor
+      case aTopic :: Nil => (aTopic, 0)
+      case aTopic :: aPartition :: Nil => (aTopic, parsePartition(aPartition))
+      case _ => die("Invalid arguments")
+    }
+  }
+
+  /**
+   * Retrieves the topic, partition and offset from the given arguments
+   * @param args the given arguments
+   * @return a tuple containing the topic, partition and offset
+   */
+  private def extractTopicPartitionAndOffset(args: List[String]): (String, Int, Long) = {
+    args match {
+      case Nil => cursor map (c => (c.topic, c.partition, c.offset)) getOrElse dieNoCursor
+      case anOffset :: Nil => cursor map (c => (c.topic, c.partition, parseOffset(anOffset))) getOrElse dieNoCursor
+      case aTopic :: aPartition :: anOffset :: Nil => (aTopic, parsePartition(aPartition), parseOffset(anOffset))
+      case _ => die("Invalid arguments")
+    }
+  }
+
   private def parsePartition(partition: String): Int = parseInt("partition", partition)
 
   private def parseOffset(offset: String): Long = parseLong("offset", offset)
@@ -812,20 +803,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     if (partitions.isEmpty)
       throw new IllegalStateException(s"No partitions found for topic $topic")
     (partitions.min, partitions.max)
-  }
-
-  /**
-   * Retrieves the topic and partition from the given arguments
-   * @param args the given arguments
-   * @return a tuple containing the topic and partition
-   */
-  private def getTopicAndPartition(args: Seq[String]): (String, Int) = {
-    args.toList match {
-      case Nil => cursor map (c => (c.topic, c.partition)) getOrElse dieNoCursor
-      case aTopic :: Nil => (aTopic, 0)
-      case aTopic :: aPartition :: Nil => (aTopic, parsePartition(aPartition))
-      case _ => die("Invalid arguments")
-    }
   }
 
   /**
