@@ -527,6 +527,20 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   }
 
   /**
+   * "kreplicas" - Lists all replicas for all or a subset of topics
+   * @example {{{ kreplicas com.shocktrade.quotes.realtime  }}}
+   */
+  def getReplicas(params: UnixLikeArgs): Seq[TopicReplicas] = {
+    val prefix = params.args.headOption
+
+    KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
+      t.replicas map { replica =>
+        TopicReplicas(t.topic, t.partitionId, replica.toString, t.isr.contains(replica))
+      } filter (t => prefix.isEmpty || prefix.exists(t.topic.startsWith))
+    }
+  }
+
+  /**
    * "kstats" - Returns the number of available messages for a given topic
    * @example {{{ kstats com.shocktrade.alerts 0 4 }}}
    * @example {{{ kstats }}}
@@ -748,20 +762,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   }
 
   case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
-
-  /**
-   * "kreplicas" - Lists all replicas for all or a subset of topics
-   * @example {{{ kreplicas com.shocktrade.quotes.realtime  }}}
-   */
-  def getReplicas(params: UnixLikeArgs): Seq[TopicReplicas] = {
-    val prefix = params.args.headOption
-
-    KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
-      t.replicas map { replica =>
-        TopicReplicas(t.topic, t.partitionId, replica.toString, t.isr.contains(replica))
-      } filter (t => prefix.isEmpty || prefix.exists(t.topic.startsWith))
-    }
-  }
 
   case class TopicReplicas(topic: String, partition: Int, replicaBroker: String, inSync: Boolean)
 
