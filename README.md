@@ -34,10 +34,14 @@ Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like comm
 ## Status
 
 I'm currently using _Verify_ as part of my daily development workflow, and the application itself is undergoing heavy 
- development as I define (and at times redefine) its API and command sets. As such, new commands will appear, and older 
- commands may be merged with a newer command or disappear altogether. I apologize in advance if a command you were 
- fond of has been removed, and if there isn't a suitable replacement command, drop me a note, and perhaps I'll re-add 
- the unit of functionality.
+development as I define (and at times redefine) its API and command sets. As such, new commands will appear, and older 
+commands may be merged with a newer command or disappear altogether. I apologize in advance if a command you were 
+fond of has been removed, and if there isn't a suitable replacement command, drop me a note, and perhaps I'll re-add 
+the unit of functionality. 
+ 
+**NOTE**: There are a set of hidden commands called _undocumented_ commands. These commands are hidden either because 
+they are experimental, work-in-progress, or not yet fully implemented, so use them at your own
+risk! To retrieve a list of these _undocumented_ commands, use the `undoc` command.
 
 <a name="Development"></a>
 ## Development
@@ -222,9 +226,9 @@ To see the statistics for a specific topic, use the `kstats` command:
 ##### Kafka Navigable Cursor
 
 The Kafka module offers the concept of a navigable cursor. Any command that references a specific message offset
-creates a pointer to that offset, called a cursor. Once the cursor has been established, with a single command, 
-you can navigate to the first, last, previous, or next message using `kfirst`, `klast`, `kprev` and `knext` respectively. 
-Consider the following examples:
+creates a pointer to that offset, called a navigable cursor. Once the cursor has been established, with a single command, 
+you can navigate to the first, last, previous, or next message using the `kfirst`, `klast`, `kprev` and `knext` commands
+respectively. Consider the following examples:
 
 To retrieve the first message of a topic partition:
 
@@ -235,7 +239,10 @@ To retrieve the first message of a topic partition:
     [5945:075] 2c.31.30.2e.38.31.2c.31.30.2e.39.31.2c.31.30.2e.38.30.2c.33.36.35.35.38.2c | ,10.81,10.91,10.80,36558, |
     [5945:100] 4e.2f.41.2c.22.4e.2f.41.22                                                | N/A,"N/A"                 |    
 
-The previous command resulted in the creation of a message cursor (notice below our prompt changed). 
+The previous command resulted in the creation of a navigable cursor (notice below how our prompt has changed). 
+
+    kafka:com.shocktrade.quotes.csv/0:5945> _
+
 Let's view the cursor:
 
     kafka:com.shocktrade.quotes.csv/0:5945> kcursor
