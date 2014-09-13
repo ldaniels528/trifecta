@@ -5,10 +5,11 @@ import java.util.{Date, TimeZone}
 
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules.ModuleManager.ModuleVariable
-import com.ldaniels528.verify.modules.{UnixLikeParams, Command, Module, SimpleParams}
+import com.ldaniels528.verify.modules.{Command, Module, SimpleParams, UnixLikeParams}
+import com.ldaniels528.verify.support.avro.AvroReading
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
-import com.ldaniels528.verify.vscript.{Scope, Variable}
+import com.ldaniels528.verify.vscript.{OpCode, Scope, Variable}
 import com.ldaniels528.verify.{SessionManagement, VerifyShell, VxRuntimeContext}
 import org.apache.commons.io.IOUtils
 
@@ -22,7 +23,7 @@ import scala.util.Properties
  * Core Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class CoreModule(rt: VxRuntimeContext) extends Module {
+class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   private implicit val scope: Scope = rt.scope
   private implicit val out: PrintStream = rt.out
 
@@ -37,6 +38,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "!", executeHistory, SimpleParams(Seq("index"), Seq.empty), help = "Executes a previously issued command"),
     Command(this, "?", help, SimpleParams(Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, SimpleParams(Seq.empty, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
+    Command(this, "avcat", avroCat, SimpleParams(required = Seq("variable")), help = "Displays the contents of a schema variable", promptAware = false),
+    Command(this, "avload", avroLoadSchema, SimpleParams(required = Seq("variable", "schemaPath")), help = "Loads an Avro schema into memory", promptAware = false),
     Command(this, "cat", cat, SimpleParams(Seq("file"), Seq.empty), help = "Dumps the contents of the given file", promptAware = true),
     Command(this, "cd", changeDir, SimpleParams(Seq("path"), Seq.empty), help = "Changes the local file system path/directory", promptAware = true),
     Command(this, "charset", charSet, SimpleParams(Seq.empty, Seq("encoding")), help = "Retrieves or sets the character encoding"),
@@ -98,6 +101,31 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
   def autoSwitch(params: UnixLikeArgs): String = {
     params.args.headOption map (_.toBoolean) foreach (rt.autoSwitching = _)
     s"auto switching is ${if (rt.autoSwitching) "On" else "Off"}"
+  }
+
+  def avroCat(params: UnixLikeArgs): String = {
+    val name = params.args.head
+
+    implicit val scope = rt.scope
+    val decoder = getAvroDecoder(name)
+    decoder.schemaString
+  }
+
+  def avroLoadSchema(params: UnixLikeArgs): Unit = {
+    val Seq(name, schemaPath, _*) = params.args
+
+    // get the decoder
+    val decoder = loadAvroDecoder(name, schemaPath)
+
+    // create the variable and attach it to the scope
+    rt.scope += Variable(name, new OpCode {
+      val value = Some(decoder)
+
+      override def eval(implicit scope: Scope): Option[Any] = value
+
+      override def toString = s"[$name]"
+    })
+    ()
   }
 
   /**
