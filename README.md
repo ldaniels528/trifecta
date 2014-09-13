@@ -543,13 +543,13 @@ To view all of the Zookeeper commands, which all begin with the letter "z":
     + ----------------------------------------------------------------------------------------- +
     | command     module     description                                                        |
     + ----------------------------------------------------------------------------------------- +
-    | zcat        zookeeper  Retrieves the value of a key from ZooKeeper                        |
+    | zcat        zookeeper  Retrieves the type-specific value of a key from ZooKeeper          |
     | zcd         zookeeper  Changes the current path/directory in ZooKeeper                    |
     | zexists     zookeeper  Verifies the existence of a ZooKeeper key                          |
     | zget        zookeeper  Retrieves the contents of a specific Zookeeper key                 |
     | zls         zookeeper  Retrieves the child nodes for a key from ZooKeeper                 |
     | zmk         zookeeper  Creates a new ZooKeeper sub-directory (key)                        |
-    | zput        zookeeper  Retrieves a value from ZooKeeper                                   |
+    | zput        zookeeper  Sets a key-value pair in ZooKeeper                                 |
     | zreconnect  zookeeper  Re-establishes the connection to Zookeeper                         |
     | zrm         zookeeper  Removes a key-value from ZooKeeper (DESTRUCTIVE)                   |
     | zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)        |
