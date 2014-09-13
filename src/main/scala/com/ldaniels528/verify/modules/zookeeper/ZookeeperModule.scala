@@ -5,12 +5,11 @@ import java.nio.ByteBuffer
 import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.support.zookeeper.ZKProxy.Implicits._
-import com.ldaniels528.verify.util.BinaryMessaging
+import com.ldaniels528.verify.util.{EndPoint, BinaryMessaging}
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.Variable
 

@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.support.zookeeper
 
-import com.ldaniels528.verify.io.EndPoint
+import com.ldaniels528.verify.util.EndPoint
 import org.apache.zookeeper.data.Stat
 
 import scala.concurrent.{ExecutionContext, Future}

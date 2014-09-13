@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.codecs
+package com.ldaniels528.verify.support.messaging
 
 import scala.util.Try
 

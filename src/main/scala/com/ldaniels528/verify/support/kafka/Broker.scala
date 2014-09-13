@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.support.kafka
 
-import com.ldaniels528.verify.io.EndPoint
+import com.ldaniels528.verify.util.EndPoint
 
 /**
  * Type-safe Broker implementation

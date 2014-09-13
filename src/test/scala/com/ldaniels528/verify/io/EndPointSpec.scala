@@ -1,5 +1,6 @@
 package com.ldaniels528.verify.io
 
+import com.ldaniels528.verify.util.EndPoint
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 

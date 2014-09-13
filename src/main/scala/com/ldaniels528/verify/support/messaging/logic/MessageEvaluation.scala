@@ -3,10 +3,10 @@ package com.ldaniels528.verify.support.messaging.logic
 import com.ldaniels528.verify.support.messaging.logic.Operations._
 
 /**
- * Operation Compiler
+ * Message Evaluation
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait MessageComparison {
+trait MessageEvaluation {
 
   /**
    * Compiles the given operation into a condition

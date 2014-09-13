@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.support.gzip
 
-import com.ldaniels528.verify.codecs.MessageDecoder
+import com.ldaniels528.verify.support.messaging.MessageDecoder
 
 import scala.util.Try
 

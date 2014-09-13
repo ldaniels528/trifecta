@@ -1,9 +1,9 @@
 package com.ldaniels528.verify.support.avro
 
-import com.ldaniels528.verify.codecs.MessageDecoder
 import com.ldaniels528.verify.support.avro.AvroConditions._
+import com.ldaniels528.verify.support.messaging.MessageDecoder
 import com.ldaniels528.verify.support.messaging.logic.Operations._
-import com.ldaniels528.verify.support.messaging.logic.{Condition, MessageComparison}
+import com.ldaniels528.verify.support.messaging.logic.{Condition, MessageEvaluation}
 import com.twitter.bijection.Injection
 import com.twitter.bijection.avro.GenericAvroCodecs
 import org.apache.avro.Schema
@@ -15,7 +15,7 @@ import scala.util.Try
  * Apache Avro Decoder
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class AvroDecoder(label: String, schemaString: String) extends MessageDecoder[GenericRecord] with MessageComparison {
+case class AvroDecoder(label: String, schemaString: String) extends MessageDecoder[GenericRecord] with MessageEvaluation {
   val schema = new Schema.Parser().parse(schemaString)
   val converter: Injection[GenericRecord, Array[Byte]] = GenericAvroCodecs.toBinary(schema)
 

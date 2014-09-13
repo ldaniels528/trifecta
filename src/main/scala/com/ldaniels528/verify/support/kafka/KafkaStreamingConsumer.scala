@@ -3,9 +3,9 @@ package com.ldaniels528.verify.support.kafka
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import akka.actor.ActorRef
-import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.support.kafka.KafkaStreamingConsumer.StreamedMessage
 import com.ldaniels528.verify.support.messaging.logic.Condition
+import com.ldaniels528.verify.util.EndPoint
 import com.ldaniels528.verify.util.VxUtils._
 import kafka.consumer.{Consumer, ConsumerConfig}
 

@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.io
+package com.ldaniels528.verify.util
 
 /**
  * Represents a type-safe remote peer end-point

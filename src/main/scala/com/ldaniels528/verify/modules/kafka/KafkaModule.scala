@@ -6,18 +6,16 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.codecs.MessageDecoder
-import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
 import com.ldaniels528.verify.support.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.verify.support.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
 import com.ldaniels528.verify.support.kafka._
-import com.ldaniels528.verify.support.messaging.MessageCursor
-import com.ldaniels528.verify.support.messaging.logic.{MessageComparison, Condition}
+import com.ldaniels528.verify.support.messaging.{MessageDecoder, MessageCursor}
+import com.ldaniels528.verify.support.messaging.logic.{MessageEvaluation, Condition}
 import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
-import com.ldaniels528.verify.util.BinaryMessaging
+import com.ldaniels528.verify.util.{EndPoint, BinaryMessaging}
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
@@ -377,9 +375,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     if (decodedMessage.isDefined) Right(decodedMessage) else Left(messageData)
   }
 
-  private def asMessageComparator(decoder: Option[MessageDecoder[_]]): Option[MessageComparison] = {
+  private def asMessageComparator(decoder: Option[MessageDecoder[_]]): Option[MessageEvaluation] = {
     decoder flatMap {
-      case compiler: MessageComparison => Option(compiler)
+      case compiler: MessageEvaluation => Option(compiler)
       case _ => None
     }
   }

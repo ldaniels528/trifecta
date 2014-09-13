@@ -8,7 +8,7 @@ import com.ldaniels528.verify.support.messaging.logic.Operations._
  */
 object ConditionCompiler {
 
-  def compile(operation: Operation, compiler: MessageComparison): Condition = {
+  def compile(operation: Operation, compiler: MessageEvaluation): Condition = {
     operation match {
       case AND(a, b) => Conditions.AND(compile(a, compiler), compile(b, compiler))
       case OR(a, b) => Conditions.OR(compile(a, compiler), compile(b, compiler))
