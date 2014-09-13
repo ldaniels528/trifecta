@@ -42,11 +42,6 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   }
 }
 
-// Local Dependencies
-libraryDependencies ++= Seq(
-  "com.ldaniels528" %% "tabular" % "0.1.0"
-)
-
 // General Dependencies
 libraryDependencies ++= Seq(
   "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.0",
