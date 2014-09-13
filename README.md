@@ -87,12 +87,11 @@ _Verify_ exposes its commands through modules. At any time to see which modules 
     + ------------------------------------------------------------------------------------- +
     | kafka      com.ldaniels528.verify.modules.kafka.KafkaModule          true    false    |
     | core       com.ldaniels528.verify.modules.core.CoreModule            true    true     |
-    | avro       com.ldaniels528.verify.modules.avro.AvroModule            true    false    |
     | zookeeper  com.ldaniels528.verify.modules.zookeeper.ZookeeperModule  true    false    |
     | storm      com.ldaniels528.verify.modules.storm.StormModule          true    false    |
     + ------------------------------------------------------------------------------------- +
     
-Additionally, to see all available commands, use the `help` command (`?` is a shortcut):
+To see all available commands, use the `help` command (`?` is a shortcut):
 
     core:/home/ldaniels> ?
     + ---------------------------------------------------------------------------------------------------------------------- +
@@ -120,7 +119,7 @@ Additionally, to see all available commands, use the `help` command (`?` is a sh
     | ztree       zookeeper  Retrieves Zookeeper directory structure                                                         |
     + ---------------------------------------------------------------------------------------------------------------------- +
 
-Finally, to see the syntax/usage of a command, use the `syntax` command:
+To see the syntax/usage of a command, use the `syntax` command:
 
     core:/home/ldaniels> syntax kget
     Description: Retrieves the message at the specified offset for a given topic partition
