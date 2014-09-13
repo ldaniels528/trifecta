@@ -70,7 +70,7 @@ class TabularSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar {
 
   feature("Ability to represent a table of data using ASCII characters with custom numeric transforms") {
     scenario("Transform collections of case classes into a string array representing a table") {
-      Given("A Tabular with number formatting mixed-in instance")
+      Given("A Tabular instance with number formatting mixed-in")
       val tabular = new Tabular() with NumberFormatHandler
 
       And("A collections of case class instances representing the data:")
