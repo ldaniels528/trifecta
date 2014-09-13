@@ -24,6 +24,7 @@ import scala.util.Properties
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
+  private implicit val rtc: VxRuntimeContext = rt
   private implicit val scope: Scope = rt.scope
   private implicit val out: PrintStream = rt.out
 
