@@ -198,9 +198,9 @@ To see a subset of the topics (matches any topic that starts with the given sear
 <a name="kafka-message-cursor"></a>
 ##### Kafka Navigable Cursor
 
-The Kafka module offers the concept of a navigational cursor. Any command that references a specific message offset
-creates a cursor. Once the cursor has been established, with a single command, you can navigate to the first, last,
-previous, or next message. Consider the following examples:
+The Kafka module offers the concept of a navigable cursor. Any command that references a specific message offset
+creates a pointer to that offset, called a cursor. Once the cursor has been established, with a single command, 
+you can navigate to the first, last, previous, or next message. Consider the following examples:
 
 To retrieve the first message of a topic partition:
 
