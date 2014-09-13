@@ -7,7 +7,6 @@ import java.util.{Properties, Random}
 
 import com.ldaniels528.verify.VxRuntimeContext.JobItem
 import com.ldaniels528.verify.io.EndPoint
-import com.ldaniels528.verify.modules.avro.AvroModule
 import com.ldaniels528.verify.modules.core.CoreModule
 import com.ldaniels528.verify.modules.kafka.KafkaModule
 import com.ldaniels528.verify.modules.storm.StormModule
@@ -61,7 +60,6 @@ class VxRuntimeContext(val zkProxy: ZKProxy) extends BinaryMessaging {
 
   // load the built-in modules
   moduleManager ++= Seq(
-    new AvroModule(this),
     new CoreModule(this),
     new KafkaModule(this),
     new StormModule(this),
