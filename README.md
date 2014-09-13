@@ -14,8 +14,11 @@ Table of Contents
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
-    * <a href="#kafka-module">Kafka Module</a>
-    * <a href="#kafka-avro-module">Kafka &amp; Avro Integration</a>
+    * <a href="#kafka-module">Kafka Module</a>  
+        * <a href="#kafka-message-cursor">Navigable Cursor</a>
+        * <a href="#kafka-consumer-group">Consumer Groups</a>
+        * <a href="kafka-inbound-traffic">Inbound Traffic</a>
+        * <a href="#kafka-avro-module">Avro Integration</a>
     * <a href="#storm-module">Storm Module</a>     
     * <a href="#zookeeper-module">Zookeeper Module</a>   
 
@@ -192,6 +195,9 @@ To see a subset of the topics (matches any topic that starts with the given sear
     | com.shocktrade.quotes.csv  4          dev502:9092  1         true   |
     + ------------------------------------------------------------------- +
 
+<a name="kafka-message-cursor"></a>
+##### Kafka Navigable Cursor
+
 The Kafka module offers the concept of a navigational cursor. Any command that references a specific message offset
 creates a cursor. Once the cursor has been established, with a single command, you can navigate to the first, last,
 previous, or next message. Consider the following examples:
@@ -267,6 +273,9 @@ To retrieve the start and end offsets and number of messages available for a top
     | com.shocktrade.quotes.csv  4          4364         8276       3912                |
     + --------------------------------------------------------------------------------- +
 
+<a name="kafka-consumer-group"></a>
+##### Kafka Consumer Groups
+
 **NOTE**: Above "kstats" is equivalent to "kstats com.shocktrade.quotes.csv" or "kstats com.shocktrade.quotes.csv 0 4".
 However, because of the cursor we previously established, those arguments could be omitted.
 
@@ -283,6 +292,9 @@ To see the current offsets for all consumer group IDs:
     | dev         com.shocktrade.quotes.csv  4          0       8276         8276           |
     + ------------------------------------------------------------------------------------- +
 
+<a name="kafka-inbound-traffic"></a>
+##### Kafka Inbound Traffic
+
 To retrieve the list of topics with new messages (since your last query):
 
     kafka:com.shocktrade.quotes.csv/0:10795> kinbound
@@ -297,7 +309,7 @@ To retrieve the list of topics with new messages (since your last query):
     + --------------------------------------------------------------------------------------------------------- +
 
 <a name="kafka-avro-module"></a>
-#### Kafka &amp; Avro Integration
+##### Kafka &amp; Avro Integration
 
 Verify supports Avro integration for Kafka. The next few examples make use of the following Avro schema:
 
@@ -315,6 +327,7 @@ Verify supports Avro integration for Kafka. The next few examples make use of th
       ],
       "doc": "A basic schema for top-talkers messages"
     }
+      
 
 Let's load the Avro schema into memory as the variable "topTalkers":
  
@@ -322,7 +335,7 @@ Let's load the Avro schema into memory as the variable "topTalkers":
 
 Next, let's use the variable (containing the Avro schema) to decode a Kafka message:
 
-    avro:avro$> kgeta topTalkers com.shocktrade.topTalkers  0 0
+    kafka:com.shocktrade.quotes.csv/0:9580> kgeta topTalkers com.shocktrade.topTalkers  0 0
     + ------------------------------------ +
     | field           value         type   |
     + ------------------------------------ +
@@ -333,6 +346,15 @@ Next, let's use the variable (containing the Avro schema) to decode a Kafka mess
     | firstTimestamp  1409979852    Long   |
     | lastTimestamp   1409979916    Long   |
     + ------------------------------------ +
+
+Let's view the cursor:
+    
+    kafka:com.shocktrade.topTalkers/0:0> kcursor
+    + --------------------------------------------------------------------------------- +
+    | topic                      partition  offset  nextOffset  decoder                 |
+    + --------------------------------------------------------------------------------- +
+    | com.shocktrade.topTalkers  0          0       1           AvroDecoder(topTalkers) |
+    + --------------------------------------------------------------------------------- +  
 
 The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro integration:
 
