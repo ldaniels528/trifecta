@@ -116,7 +116,7 @@ Additionally, to see all available commands, use the `help` command (`?` is a sh
     | ztree       zookeeper  Retrieves Zookeeper directory structure                                                         |
     + ---------------------------------------------------------------------------------------------------------------------- +
 
-Finally, to see the syntax/usage of a command, use `syntax` command:
+Finally, to see the syntax/usage of a command, use the `syntax` command:
 
     core:/home/ldaniels> syntax kget
     Description: Retrieves the message at the specified offset for a given topic partition
@@ -394,14 +394,14 @@ The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro inte
     | lastTimestamp   1409979916    Long   |
     + ------------------------------------ +
 
-Suppose you want to know how many messages contain a frequency greater than 2500, use could issue the `kCount` command:
+Suppose you want to know how many messages contain a frequency greater than 2500, you could issue the `kCount` command:
 
     kafka:com.shocktrade.topTalkers/7:3> kCount frequency > 2500
     106
 
 The response was 106, meaning there are 106 messages containing a frequency greater than 2500.
 
-Now suppose you want to view the first message whose frequency is  greater than 2500, use could issue the `kFindOne` command:
+Now suppose you want to view the first message whose frequency is  greater than 2500, you could issue the `kFindOne` command:
 
     kafka:com.shocktrade.topTalkers/0:0> kFindOne frequency > 2500
     + ------------------------------------- +
