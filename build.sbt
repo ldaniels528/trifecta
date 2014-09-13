@@ -49,6 +49,7 @@ libraryDependencies ++= Seq(
 
 // General Dependencies
 libraryDependencies ++= Seq(
+  "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.0",
   "com.twitter" %% "bijection-core" % "0.7.0",
   "com.twitter" %% "bijection-avro" % "0.7.0",
   "com.typesafe.akka" %% "akka-actor" % "2.3.5",
