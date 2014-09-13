@@ -41,7 +41,6 @@ I'm currently using _Verify_ as part of my daily development workflow, and the a
 ### Build Requirements
 
 * [Java SDK 1.7] (http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
-* [Tabular] (https://github.com/ldaniels528/tabular)
 * [SBT 0.13+] (http://www.scala-sbt.org/download.html)
 
 <a name="configuring-your-ide"></a>
