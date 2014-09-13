@@ -3,6 +3,7 @@ package com.ldaniels528.verify.support.kafka
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.ldaniels528.verify.support.kafka.KafkaSubscriber._
+import com.ldaniels528.verify.support.messaging.logic.Condition
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.VxUtils._
 import kafka.api._

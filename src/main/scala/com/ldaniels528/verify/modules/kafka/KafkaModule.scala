@@ -10,11 +10,12 @@ import com.ldaniels528.verify.codecs.MessageDecoder
 import com.ldaniels528.verify.io.EndPoint
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
-import com.ldaniels528.verify.modules.avro.AvroConditions._
 import com.ldaniels528.verify.modules.kafka.KafkaModule._
 import com.ldaniels528.verify.support.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.verify.support.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
-import com.ldaniels528.verify.support.kafka.{Condition, _}
+import com.ldaniels528.verify.support.kafka._
+import com.ldaniels528.verify.support.messaging.logic.{MessageComparison, Condition}
+import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
@@ -127,7 +128,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
-    val conditions = Seq(toCondition(asAvroDecoder(decoder), field, operator, value))
+    val messageComparator = asMessageComparator(decoder) getOrElse dieNotMessageComparator
+    val conditions = Seq(compile(compile(field, operator, value), messageComparator))
 
     // perform the count
     KafkaSubscriber.count(topic, brokers, correlationId, conditions: _*)
@@ -235,12 +237,15 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example {{{ kfindone frequency > 5000 }}}
    */
   def findOneMessage(params: UnixLikeArgs): Future[Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]]] = {
+    import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
+
     // get the topic and partition from the cursor
-    val (topic, aDecoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
+    val (topic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
 
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
-    val conditions = Seq(toCondition(asAvroDecoder(aDecoder), field, operator, value))
+    val messageComparator = asMessageComparator(decoder) getOrElse dieNotMessageComparator
+    val conditions = Seq(compile(compile(field, operator, value), messageComparator))
 
     // perform the search
     KafkaSubscriber.findOne(topic, brokers, correlationId, conditions: _*) map { result_? =>
@@ -373,11 +378,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     if (decodedMessage.isDefined) Right(decodedMessage) else Left(messageData)
   }
 
-  private def asAvroDecoder(decoder: Option[MessageDecoder[_]]) = {
-    decoder match {
-      case Some(avro: AvroDecoder) => avro
-      case _ =>
-        throw new IllegalArgumentException("Only Avro decoding is supported")
+  private def asMessageComparator(decoder: Option[MessageDecoder[_]]): Option[MessageComparison] = {
+    decoder flatMap {
+      case compiler: MessageComparison => Option(compiler)
+      case _ => None
     }
   }
 
@@ -763,6 +767,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private def dieNoInputSource[S](): S = die("No input source specified")
 
   private def dieNoOutputSource[S](): S = die("No output source specified")
+
+  private def dieNotMessageComparator[S](): S = die("Decoder does not support logical operations")
 
   private def dieSyntax[S](command: String): S = die( s"""Invalid arguments - use "syntax $command" to see usage""")
 
