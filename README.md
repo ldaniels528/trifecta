@@ -15,6 +15,8 @@ Table of Contents
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#kafka-module">Kafka Module</a>  
+        * <a href="#kafka-brokers">Kafka Brokers</a> 
+        * <a href="#kafka-topics">Kafka Topics</a> 
         * <a href="#kafka-message-cursor">Navigable Cursor</a>
         * <a href="#kafka-consumer-group">Consumer Groups</a>
         * <a href="kafka-inbound-traffic">Inbound Traffic</a>
@@ -150,6 +152,9 @@ To view all of the Kafka commands, which all begin with the letter "k":
     | kstats      kafka   Returns the partition details for a given topic                                                 |
     + ------------------------------------------------------------------------------------------------------------------- +
 
+<a name="kafka-brokers"></a>
+##### Kafka Brokers
+
 To list the replica brokers that Zookeeper is aware of:
 
     kafka:/> kbrokers
@@ -163,6 +168,9 @@ To list the replica brokers that Zookeeper is aware of:
     | 9999      2014-08-23 20:05:17 PDT  dev502  1        9092   |
     | 9999      2014-08-23 20:05:17 PDT  dev502  1        9091   |
     + ---------------------------------------------------------- +
+
+<a name="kafka-topics"></a>
+##### Kafka Topics
 
 To list all of the Kafka topics that Zookeeper is aware of:
 
