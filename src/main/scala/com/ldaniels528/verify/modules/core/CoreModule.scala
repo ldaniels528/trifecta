@@ -5,7 +5,7 @@ import java.util.{Date, TimeZone}
 
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules.ModuleManager.ModuleVariable
-import com.ldaniels528.verify.modules.{SimpleParams, Command, Module}
+import com.ldaniels528.verify.modules.{Command, Module, SimpleParams}
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
@@ -351,6 +351,9 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
    */
   def processList(params: UnixLikeArgs)(implicit out: PrintStream): Seq[String] = {
     import scala.util.Properties
+
+    // this command only works on Linux
+    if (Properties.isMac || Properties.isWin) throw new IllegalStateException("Unsupported platform for this command")
 
     // get the node
     val args = params.args
