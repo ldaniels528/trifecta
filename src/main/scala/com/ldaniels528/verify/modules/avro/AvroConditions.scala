@@ -2,7 +2,6 @@ package com.ldaniels528.verify.modules.avro
 
 import com.ldaniels528.verify.support.avro.AvroDecoder
 import com.ldaniels528.verify.support.kafka.Condition
-import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success}
 
@@ -11,7 +10,6 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object AvroConditions {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
 
   def toCondition(decoder: AvroDecoder, field: String, operator: String, value: String): Condition = {
     operator match {
