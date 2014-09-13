@@ -100,8 +100,8 @@ To see all available commands, use the `help` command (`?` is a shortcut):
     | !           core       Executes a previously issued command                                                            |
     | ?           core       Provides the list of available commands                                                         |
     | autoswitch  core       Automatically switches to the module of the most recently executed command                      |
-    | avcat       avro       Displays the contents of a schema variable                                                      |
-    | avload      avro       Loads an Avro schema into memory                                                                |
+    | avcat       core       Displays the contents of a schema variable                                                      |
+    | avload      core       Loads an Avro schema into memory                                                                |
     | cat         core       Dumps the contents of the given file                                                            |
     | cd          core       Changes the local file system path/directory                                                    |
     .                                                                                                                        .
@@ -118,6 +118,8 @@ To see all available commands, use the `help` command (`?` is a shortcut):
     | zstat       zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)                                |
     | ztree       zookeeper  Retrieves Zookeeper directory structure                                                         |
     + ---------------------------------------------------------------------------------------------------------------------- +
+
+**NOTE**: Although the commands are shown in lowercase, they are case insensitive.
 
 To see the syntax/usage of a command, use the `syntax` command:
 
