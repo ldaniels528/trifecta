@@ -115,7 +115,7 @@ class ScalaBeanUtil() {
       case v if v == null => getDefaultValue(returnType)
 
       // if the value is an Option[T] ...
-      case o: Option[_] if returnType != classOf[Option[_]] => o.orNull.asInstanceOf[Object]
+      case o: Option[_] if returnType != classOf[Option[_]] => (o getOrElse null).asInstanceOf[Object]
 
       // look for exception cases by return type
       case _ =>
