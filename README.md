@@ -273,11 +273,11 @@ To retrieve the start and end offsets and number of messages available for a top
     | com.shocktrade.quotes.csv  4          4364         8276       3912                |
     + --------------------------------------------------------------------------------- +
 
-<a name="kafka-consumer-group"></a>
-##### Kafka Consumer Groups
-
 **NOTE**: Above "kstats" is equivalent to "kstats com.shocktrade.quotes.csv" or "kstats com.shocktrade.quotes.csv 0 4".
 However, because of the cursor we previously established, those arguments could be omitted.
+
+<a name="kafka-consumer-group"></a>
+##### Kafka Consumer Groups
 
 To see the current offsets for all consumer group IDs:
 
