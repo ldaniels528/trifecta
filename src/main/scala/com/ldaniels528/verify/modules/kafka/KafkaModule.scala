@@ -276,8 +276,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
   }
 
-  case class ConsumerDelta(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], messagesLeft: Option[Long])
-
   /**
    * "kcursor" - Displays the current message cursor
    * @example {{{ kcursor }}}
@@ -450,8 +448,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Seq.empty
     }
   }
-
-  case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
 
   /**
    * "knext" - Optionally returns the next message
@@ -708,10 +704,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     inboundData.filterNot(_.change == 0) sortBy (-_.change)
   }
 
-  case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
-
-  case class TopicReplicas(topic: String, partition: Int, replicaBroker: String, replicaId: Int, inSync: Boolean)
-
   /**
    * "kpublish" - Returns the EOF offset for a given topic
    */
@@ -825,15 +817,27 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   private def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
 
+  ///////////////////////////////////////////////////////////////////
+  //    Case Classes
+  ///////////////////////////////////////////////////////////////////
+
   case class AvroRecord(field: String, value: Any, `type`: String)
 
   case class AvroVerification(verified: Int, failed: Int)
 
+  case class ConsumerDelta(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], messagesLeft: Option[Long])
+
+  case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
+
   case class MessageCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, decoder: Option[MessageDecoder[_]])
+
+  case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
 
   case class TopicDetail(topic: String, partition: Int, leader: String, replicas: Int, inSync: Int)
 
   case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
+
+  case class TopicReplicas(topic: String, partition: Int, replicaBroker: String, replicaId: Int, inSync: Boolean)
 
 }
 
