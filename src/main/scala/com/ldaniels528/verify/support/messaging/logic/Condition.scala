@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.support.kafka
+package com.ldaniels528.verify.support.messaging.logic
 
 /**
  * Represents a message matching condition
