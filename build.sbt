@@ -57,6 +57,8 @@ libraryDependencies ++= Seq(
   "log4j" % "log4j" % "1.2.17",
   "net.liftweb" %% "lift-json" % "2.5.1",
   "org.apache.avro" % "avro" % "1.7.6",
+  "org.apache.httpcomponents" % "httpclient" % "4.3.2",
+  "org.apache.httpcomponents" % "httpcore" % "4.3.2",
   "org.apache.kafka" % "kafka_2.10" % "0.8.1.1",
   "org.apache.storm" % "storm-core" % "0.9.2-incubating",
   "org.fusesource.jansi" % "jansi" % "1.11",
