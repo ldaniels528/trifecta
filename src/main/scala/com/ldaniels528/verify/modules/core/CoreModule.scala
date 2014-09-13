@@ -5,7 +5,7 @@ import java.util.{Date, TimeZone}
 
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules.ModuleManager.ModuleVariable
-import com.ldaniels528.verify.modules.{Command, Module, SimpleParams}
+import com.ldaniels528.verify.modules.{UnixLikeParams, Command, Module, SimpleParams}
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
@@ -60,6 +60,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     Command(this, "systime", systemTime, SimpleParams(), help = "Returns the system time as an EPOC in milliseconds"),
     Command(this, "time", time, SimpleParams(), help = "Returns the system time"),
     Command(this, "timeutc", timeUTC, SimpleParams(), help = "Returns the system time in UTC"),
+    Command(this, "undoc", listUndocumented, UnixLikeParams(), help = "Displays undocumented commands", undocumented = true),
     Command(this, "use", useModule, SimpleParams(Seq("module"), Seq.empty), help = "Switches the active module"),
     Command(this, "version", version, SimpleParams(), help = "Returns the Verify application version"),
     Command(this, "wget", httpGet, SimpleParams(required = Seq("url")), help = "Retrieves remote content via HTTP"))
@@ -342,6 +343,19 @@ class CoreModule(rt: VxRuntimeContext) extends Module {
     (varsA map (v => ScopeItem(v.variable.name, v.moduleName, "variable", v.variable.eval))) ++
       (varsB map (v => ScopeItem(v.name, "", "variable", v.eval))) ++
       (scope.getFunctions map (f => ScopeItem(f.name, "", "function"))) sortBy (_.name)
+  }
+
+  /**
+   * "undoc" - List undocumented commands
+   * @example {{ undoc }}
+   */
+  def listUndocumented(params: UnixLikeArgs): Seq[CommandItem] = {
+    val args = params.args
+    commandSet.toSeq filter {
+      case (nameA, cmdA) => cmdA.undocumented && (args.isEmpty || nameA.startsWith(args.head))
+    } sortBy (_._1) map {
+      case (nameB, cmdB) => CommandItem(nameB, cmdB.module.moduleName, cmdB.help)
+    }
   }
 
   case class ScopeItem(name: String, module: String, `type`: String, value: Option[_] = None)
