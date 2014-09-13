@@ -1,6 +1,6 @@
-package com.ldaniels528.verify.util
+package com.ldaniels528.verify.support.gzip
 
-import com.ldaniels528.verify.util.GzipCompression._
+import com.ldaniels528.verify.support.gzip.GzipCompression._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 

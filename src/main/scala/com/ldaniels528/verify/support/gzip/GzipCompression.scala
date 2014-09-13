@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.util
+package com.ldaniels528.verify.support.gzip
 
 import java.io._
 import java.util.zip._
