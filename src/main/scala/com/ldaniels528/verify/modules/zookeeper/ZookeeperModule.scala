@@ -28,7 +28,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
     Command(this, "zget", zget, SimpleParams(Seq("key"), Seq.empty), "Retrieves the contents of a specific Zookeeper key"),
     Command(this, "zls", zls, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
     Command(this, "zmk", zmkdir, SimpleParams(Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
-    Command(this, "zput", zput, SimpleParams(Seq("key", "value", "type"), Seq.empty), "Retrieves a value from ZooKeeper"),
+    Command(this, "zput", zput, SimpleParams(Seq("key", "value", "type"), Seq.empty), "Sets a key-value pair in ZooKeeper"),
     Command(this, "zreconnect", reconnect, SimpleParams(Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
     Command(this, "zrm", delete, UnixLikeParams(Seq("key" -> true), flags = Seq("-r" -> "recursive")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
     Command(this, "zruok", ruok, SimpleParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
