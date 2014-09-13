@@ -88,7 +88,7 @@ _Verify_ exposes its commands through modules. At any time to see which modules 
     | storm      com.ldaniels528.verify.modules.storm.StormModule          true    false    |
     + ------------------------------------------------------------------------------------- +
     
-Additionally, to see all available commands issue the `help` command (`?` is a shortcut):
+Additionally, to see all available commands, use the `help` command (`?` is a shortcut):
 
     core:/home/ldaniels> ?
     + ---------------------------------------------------------------------------------------------------------------------- +
@@ -116,6 +116,12 @@ Additionally, to see all available commands issue the `help` command (`?` is a s
     | ztree       zookeeper  Retrieves Zookeeper directory structure                                                         |
     + ---------------------------------------------------------------------------------------------------------------------- +
 
+Finally, to see the syntax/usage of a command, use `syntax` command:
+
+    core:/home/ldaniels> syntax kget
+    Description: Retrieves the message at the specified offset for a given topic partition
+    Usage: kget [-f outputFile] [-d YYYY-MM-DDTHH:MM:SS] [-a avroSchema] [topic] [partition] [offset]
+
 <a name="kafka-module"></a>
 #### Kakfa Module
 
@@ -135,7 +141,6 @@ To view all of the Kafka commands, which all begin with the letter "k":
     | kfindone    kafka   Returns the first message that corresponds to the given criteria [references cursor]            |
     | kfirst      kafka   Returns the first message for a given topic                                                     |
     | kget        kafka   Retrieves the message at the specified offset for a given topic partition                       |
-    | kgeta       kafka   Returns the key-value pairs of an Avro message from a topic partition                           |
     | kgetminmax  kafka   Retrieves the smallest and largest message sizes for a range of offsets for a given partition   |
     | kgetsize    kafka   Retrieves the size of the message at the specified offset for a given topic partition           |
     | kimport     kafka   Imports messages into a new/existing topic                                                      |
@@ -143,12 +148,9 @@ To view all of the Kafka commands, which all begin with the letter "k":
     | klast       kafka   Returns the last message for a given topic                                                      |
     | kls         kafka   Lists all existing topics                                                                       |
     | knext       kafka   Attempts to retrieve the next message                                                           |
-    | koffset     kafka   Returns the offset at a specific instant-in-time for a given topic                              |
     | kprev       kafka   Attempts to retrieve the message at the previous offset                                         |
-    | kpublish    kafka   Publishes a message to a topic                                                                  |
     | kreplicas   kafka   Returns a list of replicas for specified topics                                                 |
     | kreset      kafka   Sets a consumer group ID to zero for all partitions                                             |
-    | ksearch     kafka   Scans a topic for a message with a given key                                                    |
     | kstats      kafka   Returns the partition details for a given topic                                                 |
     + ------------------------------------------------------------------------------------------------------------------- +
 
@@ -178,16 +180,16 @@ To list all of the Kafka topics that Zookeeper is aware of:
     + ------------------------------------------------------------------- +
     | topic                      partition  leader       replicas  inSync |
     + ------------------------------------------------------------------- +
-    | com.shocktrade.quotes.rt   0          dev502:9093  1         true   |
-    | com.shocktrade.quotes.rt   1          dev501:9091  1         true   |
-    | com.shocktrade.quotes.rt   2          dev501:9092  1         true   |
-    | com.shocktrade.quotes.rt   3          dev501:9093  1         true   |
-    | com.shocktrade.quotes.rt   4          dev502:9091  1         true   |
-    | com.shocktrade.quotes.csv  0          dev501:9091  1         true   |
-    | com.shocktrade.quotes.csv  1          dev501:9092  1         true   |
-    | com.shocktrade.quotes.csv  2          dev501:9093  1         true   |
-    | com.shocktrade.quotes.csv  3          dev502:9091  1         true   |
-    | com.shocktrade.quotes.csv  4          dev502:9092  1         true   |
+    | com.shocktrade.quotes.rt   0          dev502:9093  1         1      |
+    | com.shocktrade.quotes.rt   1          dev501:9091  1         1      |
+    | com.shocktrade.quotes.rt   2          dev501:9092  1         1      |
+    | com.shocktrade.quotes.rt   3          dev501:9093  1         1      |
+    | com.shocktrade.quotes.rt   4          dev502:9091  1         1      |
+    | com.shocktrade.quotes.csv  0          dev501:9091  1         1      |
+    | com.shocktrade.quotes.csv  1          dev501:9092  1         1      |
+    | com.shocktrade.quotes.csv  2          dev501:9093  1         1      |
+    | com.shocktrade.quotes.csv  3          dev502:9091  1         1      |
+    | com.shocktrade.quotes.csv  4          dev502:9092  1         1      |
     + ------------------------------------------------------------------- +
 
 To see a subset of the topics (matches any topic that starts with the given search term):
@@ -196,19 +198,33 @@ To see a subset of the topics (matches any topic that starts with the given sear
     + ------------------------------------------------------------------- +
     | topic                      partition  leader       replicas  inSync |
     + ------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          dev501:9091  1         true   |
-    | com.shocktrade.quotes.csv  1          dev501:9092  1         true   |
-    | com.shocktrade.quotes.csv  2          dev501:9093  1         true   |
-    | com.shocktrade.quotes.csv  3          dev502:9091  1         true   |
-    | com.shocktrade.quotes.csv  4          dev502:9092  1         true   |
+    | com.shocktrade.quotes.csv  0          dev501:9091  1         1      |
+    | com.shocktrade.quotes.csv  1          dev501:9092  1         1      |
+    | com.shocktrade.quotes.csv  2          dev501:9093  1         1      |
+    | com.shocktrade.quotes.csv  3          dev502:9091  1         1      |
+    | com.shocktrade.quotes.csv  4          dev502:9092  1         1      |
     + ------------------------------------------------------------------- +
+
+To see the statistics for a specific topic, use the `kstats` command:
+
+    kafka:/> kstats com.shocktrade.quotes.csv
+    + --------------------------------------------------------------------------------- +
+    | topic                      partition  startOffset  endOffset  messagesAvailable   |
+    + --------------------------------------------------------------------------------- +
+    | com.shocktrade.quotes.csv  0          5945         10796      4851                |
+    | com.shocktrade.quotes.csv  1          5160         10547      5387                |
+    | com.shocktrade.quotes.csv  2          3974         8788       4814                |
+    | com.shocktrade.quotes.csv  3          3453         7334       3881                |
+    | com.shocktrade.quotes.csv  4          4364         8276       3912                |
+    + --------------------------------------------------------------------------------- +
 
 <a name="kafka-message-cursor"></a>
 ##### Kafka Navigable Cursor
 
 The Kafka module offers the concept of a navigable cursor. Any command that references a specific message offset
 creates a pointer to that offset, called a cursor. Once the cursor has been established, with a single command, 
-you can navigate to the first, last, previous, or next message. Consider the following examples:
+you can navigate to the first, last, previous, or next message using `kfirst`, `klast`, `kprev` and `knext` respectively. 
+Consider the following examples:
 
 To retrieve the first message of a topic partition:
 
