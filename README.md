@@ -193,63 +193,79 @@ To see a subset of the topics (matches any topic that starts with the given sear
     | com.shocktrade.quotes.csv  4          dev502:9092  1         true   |
     + ------------------------------------------------------------------- +
 
+The Kafka module offers the concept of a navigational cursor. Any command that references a specific message offset
+creates a cursor. Once the cursor has been established, with a single command, you can navigate to the first, last,
+previous, or next message. Consider the following examples:
+
 To retrieve the first message of a topic partition:
 
     kafka:/> kfirst com.shocktrade.quotes.csv 0
-    [0000:000] 22.47.44.46.22.2c.31.30.2e.39.35.2c.22.38.2f.32.32.2f.32.30.31.34.22.2c.22 | "GDF",10.95,"8/22/2014"," |
-    [0000:025] 34.3a.30.30.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.30.32.2c.22.2d.30 | 4:00pm",N/A,N/A,-0.02,"-0 |
-    [0000:050] 2e.30.32.20.2d.20.2d.30.2e.31.38.25.22.2c.31.30.2e.39.37.2c.31.30.2e.39.37 | .02 - -0.18%",10.97,10.97 |
-    [0000:075] 2c.31.30.2e.39.35.2c.31.30.2e.39.39.2c.31.30.2e.39.33.2c.34.36.36.30.35.2c | ,10.95,10.99,10.93,46605, |
-    [0000:100] 4e.2f.41.2c.22.4e.2f.41.22                                                 | N/A,"N/A"                 |    
+    [5945:000] 22.47.44.46.22.2c.31.30.2e.38.31.2c.22.39.2f.31.32.2f.32.30.31.34.22.2c.22 | "GDF",10.81,"9/12/2014"," |
+    [5945:025] 34.3a.30.30.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.31.30.2c.22.2d.30 | 4:00pm",N/A,N/A,-0.10,"-0 |
+    [5945:050] 2e.31.30.20.2d.20.2d.30.2e.39.32.25.22.2c.31.30.2e.39.31.2c.31.30.2e.39.31 | .10 - -0.92%",10.91,10.91 |
+    [5945:075] 2c.31.30.2e.38.31.2c.31.30.2e.39.31.2c.31.30.2e.38.30.2c.33.36.35.35.38.2c | ,10.81,10.91,10.80,36558, |
+    [5945:100] 4e.2f.41.2c.22.4e.2f.41.22                                                | N/A,"N/A"                 |    
 
 The previous command resulted in the creation of a message cursor (notice below our prompt changed). 
 Let's view the cursor:
 
-    kafka:com.shocktrade.quotes.csv/0:0> kcursor
-    + -------------------------------------------------------------------- +
-    | topic                      partition  offset  nextOffset  decoder    |
-    + -------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          0       1                      |
-    + -------------------------------------------------------------------- +
+    kafka:com.shocktrade.quotes.csv/0:5945> kcursor
+    + ------------------------------------------------------------------- +
+    | topic                      partition  offset  nextOffset  decoder   |
+    + ------------------------------------------------------------------- +
+    | com.shocktrade.quotes.csv  0          5945    5946                  |
+    + ------------------------------------------------------------------- +
     
 Let's view the next message for this topic partition:
     
-    kafka:com.shocktrade.quotes.csv/0:0> knext
-    [0001:000] 22.47.46.41.22.2c.32.2e.37.39.2c.22.38.2f.32.32.2f.32.30.31.34.22.2c.22.34 | "GFA",2.79,"8/22/2014","4 |
-    [0001:025] 3a.30.33.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.30.37.2c.22.2d.30.2e | :03pm",N/A,N/A,-0.07,"-0. |
-    [0001:050] 30.37.20.2d.20.2d.32.2e.34.35.25.22.2c.32.2e.38.36.2c.32.2e.38.34.2c.32.2e | 07 - -2.45%",2.86,2.84,2. |
-    [0001:075] 37.39.2c.32.2e.38.35.2c.32.2e.37.39.2c.36.32.36.33.34.30.2c.35.36.34.2e.36 | 79,2.85,2.79,626340,564.6 |
-    [0001:100] 4d.2c.22.4e.2f.41.22                                                       | M,"N/A"                   |    
+    kafka:com.shocktrade.quotes.csv/0:5945> knext
+    [5946:000] 22.47.44.50.22.2c.31.38.2e.35.31.2c.22.39.2f.31.32.2f.32.30.31.34.22.2c.22 | "GDP",18.51,"9/12/2014"," |
+    [5946:025] 34.3a.30.31.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.38.39.2c.22.2d.30 | 4:01pm",N/A,N/A,-0.89,"-0 |
+    [5946:050] 2e.38.39.20.2d.20.2d.34.2e.35.39.25.22.2c.31.39.2e.34.30.2c.31.39.2e.32.37 | .89 - -4.59%",19.40,19.27 |
+    [5946:075] 2c.31.38.2e.35.31.2c.31.39.2e.33.32.2c.31.38.2e.33.30.2c.31.35.31.36.32.32 | ,18.51,19.32,18.30,151622 |
+    [5946:100] 30.2c.38.32.32.2e.33.4d.2c.22.4e.2f.41.22                                  | 0,822.3M,"N/A"            |                                                    | M,"N/A"                   |    
     
 Let's view the last message for this topic partition: 
 
-    kafka:com.shocktrade.quotes.csv/0:0> klast
-    [9580:000] 22.52.57.46.43.45.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "RWFCE",0.00,"N/A","N/A", |
-    [9580:025] 4e.2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.22.30.2e.30.30.20.2d.20.30.2e.30.30 | N/A,N/A,0.00,"0.00 - 0.00 |
-    [9580:050] 25.22.2c.4e.2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.30 | %",N/A,N/A,0.00,N/A,N/A,0 |
-    [9580:075] 2c.4e.2f.41.2c.22.4e.2f.41.22                                              | ,N/A,"N/A"                |
+    kafka:com.shocktrade.quotes.csv/0:5945> klast
+    [10796:000] 22.4e.4f.53.50.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "NOSPF",0.00,"N/A","N/A", |
+    [10796:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
+    [10796:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
+    [10796:075] 2f.41.2c.22.54.69.63.6b.65.72.20.73.79.6d.62.6f.6c.20.68.61.73.20.63.68.61 | /A,"Ticker symbol has cha |
+    [10796:100] 6e.67.65.64.20.74.6f.3a.20.3c.61.20.68.72.65.66.3d.22.2f.71.3f.73.3d.4e.4f | nged to: <a href="/q?s=NO |
+    [10796:125] 53.50.46.22.3e.4e.4f.53.50.46.3c.2f.61.3e.22                               | SPF">NOSPF</a>"           |                                          | ,N/A,"N/A"                |
 
 Notice above we didn't have to specify the topic or partition because it's defined in our cursor. 
 Let's view the cursor again:
 
-    kafka:com.shocktrade.quotes.csv/0:9580> kcursor
-    + -------------------------------------------------------------------- +
-    | topic                      partition  offset  nextOffset  decoder    |
-    + -------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          9580    9581                   |
-    + -------------------------------------------------------------------- +
+    kafka:com.shocktrade.quotes.csv/0:10796> kcursor
+    + ------------------------------------------------------------------- +
+    | topic                      partition  offset  nextOffset  decoder   |
+    + ------------------------------------------------------------------- +
+    | com.shocktrade.quotes.csv  0          10796   10797                 |
+    + ------------------------------------------------------------------- +
+
+Now, let's view the previous record:
+
+    kafka:com.shocktrade.quotes.csv/0:10796> kprev
+    [10795:000] 22.4d.4c.50.4b.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "MLPKF",0.00,"N/A","N/A", |
+    [10795:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
+    [10795:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
+    [10795:075] 2f.41.2c.22.54.69.63.6b.65.72.20.73.79.6d.62.6f.6c.20.68.61.73.20.63.68.61 | /A,"Ticker symbol has cha |
+    [10795:100] 6e.67.65.64.20.74.6f.3a.20.3c.61.20.68.72.65.66.3d.22.2f.71.3f.73.3d.4d.4c | nged to: <a href="/q?s=ML |
+    [10795:125] 50.4b.46.22.3e.4d.4c.50.4b.46.3c.2f.61.3e.22                               | PKF">MLPKF</a>"           |                                               | N/A,"N/A"                 |
 
 To retrieve the start and end offsets and number of messages available for a topic across any number of partitions:
 
-    kafka:com.shocktrade.quotes.csv/0:9580> kstats
+    kafka:com.shocktrade.quotes.csv/0:10795> kstats
     + --------------------------------------------------------------------------------- +
     | topic                      partition  startOffset  endOffset  messagesAvailable   |
     + --------------------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          0            9580       9580                |
-    | com.shocktrade.quotes.csv  1          0            10445      10445               |
-    | com.shocktrade.quotes.csv  2          0            10973      10973               |
-    | com.shocktrade.quotes.csv  3          0            9994       9994                |
-    | com.shocktrade.quotes.csv  4          0            9080       9080                |
+    | com.shocktrade.quotes.csv  0          5945         10796      4851                |
+    | com.shocktrade.quotes.csv  1          5160         10547      5387                |
+    | com.shocktrade.quotes.csv  2          3974         8788       4814                |
+    | com.shocktrade.quotes.csv  3          3453         7334       3881                |
+    | com.shocktrade.quotes.csv  4          4364         8276       3912                |
     + --------------------------------------------------------------------------------- +
 
 **NOTE**: Above "kstats" is equivalent to "kstats com.shocktrade.quotes.csv" or "kstats com.shocktrade.quotes.csv 0 4".
@@ -257,20 +273,20 @@ However, because of the cursor we previously established, those arguments could 
 
 To see the current offsets for all consumer group IDs:
 
-    kafka:com.shocktrade.quotes.csv/0:9580> kconsumers
+    kafka:com.shocktrade.quotes.csv/0:10795> kconsumers
     + ------------------------------------------------------------------------------------- +
     | consumerId  topic                      partition  offset  topicOffset  messagesLeft   |
     + ------------------------------------------------------------------------------------- +
-    | dev         com.shocktrade.quotes.csv  0          4259    9580         5321           |
-    | dev         com.shocktrade.quotes.csv  1          0       10445        10445          |
-    | dev         com.shocktrade.quotes.csv  2          3352    10973        7621           |
-    | dev         com.shocktrade.quotes.csv  3          3781    9994         6213           |
-    | dev         com.shocktrade.quotes.csv  4          9081    9080         0              |
+    | dev         com.shocktrade.quotes.csv  0          5555    10796        5241           |
+    | dev         com.shocktrade.quotes.csv  1          0       10547        10547          |
+    | dev         com.shocktrade.quotes.csv  2          0       8788         8788           |
+    | dev         com.shocktrade.quotes.csv  3          0       7334         7334           |
+    | dev         com.shocktrade.quotes.csv  4          0       8276         8276           |
     + ------------------------------------------------------------------------------------- +
 
 To retrieve the list of topics with new messages (since your last query):
 
-    kafka:com.shocktrade.quotes.csv/0:9580> kinbound
+    kafka:com.shocktrade.quotes.csv/0:10795> kinbound
     + --------------------------------------------------------------------------------------------------------- +
     | topic                      partition  startOffset  endOffset  change  msgsPerSec  lastCheckTime           |
     + --------------------------------------------------------------------------------------------------------- +
