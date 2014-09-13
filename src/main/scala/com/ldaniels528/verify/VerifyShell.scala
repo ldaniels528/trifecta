@@ -55,6 +55,10 @@ class VerifyShell(rt: VxRuntimeContext) {
       out.println(a"${WHITE}Type '${CYAN}help$WHITE' (or '$CYAN?$WHITE') to see the list of available commands")
     }
 
+    if(rt.autoSwitching) {
+      out.println("Module Auto-Switching is On")
+    }
+
     // define the console reader
     val consoleReader = new ConsoleReader()
     consoleReader.setExpandEvents(false)
