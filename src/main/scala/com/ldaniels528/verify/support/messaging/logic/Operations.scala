@@ -18,6 +18,8 @@ object Operations {
 
   case class GT(field: String, value: String) extends Operation
 
+  case class KEY_EQ(value: String) extends Operation
+
   case class LE(field: String, value: String) extends Operation
 
   case class LT(field: String, value: String) extends Operation

@@ -15,7 +15,7 @@ object AvroConditions {
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   case class AvroEQ(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Option[Array[Byte]]): Boolean = {
+    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
@@ -34,7 +34,7 @@ object AvroConditions {
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   case class AvroGT(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Option[Array[Byte]]): Boolean = {
+    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
@@ -52,7 +52,7 @@ object AvroConditions {
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   case class AvroGE(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Option[Array[Byte]]): Boolean = {
+    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
@@ -70,7 +70,7 @@ object AvroConditions {
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   case class AvroLT(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Option[Array[Byte]]): Boolean = {
+    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
@@ -88,7 +88,7 @@ object AvroConditions {
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   case class AvroLE(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Option[Array[Byte]]): Boolean = {
+    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
@@ -106,7 +106,7 @@ object AvroConditions {
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   case class AvroNE(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Option[Array[Byte]]): Boolean = {
+    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {

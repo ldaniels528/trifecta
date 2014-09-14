@@ -1,5 +1,7 @@
 package com.ldaniels528.verify.support.messaging.logic
 
+import com.ldaniels528.verify.modules.CommandParser
+import com.ldaniels528.verify.support.messaging.MessageDecoder
 import com.ldaniels528.verify.support.messaging.logic.Operations._
 
 /**
@@ -8,11 +10,17 @@ import com.ldaniels528.verify.support.messaging.logic.Operations._
  */
 object ConditionCompiler {
 
-  def compile(operation: Operation, compiler: MessageEvaluation): Condition = {
+  def compile(operation: Operation, decoder: Option[MessageDecoder[_]]): Condition = {
     operation match {
-      case AND(a, b) => Conditions.AND(compile(a, compiler), compile(b, compiler))
-      case OR(a, b) => Conditions.OR(compile(a, compiler), compile(b, compiler))
-      case op => compiler.compile(op)
+      case AND(a, b) => Conditions.AND(compile(a, decoder), compile(b, decoder))
+      case KEY_EQ(v) => Conditions.KeyIs(CommandParser.toBinary(v))
+      case OR(a, b) => Conditions.OR(compile(a, decoder), compile(b, decoder))
+      case op =>
+        decoder match {
+          case Some(compiler: MessageEvaluation) => compiler.compile(op)
+          case Some(aDecoder) => throw new IllegalStateException(s"The selected decoder is not a message compiler")
+          case None => throw new IllegalStateException("No message decoder selected")
+        }
     }
   }
 
@@ -24,6 +32,9 @@ object ConditionCompiler {
       case "<" => LT(field, value)
       case ">=" => GE(field, value)
       case "<=" => LE(field, value)
+      case "is" =>
+        if (field == "key") KEY_EQ(value)
+        else throw new IllegalArgumentException("Only 'key' can be used with the verb 'is'")
       case _ => throw new IllegalArgumentException(s"Illegal operator '$operator'")
     }
   }

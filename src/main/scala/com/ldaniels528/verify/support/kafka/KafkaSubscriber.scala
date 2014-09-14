@@ -1,5 +1,6 @@
 package com.ldaniels528.verify.support.kafka
 
+import java.nio.ByteBuffer
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.ldaniels528.verify.support.kafka.KafkaSubscriber._
@@ -9,7 +10,6 @@ import com.ldaniels528.verify.util.VxUtils._
 import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
-import kafka.message.MessageAndOffset
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
@@ -97,7 +97,9 @@ class KafkaSubscriber(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId
     else {
       val lastOffset = response.highWatermark(topic.name, topic.partition)
       response.messageSet(topic.name, topic.partition) map { msgAndOffset =>
-        MessageData(msgAndOffset.offset, msgAndOffset.nextOffset, lastOffset, getMessagePayload(msgAndOffset))
+        val key = Option(msgAndOffset.message) map (_.key) getOrElse ByteBuffer.allocate(0)
+        val payload = Option(msgAndOffset.message) map (_.payload) getOrElse ByteBuffer.allocate(0)
+        MessageData(msgAndOffset.offset, msgAndOffset.nextOffset, lastOffset, toArray(key), toArray(payload))
       }
     }
   }
@@ -169,8 +171,7 @@ class KafkaSubscriber(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId
     }
   }
 
-  private def getMessagePayload(messageAndOffset: MessageAndOffset): Array[Byte] = {
-    val payload = messageAndOffset.message.payload
+  private def toArray(payload: ByteBuffer): Array[Byte] = {
     val bytes = new Array[Byte](payload.limit)
     payload.get(bytes)
     bytes
@@ -229,7 +230,7 @@ object KafkaSubscriber {
               ofs <- offset
               msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
             } {
-              if (conditions.forall(_.satisfies(msg.message))) counter.incrementAndGet()
+              if (conditions.forall(_.satisfies(msg.message, msg.key))) counter.incrementAndGet()
             }
 
             offset = offset map (_ + 1)
@@ -270,7 +271,7 @@ object KafkaSubscriber {
               ofs <- offset
               msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
             } {
-              if (conditions.forall(_.satisfies(msg.message)) && found.compareAndSet(false, true)) message = Option((partition, msg))
+              if (conditions.forall(_.satisfies(msg.message, msg.key)) && found.compareAndSet(false, true)) message = Option((partition, msg))
             }
 
             offset = offset map (_ + 1)
@@ -456,7 +457,7 @@ object KafkaSubscriber {
    * @param nextOffset the next available offset
    * @param message the message
    */
-  case class MessageData(offset: Long, nextOffset: Long, lastOffset: Long, message: Array[Byte])
+  case class MessageData(offset: Long, nextOffset: Long, lastOffset: Long, key: Array[Byte], message: Array[Byte])
 
   /**
    * Represents the details for a Kafka topic

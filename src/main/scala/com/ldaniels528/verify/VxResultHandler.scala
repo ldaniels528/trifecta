@@ -33,7 +33,7 @@ class VxResultHandler(rt: VxRuntimeContext) extends BinaryMessaging {
       // handle binary data
       case message: Array[Byte] if message.isEmpty => out.println("No data returned")
       case message: Array[Byte] => dumpMessage(message)(rt, out)
-      case MessageData(offset, _, _, message) => dumpMessage(offset, message)(rt, out)
+      case MessageData(offset, _, _, _, message) => dumpMessage(offset, message)(rt, out)
 
       // handle Either cases
       case e: Either[_, _] => e match {
@@ -69,9 +69,9 @@ class VxResultHandler(rt: VxRuntimeContext) extends BinaryMessaging {
   }
 
   private def handleAsyncResult(f: Future[_])(implicit ec: ExecutionContext) {
-    // initially, wait for 3 seconds for the task to complete.
+    // initially, wait for 10 seconds for the task to complete.
     // if it fails to complete in that time, queue it as an asynchronous job
-    Try(Await.result(f, 3.seconds)) match {
+    Try(Await.result(f, 10.seconds)) match {
       case Success(value) => handleResult(value)
       case Failure(e) => setupAsyncJob(f)
     }

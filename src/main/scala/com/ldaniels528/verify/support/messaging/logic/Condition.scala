@@ -12,6 +12,6 @@ trait Condition {
    * @param key the given key
    * @return true, if the given message (and/or key) satisfies the condition
    */
-  def satisfies(message: Array[Byte], key: Option[Array[Byte]] = None): Boolean
+  def satisfies(message: Array[Byte], key: Array[Byte]): Boolean
 
 }

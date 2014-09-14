@@ -44,7 +44,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
             val it = stream.iterator()
             while (it.hasNext()) {
               val mam = it.next()
-              if (conditions.forall(_.satisfies(mam.message(), Option(mam.key())))) total.incrementAndGet()
+              if (conditions.forall(_.satisfies(mam.message(), mam.key()))) total.incrementAndGet()
             }
           }
         }
@@ -126,7 +126,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
             val it = stream.iterator()
             while (!found.get && it.hasNext()) {
               val mam = it.next()
-              if (!found.get && conditions.forall(_.satisfies(mam.message(), Option(mam.key())))) {
+              if (!found.get && conditions.forall(_.satisfies(mam.message(), mam.key()))) {
                 if (found.compareAndSet(false, true)) {
                   message = Option(StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message()))
                 }
@@ -200,7 +200,5 @@ object KafkaStreamingConsumer {
    * Represents a stream message
    */
   case class StreamedMessage(topic: String, partition: Int, offset: Long, key: Array[Byte], message: Array[Byte])
-
-
 
 }
