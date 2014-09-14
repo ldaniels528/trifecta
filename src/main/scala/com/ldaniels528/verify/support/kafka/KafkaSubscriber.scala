@@ -436,7 +436,7 @@ object KafkaSubscriber {
    * @return the promise of the option of a message based on the given search criteria
    */
   def observe(topic: String, brokers: Seq[Broker], correlationId: Int)(observer: MessageData => Unit)(implicit ec: ExecutionContext, zk: ZKProxy) {
-    val tasks = getTopicPartitions(topic) map { partition =>
+    getTopicPartitions(topic) foreach { partition =>
       Future {
         new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
