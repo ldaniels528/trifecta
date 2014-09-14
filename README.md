@@ -330,16 +330,29 @@ To see the current offsets for all consumer group IDs:
 
 To retrieve the list of topics with new messages (since your last query):
 
-    kafka:com.shocktrade.quotes.csv/0:10795> kinbound
-    + --------------------------------------------------------------------------------------------------------- +
-    | topic                      partition  startOffset  endOffset  change  msgsPerSec  lastCheckTime           |
-    + --------------------------------------------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  4          0            9138       36      12.0        09/01/14 01:51:30 PDT   |
-    | com.shocktrade.quotes.csv  0          0            9624       32      10.7        09/01/14 01:51:30 PDT   |
-    | com.shocktrade.quotes.csv  1          0            10492      32      10.7        09/01/14 01:51:30 PDT   |
-    | com.shocktrade.quotes.csv  2          0            11018      32      10.7        09/01/14 01:51:30 PDT   |
-    | com.shocktrade.quotes.csv  3          0            10031      27      9.0         09/01/14 01:51:30 PDT   |
-    + --------------------------------------------------------------------------------------------------------- +
+    kafka:/> kinbound
+    + ----------------------------------------------------------------------------------------------------------- +
+    | topic                        partition  startOffset  endOffset  change  msgsPerSec  lastCheckTime           |
+    + ----------------------------------------------------------------------------------------------------------- +
+    | test.Shocktrade.quotes.avro  3          0            657        65      16.3        09/13/14 06:37:03 PDT   |
+    | test.Shocktrade.quotes.avro  0          0            650        64      16.0        09/13/14 06:37:03 PDT   |
+    | test.Shocktrade.quotes.avro  1          0            618        56      14.0        09/13/14 06:37:03 PDT   |
+    | test.Shocktrade.quotes.avro  2          0            618        49      12.3        09/13/14 06:37:03 PDT   |
+    | test.Shocktrade.quotes.avro  4          0            584        40      10.0        09/13/14 06:37:03 PDT   |
+    + ----------------------------------------------------------------------------------------------------------- +
+
+Next, we wait a few moments and run the command again:
+
+    kafka:/> kinbound
+    + ----------------------------------------------------------------------------------------------------------- +
+    | topic                        partition  startOffset  endOffset  change  msgsPerSec  lastCheckTime           |
+    + ----------------------------------------------------------------------------------------------------------- +
+    | test.Shocktrade.quotes.avro  1          0            913        295     15.6        09/13/14 06:37:21 PDT   |
+    | test.Shocktrade.quotes.avro  3          0            952        295     15.6        09/13/14 06:37:21 PDT   |
+    | test.Shocktrade.quotes.avro  2          0            881        263     13.9        09/13/14 06:37:21 PDT   |
+    | test.Shocktrade.quotes.avro  4          0            846        262     13.8        09/13/14 06:37:21 PDT   |
+    | test.Shocktrade.quotes.avro  0          0            893        243     12.8        09/13/14 06:37:21 PDT   |
+    + ----------------------------------------------------------------------------------------------------------- +
 
 <a name="kafka-avro-module"></a>
 ##### Kafka &amp; Avro Integration
