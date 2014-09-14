@@ -21,6 +21,7 @@ Table of Contents
         * <a href="#kafka-consumer-group">Consumer Groups</a>
         * <a href="kafka-inbound-traffic">Inbound Traffic</a>
         * <a href="#kafka-avro-module">Avro Integration</a>
+        * <a href="#kafka-queries">Queries</a>
     * <a href="#storm-module">Storm Module</a>     
     * <a href="#zookeeper-module">Zookeeper Module</a>   
 
@@ -143,12 +144,13 @@ To view all of the Kafka commands, which all begin with the letter "k":
     | kcursor     kafka   Displays the current message cursor                                                             |
     | kfetch      kafka   Retrieves the offset for a given topic and group                                                |
     | kfetchsize  kafka   Retrieves or sets the default fetch size for all Kafka queries                                  |
-    | kfindone    kafka   Returns the first message that corresponds to the given criteria [references cursor]            |
+    | kfind       kafka   Finds messages that corresponds to the given criteria and exports them to a topic               |
+    | kfindone    kafka   Returns the first message that corresponds to the given criteria                                |
     | kfirst      kafka   Returns the first message for a given topic                                                     |
     | kget        kafka   Retrieves the message at the specified offset for a given topic partition                       |
+    | kgetkey     kafka   Retrieves the key of the message at the specified offset for a given topic partition            |
     | kgetminmax  kafka   Retrieves the smallest and largest message sizes for a range of offsets for a given partition   |
     | kgetsize    kafka   Retrieves the size of the message at the specified offset for a given topic partition           |
-    | kimport     kafka   Imports messages into a new/existing topic                                                      |
     | kinbound    kafka   Retrieves a list of topics with new messages (since last query)                                 |
     | klast       kafka   Returns the last message for a given topic                                                      |
     | kls         kafka   Lists all existing topics                                                                       |
@@ -415,6 +417,12 @@ The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro inte
     | firstTimestamp  1409979852    Long   |
     | lastTimestamp   1409979916    Long   |
     + ------------------------------------ +
+
+<a name="kafka-queries"></a>
+##### Kafka Queries
+
+Building on the <a href="#kafka-avro-module">Avro Integration</a>, _Verify_ offers the ability to execute queries against 
+structured data.
 
 Suppose you want to know how many messages contain a frequency greater than 2500, you could issue the `kCount` command:
 
