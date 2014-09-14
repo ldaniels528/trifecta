@@ -12,11 +12,11 @@ import com.ldaniels528.verify.modules.kafka.KafkaModule._
 import com.ldaniels528.verify.support.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.verify.support.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
 import com.ldaniels528.verify.support.kafka._
-import com.ldaniels528.verify.support.messaging.{MessageDecoder, MessageCursor}
-import com.ldaniels528.verify.support.messaging.logic.{MessageEvaluation, Condition}
 import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
-import com.ldaniels528.verify.util.{EndPoint, BinaryMessaging}
+import com.ldaniels528.verify.support.messaging.logic.{Condition, MessageEvaluation}
+import com.ldaniels528.verify.support.messaging.{MessageCursor, MessageDecoder}
 import com.ldaniels528.verify.util.VxUtils._
+import com.ldaniels528.verify.util.{BinaryMessaging, EndPoint}
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
 import org.slf4j.LoggerFactory
@@ -77,7 +77,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "YYYY-MM-DDTHH:MM:SS", "-f" -> "outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
-    Command(this, "kimport", importMessages, UnixLikeParams(Seq("topic" -> false), Seq("-a" -> "avro", "-b" -> "binary", "-f" -> "inputFile", "-t" -> "fileType")), help = "Imports messages into a new/existing topic"),
+    Command(this, "kimport", importMessages, UnixLikeParams(Seq("topic" -> false), Seq("-a" -> "avro", "-b" -> "binary", "-f" -> "inputFile", "-t" -> "fileType")), help = "Imports messages into a new/existing topic", undocumented = true),
     Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the last message for a given topic"),
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Lists all existing topics"),
@@ -549,29 +549,30 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kimport" - Imports a message into a new/existing topic
-   * @example {{{ kimport com.shocktrade.alerts -text messages/mymessage.txt }}}
+   * @example {{{ kimport com.shocktrade.alerts -t -f messages/mymessage.txt }}}
+   * @example {{{ kimport -a mySchema -f messages/mymessage.txt }}}
    */
-  def importMessages(params: UnixLikeArgs): Int = {
-    // get the arguments
-    val Seq(topic, _*) = params.args
+  def importMessages(params: UnixLikeArgs): Long = {
+    // get the topic
+    val topic = params.args match {
+      case Nil => cursor.map(c => c.topic) getOrElse dieNoCursor()
+      case aTopic :: Nil => aTopic
+      case _ => dieSyntax("kimport")
+    }
 
-    // expand the file path
+    // get the input file (expand the path)
     val filePath = params("-f") map expandPath getOrElse dieNoInputSource
-    val fileType = params("-a") ?? params("-b") ?? params("-t") getOrElse "-b"
 
     KafkaPublisher(brokers) use { publisher =>
       publisher.open()
 
-      // import the messages based on file type
-      fileType match {
-        case "-a" =>
-          importMessagesFromAvroFile(publisher, filePath)
-        case "-b" =>
+      // import text file?
+      params("-t") map (na => importMessagesFromTextFile(publisher, topic, filePath)) getOrElse {
+        // import Avro file?
+        params("-a") map (schema => importMessagesFromAvroFile(publisher, schema, filePath)) getOrElse {
+          // let's assume it's a binary file
           importMessagesFromBinaryFile(publisher, topic, filePath)
-        case "-t" =>
-          importMessagesFromTextFile(publisher, topic, filePath)
-        case unknown =>
-          throw new IllegalArgumentException(s"Unrecognized file type flag '$unknown'")
+        }
       }
     }
   }
@@ -581,11 +582,11 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @param publisher the given Kafka publisher
    * @param filePath the given file path
    */
-  private def importMessagesFromAvroFile(publisher: KafkaPublisher, filePath: String): Int = {
+  private def importMessagesFromAvroFile(publisher: KafkaPublisher, schema: String, filePath: String): Long = {
     import org.apache.avro.file.DataFileReader
     import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 
-    var messages = 0
+    var messages = 0L
     val reader = new DataFileReader[GenericRecord](new File(filePath), new GenericDatumReader[GenericRecord]())
     while (reader.hasNext) {
       val record = reader.next()
@@ -609,10 +610,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @param publisher the given Kafka publisher
    * @param filePath the given file path
    */
-  private def importMessagesFromBinaryFile(publisher: KafkaPublisher, topic: String, filePath: String): Int = {
+  private def importMessagesFromBinaryFile(publisher: KafkaPublisher, topic: String, filePath: String): Long = {
     import java.io.{DataInputStream, FileInputStream}
 
-    var messages = 0
+    var messages = 0L
     new DataInputStream(new FileInputStream(filePath)) use { in =>
       // get the next message length and retrieve the message
       val messageLength = in.readInt()
@@ -631,10 +632,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @param publisher the given Kafka publisher
    * @param filePath the given file path
    */
-  private def importMessagesFromTextFile(publisher: KafkaPublisher, topic: String, filePath: String): Int = {
+  private def importMessagesFromTextFile(publisher: KafkaPublisher, topic: String, filePath: String): Long = {
     import scala.io.Source
 
-    var messages = 0
+    var messages = 0L
     Source.fromFile(filePath).getLines() foreach { message =>
       publisher.publish(topic, toBytes(System.currentTimeMillis()), message.getBytes(rt.encoding))
       messages += 1
