@@ -70,7 +70,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kexport", exportToFile, UnixLikeParams(Seq("topic" -> false, "groupId" -> true), Seq("-f" -> "outputFile")), help = "Writes the contents of a specific topic to a file", undocumented = true),
     Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Seq.empty, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
-    Command(this, "kfindone", findOneMessage, SimpleParams(Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria [references cursor]"),
+    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputTopic")), "Finds messages that corresponds to the given criteria and exports them to a topic"),
+    Command(this, "kfindone", findOneMessage, SimpleParams(Seq("field", "operator", "value"), Seq.empty), "Returns the first message that corresponds to the given criteria"),
     Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the first message for a given topic"),
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "YYYY-MM-DDTHH:MM:SS", "-f" -> "outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
@@ -216,6 +217,39 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
         decoder <- cursor map (_.decoder)
       } yield getMessage(topic, partition, md.offset, UnixLikeArgs(Nil))
     }
+  }
+
+  /**
+   * "kfind" - Finds messages that corresponds to the given criteria and exports them to a topic
+   * @example {{{ kfind frequency > 5000 -o highFrequency.topTalkers }}}
+   */
+  def findMessages(params: UnixLikeArgs): Long = {
+    import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
+
+    // get the input topic and partition from the cursor
+    val (inputTopic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
+
+    // get the criteria
+    val Seq(field, operator, value, _*) = params.args
+    val conditions = Seq(compile(compile(field, operator, value), decoder))
+
+    // get the output topic
+    val outputTopic = params("-o") getOrElse die("Output topic expected")
+
+    // open the publisher
+    var count = 0L
+    KafkaPublisher(brokers) use { publisher =>
+      publisher.open()
+
+      // find and export the messages matching our criteria
+      KafkaSubscriber.observe(inputTopic, brokers, correlationId) { md =>
+        if (conditions.forall(_.satisfies(md.message, md.key))) {
+          publisher.publish(outputTopic, md.key, md.message)
+          count += 1
+        }
+      }
+    }
+    count
   }
 
   /**
