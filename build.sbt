@@ -15,7 +15,7 @@ version := "0.1.4"
 
 packageArchetype.java_application
 
-maintainer in Linux := "Lawrence Daniels <ldaniels@verisign.com>"
+maintainer in Linux := "Lawrence Daniels <ldaniels@gmail.com>"
 
 packageSummary in Linux := "Swiss-Army-Knife for viewing/managing topics for Kafka"
 
