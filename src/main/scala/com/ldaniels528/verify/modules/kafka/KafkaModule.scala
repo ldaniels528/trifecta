@@ -83,8 +83,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Lists all existing topics"),
     Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the next message"),
     Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the message at the previous offset"),
-    Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Seq.empty), help = "Publishes a message to a topic", undocumented = true),
-    Command(this, "kreplicas", getReplicas, SimpleParams(Seq.empty, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
+    Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Nil), help = "Publishes a message to a topic", undocumented = true),
+    Command(this, "kreplicas", getReplicas, SimpleParams(Nil, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"))
 
@@ -277,7 +277,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example {{{ kcursor }}}
    */
   def getCursor(params: UnixLikeArgs): Seq[KafkaCursor] = {
-    cursor.map(c => Seq(c)) getOrElse Seq.empty
+    cursor.map(c => Seq(c)) getOrElse Nil
   }
 
   /**
@@ -468,7 +468,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subscriber =>
       val offsets = startOffset.toLong to endOffset.toLong
       val messages = subscriber.fetch(offsets, fetchSize).map(_.message.length)
-      if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Seq.empty
+      if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Nil
     }
   }
 
@@ -540,7 +540,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
             KafkaCursor(topic, partition0, offset, offset + 1, None))
         }
         getStatisticsData(topic, partition0, partition1)
-      case _ => Seq.empty
+      case _ => Nil
     }
   }
 
