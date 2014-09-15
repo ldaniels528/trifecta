@@ -328,6 +328,25 @@ To see the current offsets for all consumer group IDs:
     | dev         com.shocktrade.quotes.csv  4          0       8276         8276           |
     + ------------------------------------------------------------------------------------- +
 
+Let's change the committed offset for the current topic/partition (the one to which our cursor is pointing) to 6000
+
+    kafka:com.shocktrade.quotes.csv/0:10795> kcommit dev 6000
+
+Finally, let's re-examin the consumer group IDs:
+    
+    kafka:com.shocktrade.quotes.csv/0:10795> kconsumers
+    + ------------------------------------------------------------------------------------- +
+    | consumerId  topic                      partition  offset  topicOffset  messagesLeft   |
+    + ------------------------------------------------------------------------------------- +
+    | dev         com.shocktrade.quotes.csv  0          6000    10796        4796           |
+    | dev         com.shocktrade.quotes.csv  1          0       10547        10547          |
+    | dev         com.shocktrade.quotes.csv  2          0       8788         8788           |
+    | dev         com.shocktrade.quotes.csv  3          0       7334         7334           |
+    | dev         com.shocktrade.quotes.csv  4          0       8276         8276           |
+    + ------------------------------------------------------------------------------------- +
+
+Notice that the committed offset, for consumer group _dev_, has been changed to 6000 for partition 0.
+
 <a name="kafka-inbound-traffic"></a>
 ##### Kafka Inbound Traffic
 
