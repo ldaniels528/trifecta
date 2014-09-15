@@ -42,6 +42,10 @@ trait Module {
    */
   def shutdown(): Unit
 
+  protected def die[S](message: String): S = throw new IllegalArgumentException(message)
+
+  protected def dieSyntax[S](command: String): S = die( s"""Invalid arguments - use "syntax $command" to see usage""")
+
   /**
    * Expands the UNIX path into a JVM-safe value
    * @param path the UNIX path (e.g. "~/ldaniels")

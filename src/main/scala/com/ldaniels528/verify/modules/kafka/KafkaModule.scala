@@ -776,8 +776,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
   }
 
-  private def die[S](message: String): S = throw new IllegalArgumentException(message)
-
   private def dieNoCursor[S](): S = die("No cursor exists")
 
   private def dieNoInputSource[S](): S = die("No input source specified")
@@ -785,8 +783,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private def dieNoOutputSource[S](): S = die("No output source specified")
 
   private def dieNotMessageComparator[S](): S = die("Decoder does not support logical operations")
-
-  private def dieSyntax[S](command: String): S = die( s"""Invalid arguments - use "syntax $command" to see usage""")
 
   /**
    * Retrieves the topic and partition from the given arguments
