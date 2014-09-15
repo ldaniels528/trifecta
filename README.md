@@ -431,7 +431,7 @@ Suppose you want to know how many messages contain a frequency greater than 2500
 
 The response was 106, meaning there are 106 messages containing a frequency greater than 2500.
 
-Now suppose you want to view the first message whose frequency is  greater than 2500, you could issue the `kFindOne` command:
+Suppose you want to view the first message whose frequency is  greater than 2500, you could issue the `kFindOne` command:
 
     kafka:com.shocktrade.topTalkers/0:0> kFindOne frequency > 2500
     + ------------------------------------- +
@@ -445,6 +445,23 @@ Now suppose you want to view the first message whose frequency is  greater than 
     | lastTimestamp   1410038896     Long   |
     + ------------------------------------- +
 
+Now suppose you want to copy the messages having high frequencies (1,000 or more) to another topic:
+
+    kfind frequency > 1000 -o topTalkers.highFrequency
+
+Finally, let's look at the results:
+
+    kafka:com.shocktrade.topTalkers/0:0> kstats topTalkers.highFrequency
+    + ------------------------------------------------------------------------------------ +
+    | topic                         partition  startOffset  endOffset  messagesAvailable   |
+    + ------------------------------------------------------------------------------------ +
+    | topTalkers.highFrequency      0          0            288        288                 |
+    | topTalkers.highFrequency      1          0            242        242                 |
+    | topTalkers.highFrequency      2          0            280        280                 |
+    | topTalkers.highFrequency      3          0            264        264                 |
+    | topTalkers.highFrequency      4          0            271        271                 |
+    + ------------------------------------------------------------------------------------ +
+            
 <a name="storm-module"></a>
 #### Storm Module
 
