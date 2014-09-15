@@ -18,7 +18,7 @@ class KafkaModuleSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWh
   //val zk = ZKProxy("localhost", 2181)
 
   info("As a Kafka Module")
-  info("I want to be able to execute Kafka commands")
+  info("I want to be able to execute Kafka Module commands")
 
   /*
   feature("The 'kbrokers' command provides a list of brokers from Zookeeper") {
