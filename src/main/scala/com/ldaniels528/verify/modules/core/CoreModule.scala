@@ -37,8 +37,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
   override def getCommands: Seq[Command] = Seq(
     Command(this, "!", executeHistory, SimpleParams(Seq("index"), Seq.empty), help = "Executes a previously issued command"),
-    Command(this, "?", help, SimpleParams(Seq.empty, Seq("search-term")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, SimpleParams(Seq.empty, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
+    Command(this, "?", help, SimpleParams(Nil, Seq("search-term")), help = "Provides the list of available commands"),
     Command(this, "avcat", avroCat, SimpleParams(required = Seq("variable")), help = "Displays the contents of a schema variable", promptAware = false),
     Command(this, "avload", avroLoadSchema, SimpleParams(required = Seq("variable", "schemaPath")), help = "Loads an Avro schema into memory", promptAware = false),
     Command(this, "cat", cat, SimpleParams(Seq("file"), Seq.empty), help = "Dumps the contents of the given file", promptAware = true),
@@ -329,7 +329,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * "history" - Retrieves previously executed commands
    */
   def listHistory(params: UnixLikeArgs): Seq[HistoryItem] = {
-    val lines = SessionManagement.history.getLines
+    val count = params.args.headOption map (parseInt("count", _))
+    val lines = SessionManagement.history.getLines(count.getOrElse(-1))
     ((1 to lines.size) zip lines) map {
       case (itemNo, command) => HistoryItem(itemNo, command)
     }
