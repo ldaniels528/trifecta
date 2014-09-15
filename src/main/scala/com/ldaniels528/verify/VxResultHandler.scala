@@ -89,7 +89,7 @@ class VxResultHandler(rt: VxRuntimeContext) extends BinaryMessaging {
         out.println(s"Job #${job.jobId} failed: ${e.getMessage}")
         rt.jobs -= job
     }
-    handleResult(Seq(job))
+    out.println("Task is now running in the background (use 'jobs' to view)")
   }
 
 }
