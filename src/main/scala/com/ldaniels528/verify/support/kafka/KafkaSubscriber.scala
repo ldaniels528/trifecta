@@ -441,7 +441,7 @@ object KafkaSubscriber {
         new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
-          def eof = (for {o <- offset; lo <- lastOffset} yield o > lo) getOrElse true
+          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
           while (!eof) {
             for {ofs <- offset; msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption} observer(msg)
             offset = offset map (_ + 1)
