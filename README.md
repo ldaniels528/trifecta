@@ -21,7 +21,8 @@ Table of Contents
         * <a href="#kafka-consumer-group">Consumer Groups</a>
         * <a href="kafka-inbound-traffic">Inbound Traffic</a>
         * <a href="#kafka-avro-module">Avro Integration</a>
-        * <a href="#kafka-queries">Queries</a>
+        * <a href="#kafka-search-by-key">Searching By Key</a>
+        * <a href="#kafka-advanced-search">Advanced Search</a>
     * <a href="#storm-module">Storm Module</a>     
     * <a href="#zookeeper-module">Zookeeper Module</a>   
 
@@ -240,7 +241,7 @@ To retrieve the first message of a topic partition:
     [5945:025] 34.3a.30.30.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.31.30.2c.22.2d.30 | 4:00pm",N/A,N/A,-0.10,"-0 |
     [5945:050] 2e.31.30.20.2d.20.2d.30.2e.39.32.25.22.2c.31.30.2e.39.31.2c.31.30.2e.39.31 | .10 - -0.92%",10.91,10.91 |
     [5945:075] 2c.31.30.2e.38.31.2c.31.30.2e.39.31.2c.31.30.2e.38.30.2c.33.36.35.35.38.2c | ,10.81,10.91,10.80,36558, |
-    [5945:100] 4e.2f.41.2c.22.4e.2f.41.22                                                | N/A,"N/A"                 |    
+    [5945:100] 4e.2f.41.2c.22.4e.2f.41.22                                                 | N/A,"N/A"                 |    
 
 The previous command resulted in the creation of a navigable cursor (notice below how our prompt has changed). 
 
@@ -418,8 +419,58 @@ The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro inte
     | lastTimestamp   1409979916    Long   |
     + ------------------------------------ +
 
-<a name="kafka-queries"></a>
-##### Kafka Queries
+<a name="kafka-search-by-key"></a>
+#### Kafka Search by Key
+
+You can view the key for any message by using the `kgetkey` command. Let's start by retrieving the last available message 
+for a topic/partition.
+
+    kafka:/> klast com.shocktrade.quotes.csv 0 
+    [10796:000] 22.4e.4f.53.50.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "NOSPF",0.00,"N/A","N/A", |
+    [10796:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
+    [10796:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
+    [10796:075] 2f.41.2c.22.54.69.63.6b.65.72.20.73.79.6d.62.6f.6c.20.68.61.73.20.63.68.61 | /A,"Ticker symbol has cha |
+    [10796:100] 6e.67.65.64.20.74.6f.3a.20.3c.61.20.68.72.65.66.3d.22.2f.71.3f.73.3d.4e.4f | nged to: <a href="/q?s=NO |
+    [10796:125] 53.50.46.22.3e.4e.4f.53.50.46.3c.2f.61.3e.22                               | SPF">NOSPF</a>"           |
+    
+Now let's view the key for message using the `kgetkey` command:    
+    
+    kafka:com.shocktrade.quotes.csv/0:10796> kgetkey
+    [000] 31.34.31.30.35.36.33.37.31.34.34.36.35                                     | 1410563714465             |
+    
+And for the purposes of fully understanding what happened here, let reposition the cursor to the beginning of the
+topic/partition:
+
+    kafka:com.shocktrade.quotes.csv/0:10796> kfirst
+    [5945:000] 22.47.44.46.22.2c.31.30.2e.38.31.2c.22.39.2f.31.32.2f.32.30.31.34.22.2c.22 | "GDF",10.81,"9/12/2014"," |
+    [5945:025] 34.3a.30.30.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.31.30.2c.22.2d.30 | 4:00pm",N/A,N/A,-0.10,"-0 |
+    [5945:050] 2e.31.30.20.2d.20.2d.30.2e.39.32.25.22.2c.31.30.2e.39.31.2c.31.30.2e.39.31 | .10 - -0.92%",10.91,10.91 |
+    [5945:075] 2c.31.30.2e.38.31.2c.31.30.2e.39.31.2c.31.30.2e.38.30.2c.33.36.35.35.38.2c | ,10.81,10.91,10.80,36558, |
+    [5945:100] 4e.2f.41.2c.22.4e.2f.41.22                                                 | N/A,"N/A"                 |
+    
+    kafka:com.shocktrade.quotes.csv/0:5945>     
+
+Next, using the `kfindone`command let's search for the last message by key (using hexadecimal dot-notation):
+
+    kafka:com.shocktrade.quotes.csv/0:5945> kfindone key is 31.34.31.30.35.36.33.37.31.34.34.36.35
+    Task is now running in the background (use 'jobs' to view)
+
+You may have received a message indicating the the task is now running in the background. This happens when a query is
+executed that requires more than 30 seconds to complete. After a few moments, the results should appear on the console:
+
+    kafka:com.shocktrade.quotes.csv/0:5945> Job #1006 completed
+    [10796:000] 22.4e.4f.53.50.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "NOSPF",0.00,"N/A","N/A", |
+    [10796:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
+    [10796:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
+    [10796:075] 2f.41.2c.22.54.69.63.6b.65.72.20.73.79.6d.62.6f.6c.20.68.61.73.20.63.68.61 | /A,"Ticker symbol has cha |
+    [10796:100] 6e.67.65.64.20.74.6f.3a.20.3c.61.20.68.72.65.66.3d.22.2f.71.3f.73.3d.4e.4f | nged to: <a href="/q?s=NO |
+    [10796:125] 53.50.46.22.3e.4e.4f.53.50.46.3c.2f.61.3e.22                               | SPF">NOSPF</a>"           |
+
+The result is the last message of the topic. Notice that our cursor has changed reflecting the move 
+from offset 5945 to 10796.  
+
+<a name="kafka-advanced-search"></a>
+##### Kafka Advanced Search
 
 Building on the <a href="#kafka-avro-module">Avro Integration</a>, _Verify_ offers the ability to execute queries against 
 structured data.
