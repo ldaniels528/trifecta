@@ -39,7 +39,7 @@ class History(val maxHistory: Int) {
    * Returns all previously issued commands for this session
    * @return the [[Seq]]uence of [[String]]s representing the previously issued commands for this session
    */
-  def getLines: Seq[String] = history
+  def getLines(count: Int = -1): Seq[String] = if(count > 0) history.slice(0, count) else history
 
   def isEmpty: Boolean = history.isEmpty
 
