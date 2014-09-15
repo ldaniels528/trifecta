@@ -4,6 +4,7 @@ import java.io.{File, FileOutputStream, PrintStream}
 import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.concurrent.atomic.AtomicLong
 
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
@@ -223,7 +224,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "kfind" - Finds messages that corresponds to the given criteria and exports them to a topic
    * @example {{{ kfind frequency > 5000 -o highFrequency.topTalkers }}}
    */
-  def findMessages(params: UnixLikeArgs): Long = {
+  def findMessages(params: UnixLikeArgs): Future[Long] = {
     import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
 
     // get the input topic and partition from the cursor
@@ -237,19 +238,26 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val outputTopic = params("-o") getOrElse die("Output topic expected")
 
     // open the publisher
-    var count = 0L
-    KafkaPublisher(brokers) use { publisher =>
-      publisher.open()
+    val counter = new AtomicLong(0L)
+    val publisher = KafkaPublisher(brokers)
+    publisher.open()
 
-      // find and export the messages matching our criteria
-      KafkaSubscriber.observe(inputTopic, brokers, correlationId) { md =>
-        if (conditions.forall(_.satisfies(md.message, md.key))) {
-          publisher.publish(outputTopic, md.key, md.message)
-          count += 1
-        }
+    // find and export the messages matching our criteria
+    val task = KafkaSubscriber.observe(inputTopic, brokers, correlationId) { md =>
+      if (conditions.forall(_.satisfies(md.message, md.key))) {
+        publisher.publish(outputTopic, md.key, md.message)
+        counter.incrementAndGet()
       }
     }
-    count
+
+    // upon completion, close the publisher
+    task.onComplete {
+      case Success(_) => publisher.close()
+      case Failure(e) => publisher.close()
+    }
+
+    // return the future count
+    task.map(u => counter.get)
   }
 
   /**
