@@ -784,7 +784,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
   }
 
-  private def dieNoCursor[S](): S = die("No cursor exists")
+  private def dieNoCursor[S](): S = die("No topic/partition specified and no cursor exists")
 
   private def dieNoInputSource[S](): S = die("No input source specified")
 
