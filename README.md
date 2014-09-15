@@ -438,7 +438,7 @@ Now let's view the key for message using the `kgetkey` command:
     kafka:com.shocktrade.quotes.csv/0:10796> kgetkey
     [000] 31.34.31.30.35.36.33.37.31.34.34.36.35                                     | 1410563714465             |
     
-And for the purposes of fully understanding what happened here, let reposition the cursor to the beginning of the
+And for the purposes of fully understanding what happened here, let's reposition the cursor to the beginning of the
 topic/partition:
 
     kafka:com.shocktrade.quotes.csv/0:10796> kfirst
