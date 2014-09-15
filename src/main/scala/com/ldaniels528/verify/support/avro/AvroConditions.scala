@@ -19,6 +19,7 @@ object AvroConditions {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
+            case v if v == null => value == null
             case v: java.lang.Number => v.doubleValue() == value.toDouble
             case s: String => s == value
             case x =>
@@ -38,6 +39,7 @@ object AvroConditions {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
+            case null => false
             case v: java.lang.Number => v.doubleValue() > value.toDouble
             case s: String => s > value
             case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
@@ -56,6 +58,7 @@ object AvroConditions {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
+            case null => false
             case v: java.lang.Number => v.doubleValue() >= value.toDouble
             case s: String => s >= value
             case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
@@ -74,6 +77,7 @@ object AvroConditions {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
+            case null => false
             case v: java.lang.Number => v.doubleValue() < value.toDouble
             case s: String => s < value
             case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
@@ -92,6 +96,7 @@ object AvroConditions {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
+            case null => false
             case v: java.lang.Number => v.doubleValue() <= value.toDouble
             case s: String => s <= value
             case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
@@ -110,6 +115,7 @@ object AvroConditions {
       decoder.decode(message) match {
         case Success(record) =>
           record.get(field) match {
+            case v if v == null => value != null
             case v: java.lang.Number => v.doubleValue() != value.toDouble
             case s: String => s != value
             case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
