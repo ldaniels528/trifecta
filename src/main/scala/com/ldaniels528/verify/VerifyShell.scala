@@ -55,7 +55,7 @@ class VerifyShell(rt: VxRuntimeContext) {
       out.println(a"${WHITE}Type '${CYAN}help$WHITE' (or '$CYAN?$WHITE') to see the list of available commands")
     }
 
-    if(rt.autoSwitching) {
+    if (rt.autoSwitching) {
       out.println("Module Auto-Switching is On")
     }
 
@@ -74,9 +74,9 @@ class VerifyShell(rt: VxRuntimeContext) {
             rt.interpret(line) match {
               case Success(result) =>
                 rt.handleResult(result)
-                if (line != "history" && !line.startsWith("!") && !line.startsWith("?")) SessionManagement.history += line
+                if (!ineligibleHistory(line)) SessionManagement.history += line
               case Failure(e: ConnectionLossException) =>
-                err.println("Zookeeper connect loss error - Try: zreconnect")
+                err.println("Zookeeper connect loss error - use 'zreconnect' to re-establish a connection")
               case Failure(e: IllegalArgumentException) =>
                 if (rt.debugOn) e.printStackTrace()
                 err.println(s"Syntax error: ${e.getMessage}")
@@ -88,6 +88,15 @@ class VerifyShell(rt: VxRuntimeContext) {
         }
       }
     } while (rt.alive)
+  }
+
+  /**
+   * Indicates whether the given line is ineligible for addition into the session history
+   * @param line the given line of execution
+   * @return true, if the line of execution is ineligible for addition into the session history
+   */
+  private def ineligibleHistory(line: String): Boolean = {
+    line.startsWith("history") || line.startsWith("!") || SessionManagement.history.last.exists(_ == line)
   }
 
   private def getErrorMessage(t: Throwable): String = {
