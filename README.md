@@ -332,7 +332,7 @@ Let's change the committed offset for the current topic/partition (the one to wh
 
     kafka:com.shocktrade.quotes.csv/0:10795> kcommit dev 6000
 
-Finally, let's re-examin the consumer group IDs:
+Let's re-examine the consumer group IDs:
     
     kafka:com.shocktrade.quotes.csv/0:10795> kconsumers
     + ------------------------------------------------------------------------------------- +
@@ -346,6 +346,11 @@ Finally, let's re-examin the consumer group IDs:
     + ------------------------------------------------------------------------------------- +
 
 Notice that the committed offset, for consumer group _dev_, has been changed to 6000 for partition 0.
+
+Finally, let's use the `kfetch` to retrieve just the offset for the consumer group ID:
+
+   kafka:com.shocktrade.quotes.csv/0:10795> kfetch dev
+   6000
 
 <a name="kafka-inbound-traffic"></a>
 ##### Kafka Inbound Traffic
@@ -439,7 +444,7 @@ The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro inte
     + ------------------------------------ +
 
 <a name="kafka-search-by-key"></a>
-#### Kafka Search by Key
+##### Kafka Search by Key
 
 You can view the key for any message by using the `kgetkey` command. Let's start by retrieving the last available message 
 for a topic/partition.
