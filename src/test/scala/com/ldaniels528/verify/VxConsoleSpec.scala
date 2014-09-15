@@ -3,7 +3,6 @@ package com.ldaniels528.verify
 import com.ldaniels528.verify.VxConsole._
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.Ansi.Color._
-import org.mockito.Mockito.{when => when$}
 import org.scalatest.Matchers._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
@@ -17,11 +16,10 @@ class VxConsoleSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWhen
   info("As a VxConsole instance")
   info("I want to be able to print escape characters")
 
-  feature("Printing string interpolation creates ANSI colored sequences") {
-    scenario("A string interpolation contains multiple escape sequences") {
-      Given("A string interpolation containing escape sequences for colors red, green, blue and white")
-      val VERSION = "0.10"
-      val interpolation = a"${RED}Ve${GREEN}ri${BLUE}fy ${WHITE}v$VERSION"
+  feature("Printing an ANSI string interpolation creates ANSI colored sequences") {
+    scenario("An ANSI interpolation contains multiple escape sequences") {
+      Given("An ANSI interpolation containing escape sequences for colors red, green, blue and white")
+      val interpolation = a"${RED}Ve${GREEN}ri${BLUE}fy ${WHITE}v0.10"
 
       When("the interpolation is converted to a string")
       val ansiString = interpolation.toString
