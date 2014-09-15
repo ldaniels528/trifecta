@@ -282,18 +282,18 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * "!" command - History execution command. This command can either executed a
    * previously executed command by its unique identifier, or list (!?) all previously
    * executed commands.
-   * Example 1: !123
-   * Example 2: !?
+   * @example !123
+   * @example !? 10
+   * @example !?
    */
   def executeHistory(params: UnixLikeArgs)(implicit out: PrintStream) = {
     for {
-      index <- params.args.headOption
-      command <- index match {
-        case s if s == "?" => Some("history")
-        case s if s == "!" => SessionManagement.history.last
-        case s if s.matches("\\d+") => SessionManagement.history(index.toInt - 1)
-        case s =>
-          throw new IllegalArgumentException(s"Unrecognized symbol '$s'")
+      command <- params.args match {
+        case Nil => SessionManagement.history.last
+        case "?" :: count :: Nil => Some(s"history $count")
+        case "?" :: Nil => Some("history")
+        case index :: Nil => SessionManagement.history(parseInt("history ID", index) - 1)
+        case _ => dieSyntax("!")
       }
     } {
       out.println(s">> $command")
