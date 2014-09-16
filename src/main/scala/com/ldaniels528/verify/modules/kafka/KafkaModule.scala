@@ -367,8 +367,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = getFetchSize(params)
 
     // retrieve the key
-    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
-      subs.fetch(offset, fetchSize).headOption map (_.key)
+    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { consumer =>
+      consumer.fetch(offset, fetchSize).headOption map (_.key)
     }
   }
 
@@ -389,9 +389,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // retrieve the message
-    val messageData = new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
-      val myOffset: Long = instant flatMap subs.getOffsetsBefore getOrElse offset
-      subs.fetch(myOffset, defaultFetchSize).headOption
+    val messageData = new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { consumer =>
+      val myOffset: Long = instant flatMap consumer.getOffsetsBefore getOrElse offset
+      consumer.fetch(myOffset, defaultFetchSize).headOption
     }
 
     // write the data to an output file (or device)?
@@ -473,9 +473,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = getFetchSize(params)
 
     // perform the action
-    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subscriber =>
+    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { consumer =>
       val offsets = startOffset.toLong to endOffset.toLong
-      val messages = subscriber.fetch(offsets, fetchSize).map(_.message.length)
+      val messages = consumer.fetch(offsets, fetchSize).map(_.message.length)
       if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Nil
     }
   }
@@ -778,8 +778,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // reset the consumer group ID for each partition
     (start to end) foreach { partition =>
-      new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId = 0) use { subscriber =>
-        subscriber.commitOffsets(groupId, offset = 0L, "resetting consumer ID")
+      new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId = 0) use { consumer =>
+        consumer.commitOffsets(groupId, offset = 0L, "resetting consumer ID")
       }
     }
   }
