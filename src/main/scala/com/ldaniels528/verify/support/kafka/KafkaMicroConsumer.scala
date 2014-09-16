@@ -6,13 +6,13 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer._
 import com.ldaniels528.verify.support.messaging.logic.Condition
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
+import com.ldaniels528.verify.util.ByteBufferUtils._
 import com.ldaniels528.verify.util.VxUtils._
 import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success, Try}
 
@@ -142,7 +142,7 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
    * @param time the given time EPOC in milliseconds
    * @return an option of an offset
    */
-  def getOffsetsBefore(time: Long): Iterable[Long] = {
+  def getOffsetsBefore(time: Long): Seq[Long] = {
     // create the topic/partition and request information
     val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
     val requestInfo = Map(topicAndPartition -> new PartitionOffsetRequestInfo(time, 1))
@@ -161,6 +161,10 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
           throw new RuntimeException(s"Error fetching data Offset Data the Broker. Reason: $code - ${ERROR_CODES.getOrElse(code, s"UNKNOWN - $code")}")
       }
       Nil
+    } else (for {
+      topicMap <- response.offsetsGroupedByTopic.get(topic.name)
+      por <- topicMap.get(topicAndPartition)
+    } yield por.offsets) getOrElse Nil
   }
 
 }
