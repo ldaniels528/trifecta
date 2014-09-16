@@ -361,6 +361,30 @@ object KafkaMicroConsumer {
   }
 
   /**
+   * Returns the promise of the option of a message based on the given search criteria
+   * @param topic the given topic name
+   * @param brokers the given replica brokers
+   * @param correlationId the given correlation ID
+   * @param observer the given callback function
+   * @return the promise of the option of a message based on the given search criteria
+   */
+  def observe(topic: String, brokers: Seq[Broker], correlationId: Int)(observer: MessageData => Unit)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[Unit]] = {
+    Future.sequence(getTopicPartitions(topic) map { partition =>
+      Future {
+        new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+          var offset: Option[Long] = subs.getFirstOffset
+          val lastOffset: Option[Long] = subs.getLastOffset
+          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
+          while (!eof) {
+            for (ofs <- offset; msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption) observer(msg)
+            offset = offset map (_ + 1)
+          }
+        }
+      }
+    })
+  }
+
+  /**
    * Establishes a connection with the specified broker
    * @param broker the specified { @link Broker broker}
    */
@@ -422,29 +446,6 @@ object KafkaMicroConsumer {
     }
   }
 
-  /**
-   * Returns the promise of the option of a message based on the given search criteria
-   * @param topic the given topic name
-   * @param brokers the given replica brokers
-   * @param correlationId the given correlation ID
-   * @param observer the given callback function
-   * @return the promise of the option of a message based on the given search criteria
-   */
-  def observe(topic: String, brokers: Seq[Broker], correlationId: Int)(observer: MessageData => Unit)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[Unit]] = {
-    Future.sequence(getTopicPartitions(topic) map { partition =>
-      Future {
-        new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
-          var offset: Option[Long] = subs.getFirstOffset
-          val lastOffset: Option[Long] = subs.getLastOffset
-          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
-          while (!eof) {
-            for (ofs <- offset; msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption) observer(msg)
-            offset = offset map (_ + 1)
-          }
-        }
-      }
-    })
-  }
 
   /**
    * Represents a message and offset
