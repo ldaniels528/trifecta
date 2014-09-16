@@ -8,10 +8,15 @@ import java.nio.ByteBuffer
  */
 object ByteBufferUtils {
 
-  def toArray(payload: ByteBuffer): Array[Byte] = {
-    val bytes = new Array[Byte](payload.limit)
-    payload.get(bytes)
-    bytes
+  def toArray(buffer: ByteBuffer): Array[Byte] = {
+    (for {
+      buf <- Option(buffer)
+      limit = buf.limit()
+    } yield {
+      val bytes = new Array[Byte](limit)
+      buf.get(bytes)
+      bytes
+    }) getOrElse Array.empty
   }
 
 }
