@@ -1,6 +1,5 @@
 package com.ldaniels528.verify.support.kafka
 
-import java.nio.ByteBuffer
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer._
@@ -20,13 +19,13 @@ import scala.util.{Failure, Success, Try}
  * Kafka Low-Level Message Consumer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId: Int) {
+class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[Broker], correlationId: Int) {
   // generate the client ID
   private val clientID = makeClientID("consumer")
 
   // get the leader, meta data and replica brokers
-  private val (leader, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topic, seedBrokers, correlationId)
-    .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for $topic"))
+  private val (leader, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topicAndPartition, seedBrokers, correlationId)
+    .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for $topicAndPartition"))
 
   // get the initial broker (topic leader)
   private val broker: Broker = leader
@@ -42,9 +41,8 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
   /**
    * Commits an offset for the given consumer group
    */
-  def commitOffsets(groupId: String, offset: Long, metadata: String): Option[Short] = {
+  def commitOffsets(groupId: String, offset: Long, metadata: String) {
     // create the topic/partition and request information
-    val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
     val requestInfo = Map(topicAndPartition -> new OffsetMetadataAndError((offset, metadata, 1.toShort)))
 
     // submit the request, and retrieve the response
@@ -53,9 +51,11 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
 
     // retrieve the response code
     for {
-      topicMap <- response.requestInfoGroupedByTopic.get(topic.name)
-      code <- topicMap.get(new TopicAndPartition(topic.name, topic.partition))
-    } yield code
+      topicMap <- response.requestInfoGroupedByTopic.get(topicAndPartition.topic)
+      code <- topicMap.get(topicAndPartition)
+    } if (code != 0) {
+      throw new KafkaFetchException(code)
+    }
   }
 
   /**
@@ -65,7 +65,6 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
    * @return the earliest or latest offset
    */
   def earliestOrLatestOffset(consumerId: Int, timeInMillis: Long): Option[Long] = {
-    val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
     Option(consumer.earliestOrLatestOffset(topicAndPartition, timeInMillis, consumerId))
   }
 
@@ -87,19 +86,19 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
     // build the request
     val request = offsets.foldLeft(new FetchRequestBuilder().clientId(clientID)) {
       (builder, offset) =>
-        builder.addFetch(topic.name, topic.partition, offset, fetchSize)
+        builder.addFetch(topicAndPartition.topic, topicAndPartition.partition, offset, fetchSize)
         builder
     }.build()
 
     // submit the request, and process the response
     val response = consumer.fetch(request)
-    if (response.hasError) throw new KafkaFetchException(response.errorCode(topic.name, topic.partition))
+    if (response.hasError) throw new KafkaFetchException(response.errorCode(topicAndPartition.topic, topicAndPartition.partition))
     else {
-      val lastOffset = response.highWatermark(topic.name, topic.partition)
-      response.messageSet(topic.name, topic.partition) map { msgAndOffset =>
-        val key = Option(msgAndOffset.message) map (_.key) getOrElse ByteBuffer.allocate(0)
-        val payload = Option(msgAndOffset.message) map (_.payload) getOrElse ByteBuffer.allocate(0)
-        MessageData(msgAndOffset.offset, msgAndOffset.nextOffset, lastOffset, toArray(key), toArray(payload))
+      val lastOffset = response.highWatermark(topicAndPartition.topic, topicAndPartition.partition)
+      response.messageSet(topicAndPartition.topic, topicAndPartition.partition) map { msgAndOffset =>
+        val key: Array[Byte] = Option(msgAndOffset.message) map (_.key) map toArray getOrElse Array.empty
+        val message: Array[Byte] = Option(msgAndOffset.message) map (_.payload) map toArray getOrElse Array.empty
+        MessageData(msgAndOffset.offset, msgAndOffset.nextOffset, lastOffset, key, message)
       }
     }
   }
@@ -111,7 +110,6 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
    */
   def fetchOffsets(groupId: String): Option[Long] = {
     // create the topic/partition and request information
-    val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
     val requestInfo = Seq(topicAndPartition)
 
     // submit the request, and retrieve the response
@@ -120,7 +118,7 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
 
     // retrieve the offset(s)
     for {
-      topicMap <- response.requestInfoGroupedByTopic.get(topic.name)
+      topicMap <- response.requestInfoGroupedByTopic.get(topicAndPartition.topic)
       ome <- topicMap.get(topicAndPartition)
     } yield ome.offset
   }
@@ -144,7 +142,6 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
    */
   def getOffsetsBefore(time: Long): Seq[Long] = {
     // create the topic/partition and request information
-    val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
     val requestInfo = Map(topicAndPartition -> new PartitionOffsetRequestInfo(time, 1))
     val replicaId = replicas.indexOf(broker)
 
@@ -162,7 +159,7 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
       }
       Nil
     } else (for {
-      topicMap <- response.offsetsGroupedByTopic.get(topic.name)
+      topicMap <- response.offsetsGroupedByTopic.get(topicAndPartition.topic)
       por <- topicMap.get(topicAndPartition)
     } yield por.offsets) getOrElse Nil
   }
@@ -192,7 +189,7 @@ object KafkaMicroConsumer {
     val counter = new AtomicLong(0)
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
-        new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
@@ -229,7 +226,7 @@ object KafkaMicroConsumer {
     var message: Option[(Int, MessageData)] = None
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
-        new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
@@ -342,7 +339,7 @@ object KafkaMicroConsumer {
   def observe(topic: String, brokers: Seq[Broker], correlationId: Int)(observer: MessageData => Unit)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[Unit]] = {
     Future.sequence(getTopicPartitions(topic) map { partition =>
       Future {
-        new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
@@ -366,7 +363,7 @@ object KafkaMicroConsumer {
   /**
    * Retrieves the partition meta data and replicas for the lead broker
    */
-  private def getLeaderPartitionMetaDataAndReplicas(topic: TopicSlice, brokers: Seq[Broker], correlationId: Int): Option[(Broker, PartitionMetadata, Seq[Broker])] = {
+  private def getLeaderPartitionMetaDataAndReplicas(topic: TopicAndPartition, brokers: Seq[Broker], correlationId: Int): Option[(Broker, PartitionMetadata, Seq[Broker])] = {
     for {
       pmd <- brokers.foldLeft[Option[PartitionMetadata]](None)((result, broker) => result ?? getPartitionMetadata(broker, topic, correlationId))
       leader <- pmd.leader map (r => Broker(r.host, r.port))
@@ -377,21 +374,21 @@ object KafkaMicroConsumer {
   /**
    * Retrieves the partition meta data for the given broker
    */
-  private def getPartitionMetadata(broker: Broker, topic: TopicSlice, correlationId: Int): Option[PartitionMetadata] = {
+  private def getPartitionMetadata(broker: Broker, topicAndPartition: TopicAndPartition, correlationId: Int): Option[PartitionMetadata] = {
     connect(broker, makeClientID("pmdLookup")) use { consumer =>
       Try {
         // submit the request and retrieve the response
-        val response = consumer.send(new TopicMetadataRequest(Seq(topic.name), correlationId))
+        val response = consumer.send(new TopicMetadataRequest(Seq(topicAndPartition.topic), correlationId))
 
         // capture the meta data for the partition
         (response.topicsMetadata flatMap { tmd =>
-          tmd.partitionsMetadata.find(m => m.partitionId == topic.partition)
+          tmd.partitionsMetadata.find(m => m.partitionId == topicAndPartition.partition)
         }).headOption
 
       } match {
         case Success(pmd) => pmd
         case Failure(e) =>
-          throw new RuntimeException(s"Error communicating with Broker [$broker] to find Leader for [$topic] Reason: ${e.getMessage}")
+          throw new RuntimeException(s"Error communicating with Broker [$broker] to find Leader for [$topicAndPartition] Reason: ${e.getMessage}")
       }
     }
   }

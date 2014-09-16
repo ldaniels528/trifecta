@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.concurrent.atomic.AtomicLong
 
+import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
@@ -47,7 +48,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private val correlationId: Int = (Math.random * Int.MaxValue).toInt
 
   // incoming messages cache
-  private var incomingMessageCache = Map[TopicSlice, Inbound]()
+  private var incomingMessageCache = Map[TopicAndPartition, Inbound]()
   private var lastInboundCheck: Long = _
 
   // define the offset for message cursor navigation commands
@@ -104,7 +105,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example {{{ kcommit com.shocktrade.alerts 0 devc0 123678 }}}
    * @example {{{ kcommit devc0 123678 }}}
    */
-  def commitOffset(params: UnixLikeArgs): Option[Short] = {
+  def commitOffset(params: UnixLikeArgs) {
     // get the arguments (topic, partition, groupId and offset)
     val (topic, partition, groupId, offset) = params.args match {
       case aGroupId :: anOffset :: Nil => cursor map (c => (c.topic, c.partition, aGroupId, parseOffset(anOffset))) getOrElse dieNoCursor
@@ -113,7 +114,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // perform the action
-    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use (
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (
       _.commitOffsets(groupId, offset, params("-m") getOrElse "N/A"))
   }
 
@@ -183,7 +184,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // perform the action
-    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use (_.fetchOffsets(groupId))
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.fetchOffsets(groupId))
   }
 
   /**
@@ -321,7 +322,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * Returns the first offset for a given topic
    */
   def getFirstOffset(topic: String, partition: Int): Option[Long] = {
-    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use (_.getFirstOffset)
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getFirstOffset)
   }
 
   /**
@@ -339,7 +340,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * Returns the last offset for a given topic
    */
   def getLastOffset(topic: String, partition: Int): Option[Long] = {
-    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use (_.getLastOffset)
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getLastOffset)
   }
 
   /**
@@ -368,7 +369,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = getFetchSize(params)
 
     // retrieve the key
-    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { consumer =>
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
       consumer.fetch(offset, fetchSize).headOption map (_.key)
     }
   }
@@ -390,7 +391,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // retrieve the message
-    val messageData = new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { consumer =>
+    val messageData = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
       val myOffset: Long = instant flatMap (t => consumer.getOffsetsBefore(t).headOption) getOrElse offset
       consumer.fetch(myOffset, defaultFetchSize).headOption
     }
@@ -452,7 +453,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = getFetchSize(params)
 
     // perform the action
-    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use {
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use {
       _.fetch(offset.toLong, fetchSize).headOption map (_.message.length)
     }
   }
@@ -474,7 +475,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = getFetchSize(params)
 
     // perform the action
-    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { consumer =>
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
       val offsets = startOffset.toLong to endOffset.toLong
       val messages = consumer.fetch(offsets, fetchSize).map(_.message.length)
       if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Nil
@@ -720,7 +721,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
       // retrieve the statistics for each topic
       getStatisticsData(topic, beginPartition, endPartition) map { o =>
-        val prevInbound = incomingMessageCache.get(TopicSlice(o.topic, o.partition))
+        val prevInbound = incomingMessageCache.get(TopicAndPartition(o.topic, o.partition))
         val lastCheckTime = prevInbound.map(_.lastCheckTime.getTime) getOrElse System.currentTimeMillis()
         val currentTime = System.currentTimeMillis()
         val elapsedTime = 1 + (currentTime - lastCheckTime) / 1000L
@@ -731,7 +732,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }).toSeq
 
     // cache the unfiltered inbound data
-    incomingMessageCache = incomingMessageCache ++ Map(inboundData map (i => TopicSlice(i.topic, i.partition) -> i): _*)
+    incomingMessageCache = incomingMessageCache ++ Map(inboundData map (i => TopicAndPartition(i.topic, i.partition) -> i): _*)
 
     // filter out the non-changed records
     inboundData.filterNot(_.change == 0) sortBy (-_.change)
@@ -779,7 +780,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // reset the consumer group ID for each partition
     (start to end) foreach { partition =>
-      new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId = 0) use { consumer =>
+      new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId = 0) use { consumer =>
         consumer.commitOffsets(groupId, offset = 0L, "resetting consumer ID")
       }
     }

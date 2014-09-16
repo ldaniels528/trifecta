@@ -7,6 +7,7 @@ import com.ldaniels528.verify.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.EndPoint
 import com.ldaniels528.verify.util.VxUtils._
+import kafka.common.TopicAndPartition
 import org.junit.{After, Before, Test}
 import org.slf4j.LoggerFactory
 
@@ -71,7 +72,7 @@ class KafkaMacroConsumerTest {
 
     // reset each partitions
     (0 to (partitions - 1)) foreach { partition =>
-      new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, 1) use (_.commitOffsets(groupId, 0L, "Development offset"))
+      new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, 1) use (_.commitOffsets(groupId, 0L, "Development offset"))
     }
   }
 
