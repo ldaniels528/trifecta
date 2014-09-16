@@ -2,12 +2,14 @@ package com.ldaniels528.verify.modules.storm
 
 import java.net.{URL, URLClassLoader}
 
-import backtype.storm.generated.Nimbus
+import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
 import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules.{Command, Module, SimpleParams}
 import com.ldaniels528.verify.vscript.Variable
+import net.liftweb.json.DefaultFormats
+import net.liftweb.json.JsonAST.JValue
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
@@ -45,7 +47,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
     Command(this, "srun", runTopology, SimpleParams(Seq("jarPath", "className"), Seq("arg0", "arg1", "arg2")), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true, undocumented = true)
   )
 
-  override def getVariables: Seq[Variable] = Seq.empty
+  override def getVariables: Seq[Variable] = Nil
 
   override def moduleName = "storm"
 
@@ -83,8 +85,8 @@ class StormModule(rt: VxRuntimeContext) extends Module {
     // get the topology ID
     val topologyId = params.args.head
 
-    client.map(_.getTopology(topologyId)) map { t =>
-      Seq(TopologyInfo(topologyId, t.get_bolts_size, t.get_spouts_size))
+    client.map(_.getTopology(topologyId)) map { topology =>
+      Seq(TopologyInfo(topologyId, topology.get_bolts_size, topology.get_spouts_size))
     } getOrElse Seq.empty
   }
 
@@ -94,29 +96,71 @@ class StormModule(rt: VxRuntimeContext) extends Module {
    * "sbolts" - Retrieves the list of bolts for a given topology by ID
    * @example {{{ sbolts nm-traffic-rate-aggregation-17-1407973634 }}}
    */
-  def getTopologyBolts(params: UnixLikeArgs): Seq[BoltSpoutInfo] = {
+  def getTopologyBolts(params: UnixLikeArgs): Seq[BoltInfo] = {
+    import net.liftweb.json._
+
     // get the topology ID
     val topologyId = params.args.head
 
-    client.map(_.getTopology(topologyId)) map { t =>
-      t.get_bolts.toSeq map { case (name, bolt) => BoltSpoutInfo(topologyId, name)}
-    } getOrElse Seq.empty
+    client.map(_.getTopology(topologyId)) map { topology =>
+      topology.get_bolts.toSeq filterNot { case (name, _) => name.startsWith("__")} map { case (name, bolt) =>
+        //println(s"bolt.get_common.get_json_conf = ${bolt.get_common().get_json_conf()}")
+        val jsConf = parse(bolt.get_common.get_json_conf)
+        val tickTupleFreq = getStringValue(jsConf \ "topology.tick.tuple.freq.secs")
+
+        val result = (bolt.get_common.get_inputs flatMap { case (id, grouping) =>
+          //println(s"\tbolt.get_common.get_inputs: ${id.get_componentId} = $grouping [${grouping.getClass.getName}]")
+          for {
+            groupId <- Option(id.get_componentId)
+            (groupingFields, groupingType) <- getGroupingValue(grouping)
+          } yield (groupId, groupingFields, groupingType)
+        }).headOption
+
+        // get the group ID and grouping fields
+        val (groupId, groupingFields, groupingType) = result match {
+          case Some((aGroupId, aGrouping, aGroupType)) => (Option(aGroupId), Option(aGrouping), Option(aGroupType))
+          case None => (None, None, None)
+        }
+
+        BoltInfo(topologyId, name, Option(bolt.get_common) map (_.get_parallelism_hint), groupId, groupingFields, groupingType, tickTupleFreq)
+      }
+    } getOrElse Nil
+  }
+
+  case class BoltInfo(topologyId: String, name: String, parallelism: Option[Int], input: Option[String], groupingFields: Option[String], groupingType: Option[String], tickTupleFreq: Option[String])
+
+  private def getStringValue(jsConf: JValue): Option[String] = {
+    implicit val formats = DefaultFormats
+
+    Try(jsConf.extract[String]) match {
+      case Success(v) => Some(v)
+      case Failure(e) => None
+    }
+  }
+
+  private def getGroupingValue(grouping: Grouping): Option[(String, String)] = {
+    if (grouping.is_set_fields()) Option(grouping.get_fields) map (g => (g.mkString(", "), "Fields"))
+    else if (grouping.is_set_all()) Option(grouping.get_all) map (g => (g.toString, "All"))
+    else if (grouping.is_set_local_or_shuffle()) Option(grouping.get_local_or_shuffle()) map (g => ("", "Local/Shuffle"))
+    else None
   }
 
   /**
    * "spouts" - Retrieves the list of spouts for a given topology by ID
    * @example {{{ sbolts nm-traffic-rate-aggregation-17-1407973634 }}}
    */
-  def getTopologySpouts(params: UnixLikeArgs): Seq[BoltSpoutInfo] = {
+  def getTopologySpouts(params: UnixLikeArgs): Seq[SpoutInfo] = {
     // get the topology ID
     val topologyId = params.args.head
 
     client.map(_.getTopology(topologyId)) map { t =>
-      t.get_spouts.toSeq map { case (name, spout) => BoltSpoutInfo(topologyId, name)}
+      t.get_spouts.toSeq map { case (name, spout) =>
+        SpoutInfo(topologyId, name, Option(spout.get_common) map (_.get_parallelism_hint))
+      }
     } getOrElse Seq.empty
   }
 
-  case class BoltSpoutInfo(topologyId: String, name: String)
+  case class SpoutInfo(topologyId: String, name: String, parallelism: Option[Int])
 
   /**
    * "sdeploy" command - Deploys a topology to the Storm server
