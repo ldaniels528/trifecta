@@ -103,26 +103,27 @@ class StormModule(rt: VxRuntimeContext) extends Module {
     val topologyId = params.args.head
 
     client.map(_.getTopology(topologyId)) map { topology =>
-      topology.get_bolts.toSeq filterNot { case (name, _) => name.startsWith("__")} map { case (name, bolt) =>
-        //println(s"bolt.get_common.get_json_conf = ${bolt.get_common().get_json_conf()}")
-        val jsConf = parse(bolt.get_common.get_json_conf)
-        val tickTupleFreq = getStringValue(jsConf \ "topology.tick.tuple.freq.secs")
+      topology.get_bolts.toSeq filterNot { case (name, _) => name.startsWith("__")} sortBy { case (name, _) => name} map {
+        case (name, bolt) =>
+          //println(s"bolt.get_common.get_json_conf = ${bolt.get_common().get_json_conf()}")
+          val jsConf = parse(bolt.get_common.get_json_conf)
+          val tickTupleFreq = getStringValue(jsConf \ "topology.tick.tuple.freq.secs")
 
-        val result = (bolt.get_common.get_inputs flatMap { case (id, grouping) =>
-          //println(s"\tbolt.get_common.get_inputs: ${id.get_componentId} = $grouping [${grouping.getClass.getName}]")
-          for {
-            groupId <- Option(id.get_componentId)
-            (groupingFields, groupingType) <- getGroupingValue(grouping)
-          } yield (groupId, groupingFields, groupingType)
-        }).headOption
+          val result = (bolt.get_common.get_inputs flatMap { case (id, grouping) =>
+            //println(s"\tbolt.get_common.get_inputs: ${id.get_componentId} = $grouping [${grouping.getClass.getName}]")
+            for {
+              groupId <- Option(id.get_componentId)
+              (groupingFields, groupingType) <- getGroupingValue(grouping)
+            } yield (groupId, groupingFields, groupingType)
+          }).headOption
 
-        // get the group ID and grouping fields
-        val (groupId, groupingFields, groupingType) = result match {
-          case Some((aGroupId, aGrouping, aGroupType)) => (Option(aGroupId), Option(aGrouping), Option(aGroupType))
-          case None => (None, None, None)
-        }
+          // get the group ID and grouping fields
+          val (groupId, groupingFields, groupingType) = result match {
+            case Some((aGroupId, aGrouping, aGroupType)) => (Option(aGroupId), Option(aGrouping), Option(aGroupType))
+            case None => (None, None, None)
+          }
 
-        BoltInfo(topologyId, name, Option(bolt.get_common) map (_.get_parallelism_hint), groupId, groupingFields, groupingType, tickTupleFreq)
+          BoltInfo(topologyId, name, Option(bolt.get_common) map (_.get_parallelism_hint), groupId, groupingFields, groupingType, tickTupleFreq)
       }
     } getOrElse Nil
   }
