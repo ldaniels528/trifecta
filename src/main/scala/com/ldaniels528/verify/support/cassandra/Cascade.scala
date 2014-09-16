@@ -6,6 +6,7 @@ import com.datastax.driver.core._
 
 import scala.collection.JavaConversions._
 import scala.collection.concurrent.TrieMap
+import scala.language.existentials
 
 /**
  * DataStax/Cassandra Object Mapping Utility
@@ -52,7 +53,7 @@ object Cascade extends ScalaBeanUtil {
         // lookup the constructor and methods
         val cons = beanClass.getConstructors()(0)
         val methods = extractMethods(beanClass)
-        cache += (beanClass -> (cons, methods))
+        cache += (beanClass -> (cons -> methods))
         (cons, methods)
     }
   }

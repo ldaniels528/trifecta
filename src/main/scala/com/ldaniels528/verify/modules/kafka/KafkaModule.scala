@@ -247,6 +247,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       if (conditions.forall(_.satisfies(md.message, md.key))) {
         publisher.publish(outputTopic, md.key, md.message)
         counter.incrementAndGet()
+        ()
       }
     }
 
