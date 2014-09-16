@@ -22,7 +22,7 @@ import scala.util.{Failure, Success, Try}
  */
 class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId: Int) {
   // generate the client ID
-  private val clientID = s"Client_${topic.name}_${topic.partition}_${System.currentTimeMillis()}"
+  private val clientID = makeClientID("client")
 
   // get the leader, meta data and replica brokers
   private val (leader, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topic, seedBrokers, correlationId)
@@ -407,7 +407,7 @@ object KafkaMicroConsumer {
    * Retrieves the partition meta data for the given broker
    */
   private def getPartitionMetadata(broker: Broker, topic: TopicSlice, correlationId: Int): Option[PartitionMetadata] = {
-    connect(broker, clientID = s"pmdLookup_${System.currentTimeMillis()}") use { consumer =>
+    connect(broker, makeClientID("pmdLookup")) use { consumer =>
       Try {
         // submit the request and retrieve the response
         val response = consumer.send(new TopicMetadataRequest(Seq(topic.name), correlationId))
@@ -429,7 +429,7 @@ object KafkaMicroConsumer {
    * Retrieves the partition meta data for the given broker
    */
   private def getTopicMetadata(broker: Broker, topics: Seq[String], correlationId: Int): Seq[TopicMetadata] = {
-    connect(broker, clientID = s"tmdLookup_${System.currentTimeMillis()}") use { consumer =>
+    connect(broker, makeClientID("tmdLookup")) use { consumer =>
       Try {
         // submit the request and retrieve the response
         val response = consumer.send(new TopicMetadataRequest(topics, correlationId))
@@ -446,6 +446,7 @@ object KafkaMicroConsumer {
     }
   }
 
+  private def makeClientID(prefix:String): String =  s"$prefix${System.nanoTime()}"
 
   /**
    * Represents a message and offset
