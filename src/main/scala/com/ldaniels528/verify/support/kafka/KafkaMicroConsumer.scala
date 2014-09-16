@@ -129,20 +129,20 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
    * Returns the first available offset
    * @return an option of an offset
    */
-  def getFirstOffset: Option[Long] = getOffsetsBefore(OffsetRequest.EarliestTime)
+  def getFirstOffset: Option[Long] = getOffsetsBefore(OffsetRequest.EarliestTime).headOption
 
   /**
    * Returns the last available offset
    * @return an option of an offset
    */
-  def getLastOffset: Option[Long] = getOffsetsBefore(OffsetRequest.LatestTime) map (offset => Math.max(0, offset - 1))
+  def getLastOffset: Option[Long] = getOffsetsBefore(OffsetRequest.LatestTime).headOption map (offset => Math.max(0, offset - 1))
 
   /**
    * Returns the offset for an instance in time
    * @param time the given time EPOC in milliseconds
    * @return an option of an offset
    */
-  def getOffsetsBefore(time: Long): Option[Long] = {
+  def getOffsetsBefore(time: Long): Iterable[Long] = {
     // create the topic/partition and request information
     val topicAndPartition = new TopicAndPartition(topic.name, topic.partition)
     val requestInfo = Map(topicAndPartition -> new PartitionOffsetRequestInfo(time, 1))
@@ -160,13 +160,13 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
           val code = por.error
           throw new RuntimeException(s"Error fetching data Offset Data the Broker. Reason: $code - ${ERROR_CODES.getOrElse(code, s"UNKNOWN - $code")}")
       }
-      None
+      Nil
     } else {
       // return the first offset
       for {
         topicMap <- response.offsetsGroupedByTopic.get(topic.name)
         por <- topicMap.get(topicAndPartition)
-        offset <- por.offsets.headOption
+        offset <- por.offsets
       } yield offset
     }
   }

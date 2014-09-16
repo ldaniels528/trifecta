@@ -390,7 +390,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // retrieve the message
     val messageData = new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { consumer =>
-      val myOffset: Long = instant flatMap consumer.getOffsetsBefore getOrElse offset
+      val myOffset: Long = instant flatMap(i => consumer.getOffsetsBefore(i)).headOption getOrElse offset
       consumer.fetch(myOffset, defaultFetchSize).headOption
     }
 
