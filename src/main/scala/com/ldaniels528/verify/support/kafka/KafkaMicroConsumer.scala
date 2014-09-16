@@ -25,7 +25,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
 
   // get the leader, meta data and replica brokers
   private val (leader, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topicAndPartition, seedBrokers, correlationId)
-    .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for $topicAndPartition"))
+    .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for topic ${topicAndPartition.topic} partition ${topicAndPartition.partition}"))
 
   // get the initial broker (topic leader)
   private val broker: Broker = leader
