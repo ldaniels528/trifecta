@@ -3,7 +3,7 @@ package com.ldaniels528.verify.support.kafka
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
-import com.ldaniels528.verify.support.kafka.KafkaSubscriber._
+import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer._
 import com.ldaniels528.verify.support.messaging.logic.Condition
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.VxUtils._
@@ -17,10 +17,10 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success, Try}
 
 /**
- * Low-Level Kafka Consumer
+ * Kafka Low-Level Message Consumer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaSubscriber(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId: Int) {
+class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId: Int) {
   // generate the client ID
   private val clientID = s"Client_${topic.name}_${topic.partition}_${System.currentTimeMillis()}"
 
@@ -202,7 +202,7 @@ class KafkaSubscriber(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId
  * Verify Kafka Message Subscriber Singleton
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object KafkaSubscriber {
+object KafkaMicroConsumer {
   private lazy val logger = LoggerFactory.getLogger(getClass)
 
   // setup defaults
@@ -221,7 +221,7 @@ object KafkaSubscriber {
     val counter = new AtomicLong(0)
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
-        new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+        new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
@@ -258,7 +258,7 @@ object KafkaSubscriber {
     var message: Option[(Int, MessageData)] = None
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
-        new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+        new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
@@ -433,7 +433,7 @@ object KafkaSubscriber {
   def observe(topic: String, brokers: Seq[Broker], correlationId: Int)(observer: MessageData => Unit)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[Unit]] = {
     Future.sequence(getTopicPartitions(topic) map { partition =>
       Future {
-        new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+        new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))

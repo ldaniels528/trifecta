@@ -10,7 +10,7 @@ import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.support.avro.{AvroDecoder, AvroReading}
-import com.ldaniels528.verify.support.kafka.KafkaSubscriber.{BrokerDetails, MessageData}
+import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData}
 import com.ldaniels528.verify.support.kafka._
 import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.verify.support.messaging.{MessageCursor, MessageDecoder}
@@ -41,7 +41,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private implicit val zk = rt.zkProxy
 
   // get the list of brokers from zookeeper
-  private val brokers: Seq[Broker] = KafkaSubscriber.getBrokerList(zk) map (b => Broker(b.host, b.port))
+  private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
   // set the default correlation ID
   private val correlationId: Int = (Math.random * Int.MaxValue).toInt
@@ -113,7 +113,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (
+    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use (
       _.commitOffsets(groupId, offset, params("-m") getOrElse "N/A"))
   }
 
@@ -130,7 +130,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val conditions = Seq(compile(compile(field, operator, value), decoder))
 
     // perform the count
-    KafkaSubscriber.count(topic, brokers, correlationId, conditions: _*)
+    KafkaMicroConsumer.count(topic, brokers, correlationId, conditions: _*)
   }
 
   /**
@@ -155,7 +155,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // export the data to the file
     var count = 0L
     new DataOutputStream(new FileOutputStream(file)) use { fos =>
-      KafkaSubscriber.observe(topic, brokers, correlationId) { md =>
+      KafkaMicroConsumer.observe(topic, brokers, correlationId) { md =>
         val message = md.message
         fos.writeInt(message.length)
         fos.write(message)
@@ -183,7 +183,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (_.fetchOffsets(groupId))
+    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use (_.fetchOffsets(groupId))
   }
 
   /**
@@ -212,7 +212,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val conditions = Seq(compile(compile(field, operator, value), decoder))
 
     // perform the search
-    KafkaSubscriber.findOne(topic, brokers, correlationId, conditions: _*) map { result_? =>
+    KafkaMicroConsumer.findOne(topic, brokers, correlationId, conditions: _*) map { result_? =>
       for {
         (partition, md) <- result_?
         decoder <- cursor map (_.decoder)
@@ -243,7 +243,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     publisher.open()
 
     // find and export the messages matching our criteria
-    val task = KafkaSubscriber.observe(inputTopic, brokers, correlationId) { md =>
+    val task = KafkaMicroConsumer.observe(inputTopic, brokers, correlationId) { md =>
       if (conditions.forall(_.satisfies(md.message, md.key))) {
         publisher.publish(outputTopic, md.key, md.message)
         counter.incrementAndGet()
@@ -263,7 +263,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   /**
    * "kbrokers" - Retrieves the list of Kafka brokers
    */
-  def getBrokers(args: UnixLikeArgs): Seq[BrokerDetails] = KafkaSubscriber.getBrokerList
+  def getBrokers(args: UnixLikeArgs): Seq[BrokerDetails] = KafkaMicroConsumer.getBrokerList
 
   /**
    * "kconsumers" - Retrieves the list of Kafka consumers
@@ -273,7 +273,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val topicPrefix = params.args.headOption
 
     // retrieve the data
-    KafkaSubscriber.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition)) map { c =>
+    KafkaMicroConsumer.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition)) map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
       ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
@@ -320,7 +320,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * Returns the first offset for a given topic
    */
   def getFirstOffset(topic: String, partition: Int): Option[Long] = {
-    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (_.getFirstOffset)
+    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use (_.getFirstOffset)
   }
 
   /**
@@ -338,7 +338,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * Returns the last offset for a given topic
    */
   def getLastOffset(topic: String, partition: Int): Option[Long] = {
-    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use (_.getLastOffset)
+    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use (_.getLastOffset)
   }
 
   /**
@@ -367,7 +367,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = getFetchSize(params)
 
     // retrieve the key
-    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
       subs.fetch(offset, fetchSize).headOption map (_.key)
     }
   }
@@ -389,7 +389,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // retrieve the message
-    val messageData = new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
+    val messageData = new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
       val myOffset: Long = instant flatMap subs.getOffsetsBefore getOrElse offset
       subs.fetch(myOffset, defaultFetchSize).headOption
     }
@@ -451,7 +451,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = getFetchSize(params)
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use {
+    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use {
       _.fetch(offset.toLong, fetchSize).headOption map (_.message.length)
     }
   }
@@ -473,7 +473,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val fetchSize = getFetchSize(params)
 
     // perform the action
-    new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subscriber =>
+    new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId) use { subscriber =>
       val offsets = startOffset.toLong to endOffset.toLong
       val messages = subscriber.fetch(offsets, fetchSize).map(_.message.length)
       if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Nil
@@ -507,7 +507,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getReplicas(params: UnixLikeArgs): Seq[TopicReplicas] = {
     val prefix = params.args.headOption
 
-    KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
+    KafkaMicroConsumer.getTopicList(brokers, correlationId) flatMap { t =>
       t.replicas map { replica =>
         TopicReplicas(t.topic, t.partitionId, replica.toString, replica.brokerId, t.isr.contains(replica))
       } filter (t => prefix.isEmpty || prefix.exists(t.topic.startsWith))
@@ -524,11 +524,11 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val results = params.args match {
       case Nil =>
         val topic = cursor map (_.topic) getOrElse dieNoCursor
-        val partitions = KafkaSubscriber.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
+        val partitions = KafkaMicroConsumer.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
         if (partitions.nonEmpty) Some((topic, partitions.min, partitions.max)) else None
 
       case topic :: Nil =>
-        val partitions = KafkaSubscriber.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
+        val partitions = KafkaMicroConsumer.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
         if (partitions.nonEmpty) Some((topic, partitions.min, partitions.max)) else None
 
       case topic :: aPartition :: Nil =>
@@ -573,7 +573,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def getTopics(params: UnixLikeArgs): Seq[TopicDetail] = {
     val prefix = params.args.headOption
 
-    KafkaSubscriber.getTopicList(brokers, correlationId) flatMap { t =>
+    KafkaMicroConsumer.getTopicList(brokers, correlationId) flatMap { t =>
       val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size, t.isr.size)
       if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(detail) else None
     }
@@ -707,7 +707,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    */
   private def inboundMessageStatistics(topicPrefix: Option[String] = None): Iterable[Inbound] = {
     // start by retrieving a list of all topics
-    val topics = KafkaSubscriber.getTopicList(brokers, correlationId)
+    val topics = KafkaMicroConsumer.getTopicList(brokers, correlationId)
       .filter(t => t.topic == topicPrefix.getOrElse(t.topic))
       .groupBy(_.topic)
 
@@ -771,14 +771,14 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // get the partition range
-    val partitions = KafkaSubscriber.getTopicList(brokers, correlationId) filter (_.topic == topic) map (_.partitionId)
+    val partitions = KafkaMicroConsumer.getTopicList(brokers, correlationId) filter (_.topic == topic) map (_.partitionId)
     if (partitions.isEmpty)
       throw new IllegalStateException(s"No partitions found for topic $topic")
     val (start, end) = (partitions.min, partitions.max)
 
     // reset the consumer group ID for each partition
     (start to end) foreach { partition =>
-      new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId = 0) use { subscriber =>
+      new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, correlationId = 0) use { subscriber =>
         subscriber.commitOffsets(groupId, offset = 0L, "resetting consumer ID")
       }
     }
@@ -825,7 +825,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private def parseOffset(offset: String): Long = parseLong("offset", offset)
 
   private def getPartitionRange(topic: String): (Int, Int) = {
-    val partitions = KafkaSubscriber.getTopicList(brokers, correlationId) filter (_.topic == topic) map (_.partitionId)
+    val partitions = KafkaMicroConsumer.getTopicList(brokers, correlationId) filter (_.topic == topic) map (_.partitionId)
     if (partitions.isEmpty)
       throw new IllegalStateException(s"No partitions found for topic $topic")
     (partitions.min, partitions.max)

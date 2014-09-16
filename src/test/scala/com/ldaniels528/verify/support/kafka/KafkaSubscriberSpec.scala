@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.support.kafka
 
-import com.ldaniels528.verify.support.kafka.KafkaSubscriber.BrokerDetails
+import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer.BrokerDetails
 import net.liftweb.json._
 import org.scalatest.Matchers._
 import org.scalatest.mock.MockitoSugar

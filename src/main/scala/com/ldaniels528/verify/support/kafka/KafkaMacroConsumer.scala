@@ -3,7 +3,7 @@ package com.ldaniels528.verify.support.kafka
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import akka.actor.ActorRef
-import com.ldaniels528.verify.support.kafka.KafkaStreamingConsumer.StreamedMessage
+import com.ldaniels528.verify.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.verify.support.messaging.logic.Condition
 import com.ldaniels528.verify.util.EndPoint
 import com.ldaniels528.verify.util.VxUtils._
@@ -13,10 +13,10 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success, Try}
 
 /**
- * High-Level Kafka Consumer
+ * Kafka High-Level Message Consumer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
+class KafkaMacroConsumer(consumerConfig: ConsumerConfig) {
   private val consumer = Consumer.create(consumerConfig)
 
   /**
@@ -177,7 +177,7 @@ class KafkaStreamingConsumer(consumerConfig: ConsumerConfig) {
  * Kafka Streaming Consumer Companion Object
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object KafkaStreamingConsumer {
+object KafkaMacroConsumer {
 
   /**
    * Convenience method   for creating Streaming Consumer instances
@@ -186,14 +186,14 @@ object KafkaStreamingConsumer {
    * @return a new Streaming Consumer instance
    * @see http://kafka.apache.org/07/configuration.html
    */
-  def apply(zkEndPoint: EndPoint, groupId: String, params: (String, Any)*): KafkaStreamingConsumer = {
+  def apply(zkEndPoint: EndPoint, groupId: String, params: (String, Any)*): KafkaMacroConsumer = {
     val props = Map(
       "zookeeper.connect" -> zkEndPoint.toString,
       "group.id" -> groupId,
       "zookeeper.session.timeout.ms" -> "400",
       "zookeeper.sync.time.ms" -> "200",
       "auto.commit.interval.ms" -> "1000") ++ Map(params.map { case (k, v) => (k, String.valueOf(v))}: _*)
-    new KafkaStreamingConsumer(new ConsumerConfig(props.toProps))
+    new KafkaMacroConsumer(new ConsumerConfig(props.toProps))
   }
 
   /**

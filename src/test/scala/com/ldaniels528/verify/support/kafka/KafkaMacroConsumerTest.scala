@@ -1,9 +1,9 @@
 package com.ldaniels528.verify.support.kafka
 
-import KafkaStreamingConsumerTest._
+import KafkaMacroConsumerTest._
 import akka.actor.{Actor, ActorSystem, Props}
 import com.ldaniels528.tabular.Tabular
-import com.ldaniels528.verify.support.kafka.KafkaStreamingConsumer.StreamedMessage
+import com.ldaniels528.verify.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.EndPoint
 import com.ldaniels528.verify.util.VxUtils._
@@ -17,7 +17,7 @@ import scala.concurrent.duration._
  * Kafka Streaming Consumer Test
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaStreamingConsumerTest {
+class KafkaMacroConsumerTest {
   // setup our Zookeeper connection
   private val zkEndPoint = EndPoint("dev501", 2181)
   private implicit val zk = ZKProxy(zkEndPoint)
@@ -34,13 +34,13 @@ class KafkaStreamingConsumerTest {
     val streamingActor = system.actorOf(Props[StreamingMessageActor], name = "streamingActor")
 
     // start streaming the data
-    val consumer = KafkaStreamingConsumer(zkEndPoint, consumerId)
+    val consumer = KafkaMacroConsumer(zkEndPoint, consumerId)
     consumer.stream("com.shocktrade.quotes.csv", parallelism, streamingActor)
   }
 
   @Test
   def iteratePatternTest(): Unit = {
-    val consumer = KafkaStreamingConsumer(zkEndPoint, consumerId)
+    val consumer = KafkaMacroConsumer(zkEndPoint, consumerId)
     for (message <- consumer.iterate("com.shocktrade.quotes.csv", parallelism = 1)) {
       tabular.transform(Seq(message)) foreach logger.info
     }
@@ -49,7 +49,7 @@ class KafkaStreamingConsumerTest {
   @Test
   def observerPatternTest(): Unit = {
     // start streaming the data
-    val consumer = KafkaStreamingConsumer(zkEndPoint, consumerId)
+    val consumer = KafkaMacroConsumer(zkEndPoint, consumerId)
     consumer.observe("com.shocktrade.quotes.csv", parallelism) { message =>
       tabular.transform(Seq(message)) foreach logger.info
     }
@@ -63,7 +63,7 @@ class KafkaStreamingConsumerTest {
    */
   private def resetOffsets(topic: String, partitions: Int, groupId: String)(implicit zk: ZKProxy): Unit = {
     logger.info("Retrieving Kafka brokers...")
-    val brokerDetails = KafkaSubscriber.getBrokerList
+    val brokerDetails = KafkaMicroConsumer.getBrokerList
     tabular.transform(brokerDetails) foreach logger.info
 
     // extract just the broker objects
@@ -71,7 +71,7 @@ class KafkaStreamingConsumerTest {
 
     // reset each partitions
     (0 to (partitions - 1)) foreach { partition =>
-      new KafkaSubscriber(TopicSlice(topic, partition), brokers, 1) use (_.commitOffsets(groupId, 0L, "Development offset"))
+      new KafkaMicroConsumer(TopicSlice(topic, partition), brokers, 1) use (_.commitOffsets(groupId, 0L, "Development offset"))
     }
   }
 
@@ -81,7 +81,7 @@ class KafkaStreamingConsumerTest {
  * Kafka Streaming Consumer Test Companion Object
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object KafkaStreamingConsumerTest {
+object KafkaMacroConsumerTest {
   private val logger = LoggerFactory.getLogger(getClass)
   private val tabular = new Tabular()
 
