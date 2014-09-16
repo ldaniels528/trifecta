@@ -161,27 +161,6 @@ class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlatio
           throw new RuntimeException(s"Error fetching data Offset Data the Broker. Reason: $code - ${ERROR_CODES.getOrElse(code, s"UNKNOWN - $code")}")
       }
       Nil
-    } else {
-      // return the first offset
-      for {
-        topicMap <- response.offsetsGroupedByTopic.get(topic.name)
-        por <- topicMap.get(topicAndPartition)
-        offset <- por.offsets
-      } yield offset
-    }
-  }
-
-  private def toArray(payload: ByteBuffer): Array[Byte] = {
-    val bytes = new Array[Byte](payload.limit)
-    payload.get(bytes)
-    bytes
-  }
-
-  private def findNewLeader(oldLeader: Broker, correlationId: Int): Option[Broker] = {
-    def f() = for {
-      (leader, metadata, replicas) <- getLeaderPartitionMetaDataAndReplicas(topic, replicas, correlationId)
-    } yield leader
-    untilTimeout(5.seconds, 1.second, f)
   }
 
 }
@@ -440,26 +419,6 @@ object KafkaMicroConsumer {
    * @return a unique client identifier
    */
   private def makeClientID(prefix: String): String = s"$prefix${System.nanoTime()}"
-
-  /**
-   * Continues to retry the given function until option returns some value
-   * @param duration the given wait duration
-   * @param delay the given delay between retries
-   * @param f the given function
-   * @tparam T the Option's typed value
-   * @return the option of a value
-   */
-  private def untilTimeout[T](duration: FiniteDuration, delay: FiniteDuration, f: () => Option[T]): Option[T] = {
-    val startTime = System.currentTimeMillis
-    var result: Option[T] = None
-    while (result.isEmpty && (System.currentTimeMillis - startTime < duration)) {
-      result = f()
-      if (result.isEmpty) {
-        Thread.sleep(delay)
-      }
-    }
-    result
-  }
 
   /**
    * Represents a message and offset
