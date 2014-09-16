@@ -54,7 +54,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
       topicMap <- response.requestInfoGroupedByTopic.get(topicAndPartition.topic)
       code <- topicMap.get(topicAndPartition)
     } if (code != 0) {
-      throw new KafkaFetchException(code)
+      throw new VxKafkaException(code)
     }
   }
 
@@ -92,7 +92,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
 
     // submit the request, and process the response
     val response = consumer.fetch(request)
-    if (response.hasError) throw new KafkaFetchException(response.errorCode(topicAndPartition.topic, topicAndPartition.partition))
+    if (response.hasError) throw new VxKafkaException(response.errorCode(topicAndPartition.topic, topicAndPartition.partition))
     else {
       val lastOffset = response.highWatermark(topicAndPartition.topic, topicAndPartition.partition)
       response.messageSet(topicAndPartition.topic, topicAndPartition.partition) map { msgAndOffset =>
@@ -153,9 +153,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
     // handle the response
     if (response.hasError) {
       response.partitionErrorAndOffsets map {
-        case (tap, por) =>
-          val code = por.error
-          throw new RuntimeException(s"Error fetching data Offset Data the Broker. Reason: $code - ${ERROR_CODES.getOrElse(code, s"UNKNOWN - $code")}")
+        case (tap, por) => throw new VxKafkaException(por.error)
       }
       Nil
     } else (for {
@@ -310,12 +308,12 @@ object KafkaMicroConsumer {
     // capture the meta data for all topics
     getTopicMetadata(brokers.head, topics, correlationId) flatMap { tmd =>
       // check for errors
-      if (tmd.errorCode != 0) throw new KafkaFetchException(tmd.errorCode)
+      if (tmd.errorCode != 0) throw new VxKafkaException(tmd.errorCode)
 
       // translate the partition meta data into topic information instances
       tmd.partitionsMetadata map { pmd =>
         // check for errors
-        if (pmd.errorCode != 0) throw new KafkaFetchException(pmd.errorCode)
+        if (pmd.errorCode != 0) throw new VxKafkaException(pmd.errorCode)
 
         TopicDetails(
           tmd.topic,
@@ -444,7 +442,7 @@ object KafkaMicroConsumer {
    * Represents a class of exceptions that occur while attempting to fetch data from a Kafka broker
    * @param code the status/error code
    */
-  class KafkaFetchException(val code: Short)
+  class VxKafkaException(val code: Short)
     extends RuntimeException(ERROR_CODES.getOrElse(code, "Unrecognized Error Code"))
 
   /**
