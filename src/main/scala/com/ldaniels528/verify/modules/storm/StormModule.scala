@@ -8,8 +8,8 @@ import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules.{Command, Module, SimpleParams}
 import com.ldaniels528.verify.vscript.Variable
-import net.liftweb.json.DefaultFormats
 import net.liftweb.json.JsonAST.JValue
+import net.liftweb.json._
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
@@ -123,12 +123,12 @@ class StormModule(rt: VxRuntimeContext) extends Module {
             case None => (None, None, None)
           }
 
-          BoltInfo(topologyId, name, Option(bolt.get_common) map (_.get_parallelism_hint), groupId, groupingFields, groupingType, tickTupleFreq)
+          BoltInfo(name, Option(bolt.get_common) map (_.get_parallelism_hint), groupId, groupingFields, groupingType, tickTupleFreq)
       }
     } getOrElse Nil
   }
 
-  case class BoltInfo(topologyId: String, name: String, parallelism: Option[Int], input: Option[String], groupingFields: Option[String], groupingType: Option[String], tickTupleFreq: Option[String])
+  case class BoltInfo(name: String, parallelism: Option[Int], input: Option[String], groupingFields: Option[String], groupingType: Option[String], tickTupleFreq: Option[String])
 
   private def getStringValue(jsConf: JValue): Option[String] = {
     implicit val formats = DefaultFormats
@@ -156,12 +156,14 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
     client.map(_.getTopology(topologyId)) map { topology =>
       topology.get_spouts.toSeq sortBy { case (name, _) => name} map { case (name, spout) =>
-        SpoutInfo(topologyId, name, Option(spout.get_common) map (_.get_parallelism_hint))
+        val jsConf = parse(spout.get_common.get_json_conf)
+        val tickTupleFreq = getStringValue(jsConf \ "topology.tick.tuple.freq.secs")
+        SpoutInfo(name, Option(spout.get_common) map (_.get_parallelism_hint), tickTupleFreq)
       }
     } getOrElse Seq.empty
   }
 
-  case class SpoutInfo(topologyId: String, name: String, parallelism: Option[Int])
+  case class SpoutInfo(name: String, parallelism: Option[Int], tickTupleFreq: Option[String])
 
   /**
    * "sdeploy" command - Deploys a topology to the Storm server
