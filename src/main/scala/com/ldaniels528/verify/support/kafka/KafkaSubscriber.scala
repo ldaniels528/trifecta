@@ -224,15 +224,12 @@ object KafkaSubscriber {
         new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
-          def eof = (for {o <- offset; lo <- lastOffset} yield o > lo) getOrElse true
+          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
           while (!eof) {
             for {
               ofs <- offset
               msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
-            } {
-              if (conditions.forall(_.satisfies(msg.message, msg.key))) counter.incrementAndGet()
-            }
-
+            } if (conditions.forall(_.satisfies(msg.message, msg.key))) counter.incrementAndGet()
             offset = offset map (_ + 1)
           }
         }
@@ -244,7 +241,6 @@ object KafkaSubscriber {
       case Success(v) => promise.success(counter.get)
       case Failure(e) => promise.failure(e)
     }
-
     promise.future
   }
 
@@ -265,7 +261,7 @@ object KafkaSubscriber {
         new KafkaSubscriber(TopicSlice(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
-          def eof = (for {o <- offset; lo <- lastOffset} yield o > lo) getOrElse true
+          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
           while (!found.get && !eof) {
             for {
               ofs <- offset
@@ -285,7 +281,6 @@ object KafkaSubscriber {
       case Success(v) => promise.success(message)
       case Failure(e) => promise.failure(e)
     }
-
     promise.future
   }
 
@@ -443,7 +438,7 @@ object KafkaSubscriber {
           val lastOffset: Option[Long] = subs.getLastOffset
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
           while (!eof) {
-            for {ofs <- offset; msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption} observer(msg)
+            for (ofs <- offset; msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption) observer(msg)
             offset = offset map (_ + 1)
           }
         }
