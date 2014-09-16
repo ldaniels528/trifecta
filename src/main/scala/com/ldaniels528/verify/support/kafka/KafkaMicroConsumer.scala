@@ -22,7 +22,7 @@ import scala.util.{Failure, Success, Try}
  */
 class KafkaMicroConsumer(topic: TopicSlice, seedBrokers: Seq[Broker], correlationId: Int) {
   // generate the client ID
-  private val clientID = makeClientID("client")
+  private val clientID = makeClientID("consumer")
 
   // get the leader, meta data and replica brokers
   private val (leader, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topic, seedBrokers, correlationId)
