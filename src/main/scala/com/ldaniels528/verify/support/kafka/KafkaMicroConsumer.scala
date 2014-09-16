@@ -20,15 +20,12 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[Broker], correlationId: Int) {
-  // generate the client ID
-  private val clientID = makeClientID("consumer")
-
-  // get the leader, meta data and replica brokers
-  private val (leader, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topicAndPartition, seedBrokers, correlationId)
+ // get the leader, meta data and replica brokers
+  private val (broker, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topicAndPartition, seedBrokers, correlationId)
     .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for topic ${topicAndPartition.topic} partition ${topicAndPartition.partition}"))
 
-  // get the initial broker (topic leader)
-  private val broker: Broker = leader
+  // generate the client ID
+  private val clientID = makeClientID("consumer")
 
   // get the connection (topic consumer)
   private val consumer: SimpleConsumer = connect(broker, clientID)
