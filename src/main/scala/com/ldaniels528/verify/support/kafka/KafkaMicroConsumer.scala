@@ -43,10 +43,10 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
    */
   def commitOffsets(groupId: String, offset: Long, metadata: String) {
     // create the topic/partition and request information
-    val requestInfo = Map(topicAndPartition -> new OffsetMetadataAndError((offset, metadata, 1.toShort)))
+    val requestInfo = Map(topicAndPartition -> OffsetMetadataAndError(offset, metadata, 1.toShort))
 
     // submit the request, and retrieve the response
-    val request = new OffsetCommitRequest(groupId, requestInfo, OffsetRequest.CurrentVersion, correlationId, clientID)
+    val request = OffsetCommitRequest(groupId, requestInfo, OffsetRequest.CurrentVersion, correlationId, clientID)
     val response = consumer.commitOffsets(request)
 
     // retrieve the response code
