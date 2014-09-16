@@ -154,8 +154,8 @@ class StormModule(rt: VxRuntimeContext) extends Module {
     // get the topology ID
     val topologyId = params.args.head
 
-    client.map(_.getTopology(topologyId)) map { t =>
-      t.get_spouts.toSeq map { case (name, spout) =>
+    client.map(_.getTopology(topologyId)) map { topology =>
+      topology.get_spouts.toSeq sortBy { case (name, _) => name} map { case (name, spout) =>
         SpoutInfo(topologyId, name, Option(spout.get_common) map (_.get_parallelism_hint))
       }
     } getOrElse Seq.empty
