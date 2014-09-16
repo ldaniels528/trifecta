@@ -290,6 +290,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
     for {
       command <- params.args match {
         case Nil => SessionManagement.history.last
+        case "!" :: Nil => SessionManagement.history.last
         case "?" :: count :: Nil => Some(s"history $count")
         case "?" :: Nil => Some("history")
         case index :: Nil => SessionManagement.history(parseInt("history ID", index) - 1)
