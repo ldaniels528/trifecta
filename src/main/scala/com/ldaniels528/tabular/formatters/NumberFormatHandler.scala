@@ -2,7 +2,8 @@ package com.ldaniels528.tabular.formatters
 
 import com.ldaniels528.tabular.Tabular
 
-import scala.util.{Failure, Try, Success}
+import scala.language.reflectiveCalls
+import scala.util.{Failure, Success, Try}
 
 /**
  * Number Format Handler
