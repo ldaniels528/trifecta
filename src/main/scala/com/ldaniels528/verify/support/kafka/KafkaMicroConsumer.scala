@@ -446,7 +446,12 @@ object KafkaMicroConsumer {
     }
   }
 
-  private def makeClientID(prefix:String): String =  s"$prefix${System.nanoTime()}"
+  /**
+   * Generates a unique client identifier
+   * @param prefix the given prefix
+   * @return a unique client identifier
+   */
+  private def makeClientID(prefix: String): String = s"$prefix${System.nanoTime()}"
 
   /**
    * Represents a message and offset
