@@ -543,18 +543,17 @@ Finally, let's look at the results:
 To view all of the Storm commands, which all begin with the letter "s":
 
     storm:localhost> ?s
-    + --------------------------------------------------------------------------- +
-    | command   module  description                                               |
-    + --------------------------------------------------------------------------- +
-    | sbolts    storm   Retrieves the list of bolts for s given topology by ID    |
-    | sconf     storm   Lists, retrieves or sets the configuration keys           |
-    | sconnect  storm   Establishes a connect to the Storm Nimbus Host            |
-    | sdeploy   storm   Deploys a topology to the Storm server (EXPERIMENTAL)     |
-    | sget      storm   Retrieves the information for a topology                  |
-    | skill     storm   Kills a running topology                                  |
-    | sls       storm   Lists available topologies                                |
-    | spouts    storm   Retrieves the list of spouts for a given topology by ID   |
-    + --------------------------------------------------------------------------- +
+    + -------------------------------------------------------------------------------------- +
+    | command   module  description                                                          |
+    + -------------------------------------------------------------------------------------- +
+    | sbolts    storm   Retrieves the list of bolts for s given topology by ID               |
+    | sconf     storm   Lists, retrieves or sets the configuration keys                      |
+    | sconnect  storm   Establishes (or re-establishes) a connect to the Storm Nimbus Host   |
+    | sget      storm   Retrieves the information for a topology                             |
+    | skill     storm   Kills a running topology                                             |
+    | sls       storm   Lists available topologies                                           |
+    | spouts    storm   Retrieves the list of spouts for a given topology by ID              |
+    + -------------------------------------------------------------------------------------- +
 
 Let's view the currently running topologies:
 
@@ -562,43 +561,42 @@ Let's view the currently running topologies:
     + ---------------------------------------------------------------------------------------------------------------------------------------------- +
     | name                                     topologyId                                            status  workers  executors  tasks  uptimeSecs   |
     + ---------------------------------------------------------------------------------------------------------------------------------------------- +
-    | nm-traffic-rate-aggregation-xxmyller     nm-traffic-rate-aggregation-xxmyller-17-1407973634    ACTIVE  4        22         22     1619957      |
-    | CTSC0-Traffic-Categorizer                CTSC0-Traffic-Categorizer-8-1408969694                ACTIVE  4        125        125    623897       |
-    | NetworkMonitoringTrafficRateAggregation  NetworkMonitoringTrafficRateAggregation-9-1409160151  ACTIVE  4        22         22     433440       |
-    | Hydra-Listener-Traffic-Rates             Hydra-Listener-Traffic-Rates-13-1407867259            ACTIVE  4        30         30     1726332      |
-    | nm-traffic-rate-aggregation              nm-traffic-rate-aggregation-10-1407854552             ACTIVE  4        22         22     1739039      |
+    | AvroSummaryMetricCounterTopology         AvroSummaryMetricCounterTopology-42-1410749701        ACTIVE  4        48         48     93153        |
+    | Hydra-Listener-Traffic-Rates             Hydra-Listener-Traffic-Rates-3-1409671097             ACTIVE  4        30         30     1171757      |
+    | TopTalkersTopologyV5                     TopTalkersTopologyV5-44-1410803756                    ACTIVE  4        53         53     39098        |
+    | NetworkMonitoringTrafficRateAggregation  NetworkMonitoringTrafficRateAggregation-2-1409671007  ACTIVE  4        22         22     1171847      |
     + ---------------------------------------------------------------------------------------------------------------------------------------------- +
 
 Next, let's look at the details of one of the topologies by ID:
 
-    storm:localhost> sget nm-traffic-rate-aggregation-xxmyller-17-1407973634
-    + ------------------------------------------------------------------- +
-    | topologyId                                          bolts  spouts   |
-    + ------------------------------------------------------------------- +
-    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  5      1        |
-    + ------------------------------------------------------------------- +
+    storm:localhost> sget TopTalkersTopologyV5-44-1410803756
+    + --------------------------------------------------- +
+    | topologyId                          bolts  spouts   |
+    + --------------------------------------------------- +
+    | TopTalkersTopologyV5-44-1410803756  7      1        |
+    + --------------------------------------------------- +
 
 Let's look at the Topology's bolts:
 
-    zookeeper:vsccrtc201-brn1:2181/> sbolts nm-traffic-rate-aggregation-xxmyller-17-1407973634
-    + ------------------------------------------------------------------------------------ +
-    | topologyId                                          name                             |
-    + ------------------------------------------------------------------------------------ +
-    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  nm-aggregation-kafka-sink-bolt   |
-    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  nm-aggregation-tuple-bolt        |
-    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  __acker                          |
-    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  __system                         |
-    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  nm-aggregation-reporting-bolt    |
-    + ------------------------------------------------------------------------------------ +
+    storm:localhost> sbolts TopTalkersTopologyV5-44-1410803756
+    + ------------------------------------------------------------------------------------------------------------------------------------------- +
+    | topologyId                          name                  parallelism  input                 groupingFields  groupingType   tickTupleFreq   |
+    + ------------------------------------------------------------------------------------------------------------------------------------------- +
+    | TopTalkersTopologyV5-44-1410803756  decoderBolt           10           kafkaSpout                            Local/Shuffle                  |
+    | TopTalkersTopologyV5-44-1410803756  kafkaSinkVipOnlyBolt  1            summaryByVipOnlyBolt                  Local/Shuffle                  |
+    | TopTalkersTopologyV5-44-1410803756  kafkaSinkVipSiteBolt  1            summaryByVipSiteBolt                  Local/Shuffle                  |
+    | TopTalkersTopologyV5-44-1410803756  summaryByVipOnlyBolt  20           decoderBolt           vip             Fields         60              |
+    | TopTalkersTopologyV5-44-1410803756  summaryByVipSiteBolt  20           decoderBolt           vip, site       Fields         60              |
+    + ------------------------------------------------------------------------------------------------------------------------------------------- +
 
 Let's look at the Topology's spouts:
 
-    storm:localhost> spouts nm-traffic-rate-aggregation-xxmyller-17-1407973634
-    + -------------------------------------------------------------------------- +
-    | topologyId                                          name                   |
-    + -------------------------------------------------------------------------- +
-    | nm-traffic-rate-aggregation-xxmyller-17-1407973634  nm-aggregation-spout   |
-    + -------------------------------------------------------------------------- +
+    storm:localhost> spouts TopTalkersTopologyV5-44-1410803756
+    + ------------------------------------------------------------- +
+    | topologyId                          name        parallelism   |
+    + ------------------------------------------------------------- +
+    | TopTalkersTopologyV5-44-1410803756  kafkaSpout  1             |
+    + ------------------------------------------------------------- +
 
 Finally, let's take a look at the connection properties for this session:
 
