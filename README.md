@@ -188,42 +188,42 @@ To list all of the Kafka topics that Zookeeper is aware of:
     + ------------------------------------------------------------------- +
     | topic                      partition  leader       replicas  inSync |
     + ------------------------------------------------------------------- +
-    | com.shocktrade.quotes.rt   0          dev502:9093  1         1      |
-    | com.shocktrade.quotes.rt   1          dev501:9091  1         1      |
-    | com.shocktrade.quotes.rt   2          dev501:9092  1         1      |
-    | com.shocktrade.quotes.rt   3          dev501:9093  1         1      |
-    | com.shocktrade.quotes.rt   4          dev502:9091  1         1      |
-    | com.shocktrade.quotes.csv  0          dev501:9091  1         1      |
-    | com.shocktrade.quotes.csv  1          dev501:9092  1         1      |
-    | com.shocktrade.quotes.csv  2          dev501:9093  1         1      |
-    | com.shocktrade.quotes.csv  3          dev502:9091  1         1      |
-    | com.shocktrade.quotes.csv  4          dev502:9092  1         1      |
+    | Shocktrade.quotes.avro     0          dev502:9093  1         1      |
+    | Shocktrade.quotes.avro     1          dev501:9091  1         1      |
+    | Shocktrade.quotes.avro     2          dev501:9092  1         1      |
+    | Shocktrade.quotes.avro     3          dev501:9093  1         1      |
+    | Shocktrade.quotes.avro     4          dev502:9091  1         1      |
+    | Shocktrade.quotes.csv      0          dev501:9091  1         1      |
+    | Shocktrade.quotes.csv      1          dev501:9092  1         1      |
+    | Shocktrade.quotes.csv      2          dev501:9093  1         1      |
+    | Shocktrade.quotes.csv      3          dev502:9091  1         1      |
+    | Shocktrade.quotes.csv      4          dev502:9092  1         1      |
     + ------------------------------------------------------------------- +
 
 To see a subset of the topics (matches any topic that starts with the given search term):
 
-    kafka:/> kls com.shocktrade.quotes.csv
+    kafka:/> kls Shocktrade.quotes.csv
     + ------------------------------------------------------------------- +
     | topic                      partition  leader       replicas  inSync |
     + ------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          dev501:9091  1         1      |
-    | com.shocktrade.quotes.csv  1          dev501:9092  1         1      |
-    | com.shocktrade.quotes.csv  2          dev501:9093  1         1      |
-    | com.shocktrade.quotes.csv  3          dev502:9091  1         1      |
-    | com.shocktrade.quotes.csv  4          dev502:9092  1         1      |
+    | Shocktrade.quotes.csv      0          dev501:9091  1         1      |
+    | Shocktrade.quotes.csv      1          dev501:9092  1         1      |
+    | Shocktrade.quotes.csv      2          dev501:9093  1         1      |
+    | Shocktrade.quotes.csv      3          dev502:9091  1         1      |
+    | Shocktrade.quotes.csv      4          dev502:9092  1         1      |
     + ------------------------------------------------------------------- +
 
 To see the statistics for a specific topic, use the `kstats` command:
 
-    kafka:/> kstats com.shocktrade.quotes.csv
+    kafka:/> kstats Shocktrade.quotes.csv
     + --------------------------------------------------------------------------------- +
     | topic                      partition  startOffset  endOffset  messagesAvailable   |
     + --------------------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          5945         10796      4851                |
-    | com.shocktrade.quotes.csv  1          5160         10547      5387                |
-    | com.shocktrade.quotes.csv  2          3974         8788       4814                |
-    | com.shocktrade.quotes.csv  3          3453         7334       3881                |
-    | com.shocktrade.quotes.csv  4          4364         8276       3912                |
+    | Shocktrade.quotes.csv      0          5945         10796      4851                |
+    | Shocktrade.quotes.csv      1          5160         10547      5387                |
+    | Shocktrade.quotes.csv      2          3974         8788       4814                |
+    | Shocktrade.quotes.csv      3          3453         7334       3881                |
+    | Shocktrade.quotes.csv      4          4364         8276       3912                |
     + --------------------------------------------------------------------------------- +
 
 <a name="kafka-message-cursor"></a>
@@ -236,7 +236,7 @@ respectively. Consider the following examples:
 
 To retrieve the first message of a topic partition:
 
-    kafka:/> kfirst com.shocktrade.quotes.csv 0
+    kafka:/> kfirst Shocktrade.quotes.csv 0
     [5945:000] 22.47.44.46.22.2c.31.30.2e.38.31.2c.22.39.2f.31.32.2f.32.30.31.34.22.2c.22 | "GDF",10.81,"9/12/2014"," |
     [5945:025] 34.3a.30.30.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.31.30.2c.22.2d.30 | 4:00pm",N/A,N/A,-0.10,"-0 |
     [5945:050] 2e.31.30.20.2d.20.2d.30.2e.39.32.25.22.2c.31.30.2e.39.31.2c.31.30.2e.39.31 | .10 - -0.92%",10.91,10.91 |
@@ -245,20 +245,20 @@ To retrieve the first message of a topic partition:
 
 The previous command resulted in the creation of a navigable cursor (notice below how our prompt has changed). 
 
-    kafka:com.shocktrade.quotes.csv/0:5945> _
+    kafka:Shocktrade.quotes.csv/0:5945> _
 
 Let's view the cursor:
 
-    kafka:com.shocktrade.quotes.csv/0:5945> kcursor
+    kafka:Shocktrade.quotes.csv/0:5945> kcursor
     + ------------------------------------------------------------------- +
     | topic                      partition  offset  nextOffset  decoder   |
     + ------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          5945    5946                  |
+    | Shocktrade.quotes.csv      0          5945    5946                  |
     + ------------------------------------------------------------------- +
     
 Let's view the next message for this topic partition:
     
-    kafka:com.shocktrade.quotes.csv/0:5945> knext
+    kafka:Shocktrade.quotes.csv/0:5945> knext
     [5946:000] 22.47.44.50.22.2c.31.38.2e.35.31.2c.22.39.2f.31.32.2f.32.30.31.34.22.2c.22 | "GDP",18.51,"9/12/2014"," |
     [5946:025] 34.3a.30.31.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.38.39.2c.22.2d.30 | 4:01pm",N/A,N/A,-0.89,"-0 |
     [5946:050] 2e.38.39.20.2d.20.2d.34.2e.35.39.25.22.2c.31.39.2e.34.30.2c.31.39.2e.32.37 | .89 - -4.59%",19.40,19.27 |
@@ -267,7 +267,7 @@ Let's view the next message for this topic partition:
     
 Let's view the last message for this topic partition: 
 
-    kafka:com.shocktrade.quotes.csv/0:5945> klast
+    kafka:Shocktrade.quotes.csv/0:5945> klast
     [10796:000] 22.4e.4f.53.50.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "NOSPF",0.00,"N/A","N/A", |
     [10796:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
     [10796:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
@@ -278,16 +278,16 @@ Let's view the last message for this topic partition:
 Notice above we didn't have to specify the topic or partition because it's defined in our cursor. 
 Let's view the cursor again:
 
-    kafka:com.shocktrade.quotes.csv/0:10796> kcursor
+    kafka:Shocktrade.quotes.csv/0:10796> kcursor
     + ------------------------------------------------------------------- +
     | topic                      partition  offset  nextOffset  decoder   |
     + ------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          10796   10797                 |
+    | Shocktrade.quotes.csv      0          10796   10797                 |
     + ------------------------------------------------------------------- +
 
 Now, let's view the previous record:
 
-    kafka:com.shocktrade.quotes.csv/0:10796> kprev
+    kafka:Shocktrade.quotes.csv/0:10796> kprev
     [10795:000] 22.4d.4c.50.4b.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "MLPKF",0.00,"N/A","N/A", |
     [10795:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
     [10795:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
@@ -297,19 +297,19 @@ Now, let's view the previous record:
 
 To retrieve the start and end offsets and number of messages available for a topic across any number of partitions:
 
-    kafka:com.shocktrade.quotes.csv/0:10795> kstats
+    kafka:Shocktrade.quotes.csv/0:10795> kstats
     + --------------------------------------------------------------------------------- +
     | topic                      partition  startOffset  endOffset  messagesAvailable   |
     + --------------------------------------------------------------------------------- +
-    | com.shocktrade.quotes.csv  0          5945         10796      4851                |
-    | com.shocktrade.quotes.csv  1          5160         10547      5387                |
-    | com.shocktrade.quotes.csv  2          3974         8788       4814                |
-    | com.shocktrade.quotes.csv  3          3453         7334       3881                |
-    | com.shocktrade.quotes.csv  4          4364         8276       3912                |
+    | Shocktrade.quotes.csv      0          5945         10796      4851                |
+    | Shocktrade.quotes.csv      1          5160         10547      5387                |
+    | Shocktrade.quotes.csv      2          3974         8788       4814                |
+    | Shocktrade.quotes.csv      3          3453         7334       3881                |
+    | Shocktrade.quotes.csv      4          4364         8276       3912                |
     + --------------------------------------------------------------------------------- +
 
-**NOTE**: Above `kstats` is equivalent to both `kstats com.shocktrade.quotes.csv` and 
-`kstats com.shocktrade.quotes.csv 0 4`. However, because of the cursor we previously established, those arguments 
+**NOTE**: Above `kstats` is equivalent to both `kstats Shocktrade.quotes.csv` and 
+`kstats Shocktrade.quotes.csv 0 4`. However, because of the cursor we previously established, those arguments 
 could be omitted.
 
 <a name="kafka-consumer-group"></a>
@@ -317,39 +317,39 @@ could be omitted.
 
 To see the current offsets for all consumer group IDs:
 
-    kafka:com.shocktrade.quotes.csv/0:10795> kconsumers
+    kafka:Shocktrade.quotes.csv/0:10795> kconsumers
     + ------------------------------------------------------------------------------------- +
     | consumerId  topic                      partition  offset  topicOffset  messagesLeft   |
     + ------------------------------------------------------------------------------------- +
-    | dev         com.shocktrade.quotes.csv  0          5555    10796        5241           |
-    | dev         com.shocktrade.quotes.csv  1          0       10547        10547          |
-    | dev         com.shocktrade.quotes.csv  2          0       8788         8788           |
-    | dev         com.shocktrade.quotes.csv  3          0       7334         7334           |
-    | dev         com.shocktrade.quotes.csv  4          0       8276         8276           |
+    | dev         Shocktrade.quotes.csv      0          5555    10796        5241           |
+    | dev         Shocktrade.quotes.csv      1          0       10547        10547          |
+    | dev         Shocktrade.quotes.csv      2          0       8788         8788           |
+    | dev         Shocktrade.quotes.csv      3          0       7334         7334           |
+    | dev         Shocktrade.quotes.csv      4          0       8276         8276           |
     + ------------------------------------------------------------------------------------- +
 
 Let's change the committed offset for the current topic/partition (the one to which our cursor is pointing) to 6000
 
-    kafka:com.shocktrade.quotes.csv/0:10795> kcommit dev 6000
+    kafka:Shocktrade.quotes.csv/0:10795> kcommit dev 6000
 
 Let's re-examine the consumer group IDs:
     
-    kafka:com.shocktrade.quotes.csv/0:10795> kconsumers
+    kafka:Shocktrade.quotes.csv/0:10795> kconsumers
     + ------------------------------------------------------------------------------------- +
     | consumerId  topic                      partition  offset  topicOffset  messagesLeft   |
     + ------------------------------------------------------------------------------------- +
-    | dev         com.shocktrade.quotes.csv  0          6000    10796        4796           |
-    | dev         com.shocktrade.quotes.csv  1          0       10547        10547          |
-    | dev         com.shocktrade.quotes.csv  2          0       8788         8788           |
-    | dev         com.shocktrade.quotes.csv  3          0       7334         7334           |
-    | dev         com.shocktrade.quotes.csv  4          0       8276         8276           |
+    | dev         Shocktrade.quotes.csv      0          6000    10796        4796           |
+    | dev         Shocktrade.quotes.csv      1          0       10547        10547          |
+    | dev         Shocktrade.quotes.csv      2          0       8788         8788           |
+    | dev         Shocktrade.quotes.csv      3          0       7334         7334           |
+    | dev         Shocktrade.quotes.csv      4          0       8276         8276           |
     + ------------------------------------------------------------------------------------- +
 
 Notice that the committed offset, for consumer group _dev_, has been changed to 6000 for partition 0.
 
 Finally, let's use the `kfetch` to retrieve just the offset for the consumer group ID:
 
-   kafka:com.shocktrade.quotes.csv/0:10795> kfetch dev
+   kafka:Shocktrade.quotes.csv/0:10795> kfetch dev
    6000
 
 <a name="kafka-inbound-traffic"></a>
@@ -361,11 +361,11 @@ To retrieve the list of topics with new messages (since your last query):
     + ----------------------------------------------------------------------------------------------------------- +
     | topic                        partition  startOffset  endOffset  change  msgsPerSec  lastCheckTime           |
     + ----------------------------------------------------------------------------------------------------------- +
-    | test.Shocktrade.quotes.avro  3          0            657        65      16.3        09/13/14 06:37:03 PDT   |
-    | test.Shocktrade.quotes.avro  0          0            650        64      16.0        09/13/14 06:37:03 PDT   |
-    | test.Shocktrade.quotes.avro  1          0            618        56      14.0        09/13/14 06:37:03 PDT   |
-    | test.Shocktrade.quotes.avro  2          0            618        49      12.3        09/13/14 06:37:03 PDT   |
-    | test.Shocktrade.quotes.avro  4          0            584        40      10.0        09/13/14 06:37:03 PDT   |
+    | Shocktrade.quotes.avro       3          0            657        65      16.3        09/13/14 06:37:03 PDT   |
+    | Shocktrade.quotes.avro       0          0            650        64      16.0        09/13/14 06:37:03 PDT   |
+    | Shocktrade.quotes.avro       1          0            618        56      14.0        09/13/14 06:37:03 PDT   |
+    | Shocktrade.quotes.avro       2          0            618        49      12.3        09/13/14 06:37:03 PDT   |
+    | Shocktrade.quotes.avro       4          0            584        40      10.0        09/13/14 06:37:03 PDT   |
     + ----------------------------------------------------------------------------------------------------------- +
 
 Next, we wait a few moments and run the command again:
@@ -374,74 +374,103 @@ Next, we wait a few moments and run the command again:
     + ----------------------------------------------------------------------------------------------------------- +
     | topic                        partition  startOffset  endOffset  change  msgsPerSec  lastCheckTime           |
     + ----------------------------------------------------------------------------------------------------------- +
-    | test.Shocktrade.quotes.avro  1          0            913        295     15.6        09/13/14 06:37:21 PDT   |
-    | test.Shocktrade.quotes.avro  3          0            952        295     15.6        09/13/14 06:37:21 PDT   |
-    | test.Shocktrade.quotes.avro  2          0            881        263     13.9        09/13/14 06:37:21 PDT   |
-    | test.Shocktrade.quotes.avro  4          0            846        262     13.8        09/13/14 06:37:21 PDT   |
-    | test.Shocktrade.quotes.avro  0          0            893        243     12.8        09/13/14 06:37:21 PDT   |
+    | Shocktrade.quotes.avro       1          0            913        295     15.6        09/13/14 06:37:21 PDT   |
+    | Shocktrade.quotes.avro       3          0            952        295     15.6        09/13/14 06:37:21 PDT   |
+    | Shocktrade.quotes.avro       2          0            881        263     13.9        09/13/14 06:37:21 PDT   |
+    | Shocktrade.quotes.avro       4          0            846        262     13.8        09/13/14 06:37:21 PDT   |
+    | Shocktrade.quotes.avro       0          0            893        243     12.8        09/13/14 06:37:21 PDT   |
     + ----------------------------------------------------------------------------------------------------------- +
 
 <a name="kafka-avro-module"></a>
 ##### Kafka &amp; Avro Integration
 
-Verify supports Avro integration for Kafka. The next few examples make use of the following Avro schema:
+_Verify_ supports Avro integration for Kafka. The next few examples make use of the following Avro schema:
 
     {
-      "type": "record",
-      "name": "TopTalkers",
-      "namespace": "com.shocktrade.avro",
-      "fields": [
-        { "name": "vip", "type": "string", "doc": "The Internally-issued IP address" },
-        { "name": "site", "type": "string", "doc": "The top-level-domain/site" },
-        { "name": "srcIP", "type": "string", "doc": "The source IP address" },
-        { "name": "frequency", "type": "long", "doc": "The number of occurrences of the vip, site and source IP tuple" },
-        { "name": "firstTimestamp", "type": "long", "doc": "The first occurrence of the source IP" },
-        { "name": "lastTimestamp", "type": "long", "doc": "The last occurrence of the source IP" }
-      ],
-      "doc": "A basic schema for top-talkers messages"
+        "type": "record",
+        "name": "StockQuote",
+        "namespace": "Shocktrade.avro",
+        "fields":[
+            { "name": "symbol", "type":"string", "doc":"stock symbol" },
+            { "name": "lastTrade", "type":["null", "double"], "doc":"last sale price", "default":null },
+            { "name": "tradeDate", "type":["null", "long"], "doc":"last sale date", "default":null },
+            { "name": "tradeTime", "type":["null", "string"], "doc":"last sale time", "default":null },
+            { "name": "ask", "type":["null", "double"], "doc":"ask price", "default":null },
+            { "name": "bid", "type":["null", "double"], "doc":"bid price", "default":null },
+            { "name": "change", "type":["null", "double"], "doc":"price change", "default":null },
+            { "name": "changePct", "type":["null", "double"], "doc":"price change percent", "default":null },
+            { "name": "prevClose", "type":["null", "double"], "doc":"previous close price", "default":null },
+            { "name": "open", "type":["null", "double"], "doc":"open price", "default":null },
+            { "name": "close", "type":["null", "double"], "doc":"close price", "default":null },
+            { "name": "high", "type":["null", "double"], "doc":"day's high price", "default":null },
+            { "name": "low", "type":["null", "double"], "doc":"day's low price", "default":null },
+            { "name": "volume", "type":["null", "long"], "doc":"day's volume", "default":null },
+            { "name": "marketCap", "type":["null", "double"], "doc":"market capitalization", "default":null },
+            { "name": "errorMessage", "type":["null", "string"], "doc":"error message", "default":null }
+        ],
+        "doc": "A schema for stock quotes"
     }
       
-
 Let's load the Avro schema into memory as the variable "topTalkers":
  
-    kafka:com.shocktrade.quotes.csv/0:9580> avload topTalkers avro/topTalkers.avsc
+    kafka:/> avload schema avro/quotes.avsc
 
 Next, let's use the variable (containing the Avro schema) to decode a Kafka message:
 
-    kafka:com.shocktrade.quotes.csv/0:9580> kgeta topTalkers com.shocktrade.topTalkers  0 0
-    + ------------------------------------ +
-    | field           value         type   |
-    + ------------------------------------ +
-    | vip             192.73.24.30  Utf8   |
-    | site            vxfjc3        Utf8   |
-    | srcIP           68.152.96.28  Utf8   |
-    | frequency       1071          Long   |
-    | firstTimestamp  1409979852    Long   |
-    | lastTimestamp   1409979916    Long   |
-    + ------------------------------------ +
+    kafka:/> kfirst Shocktrade.quotes.avro 0 -a schema
+    + ------------------------------------- +
+    | field         value          type     |
+    + ------------------------------------- +
+    | symbol        M              Utf8     |
+    | lastTrade     59.59          Double   |
+    | tradeDate     1410505200000  Long     |
+    | tradeTime                             |
+    | ask                                   |
+    | bid                                   |
+    | change        -0.23          Double   |
+    | changePct     -0.38          Double   |
+    | prevClose     59.82          Double   |
+    | open          59.91          Double   |
+    | close         59.59          Double   |
+    | high          60.06          Double   |
+    | low           59.27          Double   |
+    | volume        3811771        Long     |
+    | marketCap     2.1043E10      Double   |
+    | errorMessage                          |
+    + ------------------------------------- +
 
 Let's view the cursor:
     
-    kafka:com.shocktrade.topTalkers/0:0> kcursor
-    + --------------------------------------------------------------------------------- +
-    | topic                      partition  offset  nextOffset  decoder                 |
-    + --------------------------------------------------------------------------------- +
-    | com.shocktrade.topTalkers  0          0       1           AvroDecoder(topTalkers) |
-    + --------------------------------------------------------------------------------- +  
+    kafka:Shocktrade.quotes.avro/0:0> kcursor
+    + ---------------------------------------------------------------------------------- +
+    | topic                         partition  offset  nextOffset  decoder               |
+    + ---------------------------------------------------------------------------------- +
+    | Shocktrade.quotes.avro    0          0       1           AvroDecoder(schema)   |
+    + ---------------------------------------------------------------------------------- +
 
 The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro integration:
 
-    kafka:com.shocktrade.topTalkers/0:0> knext
-    + ------------------------------------ +
-    | field           value         type   |
-    + ------------------------------------ +
-    | vip             191.73.24.30  Utf8   |
-    | site            vxfjc3        Utf8   |
-    | srcIP           69.252.96.17  Utf8   |
-    | frequency       1085          Long   |
-    | firstTimestamp  1409979852    Long   |
-    | lastTimestamp   1409979916    Long   |
-    + ------------------------------------ +
+    kafka:Shocktrade.quotes.avro/0:0> knext
+    + ------------------------------------- +
+    | field         value          type     |
+    + ------------------------------------- +
+    | symbol        FNF            Utf8     |
+    | lastTrade     27.75          Double   |
+    | tradeDate     1410505200000  Long     |
+    | tradeTime                             |
+    | ask                                   |
+    | bid                                   |
+    | change        -0.24          Double   |
+    | changePct     -0.86          Double   |
+    | prevClose     27.99          Double   |
+    | open          28.13          Double   |
+    | close         27.75          Double   |
+    | high          28.23          Double   |
+    | low           27.71          Double   |
+    | volume        1157144        Long     |
+    | marketCap     7.7E9          Double   |
+    | errorMessage                          |
+    + ------------------------------------- +
 
 <a name="kafka-search-by-key"></a>
 ##### Kafka Search by Key
@@ -449,7 +478,7 @@ The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro inte
 You can view the key for any message by using the `kgetkey` command. Let's start by retrieving the last available message 
 for a topic/partition.
 
-    kafka:/> klast com.shocktrade.quotes.csv 0 
+    kafka:/> klast Shocktrade.quotes.csv 0 
     [10796:000] 22.4e.4f.53.50.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "NOSPF",0.00,"N/A","N/A", |
     [10796:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
     [10796:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
@@ -459,30 +488,30 @@ for a topic/partition.
     
 Now let's view the key for message using the `kgetkey` command:    
     
-    kafka:com.shocktrade.quotes.csv/0:10796> kgetkey
+    kafka:Shocktrade.quotes.csv/0:10796> kgetkey
     [000] 31.34.31.30.35.36.33.37.31.34.34.36.35                                     | 1410563714465             |
     
 And for the purposes of fully understanding what happened here, let's reposition the cursor to the beginning of the
 topic/partition:
 
-    kafka:com.shocktrade.quotes.csv/0:10796> kfirst
+    kafka:Shocktrade.quotes.csv/0:10796> kfirst
     [5945:000] 22.47.44.46.22.2c.31.30.2e.38.31.2c.22.39.2f.31.32.2f.32.30.31.34.22.2c.22 | "GDF",10.81,"9/12/2014"," |
     [5945:025] 34.3a.30.30.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.31.30.2c.22.2d.30 | 4:00pm",N/A,N/A,-0.10,"-0 |
     [5945:050] 2e.31.30.20.2d.20.2d.30.2e.39.32.25.22.2c.31.30.2e.39.31.2c.31.30.2e.39.31 | .10 - -0.92%",10.91,10.91 |
     [5945:075] 2c.31.30.2e.38.31.2c.31.30.2e.39.31.2c.31.30.2e.38.30.2c.33.36.35.35.38.2c | ,10.81,10.91,10.80,36558, |
     [5945:100] 4e.2f.41.2c.22.4e.2f.41.22                                                 | N/A,"N/A"                 |
     
-    kafka:com.shocktrade.quotes.csv/0:5945>     
+    kafka:Shocktrade.quotes.csv/0:5945>     
 
 Next, using the `kfindone`command let's search for the last message by key (using hexadecimal dot-notation):
 
-    kafka:com.shocktrade.quotes.csv/0:5945> kfindone key is 31.34.31.30.35.36.33.37.31.34.34.36.35
+    kafka:Shocktrade.quotes.csv/0:5945> kfindone key is 31.34.31.30.35.36.33.37.31.34.34.36.35
     Task is now running in the background (use 'jobs' to view)
 
 You may have received a message indicating the the task is now running in the background. This happens when a query is
 executed that requires more than 30 seconds to complete. After a few moments, the results should appear on the console:
 
-    kafka:com.shocktrade.quotes.csv/0:5945> Job #1006 completed
+    kafka:Shocktrade.quotes.csv/0:5945> Job #1006 completed
     [10796:000] 22.4e.4f.53.50.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "NOSPF",0.00,"N/A","N/A", |
     [10796:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
     [10796:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
@@ -499,43 +528,66 @@ from offset 5945 to 10796.
 Building on the <a href="#kafka-avro-module">Avro Integration</a>, _Verify_ offers the ability to execute queries against 
 structured data.
 
-Suppose you want to know how many messages contain a frequency greater than 2500, you could issue the `kCount` command:
+Suppose you want to know how many messages contain a volume greater than 1,000,000, you could issue the `kcount` command:
 
-    kafka:com.shocktrade.topTalkers/7:3> kCount frequency > 2500
-    106
+    kafka:Shocktrade.quotes.avro/0:1> kcount volume > 1000000
+    1350
 
-The response was 106, meaning there are 106 messages containing a frequency greater than 2500.
+The response was 1350, meaning there are 1350 messages containing a volume greater than 1,000,000.
 
-Suppose you want to view the first message whose frequency is  greater than 2500, you could issue the `kFindOne` command:
+Suppose you want to view the first message whose volume is greater than 1,000,000, you could issue the `kfindone` command:
 
-    kafka:com.shocktrade.topTalkers/0:0> kFindOne frequency > 2500
+    kafka:Shocktrade.quotes.avro/0:1> kfindone volume > 1000000
     + ------------------------------------- +
-    | field           value          type   |
+    | field         value          type     |
     + ------------------------------------- +
-    | vip             191.78.128.30  Utf8   |
-    | site            vxfjc4         Utf8   |
-    | srcIP           172.16.14.15   Utf8   |
-    | frequency       4150           Long   |
-    | firstTimestamp  1410038836     Long   |
-    | lastTimestamp   1410038896     Long   |
+    | symbol        Z              Utf8     |
+    | lastTrade     127.92         Double   |
+    | tradeDate     1410505200000  Long     |
+    | tradeTime                             |
+    | ask           128.0          Double   |
+    | bid           125.0          Double   |
+    | change        -2.04          Double   |
+    | changePct     -1.57          Double   |
+    | prevClose     129.96         Double   |
+    | open          130.07         Double   |
+    | close         127.92         Double   |
+    | high          130.07         Double   |
+    | low           127.52         Double   |
+    | volume        1026150        Long     |
+    | marketCap     5.132E9        Double   |
+    | errorMessage                          |
     + ------------------------------------- +
 
-Now suppose you want to copy the messages having high frequencies (1,000 or more) to another topic:
+Now suppose you want to copy the messages having high volume (1,000,000 or more) to another topic:
 
-    kfind frequency > 1000 -o topTalkers.highFrequency
+    kfind volume >= 1000000 -o hft.Shocktrade.quotes.avro
 
 Finally, let's look at the results:
 
-    kafka:com.shocktrade.topTalkers/0:0> kstats topTalkers.highFrequency
-    + ------------------------------------------------------------------------------------ +
-    | topic                         partition  startOffset  endOffset  messagesAvailable   |
-    + ------------------------------------------------------------------------------------ +
-    | topTalkers.highFrequency      0          0            288        288                 |
-    | topTalkers.highFrequency      1          0            242        242                 |
-    | topTalkers.highFrequency      2          0            280        280                 |
-    | topTalkers.highFrequency      3          0            264        264                 |
-    | topTalkers.highFrequency      4          0            271        271                 |
-    + ------------------------------------------------------------------------------------ +
+    kafka:Shocktrade.quotes.avro/3:0> kstats hft.Shocktrade.quotes.avro
+    + ---------------------------------------------------------------------------------- +
+    | topic                       partition  startOffset  endOffset  messagesAvailable   |
+    + ---------------------------------------------------------------------------------- +
+    | hft.Shocktrade.quotes.avro  0          0            283        283                 |
+    | hft.Shocktrade.quotes.avro  1          0            287        287                 |
+    | hft.Shocktrade.quotes.avro  2          0            258        258                 |
+    | hft.Shocktrade.quotes.avro  3          0            245        245                 |
+    | hft.Shocktrade.quotes.avro  4          0            272        272                 |
+    + ---------------------------------------------------------------------------------- +
+
+Let's see how these statistics compares to the original:
+
+    kafka:Shocktrade.quotes.avro/3:0> kstats Shocktrade.quotes.avro
+    + ----------------------------------------------------------------------------------- +
+    | topic                        partition  startOffset  endOffset  messagesAvailable   |
+    + ----------------------------------------------------------------------------------- +
+    | Shocktrade.quotes.avro       0          0            4539       4539                |
+    | Shocktrade.quotes.avro       1          0            4713       4713                |
+    | Shocktrade.quotes.avro       2          0            4500       4500                |
+    | Shocktrade.quotes.avro       3          0            4670       4670                |
+    | Shocktrade.quotes.avro       4          0            4431       4431                |
+    + ----------------------------------------------------------------------------------- +   
             
 <a name="storm-module"></a>
 #### Storm Module
@@ -709,18 +761,18 @@ Let's look at the entire Zookeeper hierarchy recursively from our current path:
     /brokers/topics/csvQuotes/partitions/0/state
     /brokers/topics/csvQuotes/partitions/4
     /brokers/topics/csvQuotes/partitions/4/state
-    /brokers/topics/com.shocktrade.quotes.csv
-    /brokers/topics/com.shocktrade.quotes.csv/partitions
-    /brokers/topics/com.shocktrade.quotes.csv/partitions/3
-    /brokers/topics/com.shocktrade.quotes.csv/partitions/3/state
-    /brokers/topics/com.shocktrade.quotes.csv/partitions/2
-    /brokers/topics/com.shocktrade.quotes.csv/partitions/2/state
-    /brokers/topics/com.shocktrade.quotes.csv/partitions/1
-    /brokers/topics/com.shocktrade.quotes.csv/partitions/1/state
-    /brokers/topics/com.shocktrade.quotes.csv/partitions/0
-    /brokers/topics/com.shocktrade.quotes.csv/partitions/0/state
-    /brokers/topics/com.shocktrade.quotes.csv/partitions/4
-    /brokers/topics/com.shocktrade.quotes.csv/partitions/4/state
+    /brokers/topics/Shocktrade.quotes.csv
+    /brokers/topics/Shocktrade.quotes.csv/partitions
+    /brokers/topics/Shocktrade.quotes.csv/partitions/3
+    /brokers/topics/Shocktrade.quotes.csv/partitions/3/state
+    /brokers/topics/Shocktrade.quotes.csv/partitions/2
+    /brokers/topics/Shocktrade.quotes.csv/partitions/2/state
+    /brokers/topics/Shocktrade.quotes.csv/partitions/1
+    /brokers/topics/Shocktrade.quotes.csv/partitions/1/state
+    /brokers/topics/Shocktrade.quotes.csv/partitions/0
+    /brokers/topics/Shocktrade.quotes.csv/partitions/0/state
+    /brokers/topics/Shocktrade.quotes.csv/partitions/4
+    /brokers/topics/Shocktrade.quotes.csv/partitions/4/state
     /brokers/ids
     /brokers/ids/3
     /brokers/ids/2
@@ -731,7 +783,7 @@ Let's look at the entire Zookeeper hierarchy recursively from our current path:
         
 Let's view the contents of one of the keys:        
         
-    zookeeper:localhost:2181/brokers> zget topics/com.shocktrade.quotes.csv/partitions/4/state
+    zookeeper:localhost:2181/brokers> zget topics/Shocktrade.quotes.csv/partitions/4/state
     [00] 7b.22.63.6f.6e.74.72.6f.6c.6c.65.72.5f.65.70.6f.63.68.22.3a.31.2c.22.6c.65 | {"controller_epoch":1,"le
     [25] 61.64.65.72.22.3a.35.2c.22.76.65.72.73.69.6f.6e.22.3a.31.2c.22.6c.65.61.64 | ader":5,"version":1,"lead
     [50] 65.72.5f.65.70.6f.63.68.22.3a.30.2c.22.69.73.72.22.3a.5b.35.5d.7d          | er_epoch":0,"isr":[5]}         
@@ -739,5 +791,5 @@ Let's view the contents of one of the keys:
 Since we now know the contents of the key is text-based (JSON in this case), let's look at the plain-text value.
 **NOTE:** This command comes in handy when you want to copy/paste the value of a key.
 
-    zookeeper:localhost:2181/brokers> zcat topics/com.shocktrade.quotes.csv/partitions/4/state text
+    zookeeper:localhost:2181/brokers> zcat topics/Shocktrade.quotes.csv/partitions/4/state text
     {"controller_epoch":1,"leader":5,"version":1,"leader_epoch":0,"isr":[5]}
