@@ -20,9 +20,9 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[Broker], correlationId: Int) {
- // get the leader, meta data and replica brokers
+  // get the leader, meta data and replica brokers
   private val (broker, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topicAndPartition, seedBrokers, correlationId)
-    .getOrElse(throw new IllegalStateException(s"The leader broker could not be determined for topic ${topicAndPartition.topic} partition ${topicAndPartition.partition}"))
+    .getOrElse(throw new VxKafkaTopicException("The leader broker could not be determined", topicAndPartition))
 
   // generate the client ID
   private val clientID = makeClientID("consumer")
@@ -51,7 +51,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
       topicMap <- response.requestInfoGroupedByTopic.get(topicAndPartition.topic)
       code <- topicMap.get(topicAndPartition)
     } if (code != 0) {
-      throw new VxKafkaException(code)
+      throw new VxKafkaCodeException(code)
     }
   }
 
@@ -89,7 +89,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
 
     // submit the request, and process the response
     val response = consumer.fetch(request)
-    if (response.hasError) throw new VxKafkaException(response.errorCode(topicAndPartition.topic, topicAndPartition.partition))
+    if (response.hasError) throw new VxKafkaCodeException(response.errorCode(topicAndPartition.topic, topicAndPartition.partition))
     else {
       val lastOffset = response.highWatermark(topicAndPartition.topic, topicAndPartition.partition)
       response.messageSet(topicAndPartition.topic, topicAndPartition.partition) map { msgAndOffset =>
@@ -150,7 +150,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
     // handle the response
     if (response.hasError) {
       response.partitionErrorAndOffsets map {
-        case (tap, por) => throw new VxKafkaException(por.error)
+        case (tap, por) => throw new VxKafkaCodeException(por.error)
       }
       Nil
     } else (for {
@@ -305,12 +305,12 @@ object KafkaMicroConsumer {
     // capture the meta data for all topics
     getTopicMetadata(brokers.head, topics, correlationId) flatMap { tmd =>
       // check for errors
-      if (tmd.errorCode != 0) throw new VxKafkaException(tmd.errorCode)
+      if (tmd.errorCode != 0) throw new VxKafkaCodeException(tmd.errorCode)
 
       // translate the partition meta data into topic information instances
       tmd.partitionsMetadata map { pmd =>
         // check for errors
-        if (pmd.errorCode != 0) throw new VxKafkaException(pmd.errorCode)
+        if (pmd.errorCode != 0) throw new VxKafkaCodeException(pmd.errorCode)
 
         TopicDetails(
           tmd.topic,
@@ -383,7 +383,7 @@ object KafkaMicroConsumer {
       } match {
         case Success(pmd) => pmd
         case Failure(e) =>
-          throw new RuntimeException(s"Error communicating with Broker [$broker] to find Leader for [$topicAndPartition] Reason: ${e.getMessage}")
+          throw new VxKafkaTopicException(s"Error communicating with Broker [$broker] to find Leader", topicAndPartition, e)
       }
     }
   }
@@ -403,8 +403,7 @@ object KafkaMicroConsumer {
       } match {
         case Success(tmds) => tmds
         case Failure(e) =>
-          e.printStackTrace()
-          throw new RuntimeException(s"Error communicating with Broker [$broker] Reason: ${e.getMessage}")
+          throw new VxKafkaException(s"Error communicating with Broker [$broker] Reason: ${e.getMessage}", e)
       }
     }
   }
@@ -431,24 +430,38 @@ object KafkaMicroConsumer {
 
   /**
    * Object representation of the broker information JSON
-   * {"jmx_port":9999,"timestamp":"1405818758964","host":"vsccrtc204-brn1.rtc.vrsn.com","version":1,"port":9092}
+   * {"jmx_port":9999,"timestamp":"1405818758964","host":"dev502","version":1,"port":9092}
    */
   case class BrokerDetails(jmx_port: Int, var timestamp: String, host: String, version: Int, port: Int)
 
   /**
    * Represents a class of exceptions that occur while attempting to fetch data from a Kafka broker
+   * @param message the given error message
+   * @param cause the given root cause of the exception
+   */
+  class VxKafkaException(message: String, cause: Throwable = null)
+    extends RuntimeException(message, cause)
+
+  /**
+   * Represents a class of exceptions that occur while attempting to fetch data from a Kafka broker
    * @param code the status/error code
    */
-  class VxKafkaException(val code: Short)
-    extends RuntimeException(ERROR_CODES.getOrElse(code, "Unrecognized Error Code"))
+  class VxKafkaCodeException(val code: Short)
+    extends VxKafkaException(ERROR_CODES.getOrElse(code, "Unrecognized Error Code"))
+
+  /**
+   * Represents a class of exceptions that occur while consuming a Kafka message
+   * @param message the given error message
+   */
+  class VxKafkaTopicException(message: String, tap: TopicAndPartition, cause: Throwable = null)
+    extends VxKafkaException(s"$message for topic ${tap.topic} partition ${tap.partition}", cause)
+
+  import kafka.common.ErrorMapping._
 
   /**
    * Kafka Error Codes
    * @see https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol
    */
-
-  import kafka.common.ErrorMapping._
-
   val ERROR_CODES = Map(
     BrokerNotAvailableCode -> "Broker Not Available",
     InvalidFetchSizeCode -> "Invalid Fetch Size",
