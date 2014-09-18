@@ -52,8 +52,8 @@ case class SimpleParams(required: Seq[String] = Nil, optional: Seq[String] = Nil
   }
 
   override def prototypeOf(command: Command): String = {
-    val items = optional.map(s => s"[$s]").toList ::: required.toList ::: command.name :: Nil
-    items.reverse mkString " "
+    val items: List[String] = command.name :: optional.map(s => s"[$s]").toList ::: required.toList ::: Nil
+    items mkString " "
   }
 
   override def transform(args: Seq[String]): Seq[String] = args
