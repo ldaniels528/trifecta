@@ -9,7 +9,8 @@ import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.support.zookeeper.ZKProxy.Implicits._
-import com.ldaniels528.verify.util.{EndPoint, BinaryMessaging}
+import com.ldaniels528.verify.util.VxUtils._
+import com.ldaniels528.verify.util.{BinaryMessaging, EndPoint}
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.Variable
 
@@ -133,11 +134,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
    * @example {{{ zrm -r /consumer/GRP000a2ce }}}
    */
   def delete(params: UnixLikeArgs) {
-    // recursive delete?
-    params("-r") map { path =>
-      deleteRecursively(path)
-    } getOrElse {
-      params.args.headOption foreach (path => zk.delete(path))
+    (params("-r") ?? params.args.headOption) map zkKeyToPath foreach { path =>
+      // recursive delete?
+      if (params.contains("-r")) deleteRecursively(path) else zk.delete(path)
     }
   }
 
