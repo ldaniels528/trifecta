@@ -883,7 +883,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   case class TopicItem(topic: String, partition: Int, leader: String, replicas: Int, inSync: Int)
 
-  case class TopicItemCompact(topic: String, partitions: Int, inSyncPct: String)
+  case class TopicItemCompact(topic: String, partitions: Int, replicated: String)
 
   case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
 
