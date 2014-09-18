@@ -105,6 +105,8 @@ object CommandParser {
 
     def apply(flag: String) = flags.get(flag).flatten
 
+    def contains(flag: String) = flags.get(flag).isDefined
+
   }
 
 }
