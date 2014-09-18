@@ -136,8 +136,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kexport" - Dumps the contents of a specific topic to a file
-   * @example {{{  kexport com.shocktrade.quotes.csv lld3 -f quotes.bin }}}
-   * @example {{{  kexport lld3 -f quotes.bin }}}
+   * @example {{{ kexport com.shocktrade.quotes.csv lld3 -f quotes.bin }}}
+   * @example {{{ kexport lld3 -f quotes.bin }}}
    */
   def exportToFile(params: UnixLikeArgs): Long = {
     import java.io.{DataOutputStream, FileOutputStream}
