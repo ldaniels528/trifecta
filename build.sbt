@@ -36,7 +36,6 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   {
     case PathList("stax", "stax-api", xs @ _*) => MergeStrategy.first
     case PathList("log4j-over-slf4j", xs @ _*) => MergeStrategy.discard
-    case PathList("log4j-over-slf4j", xs @ _*) => MergeStrategy.discard
     case PathList("META-INF", "MANIFEST.MF", xs @ _*) => MergeStrategy.discard
     case x => MergeStrategy.first
   }
@@ -44,7 +43,10 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
 
 // General Dependencies
 libraryDependencies ++= Seq(
-  "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.0",
+  "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.0"
+    exclude ("org.slf4j", "slf4j-api")
+    exclude ("org.slf4j", "slf4j-log4j12")
+    exclude ("log4j", "log4j"),
   "com.twitter" %% "bijection-core" % "0.7.0",
   "com.twitter" %% "bijection-avro" % "0.7.0",
   "com.typesafe.akka" %% "akka-actor" % "2.3.5",
@@ -54,7 +56,10 @@ libraryDependencies ++= Seq(
   "org.apache.httpcomponents" % "httpclient" % "4.3.2",
   "org.apache.httpcomponents" % "httpcore" % "4.3.2",
   "org.apache.kafka" % "kafka_2.10" % "0.8.1.1",
-  "org.apache.storm" % "storm-core" % "0.9.2-incubating",
+  "org.apache.storm" % "storm-core" % "0.9.2-incubating"
+    exclude("org.apache.zookeeper", "zookeeper")
+    exclude("org.slf4j", "log4j-over-slf4j"),
+  "org.apache.zookeeper" % "zookeeper" % "3.4.6",
   "org.fusesource.jansi" % "jansi" % "1.11",
   "org.slf4j" % "slf4j-api" % "1.7.7"
 )
