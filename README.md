@@ -451,7 +451,7 @@ Let's view the cursor:
     + ---------------------------------------------------------------------------------- +
     | topic                         partition  offset  nextOffset  decoder               |
     + ---------------------------------------------------------------------------------- +
-    | Shocktrade.quotes.avro    0          0       1           AvroDecoder(schema)   |
+    | Shocktrade.quotes.avro        0          0       1           AvroDecoder(schema)   |
     + ---------------------------------------------------------------------------------- +
 
 The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro integration:
@@ -696,9 +696,9 @@ Finally, let's take a look at the connection properties for this session:
     | storm.zookeeper.root                           /storm                                                      |
     | storm.zookeeper.servers                        [localhost]                                                 |
     | storm.zookeeper.session.timeout                20000                                                       |
-    .
-    .
-    .
+    .                                                                                                            .
+    .                                                                                                            .
+    .                                                                                                            .
     | worker.heartbeat.frequency.secs                1                                                           |
     | zmq.hwm                                        0                                                           |
     | zmq.linger.millis                              5000                                                        |
