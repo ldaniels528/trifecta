@@ -82,7 +82,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kimport", importMessages, UnixLikeParams(Seq("topic" -> false), Seq("-a" -> "avro", "-b" -> "binary", "-f" -> "inputFile", "-t" -> "fileType")), help = "Imports messages into a new/existing topic", undocumented = true),
     Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the last message for a given topic"),
-    Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Lists all existing topics"),
+    Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-c" -> "compact")), help = "Lists all existing topics"),
     Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the next message"),
     Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Nil), help = "Publishes a message to a topic", undocumented = true),
@@ -572,12 +572,32 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   /**
    * "kls" - Lists all existing topicList
    */
-  def getTopics(params: UnixLikeArgs): Seq[TopicDetail] = {
-    val prefix = params.args.headOption
+  def getTopics(params: UnixLikeArgs): Either[Seq[TopicItemCompact], Seq[TopicItem]] = {
+    // get the prefix
+    val prefix = params("-c") ?? params.args.headOption
 
-    KafkaMicroConsumer.getTopicList(brokers, correlationId) flatMap { t =>
-      val detail = TopicDetail(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size, t.isr.size)
-      if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(detail) else None
+    // get the raw topic data
+    val topicData = KafkaMicroConsumer.getTopicList(brokers, correlationId)
+
+    // is the compact flag set?
+    if (params.contains("-c")) {
+      Left {
+        topicData.groupBy(_.topic).toSeq flatMap { case (name, details) =>
+          val partitions = details.map(_.partitionId)
+          val item = TopicItemCompact(name, partitions.min, partitions.max)
+          if (prefix.isEmpty || prefix.exists(name.startsWith)) Some(item) else None
+        }
+      }
+    }
+
+    // otherwise, create a detailed output
+    else {
+      Right {
+        topicData flatMap { t =>
+          val item = TopicItem(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size, t.isr.size)
+          if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(item) else None
+        }
+      }
     }
   }
 
@@ -856,7 +876,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
 
-  case class TopicDetail(topic: String, partition: Int, leader: String, replicas: Int, inSync: Int)
+  case class TopicItem(topic: String, partition: Int, leader: String, replicas: Int, inSync: Int)
+
+  case class TopicItemCompact(topic: String, startPartition: Int, endPartition: Int)
 
   case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
 
