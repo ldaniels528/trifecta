@@ -19,4 +19,12 @@ object ByteBufferUtils {
     }) getOrElse Array.empty
   }
 
+  def intToBytes(value: Int): Array[Byte] = {
+    ByteBuffer.allocate(4).putInt(value).array()
+  }
+
+  def longToBytes(value: Long): Array[Byte] = {
+    ByteBuffer.allocate(8).putLong(value).array()
+  }
+
 }
