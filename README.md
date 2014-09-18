@@ -417,7 +417,7 @@ _Verify_ supports Avro integration for Kafka. The next few examples make use of 
         "doc": "A schema for stock quotes"
     }
       
-Let's load the Avro schema into memory as the variable "topTalkers":
+Let's load the Avro schema into memory as the variable "schema":
  
     kafka:/> avload schema avro/quotes.avsc
 
