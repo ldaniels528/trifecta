@@ -185,33 +185,39 @@ To list the replica brokers that Zookeeper is aware of:
 To list all of the Kafka topics that Zookeeper is aware of:
 
     kafka:/> kls
-    + ------------------------------------------------------------------- +
-    | topic                      partition  leader       replicas  inSync |
-    + ------------------------------------------------------------------- +
-    | Shocktrade.quotes.avro     0          dev502:9093  1         1      |
-    | Shocktrade.quotes.avro     1          dev501:9091  1         1      |
-    | Shocktrade.quotes.avro     2          dev501:9092  1         1      |
-    | Shocktrade.quotes.avro     3          dev501:9093  1         1      |
-    | Shocktrade.quotes.avro     4          dev502:9091  1         1      |
-    | Shocktrade.quotes.csv      0          dev501:9091  1         1      |
-    | Shocktrade.quotes.csv      1          dev501:9092  1         1      |
-    | Shocktrade.quotes.csv      2          dev501:9093  1         1      |
-    | Shocktrade.quotes.csv      3          dev502:9091  1         1      |
-    | Shocktrade.quotes.csv      4          dev502:9092  1         1      |
-    + ------------------------------------------------------------------- +
+    + ------------------------------------------------------ +
+    | topic                         partitions  replicated   |
+    + ------------------------------------------------------ +
+    | Shocktrade.quotes.csv         5           100%         |
+    | shocktrade.quotes.avro        5           100%         |
+    | test.Shocktrade.quotes.avro   5           100%         |
+    | hft.Shocktrade.quotes.avro    5           100%         |
+    | test2.Shocktrade.quotes.avro  5           100%         |
+    | test1.Shocktrade.quotes.avro  5           100%         |
+    | test3.Shocktrade.quotes.avro  5           100%         |
+    + ------------------------------------------------------ +
 
 To see a subset of the topics (matches any topic that starts with the given search term):
 
-    kafka:/> kls Shocktrade.quotes.csv
-    + ------------------------------------------------------------------- +
-    | topic                      partition  leader       replicas  inSync |
-    + ------------------------------------------------------------------- +
-    | Shocktrade.quotes.csv      0          dev501:9091  1         1      |
-    | Shocktrade.quotes.csv      1          dev501:9092  1         1      |
-    | Shocktrade.quotes.csv      2          dev501:9093  1         1      |
-    | Shocktrade.quotes.csv      3          dev502:9091  1         1      |
-    | Shocktrade.quotes.csv      4          dev502:9092  1         1      |
-    + ------------------------------------------------------------------- +
+    kafka:/> kls shocktrade.quotes.avro
+    + ------------------------------------------------ +
+    | topic                   partitions  replicated   |
+    + ------------------------------------------------ +
+    | shocktrade.quotes.avro  5           100%         |
+    + ------------------------------------------------ +
+
+To see a detailed list including all partitions, use the `-l` flag:
+
+    kafka:/> kls -l shocktrade.quotes.avro
+    + ------------------------------------------------------------------ +
+    | topic                   partition  leader       replicas  inSync   |
+    + ------------------------------------------------------------------ +
+    | shocktrade.quotes.avro  0          dev501:9092  1         1        |
+    | shocktrade.quotes.avro  1          dev501:9093  1         1        |
+    | shocktrade.quotes.avro  2          dev502:9091  1         1        |
+    | shocktrade.quotes.avro  3          dev502:9092  1         1        |
+    | shocktrade.quotes.avro  4          dev502:9093  1         1        |
+    + ------------------------------------------------------------------ +
 
 To see the statistics for a specific topic, use the `kstats` command:
 
