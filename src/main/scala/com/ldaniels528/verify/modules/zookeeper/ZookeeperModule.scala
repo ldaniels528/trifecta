@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
+import com.ldaniels528.verify.modules.CommandParser._
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.support.zookeeper.ZKProxy.Implicits._
@@ -13,6 +13,8 @@ import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.util.{BinaryMessaging, EndPoint}
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.Variable
+
+import scala.util.Try
 
 /**
  * Zookeeper Module
@@ -23,13 +25,13 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
   private val zk: ZKProxy = rt.zkProxy
 
   override def getCommands = Seq(
-    Command(this, "zcat", zcat, SimpleParams(Seq("key", "type"), Seq.empty), "Retrieves the type-specific value of a key from ZooKeeper"),
+    Command(this, "zcat", zcat, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the type-specific value of a key from ZooKeeper"),
     Command(this, "zcd", zcd, SimpleParams(Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
     Command(this, "zexists", zexists, SimpleParams(Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
     Command(this, "zget", zget, SimpleParams(Seq("key"), Seq.empty), "Retrieves the contents of a specific Zookeeper key"),
     Command(this, "zls", zls, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
     Command(this, "zmk", zmkdir, SimpleParams(Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
-    Command(this, "zput", zput, SimpleParams(Seq("key", "value", "type"), Seq.empty), "Sets a key-value pair in ZooKeeper"),
+    Command(this, "zput", zput, UnixLikeParams(Seq("key" -> true, "value" -> true), Seq("-t" -> "type")), "Sets a key-value pair in ZooKeeper"),
     Command(this, "zreconnect", reconnect, SimpleParams(Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
     Command(this, "zrm", delete, UnixLikeParams(Seq("key" -> true), flags = Seq("-r" -> "recursive")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
     Command(this, "zruok", ruok, SimpleParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
@@ -224,19 +226,26 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
   }
 
   /**
-   * "zput" - Retrieves a value from ZooKeeper
+   * "zput" - Sets a key-value pair in ZooKeeper
+   * @example {{{ zput /test/data/items/1 "Hello World" }}}
+   * @example {{{ zput /test/data/items/2 1234.5 }}}
+   * @example {{{ zput /test/data/items/3 12345 -t short }}}
+   * @example {{{ zput /test/data/items/4 de.ad.be.ef }}}
    */
   def zput(params: UnixLikeArgs) = {
     // get the arguments
-    val Seq(key, value, typeName, _*) = params.args
+    val Seq(key, value, _*) = params.args
 
     // convert the key to a fully-qualified path
     val path = zkKeyToPath(key)
 
+    // retrieve (or guess) the value's type
+    val valueType = params("-t") getOrElse guessValueType(value)
+
     // perform the action
-    zk.delete(path)
-    zk ensureParents path
-    zk.create(path -> toBytes(value, typeName))
+    Try(zk delete path)
+    Try(zk ensureParents path)
+    zk.create(path -> encodeValue(value, valueType))
   }
 
   /**
@@ -267,27 +276,47 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
     unwind(path)
   }
 
-  private def fromBytes(bytes: Array[Byte], typeName: String): String = {
-    typeName match {
-      case "hex" => bytes map (b => "%02x".format(b)) mkString "."
-      case "int" => ByteBuffer.wrap(bytes).getInt.toString
+  private def decodeValue(bytes: Array[Byte], valueType: String): String = {
+    valueType match {
+      case "bytes" => bytes map (b => "%02x".format(b)) mkString "."
+      case "char" => ByteBuffer.wrap(bytes).getChar.toString
+      case "double" => ByteBuffer.wrap(bytes).getDouble.toString
+      case "float" => ByteBuffer.wrap(bytes).getFloat.toString
+      case "int" | "integer" => ByteBuffer.wrap(bytes).getInt.toString
       case "long" => ByteBuffer.wrap(bytes).getLong.toString
-      case "dec" | "double" => ByteBuffer.wrap(bytes).getDouble.toString
+      case "short" => ByteBuffer.wrap(bytes).getShort.toString
       case "string" | "text" => new String(bytes)
-      case _ => throw new IllegalArgumentException(s"Invalid type '$typeName'")
+      case _ => throw new IllegalArgumentException(s"Invalid type '$valueType'")
     }
   }
 
-  private def toBytes(value: String, typeName: String): Array[Byte] = {
+  private def encodeValue(value: String, valueType: String): Array[Byte] = {
     import java.nio.ByteBuffer.allocate
 
-    typeName match {
-      case "hex" => value.getBytes
-      case "int" => allocate(4).putInt(value.toInt)
+    valueType match {
+      case "bytes" => parseDottedHex(value)
+      case "char" => allocate(2).putChar(value.head)
+      case "double" => allocate(8).putDouble(value.toDouble)
+      case "float" => allocate(4).putFloat(value.toFloat)
+      case "int" | "integer" => allocate(4).putInt(value.toInt)
       case "long" => allocate(8).putLong(value.toLong)
-      case "dec" | "double" => allocate(8).putDouble(value.toDouble)
-      case "string" | "text" => value.getBytes
-      case _ => throw new IllegalArgumentException(s"Invalid type '$typeName'")
+      case "short" => allocate(2).putShort(value.toShort)
+      case "string" | "text" => parseString(value).getBytes
+      case _ => throw new IllegalArgumentException(s"Invalid type '$valueType'")
+    }
+  }
+
+  /**
+   * Guesses the given value's type
+   * @param value the given value
+   * @return the guessed type
+   */
+  private def guessValueType(value: String): String = {
+    value match {
+      case s if s.matches( """^-?[0-9]\d*(\.\d+)?$""") => "double"
+      case s if s.matches( """\d+""") => "long"
+      case s if isDottedHex(s) => "bytes"
+      case _ => "string"
     }
   }
 
