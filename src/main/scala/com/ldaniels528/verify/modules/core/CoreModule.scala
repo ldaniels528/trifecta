@@ -289,7 +289,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
         case "?" :: count :: Nil => Some(s"history $count")
         case "?" :: Nil => Some("history")
         case index :: Nil => SessionManagement.history(parseInt("history ID", index) - 1)
-        case _ => dieSyntax("!")
+        case _ => dieSyntax(params)
       }
     } {
       out.println(s">> $command")

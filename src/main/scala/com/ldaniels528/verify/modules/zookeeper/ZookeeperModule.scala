@@ -179,7 +179,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
         zk.create(path -> encodeValue(value, valueType))
 
       case _ =>
-        throw new IllegalArgumentException(s"Invalid arguments - Use 'syntax zput' to see usage")
+        dieSyntax(params)
     }
     ()
   }

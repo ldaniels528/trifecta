@@ -67,7 +67,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kconsumers", getConsumers, SimpleParams(Nil, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Nil), help = "Counts the messages matching a given condition"),
     Command(this, "kcursor", getCursor, UnixLikeParams(), help = "Displays the current message cursor"),
-    Command(this, "kexport", exportToFile, UnixLikeParams(Seq("topic" -> false, "groupId" -> true), Seq("-f" -> "outputFile")), help = "Writes the contents of a specific topic to a file", undocumented = true),
+    Command(this, "kexport", exportMessages, UnixLikeParams(Seq("topic" -> false, "groupId" -> true), Seq("-f" -> "outputFile")), help = "Writes the contents of a specific topic to a file", undocumented = true),
     Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Nil, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputTopic")), "Finds messages matching a given condition and exports them to a topic"),
@@ -108,7 +108,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val (topic, partition, groupId, offset) = params.args match {
       case aGroupId :: anOffset :: Nil => cursor map (c => (c.topic, c.partition, aGroupId, parseOffset(anOffset))) getOrElse dieNoCursor
       case aTopic :: aPartition :: aGroupId :: anOffset :: Nil => (aTopic, parsePartition(aPartition), aGroupId, parseOffset(anOffset))
-      case _ => dieSyntax("kcommit")
+      case _ => dieSyntax(params)
     }
 
     // perform the action
@@ -137,14 +137,14 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example {{{ kexport com.shocktrade.quotes.csv lld3 -f quotes.bin }}}
    * @example {{{ kexport lld3 -f quotes.bin }}}
    */
-  def exportToFile(params: UnixLikeArgs): Long = {
+  def exportMessages(params: UnixLikeArgs): Long = {
     import java.io.{DataOutputStream, FileOutputStream}
 
     // get the arguments (topic, groupId)
     val (topic, groupId) = params.args match {
       case aGroupId :: Nil => cursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor
       case aTopic :: aGroupId :: Nil => (aTopic, aGroupId)
-      case _ => dieSyntax("kexport")
+      case _ => dieSyntax(params)
     }
 
     // get the output source
@@ -160,6 +160,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
         fos.write(message)
         count += 1
         if (count % 10000 == 0) {
+          // TODO add count to job information
           out.println(s"$count messages written so far...")
           fos.flush()
         }
@@ -178,7 +179,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val (topic, partition, groupId) = params.args match {
       case aGroupId :: Nil => cursor map (c => (c.topic, c.partition, aGroupId)) getOrElse dieNoCursor
       case aTopic :: aPartition :: aGroupId :: Nil => (aTopic, parsePartition(aPartition), aGroupId)
-      case _ => dieSyntax("kfetch")
+      case _ => dieSyntax(params)
     }
 
     // perform the action
@@ -466,7 +467,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val (topic, partition, startOffset, endOffset) = params.args match {
       case offset0 :: offset1 :: Nil => cursor map (c => (c.topic, c.partition, parseOffset(offset0), parseOffset(offset1))) getOrElse dieNoCursor
       case aTopic :: aPartition :: aStartOffset :: anEndOffset :: Nil => (aTopic, parsePartition(aPartition), parseOffset(aStartOffset), parseOffset(anEndOffset))
-      case _ => dieSyntax("kgetminmax")
+      case _ => dieSyntax(params)
     }
 
     // get the optional arguments
@@ -538,7 +539,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
         Some((topic, parsePartition(partitionA), parsePartition(partitionB)))
 
       case _ =>
-        dieSyntax("kstats")
+        dieSyntax(params)
     }
 
     results match {
@@ -614,7 +615,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val topic = params.args match {
       case Nil => cursor.map(c => c.topic) getOrElse dieNoCursor()
       case aTopic :: Nil => aTopic
-      case _ => dieSyntax("kimport")
+      case _ => dieSyntax(params)
     }
 
     // get the input file (expand the path)
@@ -769,7 +770,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val (topic, key, message) = params.args match {
       case aKey :: aMessage :: Nil => cursor map (c => (c.topic, aKey, aMessage)) getOrElse dieNoCursor
       case aTopic :: aGroupId :: aKey :: aMessage :: Nil => (aTopic, aKey, aMessage)
-      case _ => dieSyntax("kpublish")
+      case _ => dieSyntax(params)
     }
 
     // convert the key and message to binary
@@ -792,7 +793,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     val (topic, groupId) = params.args match {
       case aGroupId :: Nil => cursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor
       case aTopic :: aGroupId :: Nil => (aTopic, aGroupId)
-      case _ => dieSyntax("kreset")
+      case _ => dieSyntax(params)
     }
 
     // get the partition range

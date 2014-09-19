@@ -2,7 +2,7 @@ package com.ldaniels528.verify.modules
 
 import java.net.{URL, URLClassLoader}
 
-import com.ldaniels528.verify.command.Command
+import com.ldaniels528.verify.command.{UnixLikeArgs, Command}
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.Variable
 
@@ -45,7 +45,9 @@ trait Module {
 
   protected def die[S](message: String): S = throw new IllegalArgumentException(message)
 
-  protected def dieSyntax[S](command: String): S = die( s"""Invalid arguments - use "syntax $command" to see usage""")
+  protected def dieSyntax[S](unixArgs: UnixLikeArgs): S = {
+    die(s"""Invalid arguments - use "syntax ${unixArgs.commandName.get}" to see usage""")
+  }
 
   /**
    * Expands the UNIX path into a JVM-safe value

@@ -232,7 +232,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
         stormConf.put(key, value)
         Seq(TopologyConfig(key, value))
       case _ =>
-        throw new IllegalArgumentException("Usage: sconf [<key> [<value>]]")
+        dieSyntax(params)
     }
   }
 
