@@ -800,6 +800,7 @@ The valid value types are:
 * double
 * float
 * integer
+* json
 * long
 * short
 * string
