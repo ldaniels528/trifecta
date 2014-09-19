@@ -215,7 +215,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
       for {
         (partition, md) <- result_?
         decoder <- cursor map (_.decoder)
-      } yield getMessage(topic, partition, md.offset, UnixLikeArgs(Nil))
+      } yield getMessage(topic, partition, md.offset, params)
     }
   }
 

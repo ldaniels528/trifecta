@@ -19,13 +19,10 @@ class UnixLikeParamsSpec() extends FeatureSpec with GivenWhenThen with MockitoSu
       val line = "kget -a schema -f outfile.txt shocktrades.quotes.csv 0 165 -b"
 
       When("The string is parsed into tokens")
-      val tokens = CommandParser.parse(line)
-
-      Then("The tokens are transformed into Unix-style parameters")
-      val result = CommandParser.parseUnixLikeArgs(tokens)
+      val result = CommandParser.parseUnixLikeArgs(line)
 
       And("Finally validate the Unix-style parameters")
-      result shouldBe UnixLikeArgs(List("kget", "shocktrades.quotes.csv", "0", "165"), Map("-f" -> Some("outfile.txt"), "-a" -> Some("schema"), "-b" -> None))
+      result shouldBe UnixLikeArgs(Some("kget"), List("shocktrades.quotes.csv", "0", "165"), Map("-f" -> Some("outfile.txt"), "-a" -> Some("schema"), "-b" -> None))
     }
   }
 
@@ -35,13 +32,10 @@ class UnixLikeParamsSpec() extends FeatureSpec with GivenWhenThen with MockitoSu
       val line = "kget shocktrades.quotes.csv 0 165"
 
       When("The string is parsed into tokens")
-      val tokens = CommandParser.parse(line)
-
-      Then("The tokens are transformed into Unix-style parameters")
-      val result = CommandParser.parseUnixLikeArgs(tokens)
+      val result = CommandParser.parseUnixLikeArgs(line)
 
       And("Finally validate the Unix-style parameters")
-      result shouldBe UnixLikeArgs(List("kget", "shocktrades.quotes.csv", "0", "165"))
+      result shouldBe UnixLikeArgs(Some("kget"), List("shocktrades.quotes.csv", "0", "165"))
     }
   }
 

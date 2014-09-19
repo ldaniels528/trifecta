@@ -22,12 +22,11 @@ class VxRuntimeContextSpec() extends FeatureSpec with GivenWhenThen with Mockito
       val command = mock[Command]
 
       When("Parsing command line input into arguments")
-      val args = CommandParser.parse(commandLineInput)
+      val params = CommandParser.parse(commandLineInput)
 
       Then("The arguments should be successfully verified")
-      val params = args.tail
       //paramSet.checkArgs(command, params)
-      paramSet.transform(params) shouldBe UnixLikeArgs(Nil, Map("-r" -> Some("/some/path/to/delete")))
+      paramSet.transform(params) shouldBe UnixLikeArgs(Some("zrm"), Nil, Map("-r" -> Some("/some/path/to/delete")))
     }
   }
 

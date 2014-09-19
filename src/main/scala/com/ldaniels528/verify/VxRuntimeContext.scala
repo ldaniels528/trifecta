@@ -7,13 +7,13 @@ import java.util.{Properties, Random}
 
 import com.ldaniels528.verify.VxRuntimeContext.JobItem
 import com.ldaniels528.verify.command.CommandParser
+import com.ldaniels528.verify.modules.ModuleManager
 import com.ldaniels528.verify.modules.core.CoreModule
 import com.ldaniels528.verify.modules.kafka.KafkaModule
 import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.ZookeeperModule
-import com.ldaniels528.verify.modules.ModuleManager
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
-import com.ldaniels528.verify.util.{EndPoint, BinaryMessaging}
+import com.ldaniels528.verify.util.{BinaryMessaging, EndPoint}
 import com.ldaniels528.verify.vscript.{RootScope, VScriptCompiler}
 import org.slf4j.LoggerFactory
 
@@ -114,31 +114,31 @@ class VxRuntimeContext(val zkProxy: ZKProxy) extends BinaryMessaging {
    * @param input the given line of input
    * @return a try-monad wrapped result
    */
-  private def interpretCommandLine(input: String): Try[Any] = {
-    // parse & evaluate the user input
-    Try(parseInput(input) match {
-      case Some((cmd, args)) =>
-        // match the command
-        val commandSet = moduleManager.commandSet
-        commandSet.get(cmd) match {
-          case Some(command) =>
-            // parse the args into Unix-style args
-            val unixArgs = CommandParser.parseUnixLikeArgs(args)
+  private def interpretCommandLine(input: String): Try[Any] = Try {
+    // parse the input into tokens
+    val tokens = CommandParser.parse(input)
 
-            // verify and execute the command
-            command.params.checkArgs(command, args)
-            val result = command.fx(unixArgs)
+    // convert the tokens into Unix-style arguments
+    val unixArgs = CommandParser.parseUnixLikeArgs(tokens)
 
-            // auto-switch modules?
-            if (autoSwitching && (command.promptAware || command.module.moduleName != "core")) {
-              moduleManager.setActiveModule(command.module)
-            }
-            result
-          case _ =>
-            throw new IllegalArgumentException(s"'$input' not recognized")
-        }
-      case _ =>
-    })
+    // match the command
+    val commandSet = moduleManager.commandSet
+
+    for {
+      commandName <- unixArgs.commandName
+      command <- commandSet.get(commandName)
+
+    } yield {
+      // verify and execute the command
+      command.params.checkArgs(command, tokens.tail)
+      val result = command.fx(unixArgs)
+
+      // auto-switch modules?
+      if (autoSwitching && (command.promptAware || command.module.moduleName != "core")) {
+        moduleManager.setActiveModule(command.module)
+      }
+      result
+    }
   }
 
   /**

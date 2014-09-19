@@ -70,12 +70,19 @@ object CommandParser {
   def parseDottedHex(dottedHex: String): Array[Byte] = dottedHex.split("[.]") map (Integer.parseInt(_, 16)) map (_.toByte)
 
   /**
+   * Parses the given input string into tokens
+   * @return the argument list
+   */
+  def parseUnixLikeArgs(input: String): UnixLikeArgs = parseUnixLikeArgs(parse(input))
+
+  /**
    * Parses the given items (e.g. ["-c", "-f", "myfile"]) into an argument list (e.g. ["-c" -> None, "-f" -> Some("myfile")])
    * @param items the given array of items
    * @return the argument list
    */
   def parseUnixLikeArgs(items: Seq[String]): UnixLikeArgs = {
-    val result = items.foldLeft[Accumulator](Accumulator()) { case (acc: Accumulator, item) =>
+    val args = if(items.nonEmpty) items.tail else Nil
+    val result = args.foldLeft[Accumulator](Accumulator()) { case (acc: Accumulator, item) =>
       // is the item flag?
       if (item.startsWith("-")) {
         if (acc.flag.isDefined) {
@@ -96,7 +103,7 @@ object CommandParser {
     }
 
     val flags = result.flag map (flag => flag -> None :: result.flags) getOrElse result.flags
-    UnixLikeArgs(result.args.reverse, Map(flags: _*))
+    UnixLikeArgs(items.headOption, result.args.reverse, Map(flags: _*))
   }
 
   private case class Accumulator(var args: List[String] = Nil,

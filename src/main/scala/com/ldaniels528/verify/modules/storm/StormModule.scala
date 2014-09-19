@@ -32,7 +32,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
   }
 
   // connect to the server
-  createConnection(UnixLikeArgs(Nil))
+  createConnection(UnixLikeArgs(commandName = None, args = Nil))
 
   // the bound commands
   override def getCommands: Seq[Command] = Seq(
