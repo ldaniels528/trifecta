@@ -25,10 +25,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
   private val zk: ZKProxy = rt.zkProxy
 
   override def getCommands = Seq(
-    Command(this, "zcat", zcat, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the type-specific value of a key from ZooKeeper"),
     Command(this, "zcd", zcd, SimpleParams(Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
     Command(this, "zexists", zexists, SimpleParams(Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
-    Command(this, "zget", zget, SimpleParams(Seq("key"), Seq.empty), "Retrieves the contents of a specific Zookeeper key"),
+    Command(this, "zget", zget, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the contents of a specific Zookeeper key"),
     Command(this, "zls", zls, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
     Command(this, "zmk", zmkdir, SimpleParams(Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
     Command(this, "zput", zput, UnixLikeParams(Seq("key" -> true, "value" -> true), Seq("-t" -> "type")), "Sets a key-value pair in ZooKeeper"),
@@ -73,14 +72,11 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
   }
 
   /**
-   * "zcat" - Outputs the value of a key from ZooKeeper
-   * @example {{{ zcat /test/data/items/1 -t string => Hello World }}}
-   * @example {{{ zcat /test/data/items/2 -t double => 123.45 }}}
-   * @example {{{ zcat /test/data/items/3 -t integer => 1234 }}}
-   * @example {{{ zcat /test/data/items/4 -t bytes => de.ad.be.ef }}}
+   * "zget" - Dumps the contents of a specific Zookeeper key to the console
+   * @example {{{ zget /storm/workerbeats/my-test-topology-17-1407973634 }}}
    */
-  def zcat(params: UnixLikeArgs): Option[String] = {
-    // get the arguments
+  def zget(params: UnixLikeArgs)(implicit out: PrintStream) {
+    // get the key
     val key = params.args.head
 
     // convert the key to a fully-qualified path
@@ -92,31 +88,6 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
     // perform the action
     zk.read(path) map { bytes =>
       decodeValue(bytes, valueType)
-    }
-  }
-
-  /**
-   * "zget" - Dumps the contents of a specific Zookeeper key to the console
-   * @example {{{ zget /storm/workerbeats/my-test-topology-17-1407973634 }}}
-   */
-  def zget(params: UnixLikeArgs)(implicit out: PrintStream) {
-    // get the Zookeeper key
-    val key = params.args.head
-
-    // convert the key to a fully-qualified path
-    val path = zkKeyToPath(key)
-
-    // perform the action
-    val columns = rt.columns
-    val byteWidth = columns * 3
-    zk.read(path) foreach { bytes =>
-      val length = 1 + Math.log10(bytes.length).toInt
-      var offset = 0
-      val myFormat = s"[%0${length}d] %-${byteWidth}s| %-${columns}s"
-      bytes.sliding(columns, columns) foreach { bytes =>
-        out.println(myFormat.format(offset, asHexString(bytes), asChars(bytes)))
-        offset += columns
-      }
     }
   }
 
@@ -232,7 +203,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
    * @example {{{ zput /test/data/items/3 12345 -t short }}}
    * @example {{{ zput /test/data/items/4 de.ad.be.ef }}}
    */
-  def zput(params: UnixLikeArgs) = {
+  def zput(params: UnixLikeArgs) {
     // get the arguments
     val Seq(key, value, _*) = params.args
 
@@ -246,6 +217,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
     Try(zk delete path)
     Try(zk ensureParents path)
     zk.create(path -> encodeValue(value, valueType))
+    ()
   }
 
   /**
@@ -276,15 +248,15 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
     unwind(path)
   }
 
-  private def decodeValue(bytes: Array[Byte], valueType: String): String = {
+  private def decodeValue(bytes: Array[Byte], valueType: String): Any = {
     valueType match {
-      case "bytes" => bytes map (b => "%02x".format(b)) mkString "."
-      case "char" => ByteBuffer.wrap(bytes).getChar.toString
-      case "double" => ByteBuffer.wrap(bytes).getDouble.toString
-      case "float" => ByteBuffer.wrap(bytes).getFloat.toString
-      case "int" | "integer" => ByteBuffer.wrap(bytes).getInt.toString
-      case "long" => ByteBuffer.wrap(bytes).getLong.toString
-      case "short" => ByteBuffer.wrap(bytes).getShort.toString
+      case "bytes" => bytes
+      case "char" => ByteBuffer.wrap(bytes).getChar
+      case "double" => ByteBuffer.wrap(bytes).getDouble
+      case "float" => ByteBuffer.wrap(bytes).getFloat
+      case "int" | "integer" => ByteBuffer.wrap(bytes).getInt
+      case "long" => ByteBuffer.wrap(bytes).getLong
+      case "short" => ByteBuffer.wrap(bytes).getShort
       case "string" | "text" => new String(bytes)
       case _ => throw new IllegalArgumentException(s"Invalid type '$valueType'")
     }
