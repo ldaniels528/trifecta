@@ -64,6 +64,10 @@ object CommandParser {
    */
   def parseDottedHex(dottedHex: String): Array[Byte] = dottedHex.split("[.]") map (Integer.parseInt(_, 16)) map (_.toByte)
 
+  def parseString(value: String): String = {
+    if(value.startsWith("\"") && value.endsWith("\"")) value.drop(1).dropRight(1) else value
+  }
+
   /**
    * Parses the given items (e.g. ["-c", "-f", "myfile"]) into an argument list (e.g. ["-c" -> None, "-f" -> Some("myfile")])
    * @param items the given array of items
