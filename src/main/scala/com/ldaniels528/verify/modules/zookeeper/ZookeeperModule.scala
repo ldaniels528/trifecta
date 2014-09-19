@@ -272,7 +272,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
       case "int" | "integer" => allocate(4).putInt(value.toInt)
       case "long" => allocate(8).putLong(value.toLong)
       case "short" => allocate(2).putShort(value.toShort)
-      case "string" | "text" => parseString(value).getBytes
+      case "string" | "text" => value.getBytes
       case _ => throw new IllegalArgumentException(s"Invalid type '$valueType'")
     }
   }
