@@ -3,7 +3,7 @@ package com.ldaniels528.verify
 import java.io.PrintStream
 
 import com.ldaniels528.verify.VxConsole._
-import com.ldaniels528.verify.modules.Command
+import com.ldaniels528.verify.command.Command
 import com.ldaniels528.verify.vscript.Scope
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._

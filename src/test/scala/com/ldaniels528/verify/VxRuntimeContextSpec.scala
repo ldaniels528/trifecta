@@ -1,10 +1,9 @@
 package com.ldaniels528.verify
 
+import com.ldaniels528.verify.command.{UnixLikeArgs, Command, CommandParser, UnixLikeParams}
 import org.scalatest.Matchers._
-import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
-import com.ldaniels528.verify.modules.{CommandParser, Command, UnixLikeParams}
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{GivenWhenThen, FeatureSpec}
+import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 /**
  * Verify Runtime Context Specification

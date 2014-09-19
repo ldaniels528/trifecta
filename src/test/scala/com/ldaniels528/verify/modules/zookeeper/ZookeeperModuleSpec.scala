@@ -1,9 +1,5 @@
 package com.ldaniels528.verify.modules.zookeeper
 
-import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
-import com.ldaniels528.verify.support.zookeeper.ZKProxy
-import com.ldaniels528.verify.util.EndPoint
 import org.apache.curator.test.TestingServer
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
 

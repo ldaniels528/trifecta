@@ -5,7 +5,8 @@ import java.nio.ByteBuffer
 import java.util.Date
 
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.modules.CommandParser._
+import com.ldaniels528.verify.command.CommandParser._
+import com.ldaniels528.verify.command._
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.support.zookeeper.ZKProxy.Implicits._

@@ -1,13 +1,6 @@
 package com.ldaniels528.verify.modules.kafka
 
-import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
-import com.ldaniels528.verify.modules.zookeeper.ZookeeperModule
-import com.ldaniels528.verify.support.zookeeper.ZKProxy
-import org.apache.curator.test.TestingServer
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
-
-import scala.util.Try
 
 /**
  * Kafka Module Specification

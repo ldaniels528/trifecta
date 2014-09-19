@@ -47,11 +47,8 @@ class VxKafkaSpout(zkHost: EndPoint, topic: String, parallelism: Int, consumerId
     // schedule the events
     if (once) {
       once = false
-      Future {
-        consumer.observe(topic, parallelism) { message =>
-          queue.add(message)
-        }
-      }
+      startConsuming()
+      ()
     }
   }
 
@@ -60,6 +57,15 @@ class VxKafkaSpout(zkHost: EndPoint, topic: String, parallelism: Int, consumerId
       collector.emit(new Values(msg.message), msg.key)
     }
     ()
+  }
+
+  private def startConsuming(): Future[Unit] = {
+    Future {
+      consumer.observe(topic, parallelism) { message =>
+        queue.add(message)
+        ()
+      }
+    }
   }
 
 }

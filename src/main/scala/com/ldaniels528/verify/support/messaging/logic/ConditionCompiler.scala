@@ -1,6 +1,6 @@
 package com.ldaniels528.verify.support.messaging.logic
 
-import com.ldaniels528.verify.modules.CommandParser
+import com.ldaniels528.verify.command.CommandParser
 import com.ldaniels528.verify.support.messaging.MessageDecoder
 import com.ldaniels528.verify.support.messaging.logic.Operations._
 

@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
+import com.ldaniels528.verify.command._
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.support.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData}

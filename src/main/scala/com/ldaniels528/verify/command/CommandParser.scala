@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.modules
+package com.ldaniels528.verify.command
 
 /**
  * Verify Command Parser
@@ -53,6 +53,11 @@ object CommandParser {
     (if (sb.nonEmpty) sb.toString :: list else list).reverse
   }
 
+  /**
+   * Indicates whether the given string is hexadecimal dot-notation
+   * @param value the given string value
+   * @return true, if the string is hexadecimal dot-notation (e.g. "de.ad.be.ef.ca.fe.ba.be")
+   */
   def isDottedHex(value: String): Boolean = {
     value.split("[.]").forall(_.matches( """[0-9a-fA-F]{2}"""))
   }
@@ -101,20 +106,5 @@ object CommandParser {
   private case class Accumulator(var args: List[String] = Nil,
                                  var flags: List[(String, Option[String])] = Nil,
                                  var flag: Option[String] = None)
-
-  /**
-   * Represents a set of Unix-style parameters (e.g. "kget -a schema -f outfile.txt shocktrades.quotes.csv 0 165 -b")
-   * @param args the given arguments (e.g. ("kget", "shocktrades.quotes.csv", "0", "165"))
-   * @param flags the flag arguments (e.g. ("-a" -> "schema", "-f" -> "outfile.txt", "-b" -> None))
-   */
-  case class UnixLikeArgs(args: List[String], flags: Map[String, Option[String]] = Map.empty) {
-
-    def apply(index: Int): String = args(index)
-
-    def apply(flag: String) = flags.get(flag).flatten
-
-    def contains(flag: String) = flags.get(flag).isDefined
-
-  }
 
 }

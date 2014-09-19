@@ -1,7 +1,5 @@
-package com.ldaniels528.verify.modules
+package com.ldaniels528.verify.command
 
-import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
-import org.scalatest.Matchers._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 

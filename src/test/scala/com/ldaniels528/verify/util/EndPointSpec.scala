@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.io
+package com.ldaniels528.verify.util
 
 import com.ldaniels528.verify.util.EndPoint
 import org.scalatest.mock.MockitoSugar

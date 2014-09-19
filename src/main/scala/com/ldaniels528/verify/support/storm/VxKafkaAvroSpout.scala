@@ -56,10 +56,16 @@ class VxKafkaAvroSpout(zkHost: EndPoint, topic: String, parallelism: Int, consum
     // schedule the events
     if (once) {
       once = false
-      Future {
-        consumer.observe(topic, parallelism) { message =>
-          queue.add(message)
-        }
+      startConsuming()
+      ()
+    }
+  }
+
+  private def startConsuming(): Future[Unit] = {
+    Future {
+      consumer.observe(topic, parallelism) { message =>
+        queue.add(message)
+        ()
       }
     }
   }

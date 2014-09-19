@@ -6,11 +6,12 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Properties, Random}
 
 import com.ldaniels528.verify.VxRuntimeContext.JobItem
+import com.ldaniels528.verify.command.CommandParser
 import com.ldaniels528.verify.modules.core.CoreModule
 import com.ldaniels528.verify.modules.kafka.KafkaModule
 import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.ZookeeperModule
-import com.ldaniels528.verify.modules.{CommandParser, ModuleManager}
+import com.ldaniels528.verify.modules.ModuleManager
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.{EndPoint, BinaryMessaging}
 import com.ldaniels528.verify.vscript.{RootScope, VScriptCompiler}

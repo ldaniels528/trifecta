@@ -3,9 +3,9 @@ package com.ldaniels528.verify.modules.core
 import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
-import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
+import com.ldaniels528.verify.command._
+import com.ldaniels528.verify.modules.Module
 import com.ldaniels528.verify.modules.ModuleManager.ModuleVariable
-import com.ldaniels528.verify.modules.{Command, Module, SimpleParams, UnixLikeParams}
 import com.ldaniels528.verify.support.avro.AvroReading
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue

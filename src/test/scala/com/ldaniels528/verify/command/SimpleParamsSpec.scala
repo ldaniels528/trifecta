@@ -1,4 +1,4 @@
-package com.ldaniels528.verify.modules
+package com.ldaniels528.verify.command
 
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}

@@ -2,6 +2,7 @@ package com.ldaniels528.verify.modules
 
 import java.net.{URL, URLClassLoader}
 
+import com.ldaniels528.verify.command.Command
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.Variable
 

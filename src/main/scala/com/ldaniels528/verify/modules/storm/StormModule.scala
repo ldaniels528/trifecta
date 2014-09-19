@@ -5,8 +5,8 @@ import java.net.{URL, URLClassLoader}
 import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
 import com.ldaniels528.verify.VxRuntimeContext
-import com.ldaniels528.verify.modules.CommandParser.UnixLikeArgs
-import com.ldaniels528.verify.modules.{Command, Module, SimpleParams}
+import com.ldaniels528.verify.command.{Command, SimpleParams, UnixLikeArgs}
+import com.ldaniels528.verify.modules.Module
 import com.ldaniels528.verify.vscript.Variable
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json._
