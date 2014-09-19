@@ -89,9 +89,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
    * @param path the path to delete
    */
   private def deleteRecursively(path: String): Unit = {
-    zk.getChildren(path) foreach { subPath =>
-      deleteRecursively(zkKeyToPath(path, subPath))
-    }
+    zk.getChildren(path) foreach (subPath => deleteRecursively(zkKeyToPath(path, subPath)))
 
     out.println(s"Deleting '$path'...")
     zk.delete(path)
@@ -167,25 +165,29 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
    */
   def publishMessage(params: UnixLikeArgs) {
     // get the arguments
-    val Seq(key, value, _*) = params.args
+    params.args match {
+      case key :: value :: Nil =>
+        // convert the key to a fully-qualified path
+        val path = zkKeyToPath(key)
 
-    // convert the key to a fully-qualified path
-    val path = zkKeyToPath(key)
+        // retrieve (or guess) the value's type
+        val valueType = params("-t") getOrElse guessValueType(value)
 
-    // retrieve (or guess) the value's type
-    val valueType = params("-t") getOrElse guessValueType(value)
+        // perform the action
+        Try(zk delete path)
+        Try(zk ensureParents path)
+        zk.create(path -> encodeValue(value, valueType))
 
-    // perform the action
-    Try(zk delete path)
-    Try(zk ensureParents path)
-    zk.create(path -> encodeValue(value, valueType))
+      case _ =>
+        throw new IllegalArgumentException(s"Invalid arguments - Use 'syntax zput' to see usage")
+    }
     ()
   }
 
   /**
    * Re-establishes the connection to Zookeeper
    */
-  def reconnect(params: UnixLikeArgs) = zk.reconnect()
+  def reconnect(params: UnixLikeArgs): Unit = zk.reconnect()
 
   /**
    * "zruok" - Checks the status of a Zookeeper instance

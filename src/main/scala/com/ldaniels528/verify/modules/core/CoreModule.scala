@@ -104,15 +104,15 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
     s"auto switching is ${if (rt.autoSwitching) "On" else "Off"}"
   }
 
-  def avroCat(params: UnixLikeArgs): String = {
-    val name = params.args.head
-
-    implicit val scope = rt.scope
-    val decoder = getAvroDecoder(name)
-    decoder.schemaString
+  def avroCat(params: UnixLikeArgs): Option[String] = {
+    params.args.headOption map { name =>
+      implicit val scope = rt.scope
+      val decoder = getAvroDecoder(name)
+      decoder.schemaString
+    }
   }
 
-  def avroLoadSchema(params: UnixLikeArgs): Unit = {
+  def avroLoadSchema(params: UnixLikeArgs) {
     val Seq(name, schemaPath, _*) = params.args
 
     // get the decoder
@@ -144,22 +144,17 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   /**
    * "cd" - Changes the local file system path/directory
    */
-  def changeDir(params: UnixLikeArgs): String = {
-    // get the argument
-    val key = params.args.head
-
-    // perform the action
-    cwd = key match {
-      case s if s == ".." =>
+  def changeDir(params: UnixLikeArgs): Option[String] = {
+    params.args.headOption map {
+      case path if path == ".." =>
         cwd.split("[/]") match {
           case a if a.length <= 1 => "/"
           case a =>
             val newPath = a.init.mkString("/")
             if (newPath.trim.length == 0) "/" else newPath
         }
-      case s => setupPath(s)
+      case path => setupPath(path)
     }
-    cwd
   }
 
   /**
@@ -167,10 +162,10 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * Example: charset UTF-8
    * @param params the given arguments
    */
-  def charSet(params: UnixLikeArgs) = {
+  def charSet(params: UnixLikeArgs): Either[Unit, String] = {
     params.args.headOption match {
-      case Some(newEncoding) => rt.encoding = newEncoding
-      case None => rt.encoding
+      case Some(newEncoding) => Left(rt.encoding = newEncoding)
+      case None => Right(rt.encoding)
     }
   }
 
@@ -178,10 +173,10 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * "columns" - Retrieves or sets the column width for message output
    * @example {{{ columns 30 }}}
    */
-  def columnWidthGetOrSet(params: UnixLikeArgs): Any = {
+  def columnWidthGetOrSet(params: UnixLikeArgs): Either[Unit, Int] = {
     params.args.headOption match {
-      case Some(arg) => rt.columns = parseInt("columnWidth", arg)
-      case None => rt.columns
+      case Some(arg) => Left(rt.columns = parseInt("columnWidth", arg))
+      case None => Right(rt.columns)
     }
   }
 
@@ -242,21 +237,21 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
   /**
    * "wget" command - Retrieves remote content via HTTP
-   * @example {{{ wget http://www.example.com/ }}}
+   * @example {{{ wget "http://www.example.com/" }}}
    */
-  def httpGet(params: UnixLikeArgs): Array[Byte] = {
+  def httpGet(params: UnixLikeArgs): Option[Array[Byte]] = {
     import java.io.ByteArrayOutputStream
     import java.net._
 
     // get the URL string
-    val urlString = params.args.head
-
-    // download the content
-    new URL(urlString).openConnection().asInstanceOf[HttpURLConnection] use { conn =>
-      conn.getInputStream use { in =>
-        val out = new ByteArrayOutputStream(1024)
-        IOUtils.copy(in, out)
-        out.toByteArray
+    params.args.headOption map { urlString =>
+      // download the content
+      new URL(urlString).openConnection().asInstanceOf[HttpURLConnection] use { conn =>
+        conn.getInputStream use { in =>
+          val out = new ByteArrayOutputStream(1024)
+          IOUtils.copy(in, out)
+          out.toByteArray
+        }
       }
     }
   }
@@ -286,7 +281,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * @example !? 10
    * @example !?
    */
-  def executeHistory(params: UnixLikeArgs)(implicit out: PrintStream) = {
+  def executeHistory(params: UnixLikeArgs)(implicit out: PrintStream) {
     for {
       command <- params.args match {
         case Nil => SessionManagement.history.last
@@ -306,7 +301,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   /**
    * "exit" command - Exits the shell
    */
-  def exit(params: UnixLikeArgs) = {
+  def exit(params: UnixLikeArgs) {
     rt.alive = false
     SessionManagement.history.store(rt.historyFile)
   }
@@ -544,7 +539,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   /**
    * "systime" command - Returns the system time as an EPOC in milliseconds
    */
-  def systemTime(args: UnixLikeArgs) = System.currentTimeMillis.toString
+  def systemTime(args: UnixLikeArgs): Long = System.currentTimeMillis()
 
   /**
    * "time" command - Returns the time in the local time zone
@@ -566,7 +561,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * "use" command - Switches the active module
    * Example: use kafka
    */
-  def useModule(params: UnixLikeArgs) = {
+  def useModule(params: UnixLikeArgs) {
     val moduleName = params.args.head
     rt.moduleManager.findModuleByName(moduleName) match {
       case Some(module) => rt.moduleManager.activeModule = module
