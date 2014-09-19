@@ -1,14 +1,13 @@
 package com.ldaniels528.verify.util
 
-import com.ldaniels528.verify.util.EndPoint
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 /**
  * End-Point Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class EndPointSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar {
+class EndPointSpec() extends FeatureSpec with GivenWhenThen {
 
   info("As a EndPoint instance")
   info("I want to be able to encode and/or decode end-points")
@@ -24,10 +23,10 @@ class EndPointSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar {
       val (myHost, myPort) = EndPoint.unapply(endPoint)
 
       Then("The host name should match the original value")
-      assert(myHost == host)
+      myHost shouldBe host
 
       And("The port should match the original value")
-      assert(myPort == port)
+      myPort shouldBe port
     }
   }
 

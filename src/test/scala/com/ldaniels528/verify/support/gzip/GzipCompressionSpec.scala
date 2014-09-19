@@ -1,14 +1,14 @@
 package com.ldaniels528.verify.support.gzip
 
 import com.ldaniels528.verify.support.gzip.GzipCompression._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 /**
  * GZIP Compression Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class GzipCompressionSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar with GzipCompression {
+class GzipCompressionSpec() extends FeatureSpec with GivenWhenThen with GzipCompression {
 
   info("As a GzipCompression instance")
   info("I want to be able to compress and/or decompress data")
@@ -29,7 +29,7 @@ class GzipCompressionSpec() extends FeatureSpec with GivenWhenThen with MockitoS
       assert(result.isSuccess)
 
       And("The original message should be the same as the decompressed message")
-      assert(result.get == originalMessage)
+      result.get shouldBe originalMessage
     }
   }
 

@@ -3,14 +3,13 @@ package com.ldaniels528.verify.support.kafka
 import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer.BrokerDetails
 import net.liftweb.json._
 import org.scalatest.Matchers._
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 /**
  * Kafka Subscriber Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaSubscriberSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar {
+class KafkaSubscriberSpec() extends FeatureSpec with GivenWhenThen {
   implicit val formats = DefaultFormats
 
   info("As a KafkaSubscriber instance")

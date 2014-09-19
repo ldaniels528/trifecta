@@ -1,5 +1,6 @@
 package com.ldaniels528.verify.command
 
+import org.scalatest.Matchers._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
@@ -26,7 +27,7 @@ class SimpleParamsSpec() extends FeatureSpec with GivenWhenThen with MockitoSuga
       val params = args.tail
       //intercept[IllegalArgumentException]
       paramSet.checkArgs(command, params)
-      assert(paramSet.transform(params) sameElements Seq("-r", "/some/path/to/delete"))
+      paramSet.transform(params) shouldBe Seq("-r", "/some/path/to/delete")
     }
   }
 
