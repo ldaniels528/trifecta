@@ -53,6 +53,10 @@ object CommandParser {
     (if (sb.nonEmpty) sb.toString :: list else list).reverse
   }
 
+  def isDottedHex(value: String): Boolean = {
+    value.split("[.]").forall(_.matches( """[0-9a-fA-F]{2}"""))
+  }
+
   /**
    * Converts a binary string to a byte array
    * @param dottedHex the given binary string (e.g. "de.ad.be.ef.00")
