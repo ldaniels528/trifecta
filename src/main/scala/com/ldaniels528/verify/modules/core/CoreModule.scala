@@ -36,7 +36,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   override def moduleName = "core"
 
   override def getCommands: Seq[Command] = Seq(
-    Command(this, "!", executeHistory, UnixLikeParams(Seq("index" -> true, "count" -> false), Nil), help = "Executes a previously issued command"),
+    Command(this, "!", executeHistory, UnixLikeParams(Seq("!" -> false, "?" -> false, "index|count" -> false), Nil), help = "Executes a previously issued command"),
     Command(this, "?", help, SimpleParams(Nil, Seq("search-term")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, SimpleParams(Nil, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
     Command(this, "avcat", avroCat, SimpleParams(required = Seq("variable")), help = "Displays the contents of a schema variable", promptAware = false),
@@ -286,9 +286,9 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
       command <- params.args match {
         case Nil => SessionManagement.history.last
         case "!" :: Nil => SessionManagement.history.last
-        case "?" :: count :: Nil => Some(s"history $count")
         case "?" :: Nil => Some("history")
-        case index :: Nil => SessionManagement.history(parseInt("history ID", index) - 1)
+        case "?" :: count :: Nil => Some(s"history $count")
+        case index :: Nil if index.matches("\\d+") => SessionManagement.history(parseInt("history ID", index) - 1)
         case _ => dieSyntax(params)
       }
     } {
