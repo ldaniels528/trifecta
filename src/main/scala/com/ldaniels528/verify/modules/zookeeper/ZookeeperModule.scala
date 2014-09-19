@@ -47,6 +47,53 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
   override def shutdown() = ()
 
   /**
+   * "zruok" - Checks the status of a Zookeeper instance
+   * (e.g. echo ruok | nc zookeeper 2181)
+   */
+  def ruok(params: UnixLikeArgs): String = {
+    import scala.sys.process._
+
+    // echo ruok | nc zookeeper 2181
+    val (host, port) = EndPoint(zk.remoteHost).unapply()
+    ("echo ruok" #> s"nc $host $port").!!
+  }
+
+  /**
+   * "zstat" - Returns the statistics of a Zookeeper instance
+   * echo stat | nc zookeeper 2181
+   */
+  def stat(params: UnixLikeArgs): String = {
+    import scala.sys.process._
+
+    // echo stat | nc zookeeper 2181
+    val (host, port) = EndPoint(zk.remoteHost).unapply()
+    ("echo stat" #> s"nc $host $port").!!
+  }
+
+  /**
+   * "zcat" - Outputs the value of a key from ZooKeeper
+   * @example {{{ zcat /test/data/items/1 -t string => Hello World }}}
+   * @example {{{ zcat /test/data/items/2 -t double => 123.45 }}}
+   * @example {{{ zcat /test/data/items/3 -t integer => 1234 }}}
+   * @example {{{ zcat /test/data/items/4 -t bytes => de.ad.be.ef }}}
+   */
+  def zcat(params: UnixLikeArgs): Option[String] = {
+    // get the arguments
+    val key = params.args.head
+
+    // convert the key to a fully-qualified path
+    val path = zkKeyToPath(key)
+
+    // retrieve (or guess) the value's type
+    val valueType = params("-t") getOrElse "bytes"
+
+    // perform the action
+    zk.read(path) map { bytes =>
+      decodeValue(bytes, valueType)
+    }
+  }
+
+  /**
    * "zget" - Dumps the contents of a specific Zookeeper key to the console
    * @example {{{ zget /storm/workerbeats/my-test-topology-17-1407973634 }}}
    */
@@ -69,30 +116,6 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
         offset += columns
       }
     }
-  }
-
-  /**
-   * "zruok" - Checks the status of a Zookeeper instance
-   * (e.g. echo ruok | nc zookeeper 2181)
-   */
-  def ruok(params: UnixLikeArgs): String = {
-    import scala.sys.process._
-
-    // echo ruok | nc zookeeper 2181
-    val (host, port) = EndPoint(zk.remoteHost).unapply()
-    ("echo ruok" #> s"nc $host $port").!!
-  }
-
-  /**
-   * "zstat" - Returns the statistics of a Zookeeper instance
-   * echo stat | nc zookeeper 2181
-   */
-  def stat(params: UnixLikeArgs): String = {
-    import scala.sys.process._
-
-    // echo stat | nc zookeeper 2181
-    val (host, port) = EndPoint(zk.remoteHost).unapply()
-    ("echo stat" #> s"nc $host $port").!!
   }
 
   /**
@@ -174,22 +197,6 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
           s"change time: ${new Date(stat.getCtime)}")
       case None =>
         Seq.empty
-    }
-  }
-
-  /**
-   * "zcat" - Outputs the value of a key from ZooKeeper
-   */
-  def zcat(params: UnixLikeArgs): Option[String] = {
-    // get the arguments
-    val Seq(key, typeName, _*) = params.args
-
-    // convert the key to a fully-qualified path
-    val path = zkKeyToPath(key)
-
-    // perform the action
-    zk.read(path) map { bytes =>
-      fromBytes(bytes, typeName)
     }
   }
 
