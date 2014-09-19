@@ -25,17 +25,17 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
   private val zk: ZKProxy = rt.zkProxy
 
   override def getCommands = Seq(
-    Command(this, "zcd", zcd, SimpleParams(Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
-    Command(this, "zexists", zexists, SimpleParams(Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
-    Command(this, "zget", zget, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the contents of a specific Zookeeper key"),
-    Command(this, "zls", zls, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
-    Command(this, "zmk", zmkdir, SimpleParams(Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
-    Command(this, "zput", zput, UnixLikeParams(Seq("key" -> true, "value" -> true), Seq("-t" -> "type")), "Sets a key-value pair in ZooKeeper"),
+    Command(this, "zcd", chdir, SimpleParams(Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
+    Command(this, "zexists", pathExists, SimpleParams(Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
+    Command(this, "zget", getMessage, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the contents of a specific Zookeeper key"),
+    Command(this, "zls", listKeys, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
+    Command(this, "zmk", mkdir, SimpleParams(Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
+    Command(this, "zput", publishMessage, UnixLikeParams(Seq("key" -> true, "value" -> true), Seq("-t" -> "type")), "Sets a key-value pair in ZooKeeper"),
     Command(this, "zreconnect", reconnect, SimpleParams(Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
     Command(this, "zrm", delete, UnixLikeParams(Seq("key" -> true), flags = Seq("-r" -> "recursive")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
     Command(this, "zruok", ruok, SimpleParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
     Command(this, "zsess", session, SimpleParams(), help = "Retrieves the Session ID from ZooKeeper"),
-    Command(this, "zstat", stat, SimpleParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
+    Command(this, "zstats", stats, SimpleParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
     Command(this, "ztree", tree, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
   override def getVariables: Seq[Variable] = Seq(
@@ -48,80 +48,27 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
   override def shutdown() = ()
 
   /**
-   * "zruok" - Checks the status of a Zookeeper instance
-   * (e.g. echo ruok | nc zookeeper 2181)
-   */
-  def ruok(params: UnixLikeArgs): String = {
-    import scala.sys.process._
-
-    // echo ruok | nc zookeeper 2181
-    val (host, port) = EndPoint(zk.remoteHost).unapply()
-    ("echo ruok" #> s"nc $host $port").!!
-  }
-
-  /**
-   * "zstat" - Returns the statistics of a Zookeeper instance
-   * echo stat | nc zookeeper 2181
-   */
-  def stat(params: UnixLikeArgs): String = {
-    import scala.sys.process._
-
-    // echo stat | nc zookeeper 2181
-    val (host, port) = EndPoint(zk.remoteHost).unapply()
-    ("echo stat" #> s"nc $host $port").!!
-  }
-
-  /**
-   * "zget" - Dumps the contents of a specific Zookeeper key to the console
-   * @example {{{ zget /storm/workerbeats/my-test-topology-17-1407973634 }}}
-   */
-  def zget(params: UnixLikeArgs): Option[Any] = {
-    // get the key
-    val key = params.args.head
-
-    // convert the key to a fully-qualified path
-    val path = zkKeyToPath(key)
-
-    // retrieve (or guess) the value's type
-    val valueType = params("-t") getOrElse "bytes"
-
-    // perform the action
-    zk.read(path) map { bytes =>
-      decodeValue(bytes, valueType)
-    }
-  }
-
-  /**
    * "zcd" - Changes the current path/directory in ZooKeeper
+   * @example {{{ zcd / }}}
+   * @example {{{ zcd .. }}}
    * @example {{{ zcd brokers }}}
    */
-  def zcd(params: UnixLikeArgs): String = {
+  def chdir(params: UnixLikeArgs): Option[String] = {
     // get the argument
-    val key = params.args.head
-
-    // perform the action
-    rt.zkCwd = key match {
-      case s if s == ".." =>
-        rt.zkCwd.split("[/]") match {
-          case a if a.length <= 1 => "/"
-          case a =>
-            val newPath = a.init.mkString("/")
-            if (newPath.trim.length == 0) "/" else newPath
-        }
-      case s => zkKeyToPath(s)
+    params.args.headOption map { key =>
+      // perform the action
+      rt.zkCwd = key match {
+        case s if s == ".." =>
+          rt.zkCwd.split("[/]") match {
+            case a if a.length <= 1 => "/"
+            case a =>
+              val newPath = a.init.mkString("/")
+              if (newPath.trim.length == 0) "/" else newPath
+          }
+        case s => zkKeyToPath(s)
+      }
+      rt.zkCwd
     }
-    rt.zkCwd
-  }
-
-  /**
-   * "zls" - Retrieves the child nodes for a key from ZooKeeper
-   */
-  def zls(params: UnixLikeArgs): Seq[String] = {
-    // get the argument
-    val path = params.args.headOption map zkKeyToPath getOrElse rt.zkCwd
-
-    // perform the action
-    zk.getChildren(path, watch = false)
   }
 
   /**
@@ -150,50 +97,64 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
   }
 
   /**
-   * "zexists" - Returns the status of a Zookeeper key if it exists
+   * "zget" - Dumps the contents of a specific Zookeeper key to the console
+   * @example {{{ zget /storm/workerbeats/my-test-topology-17-1407973634 }}}
    */
-  def zexists(params: UnixLikeArgs): Seq[String] = {
-    // get the argument
-    val key = params.args.head
+  def getMessage(params: UnixLikeArgs): Option[Any] = {
+    // get the key
+    params.args.headOption flatMap { key =>
+      // convert the key to a fully-qualified path
+      val path = zkKeyToPath(key)
 
-    // convert the key to a fully-qualified path
-    val path = zkKeyToPath(key)
+      // retrieve (or guess) the value's type
+      val valueType = params("-t") getOrElse "bytes"
+
+      // perform the action
+      zk.read(path) map (decodeValue(_, valueType))
+    }
+  }
+
+  /**
+   * "zls" - Retrieves the child nodes for a key from ZooKeeper
+   * @example zls topics/Shocktrade.quotes.csv/partitions/4/state
+   */
+  def listKeys(params: UnixLikeArgs): Seq[String] = {
+    // get the argument
+    val path = params.args.headOption map zkKeyToPath getOrElse rt.zkCwd
 
     // perform the action
-    zk.exists(path) match {
-      case Some(stat) =>
-        Seq(
-          s"Aversion: ${stat.getAversion}",
-          s"version: ${stat.getVersion}",
-          s"data length: ${stat.getDataLength}",
-          s"children: ${stat.getNumChildren}",
-          s"change time: ${new Date(stat.getCtime)}")
-      case None =>
-        Seq.empty
-    }
-  }
-
-  private def zkKeyToPath(parent: String, child: String): String = {
-    val parentWithSlash = if (parent.endsWith("/")) parent else parent + "/"
-    parentWithSlash + child
-  }
-
-  private def zkKeyToPath(key: String): String = {
-    key match {
-      case s if s.startsWith("/") => key
-      case s => (if (rt.zkCwd.endsWith("/")) rt.zkCwd else rt.zkCwd + "/") + s
-    }
+    zk.getChildren(path, watch = false)
   }
 
   /**
    * "zmk" - Creates a new ZooKeeper sub-directory (key)
    */
-  def zmkdir(params: UnixLikeArgs) = {
-    // get the arguments
-    val Seq(key, _*) = params.args
+  def mkdir(params: UnixLikeArgs): List[String] = {
+    params.args.headOption map (key => zk.ensurePath(zkKeyToPath(key))) getOrElse Nil
+  }
 
-    // perform the action
-    zk.ensurePath(zkKeyToPath(key))
+  /**
+   * "zexists" - Returns the status of a Zookeeper key if it exists
+   */
+  def pathExists(params: UnixLikeArgs): Seq[String] = {
+    // get the argument
+    params.args.headOption map { key =>
+      // convert the key to a fully-qualified path
+      val path = zkKeyToPath(key)
+
+      // perform the action
+      zk.exists(path) match {
+        case Some(stat) =>
+          Seq(
+            s"Aversion: ${stat.getAversion}",
+            s"version: ${stat.getVersion}",
+            s"data length: ${stat.getDataLength}",
+            s"children: ${stat.getNumChildren}",
+            s"change time: ${new Date(stat.getCtime)}")
+        case None =>
+          Seq.empty
+      }
+    } getOrElse Nil
   }
 
   /**
@@ -203,7 +164,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
    * @example {{{ zput /test/data/items/3 12345 -t short }}}
    * @example {{{ zput /test/data/items/4 de.ad.be.ef }}}
    */
-  def zput(params: UnixLikeArgs) {
+  def publishMessage(params: UnixLikeArgs) {
     // get the arguments
     val Seq(key, value, _*) = params.args
 
@@ -224,6 +185,42 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
    * Re-establishes the connection to Zookeeper
    */
   def reconnect(params: UnixLikeArgs) = zk.reconnect()
+
+  /**
+   * "zruok" - Checks the status of a Zookeeper instance
+   * (e.g. echo ruok | nc zookeeper 2181)
+   */
+  def ruok(params: UnixLikeArgs): String = {
+    import scala.sys.process._
+
+    // echo ruok | nc zookeeper 2181
+    val (host, port) = EndPoint(zk.remoteHost).unapply()
+    ("echo ruok" #> s"nc $host $port").!!
+  }
+
+  /**
+   * "zstats" - Returns the statistics of a Zookeeper instance
+   * echo stat | nc zookeeper 2181
+   */
+  def stats(params: UnixLikeArgs): String = {
+    import scala.sys.process._
+
+    // echo stat | nc zookeeper 2181
+    val (host, port) = EndPoint(zk.remoteHost).unapply()
+    ("echo stat" #> s"nc $host $port").!!
+  }
+
+  private def zkKeyToPath(parent: String, child: String): String = {
+    val parentWithSlash = if (parent.endsWith("/")) parent else parent + "/"
+    parentWithSlash + child
+  }
+
+  private def zkKeyToPath(key: String): String = {
+    key match {
+      case s if s.startsWith("/") => key
+      case s => (if (rt.zkCwd.endsWith("/")) rt.zkCwd else rt.zkCwd + "/") + s
+    }
+  }
 
   /**
    * "zsession" - Retrieves the Session ID from ZooKeeper
