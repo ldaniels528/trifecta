@@ -25,7 +25,7 @@ Table of Contents
         * <a href="#kafka-advanced-search">Advanced Search</a>
     * <a href="#storm-module">Storm Module</a>     
     * <a href="#zookeeper-module">Zookeeper Module</a>
-        * <a href="#zookeeper-list">Navigating directories and keys </a>    
+        * <a href="#zookeeper-list">Navigating directories and keys</a>    
         * <a href="#zookeeper-get-put">Getting and setting key-value pairs</a>
 
 <a name="Motivations"></a>
@@ -762,11 +762,17 @@ Let's view the contents of one of the keys:
     [25] 61.64.65.72.22.3a.35.2c.22.76.65.72.73.69.6f.6e.22.3a.31.2c.22.6c.65.61.64 | ader":5,"version":1,"lead
     [50] 65.72.5f.65.70.6f.63.68.22.3a.30.2c.22.69.73.72.22.3a.5b.35.5d.7d          | er_epoch":0,"isr":[5]}         
 
-Since we now know the contents of the key is text-based (JSON in this case), let's look at the plain-text value.
-**NOTE:** This command comes in handy when you want to copy/paste the value of a key.
+Since we now know the contents of the key is text-based (JSON in this case), let's look at the JSON value using
+the type flag (`-t json`) to transform the JSON in a nice human-readable format.
 
-    zookeeper:localhost:2181/brokers> zget topics/Shocktrade.quotes.csv/partitions/4/state -t string
-    {"controller_epoch":1,"leader":5,"version":1,"leader_epoch":0,"isr":[5]}
+    zookeeper:localhost:2181/brokers> zget topics/Shocktrade.quotes.csv/partitions/4/state -t json
+    {
+      "controller_epoch": 3,
+      "leader": 6,
+      "version": 1,
+      "leader_epoch": 2,
+      "isr": [6]
+    }
 
 Next, let's set a key-value pair in Zookeeper:
 
