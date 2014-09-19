@@ -13,7 +13,7 @@ object ConditionCompiler {
   def compile(operation: Operation, decoder: Option[MessageDecoder[_]]): Condition = {
     operation match {
       case AND(a, b) => Conditions.AND(compile(a, decoder), compile(b, decoder))
-      case KEY_EQ(v) => Conditions.KeyIs(CommandParser.toBinary(v))
+      case KEY_EQ(v) => Conditions.KeyIs(CommandParser.parseDottedHex(v))
       case OR(a, b) => Conditions.OR(compile(a, decoder), compile(b, decoder))
       case op =>
         decoder match {

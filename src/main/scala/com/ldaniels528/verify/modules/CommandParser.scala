@@ -62,7 +62,7 @@ object CommandParser {
    * @param dottedHex the given binary string (e.g. "de.ad.be.ef.00")
    * @return a byte array
    */
-  def toBinary(dottedHex: String): Array[Byte] = dottedHex.split("[.]") map (Integer.parseInt(_, 16)) map (_.toByte)
+  def parseDottedHex(dottedHex: String): Array[Byte] = dottedHex.split("[.]") map (Integer.parseInt(_, 16)) map (_.toByte)
 
   /**
    * Parses the given items (e.g. ["-c", "-f", "myfile"]) into an argument list (e.g. ["-c" -> None, "-f" -> Some("myfile")])

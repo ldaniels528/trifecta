@@ -775,8 +775,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     }
 
     // convert the key and message to binary
-    val keyBytes = CommandParser toBinary key
-    val msgBytes = CommandParser toBinary message
+    val keyBytes = CommandParser parseDottedHex key
+    val msgBytes = CommandParser parseDottedHex message
 
     // publish the message
     KafkaPublisher(brokers) use { publisher =>
