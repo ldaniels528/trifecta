@@ -24,7 +24,9 @@ Table of Contents
         * <a href="#kafka-search-by-key">Searching By Key</a>
         * <a href="#kafka-advanced-search">Advanced Search</a>
     * <a href="#storm-module">Storm Module</a>     
-    * <a href="#zookeeper-module">Zookeeper Module</a>   
+    * <a href="#zookeeper-module">Zookeeper Module</a>
+        * <a href="#zookeeper-list">Navigating directories and keys </a>    
+        * <a href="#zookeeper-get-put">Getting and setting key-value pairs</a>
 
 <a name="Motivations"></a>
 ## Motivations
@@ -663,40 +665,13 @@ Finally, let's take a look at the connection properties for this session:
     | key                                            value                                                       |
     + ---------------------------------------------------------------------------------------------------------- +
     | nimbus.childopts                               -Xmx1024m                                                   |
-    | nimbus.cleanup.inbox.freq.secs                 600                                                         |
-    | nimbus.file.copy.expiration.secs               600                                                         |
     | nimbus.host                                    localhost                                                   |
     | nimbus.inbox.jar.expiration.secs               3600                                                        |
-    | nimbus.monitor.freq.secs                       10                                                          |
-    | nimbus.reassign                                true                                                        |
-    | nimbus.supervisor.timeout.secs                 60                                                          |
-    | nimbus.task.launch.secs                        120                                                         |
-    | nimbus.task.timeout.secs                       30                                                          |
-    | nimbus.thrift.max_buffer_size                  1048576                                                     |
-    | nimbus.thrift.port                             6627                                                        |
+    .                                                                                                            .
+    .                                                                                                            .
     | nimbus.topology.validator                      backtype.storm.nimbus.DefaultTopologyValidator              |
     | storm.cluster.mode                             distributed                                                 |
     | storm.local.dir                                storm-local                                                 |
-    | storm.local.mode.zmq                           false                                                       |
-    | storm.messaging.netty.buffer_size              5242880                                                     |
-    | storm.messaging.netty.client_worker_threads    1                                                           |
-    | storm.messaging.netty.flush.check.interval.ms  10                                                          |
-    | storm.messaging.netty.max_retries              30                                                          |
-    | storm.messaging.netty.max_wait_ms              1000                                                        |
-    | storm.messaging.netty.min_wait_ms              100                                                         |
-    | storm.messaging.netty.server_worker_threads    1                                                           |
-    | storm.messaging.netty.transfer.batch.size      262144                                                      |
-    | storm.messaging.transport                      backtype.storm.messaging.netty.Context                      |
-    | storm.thrift.transport                         backtype.storm.security.auth.SimpleTransportPlugin          |
-    | storm.zookeeper.connection.timeout             15000                                                       |
-    | storm.zookeeper.port                           2181                                                        |
-    | storm.zookeeper.retry.interval                 1000                                                        |
-    | storm.zookeeper.retry.intervalceiling.millis   30000                                                       |
-    | storm.zookeeper.retry.times                    5                                                           |
-    | storm.zookeeper.root                           /storm                                                      |
-    | storm.zookeeper.servers                        [localhost]                                                 |
-    | storm.zookeeper.session.timeout                20000                                                       |
-    .                                                                                                            .
     .                                                                                                            .
     .                                                                                                            .
     | worker.heartbeat.frequency.secs                1                                                           |
@@ -714,7 +689,6 @@ To view all of the Zookeeper commands, which all begin with the letter "z":
     + ----------------------------------------------------------------------------------------- +
     | command     module     description                                                        |
     + ----------------------------------------------------------------------------------------- +
-    | zcat        zookeeper  Retrieves the type-specific value of a key from ZooKeeper          |
     | zcd         zookeeper  Changes the current path/directory in ZooKeeper                    |
     | zexists     zookeeper  Verifies the existence of a ZooKeeper key                          |
     | zget        zookeeper  Retrieves the contents of a specific Zookeeper key                 |
@@ -729,56 +703,47 @@ To view all of the Zookeeper commands, which all begin with the letter "z":
     | ztree       zookeeper  Retrieves Zookeeper directory structure                            |
     + ----------------------------------------------------------------------------------------- +
 
+<a name="zookeeper-list"></a>    
+##### Zookeeper: Navigating directories and keys 
+
 To view the Zookeeper keys at the current hierarchy level:
 
 	zookeeper@dev501:2181:/> zls
-		consumers
-		storm
-		controller_epoch
-		admin
-		controller
-		brokers	
+    consumers
+    storm
+    controller_epoch
+    admin
+    controller
+    brokers	
 			
 To change the current Zookeeper hierarchy level:			
 			
     zookeeper:localhost:2181:/> zcd brokers
-        /brokers
+    /brokers
         
 Now view the keys at this level:        
     
     zookeeper:localhost:2181:/brokers> zls
-        topics
-        ids	
+    topics
+    ids	
         
 Let's look at the entire Zookeeper hierarchy recursively from our current path:
         
     zookeeper:localhost:2181/brokers> ztree
     /brokers
     /brokers/topics
-    /brokers/topics/csvQuotes
-    /brokers/topics/csvQuotes/partitions
-    /brokers/topics/csvQuotes/partitions/3
-    /brokers/topics/csvQuotes/partitions/3/state
-    /brokers/topics/csvQuotes/partitions/2
-    /brokers/topics/csvQuotes/partitions/2/state
-    /brokers/topics/csvQuotes/partitions/1
-    /brokers/topics/csvQuotes/partitions/1/state
-    /brokers/topics/csvQuotes/partitions/0
-    /brokers/topics/csvQuotes/partitions/0/state
-    /brokers/topics/csvQuotes/partitions/4
-    /brokers/topics/csvQuotes/partitions/4/state
-    /brokers/topics/Shocktrade.quotes.csv
-    /brokers/topics/Shocktrade.quotes.csv/partitions
-    /brokers/topics/Shocktrade.quotes.csv/partitions/3
-    /brokers/topics/Shocktrade.quotes.csv/partitions/3/state
-    /brokers/topics/Shocktrade.quotes.csv/partitions/2
-    /brokers/topics/Shocktrade.quotes.csv/partitions/2/state
-    /brokers/topics/Shocktrade.quotes.csv/partitions/1
-    /brokers/topics/Shocktrade.quotes.csv/partitions/1/state
-    /brokers/topics/Shocktrade.quotes.csv/partitions/0
-    /brokers/topics/Shocktrade.quotes.csv/partitions/0/state
-    /brokers/topics/Shocktrade.quotes.csv/partitions/4
-    /brokers/topics/Shocktrade.quotes.csv/partitions/4/state
+    /brokers/topics/shocktrade.quotes.avro
+    /brokers/topics/shocktrade.quotes.avro/partitions
+    /brokers/topics/shocktrade.quotes.avro/partitions/0
+    /brokers/topics/shocktrade.quotes.avro/partitions/0/state
+    /brokers/topics/shocktrade.quotes.avro/partitions/1
+    /brokers/topics/shocktrade.quotes.avro/partitions/1/state    
+    /brokers/topics/shocktrade.quotes.avro/partitions/2
+    /brokers/topics/shocktrade.quotes.avro/partitions/2/state    
+    /brokers/topics/shocktrade.quotes.avro/partitions/3
+    /brokers/topics/shocktrade.quotes.avro/partitions/3/state    
+    /brokers/topics/shocktrade.quotes.avro/partitions/4
+    /brokers/topics/shocktrade.quotes.avro/partitions/4/state
     /brokers/ids
     /brokers/ids/3
     /brokers/ids/2
@@ -786,6 +751,9 @@ Let's look at the entire Zookeeper hierarchy recursively from our current path:
     /brokers/ids/6
     /brokers/ids/5
     /brokers/ids/4        
+    
+<a name="zookeeper-get-put"></a>    
+##### Zookeeper: Getting and setting key-value pairs        
         
 Let's view the contents of one of the keys:        
         
@@ -797,5 +765,42 @@ Let's view the contents of one of the keys:
 Since we now know the contents of the key is text-based (JSON in this case), let's look at the plain-text value.
 **NOTE:** This command comes in handy when you want to copy/paste the value of a key.
 
-    zookeeper:localhost:2181/brokers> zcat topics/Shocktrade.quotes.csv/partitions/4/state text
+    zookeeper:localhost:2181/brokers> zget topics/Shocktrade.quotes.csv/partitions/4/state -t string
     {"controller_epoch":1,"leader":5,"version":1,"leader_epoch":0,"isr":[5]}
+
+Next, let's set a key-value pair in Zookeeper:
+
+    zookeeper:localhost:2181/> zput /test/message "Hello World"
+   
+To retrieve the value we've just set, we can use the `zget` command again:    
+    
+    zookeeper:localhost:2181/> zget /test/message
+    [00] 48.65.6c.6c.6f.20.57.6f.72.6c.64                                           | Hello World    
+    
+The `zput` command also allows us to set other types of values besides strings. The following example demonstrates 
+setting a binary array literal using hexadecimal dot-notation.
+
+    zookeeper:localhost:2181/> zput /test/data de.ad.be.ef.ca.fe.ba.be
+    
+The default value types for integer and decimal values are `long` and `double` respectively. However, you can also 
+explicitly set the value type using the type flag (`-t`).
+
+    zookeeper:localhost:2181/> zput /test/data2 123.45 -t float
+    
+The valid value types are:
+
+* bytes
+* char
+* double
+* float
+* integer
+* long
+* short
+* string
+
+To verify that all of the key-value pairs were inserted we use the `zls` command again:
+
+    zookeeper:localhost:2181/> zls /test
+    data
+    message
+    data2
