@@ -19,7 +19,6 @@ import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
-import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits._
@@ -33,7 +32,6 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with AvroReading {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val out: PrintStream = rt.out
   private implicit val scope: Scope = rt.scope
   private implicit val rtc: VxRuntimeContext = rt
