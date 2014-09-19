@@ -255,6 +255,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
       case "double" => ByteBuffer.wrap(bytes).getDouble
       case "float" => ByteBuffer.wrap(bytes).getFloat
       case "int" | "integer" => ByteBuffer.wrap(bytes).getInt
+      case "json" => formatJson(new String(bytes))
       case "long" => ByteBuffer.wrap(bytes).getLong
       case "short" => ByteBuffer.wrap(bytes).getShort
       case "string" | "text" => new String(bytes)
@@ -276,6 +277,13 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
       case "string" | "text" => parseString(value).getBytes
       case _ => throw new IllegalArgumentException(s"Invalid type '$valueType'")
     }
+  }
+
+  private def formatJson(value: String): String = {
+    import spray.json._
+
+    val jsonAst = value.parseJson
+    jsonAst.prettyPrint
   }
 
   /**
