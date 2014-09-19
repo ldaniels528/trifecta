@@ -75,7 +75,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
    * "zget" - Dumps the contents of a specific Zookeeper key to the console
    * @example {{{ zget /storm/workerbeats/my-test-topology-17-1407973634 }}}
    */
-  def zget(params: UnixLikeArgs)(implicit out: PrintStream) {
+  def zget(params: UnixLikeArgs): Option[Any] = {
     // get the key
     val key = params.args.head
 
