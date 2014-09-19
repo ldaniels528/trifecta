@@ -48,27 +48,40 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
 
   override def shutdown() = ()
 
+  var prevCwd = "/"
+
   /**
    * "zcd" - Changes the current path/directory in ZooKeeper
    * @example {{{ zcd / }}}
    * @example {{{ zcd .. }}}
    * @example {{{ zcd brokers }}}
    */
-  def chdir(params: UnixLikeArgs): Option[String] = {
-    // get the argument
-    params.args.headOption map { key =>
-      // perform the action
-      rt.zkCwd = key match {
-        case s if s == ".." =>
-          rt.zkCwd.split("[/]") match {
-            case a if a.length <= 1 => "/"
-            case a =>
-              val newPath = a.init.mkString("/")
-              if (newPath.trim.length == 0) "/" else newPath
-          }
-        case s => zkKeyToPath(s)
-      }
-      rt.zkCwd
+  def chdir(params: UnixLikeArgs): Either[String, Unit] = {
+    // if more than 1 argument, it's an error
+    if(params.args.length != 1) dieSyntax(params)
+
+    // perform the action
+    val newPath: Option[String] = params.args.headOption map {
+      case "-" => prevCwd
+      case "."  => rt.zkCwd
+      case ".." =>
+        rt.zkCwd.split("[/]") match {
+          case a if a.length <= 1 => "/"
+          case a =>
+            val aPath = a.init.mkString("/")
+            if (aPath.trim.isEmpty) "/" else aPath
+        }
+      case path => zkKeyToPath(path)
+      case _ => dieSyntax(params)
+    }
+
+    // if argument was a dot (.) return the current path
+    newPath match {
+      case Some(path) =>
+        prevCwd = rt.zkCwd
+        rt.zkCwd = path
+        Right(())
+      case None => Left(rt.zkCwd)
     }
   }
 
