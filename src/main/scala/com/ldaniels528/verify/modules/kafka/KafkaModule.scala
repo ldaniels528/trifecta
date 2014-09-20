@@ -385,24 +385,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   }
 
   /**
-   * "kgetkey" - Returns the message key for a given topic partition and offset
-   * @example kget com.shocktrade.alerts 0 3456
-   * @example kget 3456
-   */
-  def getMessageKey(params: UnixLikeArgs): Option[Array[Byte]] = {
-    // get the arguments
-    val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
-
-    // get the fetch size
-    val fetchSize = getFetchSize(params)
-
-    // retrieve the key
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
-      consumer.fetch(offset, fetchSize).headOption map (_.key)
-    }
-  }
-
-  /**
    * Retrieves either a binary or decoded message
    * @param topic the given topic
    * @param partition the given partition
@@ -462,6 +444,24 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
           throw new IllegalStateException(e.getMessage, e)
       }
     } yield rec
+  }
+
+  /**
+   * "kgetkey" - Returns the message key for a given topic partition and offset
+   * @example kget com.shocktrade.alerts 0 3456
+   * @example kget 3456
+   */
+  def getMessageKey(params: UnixLikeArgs): Option[Array[Byte]] = {
+    // get the arguments
+    val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
+
+    // get the fetch size
+    val fetchSize = getFetchSize(params)
+
+    // retrieve the key
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
+      consumer.fetch(offset, fetchSize).headOption map (_.key)
+    }
   }
 
   /**
