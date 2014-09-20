@@ -109,6 +109,10 @@ class VxRuntimeContext(val zkProxy: ZKProxy) extends BinaryMessaging {
     if (input.startsWith("#")) interpretVScript(input.tail) else interpretCommandLine(input)
   }
 
+  def shutdown(): Unit = {
+    zkProxy.close()
+  }
+
   /**
    * Interprets command line input
    * @param input the given line of input

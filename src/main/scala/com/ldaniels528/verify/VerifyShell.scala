@@ -36,7 +36,7 @@ class VerifyShell(rt: VxRuntimeContext) {
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() {
       // shutdown the ZooKeeper instance
-      rt.zkProxy.close()
+      rt.shutdown()
 
       // close each module
       rt.moduleManager.shutdown()
