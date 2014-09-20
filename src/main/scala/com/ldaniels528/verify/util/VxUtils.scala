@@ -73,7 +73,7 @@ object VxUtils {
   /**
    * Automatically closes a resource after completion of a code block
    */
-  implicit class AutoClose[T <: {def close()}](resource: T) {
+  implicit class AutoClose[T <: {def close()}](val resource: T) extends AnyVal {
 
     def use[S](block: T => S): S = try block(resource) finally resource.close()
 
@@ -83,7 +83,7 @@ object VxUtils {
    * Automatically closes a resource after completion of a code block
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
-  implicit class AutoDisconnect[T <: {def disconnect()}](resource: T) {
+  implicit class AutoDisconnect[T <: {def disconnect()}](val resource: T) extends AnyVal {
 
     def use[S](block: T => S): S = try block(resource) finally resource.disconnect()
 
@@ -92,7 +92,7 @@ object VxUtils {
   /**
    * Automatically closes a resource after completion of a code block
    */
-  implicit class AutoShutdown[T <: {def shutdown()}](resource: T) {
+  implicit class AutoShutdown[T <: {def shutdown()}](val resource: T) extends AnyVal {
 
     def use[S](block: T => S): S = try block(resource) finally resource.shutdown()
 
@@ -101,7 +101,7 @@ object VxUtils {
   /**
    * Facilitates option chaining
    */
-  implicit class OptionalMagic[T](opA: Option[T]) {
+  implicit class OptionalMagic[T](val opA: Option[T]) extends AnyVal {
 
     def ??(opB: => Option[T]) = if (opA.isDefined) opA else opB
 
@@ -110,7 +110,7 @@ object VxUtils {
   /**
    * Properties Conversion
    */
-  implicit class PropertiesConversion[T <: Object](m: Map[String, T]) {
+  implicit class PropertiesConversion[T <: Object](val m: Map[String, T]) extends AnyVal {
 
     import java.util.Properties
 
@@ -124,7 +124,7 @@ object VxUtils {
   /**
    * Syntactic Sugar for Properties object
    */
-  implicit class PropertiesMagic(props: Properties) {
+  implicit class PropertiesMagic(val props: Properties) extends AnyVal {
 
     def asOpt[T](key: String): Option[T] = {
       Option(props.get(key)) map (_.asInstanceOf[T])
