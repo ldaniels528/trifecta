@@ -206,7 +206,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "kfindone" - Returns the first message that corresponds to the given criteria
    * @example kfindone frequency > 5000
    */
-  def findOneMessage(params: UnixLikeArgs): Future[Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]]] = {
+  def findOneMessage(params: UnixLikeArgs): Future[Option[Either[Option[MessageData], Seq[AvroRecord]]]] = {
     import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
 
     // get the topic and partition from the cursor
@@ -304,7 +304,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   /**
    * Sets the cursor
    */
-  def setCursor(topic: String, partition: Int, messageData: Option[MessageData], decoder: Option[MessageDecoder[_]]) {
+  private def setCursor(topic: String, partition: Int, messageData: Option[MessageData], decoder: Option[MessageDecoder[_]]) {
     messageData map (m => KafkaCursor(topic, partition, m.offset, m.nextOffset, decoder)) foreach (cursors(topic) = _)
     currentTopic = Option(topic)
   }
@@ -336,7 +336,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example kfirst com.shocktrade.quotes.csv 0
    * @example kfirst
    */
-  def getFirstMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]] = {
+  def getFirstMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
     // get the arguments
     val (topic, partition) = extractTopicAndPartition(params.args)
 
@@ -356,7 +356,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example klast com.shocktrade.alerts 0
    * @example klast
    */
-  def getLastMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]] = {
+  def getLastMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
     // get the arguments
     val (topic, partition) = extractTopicAndPartition(params.args)
 
@@ -376,7 +376,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @example kget com.shocktrade.alerts 0 3456
    * @example kget 3456
    */
-  def getMessage(params: UnixLikeArgs): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
+  def getMessage(params: UnixLikeArgs): Either[Option[MessageData], Seq[AvroRecord]] = {
     // get the arguments
     val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
@@ -410,7 +410,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @param params the given Unix-style argument
    * @return either a binary or decoded message
    */
-  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
+  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs): Either[Option[MessageData], Seq[AvroRecord]] = {
     // requesting a message from an instance in time?
     val instant: Option[Long] = params("-d") map {
       case s if s.matches("\\d+") => s.toLong
@@ -441,7 +441,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     setCursor(topic, partition, messageData, decoder)
 
     // return either a binary message or a decoded message
-    if (decodedMessage.isDefined) Right(decodedMessage) else Left(messageData)
+    decodedMessage.map(Right(_)) getOrElse Left(messageData)
   }
 
   private def decodeMessage(messageData: Option[MessageData], aDecoder: MessageDecoder[_]): Option[Seq[AvroRecord]] = {
@@ -513,7 +513,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "knext" - Optionally returns the next message
    * @example knext
    */
-  def getNextMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]] = {
+  def getNextMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, nextOffset, params)
     }
@@ -523,7 +523,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * "kprev" - Optionally returns the previous message
    * @example kprev
    */
-  def getPreviousMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]] = {
+  def getPreviousMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, Math.max(0, offset - 1), params)
     }
