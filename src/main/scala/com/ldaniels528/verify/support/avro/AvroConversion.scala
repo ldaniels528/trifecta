@@ -10,6 +10,7 @@ import org.apache.avro.io.{DecoderFactory, EncoderFactory}
 import org.apache.avro.specific.SpecificRecordBase
 import org.slf4j.LoggerFactory
 
+import scala.language.existentials
 import scala.util.Try
 
 /**

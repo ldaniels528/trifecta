@@ -72,7 +72,6 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
             if (aPath.trim.isEmpty) "/" else aPath
         }
       case path => zkKeyToPath(path)
-      case _ => dieSyntax(params)
     }
 
     // if argument was a dot (.) return the current path
