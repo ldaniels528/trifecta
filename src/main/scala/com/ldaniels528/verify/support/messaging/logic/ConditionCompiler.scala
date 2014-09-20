@@ -1,6 +1,5 @@
 package com.ldaniels528.verify.support.messaging.logic
 
-import com.ldaniels528.verify.command.CommandParser
 import com.ldaniels528.verify.support.messaging.MessageDecoder
 import com.ldaniels528.verify.support.messaging.logic.Operations._
 
@@ -13,7 +12,7 @@ object ConditionCompiler {
   def compile(operation: Operation, decoder: Option[MessageDecoder[_]]): Condition = {
     operation match {
       case AND(a, b) => Conditions.AND(compile(a, decoder), compile(b, decoder))
-      case KEY_EQ(v) => Conditions.KeyIs(CommandParser.parseDottedHex(v))
+      case KEY_EQ(v) => Conditions.KeyIs(translateValue(v))
       case OR(a, b) => Conditions.OR(compile(a, decoder), compile(b, decoder))
       case op =>
         decoder match {
@@ -37,6 +36,11 @@ object ConditionCompiler {
         else throw new IllegalArgumentException("Only 'key' can be used with the verb 'is'")
       case _ => throw new IllegalArgumentException(s"Illegal operator '$operator'")
     }
+  }
+
+  private def translateValue(value: String, encoding: String = "UTF-8"): Array[Byte] = {
+    import com.ldaniels528.verify.command.CommandParser._
+    if (isDottedHex(value)) parseDottedHex(value) else value.getBytes(encoding)
   }
 
 }
