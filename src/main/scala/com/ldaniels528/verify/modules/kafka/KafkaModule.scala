@@ -88,7 +88,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Nil), help = "Publishes a message to a topic", undocumented = true),
     Command(this, "kreplicas", getReplicas, SimpleParams(Nil, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
-    Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"))
+    Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"),
+    Command(this, "kswitch", switchCursor, UnixLikeParams(Seq("topic" -> true)), help = "Switches the currently active topic cursor"))
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("defaultFetchSize", ConstantValue(Option(65536)))
@@ -306,6 +307,19 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   def setCursor(topic: String, partition: Int, messageData: Option[MessageData], decoder: Option[MessageDecoder[_]]) {
     messageData map (m => KafkaCursor(topic, partition, m.offset, m.nextOffset, decoder)) foreach (cursors(topic) = _)
     currentTopic = Option(topic)
+  }
+
+  /**
+   * "kswitch" - Switches between topic cursors
+   * @example kswitch shocktrade.keystats.avro
+   */
+  def switchCursor(params: UnixLikeArgs) {
+    for {
+      topic <- params.args.headOption
+      cursor <- cursors.get(topic)
+    } {
+      currentTopic = Option(topic)
+    }
   }
 
   /**
