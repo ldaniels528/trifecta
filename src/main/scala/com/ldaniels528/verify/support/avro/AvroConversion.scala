@@ -10,7 +10,7 @@ import org.apache.avro.io.{DecoderFactory, EncoderFactory}
 import org.apache.avro.specific.SpecificRecordBase
 import org.slf4j.LoggerFactory
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /**
  * Avro Conversion Utility
@@ -28,17 +28,61 @@ object AvroConversion {
     // retrieve the source data (name-value pairs of the case class)
     val srcData = {
       val beanClass = bean.getClass
-      beanClass.getDeclaredFields map (f => (f.getName, f.getType, beanClass.getMethod(f.getName).invoke(bean)))
+      beanClass.getDeclaredFields map (f => (f.getName, beanClass.getMethod(f.getName).invoke(bean), f.getType))
     }
 
     // populate the Java Bean
     val builderClass = builder.getClass
-    srcData foreach { case (name, kind, value) =>
+    srcData foreach { case (name, value, valueClass) =>
       Try {
-        val setter = "set%c%s".format(name.head.toUpper, name.tail)
-        builderClass.findMethod(setter, kind) foreach (_.invoke(builder, value: Object))
+        val setterName = "set%c%s".format(name.head.toUpper, name.tail)
+        setValue(value, valueClass, builder, builderClass, setterName)
       }
     }
+  }
+
+  private def setValue[A, B](value: Any, valueClass: Class[A], dstInst: Any, dstClass: Class[B], setterName: String) {
+    val results = value match {
+      case o: Option[_] =>
+        o.map { myValue =>
+          val myObjectValue = myValue.asInstanceOf[Object]
+          val myObjectValueClass = Option(myObjectValue) map (_.getClass) getOrElse valueClass
+          (myObjectValue, myObjectValueClass)
+        }
+      case v =>
+        val myObjectValue = value.asInstanceOf[Object]
+        val myObjectValueClass = Option(myObjectValue) map (_.getClass) getOrElse valueClass
+        Option((myObjectValue, myObjectValueClass))
+    }
+
+    results foreach { case (myValue, myValueClass) =>
+      findMethod(dstClass, setterName, myValueClass).foreach { m =>
+        m.invoke(dstInst, myValue)
+      }
+    }
+  }
+
+  private def findMethod(dstClass: Class[_], setterName: String, setterParamClass: Class[_]): Option[Method] = {
+    dstClass.getDeclaredMethods find (m =>
+      m.getName == setterName &&
+        m.getParameterTypes.length == 1 &&
+        m.getParameterTypes.headOption.exists(isCompatible(_, setterParamClass)))
+  }
+
+  private def isCompatible(typeA: Class[_], typeB: Class[_], first: Boolean = true): Boolean = {
+    if (typeA == typeB) true
+    else
+      typeA match {
+        case c if c == classOf[Byte] => typeB == classOf[java.lang.Byte]
+        case c if c == classOf[Char] => typeB == classOf[java.lang.Character]
+        case c if c == classOf[Double] => typeB == classOf[java.lang.Double]
+        case c if c == classOf[Float] => typeB == classOf[java.lang.Float]
+        case c if c == classOf[Int] => typeB == classOf[Integer]
+        case c if c == classOf[Long] => typeB == classOf[java.lang.Long]
+        case c if c == classOf[Short] => typeB == classOf[java.lang.Short]
+        case c if first => isCompatible(typeB, typeA, !first)
+        case _ => false
+      }
   }
 
   /**
@@ -66,39 +110,6 @@ object AvroConversion {
       writer.write(datum, encoder)
       encoder.flush()
       out.toByteArray
-    }
-  }
-
-  /**
-   * Adds a convenience method to [[Class]] instances for finding a matching method
-   */
-  implicit class MethodMagic[T](val beanClass: Class[T]) extends AnyVal {
-
-    def findMethod(name: String, kind: Class[_]): Option[Method] = {
-      Try(beanClass.getMethod(name, kind)) match {
-        case Success(method) => Option(method)
-        case Failure(e) =>
-          val method = beanClass.getDeclaredMethods find (m =>
-            m.getName == name && m.getParameterTypes.headOption.exists(isCompatible(_, kind)))
-          if(method.isEmpty) {
-            logger.warn(s"No matching method found for $name with parameter $kind")
-          }
-          method
-      }
-    }
-
-    private def isCompatible(typeA: Class[_], typeB: Class[_], first: Boolean = true): Boolean = {
-      typeA match {
-        case c if c == classOf[Byte] => typeB == classOf[java.lang.Byte]
-        case c if c == classOf[Char] => typeB == classOf[java.lang.Character]
-        case c if c == classOf[Double] => typeB == classOf[java.lang.Double]
-        case c if c == classOf[Float] => typeB == classOf[java.lang.Float]
-        case c if c == classOf[Int] => typeB == classOf[Integer]
-        case c if c == classOf[Long] => typeB == classOf[java.lang.Long]
-        case c if c == classOf[Short] => typeB == classOf[java.lang.Short]
-        case c if first => isCompatible(typeB, typeA, !first)
-        case _ => false
-      }
     }
   }
 
