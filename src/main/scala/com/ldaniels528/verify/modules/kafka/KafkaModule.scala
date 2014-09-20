@@ -21,6 +21,7 @@ import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -50,7 +51,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   private var lastInboundCheck: Long = _
 
   // define the offset for message cursor navigation commands
-  private var cursor: Option[KafkaCursor] = None
+  private val cursors = mutable.Map[String, KafkaCursor]()
+  private var currentTopic: Option[String] = None
 
   def defaultFetchSize = scope.getValue[Int]("defaultFetchSize") getOrElse 65536
 
@@ -66,7 +68,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", getConsumers, SimpleParams(Nil, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Nil), help = "Counts the messages matching a given condition"),
-    Command(this, "kcursor", getCursor, UnixLikeParams(), help = "Displays the current message cursor"),
+    Command(this, "kcursor", getCursor, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Displays the message cursor(s)"),
     Command(this, "kexport", exportMessages, UnixLikeParams(Seq("topic" -> false, "groupId" -> true), Seq("-f" -> "outputFile")), help = "Writes the contents of a specific topic to a file", undocumented = true),
     Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Nil, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
@@ -97,6 +99,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
   override def prompt: String = cursor map (c => s"${c.topic}/${c.partition}:${c.offset}") getOrElse "/"
 
   override def shutdown() = ()
+
+  private def cursor: Option[KafkaCursor] = currentTopic.flatMap(cursors.get)
 
   /**
    * "kcommit" - Commits the offset for a given topic and group ID
@@ -268,6 +272,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kconsumers" - Retrieves the list of Kafka consumers
+   * @example kconsumers shocktrade.keystats.avro
+   * @example kconsumers
    */
   def getConsumers(params: UnixLikeArgs): Seq[ConsumerDelta] = {
     // get the optional topic prefix
@@ -283,17 +289,23 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kcursor" - Displays the current message cursor
-   * @example {{{ kcursor }}}
+   * @example kcursor shocktrade.keystats.avro
+   * @example kcursor
    */
   def getCursor(params: UnixLikeArgs): Seq[KafkaCursor] = {
-    cursor.map(c => Seq(c)) getOrElse Nil
+    // get the topic prefix
+    val prefix = params.args.headOption
+
+    // filter the cursors by topic prefix
+    cursors.filter { case (topic, cursor) => prefix.isEmpty || prefix.exists(topic.startsWith)}.map(_._2).toSeq
   }
 
   /**
    * Sets the cursor
    */
   def setCursor(topic: String, partition: Int, messageData: Option[MessageData], decoder: Option[MessageDecoder[_]]) {
-    cursor = messageData map (m => KafkaCursor(topic, partition, m.offset, m.nextOffset, decoder))
+    messageData map (m => KafkaCursor(topic, partition, m.offset, m.nextOffset, decoder)) foreach (cursors(topic) = _)
+    currentTopic = Option(topic)
   }
 
   /**
@@ -399,25 +411,25 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     for (path <- params("-f") map expandPath; message <- messageData map (_.message)) new FileOutputStream(path) use (_.write(message))
 
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
-    val decoder = {
+    val decoder: Option[MessageDecoder[_]] = {
       val decoderA: Option[MessageDecoder[_]] = params("-a") map getAvroDecoder
-      val decoderB: Option[MessageDecoder[_]] = cursor.flatMap(_.decoder)
+      val decoderB: Option[MessageDecoder[_]] = cursors.get(topic).flatMap(_.decoder)
       decoderA ?? decoderB
     }
 
-    // optionally, decode the message
-    val decodedMessage = decodeMessage(messageData, decoder)
+    // if a decoder was found, use it to decode the message
+    val decodedMessage = decoder.flatMap(decodeMessage(messageData, _))
 
     // capture the message's offset and decoder
     setCursor(topic, partition, messageData, decoder)
 
-    // return either a binary encoded message or an Avro message
+    // return either a binary message or a decoded message
     if (decodedMessage.isDefined) Right(decodedMessage) else Left(messageData)
   }
 
-  private def decodeMessage(messageData: Option[MessageData], aDecoder: Option[MessageDecoder[_]]): Option[Seq[AvroRecord]] = {
+  private def decodeMessage(messageData: Option[MessageData], aDecoder: MessageDecoder[_]): Option[Seq[AvroRecord]] = {
     // only Avro decoders are supported
-    val avroDecoder: Option[AvroDecoder] = aDecoder map {
+    val decoder: AvroDecoder = aDecoder match {
       case avDecoder: AvroDecoder => avDecoder
       case _ => throw new IllegalStateException("Only Avro decoding is supported")
     }
@@ -425,7 +437,6 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     // decode the message
     for {
       md <- messageData
-      decoder <- avroDecoder
       rec = decoder.decode(md.message) match {
         case Success(record) =>
           val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
@@ -545,8 +556,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     results match {
       case Some((topic, partition0, partition1)) =>
         if (cursor.isEmpty) {
-          cursor = getFirstOffset(topic, partition0) ?? getLastOffset(topic, partition0) map (offset =>
-            KafkaCursor(topic, partition0, offset, offset + 1, None))
+          getFirstOffset(topic, partition0) ?? getLastOffset(topic, partition0) map (offset =>
+            KafkaCursor(topic, partition0, offset, offset + 1, None)) foreach (cursors(topic) = _)
+          currentTopic = Option(topic)
         }
         getStatisticsData(topic, partition0, partition1)
       case _ => Nil
