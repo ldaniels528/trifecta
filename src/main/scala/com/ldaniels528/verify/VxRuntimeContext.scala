@@ -130,7 +130,7 @@ class VxRuntimeContext(val zkProxy: ZKProxy) extends BinaryMessaging {
 
     } yield {
       // verify and execute the command
-      command.params.checkArgs(command, tokens.tail)
+      command.params.checkArgs(command, tokens)
       val result = command.fx(unixArgs)
 
       // auto-switch modules?

@@ -10,7 +10,8 @@ case class SimpleParams(required: Seq[String] = Nil, optional: Seq[String] = Nil
   extends CommandParameters[Seq[String]] {
 
   override def checkArgs(command: Command, args: Seq[String]) {
-    if (args.length < required.size || args.length > required.size + optional.size) {
+    val givenArgs = args.length - 1
+    if (givenArgs < required.size || givenArgs > required.size + optional.size) {
       throw new IllegalArgumentException(s"Usage: ${command.prototype}")
     }
   }

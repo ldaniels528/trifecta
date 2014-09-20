@@ -15,8 +15,11 @@ case class UnixLikeParams(defaults: Seq[(String, Boolean)] = Nil, flags: Seq[(St
     val unixArgs = transform(args)
 
     // there must be at least as many parameters as required arguments
-    if (unixArgs.args.size < defaults.count { case (_, required) => required}) {
-      throw new IllegalArgumentException(s"Invalid arguments - Usage: ${command.prototype}")
+    val argCount = unixArgs.args.size
+    val arguments = "argument" + (if(argCount == 1) "" else "s")
+    val requiredArgs = defaults.count { case (_, required) => required}
+    if (argCount < requiredArgs) {
+      throw new IllegalArgumentException(s"Invalid arguments ($argCount $arguments found, $requiredArgs required) - Usage: ${command.prototype}")
     }
 
     // required flags are mandatory
