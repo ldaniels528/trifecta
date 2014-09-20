@@ -24,7 +24,6 @@ import scala.util.Properties
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
-  private implicit val rtc: VxRuntimeContext = rt
   private implicit val scope: Scope = rt.scope
   private implicit val out: PrintStream = rt.out
 
@@ -107,7 +106,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   def avroCat(params: UnixLikeArgs): Option[String] = {
     params.args.headOption map { name =>
       implicit val scope = rt.scope
-      val decoder = getAvroDecoder(name)
+      val decoder = getAvroDecoder(name)(rt)
       decoder.schemaString
     }
   }

@@ -10,18 +10,18 @@ import com.ldaniels528.verify.command._
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.support.zookeeper.ZKProxy.Implicits._
+import com.ldaniels528.verify.util.EndPoint
 import com.ldaniels528.verify.util.VxUtils._
-import com.ldaniels528.verify.util.{BinaryMessaging, EndPoint}
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.Variable
 
 import scala.util.Try
 
 /**
- * Zookeeper Module
+ * Apache Zookeeper Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging {
+class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   private implicit val out: PrintStream = rt.out
   private val zk: ZKProxy = rt.zkProxy
 
@@ -58,12 +58,12 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module with BinaryMessaging 
    */
   def chdir(params: UnixLikeArgs): Either[String, Unit] = {
     // if more than 1 argument, it's an error
-    if(params.args.length != 1) dieSyntax(params)
+    if (params.args.length != 1) dieSyntax(params)
 
     // perform the action
     val newPath: Option[String] = params.args.headOption map {
       case "-" => prevCwd
-      case "."  => rt.zkCwd
+      case "." => rt.zkCwd
       case ".." =>
         rt.zkCwd.split("[/]") match {
           case a if a.length <= 1 => "/"

@@ -15,7 +15,6 @@ import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer.{BrokerDetails, M
 import com.ldaniels528.verify.support.kafka._
 import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.verify.support.messaging.{MessageCursor, MessageDecoder}
-import com.ldaniels528.verify.util.BinaryMessaging
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{Scope, Variable}
@@ -29,13 +28,12 @@ import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
 /**
- * Kafka Module
+ * Apache Kafka Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with AvroReading {
+class KafkaModule(rt: VxRuntimeContext) extends Module with AvroReading {
   private implicit val out: PrintStream = rt.out
   private implicit val scope: Scope = rt.scope
-  private implicit val rtc: VxRuntimeContext = rt
 
   // create the ZooKeeper proxy
   private implicit val zk = rt.zkProxy
@@ -411,7 +409,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
     val decoder: Option[MessageDecoder[_]] =
-      Seq(params("-a") map getAvroDecoder, cursors.get(topic).flatMap(_.decoder)).find(_.isDefined).flatten
+      Seq(params("-a") map (getAvroDecoder(_)(rt)), cursors.get(topic).flatMap(_.decoder)).find(_.isDefined).flatten
 
     // if a decoder was found, use it to decode the message
     val decodedMessage = decoder.flatMap(decodeMessage(messageData, _))

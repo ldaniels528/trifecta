@@ -13,7 +13,7 @@ import com.ldaniels528.verify.modules.kafka.KafkaModule
 import com.ldaniels528.verify.modules.storm.StormModule
 import com.ldaniels528.verify.modules.zookeeper.ZookeeperModule
 import com.ldaniels528.verify.support.zookeeper.ZKProxy
-import com.ldaniels528.verify.util.{BinaryMessaging, EndPoint}
+import com.ldaniels528.verify.util.EndPoint
 import com.ldaniels528.verify.vscript.{RootScope, VScriptCompiler}
 import org.slf4j.LoggerFactory
 
@@ -26,7 +26,7 @@ import scala.util.Try
  * Verify Runtime Context
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class VxRuntimeContext(val zkProxy: ZKProxy) extends BinaryMessaging {
+class VxRuntimeContext(val zkProxy: ZKProxy) {
   private val logger = LoggerFactory.getLogger(getClass)
 
   // capture standard output
