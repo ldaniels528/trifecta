@@ -81,7 +81,7 @@ object ZKProxy {
       bytes
     }
 
-    implicit class ZKPathSplitter(path: String) {
+    implicit class ZKPathSplitter(val path: String) extends AnyVal {
 
       def splitNodes: List[String] = {
         val pcs = path.split("[/]").tail
