@@ -50,7 +50,7 @@ class VxRuntimeContext(val zkProxy: ZKProxy) {
   val configProps = loadConfiguration(configFile)
 
   // define the job stack
-  val jobs = mutable.Buffer[JobItem]()
+  val jobs = mutable.Map[Int, JobItem]()
 
   // create the module manager
   val moduleManager = new ModuleManager(scope)

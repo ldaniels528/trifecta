@@ -5,8 +5,7 @@ import java.io.PrintStream
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.verify.VxRuntimeContext.JobItem
 import com.ldaniels528.verify.support.avro.AvroTables
-import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer
-import KafkaMicroConsumer.MessageData
+import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer.MessageData
 import com.ldaniels528.verify.util.BinaryMessaging
 
 import scala.collection.GenTraversableOnce
@@ -79,15 +78,15 @@ class VxResultHandler(rt: VxRuntimeContext) extends BinaryMessaging {
 
   private def setupAsyncJob(f: Future[_])(implicit ec: ExecutionContext): Unit = {
     val job = JobItem(startTime = System.currentTimeMillis(), task = f)
-    rt.jobs += job
+    rt.jobs += (job.jobId -> job)
     f.onComplete {
       case Success(value) =>
         out.println(s"Job #${job.jobId} completed")
-        rt.jobs -= job
+        rt.jobs -= job.jobId
         handleResult(value)
       case Failure(e) =>
         out.println(s"Job #${job.jobId} failed: ${e.getMessage}")
-        rt.jobs -= job
+        rt.jobs -= job.jobId
     }
     out.println("Task is now running in the background (use 'jobs' to view)")
   }

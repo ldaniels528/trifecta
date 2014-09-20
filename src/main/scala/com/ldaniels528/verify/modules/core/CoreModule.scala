@@ -335,12 +335,13 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * "jobs" - Retrieves the queued jobs
    */
   def listJobs(params: UnixLikeArgs): Seq[JobDetail] = {
-    rt.jobs map (j =>
+    (rt.jobs map { case (id, job) =>
       JobDetail(
-        jobId = j.jobId,
-        status = if (j.task.isCompleted) "Completed" else "Running",
-        started = new Date(j.startTime),
-        elapsedTimeSecs = (System.currentTimeMillis() - j.startTime) / 1000L))
+        jobId = job.jobId,
+        status = if (job.task.isCompleted) "Completed" else "Running",
+        started = new Date(job.startTime),
+        elapsedTimeSecs = (System.currentTimeMillis() - job.startTime) / 1000L)
+    }).toSeq
   }
 
   case class JobDetail(jobId: Int, status: String, started: Date, elapsedTimeSecs: Long)
