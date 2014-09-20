@@ -104,8 +104,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kcommit" - Commits the offset for a given topic and group ID
-   * @example {{{ kcommit com.shocktrade.alerts 0 devc0 123678 }}}
-   * @example {{{ kcommit devc0 123678 }}}
+   * @example kcommit com.shocktrade.alerts 0 devc0 123678
+   * @example kcommit devc0 123678
    */
   def commitOffset(params: UnixLikeArgs) {
     // get the arguments (topic, partition, groupId and offset)
@@ -122,7 +122,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kcount" - Counts the messages matching a given condition [references cursor]
-   * @example {{{ kcount frequency >= 1200 }}}
+   * @example kcount frequency >= 1200
    */
   def countMessages(params: UnixLikeArgs): Future[Long] = {
     // get the topic and partition from the cursor
@@ -138,8 +138,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kexport" - Dumps the contents of a specific topic to a file
-   * @example {{{ kexport com.shocktrade.quotes.csv lld3 -f quotes.bin }}}
-   * @example {{{ kexport lld3 -f quotes.bin }}}
+   * @example kexport com.shocktrade.quotes.csv lld3 -f quotes.bin
+   * @example kexport lld3 -f quotes.bin
    */
   def exportMessages(params: UnixLikeArgs): Long = {
     import java.io.{DataOutputStream, FileOutputStream}
@@ -175,8 +175,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kfetch" - Returns the offsets for a given topic and group ID
-   * @example {{{ kfetch com.shocktrade.alerts 0 dev }}}
-   * @example {{{ kfetch dev }}}
+   * @example kfetch com.shocktrade.alerts 0 dev
+   * @example kfetch dev
    */
   def fetchOffsets(params: UnixLikeArgs): Option[Long] = {
     // get the arguments (topic, partition, groupId)
@@ -203,7 +203,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kfindone" - Returns the first message that corresponds to the given criteria
-   * @example {{{ kfindone frequency > 5000 }}}
+   * @example kfindone frequency > 5000
    */
   def findOneMessage(params: UnixLikeArgs): Future[Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]]] = {
     import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
@@ -226,7 +226,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kfind" - Finds messages that corresponds to the given criteria and exports them to a topic
-   * @example {{{ kfind frequency > 5000 -o highFrequency.topTalkers }}}
+   * @example kfind frequency > 5000 -o highFrequency.topTalkers
    */
   def findMessages(params: UnixLikeArgs): Future[Long] = {
     import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
@@ -319,9 +319,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kfirst" - Returns the first message for a given topic
-   * @example {{{ kfirst com.shocktrade.quotes.csv 0 }}}
+   * @example kfirst com.shocktrade.quotes.csv 0
+   * @example kfirst
    */
-  def getFirstMessage(params: UnixLikeArgs) = {
+  def getFirstMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]] = {
     // get the arguments
     val (topic, partition) = extractTopicAndPartition(params.args)
 
@@ -338,8 +339,10 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "klast" - Returns the last offset for a given topic
+   * @example klast com.shocktrade.alerts 0
+   * @example klast
    */
-  def getLastMessage(params: UnixLikeArgs) = {
+  def getLastMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]] = {
     // get the arguments
     val (topic, partition) = extractTopicAndPartition(params.args)
 
@@ -356,8 +359,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kget" - Returns the message for a given topic partition and offset
-   * @example {{{ kget com.shocktrade.alerts 0 3456 }}}
-   * @example {{{ kget 3456 }}}
+   * @example kget com.shocktrade.alerts 0 3456
+   * @example kget 3456
    */
   def getMessage(params: UnixLikeArgs): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
     // get the arguments
@@ -369,8 +372,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kgetkey" - Returns the message key for a given topic partition and offset
-   * @example {{{ kget com.shocktrade.alerts 0 3456 }}}
-   * @example {{{ kget 3456 }}}
+   * @example kget com.shocktrade.alerts 0 3456
+   * @example kget 3456
    */
   def getMessageKey(params: UnixLikeArgs): Option[Array[Byte]] = {
     // get the arguments
@@ -393,7 +396,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
    * @param params the given Unix-style argument
    * @return either a binary or decoded message
    */
-  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs) = {
+  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs): Either[Option[MessageData], Option[Seq[AvroRecord]]] = {
     // requesting a message from an instance in time?
     val instant: Option[Long] = params("-d") map {
       case s if s.matches("\\d+") => s.toLong
@@ -452,8 +455,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kgetsize" - Returns the size of the message for a given topic partition and offset
-   * @example {{{ kgetsize com.shocktrade.alerts 0 5567 }}}
-   * @example {{{ kgetsize 5567 }}}
+   * @example kgetsize com.shocktrade.alerts 0 5567
+   * @example kgetsize 5567
    */
   def getMessageSize(params: UnixLikeArgs): Option[Int] = {
     // get the arguments (topic, partition, groupId and offset)
@@ -470,8 +473,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kgetminmax" - Returns the minimum and maximum message size for a given topic partition and offset range
-   * @example {{{ kgetmaxsize com.shocktrade.alerts 0 2100 5567 }}}
-   * @example {{{ kgetmaxsize 2100 5567 }}}
+   * @example kgetmaxsize com.shocktrade.alerts 0 2100 5567
+   * @example kgetmaxsize 2100 5567
    */
   def getMessageMinMaxSize(params: UnixLikeArgs): Seq[MessageMaxMin] = {
     // get the arguments (topic, partition, startOffset and endOffset)
@@ -494,9 +497,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "knext" - Optionally returns the next message
-   * @example {{{ knext }}}
+   * @example knext
    */
-  def getNextMessage(params: UnixLikeArgs) = {
+  def getNextMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]] = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, nextOffset, params)
     }
@@ -504,9 +507,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kprev" - Optionally returns the previous message
-   * @example {{{ kprev }}}
+   * @example kprev
    */
-  def getPreviousMessage(params: UnixLikeArgs)(implicit out: PrintStream) = {
+  def getPreviousMessage(params: UnixLikeArgs): Option[Either[Option[MessageData], Option[Seq[AvroRecord]]]] = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, Math.max(0, offset - 1), params)
     }
@@ -514,7 +517,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kreplicas" - Lists all replicas for all or a subset of topics
-   * @example {{{ kreplicas com.shocktrade.quotes.realtime  }}}
+   * @example kreplicas com.shocktrade.quotes.realtime 
    */
   def getReplicas(params: UnixLikeArgs): Seq[TopicReplicas] = {
     val prefix = params.args.headOption
@@ -528,8 +531,9 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kstats" - Returns the number of available messages for a given topic
-   * @example {{{ kstats com.shocktrade.alerts 0 4 }}}
-   * @example {{{ kstats }}}
+   * @example kstats com.shocktrade.alerts 0 4
+   * @example kstats com.shocktrade.alerts
+   * @example kstats
    */
   def getStatistics(params: UnixLikeArgs): Iterable[TopicOffsets] = {
     // interpret based on the input arguments
@@ -582,6 +586,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kls" - Lists all existing topicList
+   * @example kls com.shocktrade.alerts
+   * @example kls
    */
   def getTopics(params: UnixLikeArgs): Either[Seq[TopicItem], Seq[TopicItemCompact]] = {
     // get the prefix
@@ -619,8 +625,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kimport" - Imports a message into a new/existing topic
-   * @example {{{ kimport com.shocktrade.alerts -t -f messages/mymessage.txt }}}
-   * @example {{{ kimport -a mySchema -f messages/mymessage.txt }}}
+   * @example kimport com.shocktrade.alerts -t -f messages/mymessage.txt
+   * @example kimport -a mySchema -f messages/mymessage.txt
    */
   def importMessages(params: UnixLikeArgs): Long = {
     // get the topic
@@ -715,7 +721,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kinbound" - Retrieves a list of all topics with new messages (since last query)
-   * @example {{{ kinbound com.shocktrade.quotes }}}
+   * @example kinbound com.shocktrade.quotes
    */
   def inboundMessages(params: UnixLikeArgs): Iterable[Inbound] = {
     val prefix = params.args.headOption
@@ -798,7 +804,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
 
   /**
    * "kreset" - Sets the offset of a consumer group ID to zero for all partitions
-   * @example {{{ kreset com.shocktrade.quotes.csv lld }}}
+   * @example kreset com.shocktrade.quotes.csv lld
    */
   def resetConsumerGroup(params: UnixLikeArgs): Unit = {
     // get the arguments
