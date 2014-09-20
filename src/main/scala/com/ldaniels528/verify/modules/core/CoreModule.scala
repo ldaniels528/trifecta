@@ -96,7 +96,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
   /**
    * Automatically switches to the module of the most recently executed command
-   * @example {{{ autoswitch true }}}
+   * @example autoswitch true
    */
   def autoSwitch(params: UnixLikeArgs): String = {
     params.args.headOption map (_.toBoolean) foreach (rt.autoSwitching = _)
@@ -130,7 +130,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
   /**
    * Displays the contents of the given file
-   * @example {{{ cat avro/schema1.avsc }}}
+   * @example cat avro/schema1.avsc
    */
   def cat(params: UnixLikeArgs): Seq[String] = {
     import scala.io.Source
@@ -170,7 +170,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
   /**
    * "columns" - Retrieves or sets the column width for message output
-   * @example {{{ columns 30 }}}
+   * @example columns 30
    */
   def columnWidthGetOrSet(params: UnixLikeArgs): Either[Unit, Int] = {
     params.args.headOption match {
@@ -191,7 +191,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
   /**
    * Executes a Java class' main method
-   * @example {{{ runjava myJarFile.jar com.shocktrade.test.Tester }}}
+   * @example runjava myJarFile.jar com.shocktrade.test.Tester
    * @return the program's output
    */
   def executeJavaApp(params: UnixLikeArgs): Iterator[String] = {
@@ -236,7 +236,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
   /**
    * "wget" command - Retrieves remote content via HTTP
-   * @example {{{ wget "http://www.example.com/" }}}
+   * @example wget "http://www.example.com/"
    */
   def httpGet(params: UnixLikeArgs): Option[Array[Byte]] = {
     import java.io.ByteArrayOutputStream

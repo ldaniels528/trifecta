@@ -61,7 +61,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * Establishes (or re-establishes) a connect to the Storm Nimbus Host
-   * @example {{{ sconnect }}}
+   * @example sconnect
    */
   def createConnection(params: UnixLikeArgs) = {
     val myNimbusHost = params.args.headOption
@@ -79,7 +79,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "sget" - Retrieves the information for a topology by ID
-   * @example {{{ sget nm-traffic-rate-aggregation-17-1407973634 }}}
+   * @example sget nm-traffic-rate-aggregation-17-1407973634
    */
   def getTopologyInfo(params: UnixLikeArgs): Seq[TopologyInfo] = {
     // get the topology ID
@@ -94,7 +94,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "sbolts" - Retrieves the list of bolts for a given topology by ID
-   * @example {{{ sbolts nm-traffic-rate-aggregation-17-1407973634 }}}
+   * @example sbolts nm-traffic-rate-aggregation-17-1407973634
    */
   def getTopologyBolts(params: UnixLikeArgs): Seq[BoltInfo] = {
     import net.liftweb.json._
@@ -148,7 +148,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "spouts" - Retrieves the list of spouts for a given topology by ID
-   * @example {{{ sbolts nm-traffic-rate-aggregation-17-1407973634 }}}
+   * @example sbolts nm-traffic-rate-aggregation-17-1407973634
    */
   def getTopologySpouts(params: UnixLikeArgs): Seq[SpoutInfo] = {
     // get the topology ID
@@ -167,7 +167,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "sdeploy" command - Deploys a topology to the Storm server
-   * @example {{{ sdeploy mytopology.jar myconfig.properties }}}
+   * @example sdeploy mytopology.jar myconfig.properties
    */
   def deployTopology(params: UnixLikeArgs): String = {
     import scala.sys.process._
@@ -178,7 +178,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "skill" - Lists available topologies
-   * @example {{{ skill myTopology }}}
+   * @example skill myTopology
    */
   def killTopology(params: UnixLikeArgs): Unit = {
     // get the topology ID
@@ -202,7 +202,7 @@ class StormModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "srun" - Runs as topology in a local cluster
-   * @example {{{ srun shocktrade-etl.jar com.shocktrade.etl.QuotesTopology -local }}}
+   * @example srun shocktrade-etl.jar com.shocktrade.etl.QuotesTopology -local
    */
   def runTopology(args: UnixLikeArgs): Unit = {
     // get the parameters

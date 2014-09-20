@@ -52,9 +52,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "zcd" - Changes the current path/directory in ZooKeeper
-   * @example {{{ zcd / }}}
-   * @example {{{ zcd .. }}}
-   * @example {{{ zcd brokers }}}
+   * @example zcd /
+   * @example zcd ..
+   * @example zcd brokers
    */
   def chdir(params: UnixLikeArgs): Either[String, Unit] = {
     // if more than 1 argument, it's an error
@@ -86,8 +86,8 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "zrm" - Removes a key-value from ZooKeeper
-   * @example {{{ zrm /consumer/GRP000a2ce }}}
-   * @example {{{ zrm -r /consumer/GRP000a2ce }}}
+   * @example zrm /consumer/GRP000a2ce
+   * @example zrm -r /consumer/GRP000a2ce
    */
   def delete(params: UnixLikeArgs) {
     (params("-r") ?? params.args.headOption) map zkKeyToPath foreach { path =>
@@ -109,7 +109,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "zget" - Dumps the contents of a specific Zookeeper key to the console
-   * @example {{{ zget /storm/workerbeats/my-test-topology-17-1407973634 }}}
+   * @example zget /storm/workerbeats/my-test-topology-17-1407973634
    */
   def getMessage(params: UnixLikeArgs): Option[Any] = {
     // get the key
@@ -170,10 +170,10 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "zput" - Sets a key-value pair in ZooKeeper
-   * @example {{{ zput /test/data/items/1 "Hello World" }}}
-   * @example {{{ zput /test/data/items/2 1234.5 }}}
-   * @example {{{ zput /test/data/items/3 12345 -t short }}}
-   * @example {{{ zput /test/data/items/4 de.ad.be.ef }}}
+   * @example zput /test/data/items/1 "Hello World"
+   * @example zput /test/data/items/2 1234.5
+   * @example zput /test/data/items/3 12345 -t short
+   * @example zput /test/data/items/4 de.ad.be.ef
    */
   def publishMessage(params: UnixLikeArgs) {
     // get the arguments
