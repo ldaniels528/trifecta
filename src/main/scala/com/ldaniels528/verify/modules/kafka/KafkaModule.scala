@@ -428,11 +428,8 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with BinaryMessaging with
     for (path <- params("-f") map expandPath; message <- messageData map (_.message)) new FileOutputStream(path) use (_.write(message))
 
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
-    val decoder: Option[MessageDecoder[_]] = {
-      val decoderA: Option[MessageDecoder[_]] = params("-a") map getAvroDecoder
-      val decoderB: Option[MessageDecoder[_]] = cursors.get(topic).flatMap(_.decoder)
-      decoderA ?? decoderB
-    }
+    val decoder: Option[MessageDecoder[_]] =
+      Seq(params("-a") map getAvroDecoder, cursors.get(topic).flatMap(_.decoder)).find(_.isDefined).flatten
 
     // if a decoder was found, use it to decode the message
     val decodedMessage = decoder.flatMap(decodeMessage(messageData, _))
