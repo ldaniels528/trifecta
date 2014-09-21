@@ -56,7 +56,8 @@ libraryDependencies ++= Seq(
   "org.apache.avro" % "avro" % "1.7.7",
   "org.apache.httpcomponents" % "httpclient" % "4.3.2",
   "org.apache.httpcomponents" % "httpcore" % "4.3.2",
-  "org.apache.kafka" % "kafka_2.10" % "0.8.1.1",
+  "org.apache.kafka" % "kafka_2.10" % "0.8.1.1"
+    exclude("org.apache.zookeeper", "zookeeper"),
   "org.apache.storm" % "storm-core" % "0.9.2-incubating"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
