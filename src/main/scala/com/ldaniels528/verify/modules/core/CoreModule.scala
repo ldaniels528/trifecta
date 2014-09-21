@@ -103,6 +103,10 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
     s"auto switching is ${if (config.autoSwitching) "On" else "Off"}"
   }
 
+  /**
+   * Displays the contents of an Avro schema variable
+   * @example avcat qschema
+   */
   def avroCat(params: UnixLikeArgs): Option[String] = {
     params.args.headOption map { name =>
       implicit val scope = config.scope
@@ -111,6 +115,10 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
     }
   }
 
+  /**
+   * Loads an Avro schema into memory
+   * @example avload qschema "avro/quotes.avsc"
+   */
   def avroLoadSchema(params: UnixLikeArgs) {
     val Seq(name, schemaPath, _*) = params.args
 
@@ -130,7 +138,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
   /**
    * Displays the contents of the given file
-   * @example cat avro/schema1.avsc
+   * @example cat "avro/schema1.avsc"
    */
   def cat(params: UnixLikeArgs): Seq[String] = {
     import scala.io.Source
@@ -141,7 +149,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   }
 
   /**
-   * "cd" - Changes the local file system path/directory
+   * Changes the local file system path/directory
+   * @example cd "/home/ldaniels/examples"
    */
   def changeDir(params: UnixLikeArgs): Option[String] = {
     params.args.headOption map {
@@ -158,8 +167,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
   /**
    * Retrieves or sets the character encoding
-   * Example: charset UTF-8
-   * @param params the given arguments
+   * @example charset "UTF-8"
    */
   def charSet(params: UnixLikeArgs): Either[Unit, String] = {
     params.args.headOption match {
@@ -169,7 +177,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   }
 
   /**
-   * "columns" - Retrieves or sets the column width for message output
+   * Retrieves or sets the column width for message output
    * @example columns 30
    */
   def columnWidthGetOrSet(params: UnixLikeArgs): Either[Unit, Int] = {
@@ -216,7 +224,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   }
 
   /**
-   * "help" command - Provides the list of available commands
+   * Provides the list of available commands
+   * @example help
    */
   def help(params: UnixLikeArgs): Seq[CommandItem] = {
     val args = params.args
