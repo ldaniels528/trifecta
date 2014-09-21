@@ -77,7 +77,7 @@ class VxConfig() {
 }
 
 /**
- * Verify Runtime Context Companion Object
+ * Verify Configuration Companion Object
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object VxConfig {
