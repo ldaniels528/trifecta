@@ -18,7 +18,7 @@ class CommandParserSpec() extends FeatureSpec with GivenWhenThen {
       val line = "!?100"
 
       When("The string is parsed into tokens")
-      val tokens = CommandParser.parse(line)
+      val tokens = CommandParser.parseTokens(line)
 
       Then("The arguments should be successfully verified")
       tokens shouldBe Seq("!", "?", "100")
@@ -31,7 +31,7 @@ class CommandParserSpec() extends FeatureSpec with GivenWhenThen {
       val line = """kdumpa avro/schema.avsc 9 1799020 a+b+c+d+e+f "Hello World""""
 
       When("The string is parsed into tokens")
-      val tokens = CommandParser.parse(line)
+      val tokens = CommandParser.parseTokens(line)
 
       Then("The arguments should be successfully verified")
       tokens shouldBe Seq("kdumpa", "avro/schema.avsc", "9", "1799020", "a+b+c+d+e+f", "Hello World")

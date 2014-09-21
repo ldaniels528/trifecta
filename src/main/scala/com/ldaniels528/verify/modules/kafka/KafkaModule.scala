@@ -7,7 +7,6 @@ import java.util.Date
 import java.util.concurrent.atomic.AtomicLong
 
 import _root_.kafka.common.TopicAndPartition
-import com.ldaniels528.verify.VxRuntimeContext
 import com.ldaniels528.verify.command._
 import com.ldaniels528.verify.modules._
 import com.ldaniels528.verify.support.avro.{AvroDecoder, AvroReading}
@@ -15,9 +14,11 @@ import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer.{BrokerDetails, M
 import com.ldaniels528.verify.support.kafka._
 import com.ldaniels528.verify.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.verify.support.messaging.{MessageCursor, MessageDecoder}
+import com.ldaniels528.verify.support.zookeeper.ZKProxy
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
-import com.ldaniels528.verify.vscript.{Scope, Variable}
+import com.ldaniels528.verify.vscript.Variable
+import com.ldaniels528.verify.{VxConfig, VxRuntimeContext}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -32,14 +33,14 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(rt: VxRuntimeContext) extends Module with AvroReading {
-  private implicit val out: PrintStream = rt.out
-  private implicit val scope: Scope = rt.scope
+  private val config: VxConfig = rt.config
+  private val out: PrintStream = config.out
 
   // create the ZooKeeper proxy
-  private implicit val zk = rt.zkProxy
+  private implicit val zk: ZKProxy = rt.zkProxy
 
   // get the list of brokers from zookeeper
-  private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
+  private lazy val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
   // set the default correlation ID
   private val correlationId: Int = (Math.random * Int.MaxValue).toInt
@@ -52,13 +53,13 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with AvroReading {
   private val cursors = mutable.Map[String, KafkaCursor]()
   private var currentTopic: Option[String] = None
 
-  def defaultFetchSize = scope.getValue[Int]("defaultFetchSize") getOrElse 65536
+  def defaultFetchSize: Int = config.getOrElse("defaultFetchSize", 65536)
 
-  def defaultFetchSize_=(sizeInBytes: Int) = scope.setValue("defaultFetchSize", Option(sizeInBytes))
+  def defaultFetchSize_=(sizeInBytes: Int) = config.set("defaultFetchSize", sizeInBytes)
 
-  def parallelism = scope.getValue[Int]("parallelism") getOrElse 4
+  def parallelism: Int = config.getOrElse("parallelism", 4)
 
-  def parallelism_=(parallelism: Int) = scope.setValue("parallelism", Option(parallelism))
+  def parallelism_=(parallelism: Int) = config.set("parallelism", parallelism)
 
   // the bound commands
   override def getCommands: Seq[Command] = Seq(
@@ -722,7 +723,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with AvroReading {
 
     var messages = 0L
     Source.fromFile(filePath).getLines() foreach { message =>
-      publisher.publish(topic, toBytes(System.currentTimeMillis()), message.getBytes(rt.encoding))
+      publisher.publish(topic, toBytes(System.currentTimeMillis()), message.getBytes(rt.config.encoding))
       messages += 1
     }
     messages
@@ -792,7 +793,7 @@ class KafkaModule(rt: VxRuntimeContext) extends Module with AvroReading {
   /**
    * "kpublish" - Returns the EOF offset for a given topic
    */
-  def publishMessage(params: UnixLikeArgs)(implicit out: PrintStream): Unit = {
+  def publishMessage(params: UnixLikeArgs): Unit = {
     // get the arguments
     val (topic, key, message) = params.args match {
       case aKey :: aMessage :: Nil => cursor map (c => (c.topic, aKey, aMessage)) getOrElse dieNoCursor

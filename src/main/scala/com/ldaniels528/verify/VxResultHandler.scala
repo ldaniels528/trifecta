@@ -3,7 +3,7 @@ package com.ldaniels528.verify
 import java.io.PrintStream
 
 import com.ldaniels528.tabular.Tabular
-import com.ldaniels528.verify.VxRuntimeContext.JobItem
+import com.ldaniels528.verify.VxConfig.JobItem
 import com.ldaniels528.verify.support.avro.AvroTables
 import com.ldaniels528.verify.support.kafka.KafkaMicroConsumer.MessageData
 import com.ldaniels528.verify.util.BinaryMessaging
@@ -17,10 +17,10 @@ import scala.util.{Failure, Success, Try}
  * Verify Result Handler
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class VxResultHandler(rt: VxRuntimeContext) extends BinaryMessaging {
+class VxResultHandler(config: VxConfig) extends BinaryMessaging {
   // define the tabular instance
   val tabular = new Tabular() with AvroTables
-  val out: PrintStream = rt.out
+  val out: PrintStream = config.out
 
   /**
    * Handles the processing and/or display of the given result of a command execution
@@ -31,8 +31,8 @@ class VxResultHandler(rt: VxRuntimeContext) extends BinaryMessaging {
     result match {
       // handle binary data
       case message: Array[Byte] if message.isEmpty => out.println("No data returned")
-      case message: Array[Byte] => dumpMessage(message)(rt, out)
-      case MessageData(offset, _, _, _, message) => dumpMessage(offset, message)(rt, out)
+      case message: Array[Byte] => dumpMessage(message)(config)
+      case MessageData(offset, _, _, _, message) => dumpMessage(offset, message)(config)
 
       // handle Either cases
       case e: Either[_, _] => e match {
@@ -78,15 +78,15 @@ class VxResultHandler(rt: VxRuntimeContext) extends BinaryMessaging {
 
   private def setupAsyncJob(f: Future[_])(implicit ec: ExecutionContext): Unit = {
     val job = JobItem(startTime = System.currentTimeMillis(), task = f)
-    rt.jobs += (job.jobId -> job)
+    config.jobs += (job.jobId -> job)
     f.onComplete {
       case Success(value) =>
         out.println(s"Job #${job.jobId} completed")
-        rt.jobs -= job.jobId
+        config.jobs -= job.jobId
         handleResult(value)
       case Failure(e) =>
         out.println(s"Job #${job.jobId} failed: ${e.getMessage}")
-        rt.jobs -= job.jobId
+        config.jobs -= job.jobId
     }
     out.println("Task is now running in the background (use 'jobs' to view)")
   }

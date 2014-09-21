@@ -10,7 +10,7 @@ import com.ldaniels528.verify.support.avro.AvroReading
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.{OpCode, Scope, Variable}
-import com.ldaniels528.verify.{SessionManagement, VerifyShell, VxRuntimeContext}
+import com.ldaniels528.verify.{VxConfig, SessionManagement, VerifyShell, VxRuntimeContext}
 import org.apache.commons.io.IOUtils
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -24,8 +24,8 @@ import scala.util.Properties
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
-  private implicit val scope: Scope = rt.scope
-  private implicit val out: PrintStream = rt.out
+  private val config: VxConfig = rt.config
+  private val out: PrintStream = config.out
 
   // define the process parsing regular expression
   private val PID_MacOS_r = "^\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
@@ -86,26 +86,26 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   /**
    * Retrieves the current working directory
    */
-  def cwd: String = scope.getValue[String]("cwd") getOrElse "."
+  def cwd: String = config.getOrElse("cwd", ".")
 
   /**
    * Sets the current working directory
    * @param path the path to set
    */
-  def cwd_=(path: String) = scope.setValue("cwd", Option(path))
+  def cwd_=(path: String) = config.set("cwd", path)
 
   /**
    * Automatically switches to the module of the most recently executed command
    * @example autoswitch true
    */
   def autoSwitch(params: UnixLikeArgs): String = {
-    params.args.headOption map (_.toBoolean) foreach (rt.autoSwitching = _)
-    s"auto switching is ${if (rt.autoSwitching) "On" else "Off"}"
+    params.args.headOption map (_.toBoolean) foreach (config.autoSwitching = _)
+    s"auto switching is ${if (config.autoSwitching) "On" else "Off"}"
   }
 
   def avroCat(params: UnixLikeArgs): Option[String] = {
     params.args.headOption map { name =>
-      implicit val scope = rt.scope
+      implicit val scope = config.scope
       val decoder = getAvroDecoder(name)(rt)
       decoder.schemaString
     }
@@ -118,7 +118,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
     val decoder = loadAvroDecoder(name, schemaPath)
 
     // create the variable and attach it to the scope
-    rt.scope += Variable(name, new OpCode {
+    config.scope += Variable(name, new OpCode {
       val value = Some(decoder)
 
       override def eval(implicit scope: Scope): Option[Any] = value
@@ -163,8 +163,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    */
   def charSet(params: UnixLikeArgs): Either[Unit, String] = {
     params.args.headOption match {
-      case Some(newEncoding) => Left(rt.encoding = newEncoding)
-      case None => Right(rt.encoding)
+      case Some(newEncoding) => Left(config.encoding = newEncoding)
+      case None => Right(config.encoding)
     }
   }
 
@@ -174,8 +174,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    */
   def columnWidthGetOrSet(params: UnixLikeArgs): Either[Unit, Int] = {
     params.args.headOption match {
-      case Some(arg) => Left(rt.columns = parseInt("columnWidth", arg))
-      case None => Right(rt.columns)
+      case Some(arg) => Left(config.columns = parseInt("columnWidth", arg))
+      case None => Right(config.columns)
     }
   }
 
@@ -185,8 +185,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * @return the current state ("On" or "Off")
    */
   def debug(params: UnixLikeArgs): String = {
-    if (params.args.isEmpty) rt.debugOn = !rt.debugOn else rt.debugOn = params.args.head.toBoolean
-    s"debugging is ${if (rt.debugOn) "On" else "Off"}"
+    if (params.args.isEmpty) config.debugOn = !config.debugOn else config.debugOn = params.args.head.toBoolean
+    s"debugging is ${if (config.debugOn) "On" else "Off"}"
   }
 
   /**
@@ -280,7 +280,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * @example !? 10
    * @example !?
    */
-  def executeHistory(params: UnixLikeArgs)(implicit out: PrintStream) {
+  def executeHistory(params: UnixLikeArgs) {
     for {
       command <- params.args match {
         case Nil => SessionManagement.history.last
@@ -301,8 +301,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * "exit" command - Exits the shell
    */
   def exit(params: UnixLikeArgs) {
-    rt.alive = false
-    SessionManagement.history.store(rt.historyFile)
+    config.alive = false
+    SessionManagement.history.store(config.historyFile)
   }
 
   /**
@@ -335,7 +335,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
    * "jobs" - Retrieves the queued jobs
    */
   def listJobs(params: UnixLikeArgs): Seq[JobDetail] = {
-    (rt.jobs map { case (id, job) =>
+    (config.jobs map { case (id, job) =>
       JobDetail(
         jobId = job.jobId,
         status = if (job.task.isCompleted) "Completed" else "Running",
@@ -358,6 +358,8 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   }
 
   def listScope(params: UnixLikeArgs): Seq[ScopeItem] = {
+    implicit val scope = config.scope
+
     // get the variables (filter out duplicates)
     val varsA: Seq[ModuleVariable] = rt.moduleManager.variableSet
     val varsB: Seq[Variable] = {
@@ -389,7 +391,7 @@ class CoreModule(rt: VxRuntimeContext) extends Module with AvroReading {
   /**
    * "ps" command - Display a list of "configured" running processes
    */
-  def processList(params: UnixLikeArgs)(implicit out: PrintStream): Seq[String] = {
+  def processList(params: UnixLikeArgs): Seq[String] = {
     import scala.util.Properties
 
     // this command only works on Linux

@@ -4,6 +4,8 @@ import java.io.PrintStream
 
 import com.ldaniels528.verify.VxConsole._
 import com.ldaniels528.verify.command.Command
+import com.ldaniels528.verify.support.zookeeper.ZKProxy
+import com.ldaniels528.verify.util.EndPoint
 import com.ldaniels528.verify.vscript.Scope
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
@@ -17,17 +19,17 @@ import scala.util.{Failure, Success, Try}
  * Verify Console Shell Application
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class VerifyShell(rt: VxRuntimeContext) {
-  implicit val scope: Scope = rt.scope
+class VerifyShell(config: VxConfig, rt: VxRuntimeContext) {
+  private implicit val scope: Scope = config.scope
 
   // redirect standard output
-  val out: PrintStream = rt.out
-  val err: PrintStream = rt.err
+  val out: PrintStream = rt.config.out
+  val err: PrintStream = rt.config.err
 
   // load the history, then schedule session history file updates
   val history: History = SessionManagement.history
-  history.load(rt.historyFile)
-  SessionManagement.setupHistoryUpdates(rt.historyFile, 60 seconds)
+  history.load(config.historyFile)
+  SessionManagement.setupHistoryUpdates(config.historyFile, 60 seconds)
 
   // load the commands from the modules
   private def commandSet: Map[String, Command] = rt.moduleManager.commandSet
@@ -55,7 +57,7 @@ class VerifyShell(rt: VxRuntimeContext) {
       out.println(a"${WHITE}Type '${CYAN}help$WHITE' (or '$CYAN?$WHITE') to see the list of available commands")
     }
 
-    if (rt.autoSwitching) {
+    if (rt.config.autoSwitching) {
       out.println("Module Auto-Switching is On")
     }
 
@@ -78,16 +80,16 @@ class VerifyShell(rt: VxRuntimeContext) {
               case Failure(e: ConnectionLossException) =>
                 err.println("Zookeeper connect loss error - use 'zreconnect' to re-establish a connection")
               case Failure(e: IllegalArgumentException) =>
-                if (rt.debugOn) e.printStackTrace()
+                if (rt.config.debugOn) e.printStackTrace()
                 err.println(s"Syntax error: ${e.getMessage}")
               case Failure(e) =>
-                if (rt.debugOn) e.printStackTrace()
+                if (rt.config.debugOn) e.printStackTrace()
                 err.println(s"Runtime error: ${getErrorMessage(e)}")
             }
           }
         }
       }
-    } while (rt.alive)
+    } while (config.alive)
   }
 
   /**
@@ -132,11 +134,17 @@ object VerifyShell {
         val host: String = params.head
         val port: Int = if (params.length > 1) params(1).toInt else 2181
 
+        // load the configuration
+        val config = new VxConfig()
+
+        // create the Zookeeper proxy
+        val zkProxy = ZKProxy(EndPoint(host, port))
+
         // create the runtime context
-        val rt = VxRuntimeContext(host, port)
+        val rt = new VxRuntimeContext(config, zkProxy)
 
         // start the shell
-        val console = new VerifyShell(rt)
+        val console = new VerifyShell(config, rt)
         console.shell()
     }
 

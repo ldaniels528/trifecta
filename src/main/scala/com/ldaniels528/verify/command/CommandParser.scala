@@ -9,8 +9,9 @@ object CommandParser {
 
   /**
    * Parses the given input string into tokens
+   * @param input the given user input to parse
    */
-  def parse(input: String): Seq[String] = {
+  def parseTokens(input: String): Seq[String] = {
     val sb = new StringBuilder()
     var inQuotes = false
 
@@ -73,7 +74,7 @@ object CommandParser {
    * Parses the given input string into tokens
    * @return the argument list
    */
-  def parseUnixLikeArgs(input: String): UnixLikeArgs = parseUnixLikeArgs(parse(input))
+  def parseUnixLikeArgs(input: String): UnixLikeArgs = parseUnixLikeArgs(parseTokens(input))
 
   /**
    * Parses the given items (e.g. ["-c", "-f", "myfile"]) into an argument list (e.g. ["-c" -> None, "-f" -> Some("myfile")])

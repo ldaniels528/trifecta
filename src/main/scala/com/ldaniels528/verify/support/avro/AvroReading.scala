@@ -14,7 +14,7 @@ trait AvroReading {
 
   def getAvroDecoder(schemaVar: String)(implicit rt: VxRuntimeContext): AvroDecoder = {
     // get the decoder
-    implicit val scope = rt.scope
+    implicit val scope = rt.config.scope
     scope.getVariable(schemaVar).map(_.value).flatMap(_.eval).map(_.asInstanceOf[AvroDecoder])
       .getOrElse(throw new IllegalArgumentException(s"Variable '$schemaVar' not found"))
   }

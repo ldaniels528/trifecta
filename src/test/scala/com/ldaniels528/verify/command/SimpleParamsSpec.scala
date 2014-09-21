@@ -21,13 +21,11 @@ class SimpleParamsSpec() extends FeatureSpec with GivenWhenThen with MockitoSuga
       val command = mock[Command]
 
       When("Parsing command line input into arguments")
-      val args = CommandParser.parse(commandLineInput)
+      val args = CommandParser.parseTokens(commandLineInput)
 
       Then("The arguments should be successfully verified")
-      val params = args.tail
-      //intercept[IllegalArgumentException]
-      paramSet.checkArgs(command, params)
-      paramSet.transform(params) shouldBe Seq("-r", "/some/path/to/delete")
+      paramSet.checkArgs(command, args)
+      paramSet.transform(args) shouldBe Seq("zrm", "-r", "/some/path/to/delete")
     }
   }
 

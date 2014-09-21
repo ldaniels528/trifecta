@@ -23,9 +23,10 @@ class StormModule(rt: VxRuntimeContext) extends Module {
   private val logger = LoggerFactory.getLogger(getClass)
   private val stormConf = Utils.readStormConfig().asInstanceOf[java.util.Map[String, Any]]
   private var client: Option[Nimbus.Client] = None
+  private val config = rt.config
 
   // load Storm-specific properties
-  rt.configProps foreach { case (k, v) =>
+  config.configProps foreach { case (k, v) =>
     if (k.startsWith("storm|")) {
       stormConf.put(k.drop(6), v)
     }

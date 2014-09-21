@@ -4,7 +4,7 @@ import java.io.PrintStream
 import java.nio.ByteBuffer
 import java.util.Date
 
-import com.ldaniels528.verify.VxRuntimeContext
+import com.ldaniels528.verify.{VxConfig, VxRuntimeContext}
 import com.ldaniels528.verify.command.CommandParser._
 import com.ldaniels528.verify.command._
 import com.ldaniels528.verify.modules._
@@ -22,9 +22,9 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class ZookeeperModule(rt: VxRuntimeContext) extends Module {
-  private implicit val out: PrintStream = rt.out
-  private val zk: ZKProxy = rt.zkProxy
-
+  private val config: VxConfig = rt.config
+  private val out: PrintStream = config.out
+  
   override def getCommands = Seq(
     Command(this, "zcd", chdir, SimpleParams(Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
     Command(this, "zexists", pathExists, SimpleParams(Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
@@ -44,11 +44,20 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
 
   override def moduleName = "zookeeper"
 
-  override def prompt: String = s"${rt.remoteHost}${rt.zkCwd}"
+  override def prompt: String = s"${zk.remoteHost}$zkCwd"
 
   override def shutdown() = ()
 
-  var prevCwd = "/"
+  private def zk: ZKProxy = rt.zkProxy
+
+  def prevCwd: String = config.getOrElse("prevCwd", "/")
+
+  def prevCwd_=(path: String) = config.set("prevCwd", path)
+
+  // ZooKeeper current working directory
+  def zkCwd: String = config.getOrElse("zkCwd", "/")
+
+  def zkCwd_=(path: String) = config.set("zkCwd", path)
 
   /**
    * "zcd" - Changes the current path/directory in ZooKeeper
@@ -63,9 +72,9 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     // perform the action
     val newPath: Option[String] = params.args.headOption map {
       case "-" => prevCwd
-      case "." => rt.zkCwd
+      case "." => zkCwd
       case ".." =>
-        rt.zkCwd.split("[/]") match {
+        zkCwd.split("[/]") match {
           case a if a.length <= 1 => "/"
           case a =>
             val aPath = a.init.mkString("/")
@@ -77,10 +86,10 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     // if argument was a dot (.) return the current path
     newPath match {
       case Some(path) =>
-        prevCwd = rt.zkCwd
-        rt.zkCwd = path
+        prevCwd = zkCwd
+        zkCwd = path
         Right(())
-      case None => Left(rt.zkCwd)
+      case None => Left(zkCwd)
     }
   }
 
@@ -131,7 +140,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
    */
   def listKeys(params: UnixLikeArgs): Seq[String] = {
     // get the argument
-    val path = params.args.headOption map zkKeyToPath getOrElse rt.zkCwd
+    val path = params.args.headOption map zkKeyToPath getOrElse zkCwd
 
     // perform the action
     zk.getChildren(path, watch = false)
@@ -233,7 +242,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   private def zkKeyToPath(key: String): String = {
     key match {
       case s if s.startsWith("/") => key
-      case s => (if (rt.zkCwd.endsWith("/")) rt.zkCwd else rt.zkCwd + "/") + s
+      case s => (if (zkCwd.endsWith("/")) zkCwd else zkCwd + "/") + s
     }
   }
 
@@ -254,7 +263,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     }
 
     // get the optional path argument
-    val path = params.args.headOption map zkKeyToPath getOrElse rt.zkCwd
+    val path = params.args.headOption map zkKeyToPath getOrElse zkCwd
 
     // perform the action
     unwind(path)
