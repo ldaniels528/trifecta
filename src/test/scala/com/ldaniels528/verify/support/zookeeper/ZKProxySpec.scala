@@ -9,14 +9,14 @@ import org.scalatest.{FeatureSpec, GivenWhenThen}
 import scala.util.Try
 
 /**
- * ZooKeeper Proxy (Version 2.0)
+ * ZooKeeper Proxy
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZKProxyV2Spec() extends FeatureSpec with GivenWhenThen {
+class ZKProxySpec() extends FeatureSpec with GivenWhenThen {
   var server: TestingServer = _
   var client: CuratorFramework = _
 
-  info("As a ZooKeeper Proxy (V2) instance")
+  info("As a ZooKeeper Proxy instance")
   info("I want to be able to execute ZooKeeper commands")
 
   feature("The Proxy can create data in a Zookeeper instance") {
