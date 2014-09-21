@@ -16,7 +16,9 @@ trait ZKProxy {
 
   def create(tuples: (String, Array[Byte])*): Iterable[String]
 
-  def create(path: String, data: Array[Byte])(implicit ec: ExecutionContext): Future[Int]
+  def create(path: String, data: Array[Byte]): String
+
+  def createAsync(path: String, data: Array[Byte])(implicit ec: ExecutionContext): Future[Int]
 
   def ensurePath(path: String): List[String]
 

@@ -45,7 +45,9 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
     }
   }
 
-  def create(path: String, data: Array[Byte])(implicit ec: ExecutionContext): Future[Int] = {
+  def create(path: String, data: Array[Byte]): String = zk.create(path, data, acl, mode)
+
+  def createAsync(path: String, data: Array[Byte])(implicit ec: ExecutionContext): Future[Int] = {
     val promise = Promise[Int]()
     val ctx = new Object()
     zk.create(path, data, acl, mode, new StringCallback {
@@ -71,7 +73,7 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
   def ensurePathAsync(path: String, ctx: Any)(implicit ec: ExecutionContext): Future[List[Int]] = {
     val items = path.splitNodes map (p => (p, NO_DATA))
     Future.sequence(items map {
-      case (node, data) => create(node, data)
+      case (node, data) => createAsync(node, data)
     })
   }
 
