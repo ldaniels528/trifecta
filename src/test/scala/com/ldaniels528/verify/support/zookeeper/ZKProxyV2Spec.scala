@@ -1,8 +1,7 @@
 package com.ldaniels528.verify.support.zookeeper
 
 import com.ldaniels528.verify.util.EndPoint
-import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
-import org.apache.curator.retry.ExponentialBackoffRetry
+import org.apache.curator.framework.CuratorFramework
 import org.apache.curator.test.TestingServer
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
@@ -25,12 +24,8 @@ class ZKProxyV2Spec() extends FeatureSpec with GivenWhenThen {
       try {
         Given("a Zookeeper instance")
         server = new TestingServer(2181)
-        //server.start()
 
-        And("a Curator Framework client")
-        client = CuratorFrameworkFactory.newClient(server.getConnectString, new ExponentialBackoffRetry(5000, 3))
-        client.start()
-
+        And("a Zookeeper Proxy client")
         val zk = ZKProxy(EndPoint(server.getConnectString))
 
         And("a data set to insert")
