@@ -29,7 +29,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   override def getCommands = Seq(
     Command(this, "zcd", chdir, SimpleParams(Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
     Command(this, "zexists", pathExists, SimpleParams(Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
-    Command(this, "zget", getMessage, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the contents of a specific Zookeeper key"),
+    Command(this, "zget", getData, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the contents of a specific Zookeeper key"),
     Command(this, "zls", listKeys, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
     Command(this, "zmk", mkdir, SimpleParams(Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
     Command(this, "zput", publishMessage, UnixLikeParams(Seq("key" -> true, "value" -> true), Seq("-t" -> "type")), "Sets a key-value pair in ZooKeeper"),
@@ -138,7 +138,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
    * "zget" - Dumps the contents of a specific Zookeeper key to the console
    * @example zget /storm/workerbeats/my-test-topology-17-1407973634
    */
-  def getMessage(params: UnixLikeArgs): Option[Any] = {
+  def getData(params: UnixLikeArgs): Option[Any] = {
     // get the key
     params.args.headOption flatMap { key =>
       // convert the key to a fully-qualified path
