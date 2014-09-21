@@ -10,7 +10,6 @@ import com.ldaniels528.verify.util.VxUtils._
 import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
-import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success, Try}
@@ -166,9 +165,6 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaMicroConsumer {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
-
-  // setup defaults
   private val DEFAULT_FETCH_SIZE: Int = 65536
 
   /**
