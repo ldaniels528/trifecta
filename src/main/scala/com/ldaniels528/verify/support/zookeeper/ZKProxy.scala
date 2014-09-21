@@ -28,6 +28,8 @@ trait ZKProxy {
 
   def getChildren(path: String, watch: Boolean = false): Seq[String]
 
+  def getFamily(path: String): List[String]
+
   def getSessionId: Long
 
   def read(path: String): Option[Array[Byte]]

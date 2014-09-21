@@ -90,6 +90,14 @@ class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = Non
 
   def getChildren(path: String, watch: Boolean = false): Seq[String] = zk.getChildren(path, watch)
 
+  def getFamily(path: String): List[String] = {
+
+    def zkKeyToPath(parent: String, child: String): String = (if (parent.endsWith("/")) parent else parent + "/") + child
+
+    val children = Option(getChildren(path)) getOrElse Seq.empty
+    path :: (children flatMap (child => getFamily(zkKeyToPath(path, child)))).toList
+  }
+
   def getSessionId: Long = zk.getSessionId
 
   def getState: States = zk.getState
