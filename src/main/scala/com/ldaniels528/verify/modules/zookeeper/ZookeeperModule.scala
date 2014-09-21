@@ -4,7 +4,6 @@ import java.io.PrintStream
 import java.nio.ByteBuffer
 import java.util.Date
 
-import com.ldaniels528.verify.{VxConfig, VxRuntimeContext}
 import com.ldaniels528.verify.command.CommandParser._
 import com.ldaniels528.verify.command._
 import com.ldaniels528.verify.modules._
@@ -14,6 +13,7 @@ import com.ldaniels528.verify.util.EndPoint
 import com.ldaniels528.verify.util.VxUtils._
 import com.ldaniels528.verify.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.verify.vscript.Variable
+import com.ldaniels528.verify.{VxConfig, VxRuntimeContext}
 
 import scala.util.Try
 
@@ -24,7 +24,7 @@ import scala.util.Try
 class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   private val config: VxConfig = rt.config
   private val out: PrintStream = config.out
-  
+
   override def getCommands = Seq(
     Command(this, "zcd", chdir, SimpleParams(Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
     Command(this, "zexists", pathExists, SimpleParams(Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
@@ -40,6 +40,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     Command(this, "ztree", tree, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
   override def getVariables: Seq[Variable] = Seq(
+    Variable("zkPrevCwd", ConstantValue(Option("/"))),
     Variable("zkCwd", ConstantValue(Option("/"))))
 
   override def moduleName = "zookeeper"
@@ -50,13 +51,28 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
 
   private def zk: ZKProxy = rt.zkProxy
 
-  def prevCwd: String = config.getOrElse("prevCwd", "/")
+  /**
+   * Returns the ZooKeeper previous working directory
+   * @return the previous working directory
+   */
+  def prevCwd: String = config.getOrElse("zkPrevCwd", "/")
 
-  def prevCwd_=(path: String) = config.set("prevCwd", path)
+  /**
+   * Sets the ZooKeeper previous working directory
+   * @param path the path to set
+   */
+  def prevCwd_=(path: String) = config.set("zkPrevCwd", path)
 
-  // ZooKeeper current working directory
+  /**
+   * Returns the ZooKeeper current working directory
+   * @return the current working directory
+   */
   def zkCwd: String = config.getOrElse("zkCwd", "/")
 
+  /**
+   * Sets the ZooKeeper current working directory
+   * @param path the path to set
+   */
   def zkCwd_=(path: String) = config.set("zkCwd", path)
 
   /**
@@ -86,8 +102,10 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     // if argument was a dot (.) return the current path
     newPath match {
       case Some(path) =>
-        prevCwd = zkCwd
-        zkCwd = path
+        if (path != zkCwd) {
+          prevCwd = zkCwd
+          zkCwd = path
+        }
         Right(())
       case None => Left(zkCwd)
     }
