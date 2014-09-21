@@ -42,8 +42,8 @@ class ZKProxyV2Spec() extends FeatureSpec with GivenWhenThen {
         Then("results should match the expected values")
         val results = zk.getFamily("/brokers")
         results foreach (line => info(s"result: $line"))
-
-        results shouldBe Seq("/brokers",
+        results shouldBe Seq(
+          "/brokers",
           "/brokers/topics",
           "/brokers/topics/test2",
           "/brokers/topics/test2/partitions",

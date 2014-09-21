@@ -3,7 +3,6 @@ package com.ldaniels528.verify.support.zookeeper
 import com.ldaniels528.verify.util.EndPoint
 import org.apache.zookeeper.data.Stat
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
 /**
@@ -18,7 +17,7 @@ trait ZKProxy {
 
   def create(path: String, data: Array[Byte]): String
 
-  def createAsync(path: String, data: Array[Byte])(implicit ec: ExecutionContext): Future[Int]
+  def createDirectory(path: String): String
 
   def ensurePath(path: String): List[String]
 
@@ -26,13 +25,15 @@ trait ZKProxy {
 
   def delete(path: String): Unit
 
-  def exists(path: String, watch: Boolean = false): Option[Stat]
+  def exists(path: String): Boolean
+
+  def exists_?(path: String, watch: Boolean = false): Option[Stat]
 
   def getChildren(path: String, watch: Boolean = false): Seq[String]
 
-  def getFamily(path: String): List[String]
+  def getCreationTime(path: String): Option[Long]
 
-  def getSessionId: Long
+  def getFamily(path: String): List[String]
 
   def read(path: String): Option[Array[Byte]]
 
