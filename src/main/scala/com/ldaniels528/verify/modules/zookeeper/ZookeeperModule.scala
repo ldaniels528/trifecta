@@ -22,6 +22,7 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class ZookeeperModule(rt: VxRuntimeContext) extends Module {
+  private val formatTypes = Seq("bytes", "char", "double", "float", "int", "json", "long", "short", "string")
   private val config: VxConfig = rt.config
   private val out: PrintStream = config.out
 
@@ -299,7 +300,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
       case "long" => ByteBuffer.wrap(bytes).getLong
       case "short" => ByteBuffer.wrap(bytes).getShort
       case "string" | "text" => new String(bytes)
-      case _ => throw new IllegalArgumentException(s"Invalid type '$valueType'")
+      case _ => throw new IllegalArgumentException(s"Invalid type format '$valueType'. Acceptable values are: ${formatTypes mkString ", "}")
     }
   }
 
