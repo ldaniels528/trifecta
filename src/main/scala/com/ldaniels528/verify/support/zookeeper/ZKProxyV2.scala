@@ -3,6 +3,7 @@ package com.ldaniels528.verify.support.zookeeper
 import java.nio.ByteBuffer
 
 import org.I0Itec.zkclient.ZkClient
+import org.apache.zookeeper.CreateMode
 import org.slf4j.LoggerFactory
 
 import scala.language.implicitConversions
@@ -18,6 +19,8 @@ class ZKProxyV2(host: String, port: Int) {
   var encoding: String = "UTF8"
 
   def client: ZkClient = zk
+
+  def create(path: String, data: Array[Byte]) = zk.create(path, data, CreateMode.PERSISTENT)
 
   def delete(path: String) = zk.delete(path)
 
