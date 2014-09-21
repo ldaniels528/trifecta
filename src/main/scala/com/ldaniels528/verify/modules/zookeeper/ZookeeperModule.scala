@@ -35,7 +35,6 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     Command(this, "zreconnect", reconnect, SimpleParams(Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
     Command(this, "zrm", delete, UnixLikeParams(Seq("key" -> true), flags = Seq("-r" -> "recursive")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
     Command(this, "zruok", ruok, SimpleParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
-    Command(this, "zsess", session, SimpleParams(), help = "Retrieves the Session ID from ZooKeeper"),
     Command(this, "zstats", stats, SimpleParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
     Command(this, "ztree", tree, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
@@ -156,16 +155,21 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
    * "zls" - Retrieves the child nodes for a key from ZooKeeper
    * @example zls topics/Shocktrade.quotes.csv/partitions/4/state
    */
-  def listKeys(params: UnixLikeArgs): Seq[String] = {
+  def listKeys(params: UnixLikeArgs): Seq[ZkItem] = {
     // get the argument
     val path = params.args.headOption map zkKeyToPath getOrElse zkCwd
 
     // perform the action
-    zk.getChildren(path, watch = false)
+    zk.getChildren(path, watch = false) map { subPath =>
+      ZkItem(subPath, zk.getCreationTime(zkKeyToPath(path, subPath)).map(new Date(_)))
+    }
   }
+
+  case class ZkItem(path: String, creationTime: Option[Date])
 
   /**
    * "zmk" - Creates a new ZooKeeper sub-directory (key)
+   * @example zmk /path/to/data
    */
   def mkdir(params: UnixLikeArgs): List[String] = {
     params.args.headOption map (key => zk.ensurePath(zkKeyToPath(key))) getOrElse Nil
@@ -173,6 +177,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
 
   /**
    * "zexists" - Returns the status of a Zookeeper key if it exists
+   * @example zexists /path/to/data
    */
   def pathExists(params: UnixLikeArgs): Seq[String] = {
     // get the argument
@@ -181,7 +186,7 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
       val path = zkKeyToPath(key)
 
       // perform the action
-      zk.exists(path) match {
+      zk.exists_?(path) match {
         case Some(stat) =>
           Seq(
             s"Aversion: ${stat.getAversion}",
@@ -265,15 +270,10 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
   }
 
   /**
-   * "zsession" - Retrieves the Session ID from ZooKeeper
-   */
-  def session(params: UnixLikeArgs) = zk.getSessionId.toString
-
-  /**
    * "ztree" - Retrieves ZooKeeper key hierarchy
    * @param params the given arguments
    */
-  def tree(params: UnixLikeArgs): Seq[String] = {
+  def tree(params: UnixLikeArgs): Seq[ZkItem] = {
 
     def unwind(path: String): List[String] = {
       val children = Option(zk.getChildren(path, watch = false)) getOrElse Seq.empty
@@ -284,7 +284,8 @@ class ZookeeperModule(rt: VxRuntimeContext) extends Module {
     val path = params.args.headOption map zkKeyToPath getOrElse zkCwd
 
     // perform the action
-    unwind(path)
+    val paths = unwind(path)
+    paths.map(subPath => ZkItem(subPath, zk.getCreationTime(subPath).map(new Date(_))))
   }
 
   private def decodeValue(bytes: Array[Byte], valueType: String): Any = {
