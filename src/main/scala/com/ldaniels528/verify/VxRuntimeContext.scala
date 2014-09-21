@@ -64,7 +64,7 @@ class VxRuntimeContext(val config: VxConfig, val zkProxy: ZKProxy) {
 
     for {
       commandName <- unixArgs.commandName
-      command <- commandSet.get(commandName)
+      command = commandSet.getOrElse(commandName, throw new IllegalArgumentException(s"command '$commandName' not found"))
 
     } yield {
       // verify and execute the command
