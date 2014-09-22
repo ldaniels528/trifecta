@@ -61,6 +61,7 @@ class ZKProxySpec() extends FeatureSpec with GivenWhenThen {
       } finally {
         Try(client.close())
         Try(server.stop())
+        ()
       }
     }
   }

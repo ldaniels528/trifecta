@@ -40,7 +40,10 @@ class ZKProxyV2(host: String, port: Int) extends ZKProxy {
     zk.create(path, NO_DATA, mode)
   }
 
-  override def delete(path: String) = zk.delete(path)
+  override def delete(path: String): Unit = {
+    zk.delete(path)
+    ()
+  }
 
   override def exists(path: String): Boolean = zk.exists(path)
 
