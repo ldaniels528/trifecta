@@ -6,10 +6,10 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 /**
- * Verify Runtime Context Specification
+ * Trifecta Runtime Context Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class VxRuntimeContextSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar {
+class TxRuntimeContextSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar {
 
   info("As a Runtime Context")
   info("I want to be able to parse, validate and execute module commands")

@@ -8,10 +8,10 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
 
 /**
- * Verify Console Specification
+ * Trifecta Console Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class VxConsoleSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWhenThen with MockitoSugar {
+class TxConsoleSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWhenThen with MockitoSugar {
 
   info("As a TxConsole instance")
   info("I want to be able to print escape characters")
