@@ -17,7 +17,7 @@ import scala.util.Try
  * Trifecta Configuration
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class TxConfig() {
+class TxConfig(zkHost: String, zkPort: Int) {
   // the default state of the application is "alive"
   var alive = true
 
@@ -27,6 +27,8 @@ class TxConfig() {
 
   // create the root-level scope
   implicit val scope = RootScope()
+
+  val zooKeeperConnect = s"$zkHost:$zkPort"
 
   // define the job stack
   val jobs = mutable.Map[Int, JobItem]()

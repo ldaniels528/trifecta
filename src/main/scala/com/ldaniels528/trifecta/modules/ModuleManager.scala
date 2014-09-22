@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.modules
 
+import com.ldaniels528.trifecta.TxRuntimeContext
 import com.ldaniels528.trifecta.command.Command
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.trifecta.util.TxUtils._
@@ -9,7 +10,7 @@ import com.ldaniels528.trifecta.vscript.{Scope, Variable}
  * Module Manager
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ModuleManager(scope: Scope) {
+class ModuleManager(scope: Scope)(implicit rt: TxRuntimeContext) {
   private var commands = Map[String, Command]()
   private var variables = Seq[ModuleVariable]()
   private var moduleSet = Set[Module]()

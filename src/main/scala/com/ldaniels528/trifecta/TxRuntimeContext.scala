@@ -25,14 +25,14 @@ class TxRuntimeContext(val config: TxConfig, val zkProxy: ZKProxy) {
   private val resultHandler = new TxResultHandler(config)
 
   // create the module manager
-  val moduleManager = new ModuleManager(config.scope)
+  val moduleManager = new ModuleManager(scope)(this)
 
   // load the built-in modules
   moduleManager ++= Seq(
-    new CoreModule(this),
-    new KafkaModule(this),
-    new StormModule(this),
-    new ZookeeperModule(this))
+    new CoreModule(config),
+    new KafkaModule(config),
+    new StormModule(config),
+    new ZookeeperModule(config))
 
   // set the zookeeper module as the "active" module
   moduleManager.findModuleByName("zookeeper") foreach { module =>
@@ -53,6 +53,8 @@ class TxRuntimeContext(val config: TxConfig, val zkProxy: ZKProxy) {
    * @return a try-monad wrapped result
    */
   private def interpretCommandLine(input: String): Try[Any] = Try {
+    implicit val rtc = this
+
     // parse the input into tokens
     val tokens = CommandParser.parseTokens(input)
 

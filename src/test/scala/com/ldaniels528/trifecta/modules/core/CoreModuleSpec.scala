@@ -10,10 +10,10 @@ import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CoreModuleSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWhenThen with MockitoSugar {
-  private val config = new TxConfig()
-  private val zk = mock[ZKProxy]
-  private val rt = new TxRuntimeContext(config, zk)
-  private val module = new CoreModule(rt)
+  private val config = new TxConfig("localhost", 2181)
+  private implicit val zk = mock[ZKProxy]
+  private implicit val rt = new TxRuntimeContext(config, zk)
+  private val module = new CoreModule(config)
 
   info("As a Core Module")
   info("I want to be able to execute commands bound to the Core Module")

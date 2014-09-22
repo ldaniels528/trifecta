@@ -2,6 +2,7 @@ package com.ldaniels528.trifecta.modules
 
 import java.net.{URL, URLClassLoader}
 
+import com.ldaniels528.trifecta.TxRuntimeContext
 import com.ldaniels528.trifecta.command.{UnixLikeArgs, Command}
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
@@ -24,7 +25,7 @@ trait Module {
    * Returns the commands that are bound to the module
    * @return the commands that are bound to the module
    */
-  def getCommands: Seq[Command]
+  def getCommands(implicit rt: TxRuntimeContext): Seq[Command]
 
   /**
    * Returns the variables that are bound to the module

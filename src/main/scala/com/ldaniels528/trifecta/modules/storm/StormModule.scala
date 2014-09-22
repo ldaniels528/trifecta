@@ -4,7 +4,7 @@ import java.net.{URL, URLClassLoader}
 
 import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
-import com.ldaniels528.trifecta.TxRuntimeContext
+import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.ldaniels528.trifecta.command.{Command, SimpleParams, UnixLikeArgs}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.vscript.Variable
@@ -19,11 +19,10 @@ import scala.util.{Failure, Success, Try}
  * Apache Storm Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class StormModule(rt: TxRuntimeContext) extends Module {
+class StormModule(config: TxConfig) extends Module {
   private val logger = LoggerFactory.getLogger(getClass)
   private val stormConf = Utils.readStormConfig().asInstanceOf[java.util.Map[String, Any]]
   private var client: Option[Nimbus.Client] = None
-  private val config = rt.config
 
   // load Storm-specific properties
   config.configProps foreach { case (k, v) =>
@@ -36,7 +35,7 @@ class StormModule(rt: TxRuntimeContext) extends Module {
   createConnection(UnixLikeArgs(commandName = None, args = Nil))
 
   // the bound commands
-  override def getCommands: Seq[Command] = Seq(
+  override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "sbolts", getTopologyBolts, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the list of bolts for s given topology by ID", promptAware = true),
     Command(this, "sconf", showConfig, SimpleParams(Seq.empty, Seq("key", "value")), help = "Lists, retrieves or sets the configuration keys", promptAware = true),
     Command(this, "sconnect", createConnection, SimpleParams(Seq.empty, Seq("nimbusHost")), help = "Establishes (or re-establishes) a connect to the Storm Nimbus Host", promptAware = true),
