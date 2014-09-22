@@ -31,9 +31,9 @@ Table of Contents
 <a name="Motivations"></a>
 ## Motivations
 
-The motivations behind creating _Trifecta_ are simple; testing, verifying and managing Kafka topics can be an
-arduous task. The goal of this project is to ease the pain of developing applications that make use of 
-Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like commands.
+The motivations behind creating _Trifecta_ are simple; testing, verifying and managing Kafka topics and Zookeeper 
+key-value pairs is an arduous task. The goal of this project is to ease the pain of developing applications that 
+make use of Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like commands.
 
 ## Status
 
