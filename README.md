@@ -498,7 +498,7 @@ Now let's view the key for message using the `kgetkey` command:
     kafka:Shocktrade.quotes.csv/0:10796> kgetkey
     [000] 31.34.31.30.35.36.33.37.31.34.34.36.35                                     | 1410563714465             |
     
-And for the purposes of fully understanding what happened here, let's reposition the cursor to the beginning of the
+To ensure you'll notice the change in the cursor's position, let's reposition the cursor to the beginning of the
 topic/partition:
 
     kafka:Shocktrade.quotes.csv/0:10796> kfirst
@@ -508,15 +508,16 @@ topic/partition:
     [5945:075] 2c.31.30.2e.38.31.2c.31.30.2e.39.31.2c.31.30.2e.38.30.2c.33.36.35.35.38.2c | ,10.81,10.91,10.80,36558, |
     [5945:100] 4e.2f.41.2c.22.4e.2f.41.22                                                 | N/A,"N/A"                 |
     
-    kafka:Shocktrade.quotes.csv/0:5945>     
+    kafka:Shocktrade.quotes.csv/0:5945> _   
 
 Next, using the `kfindone`command let's search for the last message by key (using hexadecimal dot-notation):
 
     kafka:Shocktrade.quotes.csv/0:5945> kfindone key is 31.34.31.30.35.36.33.37.31.34.34.36.35
     Task is now running in the background (use 'jobs' to view)
 
-You may have received a message indicating the the task is now running in the background. This happens when a query is
-executed that requires more than 30 seconds to complete. After a few moments, the results should appear on the console:
+You may have received the message _Task is now running in the background (use 'jobs' to view)_. This happens whenever a 
+query is executed that requires more than 5 seconds to complete. You may use the `jobs` command to check the status of a 
+background task; however, either way, after a few moments the results should appear on the console:
 
     kafka:Shocktrade.quotes.csv/0:5945> Job #1006 completed
     [10796:000] 22.4e.4f.53.50.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "NOSPF",0.00,"N/A","N/A", |
@@ -528,6 +529,8 @@ executed that requires more than 30 seconds to complete. After a few moments, th
 
 The result is the last message of the topic. Notice that our cursor has changed reflecting the move 
 from offset 5945 to 10796.  
+
+    kafka:Shocktrade.quotes.csv/0:10796> _ 
 
 <a name="kafka-advanced-search"></a>
 ##### Kafka Advanced Search
