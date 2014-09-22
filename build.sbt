@@ -7,7 +7,7 @@ import NativePackagerKeys._
 
 assemblySettings
 
-name := "verify"
+name := "trifecta"
 
 organization := "com.ldaniels528"
 
@@ -28,9 +28,9 @@ scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target
 
 javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars")
 
-mainClass in assembly := Some("com.ldaniels528.verify.VerifyShell")
+mainClass in assembly := Some("com.ldaniels528.trifecta.TrifectaShell")
 
-jarName in assembly := "verify.jar"
+jarName in assembly := "trifecta.jar"
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   {
