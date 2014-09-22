@@ -123,7 +123,7 @@ object TrifectaShell {
 
     // use the ANSI console plugin to display the title line
     vxAnsi {
-      System.out.println(a"${RED}Ve${GREEN}ri${CYAN}fy ${YELLOW}v$VERSION")
+      System.out.println(a"${RED}Tri${GREEN}fect${CYAN}a ${YELLOW}v$VERSION")
     }
 
     // if arguments were not passed, stop.
