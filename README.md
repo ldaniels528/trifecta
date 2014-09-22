@@ -543,27 +543,27 @@ Suppose you want to know how many messages contain a volume greater than 1,000,0
 
 The response was 1350, meaning there are 1350 messages containing a volume greater than 1,000,000.
 
-Suppose you want to view the first message whose volume is greater than 1,000,000, you could issue the `kfindone` command:
+Suppose you want to find a message for Apple (ticker: "AAPL"), you could issue the `kfindone` command:
 
-    kafka:Shocktrade.quotes.avro/0:1> kfindone volume > 1000000
+    kafka:Shocktrade.quotes.avro/0:1> kfindone symbol == AAPL
     + ------------------------------------- +
     | field         value          type     |
     + ------------------------------------- +
-    | symbol        Z              Utf8     |
-    | lastTrade     127.92         Double   |
-    | tradeDate     1410505200000  Long     |
+    | symbol        AAPL           Utf8     |
+    | lastTrade     101.58         Double   |
+    | tradeDate     1410937200000  Long     |
     | tradeTime                             |
-    | ask           128.0          Double   |
-    | bid           125.0          Double   |
-    | change        -2.04          Double   |
-    | changePct     -1.57          Double   |
-    | prevClose     129.96         Double   |
-    | open          130.07         Double   |
-    | close         127.92         Double   |
-    | high          130.07         Double   |
-    | low           127.52         Double   |
-    | volume        1026150        Long     |
-    | marketCap     5.132E9        Double   |
+    | ask           101.64         Double   |
+    | bid           101.5          Double   |
+    | change        0.72           Double   |
+    | changePct     0.71           Double   |
+    | prevClose     100.86         Double   |
+    | open          101.32         Double   |
+    | close         101.58         Double   |
+    | high          101.8          Double   |
+    | low           100.5922       Double   |
+    | volume        60926496       Long     |
+    | marketCap     6.082E11       Double   |
     | errorMessage                          |
     + ------------------------------------- +
 
