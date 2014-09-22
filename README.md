@@ -1,7 +1,7 @@
-Verify
+Trifecta (formerly Verify)
 =======
 
-Verify is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, publish 
+Trifecta is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, publish 
 and verify messages (or data) to Kafka, Storm and Zookeeper.
 
 Table of Contents
@@ -31,13 +31,13 @@ Table of Contents
 <a name="Motivations"></a>
 ## Motivations
 
-The motivations behind creating _Verify_ are simple; testing, verifying and managing Kafka topics can be an
+The motivations behind creating _Trifecta_ are simple; testing, verifying and managing Kafka topics can be an
 arduous task. The goal of this project is to ease the pain of developing applications that make use of 
 Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like commands.
 
 ## Status
 
-I'm currently using _Verify_ as part of my daily development workflow, and the application itself is undergoing heavy 
+I'm currently using _Trifecta_ as part of my daily development workflow, and the application itself is undergoing heavy 
 development as I define (and at times redefine) its API and command sets. As such, new commands will appear, and older 
 commands may be merged with a newer command or disappear altogether. I apologize in advance if a command you were 
 fond of has been removed, and if there isn't a suitable replacement command, drop me a note, and perhaps I'll re-add 
@@ -83,7 +83,7 @@ risk! To retrieve a list of these _undocumented_ commands, use the `undoc` comma
 <a name="usage"></a>
 ### Usage Examples	
 
-_Verify_ exposes its commands through modules. At any time to see which modules are available one could issue the `modules` command.
+_Trifecta_ exposes its commands through modules. At any time to see which modules are available one could issue the `modules` command.
 
     core:/home/ldaniels> modules
     + ------------------------------------------------------------------------------------- +
@@ -392,7 +392,7 @@ Next, we wait a few moments and run the command again:
 <a name="kafka-avro-module"></a>
 ##### Kafka &amp; Avro Integration
 
-_Verify_ supports Avro integration for Kafka. The next few examples make use of the following Avro schema:
+_Trifecta_ supports Avro integration for Kafka. The next few examples make use of the following Avro schema:
 
     {
         "type": "record",
@@ -533,7 +533,7 @@ from offset 5945 to 10796.
 <a name="kafka-advanced-search"></a>
 ##### Kafka Advanced Search
 
-Building on the <a href="#kafka-avro-module">Avro Integration</a>, _Verify_ offers the ability to execute queries against 
+Building on the <a href="#kafka-avro-module">Avro Integration</a>, _Trifecta_ offers the ability to execute queries against 
 structured data.
 
 Suppose you want to know how many messages contain a volume greater than 1,000,000, you could issue the `kcount` command:
