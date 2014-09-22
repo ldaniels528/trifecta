@@ -78,7 +78,7 @@ risk! To retrieve a list of these _undocumented_ commands, use the `undoc` comma
 <a name="Running-the-app"></a> 
 ### Run the application
 
-	$ java -jar verify.jar <zookeeperHost>
+	$ java -jar trifecta.jar <zookeeperHost>
 
 <a name="usage"></a>
 ### Usage Examples	
