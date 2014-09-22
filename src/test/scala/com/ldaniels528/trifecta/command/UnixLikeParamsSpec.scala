@@ -1,14 +1,13 @@
 package com.ldaniels528.trifecta.command
 
 import org.scalatest.Matchers._
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 /**
  * Unix-Like Command Parameters Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class UnixLikeParamsSpec() extends FeatureSpec with GivenWhenThen with MockitoSugar {
+class UnixLikeParamsSpec() extends FeatureSpec with GivenWhenThen {
 
   info("As a Unix-Like Command Parameter instance")
   info("I want to be able to parse and validate command line input")
