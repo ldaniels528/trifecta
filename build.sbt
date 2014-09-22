@@ -43,10 +43,6 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
 
 // General Dependencies
 libraryDependencies ++= Seq(
-  "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.0"
-    exclude ("org.slf4j", "slf4j-api")
-    exclude ("org.slf4j", "slf4j-log4j12")
-    exclude ("log4j", "log4j"),
   "com.twitter" %% "bijection-core" % "0.7.0",
   "com.twitter" %% "bijection-avro" % "0.7.0",
   "com.typesafe.akka" %% "akka-actor" % "2.3.5",
