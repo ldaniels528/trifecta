@@ -10,7 +10,7 @@ import com.ldaniels528.trifecta.support.avro.AvroReading
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}
-import com.ldaniels528.trifecta.{TxConfig, SessionManagement, TrifectaShell, TxRuntimeContext}
+import com.ldaniels528.trifecta.{SessionManagement, TrifectaShell, TxConfig, TxRuntimeContext}
 import org.apache.commons.io.IOUtils
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -23,8 +23,7 @@ import scala.util.Properties
  * Core Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
-  private val config: TxConfig = rt.config
+class CoreModule(config: TxConfig) extends Module with AvroReading {
   private val out: PrintStream = config.out
 
   // define the process parsing regular expression
@@ -34,7 +33,7 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
 
   override def moduleName = "core"
 
-  override def getCommands: Seq[Command] = Seq(
+  override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "!", executeHistory, UnixLikeParams(Seq("!" -> false, "?" -> false, "index|count" -> false), Nil), help = "Executes a previously issued command"),
     Command(this, "?", help, SimpleParams(Nil, Seq("search-term")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, SimpleParams(Nil, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
@@ -45,7 +44,7 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
     Command(this, "charset", charSet, SimpleParams(Nil, Seq("encoding")), help = "Retrieves or sets the character encoding"),
     Command(this, "class", inspectClass, SimpleParams(Nil, Seq("action")), help = "Inspects a class using reflection"),
     Command(this, "columns", columnWidthGetOrSet, SimpleParams(Nil, Seq("columnWidth")), help = "Retrieves or sets the column width for message output"),
-    Command(this, "debug", debug, SimpleParams(Nil, Seq("enabled")), help = "Switches debugging on/off", undocumented = true),
+    Command(this, "debug", debug, UnixLikeParams(Seq("enabled" -> false)), help = "Switches debugging on/off", undocumented = true),
     Command(this, "exit", exit, UnixLikeParams(), help = "Exits the shell"),
     Command(this, "help", help, UnixLikeParams(), help = "Provides the list of available commands"),
     Command(this, "history", listHistory, UnixLikeParams(Seq("count" -> false)), help = "Returns a list of previously issued commands"),
@@ -81,7 +80,7 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
   override def shutdown() = ()
 
   // load the commands from the modules
-  private def commandSet: Map[String, Command] = rt.moduleManager.commandSet
+  private def commandSet(implicit rt: TxRuntimeContext): Map[String, Command] = rt.moduleManager.commandSet
 
   /**
    * Retrieves the current working directory
@@ -107,10 +106,10 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
    * Displays the contents of an Avro schema variable
    * @example avcat qschema
    */
-  def avroCat(params: UnixLikeArgs): Option[String] = {
+  def avroCat(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[String] = {
     params.args.headOption map { name =>
       implicit val scope = config.scope
-      val decoder = getAvroDecoder(name)(rt)
+      val decoder = getAvroDecoder(name)
       decoder.schemaString
     }
   }
@@ -120,10 +119,11 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
    * @example avload qschema "avro/quotes.avsc"
    */
   def avroLoadSchema(params: UnixLikeArgs) {
-    val Seq(name, schemaPath, _*) = params.args
-
-    // get the decoder
-    val decoder = loadAvroDecoder(name, schemaPath)
+    // get the variable name, schema and decoder
+    val (name, decoder) = params.args match {
+      case aName :: aSchemaPath :: Nil => (aName, loadAvroDecoder(aName, aSchemaPath))
+      case _ => dieSyntax(params)
+    }
 
     // create the variable and attach it to the scope
     config.scope += Variable(name, new OpCode {
@@ -144,8 +144,10 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
     import scala.io.Source
 
     // get the file path
-    val path = expandPath(params.args.head)
-    Source.fromFile(path).getLines().toSeq
+    params.args.headOption match {
+      case Some(path) => Source.fromFile(expandPath(path)).getLines().toSeq
+      case None => dieSyntax(params)
+    }
   }
 
   /**
@@ -227,7 +229,7 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
    * Provides the list of available commands
    * @example help
    */
-  def help(params: UnixLikeArgs): Seq[CommandItem] = {
+  def help(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[CommandItem] = {
     val args = params.args
     commandSet.toSeq filter {
       case (nameA, cmdA) => !cmdA.undocumented && (args.isEmpty || nameA.startsWith(args.head))
@@ -289,7 +291,7 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
    * @example !? 10
    * @example !?
    */
-  def executeHistory(params: UnixLikeArgs) {
+  def executeHistory(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
     for {
       command <- params.args match {
         case Nil => SessionManagement.history.last
@@ -360,13 +362,13 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
    * Example: modules
    * @return the list of modules
    */
-  def listModules(params: UnixLikeArgs): Seq[ModuleItem] = {
+  def listModules(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[ModuleItem] = {
     val activeModule = rt.moduleManager.activeModule
     rt.moduleManager.modules.map(m =>
       ModuleItem(m.moduleName, m.getClass.getName, loaded = true, activeModule.exists(_.moduleName == m.moduleName)))
   }
 
-  def listScope(params: UnixLikeArgs): Seq[ScopeItem] = {
+  def listScope(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[ScopeItem] = {
     implicit val scope = config.scope
 
     // get the variables (filter out duplicates)
@@ -386,7 +388,7 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
    * "undoc" - List undocumented commands
    * @example {{ undoc }}
    */
-  def listUndocumented(params: UnixLikeArgs): Seq[CommandItem] = {
+  def listUndocumented(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[CommandItem] = {
     val args = params.args
     commandSet.toSeq filter {
       case (nameA, cmdA) => cmdA.undocumented && (args.isEmpty || nameA.startsWith(args.head))
@@ -537,7 +539,7 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
     } yield (pasdata, portmap)
   }
 
-  def syntax(params: UnixLikeArgs): Seq[String] = {
+  def syntax(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[String] = {
     val commandName = params.args.head
 
     rt.moduleManager.findCommandByName(commandName) match {
@@ -572,7 +574,7 @@ class CoreModule(rt: TxRuntimeContext) extends Module with AvroReading {
    * "use" command - Switches the active module
    * Example: use kafka
    */
-  def useModule(params: UnixLikeArgs) {
+  def useModule(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
     val moduleName = params.args.head
     rt.moduleManager.findModuleByName(moduleName) match {
       case Some(module) => rt.moduleManager.activeModule = module

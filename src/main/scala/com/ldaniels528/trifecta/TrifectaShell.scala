@@ -135,7 +135,7 @@ object TrifectaShell {
         val port: Int = if (params.length > 1) params(1).toInt else 2181
 
         // load the configuration
-        val config = new TxConfig()
+        val config = new TxConfig(host, port)
 
         // create the Zookeeper proxy
         val zkProxy = ZKProxy(EndPoint(host, port))

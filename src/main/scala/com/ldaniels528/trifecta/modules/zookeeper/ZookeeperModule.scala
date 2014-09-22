@@ -21,12 +21,11 @@ import scala.util.Try
  * Apache Zookeeper Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZookeeperModule(rt: TxRuntimeContext) extends Module {
+class ZookeeperModule(config: TxConfig) extends Module {
   private val formatTypes = Seq("bytes", "char", "double", "float", "int", "json", "long", "short", "string")
-  private val config: TxConfig = rt.config
   private val out: PrintStream = config.out
 
-  override def getCommands = Seq(
+  override def getCommands(implicit rt: TxRuntimeContext) = Seq(
     Command(this, "zcd", chdir, SimpleParams(Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
     Command(this, "zexists", pathExists, SimpleParams(Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
     Command(this, "zget", getData, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the contents of a specific Zookeeper key"),
@@ -45,11 +44,11 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
 
   override def moduleName = "zookeeper"
 
-  override def prompt: String = s"${zk.remoteHost}$zkCwd"
+  override def prompt: String = s"${config.zooKeeperConnect}$zkCwd"
 
   override def shutdown() = ()
 
-  private def zk: ZKProxy = rt.zkProxy
+  private def zk(implicit rt: TxRuntimeContext): ZKProxy = rt.zkProxy
 
   /**
    * Returns the ZooKeeper previous working directory
@@ -116,7 +115,7 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
    * @example zrm /consumer/GRP000a2ce
    * @example zrm -r /consumer/GRP000a2ce
    */
-  def delete(params: UnixLikeArgs) {
+  def delete(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
     (params("-r") ?? params.args.headOption) map zkKeyToPath foreach { path =>
       // recursive delete?
       if (params.contains("-r")) deleteRecursively(path) else zk.delete(path)
@@ -127,7 +126,7 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
    * Performs a recursive delete
    * @param path the path to delete
    */
-  private def deleteRecursively(path: String): Unit = {
+  private def deleteRecursively(path: String)(implicit rt: TxRuntimeContext) {
     zk.getChildren(path) foreach (subPath => deleteRecursively(zkKeyToPath(path, subPath)))
 
     out.println(s"Deleting '$path'...")
@@ -138,7 +137,7 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
    * "zget" - Dumps the contents of a specific Zookeeper key to the console
    * @example zget /storm/workerbeats/my-test-topology-17-1407973634
    */
-  def getData(params: UnixLikeArgs): Option[Any] = {
+  def getData(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Any] = {
     // get the key
     params.args.headOption flatMap { key =>
       // convert the key to a fully-qualified path
@@ -156,7 +155,7 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
    * "zls" - Retrieves the child nodes for a key from ZooKeeper
    * @example zls topics/Shocktrade.quotes.csv/partitions/4/state
    */
-  def listKeys(params: UnixLikeArgs): Seq[ZkItem] = {
+  def listKeys(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[ZkItem] = {
     // get the argument
     val path = params.args.headOption map zkKeyToPath getOrElse zkCwd
 
@@ -172,7 +171,7 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
    * "zmk" - Creates a new ZooKeeper sub-directory (key)
    * @example zmk /path/to/data
    */
-  def mkdir(params: UnixLikeArgs): List[String] = {
+  def mkdir(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): List[String] = {
     params.args.headOption map (key => zk.ensurePath(zkKeyToPath(key))) getOrElse Nil
   }
 
@@ -180,7 +179,7 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
    * "zexists" - Returns the status of a Zookeeper key if it exists
    * @example zexists /path/to/data
    */
-  def pathExists(params: UnixLikeArgs): Seq[String] = {
+  def pathExists(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[String] = {
     // get the argument
     params.args.headOption map { key =>
       // convert the key to a fully-qualified path
@@ -208,7 +207,7 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
    * @example zput /test/data/items/3 12345 -t short
    * @example zput /test/data/items/4 de.ad.be.ef
    */
-  def publishMessage(params: UnixLikeArgs) {
+  def publishMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
     // get the arguments
     params.args match {
       case key :: value :: Nil =>
@@ -232,13 +231,13 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
   /**
    * Re-establishes the connection to Zookeeper
    */
-  def reconnect(params: UnixLikeArgs): Unit = zk.reconnect()
+  def reconnect(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Unit = zk.reconnect()
 
   /**
    * "zruok" - Checks the status of a Zookeeper instance
    * (e.g. echo ruok | nc zookeeper 2181)
    */
-  def ruok(params: UnixLikeArgs): String = {
+  def ruok(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): String = {
     import scala.sys.process._
 
     // echo ruok | nc zookeeper 2181
@@ -250,7 +249,7 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
    * "zstats" - Returns the statistics of a Zookeeper instance
    * echo stat | nc zookeeper 2181
    */
-  def stats(params: UnixLikeArgs): String = {
+  def stats(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): String = {
     import scala.sys.process._
 
     // echo stat | nc zookeeper 2181
@@ -274,7 +273,7 @@ class ZookeeperModule(rt: TxRuntimeContext) extends Module {
    * "ztree" - Retrieves ZooKeeper key hierarchy
    * @param params the given arguments
    */
-  def tree(params: UnixLikeArgs): Seq[ZkItem] = {
+  def tree(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[ZkItem] = {
 
     def unwind(path: String): List[String] = {
       val children = Option(zk.getChildren(path, watch = false)) getOrElse Seq.empty
