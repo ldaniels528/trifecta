@@ -80,7 +80,7 @@ trait Module {
     Try(value.toLong) match {
       case Success(v) => v
       case Failure(e) =>
-        throw new IllegalArgumentException(s"$label: Expected an integer value, found '$value'")
+        throw new IllegalArgumentException(s"$label: Expected an long integer value, found '$value'")
     }
   }
 
