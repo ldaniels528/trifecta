@@ -1,6 +1,7 @@
 package com.ldaniels528.trifecta.support.avro
 
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
+import org.apache.avro.util.Utf8
 
 import scala.util.{Failure, Success}
 
@@ -20,6 +21,7 @@ object AvroConditions {
         case Success(record) =>
           record.get(field) match {
             case v if v == null => value == null
+            case v: Utf8 => v.toString == value
             case v: java.lang.Number => v.doubleValue() == value.toDouble
             case s: String => s == value
             case x =>
@@ -40,6 +42,7 @@ object AvroConditions {
         case Success(record) =>
           record.get(field) match {
             case null => false
+            case v: Utf8 => v.toString == value
             case v: java.lang.Number => v.doubleValue() > value.toDouble
             case s: String => s > value
             case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
@@ -59,6 +62,7 @@ object AvroConditions {
         case Success(record) =>
           record.get(field) match {
             case null => false
+            case v: Utf8 => v.toString == value
             case v: java.lang.Number => v.doubleValue() >= value.toDouble
             case s: String => s >= value
             case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
@@ -78,6 +82,7 @@ object AvroConditions {
         case Success(record) =>
           record.get(field) match {
             case null => false
+            case v: Utf8 => v.toString == value
             case v: java.lang.Number => v.doubleValue() < value.toDouble
             case s: String => s < value
             case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
@@ -97,6 +102,7 @@ object AvroConditions {
         case Success(record) =>
           record.get(field) match {
             case null => false
+            case v: Utf8 => v.toString == value
             case v: java.lang.Number => v.doubleValue() <= value.toDouble
             case s: String => s <= value
             case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
@@ -116,6 +122,7 @@ object AvroConditions {
         case Success(record) =>
           record.get(field) match {
             case v if v == null => value != null
+            case v: Utf8 => v.toString == value
             case v: java.lang.Number => v.doubleValue() != value.toDouble
             case s: String => s != value
             case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
