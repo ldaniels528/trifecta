@@ -92,7 +92,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the next message"),
     Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Nil), help = "Publishes a message to a topic", undocumented = true),
-    Command(this, "kreplicas", getReplicas, SimpleParams(Nil, Seq("prefix")), help = "Returns a list of replicas for specified topics"),
     Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"),
     Command(this, "kswitch", switchCursor, UnixLikeParams(Seq("topic" -> true)), help = "Switches the currently active topic cursor"))
@@ -552,21 +551,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kreplicas" - Lists all replicas for all or a subset of topics
-   * @example kreplicas com.shocktrade.quotes.realtime 
-   */
-  def getReplicas(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[TopicReplicas] = {
-    implicit val zk: ZKProxy = rt.zkProxy
-    val prefix = params.args.headOption
-
-    KafkaMicroConsumer.getTopicList(brokers, correlationId) flatMap { t =>
-      t.replicas map { replica =>
-        TopicReplicas(t.topic, t.partitionId, replica.toString, replica.brokerId, t.isr.contains(replica))
-      } filter (t => prefix.isEmpty || prefix.exists(t.topic.startsWith))
-    }
-  }
-
-  /**
    * "kstats" - Returns the number of available messages for a given topic
    * @example kstats com.shocktrade.alerts 0 4
    * @example kstats com.shocktrade.alerts
@@ -941,8 +925,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   case class TopicItemCompact(topic: String, partitions: Int, replicated: String)
 
   case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
-
-  case class TopicReplicas(topic: String, partition: Int, replicaBroker: String, replicaId: Int, inSync: Boolean)
 
 }
 

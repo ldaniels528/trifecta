@@ -159,7 +159,6 @@ To view all of the Kafka commands, which all begin with the letter "k":
     | kls         kafka   Lists all existing topics                                                                       |
     | knext       kafka   Attempts to retrieve the next message                                                           |
     | kprev       kafka   Attempts to retrieve the message at the previous offset                                         |
-    | kreplicas   kafka   Returns a list of replicas for specified topics                                                 |
     | kreset      kafka   Sets a consumer group ID to zero for all partitions                                             |
     | kstats      kafka   Returns the partition details for a given topic                                                 |
     + ------------------------------------------------------------------------------------------------------------------- +
