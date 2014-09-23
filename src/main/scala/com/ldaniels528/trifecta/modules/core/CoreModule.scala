@@ -3,6 +3,7 @@ package com.ldaniels528.trifecta.modules.core
 import java.io.{File, PrintStream}
 import java.util.{Date, TimeZone}
 
+import com.ldaniels528.trifecta.JobManager.JobItem
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
@@ -49,7 +50,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "help", help, UnixLikeParams(), help = "Provides the list of available commands"),
     Command(this, "history", listHistory, UnixLikeParams(Seq("count" -> false)), help = "Returns a list of previously issued commands"),
     Command(this, "hostname", hostname, UnixLikeParams(), help = "Returns the name of the host system"),
-    Command(this, "jobs", listJobs, UnixLikeParams(), help = "Returns the list of currently running jobs"),
+    Command(this, "jobs", manageJob, UnixLikeParams(Seq("jobNumber" -> false), Seq("-c" -> "clear jobs", "-d" -> "delete job", "-l" -> "list jobs", "-v" -> "result")), help = "Returns the list of currently running jobs"),
     Command(this, "ls", listFiles, SimpleParams(Nil, Seq("path")), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "modules", listModules, UnixLikeParams(), help = "Returns a list of configured modules"),
     Command(this, "pkill", processKill, SimpleParams(Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
@@ -304,7 +305,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     } {
       out.println(s">> $command")
       val result = rt.interpret(command)
-      rt.handleResult(result)
+      rt.handleResult(result, command)
     }
   }
 
@@ -343,19 +344,60 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "jobs" - Retrieves the queued jobs
+   * "jobs" - Job management: view, list or kill jobs
+   * @example jobs 1234
+   * @example jobs -c
+   * @example jobs -d 1234
+   * @example jobs -v 1234
    */
-  def listJobs(params: UnixLikeArgs): Seq[JobDetail] = {
-    (config.jobs map { case (id, job) =>
-      JobDetail(
-        jobId = job.jobId,
-        status = if (job.task.isCompleted) "Completed" else "Running",
-        started = new Date(job.startTime),
-        elapsedTimeSecs = (System.currentTimeMillis() - job.startTime) / 1000L)
-    }).toSeq
+  def manageJob(params: UnixLikeArgs): Any = {
+    val jobMgr = config.jobManager
+
+    // list a specific job?
+    params.args.headOption map parseJobId map { myJobId =>
+      jobMgr.getJobs filter (_.jobId == myJobId) map toJobDetail
+    } getOrElse {
+      // delete a job by ID?
+      if ((params("-d") map parseJobId map jobMgr.killJobById).isDefined) "Ok"
+
+      // retrieve the job's value?
+      else if (params.contains("-v")) {
+        val jobId = params("-v") map parseJobId getOrElse die(s"${params.commandName.get} -v jobId")
+        val task = jobMgr.getJobTaskById(jobId) getOrElse die(s"Job #$jobId not found")
+        if (task.isCompleted) task.value else jobMgr.getJobById(jobId) map toJobDetail
+      }
+
+      // clear all jobs?
+      else if (params.contains("-w")) {
+        jobMgr.clear()
+        "Ok"
+      }
+
+      // return all jobs
+      else config.jobManager.getJobs map toJobDetail
+    }
   }
 
-  case class JobDetail(jobId: Int, status: String, started: Date, elapsedTimeSecs: Long)
+  private def parseJobId(id: String): Int = parseInt("job number", id)
+
+  private def toJobDetail(job: JobItem): JobDetail = {
+    val task = job.task
+
+    def jobStatus: String = if (task.isCompleted) "Completed" else "Running"
+    def jobElapsedTime: Option[Long] = {
+      if (task.isCompleted) Option(job.endTime) map (_.get - job.startTime)
+      else Option(job.startTime) map (System.currentTimeMillis() - _)
+    }
+
+    JobDetail(
+      jobId = job.jobId,
+      status = jobStatus,
+      started = new Date(job.startTime),
+      runTimeMSecs = jobElapsedTime,
+      command = job.command)
+  }
+
+  case class JobDetail(jobId: Int, status: String, started: Date, runTimeMSecs: Option[Long], command: String)
 
   /**
    * "modules" command - Returns the list of modules
