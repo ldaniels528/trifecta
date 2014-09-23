@@ -19,7 +19,7 @@ import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import scala.util.{Try, Properties}
+import scala.util.{Properties, Try}
 
 /**
  * Core Module
@@ -39,12 +39,10 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "!", executeHistory, UnixLikeParams(Seq("!" -> false, "?" -> false, "index|count" -> false), Nil), help = "Executes a previously issued command"),
     Command(this, "?", help, SimpleParams(Nil, Seq("search-term")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, SimpleParams(Nil, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
-    Command(this, "avcat", avroCat, SimpleParams(required = Seq("variable")), help = "Displays the contents of a schema variable", promptAware = false),
     Command(this, "avload", avroLoadSchema, UnixLikeParams(Seq("variable" -> true, "schemaPath" -> true)), help = "Loads an Avro schema into memory", promptAware = false),
     Command(this, "cat", cat, SimpleParams(Seq("file"), Nil), help = "Dumps the contents of the given file", promptAware = true),
     Command(this, "cd", changeDir, SimpleParams(Seq("path"), Nil), help = "Changes the local file system path/directory", promptAware = true),
     Command(this, "charset", charSet, SimpleParams(Nil, Seq("encoding")), help = "Retrieves or sets the character encoding"),
-    Command(this, "class", inspectClass, SimpleParams(Nil, Seq("action")), help = "Inspects a class using reflection"),
     Command(this, "columns", columnWidthGetOrSet, SimpleParams(Nil, Seq("columnWidth")), help = "Retrieves or sets the column width for message output"),
     Command(this, "debug", debug, UnixLikeParams(Seq("enabled" -> false)), help = "Switches debugging on/off", undocumented = true),
     Command(this, "exit", exit, UnixLikeParams(), help = "Exits the shell"),
@@ -54,11 +52,8 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "jobs", manageJob, UnixLikeParams(Seq("jobNumber" -> false), Seq("-c" -> "clear jobs", "-d" -> "delete job", "-l" -> "list jobs", "-v" -> "result")), help = "Returns the list of currently running jobs"),
     Command(this, "ls", listFiles, SimpleParams(Nil, Seq("path")), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "modules", listModules, UnixLikeParams(), help = "Returns a list of configured modules"),
-    Command(this, "pkill", processKill, SimpleParams(Seq("pid0"), Seq("pid1", "pid2", "pid3", "pid4", "pid5", "pid6")), help = "Terminates specific running processes"),
     Command(this, "ps", processList, SimpleParams(Nil, Seq("node", "timeout")), help = "Display a list of \"configured\" running processes (EXPERIMENTAL)"),
     Command(this, "pwd", printWorkingDirectory, SimpleParams(Nil, Nil), help = "Display current working directory"),
-    Command(this, "resource", findResource, SimpleParams(Seq("resource-name"), Nil), help = "Inspects the classpath for the given resource"),
-    Command(this, "runjava", executeJavaApp, SimpleParams(Seq("jarFile", "className"), (1 to 10).map(n => s"arg$n")), help = "Executes a Java class' main method"),
     Command(this, "scope", listScope, UnixLikeParams(), help = "Returns the contents of the current scope"),
     Command(this, "syntax", syntax, SimpleParams(Seq("command"), Nil), help = "Returns the syntax/usage for a given command"),
     Command(this, "systime", systemTime, UnixLikeParams(Seq("date" -> false)), help = "Returns the system time as an EPOC in milliseconds"),
@@ -102,18 +97,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   def autoSwitch(params: UnixLikeArgs): String = {
     params.args.headOption map (_.toBoolean) foreach (config.autoSwitching = _)
     s"auto switching is ${if (config.autoSwitching) "On" else "Off"}"
-  }
-
-  /**
-   * Displays the contents of an Avro schema variable
-   * @example avcat qschema
-   */
-  def avroCat(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[String] = {
-    params.args.headOption map { name =>
-      implicit val scope = config.scope
-      val decoder = getAvroDecoder(name)
-      decoder.schemaString
-    }
   }
 
   /**
@@ -203,28 +186,12 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Executes a Java class' main method
-   * @example runjava myJarFile.jar com.shocktrade.test.Tester
    * @return the program's output
+   * @example runjava myJarFile.jar com.shocktrade.test.Tester
    */
   def executeJavaApp(params: UnixLikeArgs): Iterator[String] = {
     val Seq(jarPath, className, _*) = params.args
     runJava(jarPath, className, params.args.drop(2): _*)
-  }
-
-  /**
-   * Inspects the classpath for the given resource by name
-   * Example: resource org/apache/http/message/BasicLineFormatter.class
-   */
-  def findResource(params: UnixLikeArgs): String = {
-    // get the class name (with slashes)
-    val path = params.args.head
-    val index = path.lastIndexOf('.')
-    val resourceName = path.substring(0, index).replace('.', '/') + path.substring(index)
-
-    // determine the resource
-    val classLoader = TrifectaShell.getClass.getClassLoader
-    val resource = classLoader.getResource(resourceName)
-    String.valueOf(resource)
   }
 
   /**
@@ -241,14 +208,15 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "hostname" command - Returns the name of the current host
+   * Returns the name of the current host
+   * @example hostname
    */
   def hostname(params: UnixLikeArgs): String = {
     java.net.InetAddress.getLocalHost.getHostName
   }
 
   /**
-   * "wget" command - Retrieves remote content via HTTP
+   * Retrieves remote content via HTTP
    * @example wget "http://www.example.com/"
    */
   def httpGet(params: UnixLikeArgs): Option[Array[Byte]] = {
@@ -269,29 +237,13 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * Inspects a class using reflection
-   * Example: class org.apache.commons.io.IOUtils -m
-   */
-  def inspectClass(params: UnixLikeArgs): Seq[String] = {
-    val args = params.args
-    val className = extract(args, 0).getOrElse(getClass.getName).replace('/', '.')
-    val action = extract(args, 1) getOrElse "-m"
-    val beanClass = Class.forName(className)
-
-    action match {
-      case "-m" => beanClass.getDeclaredMethods map (_.toString)
-      case "-f" => beanClass.getDeclaredFields map (_.toString)
-      case _ => beanClass.getDeclaredMethods map (_.toString)
-    }
-  }
-
-  /**
    * "!" command - History execution command. This command can either executed a
    * previously executed command by its unique identifier, or list (!?) all previously
    * executed commands.
    * @example !123
-   * @example !? 10
+   * @example !?10
    * @example !?
+   * @example !$ "netstat -pltn"
    */
   def executeHistory(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
     for {
@@ -311,7 +263,8 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "exit" command - Exits the shell
+   * Exits the shell
+   * @example exit
    */
   def exit(params: UnixLikeArgs) {
     config.alive = false
@@ -319,7 +272,9 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "ls" - Retrieves the files from the current directory
+   * Retrieves the files from the current directory
+   * @example ls
+   * @example ls avro
    */
   def listFiles(params: UnixLikeArgs): Option[Seq[String]] = {
     // get the optional path argument
@@ -334,7 +289,8 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "history" - Retrieves previously executed commands
+   * Retrieves previously executed commands
+   * @example history
    */
   def listHistory(params: UnixLikeArgs): Seq[HistoryItem] = {
     val count = params.args.headOption map (parseInt("count", _))
@@ -345,7 +301,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "jobs" - Job management: view, list or kill jobs
+   * Job management: view, list or remove jobs
    * @example jobs 1234
    * @example jobs -c
    * @example jobs -d 1234
@@ -379,31 +335,9 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     }
   }
 
-  private def parseJobId(id: String): Int = parseInt("job number", id)
-
-  private def toJobDetail(job: JobItem): JobDetail = {
-    val task = job.task
-
-    def jobStatus: String = if (task.isCompleted) "Completed" else "Running"
-    def jobElapsedTime: Option[Long] = {
-      if (task.isCompleted) Option(job.endTime) map (_.get - job.startTime)
-      else Option(job.startTime) map (System.currentTimeMillis() - _)
-    }
-
-    JobDetail(
-      jobId = job.jobId,
-      status = jobStatus,
-      started = new Date(job.startTime),
-      runTimeMSecs = jobElapsedTime,
-      command = job.command)
-  }
-
-  case class JobDetail(jobId: Int, status: String, started: Date, runTimeMSecs: Option[Long], command: String)
-
   /**
-   * "modules" command - Returns the list of modules
-   * Example: modules
-   * @return the list of modules
+   * Returns the list of modules
+   * @example modules
    */
   def listModules(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[ModuleItem] = {
     val activeModule = rt.moduleManager.activeModule
@@ -428,8 +362,9 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "undoc" - List undocumented commands
-   * @example {{ undoc }}
+   * List undocumented commands
+   * @example undoc
+   * @example undoc sdeploy
    */
   def listUndocumented(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[CommandItem] = {
     val args = params.args
@@ -443,7 +378,8 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   case class ScopeItem(name: String, module: String, `type`: String, value: Option[_] = None)
 
   /**
-   * "ps" command - Display a list of "configured" running processes
+   * Display a list of "configured" running processes
+   * @example ps
    */
   def processList(params: UnixLikeArgs): Seq[String] = {
     import scala.util.Properties
@@ -475,19 +411,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
     // and let's wait for the result...
     Await.result(outcome, timeout.seconds)
-  }
-
-  /**
-   * "pkill" command - Terminates specific running processes
-   */
-  def processKill(params: UnixLikeArgs): String = {
-    import scala.sys.process._
-
-    // get the PIDs -- ensure they are integers
-    val pidList = params.args map (parseInt("PID", _))
-
-    // kill the processes
-    s"kill ${pidList mkString " "}".!!
   }
 
   /**
@@ -525,13 +448,10 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * pwd - Print working directory
-   * @param args the given arguments
-   * @return the current working directory
+   * Print the current working directory
+   * @example pwd
    */
-  def printWorkingDirectory(args: UnixLikeArgs) = {
-    new File(cwd).getCanonicalPath
-  }
+  def printWorkingDirectory(args: UnixLikeArgs) = new File(cwd).getCanonicalPath
 
   /**
    * Retrieves "netstat -ptln" and "ps -ef" data from a remote node
@@ -598,13 +518,14 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Returns the system time as an EPOC in milliseconds
-   * @example systime
+   * @example systime                     => 1411439360907
+   * @example systime 2014-04-15T12:00:00 => 1397545920000
    */
   def systemTime(params: UnixLikeArgs): Long = {
     params.args match {
       case date :: Nil =>
         val fmt = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss")
-        Try(fmt.parse(date)) map(_.getTime) getOrElse die("Expected date format is \"yyyy-MM-dd'T'hh:mm:ss\"")
+        Try(fmt.parse(date)) map (_.getTime) getOrElse die("Expected date format is \"yyyy-MM-dd'T'hh:mm:ss\"")
       case Nil => System.currentTimeMillis()
       case _ => dieSyntax(params)
     }
@@ -625,7 +546,8 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Returns the time in the GMT time zone
-   * @example timeutc
+   * @example timeutc               => Tue Sep 23 02:27:40 GMT 2014
+   * @example timeutc 1410937200000 => Wed Sep 17 07:00:00 GMT 2014
    */
   def timeUTC(params: UnixLikeArgs): String = {
     // get the date
@@ -642,8 +564,8 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "use" command - Switches the active module
-   * Example: use kafka
+   * Switches the active module
+   * @example use kafka
    */
   def useModule(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
     val moduleName = params.args.head
@@ -654,6 +576,14 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     }
   }
 
+  /**
+   * "version" - Returns the application version
+   * @return the application version
+   */
+  def version(args: UnixLikeArgs): String = TrifectaShell.VERSION
+
+  private def parseJobId(id: String): Int = parseInt("job number", id)
+
   private def setupPath(key: String): String = {
     key match {
       case s if s.startsWith("/") => key
@@ -661,15 +591,28 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     }
   }
 
-  /**
-   * "version" - Returns the application version
-   * @return the application version
-   */
-  def version(args: UnixLikeArgs): String = TrifectaShell.VERSION
+  private def toJobDetail(job: JobItem): JobDetail = {
+    val task = job.task
+
+    def jobStatus: String = if (task.isCompleted) "Completed" else "Running"
+    def jobElapsedTime: Option[Long] = {
+      if (task.isCompleted) Option(job.endTime) map (_.get - job.startTime)
+      else Option(job.startTime) map (System.currentTimeMillis() - _)
+    }
+
+    JobDetail(
+      jobId = job.jobId,
+      status = jobStatus,
+      started = new Date(job.startTime),
+      runTimeMSecs = jobElapsedTime,
+      command = job.command)
+  }
 
   case class CommandItem(command: String, module: String, description: String)
 
   case class HistoryItem(uid: Int, command: String)
+
+  case class JobDetail(jobId: Int, status: String, started: Date, runTimeMSecs: Option[Long], command: String)
 
   case class ModuleItem(name: String, className: String, loaded: Boolean, active: Boolean)
 
