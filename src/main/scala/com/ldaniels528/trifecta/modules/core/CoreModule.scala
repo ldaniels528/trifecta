@@ -185,17 +185,9 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * Executes a Java class' main method
-   * @return the program's output
-   * @example runjava myJarFile.jar com.shocktrade.test.Tester
-   */
-  def executeJavaApp(params: UnixLikeArgs): Iterator[String] = {
-    val Seq(jarPath, className, _*) = params.args
-    runJava(jarPath, className, params.args.drop(2): _*)
-  }
-
-  /**
    * Provides the list of available commands
+   * @example ?
+   * @example ?k
    * @example help
    */
   def help(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[CommandItem] = {
