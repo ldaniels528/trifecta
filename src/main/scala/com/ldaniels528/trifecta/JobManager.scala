@@ -7,7 +7,7 @@ import com.ldaniels528.trifecta.JobManager._
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 /**
  * Job Manager
@@ -38,8 +38,9 @@ class JobManager() {
       command = command)
 
     // trigger the update for the end time
-    f.onSuccess {
-      case Success(v) => job.endTime = System.currentTimeMillis()
+    f.onComplete {
+      case Success(v) => job.endTime.set(System.currentTimeMillis())
+      case Failure(_) => job.endTime.set(System.currentTimeMillis())
     }
 
     // add the job to the mapping
