@@ -72,7 +72,9 @@ class JobManager() {
    * Kills a job by ID
    * @param jobId the given job ID
    */
-  def killJobById(jobId: Int): Unit = { jobs -= jobId; () }
+  def killJobById(jobId: Int): Unit = {
+    jobs -= jobId; ()
+  }
 
 }
 
