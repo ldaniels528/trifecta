@@ -36,6 +36,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   override def moduleName = "core"
 
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
+    Command(this, "$", executeCommand, UnboundedParams(1), help = "Executes a local system command"),
     Command(this, "!", executeHistory, UnixLikeParams(Seq("!" -> false, "?" -> false, "index|count" -> false), Nil), help = "Executes a previously issued command"),
     Command(this, "?", help, SimpleParams(Nil, Seq("search-term")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, SimpleParams(Nil, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
@@ -229,7 +230,17 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "!" command - History execution command. This command can either executed a
+   * Executes a local system command
+   * @example $ps -ef
+   */
+  def executeCommand(params: UnixLikeArgs): String = {
+    import scala.sys.process._
+
+    (params.args mkString " ").!!
+  }
+
+  /**
+   * History execution command. This command can either executed a
    * previously executed command by its unique identifier, or list (!?) all previously
    * executed commands.
    * @example !123
