@@ -22,6 +22,8 @@ javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7",
 
 mainClass in assembly := Some("com.ldaniels528.trifecta.TrifectaShell")
 
+test in assembly := {}
+
 jarName in assembly := "trifecta.jar"
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
