@@ -18,6 +18,11 @@ class JobManager() {
   private val jobs = mutable.Map[Int, JobItem]()
 
   /**
+   * Removes all jobs
+   */
+  def clear() = jobs.clear()
+
+  /**
    * Creates a new asynchronous job
    * @param startTime the start time of the job
    * @param f the asynchronous task
