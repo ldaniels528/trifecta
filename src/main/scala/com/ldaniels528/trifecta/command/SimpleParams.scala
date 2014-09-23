@@ -21,6 +21,6 @@ case class SimpleParams(required: Seq[String] = Nil, optional: Seq[String] = Nil
     items mkString " "
   }
 
-  override def transform(args: Seq[String]): Seq[String] = args
+  override def transform(tokens: Seq[String]): Seq[String] = tokens
 
 }
