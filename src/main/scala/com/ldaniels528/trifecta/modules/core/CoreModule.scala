@@ -49,7 +49,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "exit", exit, UnixLikeParams(), help = "Exits the shell"),
     Command(this, "help", help, UnixLikeParams(), help = "Provides the list of available commands"),
     Command(this, "history", listHistory, UnixLikeParams(Seq("count" -> false)), help = "Returns a list of previously issued commands"),
-    Command(this, "hostname", hostname, UnixLikeParams(), help = "Returns the name of the host system"),
     Command(this, "jobs", manageJob, UnixLikeParams(Seq("jobNumber" -> false), Seq("-c" -> "clear jobs", "-d" -> "delete job", "-l" -> "list jobs", "-v" -> "result")), help = "Returns the list of currently running jobs"),
     Command(this, "ls", listFiles, SimpleParams(Nil, Seq("path")), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "modules", listModules, UnixLikeParams(), help = "Returns a list of configured modules"),
@@ -198,14 +197,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     } sortBy (_._1) map {
       case (nameB, cmdB) => CommandItem(nameB, cmdB.module.moduleName, cmdB.help)
     }
-  }
-
-  /**
-   * Returns the name of the current host
-   * @example hostname
-   */
-  def hostname(params: UnixLikeArgs): String = {
-    java.net.InetAddress.getLocalHost.getHostName
   }
 
   /**
