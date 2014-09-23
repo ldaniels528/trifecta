@@ -18,6 +18,7 @@ import org.apache.commons.io.IOUtils
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.io.Source
 import scala.language.postfixOps
 import scala.util.{Properties, Try}
 
@@ -387,7 +388,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     // parse the process and port mapping data
     val outcome = for {
     // retrieve the process and port map data
-      (psData, portMap) <- remoteData(node)
+      (psData, portMap) <- parseNetStatData(node)
 
       // process the raw output
       lines = psData map (seq => if (Properties.isMac) seq.tail else seq)
@@ -415,12 +416,12 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
           case a if a.contains("cassandra") => "Cassandra"
           case a if a.contains("kafka") => "Kafka"
           case a if a.contains("mysqld") => "MySQLd"
-          case a if a.contains("tesla-stream") => "Verify"
           case a if a.contains("storm nimbus") => "Storm Nimbus"
           case a if a.contains("storm supervisor") => "Storm Supervisor"
           case a if a.contains("storm ui") => "Storm UI"
           case a if a.contains("storm") => "Storm"
           case a if a.contains("org.elasticsearch.bootstrap.Elasticsearch") => "Elasticsearch"
+          case a if a.contains("trifecta.jar") => "Trifecta"
           case a if a.contains("/usr/local/java/zookeeper") => "Zookeeper"
           case _ => s"java [$args]"
         }
@@ -440,18 +441,11 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * Print the current working directory
-   * @example pwd
-   */
-  def printWorkingDirectory(args: UnixLikeArgs) = new File(cwd).getCanonicalPath
-
-  /**
    * Retrieves "netstat -ptln" and "ps -ef" data from a remote node
    * @param node the given remote node (e.g. "Verify")
    * @return a future containing the data
    */
-  private def remoteData(node: String): Future[(Seq[String], Map[String, String])] = {
-    import scala.io.Source
+  private def parseNetStatData(node: String): Future[(Seq[String], Map[String, String])] = {
     import scala.sys.process._
 
     // asynchronously get the raw output from 'ps -ef'
@@ -483,7 +477,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
       } map {
         case (port, pid, cmd) => pid -> port
       } groupBy (_._1) map {
-        case (pid, seq) => (pid, seq.sortBy(_._2).reverse map (_._2) mkString ", ")
+        case (pid, seq) => (pid, seq.sortBy(_._2.toInt) map (_._2) mkString ", ")
       }
     }
 
@@ -493,6 +487,12 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
       portmap <- portmapF
     } yield (pasdata, portmap)
   }
+
+  /**
+   * Print the current working directory
+   * @example pwd
+   */
+  def printWorkingDirectory(args: UnixLikeArgs) = new File(cwd).getCanonicalPath
 
   /**
    * Returns the usage for a command
