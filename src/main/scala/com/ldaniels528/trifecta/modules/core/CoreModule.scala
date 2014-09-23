@@ -61,7 +61,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "timeutc", timeUTC, UnixLikeParams(Seq("sysTime" -> false)), help = "Returns the system time in UTC"),
     Command(this, "undoc", listUndocumented, UnixLikeParams(), help = "Displays undocumented commands", undocumented = true),
     Command(this, "use", useModule, SimpleParams(Seq("module"), Nil), help = "Switches the active module"),
-    Command(this, "version", version, UnixLikeParams(), help = "Returns the Verify application version"),
+    Command(this, "version", version, UnixLikeParams(), help = "Returns the application version"),
     Command(this, "wget", httpGet, SimpleParams(required = Seq("url")), help = "Retrieves remote content via HTTP"))
 
   override def getVariables: Seq[Variable] = Seq(
@@ -237,7 +237,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @example !123
    * @example !?10
    * @example !?
-   * @example !$ "netstat -pltn"
    */
   def executeHistory(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
     for {
@@ -369,8 +368,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     }
   }
 
-  case class ScopeItem(name: String, module: String, `type`: String, value: Option[_] = None)
-
   /**
    * Display a list of "configured" running processes
    * @example ps
@@ -423,6 +420,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
           case a if a.contains("storm supervisor") => "Storm Supervisor"
           case a if a.contains("storm ui") => "Storm UI"
           case a if a.contains("storm") => "Storm"
+          case a if a.contains("org.elasticsearch.bootstrap.Elasticsearch") => "Elasticsearch"
           case a if a.contains("/usr/local/java/zookeeper") => "Zookeeper"
           case _ => s"java [$args]"
         }
@@ -609,6 +607,8 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   case class JobDetail(jobId: Int, status: String, started: Date, runTimeMSecs: Option[Long], command: String)
 
   case class ModuleItem(name: String, className: String, loaded: Boolean, active: Boolean)
+
+  case class ScopeItem(name: String, module: String, `type`: String, value: Option[_] = None)
 
 }
 
