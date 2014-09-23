@@ -13,14 +13,6 @@ organization := "com.ldaniels528"
 
 version := "0.1.5"
 
-packageArchetype.java_application
-
-maintainer in Linux := "Lawrence Daniels <ldaniels@gmail.com>"
-
-packageSummary in Linux := "Swiss-Army-Knife for viewing/managing topics for Kafka"
-
-packageDescription := "Swiss-Army-Knife for viewing/managing topics for Kafka"
-
 scalaVersion := "2.10.4"
 
 scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.6", "-unchecked",
