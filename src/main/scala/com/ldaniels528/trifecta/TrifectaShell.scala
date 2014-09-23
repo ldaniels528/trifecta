@@ -75,7 +75,7 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
           if (line.nonEmpty) {
             rt.interpret(line) match {
               case Success(result) =>
-                rt.handleResult(result)
+                rt.handleResult(result, line)
                 if (!ineligibleHistory(line)) SessionManagement.history += line
               case Failure(e: ConnectionLossException) =>
                 err.println("Zookeeper connect loss error - use 'zreconnect' to re-establish a connection")

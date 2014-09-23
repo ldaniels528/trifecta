@@ -2,14 +2,10 @@ package com.ldaniels528.trifecta
 
 import java.io.File._
 import java.io.{File, FileInputStream}
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.{Properties, Random}
+import java.util.Properties
 
-import com.ldaniels528.trifecta.TxConfig.JobItem
 import com.ldaniels528.trifecta.vscript.RootScope
 
-import scala.collection.mutable
-import scala.concurrent.Future
 import scala.util.Properties._
 import scala.util.Try
 
@@ -30,8 +26,8 @@ class TxConfig(zkHost: String, zkPort: Int) {
 
   val zooKeeperConnect = s"$zkHost:$zkPort"
 
-  // define the job stack
-  val jobs = mutable.Map[Int, JobItem]()
+  // define the job manager
+  val jobManager = new JobManager()
 
   // define the history properties
   var historyFile = new File(s"$userHome$separator.trifecta${separator}history.txt")
@@ -78,14 +74,3 @@ class TxConfig(zkHost: String, zkPort: Int) {
 
 }
 
-/**
- * Trifecta Configuration Companion Object
- * @author Lawrence Daniels <lawrence.daniels@gmail.com>
- */
-object TxConfig {
-
-  private val jobIdGen = new AtomicInteger(new Random().nextInt(1000) + 1000)
-
-  case class JobItem(jobId: Int = jobIdGen.incrementAndGet(), startTime: Long, task: Future[_])
-
-}

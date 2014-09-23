@@ -3,7 +3,6 @@ package com.ldaniels528.trifecta
 import java.io.PrintStream
 
 import com.ldaniels528.tabular.Tabular
-import com.ldaniels528.trifecta.TxConfig.JobItem
 import com.ldaniels528.trifecta.support.avro.AvroTables
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
 import com.ldaniels528.trifecta.util.BinaryMessaging
@@ -27,7 +26,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
    * @param result the given result
    * @param ec the given execution context
    */
-  def handleResult(result: Any)(implicit ec: ExecutionContext) {
+  def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) {
     result match {
       // handle binary data
       case message: Array[Byte] if message.isEmpty => out.println("No data returned")
@@ -36,22 +35,22 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
 
       // handle Either cases
       case e: Either[_, _] => e match {
-        case Left(v) => handleResult(v)
-        case Right(v) => handleResult(v)
+        case Left(v) => handleResult(v, input)
+        case Right(v) => handleResult(v, input)
       }
 
       // handle Future cases
-      case f: Future[_] => handleAsyncResult(f)
+      case f: Future[_] => handleAsyncResult(f, input)
 
       // handle Option cases
       case o: Option[_] => o match {
-        case Some(v) => handleResult(v)
+        case Some(v) => handleResult(v, input)
         case None => out.println("No data returned")
       }
 
       // handle Try cases
       case t: Try[_] => t match {
-        case Success(v) => handleResult(v)
+        case Success(v) => handleResult(v, input)
         case Failure(e) => throw e
       }
 
@@ -67,28 +66,25 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
     }
   }
 
-  private def handleAsyncResult(f: Future[_])(implicit ec: ExecutionContext) {
-    // initially, wait for 10 seconds for the task to complete.
-    // if it fails to complete in that time, queue it as an asynchronous job
-    Try(Await.result(f, 10.seconds)) match {
-      case Success(value) => handleResult(value)
-      case Failure(e) => setupAsyncJob(f)
-    }
-  }
+  private def handleAsyncResult(task: Future[_], input: String)(implicit ec: ExecutionContext) {
+    // capture the start time
+    val startTime = System.currentTimeMillis()
 
-  private def setupAsyncJob(f: Future[_])(implicit ec: ExecutionContext): Unit = {
-    val job = JobItem(startTime = System.currentTimeMillis(), task = f)
-    config.jobs += (job.jobId -> job)
-    f.onComplete {
-      case Success(value) =>
-        out.println(s"Job #${job.jobId} completed")
-        config.jobs -= job.jobId
-        handleResult(value)
-      case Failure(e) =>
-        out.println(s"Job #${job.jobId} failed: ${e.getMessage}")
-        config.jobs -= job.jobId
+    // initially, wait for 5 seconds for the task to complete.
+    // if it fails to complete in that time, queue it as an asynchronous job
+    Try(Await.result(task, 5.seconds)) match {
+      case Success(value) => handleResult(value, input)
+      case Failure(e1) =>
+        val job = config.jobManager.createJob(startTime, task, input)
+        task.onComplete {
+          case Success(value) =>
+            out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
+            handleResult(value, input)
+          case Failure(e2) =>
+            out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
+        }
+        out.println("Task is now running in the background (use 'jobs' to view)")
     }
-    out.println("Task is now running in the background (use 'jobs' to view)")
   }
 
 }

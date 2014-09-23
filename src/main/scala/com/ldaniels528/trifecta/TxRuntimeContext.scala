@@ -39,7 +39,9 @@ class TxRuntimeContext(val config: TxConfig, val zkProxy: ZKProxy) {
     moduleManager.setActiveModule(module)
   }
 
-  def handleResult(result: Any)(implicit ec: ExecutionContext) = resultHandler.handleResult(result)
+  def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) = {
+    resultHandler.handleResult(result, input)
+  }
 
   def interpret(input: String): Try[Any] = {
     if (input.startsWith("#")) interpretVScript(input.tail) else interpretCommandLine(input)
