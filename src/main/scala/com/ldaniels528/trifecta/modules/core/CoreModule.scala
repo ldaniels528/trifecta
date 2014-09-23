@@ -1,6 +1,7 @@
 package com.ldaniels528.trifecta.modules.core
 
 import java.io.{File, PrintStream}
+import java.text.SimpleDateFormat
 import java.util.{Date, TimeZone}
 
 import com.ldaniels528.trifecta.JobManager.JobItem
@@ -18,7 +19,7 @@ import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import scala.util.Properties
+import scala.util.{Try, Properties}
 
 /**
  * Core Module
@@ -60,9 +61,9 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "runjava", executeJavaApp, SimpleParams(Seq("jarFile", "className"), (1 to 10).map(n => s"arg$n")), help = "Executes a Java class' main method"),
     Command(this, "scope", listScope, UnixLikeParams(), help = "Returns the contents of the current scope"),
     Command(this, "syntax", syntax, SimpleParams(Seq("command"), Nil), help = "Returns the syntax/usage for a given command"),
-    Command(this, "systime", systemTime, UnixLikeParams(), help = "Returns the system time as an EPOC in milliseconds"),
-    Command(this, "time", time, UnixLikeParams(), help = "Returns the system time"),
-    Command(this, "timeutc", timeUTC, UnixLikeParams(), help = "Returns the system time in UTC"),
+    Command(this, "systime", systemTime, UnixLikeParams(Seq("date" -> false)), help = "Returns the system time as an EPOC in milliseconds"),
+    Command(this, "time", time, UnixLikeParams(Seq("sysTime" -> false)), help = "Returns the system time"),
+    Command(this, "timeutc", timeUTC, UnixLikeParams(Seq("sysTime" -> false)), help = "Returns the system time in UTC"),
     Command(this, "undoc", listUndocumented, UnixLikeParams(), help = "Displays undocumented commands", undocumented = true),
     Command(this, "use", useModule, SimpleParams(Seq("module"), Nil), help = "Switches the active module"),
     Command(this, "version", version, UnixLikeParams(), help = "Returns the Verify application version"),
@@ -581,6 +582,10 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     } yield (pasdata, portmap)
   }
 
+  /**
+   * Returns the usage for a command
+   * @example syntax time
+   */
   def syntax(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[String] = {
     val commandName = params.args.head
 
@@ -592,24 +597,48 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "systime" command - Returns the system time as an EPOC in milliseconds
+   * Returns the system time as an EPOC in milliseconds
+   * @example systime
    */
-  def systemTime(args: UnixLikeArgs): Long = System.currentTimeMillis()
+  def systemTime(params: UnixLikeArgs): Long = {
+    params.args match {
+      case date :: Nil =>
+        val fmt = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss")
+        Try(fmt.parse(date)) map(_.getTime) getOrElse die("Expected date format is \"yyyy-MM-dd'T'hh:mm:ss\"")
+      case Nil => System.currentTimeMillis()
+      case _ => dieSyntax(params)
+    }
+  }
 
   /**
-   * "time" command - Returns the time in the local time zone
+   * Returns the time in the local time zone
+   * @example time               => "Mon Sep 22 18:11:07 PDT 2014"
+   * @example time 1410937200000 => "Wed Sep 17 00:00:00 PDT 2014"
    */
-  def time(args: UnixLikeArgs): Date = new Date()
+  def time(params: UnixLikeArgs): Date = {
+    params.args match {
+      case sysTime :: Nil if sysTime.matches("\\d+") => new Date(sysTime.toLong)
+      case Nil => new Date()
+      case _ => dieSyntax(params)
+    }
+  }
 
   /**
-   * "timeutc" command - Returns the time in the GMT time zone
+   * Returns the time in the GMT time zone
+   * @example timeutc
    */
-  def timeUTC(args: UnixLikeArgs): String = {
-    import java.text.SimpleDateFormat
+  def timeUTC(params: UnixLikeArgs): String = {
+    // get the date
+    val date = params.args match {
+      case sysTime :: Nil if sysTime.matches("\\d+") => new Date(sysTime.toLong)
+      case Nil => new Date()
+      case _ => dieSyntax(params)
+    }
 
+    // format the date in GMT
     val fmt = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy")
     fmt.setTimeZone(TimeZone.getTimeZone("GMT"))
-    fmt.format(new Date())
+    fmt.format(date)
   }
 
   /**
