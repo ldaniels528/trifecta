@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta
 
 import java.util.Random
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.{AtomicLong, AtomicInteger}
 
 import com.ldaniels528.trifecta.JobManager._
 
@@ -82,7 +82,7 @@ class JobManager() {
 object JobManager {
 
   case class JobItem(jobId: Int, startTime: Long, task: Future[_], command: String) {
-    var endTime: Long = _
+    val endTime = new AtomicLong(0L)
   }
 
 }
