@@ -104,7 +104,6 @@ To see all available commands, use the `help` command (`?` is a shortcut):
     | !           core       Executes a previously issued command                                                            |
     | ?           core       Provides the list of available commands                                                         |
     | autoswitch  core       Automatically switches to the module of the most recently executed command                      |
-    | avcat       core       Displays the contents of a schema variable                                                      |
     | avload      core       Loads an Avro schema into memory                                                                |
     | cat         core       Dumps the contents of the given file                                                            |
     | cd          core       Changes the local file system path/directory                                                    |
