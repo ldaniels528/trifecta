@@ -75,6 +75,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
     Try(Await.result(task, 5.seconds)) match {
       case Success(value) => handleResult(value, input)
       case Failure(e1) =>
+        out.println("Task is now running in the background (use 'jobs' to view)")
         val job = config.jobManager.createJob(startTime, task, input)
         task.onComplete {
           case Success(value) =>
@@ -83,7 +84,6 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
           case Failure(e2) =>
             out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
         }
-        out.println("Task is now running in the background (use 'jobs' to view)")
     }
   }
 
