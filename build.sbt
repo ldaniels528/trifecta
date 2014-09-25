@@ -40,7 +40,6 @@ libraryDependencies ++= Seq(
   "com.twitter" %% "bijection-core" % "0.7.0",
   "com.twitter" %% "bijection-avro" % "0.7.0",
   "com.typesafe.akka" %% "akka-actor" % "2.3.5",
-  "io.spray" %%  "spray-json" % "1.2.6",
   "jline" % "jline" % "2.12",
   "net.liftweb" %% "lift-json" % "2.5.1",
   "org.apache.avro" % "avro" % "1.7.7",
@@ -53,7 +52,8 @@ libraryDependencies ++= Seq(
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
   "org.fusesource.jansi" % "jansi" % "1.11",
-  "org.slf4j" % "slf4j-api" % "1.7.7"
+  "org.slf4j" % "slf4j-api" % "1.7.7",
+  "wabisabi" %% "wabisabi" % "2.0.10"
 )
 
 // Testing Dependencies
@@ -69,6 +69,7 @@ resolvers ++= Seq(
   "Clojars" at "http://clojars.org/repo/",
   "Clojars Project" at "http://clojars.org/org.clojars.pepijndevos/jnativehook",
   "Clojure-Releases" at "http://build.clojure.org/releases/",
+  "gphat" at "https://raw.github.com/gphat/mvn-repo/master/releases/",
   "Java Net" at "http://download.java.net/maven/2/",
   "Maven Central Server" at "http://repo1.maven.org/maven2",
   "Sonatype Repository" at "http://oss.sonatype.org/content/repositories/releases/",

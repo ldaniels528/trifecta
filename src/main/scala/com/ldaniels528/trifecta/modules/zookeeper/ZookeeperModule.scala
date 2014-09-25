@@ -14,6 +14,7 @@ import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
+import net.liftweb.json._
 
 import scala.util.Try
 
@@ -319,12 +320,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
     }
   }
 
-  private def formatJson(value: String): String = {
-    import spray.json._
-
-    val jsonAst = value.parseJson
-    jsonAst.prettyPrint
-  }
+  private def formatJson(value: String): String = pretty(render(parse(value)))
 
   /**
    * Guesses the given value's type
