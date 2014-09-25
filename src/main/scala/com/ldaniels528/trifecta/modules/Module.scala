@@ -109,3 +109,18 @@ trait Module {
   }
 
 }
+
+/**
+ * Module Companion Object
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+object Module {
+
+  /**
+   * A simple name-value pair
+   * @param name the name of the property
+   * @param value the value of the property
+   */
+  case class NameValuePair(name: String, value: Any)
+
+}
