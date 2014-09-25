@@ -17,7 +17,7 @@ import scala.util.Try
  * Trifecta Runtime Context
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class TxRuntimeContext(val config: TxConfig, val zkProxy: ZKProxy) {
+case class TxRuntimeContext(config: TxConfig, zkProxy: ZKProxy) {
   private val logger = LoggerFactory.getLogger(getClass)
   private implicit val scope = config.scope
 
