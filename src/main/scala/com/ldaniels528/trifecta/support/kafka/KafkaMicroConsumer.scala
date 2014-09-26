@@ -10,6 +10,7 @@ import com.ldaniels528.trifecta.util.TxUtils._
 import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
+import net.liftweb.json._
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success, Try}
@@ -283,7 +284,37 @@ object KafkaMicroConsumer {
     }
   }
 
+  /**
+   * Retrieves the list of consumers from Zookeeper (Partition Manager Version)
+   */
+  def getPMVConsumerList(topicPrefix: Option[String] = None, basePath: String)(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
+    zk.getFamily(basePath) filter (_.matches( """\S+[/]partition_\d+""")) flatMap { path =>
+      zk.readString(path) map parseConsumerDetailsPM
+    }
+  }
+
+  /**
+   * Parses the JSON for a Kafka Spout Partition Manager-based consumer offset
+   * @param jsonString the given JSON string
+   * @return an object represent the consumer offset details
+   */
+  private def parseConsumerDetailsPM(jsonString: String): ConsumerDetailsPM = {
+    implicit val formats = net.liftweb.json.DefaultFormats
+
+    val json = parse(jsonString)
+    val id = (json \ "topology" \ "id").extract[String]
+    val name = (json \ "topology" \ "name").extract[String]
+    val topic = (json \ "topic").extract[String]
+    val offset = (json \ "offset").extract[Long]
+    val partition = (json \ "partition").extract[Int]
+    val brokerHost = (json \ "broker" \ "host").extract[String]
+    val brokerPort = (json \ "broker" \ "port").extract[Int]
+    ConsumerDetailsPM(id, name, topic, partition, offset, s"$brokerHost:$brokerPort")
+  }
+
   case class ConsumerDetails(consumerId: String, topic: String, partition: Int, offset: Long)
+
+  case class ConsumerDetailsPM(topologyId: String, topologyName: String, topic: String, partition: Int, offset: Long, broker: String)
 
   /**
    * Returns the list of partitions for the given topic

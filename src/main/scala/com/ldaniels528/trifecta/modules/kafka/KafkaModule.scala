@@ -72,7 +72,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
-    Command(this, "kconsumers", getConsumers, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-p" -> "path")), help = "Returns a list of the consumers from ZooKeeper"),
+    Command(this, "kconsumers", getConsumers, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-p" -> "path", "-s" -> "scheme")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Nil), help = "Counts the messages matching a given condition"),
     Command(this, "kcursor", getCursor, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Displays the message cursor(s)"),
     Command(this, "kexport", exportMessages, UnixLikeParams(Seq("topic" -> false, "groupId" -> true), Seq("-f" -> "outputFile")), help = "Writes the contents of a specific topic to a file", undocumented = true),
@@ -287,10 +287,11 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * "kconsumers" - Retrieves the list of Kafka consumers
+   * @example kconsumers shocktrade.keystats.avro -s pm -b /myconsumers
    * @example kconsumers shocktrade.keystats.avro
    * @example kconsumers
    */
-  def getConsumers(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[ConsumerDelta] = {
+  def getConsumers(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Seq[ConsumerDelta], Seq[ConsumerDeltaPM]] = {
     implicit val zk: ZKProxy = rt.zkProxy
 
     // get the optional topic prefix
@@ -299,11 +300,22 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     // is there a custom base path?
     val customBasePath = params("-p")
 
-    // retrieve the data
-    KafkaMicroConsumer.getConsumerList(topicPrefix, customBasePath).sortBy(c => (c.consumerId, c.topic, c.partition)) map { c =>
-      val topicOffset = getLastOffset(c.topic, c.partition)
-      val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-      ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
+    // is it a partition manager consumer?
+    val isPM = params("-s") exists (_.toLowerCase == "pm")
+
+    if (isPM) {
+      val basePath = customBasePath getOrElse die("Must specify base path (-p) when specifying partition management (-s) scheme")
+      Right(KafkaMicroConsumer.getPMVConsumerList(topicPrefix, basePath) map { c =>
+        ConsumerDeltaPM(c.topologyName, c.topic, c.partition, c.offset, c.broker)
+      })
+    }
+    else Left {
+      // retrieve the data
+      KafkaMicroConsumer.getConsumerList(topicPrefix, customBasePath).sortBy(c => (c.consumerId, c.topic, c.partition)) map { c =>
+        val topicOffset = getLastOffset(c.topic, c.partition)
+        val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
+        ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
+      }
     }
   }
 
@@ -755,7 +767,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     val prefix = params.args.headOption
 
     // get the optional wait time parameter
-    val waitTime = params("-w") map(parseInt("wait time in seconds", _))
+    val waitTime = params("-w") map (parseInt("wait time in seconds", _))
 
     // is this the initial call to this command?
     if (waitTime.isDefined || incomingMessageCache.isEmpty || (System.currentTimeMillis() - lastInboundCheck) >= 30.minutes) {
@@ -919,6 +931,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   case class AvroVerification(verified: Int, failed: Int)
 
   case class ConsumerDelta(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], messagesLeft: Option[Long])
+
+  case class ConsumerDeltaPM(topologyName: String, topic: String, partition: Int, offset: Long, broker: String)
 
   case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
 
