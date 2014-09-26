@@ -72,7 +72,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
-    Command(this, "kconsumers", getConsumers, SimpleParams(Nil, Seq("topicPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
+    Command(this, "kconsumers", getConsumers, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-p" -> "path")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Nil), help = "Counts the messages matching a given condition"),
     Command(this, "kcursor", getCursor, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Displays the message cursor(s)"),
     Command(this, "kexport", exportMessages, UnixLikeParams(Seq("topic" -> false, "groupId" -> true), Seq("-f" -> "outputFile")), help = "Writes the contents of a specific topic to a file", undocumented = true),
@@ -296,8 +296,11 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     // get the optional topic prefix
     val topicPrefix = params.args.headOption
 
+    // is there a custom base path?
+    val customBasePath = params("-p")
+
     // retrieve the data
-    KafkaMicroConsumer.getConsumerList(topicPrefix).sortBy(c => (c.consumerId, c.topic, c.partition)) map { c =>
+    KafkaMicroConsumer.getConsumerList(topicPrefix, customBasePath).sortBy(c => (c.consumerId, c.topic, c.partition)) map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
       ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)

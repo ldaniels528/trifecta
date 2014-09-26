@@ -263,9 +263,10 @@ object KafkaMicroConsumer {
   /**
    * Retrieves the list of consumers from Zookeeper
    */
-  def getConsumerList(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
+  def getConsumerList(topicPrefix: Option[String] = None, customBasePath: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
+    val basePath = customBasePath getOrElse "/consumers"
+
     // start with the list of consumer IDs
-    val basePath = "/consumers"
     zk.getChildren(basePath) flatMap { consumerId =>
       // get the list of topics
       val offsetPath = s"$basePath/$consumerId/offsets"
