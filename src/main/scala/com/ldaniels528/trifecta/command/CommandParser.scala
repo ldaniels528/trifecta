@@ -14,10 +14,38 @@ object CommandParser {
   def parseTokens(input: String): Seq[String] = {
     val sb = new StringBuilder()
     var inQuotes = false
+    var jsonLevel = 0
 
     // extract the tokens
     val list = input.foldLeft[List[String]](Nil) { (list, ch) =>
       val result: Option[String] = ch match {
+        // JSON open
+        case c if c == '{' && !inQuotes =>
+          jsonLevel += 1
+          sb += c
+          None
+
+        // JSON close
+        case c if c == '}' && !inQuotes =>
+          sb += c
+          jsonLevel -= 1
+          if (jsonLevel > 0) None
+          else {
+            jsonLevel = 0
+            val s = sb.toString()
+            sb.clear()
+            Option(s)
+          }
+
+        case c if c == '}' && jsonLevel == 0 && !inQuotes =>
+          jsonLevel += 1
+          sb += c
+          None
+
+        case c if jsonLevel > 0 =>
+          sb += c
+          None
+
         // symbol (unquoted)?
         case c if SYMBOLS.contains(c) && !inQuotes =>
           val s = sb.toString()
@@ -27,6 +55,8 @@ object CommandParser {
             sb += c
             Option(s)
           }
+
+
 
         // quoted text
         case '"' =>
@@ -82,7 +112,7 @@ object CommandParser {
    * @return the argument list
    */
   def parseUnixLikeArgs(items: Seq[String]): UnixLikeArgs = {
-    val args = if(items.nonEmpty) items.tail else Nil
+    val args = if (items.nonEmpty) items.tail else Nil
     val result = args.foldLeft[Accumulator](Accumulator()) { case (acc: Accumulator, item) =>
       // is the item flag?
       if (item.startsWith("-") && item.length > 1) {

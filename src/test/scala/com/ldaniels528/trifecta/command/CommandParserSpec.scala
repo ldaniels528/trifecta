@@ -12,16 +12,30 @@ class CommandParserSpec() extends FeatureSpec with GivenWhenThen {
   info("As a Command Parser")
   info("I want to be able to parse command line input into tokens")
 
-  feature("Ability to distinguish symbols from atoms") {
-    scenario("A string contains both symbols and atoms") {
-      Given("A string containing symbols and atoms")
-      val line = "!?100"
+  feature("Ability to parse JSON streams") {
+    scenario("A string containing JSON data including quoted string") {
+      Given("A string containing JSON data and atoms")
+      val line = """eput bucket randomData 1234 { 1 : [ "A", "B", "C" ], 2 : [ "D", "E", "F" ] }  """
 
       When("The string is parsed into tokens")
       val tokens = CommandParser.parseTokens(line)
 
       Then("The arguments should be successfully verified")
-      tokens shouldBe Seq("!", "?", "100")
+      info(s"results: ${tokens mkString " "}")
+      tokens shouldBe Seq("eput", "bucket", "randomData", "1234", """{ 1 : [ "A", "B", "C" ], 2 : [ "D", "E", "F" ] }""")
+    }
+  }
+
+  feature("Ability to distinguish symbols from atoms") {
+    scenario("A string contains both symbols and atoms") {
+      Given("A string containing symbols and atoms")
+      val line = "!?100+1"
+
+      When("The string is parsed into tokens")
+      val tokens = CommandParser.parseTokens(line)
+
+      Then("The arguments should be successfully verified")
+      tokens shouldBe Seq("!", "?", "100+1")
     }
   }
 
