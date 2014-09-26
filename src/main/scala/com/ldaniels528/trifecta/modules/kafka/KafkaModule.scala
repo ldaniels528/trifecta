@@ -86,7 +86,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, UnixLikeParams(Seq("topic" -> false), Seq("-a" -> "avro", "-b" -> "binary", "-f" -> "inputFile", "-t" -> "fileType")), help = "Imports messages into a new/existing topic", undocumented = true),
-    Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Retrieves a list of topics with new messages (since last query)"),
+    Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-w" -> "wait-time")), help = "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the last message for a given topic"),
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "detailed list")), help = "Lists all existing topics"),
     Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the next message"),
@@ -754,15 +754,18 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   def inboundMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Iterable[Inbound] = {
     val prefix = params.args.headOption
 
+    // get the optional wait time parameter
+    val waitTime = params("-w") map(parseInt("wait time in seconds", _))
+
     // is this the initial call to this command?
-    if (incomingMessageCache.isEmpty || (System.currentTimeMillis() - lastInboundCheck) >= 15.minutes) {
+    if (waitTime.isDefined || incomingMessageCache.isEmpty || (System.currentTimeMillis() - lastInboundCheck) >= 30.minutes) {
       out.println("Sampling data; this may take a few seconds...")
 
       // generate some data to fill the cache
       inboundMessageStatistics()
 
-      // wait 3 second
-      Thread.sleep(3 second)
+      // wait for the specified time in second
+      Thread.sleep((waitTime getOrElse 3).seconds)
     }
 
     // capture the current time
