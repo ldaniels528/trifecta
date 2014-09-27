@@ -27,6 +27,8 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
    * @param ec the given execution context
    */
   def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) {
+    import net.liftweb.json._
+
     result match {
       // handle binary data
       case message: Array[Byte] if message.isEmpty => out.println("No data returned")
@@ -41,6 +43,9 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
 
       // handle Future cases
       case f: Future[_] => handleAsyncResult(f, input)
+
+      // handle JSON values
+      case js: JValue => out.println(pretty(render(js)))
 
       // handle Option cases
       case o: Option[_] => o match {
