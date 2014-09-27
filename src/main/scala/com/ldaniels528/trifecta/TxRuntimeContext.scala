@@ -3,6 +3,7 @@ package com.ldaniels528.trifecta
 import com.ldaniels528.trifecta.command.CommandParser
 import com.ldaniels528.trifecta.modules.ModuleManager
 import com.ldaniels528.trifecta.modules.core.CoreModule
+import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule
 import com.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
@@ -30,6 +31,7 @@ case class TxRuntimeContext(config: TxConfig, zkProxy: ZKProxy) {
   // load the built-in modules
   moduleManager ++= Seq(
     new CoreModule(config),
+    new ElasticSearchModule(config),
     new KafkaModule(config),
     new StormModule(config),
     new ZookeeperModule(config))
