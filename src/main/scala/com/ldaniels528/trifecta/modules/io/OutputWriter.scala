@@ -1,7 +1,5 @@
 package com.ldaniels528.trifecta.modules.io
 
-import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
-
 import scala.concurrent.ExecutionContext
 
 /**
@@ -11,8 +9,17 @@ import scala.concurrent.ExecutionContext
  */
 trait OutputWriter {
 
-  def write(message: MessageData)(implicit ec: ExecutionContext): Any
+  /**
+   * Writes the given key-message pair to the underlying stream
+   * @param key the given key
+   * @param message the given message
+   * @return any value
+   */
+  def write(key: Array[Byte], message: Array[Byte])(implicit ec: ExecutionContext): Any
 
+  /**
+   * Closes the underlying stream
+   */
   def close(): Unit
 
 }

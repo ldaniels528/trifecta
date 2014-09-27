@@ -14,8 +14,8 @@ class KafkaOutputWriter(brokers: Seq[Broker], outputTopic: String) extends Outpu
   private val publisher = KafkaPublisher(brokers)
   publisher.open()
 
-  override def write(md: MessageData)(implicit ec: ExecutionContext) {
-    publisher.publish(outputTopic, md.key, md.message)
+  override def write(key: Array[Byte], message: Array[Byte])(implicit ec: ExecutionContext) {
+    publisher.publish(outputTopic, key, message)
   }
 
   override def close() = publisher.close()

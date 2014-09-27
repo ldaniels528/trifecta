@@ -167,14 +167,17 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     }
 
     // retrieve the document
-    setCursor(index, docType, Option(id), client.get(index, docType, id)) map (js => pretty(render(js)))
+    setCursor(index, docType, Option(id), client.get(index, docType, id) map { js =>
+      handleOutput(params, id.getBytes("UTF8"), compact(render(js)).getBytes("UTF8"))
+      js
+    })
   }
 
   /**
    * Searches for document via a user-defined query
-   * @example esearch { "match_all": { } }
+   * @example esearch { "query": { "match_all": { } } }
    */
-  def searchDocument(params: UnixLikeArgs): Future[String] = {
+  def searchDocument(params: UnixLikeArgs): Future[JValue] = {
     val (index, query) = params.args match {
       case anIndex :: aQuery :: Nil => (anIndex, aQuery)
       case aQuery :: Nil => cursor_? map (c => (c.index, aQuery)) getOrElse dieCursor()

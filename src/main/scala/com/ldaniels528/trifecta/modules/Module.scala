@@ -77,6 +77,16 @@ trait Module {
     if (values.length > index) Some(values(index)) else None
   }
 
+  protected def handleOutput(params: UnixLikeArgs, key: Array[Byte], message: Array[Byte])(implicit rt: TxRuntimeContext, ec: ExecutionContext) {
+    params("-o") foreach { device =>
+      device.split(':').toList match {
+        case prefix :: path :: Nil =>
+          rt.getOutput(prefix, path) getOrElse die("No such output device") use (_.write(key, message))
+        case _ => die(s"Output device '$device' not recognized; usage: -o deviceType:devicePath")
+      }
+    }
+  }
+
   protected def parseInt(label: String, value: String): Int = {
     Try(value.toInt) match {
       case Success(v) => v

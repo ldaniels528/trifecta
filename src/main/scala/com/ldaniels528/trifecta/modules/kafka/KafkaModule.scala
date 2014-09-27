@@ -453,6 +453,9 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     // write the data to an output file (or device)?
     for (path <- params("-f") map expandPath; message <- messageData map (_.message)) new FileOutputStream(path) use (_.write(message))
 
+    // write the message to an output writer
+    messageData.foreach(md => handleOutput(params, md.key, md.message))
+
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
     val decoder: Option[MessageDecoder[_]] =
       Seq(params("-a") map (getAvroDecoder(_)(rt)), cursors.get(topic).flatMap(_.decoder)).find(_.isDefined).flatten

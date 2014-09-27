@@ -1,9 +1,8 @@
 package com.ldaniels528.trifecta.modules.core
 
-import java.io.FileOutputStream
+import java.io.{DataOutputStream, FileOutputStream}
 
 import com.ldaniels528.trifecta.modules.io.OutputWriter
-import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
 
 import scala.concurrent.ExecutionContext
 
@@ -12,9 +11,17 @@ import scala.concurrent.ExecutionContext
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class FileOutputWriter(path: String) extends OutputWriter {
-  private val out = new FileOutputStream(path)
+  private val out = new DataOutputStream(new FileOutputStream(path))
 
-  override def write(message: MessageData)(implicit ec: ExecutionContext) = out.write(message.message)
+  override def write(key: Array[Byte], message: Array[Byte])(implicit ec: ExecutionContext) = {
+    // persist the key
+    out.writeInt(key.length)
+    out.write(key)
+
+    // persist the message
+    out.writeInt(message.length)
+    out.write(message)
+  }
 
   override def close() = out.close()
 
