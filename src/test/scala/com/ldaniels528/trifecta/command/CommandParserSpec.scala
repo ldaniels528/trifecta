@@ -35,20 +35,22 @@ class CommandParserSpec() extends FeatureSpec with GivenWhenThen {
       val tokens = CommandParser.parseTokens(line)
 
       Then("The arguments should be successfully verified")
+      info(s"results: ${tokens mkString " "}")
       tokens shouldBe Seq("!", "?", "100+1")
     }
   }
 
-  feature("Ability to parse a string of mixed tokens (atoms, operators and symbols)") {
+  feature("Ability to parse a string of mixed tokens (atoms, operators, symbols and labels)") {
     scenario("A string contains both atoms, operators and symbols") {
       Given("A string containing atoms, operators and symbols")
-      val line = """kdumpa avro/schema.avsc 9 1799020 a+b+c+d+e+f "Hello World""""
+      val line = """k:dumpa avro/schema.avsc 9 1799020 a+b+c+d+e+f "Hello World""""
 
       When("The string is parsed into tokens")
       val tokens = CommandParser.parseTokens(line)
 
       Then("The arguments should be successfully verified")
-      tokens shouldBe Seq("kdumpa", "avro/schema.avsc", "9", "1799020", "a+b+c+d+e+f", "Hello World")
+      info(s"results: ${tokens mkString " "}")
+      tokens shouldBe Seq("k:", "dumpa", "avro/schema.avsc", "9", "1799020", "a+b+c+d+e+f", "Hello World")
     }
   }
 

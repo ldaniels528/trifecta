@@ -21,8 +21,8 @@ object CommandParser {
       val result: Option[String] = ch match {
         // JSON open
         case c if c == '{' && !inQuotes =>
-          jsonLevel += 1
           sb += c
+          jsonLevel += 1
           None
 
         // JSON close
@@ -37,14 +37,17 @@ object CommandParser {
             Option(s)
           }
 
-        case c if c == '}' && jsonLevel == 0 && !inQuotes =>
-          jsonLevel += 1
-          sb += c
-          None
-
+        // any character inside of JSON braces
         case c if jsonLevel > 0 =>
           sb += c
           None
+
+        // is it a label?
+        case c if c == ':' && !inQuotes =>
+          sb += c
+          val s = sb.toString()
+          sb.clear()
+          Option(s)
 
         // symbol (unquoted)?
         case c if SYMBOLS.contains(c) && !inQuotes =>
@@ -55,8 +58,6 @@ object CommandParser {
             sb += c
             Option(s)
           }
-
-
 
         // quoted text
         case '"' =>
