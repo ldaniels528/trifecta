@@ -43,11 +43,12 @@ object CommandParser {
           None
 
         // is it a label?
+        /*
         case c if c == ':' && !inQuotes =>
           sb += c
           val s = sb.toString()
           sb.clear()
-          Option(s)
+          Option(s)*/
 
         // symbol (unquoted)?
         case c if SYMBOLS.contains(c) && !inQuotes =>
