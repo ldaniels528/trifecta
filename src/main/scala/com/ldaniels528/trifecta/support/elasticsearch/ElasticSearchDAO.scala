@@ -46,8 +46,8 @@ class ElasticSearchDAO(val client: Client) {
     client.health() map convert[ClusterStatusResponse]
   }
 
-  def search(index: String, query: String)(implicit ec: ExecutionContext): Future[String] = {
-    client.search(index, query) map checkForError map (_.getResponseBody) map (js => pretty(render(parse(js))))
+  def search(index: String, query: String)(implicit ec: ExecutionContext): Future[JValue] = {
+    client.search(index, query) map checkForError map (_.getResponseBody) map parse
   }
 
   private def convert[T](response: Response)(implicit m: Manifest[T]): T = {

@@ -144,21 +144,21 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * Creates a new index
    * @example eindex "foo2"
    */
-  def createIndex(params: UnixLikeArgs)(implicit ec: ExecutionContext) = {
+  def createIndex(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Boolean] = {
     val (index, settings) = params.args match {
       case aName :: Nil => (aName, None)
       case aName :: aSetting :: Nil => (aName, Option(aSetting))
       case _ => dieSyntax(params)
     }
 
-    client.createIndex(index, settings) map (Seq(_))
+    client.createIndex(index, settings)
   }
 
   /**
    * Retrieves an existing document within an index
    * @example eget quotes quote AAPL
    */
-  def getDocument(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
+  def getDocument(params: UnixLikeArgs)(implicit rt: TxRuntimeContext, ec: ExecutionContext): Future[JValue] = {
     val (index, docType, id) = params.args match {
       case anIndex :: aType :: aId :: Nil => (anIndex, aType, aId)
       case aId :: Nil => cursor_? map (c => (c.index, c.indexType, aId)) getOrElse dieCursor()
