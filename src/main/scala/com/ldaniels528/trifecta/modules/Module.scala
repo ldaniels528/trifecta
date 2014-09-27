@@ -3,11 +3,12 @@ package com.ldaniels528.trifecta.modules
 import java.net.{URL, URLClassLoader}
 
 import com.ldaniels528.trifecta.TxRuntimeContext
-import com.ldaniels528.trifecta.command.{UnixLikeArgs, Command}
+import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
 import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -55,7 +56,7 @@ trait Module {
   protected def die[S](message: String): S = throw new IllegalArgumentException(message)
 
   protected def dieSyntax[S](unixArgs: UnixLikeArgs): S = {
-    die(s"""Invalid arguments - use "syntax ${unixArgs.commandName.get}" to see usage""")
+    die( s"""Invalid arguments - use "syntax ${unixArgs.commandName.get}" to see usage""")
   }
 
   /**
