@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
+import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.support.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData}
 import com.ldaniels528.trifecta.support.kafka._
@@ -95,6 +96,14 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"),
     Command(this, "kswitch", switchCursor, UnixLikeParams(Seq("topic" -> true)), help = "Switches the currently active topic cursor"))
+
+  /**
+   * Returns an Kafka output writer
+   * kafka:shocktrade.quotes.avro
+   */
+  override def getOutput(outputTopic: String): Option[OutputWriter] = {
+    brokers_? map (new KafkaOutputWriter(_, outputTopic))
+  }
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("defaultFetchSize", ConstantValue(Option(65536)))
@@ -408,6 +417,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * "kget" - Returns the message for a given topic partition and offset
    * @example kget com.shocktrade.alerts 0 3456
    * @example kget 3456
+   * @example kget -f /tmp/output.txt
+   * @example kget -o es:/quotes/quote/AAPL
    */
   def getMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Seq[AvroRecord]] = {
     // get the arguments

@@ -4,6 +4,7 @@ import com.ldaniels528.trifecta.command.CommandParser
 import com.ldaniels528.trifecta.modules.ModuleManager
 import com.ldaniels528.trifecta.modules.core.CoreModule
 import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule
+import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
@@ -11,6 +12,7 @@ import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.vscript.VScriptCompiler
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
@@ -39,6 +41,14 @@ case class TxRuntimeContext(config: TxConfig, zkProxy: ZKProxy) {
   // set the zookeeper module as the "active" module
   moduleManager.findModuleByName("zookeeper") foreach { module =>
     moduleManager.setActiveModule(module)
+  }
+
+  /**
+   * Returns the output device for the given module prefix
+   * @param prefix the given module prefix (e.g. "es" ~> ElasticSearch)
+   */
+  def getOutput(prefix: String, path: String): Option[OutputWriter] = {
+    moduleManager.findModuleByName(prefix) flatMap(_.getOutput(path))
   }
 
   def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) = {

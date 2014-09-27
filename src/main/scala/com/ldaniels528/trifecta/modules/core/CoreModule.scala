@@ -8,6 +8,7 @@ import com.ldaniels528.trifecta.JobManager.JobItem
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
+import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.support.avro.AvroReading
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
@@ -64,6 +65,14 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "use", useModule, SimpleParams(Seq("module"), Nil), help = "Switches the active module"),
     Command(this, "version", version, UnixLikeParams(), help = "Returns the application version"),
     Command(this, "wget", httpGet, SimpleParams(required = Seq("url")), help = "Retrieves remote content via HTTP"))
+
+  /**
+   * Returns a file output writer
+   * file:/tmp/messages.bin
+   */
+  override def getOutput(path: String): Option[OutputWriter] = {
+    Option(new FileOutputWriter(path))
+  }
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("autoSwitching", ConstantValue(Option(true))),

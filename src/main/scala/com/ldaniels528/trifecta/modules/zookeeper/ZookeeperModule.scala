@@ -7,6 +7,7 @@ import java.util.Date
 import com.ldaniels528.trifecta.command.CommandParser._
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
+import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.trifecta.util.EndPoint
@@ -38,6 +39,15 @@ class ZookeeperModule(config: TxConfig) extends Module {
     Command(this, "zruok", ruok, SimpleParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
     Command(this, "zstats", stats, SimpleParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
     Command(this, "ztree", tree, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
+
+  /**
+   * Returns an Zookeeper output writer
+   * zk:/messages/cache001
+   */
+  override def getOutput(outputTopic: String): Option[OutputWriter] = {
+    // TODO add an output writer
+    None
+  }
 
   override def getVariables: Seq[Variable] = Seq(
     Variable("zkPrevCwd", ConstantValue(Option("/"))),

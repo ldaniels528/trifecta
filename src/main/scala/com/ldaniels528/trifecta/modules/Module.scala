@@ -4,6 +4,7 @@ import java.net.{URL, URLClassLoader}
 
 import com.ldaniels528.trifecta.TxRuntimeContext
 import com.ldaniels528.trifecta.command.{UnixLikeArgs, Command}
+import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 
@@ -26,6 +27,13 @@ trait Module {
    * @return the commands that are bound to the module
    */
   def getCommands(implicit rt: TxRuntimeContext): Seq[Command]
+
+  /**
+   * Returns an output writer for the given module
+   * @param path the given output path
+   * @return the option of an output writer
+   */
+  def getOutput(path: String): Option[OutputWriter]
 
   /**
    * Returns the variables that are bound to the module

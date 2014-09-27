@@ -5,6 +5,7 @@ import java.io.PrintStream
 import com.ldaniels528.trifecta.command.{Command, UnboundedParams, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
+import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO.{AddDocumentResponse, CountResponse}
 import com.ldaniels528.trifecta.vscript.Variable
@@ -44,6 +45,21 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     Command(this, "eput", createDocument, UnixLikeParams(Seq("index" -> false, "type" -> false, "id" -> false)), help = "Creates or updates a document"),
     Command(this, "esearch", searchDocument, UnixLikeParams(Seq("index" -> false, "query" -> true)), help = "Searches for document via a user-defined query")
   )
+
+  /**
+   * Returns an Elastic Search output writer
+   * es:/quotes/quote/AAPL
+   */
+  override def getOutput(path: String): Option[OutputWriter] = {
+    client_? flatMap { client =>
+      path.split("[/]").toList match {
+        case index :: indexType :: id :: Nil =>
+          Option(new ElasticSearchOutputWriter(client, index, indexType))
+        case _ =>
+          die(s"Invalid output path '$path'")
+      }
+    }
+  }
 
   /**
    * Returns the variables that are bound to the module
@@ -178,13 +194,9 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   private def client: ElasticSearchDAO = client_? getOrElse die("No Elastic Search connection. Use 'econnect'")
 
-  private def dieCursor[S](): S = {
-    throw new IllegalStateException("No Elastic Search navigable cursor found")
-  }
+  private def dieCursor[S](): S = die[S]("No Elastic Search navigable cursor found")
 
-  private def dieNoId[S](): S = {
-    throw new IllegalStateException("No Elastic Search document ID found")
-  }
+  private def dieNoId[S](): S = die[S]("No Elastic Search document ID found")
 
   private def setCursor[T](index: String, docType: String, id: Option[String], response: Future[T]): Future[T] = {
     response.onComplete {
