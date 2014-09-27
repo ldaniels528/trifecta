@@ -4,6 +4,7 @@ import java.net.{URL, URLClassLoader}
 
 import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
+import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.ldaniels528.trifecta.command.{Command, SimpleParams, UnixLikeArgs}
 import com.ldaniels528.trifecta.modules.Module
@@ -46,6 +47,13 @@ class StormModule(config: TxConfig) extends Module {
     Command(this, "spouts", getTopologySpouts, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true),
     Command(this, "srun", runTopology, SimpleParams(Seq("jarPath", "className"), Seq("arg0", "arg1", "arg2")), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true, undocumented = true)
   )
+
+  /**
+   * Returns an output writer for the given module
+   * @param path the given output path
+   * @return the option of an output writer
+   */
+  override def getOutput(path: String): Option[OutputWriter] = None
 
   override def getVariables: Seq[Variable] = Nil
 
