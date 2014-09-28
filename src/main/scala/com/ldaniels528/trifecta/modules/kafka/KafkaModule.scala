@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.modules.kafka
 
-import java.io.{File, FileOutputStream, PrintStream}
+import java.io.{File, PrintStream}
 import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -76,22 +76,21 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kconsumers", getConsumers, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-p" -> "path", "-s" -> "scheme")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Nil), help = "Counts the messages matching a given condition"),
     Command(this, "kcursor", getCursor, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Displays the message cursor(s)"),
-    Command(this, "kexport", exportMessages, UnixLikeParams(Seq("topic" -> false, "groupId" -> true), Seq("-f" -> "outputFile")), help = "Writes the contents of a specific topic to a file", undocumented = true),
     Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Nil, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
-    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputTopic")), "Finds messages matching a given condition and exports them to a topic"),
-    Command(this, "kfindone", findOneMessage, SimpleParams(Seq("field", "operator", "value"), Nil), "Returns the first occurrence of a message matching a given condition"),
-    Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the first message for a given topic"),
-    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "YYYY-MM-DDTHH:MM:SS", "-f" -> "outputFile")), help = "Retrieves the message at the specified offset for a given topic partition"),
+    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputTo")), "Finds messages matching a given condition and exports them to a topic"),
+    Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputTo")), "Returns the first occurrence of a message matching a given condition"),
+    Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputTo")), help = "Returns the first message for a given topic"),
+    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "YYYY-MM-DDTHH:MM:SS", "-o" -> "outputTo")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, UnixLikeParams(Seq("topic" -> false), Seq("-a" -> "avro", "-b" -> "binary", "-f" -> "inputFile", "-t" -> "fileType")), help = "Imports messages into a new/existing topic", undocumented = true),
     Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-w" -> "wait-time")), help = "Retrieves a list of topics with new messages (since last query)"),
-    Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Returns the last message for a given topic"),
+    Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputTo")), help = "Returns the last message for a given topic"),
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "detailed list")), help = "Lists all existing topics"),
-    Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the next message"),
-    Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "outputFile")), help = "Attempts to retrieve the message at the previous offset"),
+    Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputTo")), help = "Attempts to retrieve the next message"),
+    Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputTo")), help = "Attempts to retrieve the message at the previous offset"),
     Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Nil), help = "Publishes a message to a topic", undocumented = true),
     Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"),
@@ -163,44 +162,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
     // perform the count
     KafkaMicroConsumer.count(topic, brokers, correlationId, conditions: _*)
-  }
-
-  /**
-   * "kexport" - Dumps the contents of a specific topic to a file
-   * @example kexport com.shocktrade.quotes.csv lld3 -f quotes.bin
-   * @example kexport lld3 -f quotes.bin
-   */
-  def exportMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Long = {
-    import java.io.{DataOutputStream, FileOutputStream}
-    implicit val zk: ZKProxy = rt.zkProxy
-
-    // get the arguments (topic, groupId)
-    val (topic, groupId) = params.args match {
-      case aGroupId :: Nil => cursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor
-      case aTopic :: aGroupId :: Nil => (aTopic, aGroupId)
-      case _ => dieSyntax(params)
-    }
-
-    // get the output source
-    val file = params("-f") getOrElse dieNoOutputSource
-    // TODO add additional sources; including Cassandra, MySQL, Kafka topic, Kestrel queue
-
-    // export the data to the file
-    var count = 0L
-    new DataOutputStream(new FileOutputStream(file)) use { fos =>
-      KafkaMicroConsumer.observe(topic, brokers, correlationId) { md =>
-        val message = md.message
-        fos.writeInt(message.length)
-        fos.write(message)
-        count += 1
-        if (count % 10000 == 0) {
-          // TODO add count to job information
-          out.println(s"$count messages written so far...")
-          fos.flush()
-        }
-      }
-    }
-    count
   }
 
   /**
