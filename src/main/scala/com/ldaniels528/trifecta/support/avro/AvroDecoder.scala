@@ -15,7 +15,8 @@ import scala.util.Try
  * Apache Avro Decoder
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class AvroDecoder(label: String, schemaString: String) extends MessageDecoder[GenericRecord] with MessageEvaluation {
+case class AvroDecoder(label: String, schemaString: String) extends MessageDecoder[GenericRecord]
+with MessageEvaluation {
   val schema = new Schema.Parser().parse(schemaString)
   val converter: Injection[GenericRecord, Array[Byte]] = GenericAvroCodecs.toBinary(schema)
 
