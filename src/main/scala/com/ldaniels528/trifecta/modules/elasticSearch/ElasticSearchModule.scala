@@ -5,9 +5,9 @@ import java.io.PrintStream
 import com.ldaniels528.trifecta.command.{Command, UnboundedParams, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
-import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO.{AddDocumentResponse, CountResponse}
+import com.ldaniels528.trifecta.support.io.MessageOutputHandler
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json._
@@ -48,15 +48,17 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   /**
    * Returns an Elastic Search output writer
-   * es:/quotes/quote/AAPL
+   * @param url the given output URL (e.g. "es:/quotes/quote/AAPL")
    */
-  override def getOutput(path: String): Option[OutputWriter] = {
+  override def getOutput(url: String): Option[MessageOutputHandler] = {
     client_? flatMap { client =>
-      path.split("[/]").toList match {
-        case index :: indexType :: id :: Nil =>
-          Option(new ElasticSearchOutputWriter(client, index, indexType))
+      url.split("[/]").toList match {
+        case "es:" :: index :: indexType :: Nil =>
+          Option(new DocumentOutputHandler(client, index, indexType, id = None))
+        case "es:" :: index :: indexType :: id :: Nil =>
+          Option(new DocumentOutputHandler(client, index, indexType, Option(id)))
         case _ =>
-          die(s"Invalid output path '$path'")
+          die(s"Invalid output URL '$url'")
       }
     }
   }
@@ -76,6 +78,8 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * Called when the application is shutting down
    */
   override def shutdown(): Unit = ()
+
+  override def supportedPrefixes: Seq[String] = Seq("es")
 
   /**
    * Establishes a connection to a remote host
@@ -168,7 +172,8 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
     // retrieve the document
     setCursor(index, docType, Option(id), client.get(index, docType, id) map { js =>
-      handleOutput(params, id.getBytes("UTF8"), compact(render(js)).getBytes("UTF8"))
+      // handle the optional output directive
+      handleOutput(params, decoder = None, id.getBytes("UTF8"), compact(render(js)).getBytes("UTF8"))
       js
     })
   }

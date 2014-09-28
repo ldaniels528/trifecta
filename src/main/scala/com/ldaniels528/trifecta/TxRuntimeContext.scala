@@ -4,15 +4,14 @@ import com.ldaniels528.trifecta.command.CommandParser
 import com.ldaniels528.trifecta.modules.ModuleManager
 import com.ldaniels528.trifecta.modules.core.CoreModule
 import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule
-import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
+import com.ldaniels528.trifecta.support.io.OutputHandler
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.vscript.VScriptCompiler
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
@@ -21,7 +20,7 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class TxRuntimeContext(config: TxConfig, zkProxy: ZKProxy) {
-  private val logger = LoggerFactory.getLogger(getClass)
+  private[trifecta] val logger = LoggerFactory.getLogger(getClass)
   private implicit val scope = config.scope
 
   // create the result handler
@@ -44,11 +43,20 @@ case class TxRuntimeContext(config: TxConfig, zkProxy: ZKProxy) {
   }
 
   /**
-   * Returns the output device for the given module prefix
-   * @param prefix the given module prefix (e.g. "es" ~> ElasticSearch)
+   * Returns the output handler for the given output URL
+   * @param url the given output URL (e.g. "es:/quotes/quote/GDF")
    */
-  def getOutput(prefix: String, path: String): Option[OutputWriter] = {
-    moduleManager.findModuleByName(prefix) flatMap(_.getOutput(path))
+  def getOutputHandler(url: String): Option[OutputHandler] = {
+    // get just the prefix
+    val (prefix, _) = {
+      val index = url.indexOf(':')
+      if (index == -1)
+        throw new IllegalArgumentException(s"Malformed output URL: $url")
+      url.splitAt(index)
+    }
+
+    // locate the module
+    moduleManager.findModuleByPrefix(prefix) flatMap (_.getOutput(url))
   }
 
   def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) = {

@@ -2,15 +2,15 @@ package com.ldaniels528.trifecta.modules.core
 
 import java.io.{DataOutputStream, FileOutputStream}
 
-import com.ldaniels528.trifecta.modules.io.OutputWriter
+import com.ldaniels528.trifecta.support.io.BinaryOutputHandler
 
 import scala.concurrent.ExecutionContext
 
 /**
- * File Output Writer
+ * File Output Handler
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class FileOutputWriter(path: String) extends OutputWriter {
+class FileOutputHandler(path: String) extends BinaryOutputHandler {
   private val out = new DataOutputStream(new FileOutputStream(path))
 
   override def write(key: Array[Byte], message: Array[Byte])(implicit ec: ExecutionContext) = {

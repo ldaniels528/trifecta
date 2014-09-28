@@ -81,6 +81,13 @@ class ModuleManager(scope: Scope)(implicit rt: TxRuntimeContext) {
   def findModuleByName(name: String): Option[Module] = moduleSet.find(_.moduleName == name)
 
   /**
+   * Retrieves a module by prefix
+   * @param prefix the prefix of the desired module
+   * @return an option of a module
+   */
+  def findModuleByPrefix(prefix: String): Option[Module] = moduleSet.find(_.supportedPrefixes.contains(prefix))
+
+  /**
    * Sets the active module
    * @param module the given module
    */

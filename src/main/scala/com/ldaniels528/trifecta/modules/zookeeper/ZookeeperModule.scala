@@ -7,7 +7,7 @@ import java.util.Date
 import com.ldaniels528.trifecta.command.CommandParser._
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.modules.io.OutputWriter
+import com.ldaniels528.trifecta.support.io.OutputHandler
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.trifecta.util.EndPoint
@@ -44,7 +44,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
    * Returns an Zookeeper output writer
    * zk:/messages/cache001
    */
-  override def getOutput(outputTopic: String): Option[OutputWriter] = {
+  override def getOutput(outputTopic: String): Option[OutputHandler] = {
     // TODO add an output writer
     None
   }
@@ -58,6 +58,8 @@ class ZookeeperModule(config: TxConfig) extends Module {
   override def prompt: String = s"${config.zooKeeperConnect}$zkCwd"
 
   override def shutdown() = ()
+
+  override def supportedPrefixes: Seq[String] = Seq("zk")
 
   private def zk(implicit rt: TxRuntimeContext): ZKProxy = rt.zkProxy
 

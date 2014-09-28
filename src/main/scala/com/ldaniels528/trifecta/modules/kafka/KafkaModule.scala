@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicLong
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.modules.io.OutputWriter
 import com.ldaniels528.trifecta.support.avro.{AvroDecoder, AvroReading}
+import com.ldaniels528.trifecta.support.io.{BinaryOutputHandler, MessageOutputHandler}
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData}
 import com.ldaniels528.trifecta.support.kafka._
 import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
@@ -101,8 +101,18 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * Returns an Kafka output writer
    * kafka:shocktrade.quotes.avro
    */
-  override def getOutput(outputTopic: String): Option[OutputWriter] = {
-    brokers_? map (new KafkaOutputWriter(_, outputTopic))
+  override def getOutput(url: String): Option[BinaryOutputHandler] = {
+    // extract the output topic
+    val outputTopic: String = {
+      val index = url.indexOf(":")
+      if (index == -1) die("Invalid URL. Usage: kafka:outputTopic")
+      else url.splitAt(index) match {
+        case (prefix, topic) if prefix == "kafka" => topic
+        case _ => die("Invalid URL. Usage: kafka:outputTopic")
+      }
+    }
+
+    brokers_? map (new KafkaTopicOutputHandler(_, outputTopic))
   }
 
   override def getVariables: Seq[Variable] = Seq(
@@ -114,6 +124,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   override def prompt: String = cursor map (c => s"${c.topic}/${c.partition}:${c.offset}") getOrElse "/"
 
   override def shutdown() = ()
+
+  override def supportedPrefixes: Seq[String] = Seq("topic")
 
   private def cursor: Option[KafkaCursor] = currentTopic.flatMap(cursors.get)
 
@@ -245,44 +257,45 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * "kfind" - Finds messages that corresponds to the given criteria and exports them to a topic
-   * @example kfind frequency > 5000 -o highFrequency.topTalkers
+   * @example kfind frequency > 5000 -o topic:highFrequency.quotes
    */
   def findMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Long] = {
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
     implicit val zk: ZKProxy = rt.zkProxy
 
-    // get the input topic and partition from the cursor
+    // get the input topic and decoder from the cursor
     val (inputTopic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
 
     // get the criteria
-    val Seq(field, operator, value, _*) = params.args
-    val conditions = Seq(compile(compile(field, operator, value), decoder))
+    val conditions = params.args match {
+      case field :: operator :: value :: Nil => Seq(compile(compile(field, operator, value), decoder))
+      case _ => dieSyntax(params)
+    }
 
-    // get the output topic
-    val outputTopic = params("-o") getOrElse die("Output topic expected")
+    // get the output device
+    val outputDevice = params("-o") flatMap rt.getOutputHandler getOrElse die("Output device URL expected")
 
     // open the publisher
     val counter = new AtomicLong(0L)
-    val publisher = KafkaPublisher(brokers)
-    publisher.open()
 
     // find and export the messages matching our criteria
     val task = KafkaMicroConsumer.observe(inputTopic, brokers, correlationId) { md =>
       if (conditions.forall(_.satisfies(md.message, md.key))) {
-        publisher.publish(outputTopic, md.key, md.message)
+        outputDevice match {
+          case device: MessageOutputHandler => device.write(decoder, md.key, md.message)
+          case device: BinaryOutputHandler => device.write(md.key, md.message)
+          case device => dieNoOutputHandler(device)
+        }
         counter.incrementAndGet()
         ()
       }
     }
 
-    // upon completion, close the publisher
-    task.onComplete {
-      case Success(_) => publisher.close()
-      case Failure(e) => publisher.close()
+    // upon completion, close the output device and return the count
+    task.map { u =>
+      outputDevice.close()
+      counter.get
     }
-
-    // return the future count
-    task.map(u => counter.get)
   }
 
   /**
@@ -450,18 +463,15 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       consumer.fetch(myOffset, defaultFetchSize).headOption
     }
 
-    // write the data to an output file (or device)?
-    for (path <- params("-f") map expandPath; message <- messageData map (_.message)) new FileOutputStream(path) use (_.write(message))
-
-    // write the message to an output writer
-    messageData.foreach(md => handleOutput(params, md.key, md.message))
-
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
     val decoder: Option[MessageDecoder[_]] =
       Seq(params("-a") map (getAvroDecoder(_)(rt)), cursors.get(topic).flatMap(_.decoder)).find(_.isDefined).flatten
 
     // if a decoder was found, use it to decode the message
     val decodedMessage = decoder.flatMap(decodeMessage(messageData, _))
+
+    // write the message to an output writer
+    messageData.foreach(md => handleOutput(params, decoder, md.key, md.message))
 
     // capture the message's offset and decoder
     setCursor(topic, partition, messageData, decoder)

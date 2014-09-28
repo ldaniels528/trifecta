@@ -4,7 +4,8 @@ import java.net.{URL, URLClassLoader}
 
 import com.ldaniels528.trifecta.TxRuntimeContext
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
-import com.ldaniels528.trifecta.modules.io.OutputWriter
+import com.ldaniels528.trifecta.support.io.{BinaryOutputHandler, MessageOutputHandler, OutputHandler}
+import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 
@@ -34,7 +35,7 @@ trait Module {
    * @param path the given output path
    * @return the option of an output writer
    */
-  def getOutput(path: String): Option[OutputWriter]
+  def getOutput(path: String): Option[OutputHandler]
 
   /**
    * Returns the variables that are bound to the module
@@ -53,7 +54,15 @@ trait Module {
    */
   def shutdown(): Unit
 
+  /**
+   * Returns the name of the prefix (e.g. Seq("file"))
+   * @return the name of the prefix
+   */
+  def supportedPrefixes: Seq[String]
+
   protected def die[S](message: String): S = throw new IllegalArgumentException(message)
+
+  protected def dieNoOutputHandler(device: OutputHandler) = die(s"Unhandled output device $device")
 
   protected def dieSyntax[S](unixArgs: UnixLikeArgs): S = {
     die( s"""Invalid arguments - use "syntax ${unixArgs.commandName.get}" to see usage""")
@@ -78,13 +87,22 @@ trait Module {
     if (values.length > index) Some(values(index)) else None
   }
 
-  protected def handleOutput(params: UnixLikeArgs, key: Array[Byte], message: Array[Byte])(implicit rt: TxRuntimeContext, ec: ExecutionContext) {
-    params("-o") foreach { device =>
-      device.split(':').toList match {
-        case prefix :: path :: Nil =>
-          rt.getOutput(prefix, path) getOrElse die("No such output device") use (_.write(key, message))
-        case _ => die(s"Output device '$device' not recognized; usage: -o deviceType:devicePath")
+  protected def handleOutput(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]], key: Array[Byte], message: Array[Byte])(implicit rt: TxRuntimeContext, ec: ExecutionContext) = {
+    params("-o") map { url =>
+      rt.getOutputHandler(url) match {
+        case Some(device: MessageOutputHandler) => device use (_.write(decoder, key, message))
+        case Some(device: BinaryOutputHandler) => device use (_.write(key, message))
+        case Some(unhandled) => dieNoOutputHandler(unhandled)
+        case None => die("No such output device")
       }
+    }
+  }
+
+  protected def parseDouble(label: String, value: String): Double = {
+    Try(value.toDouble) match {
+      case Success(v) => v
+      case Failure(e) =>
+        throw new IllegalArgumentException(s"$label: Expected an decimal value, found '$value'")
     }
   }
 

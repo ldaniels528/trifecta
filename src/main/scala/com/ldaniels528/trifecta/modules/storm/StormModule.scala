@@ -4,7 +4,7 @@ import java.net.{URL, URLClassLoader}
 
 import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
-import com.ldaniels528.trifecta.modules.io.OutputWriter
+import com.ldaniels528.trifecta.support.io.BinaryOutputHandler
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.ldaniels528.trifecta.command.{Command, SimpleParams, UnixLikeArgs}
 import com.ldaniels528.trifecta.modules.Module
@@ -53,7 +53,7 @@ class StormModule(config: TxConfig) extends Module {
    * @param path the given output path
    * @return the option of an output writer
    */
-  override def getOutput(path: String): Option[OutputWriter] = None
+  override def getOutput(path: String): Option[BinaryOutputHandler] = None
 
   override def getVariables: Seq[Variable] = Nil
 
@@ -62,6 +62,8 @@ class StormModule(config: TxConfig) extends Module {
   override def prompt: String = nimbusHost getOrElse super.prompt
 
   override def shutdown(): Unit = ()
+
+  override def supportedPrefixes: Seq[String] = Seq("storm")
 
   def nimbusHost: Option[String] = Option(stormConf.get("nimbus.host")) map (_.asInstanceOf[String])
 
