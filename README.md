@@ -16,6 +16,7 @@ Table of Contents
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#elastic-search">Elastic Search Module</a>  
+        * <a href="#es-avro-to-json">Avro-to-Document support</a>
     * <a href="#kafka-module">Kafka Module</a>  
         * <a href="#kafka-brokers">Kafka Brokers</a> 
         * <a href="#kafka-topics">Kafka Topics</a> 
