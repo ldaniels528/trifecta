@@ -288,7 +288,7 @@ object KafkaMicroConsumer {
    * Retrieves the list of consumers from Zookeeper (Kafka Spout / Partition Manager Version)
    */
   def getPMVConsumerList(topicPrefix: Option[String] = None, basePath: String)(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
-    zk.getFamily(basePath) filter (t => t.matches( """\S+[/]partition_\d+""") && topicFilter(topicPrefix, t)) flatMap { path =>
+    zk.getFamily(basePath) filter (t => t.matches( """\S+[/]partition_\d+""")) flatMap { path =>
       zk.readString(path) flatMap { jsonString =>
         successOnly(Try {
           val json = parse(jsonString)
@@ -302,7 +302,7 @@ object KafkaMicroConsumer {
           ConsumerDetailsPM(id, name, topic, partition, offset, s"$brokerHost:$brokerPort")
         })
       }
-    }
+    } filter (c => topicFilter(topicPrefix, c.topic))
   }
 
   /**
