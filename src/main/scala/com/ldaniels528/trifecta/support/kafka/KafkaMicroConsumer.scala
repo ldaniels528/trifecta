@@ -263,14 +263,14 @@ object KafkaMicroConsumer {
   /**
    * Retrieves the list of consumers from Zookeeper
    */
-  def getConsumerList(topicPrefix: Option[String] = None, customBasePath: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
-    val basePath = customBasePath getOrElse "/consumers"
+  def getConsumerList(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
+    val basePath = "/consumers"
 
     // start with the list of consumer IDs
     zk.getChildren(basePath) flatMap { consumerId =>
       // get the list of topics
       val offsetPath = s"$basePath/$consumerId/offsets"
-      val topics = zk.getChildren(offsetPath).distinct filter (topicFilter(topicPrefix, _))
+      val topics = zk.getChildren(offsetPath).distinct filter (contentFilter(topicPrefix, _))
 
       // get the list of partitions
       topics flatMap { topic =>
@@ -287,8 +287,8 @@ object KafkaMicroConsumer {
   /**
    * Retrieves the list of consumers from Zookeeper (Kafka Spout / Partition Manager Version)
    */
-  def getPMVConsumerList(topicPrefix: Option[String] = None, basePath: String)(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
-    zk.getFamily(basePath) filter (t => t.matches( """\S+[/]partition_\d+""")) flatMap { path =>
+  def getSpoutConsumerList()(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
+    zk.getFamily(path = "/").distinct filter (_.matches( """\S+[/]partition_\d+""")) flatMap { path =>
       zk.readString(path) flatMap { jsonString =>
         successOnly(Try {
           val json = parse(jsonString)
@@ -302,7 +302,7 @@ object KafkaMicroConsumer {
           ConsumerDetailsPM(id, name, topic, partition, offset, s"$brokerHost:$brokerPort")
         })
       }
-    } filter (c => topicFilter(topicPrefix, c.topic))
+    }
   }
 
   /**
@@ -316,13 +316,13 @@ object KafkaMicroConsumer {
   }
 
   /**
-   * Convenience method for filtering topics by a topic prefix
-   * @param topicPrefix the given topic prefix
-   * @param topic the given topic
+   * Convenience method for filtering content (consumers, topics, etc.) by a prefix
+   * @param prefix the given prefix
+   * @param entity the given entity to filter
    * @return true, if the topic starts with the topic prefix
    */
-  private def topicFilter(topicPrefix: Option[String], topic: String): Boolean = {
-    topicPrefix.isEmpty || topicPrefix.exists(topic.startsWith)
+  def contentFilter(prefix: Option[String], entity: String): Boolean = {
+    prefix.isEmpty || prefix.exists(entity.startsWith)
   }
 
   /**

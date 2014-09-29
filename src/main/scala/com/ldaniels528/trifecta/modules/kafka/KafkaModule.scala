@@ -11,7 +11,7 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.trifecta.support.io.{BinaryOutputHandler, MessageOutputHandler}
-import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData}
+import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
 import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.support.messaging.{MessageCursor, MessageDecoder}
@@ -74,7 +74,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
-    Command(this, "kconsumers", getConsumers, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-p" -> "path", "-s" -> "scheme")), help = "Returns a list of the consumers from ZooKeeper"),
+    Command(this, "kconsumers", getConsumers, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-t" -> "topicPrefix", "-c" -> "consumerPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Nil), help = "Counts the messages matching a given condition"),
     Command(this, "kcursor", getCursor, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Displays the message cursor(s)"),
     Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
@@ -269,20 +269,18 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * "kconsumers" - Retrieves the list of Kafka consumers
-   * @example kconsumers shocktrade.keystats.avro -p /myconsumers
-   * @example kconsumers shocktrade.keystats.avro
+   * @example kconsumers -t shocktrade.keystats.avro
+   * @example kconsumers -c devGroup
    * @example kconsumers
    */
   def getConsumers(params: UnixLikeArgs): Future[List[ConsumerDelta]] = {
-    // get the optional topic prefix
-    val topicPrefix = params.args.headOption
-
-    // is there a custom base path?
-    val customBasePath = params("-p")
+    // get the optional base path, topic & consumer prefixes
+    val consumerPrefix = params("-c")
+    val topicPrefix = params("-t")
 
     // get the Kafka consumer groups
     val consumersCG = Future {
-      KafkaMicroConsumer.getConsumerList(topicPrefix, customBasePath).sortBy(c => (c.consumerId, c.topic, c.partition)) map { c =>
+      KafkaMicroConsumer.getConsumerList(topicPrefix) map { c =>
         val topicOffset = getLastOffset(c.topic, c.partition)
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
         ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
@@ -291,7 +289,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
     // get the Kafka Spout consumers (Partition Manager)
     val consumersPM = Future {
-      KafkaMicroConsumer.getPMVConsumerList(topicPrefix, "/") map { c =>
+      KafkaMicroConsumer.getSpoutConsumerList() map { c =>
         val topicOffset = getLastOffset(c.topic, c.partition)
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
         ConsumerDelta(c.topologyName, c.topic, c.partition, c.offset, topicOffset, delta)
@@ -299,10 +297,14 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
 
     // combine the futures for the two lists
-    for {
+    (for {
       consumersA <- consumersCG
       consumersB <- consumersPM
-    } yield consumersA.toList ::: consumersB.toList
+    } yield consumersA.toList ::: consumersB.toList)
+      .map {
+      _.filter(c => contentFilter(consumerPrefix, c.consumerId) || contentFilter(topicPrefix, c.topic))
+        .sortBy(c => (c.consumerId, c.topic, c.partition))
+    }
   }
 
   /**
