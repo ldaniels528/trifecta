@@ -6,7 +6,7 @@ import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Try, Failure, Success}
+import scala.util.{Failure, Success}
 
 /**
  * Zookeeper Output Writer
@@ -53,9 +53,6 @@ class ZookeeperOutputHandler(zk: ZKProxy, rootPath: String) extends BinaryOutput
     }
   }
 
-  override def close(): Unit = {
-    Try(zk.close())
-    ()
-  }
+  override def close() = ()
 
 }

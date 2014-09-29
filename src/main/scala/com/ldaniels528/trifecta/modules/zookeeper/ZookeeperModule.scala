@@ -56,9 +56,6 @@ class ZookeeperModule(config: TxConfig) extends Module {
       }
     }
 
-    // create a standalone Zookeeper instance
-    val zk = ZKProxy(EndPoint(config.zooKeeperConnect))
-
     // return the output handler
     Option(new ZookeeperOutputHandler(zk, rootPath))
   }
