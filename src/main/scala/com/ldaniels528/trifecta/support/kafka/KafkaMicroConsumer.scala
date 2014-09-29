@@ -166,6 +166,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaMicroConsumer {
+  private implicit val formats = net.liftweb.json.DefaultFormats
   private val DEFAULT_FETCH_SIZE: Int = 65536
 
   /**
@@ -248,8 +249,6 @@ object KafkaMicroConsumer {
    * Retrieves the list of defined brokers from Zookeeper
    */
   def getBrokerList(implicit zk: ZKProxy): Seq[BrokerDetails] = {
-    import net.liftweb.json._
-    implicit val formats = DefaultFormats
     val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
     val basePath = "/brokers/ids"
     zk.getChildren(basePath) flatMap { brokerId =>
@@ -271,50 +270,60 @@ object KafkaMicroConsumer {
     zk.getChildren(basePath) flatMap { consumerId =>
       // get the list of topics
       val offsetPath = s"$basePath/$consumerId/offsets"
-      val topics = zk.getChildren(offsetPath).distinct filter (t => topicPrefix.isEmpty || topicPrefix.exists(t.startsWith))
+      val topics = zk.getChildren(offsetPath).distinct filter (topicFilter(topicPrefix, _))
 
       // get the list of partitions
       topics flatMap { topic =>
         val topicPath = s"$offsetPath/$topic"
         val partitions = zk.getChildren(topicPath)
         partitions flatMap { partitionId =>
-          zk.readString(s"$topicPath/$partitionId") map (offset => ConsumerDetails(consumerId, topic, partitionId.toInt, offset.toLong))
+          zk.readString(s"$topicPath/$partitionId") flatMap (offset =>
+            successOnly(Try(ConsumerDetails(consumerId, topic, partitionId.toInt, offset.toLong))))
         }
       }
     }
   }
 
   /**
-   * Retrieves the list of consumers from Zookeeper (Partition Manager Version)
+   * Retrieves the list of consumers from Zookeeper (Kafka Spout / Partition Manager Version)
    */
   def getPMVConsumerList(topicPrefix: Option[String] = None, basePath: String)(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
-    zk.getFamily(basePath) filter (_.matches( """\S+[/]partition_\d+""")) flatMap { path =>
-      zk.readString(path) map parseConsumerDetailsPM
+    zk.getFamily(basePath) filter (t => t.matches( """\S+[/]partition_\d+""") && topicFilter(topicPrefix, t)) flatMap { path =>
+      zk.readString(path) flatMap { jsonString =>
+        successOnly(Try {
+          val json = parse(jsonString)
+          val id = (json \ "topology" \ "id").extract[String]
+          val name = (json \ "topology" \ "name").extract[String]
+          val topic = (json \ "topic").extract[String]
+          val offset = (json \ "offset").extract[Long]
+          val partition = (json \ "partition").extract[Int]
+          val brokerHost = (json \ "broker" \ "host").extract[String]
+          val brokerPort = (json \ "broker" \ "port").extract[Int]
+          ConsumerDetailsPM(id, name, topic, partition, offset, s"$brokerHost:$brokerPort")
+        })
+      }
     }
   }
 
   /**
-   * Parses the JSON for a Kafka Spout Partition Manager-based consumer offset
-   * @param jsonString the given JSON string
-   * @return an object represent the consumer offset details
+   * Transforms the given result into a [[Some]] if successful or [[None]] if failure
+   * @param result  the given result
+   * @return an Option representing success or failure
    */
-  private def parseConsumerDetailsPM(jsonString: String): ConsumerDetailsPM = {
-    implicit val formats = net.liftweb.json.DefaultFormats
-
-    val json = parse(jsonString)
-    val id = (json \ "topology" \ "id").extract[String]
-    val name = (json \ "topology" \ "name").extract[String]
-    val topic = (json \ "topic").extract[String]
-    val offset = (json \ "offset").extract[Long]
-    val partition = (json \ "partition").extract[Int]
-    val brokerHost = (json \ "broker" \ "host").extract[String]
-    val brokerPort = (json \ "broker" \ "port").extract[Int]
-    ConsumerDetailsPM(id, name, topic, partition, offset, s"$brokerHost:$brokerPort")
+  private def successOnly[S](result: Try[S]): Option[S] = result match {
+    case Success(v) => Option(v)
+    case Failure(e) => None
   }
 
-  case class ConsumerDetails(consumerId: String, topic: String, partition: Int, offset: Long)
-
-  case class ConsumerDetailsPM(topologyId: String, topologyName: String, topic: String, partition: Int, offset: Long, broker: String)
+  /**
+   * Convenience method for filtering topics by a topic prefix
+   * @param topicPrefix the given topic prefix
+   * @param topic the given topic
+   * @return true, if the topic starts with the topic prefix
+   */
+  private def topicFilter(topicPrefix: Option[String], topic: String): Boolean = {
+    topicPrefix.isEmpty || topicPrefix.exists(topic.startsWith)
+  }
 
   /**
    * Returns the list of partitions for the given topic
@@ -442,6 +451,16 @@ object KafkaMicroConsumer {
    * @return a unique client identifier
    */
   private def makeClientID(prefix: String): String = s"$prefix${System.nanoTime()}"
+
+  /**
+   * Represents the consumer group details for a given topic partition
+   */
+  case class ConsumerDetails(consumerId: String, topic: String, partition: Int, offset: Long)
+
+  /**
+   * Represents the consumer group details for a given topic partition (Kafka Spout / Partition Manager)
+   */
+  case class ConsumerDetailsPM(topologyId: String, topologyName: String, topic: String, partition: Int, offset: Long, broker: String)
 
   /**
    * Represents a message and offset
