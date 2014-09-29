@@ -76,7 +76,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", getConsumers, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix", "-c" -> "consumerPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
     Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Nil), help = "Counts the messages matching a given condition"),
-    Command(this, "kcursor", getCursor, UnixLikeParams(Seq("topicPrefix" -> false)), help = "Displays the message cursor(s)"),
+    Command(this, "kcursor", getCursor, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix")), help = "Displays the message cursor(s)"),
     Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Nil, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputTo")), "Finds messages matching a given condition and exports them to a topic"),
@@ -274,7 +274,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kconsumers
    */
   def getConsumers(params: UnixLikeArgs): Future[List[ConsumerDelta]] = {
-    // get the optional base path, topic & consumer prefixes
+    // get the topic & consumer prefixes
     val consumerPrefix = params("-c")
     val topicPrefix = params("-t")
 
@@ -314,11 +314,11 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kcursor
    */
   def getCursor(params: UnixLikeArgs): Seq[KafkaCursor] = {
-    // get the topic prefix
-    val prefix = params.args.headOption
+    // get the topic & consumer prefixes
+    val topicPrefix = params("-t")
 
     // filter the cursors by topic prefix
-    cursors.filter { case (topic, cursor) => prefix.isEmpty || prefix.exists(topic.startsWith)}.map(_._2).toSeq
+    cursors.values.filter(c => contentFilter(topicPrefix, c.topic)).toSeq
   }
 
   /**
