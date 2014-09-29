@@ -53,8 +53,8 @@ risk! To retrieve a list of these _undocumented_ commands, use the `undoc` comma
 ## Features
 
 * Avro integration
-    * <a href="#kafka-avro-module">Kafka &amp; Avro</a> support
-    * <a href="#es-avro-to-json">Avro to JSON</a> support
+    * <a href="#kafka-avro-module">Kafka &#8212; Avro</a> support
+    * <a href="#es-avro-to-json">Elastic Search &#8212; Avro</a> support
         * Copy Avro-encoded messages from Kafka to Elastic Search as JSON
 * <a href="#elastic-search">Elastic Search</a> integration (experimental)
 * <a href="#kafka-module">Kafka</a> integration
