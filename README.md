@@ -52,12 +52,14 @@ risk! To retrieve a list of these _undocumented_ commands, use the `undoc` comma
 <a name="features"></a>
 ## Features
 
+* Avro integration
+    * <a href="#kafka-avro-module">Kafka &amp; Avro</a> support
+    * <a href="#es-avro-to-json">Avro to JSON</a> support
+        * Copy Avro-encoded messages from Kafka to Elastic Search as JSON
 * <a href="#elastic-search">Elastic Search</a> integration (experimental)
 * <a href="#kafka-module">Kafka</a> integration
 * <a href="#storm-module">Storm</a> integration
 * <a href="#zookeeper-module">Zookeeper</a> integration
-* Avro to JSON export
-    * Export Avro-encoded messages from Kafka to Elastic Search as JSON
 
 <a name="development"></a>
 ## Development
@@ -180,6 +182,9 @@ To retrieve the document we've just created, use the `eget` command:
       "symbol":"AMD",
       "lastSale":3.55
     }    
+    
+<a name="es-avro-to-json"></a>
+##### Elastic Search: Avro to JSON   
     
 Now let's do something slightly more advanced. Let's use _Trifecta's_ powerful search and copy features to copy
 a message from a Kafka Topic to create (or update) an Elastic Search document. First, let's find the Kafka message we want to copy.
