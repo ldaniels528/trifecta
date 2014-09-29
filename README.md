@@ -56,6 +56,7 @@ risk! To retrieve a list of these _undocumented_ commands, use the `undoc` comma
     * <a href="#kafka-avro-module">Kafka &#8212; Avro</a> support
     * <a href="#es-avro-to-json">Elastic Search &#8212; Avro</a> support
         * Copy Avro-encoded messages from Kafka to Elastic Search as JSON
+    * Zookeeper &#8212; Avro support (coming soon)
 * <a href="#elastic-search">Elastic Search</a> integration (experimental)
 * <a href="#kafka-module">Kafka</a> integration
 * <a href="#storm-module">Storm</a> integration
