@@ -219,7 +219,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kfind" - Finds messages that corresponds to the given criteria and exports them to a topic
+   * Finds messages that corresponds to the given criteria and exports them to a topic
    * @example kfind frequency > 5000 -o topic:highFrequency.quotes
    */
   def findMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Long] = {
