@@ -40,7 +40,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "$", executeCommand, UnboundedParams(1), help = "Executes a local system command"),
     Command(this, "!", executeHistory, UnixLikeParams(Seq("!" -> false, "?" -> false, "index|count" -> false), Nil), help = "Executes a previously issued command"),
-    Command(this, "?", help, SimpleParams(Nil, Seq("search-term")), help = "Provides the list of available commands"),
+    Command(this, "?", help, UnixLikeParams(Seq("search-term" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, SimpleParams(Nil, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
     Command(this, "avload", avroLoadSchema, UnixLikeParams(Seq("variable" -> true, "schemaPath" -> true)), help = "Loads an Avro schema into memory", promptAware = false),
     Command(this, "cat", cat, SimpleParams(Seq("file"), Nil), help = "Dumps the contents of the given file", promptAware = true),
@@ -49,7 +49,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "columns", columnWidthGetOrSet, SimpleParams(Nil, Seq("columnWidth")), help = "Retrieves or sets the column width for message output"),
     Command(this, "debug", debug, UnixLikeParams(Seq("enabled" -> false)), help = "Switches debugging on/off", undocumented = true),
     Command(this, "exit", exit, UnixLikeParams(), help = "Exits the shell"),
-    Command(this, "help", help, UnixLikeParams(), help = "Provides the list of available commands"),
+    Command(this, "help", help, UnixLikeParams(Seq("search-term" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
     Command(this, "history", listHistory, UnixLikeParams(Seq("count" -> false)), help = "Returns a list of previously issued commands"),
     Command(this, "jobs", manageJob, UnixLikeParams(Seq("jobNumber" -> false), Seq("-c" -> "clear jobs", "-d" -> "delete job", "-l" -> "list jobs", "-v" -> "result")), help = "Returns the list of currently running jobs"),
     Command(this, "ls", listFiles, SimpleParams(Nil, Seq("path")), help = "Retrieves the files from the current directory", promptAware = true),
@@ -203,9 +203,18 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @example help
    */
   def help(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[CommandItem] = {
-    val args = params.args
-    commandSet.toSeq filter {
-      case (nameA, cmdA) => !cmdA.undocumented && (args.isEmpty || nameA.startsWith(args.head))
+    // get the prefix
+    val prefix = params.args.headOption
+
+    // was the module switch used?
+   val commands = params("-m") match {
+      case Some(moduleName) => commandSet.toSeq filter { case (name, cmd) => cmd.module.moduleName == moduleName}
+      case None => commandSet.toSeq
+    }
+
+    // provide help for each commands
+    commands filter {
+      case (nameA, cmdA) => !cmdA.undocumented && (prefix.isEmpty || prefix.exists(nameA.startsWith))
     } sortBy (_._1) map {
       case (nameB, cmdB) => CommandItem(nameB, cmdB.module.moduleName, cmdB.help)
     }
