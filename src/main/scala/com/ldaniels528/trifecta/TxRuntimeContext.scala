@@ -66,7 +66,7 @@ case class TxRuntimeContext(config: TxConfig) {
     if (input.startsWith("#")) interpretVScript(input.tail) else interpretCommandLine(input)
   }
 
-  def shutdown(): Unit = ()
+  def shutdown(): Unit = moduleManager.shutdown()
 
   /**
    * Interprets command line input
