@@ -137,7 +137,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kcommit com.shocktrade.alerts 0 devc0 123678
    * @example kcommit devc0 123678
    */
-  def commitOffset(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
+  def commitOffset(params: UnixLikeArgs) {
     // get the arguments (topic, partition, groupId and offset)
     val (topic, partition, groupId, offset) = params.args match {
       case aGroupId :: anOffset :: Nil => cursor map (c => (c.topic, c.partition, aGroupId, parseOffset(anOffset))) getOrElse dieNoCursor
@@ -154,7 +154,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * "kcount" - Counts the messages matching a given condition [references cursor]
    * @example kcount frequency >= 1200
    */
-  def countMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Long] = {
+  def countMessages(params: UnixLikeArgs): Future[Long] = {
     // get the topic and partition from the cursor
     val (topic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
 
@@ -171,7 +171,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kfetch com.shocktrade.alerts 0 dev
    * @example kfetch dev
    */
-  def fetchOffsets(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Long] = {
+  def fetchOffsets(params: UnixLikeArgs): Option[Long] = {
     // get the arguments (topic, partition, groupId)
     val (topic, partition, groupId) = params.args match {
       case aGroupId :: Nil => cursor map (c => (c.topic, c.partition, aGroupId)) getOrElse dieNoCursor
@@ -273,7 +273,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kconsumers shocktrade.keystats.avro
    * @example kconsumers
    */
-  def getConsumers(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Seq[ConsumerDelta], Seq[ConsumerDeltaPM]] = {
+  def getConsumers(params: UnixLikeArgs): Either[Seq[ConsumerDelta], Seq[ConsumerDeltaPM]] = {
      // get the optional topic prefix
     val topicPrefix = params.args.headOption
 
@@ -358,7 +358,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Returns the first offset for a given topic
    */
-  def getFirstOffset(topic: String, partition: Int)(implicit rt: TxRuntimeContext): Option[Long] = {
+  def getFirstOffset(topic: String, partition: Int): Option[Long] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getFirstOffset)
   }
 
@@ -378,7 +378,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Returns the last offset for a given topic
    */
-  def getLastOffset(topic: String, partition: Int)(implicit rt: TxRuntimeContext): Option[Long] = {
+  def getLastOffset(topic: String, partition: Int): Option[Long] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getLastOffset)
   }
 
@@ -464,7 +464,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kget com.shocktrade.alerts 0 3456
    * @example kget 3456
    */
-  def getMessageKey(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Array[Byte]] = {
+  def getMessageKey(params: UnixLikeArgs): Option[Array[Byte]] = {
     // get the arguments
     val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
@@ -482,7 +482,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kgetsize com.shocktrade.alerts 0 5567
    * @example kgetsize 5567
    */
-  def getMessageSize(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Int] = {
+  def getMessageSize(params: UnixLikeArgs): Option[Int] = {
     // get the arguments (topic, partition, groupId and offset)
     val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
@@ -500,7 +500,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kgetmaxsize com.shocktrade.alerts 0 2100 5567
    * @example kgetmaxsize 2100 5567
    */
-  def getMessageMinMaxSize(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[MessageMaxMin] = {
+  def getMessageMinMaxSize(params: UnixLikeArgs): Seq[MessageMaxMin] = {
     // get the arguments (topic, partition, startOffset and endOffset)
     val (topic, partition, startOffset, endOffset) = params.args match {
       case offset0 :: offset1 :: Nil => cursor map (c => (c.topic, c.partition, parseOffset(offset0), parseOffset(offset1))) getOrElse dieNoCursor
@@ -545,7 +545,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kstats com.shocktrade.alerts
    * @example kstats
    */
-  def getStatistics(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Iterable[TopicOffsets] = {
+  def getStatistics(params: UnixLikeArgs): Iterable[TopicOffsets] = {
     // interpret based on the input arguments
     val results = params.args match {
       case Nil =>
@@ -586,7 +586,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param partition1 the ending partition
    * @return an iteration of statistics
    */
-  private def getStatisticsData(topic: String, partition0: Int, partition1: Int)(implicit rt: TxRuntimeContext): Iterable[TopicOffsets] = {
+  private def getStatisticsData(topic: String, partition0: Int, partition1: Int): Iterable[TopicOffsets] = {
     for {
       partition <- partition0 to partition1
       first <- getFirstOffset(topic, partition)
@@ -599,7 +599,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kls com.shocktrade.alerts
    * @example kls
    */
-  def getTopics(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Seq[TopicItem], Seq[TopicItemCompact]] = {
+  def getTopics(params: UnixLikeArgs): Either[Seq[TopicItem], Seq[TopicItemCompact]] = {
     // get the prefix
     val prefix = params("-l") ?? params.args.headOption
 
@@ -733,7 +733,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * "kinbound" - Retrieves a list of all topics with new messages (since last query)
    * @example kinbound com.shocktrade.quotes
    */
-  def inboundMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Iterable[Inbound] = {
+  def inboundMessages(params: UnixLikeArgs): Iterable[Inbound] = {
     val prefix = params.args.headOption
 
     // get the optional wait time parameter
@@ -762,7 +762,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param topicPrefix the given topic prefix (e.g. "myTopic123")
    * @return an iteration of inbound message statistics
    */
-  private def inboundMessageStatistics(topicPrefix: Option[String] = None)(implicit rt: TxRuntimeContext): Iterable[Inbound] = {
+  private def inboundMessageStatistics(topicPrefix: Option[String] = None): Iterable[Inbound] = {
     // start by retrieving a list of all topics
     val topics = KafkaMicroConsumer.getTopicList(brokers, correlationId)
       .filter(t => t.topic == topicPrefix.getOrElse(t.topic))
@@ -796,7 +796,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * "kpublish" - Returns the EOF offset for a given topic
    */
-  def publishMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Unit = {
+  def publishMessage(params: UnixLikeArgs): Unit = {
     // get the arguments
     val (topic, key, message) = params.args match {
       case aKey :: aMessage :: Nil => cursor map (c => (c.topic, aKey, aMessage)) getOrElse dieNoCursor
@@ -819,7 +819,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * "kreset" - Sets the offset of a consumer group ID to zero for all partitions
    * @example kreset com.shocktrade.quotes.csv lld
    */
-  def resetConsumerGroup(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Unit = {
+  def resetConsumerGroup(params: UnixLikeArgs): Unit = {
     // get the arguments
     val (topic, groupId) = params.args match {
       case aGroupId :: Nil => cursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor
