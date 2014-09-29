@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{Try, Failure, Success}
 
 /**
  * Apache Kafka Module
@@ -123,7 +123,10 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   override def prompt: String = cursor map (c => s"${c.topic}/${c.partition}:${c.offset}") getOrElse "/"
 
-  override def shutdown() = ()
+  override def shutdown() = {
+    Try(zk.close())
+    ()
+  }
 
   override def supportedPrefixes: Seq[String] = Seq("topic")
 

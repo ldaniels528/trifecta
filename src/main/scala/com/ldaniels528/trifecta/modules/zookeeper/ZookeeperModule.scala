@@ -68,7 +68,10 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   override def prompt: String = s"${config.zooKeeperConnect}$zkCwd"
 
-  override def shutdown() = ()
+  override def shutdown() = {
+    Try(zk.close())
+    ()
+  }
 
   override def supportedPrefixes: Seq[String] = Seq("zk")
 
