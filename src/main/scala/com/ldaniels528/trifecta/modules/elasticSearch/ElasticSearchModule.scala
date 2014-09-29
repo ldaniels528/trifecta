@@ -2,7 +2,7 @@ package com.ldaniels528.trifecta.modules.elasticSearch
 
 import java.io.PrintStream
 
-import com.ldaniels528.trifecta.command.{Command, UnboundedParams, UnixLikeArgs, UnixLikeParams}
+import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO
@@ -38,11 +38,11 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    */
   override def getCommands(implicit rt: TxRuntimeContext) = Seq[Command](
     Command(this, "econnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Connects to an Elastic Search server"),
-    Command(this, "ecount", count, UnboundedParams(3), help = "Counts documents based on a query"),
+    Command(this, "ecount", count, UnixLikeParams(Seq("path" -> true, "query" -> true)), help = "Counts documents based on a query"),
     Command(this, "ecursor", showCursor, UnixLikeParams(), help = "Displays the navigable cursor"),
     Command(this, "eget", getDocument, UnixLikeParams(Seq("path" -> false), Seq("-o" -> "outputTo")), help = "Retrieves a document"),
     Command(this, "eindex", createIndex, UnixLikeParams(Seq("name" -> true, "settings" -> false)), help = "Retrieves a document"),
-    Command(this, "eput", createDocument, UnixLikeParams(Seq("index" -> false, "type" -> false, "id" -> false)), help = "Creates or updates a document"),
+    Command(this, "eput", createDocument, UnixLikeParams(Seq("path" -> true, "data" -> true)), help = "Creates or updates a document"),
     Command(this, "esearch", searchDocument, UnixLikeParams(Seq("index" -> false, "query" -> true)), help = "Searches for document via a user-defined query")
   )
 
@@ -116,28 +116,34 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   /**
    * Counts documents based on a query
-   * @example ecount quotes quote { matchAll: { } }
+   * @example ecount /quotes/quote { matchAll: { } }
    */
   def count(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Seq[CountResponse]] = {
     val (index, docType, query) = params.args match {
-      case anIndex :: aType :: aQuery :: Nil => (anIndex, aType, aQuery)
+      case aPath :: aQuery :: Nil => aPath.split("[/]").toList match {
+        case anIndex :: aType :: Nil => (anIndex, aType, aQuery)
+        case _ => dieSyntax(params)
+      }
       case _ => dieSyntax(params)
     }
+
     client.count(indices = Seq(index), types = Seq(docType), query) map (Seq(_))
   }
 
   /**
    * Creates a new (or updates an existing) document within an index
-   * @example eput quotes quote AAPL { "symbol" : "AAPL", "lastSale" : 105.11 }
-   * @example eput quotes quote MSFT { "symbol" : "MSFT", "lastSale" : 31.33 }
-   * @example eput quotes quote AMD { "symbol" : "AMD", "lastSale" : 3.33 }
+   * @example eput /quotes/quote/AAPL { "symbol" : "AAPL", "lastSale" : 105.11 }
+   * @example eput /quotes/quote/MSFT { "symbol" : "MSFT", "lastSale" : 31.33 }
+   * @example eput /quotes/quote/AMD { "symbol" : "AMD", "lastSale" : 3.33 }
    */
   def createDocument(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Seq[AddDocumentResponse]] = {
     val (index, docType, id, data) = params.args match {
-      case anIndex :: aType :: anId :: someData :: Nil => (anIndex, aType, Option(anId), someData)
-      case anIndex :: aType :: someData :: Nil => (anIndex, aType, None, someData)
-      case anId :: someData :: Nil => cursor_? map (c => (c.index, c.indexType, Option(anId), someData)) getOrElse dieCursor()
-      case someData :: Nil => cursor_? map (c => (c.index, c.indexType, None, someData)) getOrElse dieCursor()
+      case aPath :: someData :: Nil => aPath.split("[/]").toList match {
+        case anIndex :: aType :: anId :: Nil => (anIndex, aType, Option(anId), someData)
+        case anIndex :: aType :: Nil => (anIndex, aType, None, someData)
+        case anId :: Nil => cursor_? map (c => (c.index, c.indexType, Option(anId), someData)) getOrElse dieCursor()
+        case _ => dieSyntax(params)
+      }
       case _ => dieSyntax(params)
     }
 
@@ -160,15 +166,11 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   /**
    * Retrieves an existing document within an index
-   * @example eget quotes quote AAPL
+   * @example eget /quotes/quote/AAPL
    */
   def getDocument(params: UnixLikeArgs)(implicit rt: TxRuntimeContext, ec: ExecutionContext): Future[JValue] = {
-    val (index, docType, id) = params.args match {
-      case path :: Nil => path.split("[/]").toList match {
-        case "" :: anIndex :: aType :: aId :: Nil => (anIndex, aType, aId)
-        case anIndex :: aType :: aId :: Nil => (anIndex, aType, aId)
-        case aId :: Nil => cursor_? map (c => (c.index, c.indexType, aId)) getOrElse dieCursor()
-      }
+    val ESPath(index, docType, id) = params.args match {
+      case path :: Nil => parsePath(params, path)
       case _ => dieSyntax(params)
     }
 
@@ -182,7 +184,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   /**
    * Searches for document via a user-defined query
-   * @example esearch { "query": { "match_all": { } } }
+   * @example esearch myIndex { "query": { "match_all": { } } }
    */
   def searchDocument(params: UnixLikeArgs): Future[JValue] = {
     val (index, query) = params.args match {
@@ -208,6 +210,16 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   private def dieNoId[S](): S = die[S]("No Elastic Search document ID found")
 
+  private def parsePath(params: UnixLikeArgs, path: String): ESPath = {
+    val (index, docType, id) = path.split("[/]").toList match {
+      case "" :: anIndex :: aType :: aId :: Nil => (anIndex, aType, aId)
+      case anIndex :: aType :: aId :: Nil => (anIndex, aType, aId)
+      case aId :: Nil => cursor_? map (c => (c.index, c.indexType, aId)) getOrElse dieCursor()
+      case _ => dieSyntax(params)
+    }
+    ESPath(index, docType, id)
+  }
+
   private def setCursor[T](index: String, docType: String, id: Option[String], response: Future[T]): Future[T] = {
     response.onComplete {
       case Success(_) => cursor_? = Option(ElasticCursor(index, docType, id))
@@ -220,5 +232,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * Elastic Search Navigable Cursor
    */
   case class ElasticCursor(index: String, indexType: String, id: Option[String])
+
+  case class ESPath(index: String, docType: String, id: String)
 
 }
