@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Try, Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Apache Kafka Module
@@ -273,30 +273,36 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kconsumers shocktrade.keystats.avro
    * @example kconsumers
    */
-  def getConsumers(params: UnixLikeArgs): Either[Seq[ConsumerDelta], Seq[ConsumerDeltaPM]] = {
-     // get the optional topic prefix
+  def getConsumers(params: UnixLikeArgs): Future[List[ConsumerDelta]] = {
+    // get the optional topic prefix
     val topicPrefix = params.args.headOption
 
     // is there a custom base path?
     val customBasePath = params("-p")
 
-    // is it a partition manager consumer?
-    val isPM = params("-s") exists (_.toLowerCase == "pm")
-
-    if (isPM) {
-      val basePath = customBasePath getOrElse die("Must specify base path (-p) when specifying partition management (-s) scheme")
-      Right(KafkaMicroConsumer.getPMVConsumerList(topicPrefix, basePath) map { c =>
-        ConsumerDeltaPM(c.topologyName, c.topic, c.partition, c.offset, c.broker)
-      })
-    }
-    else Left {
-      // retrieve the data
+    // get the Kafka consumer groups
+    val consumersCG = Future {
       KafkaMicroConsumer.getConsumerList(topicPrefix, customBasePath).sortBy(c => (c.consumerId, c.topic, c.partition)) map { c =>
         val topicOffset = getLastOffset(c.topic, c.partition)
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
         ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
       }
     }
+
+    // get the Kafka Spout consumers (Partition Manager)
+    val consumersPM = Future {
+      KafkaMicroConsumer.getPMVConsumerList(topicPrefix, "/") map { c =>
+        val topicOffset = getLastOffset(c.topic, c.partition)
+        val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
+        ConsumerDelta(c.topologyName, c.topic, c.partition, c.offset, topicOffset, delta)
+      }
+    }
+
+    // combine the futures for the two lists
+    for {
+      consumersA <- consumersCG
+      consumersB <- consumersPM
+    } yield consumersA.toList ::: consumersB.toList
   }
 
   /**
