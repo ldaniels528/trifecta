@@ -147,8 +147,7 @@ To see the syntax/usage of a command, use the `syntax` command:
 
 To establish a connection to a local/remote Elastic Search peer, use the `econnect` command:
 
-     core:/home/ldaniels> econnect dev501 9200
-     
+     core:/home/ldaniels> econnect dev501 9200    
      + ----------------------------------- +
      | name                   value        |
      + ----------------------------------- +
@@ -178,8 +177,7 @@ To create a document, use the `eput` command:
     
 To retrieve the document we've just created, use the `eget` command:
 
-    elasticSearch:localhost:9200/quotes/quote/AMD> eget /quotes/quote/AMD
-    
+    elasticSearch:localhost:9200/quotes/quote/AMD> eget /quotes/quote/AMD  
     {
       "symbol":"AMD",
       "lastSale":3.55
@@ -192,8 +190,7 @@ Now let's do something slightly more advanced. Let's use _Trifecta's_ powerful s
 a message from a Kafka Topic to create (or update) an Elastic Search document. First, let's find the Kafka message we want to copy.
 **NOTE**: Some steps have been omitted for brevity. See <a href="#kafka-advanced-search">Kafka Advanced Search</a> for full details.
 
-    elasticSearch:localhost:9200/quotes/quote/AMD> kfindone symbol == "AAPL"
-    
+    elasticSearch:localhost:9200/quotes/quote/AMD> kfindone symbol == "AAPL"    
     + ------------------------------------- +
     | field         value          type     |
     + ------------------------------------- +
@@ -245,21 +242,21 @@ Finally, let's view the document we've created:
 <a name="kafka-module"></a>
 #### Kakfa Module
 
-To view all of the Kafka commands, which all begin with the letter "k":
+To view all of the Kafka commands, use the `-m` switch and the module name
 			
-    kafka:/> ?k
+    kafka:/> ? -m kafka
     + ------------------------------------------------------------------------------------------------------------------- +
     | command     module  description                                                                                     |
     + ------------------------------------------------------------------------------------------------------------------- +
     | kbrokers    kafka   Returns a list of the brokers from ZooKeeper                                                    |
     | kcommit     kafka   Commits the offset for a given topic and group                                                  |
     | kconsumers  kafka   Returns a list of the consumers from ZooKeeper                                                  |
-    | kcount      kafka   Counts the messages matching a given condition [references cursor]                              |
-    | kcursor     kafka   Displays the current message cursor                                                             |
+    | kcount      kafka   Counts the messages matching a given condition                                                  |
+    | kcursor     kafka   Displays the message cursor(s)                                                                  |
     | kfetch      kafka   Retrieves the offset for a given topic and group                                                |
     | kfetchsize  kafka   Retrieves or sets the default fetch size for all Kafka queries                                  |
-    | kfind       kafka   Finds messages that corresponds to the given criteria and exports them to a topic               |
-    | kfindone    kafka   Returns the first message that corresponds to the given criteria                                |
+    | kfind       kafka   Finds messages matching a given condition and exports them to a topic                           |
+    | kfindone    kafka   Returns the first occurrence of a message matching a given condition                            |
     | kfirst      kafka   Returns the first message for a given topic                                                     |
     | kget        kafka   Retrieves the message at the specified offset for a given topic partition                       |
     | kgetkey     kafka   Retrieves the key of the message at the specified offset for a given topic partition            |
@@ -272,6 +269,7 @@ To view all of the Kafka commands, which all begin with the letter "k":
     | kprev       kafka   Attempts to retrieve the message at the previous offset                                         |
     | kreset      kafka   Sets a consumer group ID to zero for all partitions                                             |
     | kstats      kafka   Returns the partition details for a given topic                                                 |
+    | kswitch     kafka   Switches the currently active topic cursor                                                      |
     + ------------------------------------------------------------------------------------------------------------------- +
 
 <a name="kafka-brokers"></a>
@@ -658,7 +656,7 @@ The response was 1350, meaning there are 1350 messages containing a volume great
 
 Suppose you want to find a message for Apple (ticker: "AAPL"), you could issue the `kfindone` command:
 
-    kafka:Shocktrade.quotes.avro/0:1> kfindone symbol == AAPL
+    kafka:Shocktrade.quotes.avro/0:1> kfindone symbol == "AAPL"
     + ------------------------------------- +
     | field         value          type     |
     + ------------------------------------- +
@@ -713,20 +711,20 @@ Let's see how these statistics compares to the original:
 <a name="storm-module"></a>
 #### Storm Module
 
-To view all of the Storm commands, which all begin with the letter "s":
+To view all of the Storm commands, use the `-m` switch and the module name (`storm` in this case):
 
-    storm:localhost> ?s
-    + -------------------------------------------------------------------------------------- +
-    | command   module  description                                                          |
-    + -------------------------------------------------------------------------------------- +
-    | sbolts    storm   Retrieves the list of bolts for s given topology by ID               |
-    | sconf     storm   Lists, retrieves or sets the configuration keys                      |
-    | sconnect  storm   Establishes (or re-establishes) a connect to the Storm Nimbus Host   |
-    | sget      storm   Retrieves the information for a topology                             |
-    | skill     storm   Kills a running topology                                             |
-    | sls       storm   Lists available topologies                                           |
-    | spouts    storm   Retrieves the list of spouts for a given topology by ID              |
-    + -------------------------------------------------------------------------------------- +
+    storm:localhost> ? -m storm
+     + -------------------------------------------------------------------------------------- +
+     | command   module  description                                                          |
+     + -------------------------------------------------------------------------------------- +
+     | sbolts    storm   Retrieves the list of bolts for s given topology by ID               |
+     | sconf     storm   Lists, retrieves or sets the configuration keys                      |
+     | sconnect  storm   Establishes (or re-establishes) a connect to the Storm Nimbus Host   |
+     | sget      storm   Retrieves the information for a topology                             |
+     | skill     storm   Kills a running topology                                             |
+     | sls       storm   Lists available topologies                                           |
+     | spouts    storm   Retrieves the list of spouts for a given topology by ID              |
+     + -------------------------------------------------------------------------------------- +
 
 Let's view the currently running topologies:
 
@@ -796,25 +794,24 @@ Finally, let's take a look at the connection properties for this session:
 <a name="zookeeper-module"></a>
 #### Zookeeper Module
 
-To view all of the Zookeeper commands, which all begin with the letter "z":
+To view all of the Zookeeper commands, use the `-m` switch and the module name (`zookeeper` in this case):
 
-    zookeeper:localhost:2181/> ?z
-    + ----------------------------------------------------------------------------------------- +
-    | command     module     description                                                        |
-    + ----------------------------------------------------------------------------------------- +
-    | zcd         zookeeper  Changes the current path/directory in ZooKeeper                    |
-    | zexists     zookeeper  Verifies the existence of a ZooKeeper key                          |
-    | zget        zookeeper  Retrieves the contents of a specific Zookeeper key                 |
-    | zls         zookeeper  Retrieves the child nodes for a key from ZooKeeper                 |
-    | zmk         zookeeper  Creates a new ZooKeeper sub-directory (key)                        |
-    | zput        zookeeper  Sets a key-value pair in ZooKeeper                                 |
-    | zreconnect  zookeeper  Re-establishes the connection to Zookeeper                         |
-    | zrm         zookeeper  Removes a key-value from ZooKeeper (DESTRUCTIVE)                   |
-    | zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)        |
-    | zsess       zookeeper  Retrieves the Session ID from ZooKeeper                            |
-    | zstat       zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)   |
-    | ztree       zookeeper  Retrieves Zookeeper directory structure                            |
-    + ----------------------------------------------------------------------------------------- +
+    zookeeper:localhost:2181/> ? -m zookeeper
+   + ----------------------------------------------------------------------------------------- +
+   | command     module     description                                                        |
+   + ----------------------------------------------------------------------------------------- +
+   | zcd         zookeeper  Changes the current path/directory in ZooKeeper                    |
+   | zexists     zookeeper  Verifies the existence of a ZooKeeper key                          |
+   | zget        zookeeper  Retrieves the contents of a specific Zookeeper key                 |
+   | zls         zookeeper  Retrieves the child nodes for a key from ZooKeeper                 |
+   | zmk         zookeeper  Creates a new ZooKeeper sub-directory (key)                        |
+   | zput        zookeeper  Sets a key-value pair in ZooKeeper                                 |
+   | zreconnect  zookeeper  Re-establishes the connection to Zookeeper                         |
+   | zrm         zookeeper  Removes a key-value from ZooKeeper (DESTRUCTIVE)                   |
+   | zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)        |
+   | zstats      zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)   |
+   | ztree       zookeeper  Retrieves Zookeeper directory structure                            |
+   + ----------------------------------------------------------------------------------------- +
 
 <a name="zookeeper-list"></a>    
 ##### Zookeeper: Navigating directories and keys 
@@ -831,12 +828,12 @@ To view the Zookeeper keys at the current hierarchy level:
 			
 To change the current Zookeeper hierarchy level:			
 			
-    zookeeper:localhost:2181:/> zcd brokers
+    zookeeper:localhost:2181:/> zcd brokers  
     /brokers
         
 Now view the keys at this level:        
     
-    zookeeper:localhost:2181:/brokers> zls
+    zookeeper:localhost:2181:/brokers> zls   
     topics
     ids	
         
