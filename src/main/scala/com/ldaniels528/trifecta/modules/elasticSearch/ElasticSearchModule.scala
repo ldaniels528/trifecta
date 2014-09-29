@@ -139,6 +139,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   def createDocument(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Seq[AddDocumentResponse]] = {
     val (index, docType, id, data) = params.args match {
       case aPath :: someData :: Nil => aPath.split("[/]").toList match {
+        case "" :: anIndex :: aType :: anId :: Nil => (anIndex, aType, Option(anId), someData)
         case anIndex :: aType :: anId :: Nil => (anIndex, aType, Option(anId), someData)
         case anIndex :: aType :: Nil => (anIndex, aType, None, someData)
         case anId :: Nil => cursor_? map (c => (c.index, c.indexType, Option(anId), someData)) getOrElse dieCursor()
