@@ -269,7 +269,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * "kconsumers" - Retrieves the list of Kafka consumers
-   * @example kconsumers shocktrade.keystats.avro -s pm -b /myconsumers
+   * @example kconsumers shocktrade.keystats.avro -p /myconsumers
    * @example kconsumers shocktrade.keystats.avro
    * @example kconsumers
    */
@@ -903,8 +903,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   case class AvroVerification(verified: Int, failed: Int)
 
   case class ConsumerDelta(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], messagesLeft: Option[Long])
-
-  case class ConsumerDeltaPM(topologyName: String, topic: String, partition: Int, offset: Long, broker: String)
 
   case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
 
