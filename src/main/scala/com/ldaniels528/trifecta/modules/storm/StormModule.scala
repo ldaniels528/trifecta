@@ -53,7 +53,7 @@ class StormModule(config: TxConfig) extends Module {
    * @param path the given output path
    * @return the option of an output writer
    */
-  override def getOutput(path: String): Option[BinaryOutputHandler] = None
+  override def getOutputHandler(path: String): Option[BinaryOutputHandler] = None
 
   override def getVariables: Seq[Variable] = Nil
 

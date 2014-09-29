@@ -70,7 +70,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * Returns a file output writer
    * file:/tmp/messages.bin
    */
-  override def getOutput(path: String): Option[BinaryOutputHandler] = {
+  override def getOutputHandler(path: String): Option[BinaryOutputHandler] = {
     Option(new FileOutputHandler(path))
   }
 

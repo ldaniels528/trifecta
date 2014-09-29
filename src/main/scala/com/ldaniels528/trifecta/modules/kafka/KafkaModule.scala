@@ -16,6 +16,7 @@ import com.ldaniels528.trifecta.support.kafka._
 import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.support.messaging.{MessageCursor, MessageDecoder}
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.Variable
@@ -34,17 +35,17 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(config: TxConfig) extends Module with AvroReading {
-  private val out: PrintStream = config.out
+  implicit val zk: ZKProxy = ZKProxy(EndPoint(config.zooKeeperConnect))
   private var brokers_? : Option[Seq[Broker]] = None
+  private val out: PrintStream = config.out
 
   /**
    * Returns the list of brokers from Zookeeper
-   * @param rt the given runtime context
    * @return the list of [[Broker]]s
    */
-  private def brokers(implicit rt: TxRuntimeContext): Seq[Broker] = {
+  private def brokers: Seq[Broker] = {
     brokers_? getOrElse {
-      val brokerList = KafkaMicroConsumer.getBrokerList(rt.zkProxy) map (b => Broker(b.host, b.port))
+      val brokerList = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
       brokers_? = Option(brokerList)
       brokerList
     }
@@ -98,16 +99,16 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Returns an Kafka output writer
-   * kafka:shocktrade.quotes.avro
+   * topic:shocktrade.quotes.avro
    */
-  override def getOutput(url: String): Option[BinaryOutputHandler] = {
+  override def getOutputHandler(url: String): Option[BinaryOutputHandler] = {
     // extract the output topic
     val outputTopic: String = {
       val index = url.indexOf(":")
-      if (index == -1) die("Invalid URL. Usage: kafka:outputTopic")
+      if (index == -1) dieInvalidOutputURL(url, "topic:shocktrade.quotes.avro")
       else url.splitAt(index) match {
-        case (prefix, topic) if prefix == "kafka" => topic
-        case _ => die("Invalid URL. Usage: kafka:outputTopic")
+        case (prefix, topic) if prefix == "topic" => topic
+        case _ => dieInvalidOutputURL(url, "topic:shocktrade.quotes.avro")
       }
     }
 
@@ -151,8 +152,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kcount frequency >= 1200
    */
   def countMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Long] = {
-    implicit val zk: ZKProxy = rt.zkProxy
-
     // get the topic and partition from the cursor
     val (topic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
 
@@ -198,7 +197,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    */
   def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Option[Either[Option[MessageData], Seq[AvroRecord]]]] = {
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
-    implicit val zk: ZKProxy = rt.zkProxy
+
 
     // get the topic and partition from the cursor
     val (topic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
@@ -222,7 +221,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    */
   def findMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Long] = {
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
-    implicit val zk: ZKProxy = rt.zkProxy
 
     // get the input topic and decoder from the cursor
     val (inputTopic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
@@ -262,9 +260,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * "kbrokers" - Retrieves the list of Kafka brokers
    */
-  def getBrokers(args: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[BrokerDetails] = {
-    implicit val zk: ZKProxy = rt.zkProxy
-
+  def getBrokers(args: UnixLikeArgs): Seq[BrokerDetails] = {
     KafkaMicroConsumer.getBrokerList
   }
 
@@ -275,9 +271,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kconsumers
    */
   def getConsumers(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Seq[ConsumerDelta], Seq[ConsumerDeltaPM]] = {
-    implicit val zk: ZKProxy = rt.zkProxy
-
-    // get the optional topic prefix
+     // get the optional topic prefix
     val topicPrefix = params.args.headOption
 
     // is there a custom base path?
@@ -362,7 +356,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * Returns the first offset for a given topic
    */
   def getFirstOffset(topic: String, partition: Int)(implicit rt: TxRuntimeContext): Option[Long] = {
-    implicit val zk: ZKProxy = rt.zkProxy
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getFirstOffset)
   }
 
@@ -383,7 +376,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * Returns the last offset for a given topic
    */
   def getLastOffset(topic: String, partition: Int)(implicit rt: TxRuntimeContext): Option[Long] = {
-    implicit val zk: ZKProxy = rt.zkProxy
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getLastOffset)
   }
 
@@ -431,8 +423,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     // if a decoder was found, use it to decode the message
     val decodedMessage = decoder.flatMap(decodeMessage(messageData, _))
 
-    // write the message to an output writer
-    messageData.foreach(md => handleOutput(params, decoder, md.key, md.message))
+    // write the message to an output handler
+    messageData.foreach(md => handleOutputFlag(params, decoder, md.key, md.message))
 
     // capture the message's offset and decoder
     setCursor(topic, partition, messageData, decoder)
@@ -470,8 +462,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kget 3456
    */
   def getMessageKey(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Array[Byte]] = {
-    implicit val zk: ZKProxy = rt.zkProxy
-
     // get the arguments
     val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
@@ -490,8 +480,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kgetsize 5567
    */
   def getMessageSize(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Int] = {
-    implicit val zk: ZKProxy = rt.zkProxy
-
     // get the arguments (topic, partition, groupId and offset)
     val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
@@ -510,8 +498,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kgetmaxsize 2100 5567
    */
   def getMessageMinMaxSize(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[MessageMaxMin] = {
-    implicit val zk: ZKProxy = rt.zkProxy
-
     // get the arguments (topic, partition, startOffset and endOffset)
     val (topic, partition, startOffset, endOffset) = params.args match {
       case offset0 :: offset1 :: Nil => cursor map (c => (c.topic, c.partition, parseOffset(offset0), parseOffset(offset1))) getOrElse dieNoCursor
@@ -557,8 +543,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kstats
    */
   def getStatistics(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Iterable[TopicOffsets] = {
-    implicit val zk: ZKProxy = rt.zkProxy
-
     // interpret based on the input arguments
     val results = params.args match {
       case Nil =>
@@ -613,8 +597,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kls
    */
   def getTopics(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Seq[TopicItem], Seq[TopicItemCompact]] = {
-    implicit val zk: ZKProxy = rt.zkProxy
-
     // get the prefix
     val prefix = params("-l") ?? params.args.headOption
 
@@ -778,8 +760,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @return an iteration of inbound message statistics
    */
   private def inboundMessageStatistics(topicPrefix: Option[String] = None)(implicit rt: TxRuntimeContext): Iterable[Inbound] = {
-    implicit val zk: ZKProxy = rt.zkProxy
-
     // start by retrieving a list of all topics
     val topics = KafkaMicroConsumer.getTopicList(brokers, correlationId)
       .filter(t => t.topic == topicPrefix.getOrElse(t.topic))
@@ -837,8 +817,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kreset com.shocktrade.quotes.csv lld
    */
   def resetConsumerGroup(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Unit = {
-    implicit val zk: ZKProxy = rt.zkProxy
-
     // get the arguments
     val (topic, groupId) = params.args match {
       case aGroupId :: Nil => cursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor

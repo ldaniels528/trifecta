@@ -24,6 +24,7 @@ class TxConfig(zkHost: String, zkPort: Int) {
   // create the root-level scope
   implicit val scope = RootScope()
 
+  // Zookeeper connection string
   val zooKeeperConnect = s"$zkHost:$zkPort"
 
   // define the job manager

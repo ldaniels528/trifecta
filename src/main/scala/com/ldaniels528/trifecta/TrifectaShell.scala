@@ -4,8 +4,6 @@ import java.io.PrintStream
 
 import com.ldaniels528.trifecta.TxConsole._
 import com.ldaniels528.trifecta.command.Command
-import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
-import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.vscript.Scope
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
@@ -137,11 +135,8 @@ object TrifectaShell {
         // load the configuration
         val config = new TxConfig(host, port)
 
-        // create the Zookeeper proxy
-        val zkProxy = ZKProxy(EndPoint(host, port))
-
         // create the runtime context
-        val rt = new TxRuntimeContext(config, zkProxy)
+        val rt = new TxRuntimeContext(config)
 
         // start the shell
         val console = new TrifectaShell(config, rt)

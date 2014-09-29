@@ -31,11 +31,11 @@ trait Module {
   def getCommands(implicit rt: TxRuntimeContext): Seq[Command]
 
   /**
-   * Returns an output writer for the given module
-   * @param path the given output path
-   * @return the option of an output writer
+   * Attempts to retrieve an output handler for the given URL
+   * @param url the given output URL
+   * @return the option of an output handler
    */
-  def getOutput(path: String): Option[OutputHandler]
+  def getOutputHandler(url: String): Option[OutputHandler]
 
   /**
    * Returns the variables that are bound to the module
@@ -62,6 +62,8 @@ trait Module {
 
   protected def die[S](message: String): S = throw new IllegalArgumentException(message)
 
+  protected def dieInvalidOutputURL(url: String, example: String) = die(s"Invalid output URL '$url' - Example usage: $example")
+
   protected def dieNoOutputHandler(device: OutputHandler) = die(s"Unhandled output device $device")
 
   protected def dieSyntax[S](unixArgs: UnixLikeArgs): S = {
@@ -87,7 +89,7 @@ trait Module {
     if (values.length > index) Some(values(index)) else None
   }
 
-  protected def handleOutput(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]], key: Array[Byte], message: Array[Byte])(implicit rt: TxRuntimeContext, ec: ExecutionContext) = {
+  protected def handleOutputFlag(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]], key: Array[Byte], message: Array[Byte])(implicit rt: TxRuntimeContext, ec: ExecutionContext) = {
     params("-o") map { url =>
       rt.getOutputHandler(url) match {
         case Some(device: MessageOutputHandler) => device use (_.write(decoder, key, message))

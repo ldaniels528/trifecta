@@ -8,7 +8,6 @@ import com.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import com.ldaniels528.trifecta.support.io.OutputHandler
-import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.vscript.VScriptCompiler
 import org.slf4j.LoggerFactory
 
@@ -19,7 +18,7 @@ import scala.util.Try
  * Trifecta Runtime Context
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class TxRuntimeContext(config: TxConfig, zkProxy: ZKProxy) {
+case class TxRuntimeContext(config: TxConfig) {
   private[trifecta] val logger = LoggerFactory.getLogger(getClass)
   private implicit val scope = config.scope
 
@@ -56,7 +55,7 @@ case class TxRuntimeContext(config: TxConfig, zkProxy: ZKProxy) {
     }
 
     // locate the module
-    moduleManager.findModuleByPrefix(prefix) flatMap (_.getOutput(url))
+    moduleManager.findModuleByPrefix(prefix) flatMap (_.getOutputHandler(url))
   }
 
   def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) = {
@@ -67,7 +66,7 @@ case class TxRuntimeContext(config: TxConfig, zkProxy: ZKProxy) {
     if (input.startsWith("#")) interpretVScript(input.tail) else interpretCommandLine(input)
   }
 
-  def shutdown(): Unit = zkProxy.close()
+  def shutdown(): Unit = ()
 
   /**
    * Interprets command line input

@@ -12,7 +12,7 @@ import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
 class CoreModuleSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWhenThen with MockitoSugar {
   private val config = new TxConfig("localhost", 2181)
   private implicit val zk = mock[ZKProxy]
-  private implicit val rt = new TxRuntimeContext(config, zk)
+  private implicit val rt = new TxRuntimeContext(config)
   private val module = new CoreModule(config)
 
   info("As a Core Module")

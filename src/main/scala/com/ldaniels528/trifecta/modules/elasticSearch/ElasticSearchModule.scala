@@ -40,17 +40,17 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     Command(this, "econnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Connects to an Elastic Search server"),
     Command(this, "ecount", count, UnboundedParams(3), help = "Counts documents based on a query"),
     Command(this, "ecursor", showCursor, UnixLikeParams(), help = "Displays the navigable cursor"),
-    Command(this, "eget", getDocument, UnixLikeParams(Seq("index" -> false, "type" -> false, "id" -> false)), help = "Retrieves a document"),
+    Command(this, "eget", getDocument, UnixLikeParams(Seq("path" -> false), Seq("-o" -> "outputTo")), help = "Retrieves a document"),
     Command(this, "eindex", createIndex, UnixLikeParams(Seq("name" -> true, "settings" -> false)), help = "Retrieves a document"),
     Command(this, "eput", createDocument, UnixLikeParams(Seq("index" -> false, "type" -> false, "id" -> false)), help = "Creates or updates a document"),
     Command(this, "esearch", searchDocument, UnixLikeParams(Seq("index" -> false, "query" -> true)), help = "Searches for document via a user-defined query")
   )
 
   /**
-   * Returns an Elastic Search output writer
+   * Returns an Elastic Search document output handler
    * @param url the given output URL (e.g. "es:/quotes/quote/AAPL")
    */
-  override def getOutput(url: String): Option[MessageOutputHandler] = {
+  override def getOutputHandler(url: String): Option[MessageOutputHandler] = {
     client_? flatMap { client =>
       url.split("[/]").toList match {
         case "es:" :: index :: indexType :: Nil =>
@@ -58,7 +58,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
         case "es:" :: index :: indexType :: id :: Nil =>
           Option(new DocumentOutputHandler(client, index, indexType, Option(id)))
         case _ =>
-          die(s"Invalid output URL '$url'")
+          dieInvalidOutputURL(url, "es:/quotes/quote/AAPL")
       }
     }
   }
@@ -164,16 +164,18 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    */
   def getDocument(params: UnixLikeArgs)(implicit rt: TxRuntimeContext, ec: ExecutionContext): Future[JValue] = {
     val (index, docType, id) = params.args match {
-      case anIndex :: aType :: aId :: Nil => (anIndex, aType, aId)
-      case aId :: Nil => cursor_? map (c => (c.index, c.indexType, aId)) getOrElse dieCursor()
-      case Nil => cursor_? map (c => (c.index, c.indexType, c.id getOrElse dieNoId())) getOrElse dieCursor()
+      case path :: Nil => path.split("[/]").toList match {
+        case "" :: anIndex :: aType :: aId :: Nil => (anIndex, aType, aId)
+        case anIndex :: aType :: aId :: Nil => (anIndex, aType, aId)
+        case aId :: Nil => cursor_? map (c => (c.index, c.indexType, aId)) getOrElse dieCursor()
+      }
       case _ => dieSyntax(params)
     }
 
     // retrieve the document
     setCursor(index, docType, Option(id), client.get(index, docType, id) map { js =>
       // handle the optional output directive
-      handleOutput(params, decoder = None, id.getBytes("UTF8"), compact(render(js)).getBytes("UTF8"))
+      handleOutputFlag(params, decoder = None, id.getBytes("UTF8"), compact(render(js)).getBytes("UTF8"))
       js
     })
   }

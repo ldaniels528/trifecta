@@ -24,6 +24,7 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class ZookeeperModule(config: TxConfig) extends Module {
+  implicit val zk: ZKProxy = ZKProxy(EndPoint(config.zooKeeperConnect))
   private val formatTypes = Seq("bytes", "char", "double", "float", "int", "json", "long", "short", "string")
   private val out: PrintStream = config.out
 
@@ -41,12 +42,25 @@ class ZookeeperModule(config: TxConfig) extends Module {
     Command(this, "ztree", tree, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
   /**
-   * Returns an Zookeeper output writer
-   * zk:/messages/cache001
+   * Returns an Zookeeper output handler
+   * @param url the given output URL (e.g. "zk:/messages/cache001")
    */
-  override def getOutput(outputTopic: String): Option[OutputHandler] = {
-    // TODO add an output writer
-    None
+  override def getOutputHandler(url: String): Option[OutputHandler] = {
+    // extract the output topic
+    val rootPath: String = {
+      val index = url.indexOf(":")
+      if (index == -1) dieInvalidOutputURL(url, "zk:/messages/cache001")
+      else url.splitAt(index) match {
+        case (prefix, path) if prefix == "zk" => path
+        case _ => dieInvalidOutputURL(url, "zk:/messages/cache001")
+      }
+    }
+
+    // create a standalone Zookeeper instance
+    val zk = ZKProxy(EndPoint(config.zooKeeperConnect))
+
+    // return the output handler
+    Option(new ZookeeperOutputHandler(zk, rootPath))
   }
 
   override def getVariables: Seq[Variable] = Seq(
@@ -60,8 +74,6 @@ class ZookeeperModule(config: TxConfig) extends Module {
   override def shutdown() = ()
 
   override def supportedPrefixes: Seq[String] = Seq("zk")
-
-  private def zk(implicit rt: TxRuntimeContext): ZKProxy = rt.zkProxy
 
   /**
    * Returns the ZooKeeper previous working directory
@@ -270,18 +282,6 @@ class ZookeeperModule(config: TxConfig) extends Module {
     ("echo stat" #> s"nc $host $port").!!
   }
 
-  private def zkKeyToPath(parent: String, child: String): String = {
-    val parentWithSlash = if (parent.endsWith("/")) parent else parent + "/"
-    parentWithSlash + child
-  }
-
-  private def zkKeyToPath(key: String): String = {
-    key match {
-      case s if s.startsWith("/") => key
-      case s => (if (zkCwd.endsWith("/")) zkCwd else zkCwd + "/") + s
-    }
-  }
-
   /**
    * "ztree" - Retrieves ZooKeeper key hierarchy
    * @param params the given arguments
@@ -346,6 +346,18 @@ class ZookeeperModule(config: TxConfig) extends Module {
       case s if isDottedHex(s) => "bytes"
       case _ => "string"
     }
+  }
+
+  private def zkKeyToPath(key: String): String = {
+    key match {
+      case s if s.startsWith("/") => key
+      case s => (if (zkCwd.endsWith("/")) zkCwd else zkCwd + "/") + s
+    }
+  }
+
+  private def zkKeyToPath(parent: String, child: String): String = {
+    val parentWithSlash = if (parent.endsWith("/")) parent else parent + "/"
+    parentWithSlash + child
   }
 
 }
