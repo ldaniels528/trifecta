@@ -141,7 +141,7 @@ To see the syntax/usage of a command, use the `syntax` command:
 <a name="elastic-search"></a>
 #### Elastic Search Module
 
-To establish a connect to a local/remote Elastic Search peer, use the `econnect` command:
+To establish a connection to a local/remote Elastic Search peer, use the `econnect` command:
 
      core:/home/ldaniels> econnect dev501 9200
      
