@@ -6,14 +6,16 @@ and verify Kafka messages, Storm topologies and Zookeeper data.
 
 Table of Contents
 
-* <a href="#Motivations">Motivations</a>
-* <a href="#Development">Development</a>
+* <a href="#motivations">Motivations</a>
+* <a href="#features">Features</a>
+* <a href="#development">Development</a>
 	* <a href="#build-requirements">Build Requirements</a>
 	* <a href="#configuring-your-ide">Configuring the project for your IDE</a>
 	* <a href="#building-the-code">Building the code</a>
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
+    * <a href="#elastic-search">Elastic Search Module</a>  
     * <a href="#kafka-module">Kafka Module</a>  
         * <a href="#kafka-brokers">Kafka Brokers</a> 
         * <a href="#kafka-topics">Kafka Topics</a> 
@@ -28,7 +30,7 @@ Table of Contents
         * <a href="#zookeeper-list">Navigating directories and keys</a>    
         * <a href="#zookeeper-get-put">Getting and setting key-value pairs</a>
 
-<a name="Motivations"></a>
+<a name="motivations"></a>
 ## Motivations
 
 The motivations behind creating _Trifecta_ are simple; testing, verifying and managing Kafka topics and Zookeeper 
@@ -47,7 +49,17 @@ the unit of functionality.
 they are experimental, work-in-progress, or not yet fully implemented, so use them at your own
 risk! To retrieve a list of these _undocumented_ commands, use the `undoc` command.
 
-<a name="Development"></a>
+<a name="features"></a>
+## Features
+
+* <a href="#elastic-search">Elastic Search</a> integration (experimental)
+* <a href="#kafka-module">Kafka</a> integration
+* <a href="#storm-module">Storm</a> integration
+* <a href="#zookeeper-module">Zookeeper</a> integration
+* Avro to JSON export
+    * Export Avro-encoded messages from Kafka to Elastic Search as JSON
+
+<a name="development"></a>
 ## Development
 
 <a name="build-requirements"></a>
@@ -60,9 +72,11 @@ risk! To retrieve a list of these _undocumented_ commands, use the `undoc` comma
 ### Configuring the project for your IDE
 
 #### Generating an Eclipse project
+
     $ sbt eclipse
     
 #### Generating an Intellij Idea project
+
     $ sbt gen-idea
 
 <a name="building-the-code"></a>
@@ -86,14 +100,19 @@ risk! To retrieve a list of these _undocumented_ commands, use the `undoc` comma
 _Trifecta_ exposes its commands through modules. At any time to see which modules are available one could issue the `modules` command.
 
     core:/home/ldaniels> modules
-    + ------------------------------------------------------------------------------------- +
-    | name       className                                                 loaded  active   |
-    + ------------------------------------------------------------------------------------- +
-    | kafka      com.ldaniels528.verify.modules.kafka.KafkaModule          true    false    |
-    | core       com.ldaniels528.verify.modules.core.CoreModule            true    true     |
-    | zookeeper  com.ldaniels528.verify.modules.zookeeper.ZookeeperModule  true    false    |
-    | storm      com.ldaniels528.verify.modules.storm.StormModule          true    false    |
-    + ------------------------------------------------------------------------------------- +
+    + --------------------------------------------------------------------------------------------------- +
+    | name           className                                                           loaded  active   |
+    + --------------------------------------------------------------------------------------------------- +
+    | kafka          com.ldaniels528.trifecta.modules.kafka.KafkaModule                  true    true     |
+    | zookeeper      com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule          true    false    |
+    | elasticSearch  com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule  true    false    |
+    | core           com.ldaniels528.trifecta.modules.core.CoreModule                    true    false    |
+    | storm          com.ldaniels528.trifecta.modules.storm.StormModule                  true    false    |
+    + --------------------------------------------------------------------------------------------------- +
+
+To execute local system commands, use the `$` symbol followed by the command you'd like to execute:
+    
+    core:/home/ldaniels> $ "netstat -ptln"
     
 To see all available commands, use the `help` command (`?` is a shortcut):
 
@@ -102,23 +121,12 @@ To see all available commands, use the `help` command (`?` is a shortcut):
     | command     module     description                                                                                     |
     + ---------------------------------------------------------------------------------------------------------------------- +
     | !           core       Executes a previously issued command                                                            |
+    | $           core       Executes a local system command                                                                 |
     | ?           core       Provides the list of available commands                                                         |
     | autoswitch  core       Automatically switches to the module of the most recently executed command                      |
-    | avload      core       Loads an Avro schema into memory                                                                |
-    | cat         core       Dumps the contents of the given file                                                            |
-    | cd          core       Changes the local file system path/directory                                                    |
     .                                                                                                                        .
-    .                                                                                                                        .
-    | kbrokers    kafka      Returns a list of the brokers from ZooKeeper                                                    |
-    | kcommit     kafka      Commits the offset for a given topic and group                                                  |
-    | kconsumers  kafka      Returns a list of the consumers from ZooKeeper                                                  |
-    | kcount      kafka      Counts the messages matching a given condition [references cursor]                              |
-    | kcursor     kafka      Displays the current message cursor                                                             |
     .                                                                                                                        .
     .                                                                                                                        .                                          
-    | zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)                                     |
-    | zsess       zookeeper  Retrieves the Session ID from ZooKeeper                                                         |
-    | zstat       zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)                                |
     | ztree       zookeeper  Retrieves Zookeeper directory structure                                                         |
     + ---------------------------------------------------------------------------------------------------------------------- +
 
@@ -129,6 +137,103 @@ To see the syntax/usage of a command, use the `syntax` command:
     core:/home/ldaniels> syntax kget
     Description: Retrieves the message at the specified offset for a given topic partition
     Usage: kget [-f outputFile] [-d YYYY-MM-DDTHH:MM:SS] [-a avroSchema] [topic] [partition] [offset]
+
+<a name="elastic-search"></a>
+#### Elastic Search Module
+
+To establish a connect to a local/remote Elastic Search peer, use the `econnect` command:
+
+     core:/home/ldaniels> econnect dev501 9200
+     
+     + ----------------------------------- +
+     | name                   value        |
+     + ----------------------------------- +
+     | Cluster Name           ShockTrade   |
+     | Status                 green        |
+     | Timed Out              false        |
+     | Number of Nodes        5            |
+     | Number of Data Nodes   5            |
+     | Active Shards          10           |
+     | Active Primary Shards  5            |
+     | Initializing Shards    0            |
+     | Relocating Shards      0            |
+     | Unassigned Shards      0            |
+     + ----------------------------------- +
+
+Once connected, the server statistics above will be returned.
+    
+To create a document, use the `eput` command:
+
+    elasticSearch:localhost:9200/> eput /quotes/quote/AMD { "symbol":"AMD", "lastSale":3.33 }
+    
+    + --------------------------------------- +
+    | created  _index  _type  _id  _version   |
+    + --------------------------------------- +
+    | true     quotes  quote  AMD  3          |
+    + --------------------------------------- +
+    
+To retrieve the document we've just created, use the `eget` command:
+
+    elasticSearch:localhost:9200/quotes/quote/AMD> eget /quotes/quote/AMD
+    
+    {
+      "symbol":"AMD",
+      "lastSale":3.55
+    }    
+    
+Now let's do something slightly more advanced. Let's use _Trifecta's_ powerful search and copy features to copy
+a message from a Kafka Topic to create (or update) an Elastic Search document. First, let's find the Kafka message we want to copy.
+**NOTE**: Some steps have been omitted for brevity. See <a href="#kafka-advanced-search">Kafka Advanced Search</a> for full details.
+
+    elasticSearch:localhost:9200/quotes/quote/AMD> kfindone symbol == "AAPL"
+    
+    + ------------------------------------- +
+    | field         value          type     |
+    + ------------------------------------- +
+    | symbol        AAPL           Utf8     |
+    | lastTrade     100.75         Double   |
+    | tradeDate     1411714800000  Long     |
+    | tradeTime                             |
+    | ask           100.66         Double   |
+    | bid           100.62         Double   |
+    | change        2.88           Double   |
+    | changePct     2.94           Double   |
+    | prevClose     97.87          Double   |
+    | open          98.55          Double   |
+    | close         100.75         Double   |
+    | high          100.75         Double   |
+    | low           98.4           Double   |
+    | volume        62336772       Long     |
+    | marketCap     6.033E11       Double   |
+    | errorMessage                          |
+    + ------------------------------------- +
+
+Next, let's copy the Kafka message as an Elastic Search document using the `kget` command:
+
+    kafka:shocktrade.quotes.avro/4:5429> kget -o es:/quotes/quote/AAPL
+    
+Finally, let's view the document we've created:
+   
+     kafka:shocktrade.quotes.avro/4:5429> eget /quotes/quote/AAPL
+     
+    {
+      "symbol":"AAPL",
+      "lastTrade":100.75,
+      "tradeDate":1411714800000,
+      "tradeTime":null,
+      "ask":100.66,
+      "bid":100.62,
+      "change":2.88,
+      "changePct":2.94,
+      "prevClose":97.87,
+      "open":98.55,
+      "close":100.75,
+      "high":100.75,
+      "low":98.4,
+      "volume":62336772,
+      "marketCap":6.033E11,
+      "errorMessage":null
+    }    
 
 <a name="kafka-module"></a>
 #### Kakfa Module
@@ -570,7 +675,7 @@ Suppose you want to find a message for Apple (ticker: "AAPL"), you could issue t
 
 Now suppose you want to copy the messages having high volume (1,000,000 or more) to another topic:
 
-    kfind volume >= 1000000 -o hft.Shocktrade.quotes.avro
+    kfind volume >= 1000000 -o topic:hft.Shocktrade.quotes.avro
 
 Finally, let's look at the results:
 
