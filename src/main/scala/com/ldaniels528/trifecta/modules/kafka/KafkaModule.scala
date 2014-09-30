@@ -4,17 +4,17 @@ import java.io.{File, PrintStream}
 import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.concurrent.atomic.AtomicLong
 
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
+import com.ldaniels528.trifecta.modules.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.avro.{AvroDecoder, AvroReading}
-import com.ldaniels528.trifecta.support.io.{BinaryOutputHandler, MessageOutputHandler}
+import com.ldaniels528.trifecta.support.io.BinaryOutputHandler
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
+import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
-import com.ldaniels528.trifecta.support.messaging.{MessageCursor, MessageDecoder}
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.TxUtils._
@@ -36,20 +36,7 @@ import scala.util.{Failure, Success, Try}
  */
 class KafkaModule(config: TxConfig) extends Module with AvroReading {
   implicit val zk: ZKProxy = ZKProxy(EndPoint(config.zooKeeperConnect))
-  private var brokers_? : Option[Seq[Broker]] = None
   private val out: PrintStream = config.out
-
-  /**
-   * Returns the list of brokers from Zookeeper
-   * @return the list of [[Broker]]s
-   */
-  private def brokers: Seq[Broker] = {
-    brokers_? getOrElse {
-      val brokerList = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
-      brokers_? = Option(brokerList)
-      brokerList
-    }
-  }
 
   // set the default correlation ID
   private val correlationId: Int = (Math.random * Int.MaxValue).toInt
@@ -61,6 +48,15 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   // define the offset for message cursor navigation commands
   private val cursors = mutable.Map[String, KafkaCursor]()
   private var currentTopic: Option[String] = None
+
+  // create the facade
+  private[kafka] val facade = new KafkaFacade(correlationId)
+
+  /**
+   * Returns the list of brokers from Zookeeper
+   * @return the list of [[Broker]]s
+   */
+  private lazy val brokers: Seq[Broker] = facade.brokers
 
   def defaultFetchSize: Int = config.getOrElse("defaultFetchSize", 65536)
 
@@ -75,24 +71,24 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", getConsumers, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix", "-c" -> "consumerPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
-    Command(this, "kcount", countMessages, SimpleParams(Seq("field", "operator", "value"), Nil), help = "Counts the messages matching a given condition"),
+    Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true)), help = "Counts the messages matching a given condition"),
     Command(this, "kcursor", getCursor, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix")), help = "Displays the message cursor(s)"),
     Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
-    Command(this, "kfetchsize", fetchSizeGetOrSet, SimpleParams(Nil, Seq("fetchSize")), help = "Retrieves or sets the default fetch size for all Kafka queries"),
-    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputTo")), "Finds messages matching a given condition and exports them to a topic"),
-    Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputTo")), "Returns the first occurrence of a message matching a given condition"),
-    Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputTo")), help = "Returns the first message for a given topic"),
-    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "YYYY-MM-DDTHH:MM:SS", "-o" -> "outputTo")), help = "Retrieves the message at the specified offset for a given topic partition"),
+    Command(this, "kfetchsize", fetchSizeGetOrSet, UnixLikeParams(Seq("fetchSize" -> false)), help = "Retrieves or sets the default fetch size for all Kafka queries"),
+    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputSource")), "Finds messages matching a given condition and exports them to a topic"),
+    Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputSource")), "Returns the first occurrence of a message matching a given condition"),
+    Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Returns the first message for a given topic"),
+    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "YYYY-MM-DDTHH:MM:SS", "-o" -> "outputSource")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kimport", importMessages, UnixLikeParams(Seq("topic" -> false), Seq("-a" -> "avro", "-b" -> "binary", "-f" -> "inputFile", "-t" -> "fileType")), help = "Imports messages into a new/existing topic", undocumented = true),
     Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-w" -> "wait-time")), help = "Retrieves a list of topics with new messages (since last query)"),
-    Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputTo")), help = "Returns the last message for a given topic"),
+    Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Returns the last message for a given topic"),
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "detailed list")), help = "Lists all existing topics"),
-    Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputTo")), help = "Attempts to retrieve the next message"),
-    Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputTo")), help = "Attempts to retrieve the message at the previous offset"),
-    Command(this, "kpublish", publishMessage, SimpleParams(Seq("topic", "key"), Nil), help = "Publishes a message to a topic", undocumented = true),
+    Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Attempts to retrieve the next message"),
+    Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Attempts to retrieve the message at the previous offset"),
+    Command(this, "kpublish", publishMessage, UnixLikeParams(Seq("topic" -> true, "key" -> true)), help = "Publishes a message to a topic", undocumented = true),
     Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"),
     Command(this, "kswitch", switchCursor, UnixLikeParams(Seq("topic" -> true)), help = "Switches the currently active topic cursor"))
@@ -112,7 +108,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       }
     }
 
-    brokers_? map (new KafkaTopicOutputHandler(_, outputTopic))
+    Option(new KafkaTopicOutputHandler(brokers, outputTopic))
   }
 
   override def getVariables: Seq[Variable] = Seq(
@@ -130,10 +126,14 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   override def supportedPrefixes: Seq[String] = Seq("topic")
 
+  /**
+   * Returns the cursor for the current topic partition
+   * @return the cursor for the current topic partition
+   */
   private def cursor: Option[KafkaCursor] = currentTopic.flatMap(cursors.get)
 
   /**
-   * "kcommit" - Commits the offset for a given topic and group ID
+   * Commits the offset for a given topic and group ID
    * @example kcommit com.shocktrade.alerts 0 devc0 123678
    * @example kcommit devc0 123678
    */
@@ -145,13 +145,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       case _ => dieSyntax(params)
     }
 
-    // perform the action
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (
-      _.commitOffsets(groupId, offset, params("-m") getOrElse "N/A"))
+    // commit the offset
+    facade.commitOffset(topic, partition, groupId, offset, params("-m"))
   }
 
   /**
-   * "kcount" - Counts the messages matching a given condition [references cursor]
+   * Counts the messages matching a given condition [references cursor]
    * @example kcount frequency >= 1200
    */
   def countMessages(params: UnixLikeArgs): Future[Long] = {
@@ -163,11 +162,11 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     val conditions = Seq(compile(compile(field, operator, value), decoder))
 
     // perform the count
-    KafkaMicroConsumer.count(topic, brokers, correlationId, conditions: _*)
+    facade.countMessages(topic, conditions, decoder)
   }
 
   /**
-   * "kfetch" - Returns the offsets for a given topic and group ID
+   * Returns the offsets for a given topic and group ID
    * @example kfetch com.shocktrade.alerts 0 dev
    * @example kfetch dev
    */
@@ -180,12 +179,13 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
 
     // perform the action
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.fetchOffsets(groupId))
+    facade.fetchOffsets(topic, partition, groupId)
   }
 
   /**
-   * "kfetchsize" - Retrieves or sets the default fetch size for all Kafka queries
-   * @param params the given command line arguments
+   * Retrieves or sets the default fetch size for all Kafka queries
+   * @example kfetchsize
+   * @example kfetchsize 65536
    */
   def fetchSizeGetOrSet(params: UnixLikeArgs) = {
     params.args.headOption match {
@@ -195,26 +195,24 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kfindone" - Returns the first message that corresponds to the given criteria
+   * Returns the first message that corresponds to the given criteria
    * @example kfindone frequency > 5000
    */
   def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Option[Either[Option[MessageData], Seq[AvroRecord]]]] = {
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 
-
     // get the topic and partition from the cursor
-    val (topic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
+    val (topic, decoder_?) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
 
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
-    val conditions = Seq(compile(compile(field, operator, value), decoder))
+    val conditions = Seq(compile(compile(field, operator, value), decoder_?))
 
     // perform the search
-    KafkaMicroConsumer.findOne(topic, brokers, correlationId, conditions: _*) map { result_? =>
-      for {
-        (partition, md) <- result_?
-        decoder <- cursor map (_.decoder)
-      } yield getMessage(topic, partition, md.offset, params)
+    KafkaMicroConsumer.findOne(topic, brokers, correlationId, conditions: _*) map {
+      _ map { case (partition, md) =>
+        getMessage(topic, partition, md.offset, params)
+      }
     }
   }
 
@@ -226,7 +224,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 
     // get the input topic and decoder from the cursor
-    val (inputTopic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
+    val (topic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
 
     // get the criteria
     val conditions = params.args match {
@@ -234,30 +232,11 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       case _ => dieSyntax(params)
     }
 
-    // get the output device
-    val outputDevice = params("-o") flatMap rt.getOutputHandler getOrElse die("Output device URL expected")
+    // get the output handler
+    val outputHandler = params("-o") flatMap rt.getOutputHandler getOrElse die("Output source URL expected")
 
-    // open the publisher
-    val counter = new AtomicLong(0L)
-
-    // find and export the messages matching our criteria
-    val task = KafkaMicroConsumer.observe(inputTopic, brokers, correlationId) { md =>
-      if (conditions.forall(_.satisfies(md.message, md.key))) {
-        outputDevice match {
-          case device: MessageOutputHandler => device.write(decoder, md.key, md.message)
-          case device: BinaryOutputHandler => device.write(md.key, md.message)
-          case device => dieNoOutputHandler(device)
-        }
-        counter.incrementAndGet()
-        ()
-      }
-    }
-
-    // upon completion, close the output device and return the count
-    task.map { u =>
-      outputDevice.close()
-      counter.get
-    }
+    // find the messages
+    facade.findMessages(topic, decoder, conditions, outputHandler)
   }
 
   /**
@@ -268,7 +247,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kconsumers" - Retrieves the list of Kafka consumers
+   * Retrieves the list of Kafka consumers
    * @example kconsumers -t shocktrade.keystats.avro
    * @example kconsumers -c devGroup
    * @example kconsumers
@@ -279,33 +258,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     val topicPrefix = params("-t")
 
     // get the Kafka consumer groups
-    val consumersCG = Future {
-      KafkaMicroConsumer.getConsumerList(topicPrefix) map { c =>
-        val topicOffset = getLastOffset(c.topic, c.partition)
-        val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-        ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
-      }
-    }
-
-    // get the Kafka Spout consumers (Partition Manager)
-    val consumersPM = Future {
-      KafkaMicroConsumer.getSpoutConsumerList() map { c =>
-        val topicOffset = getLastOffset(c.topic, c.partition)
-        val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-        ConsumerDelta(c.topologyName, c.topic, c.partition, c.offset, topicOffset, delta)
-      }
-    }
-
-    // combine the futures for the two lists
-    (for {
-      consumersA <- consumersCG
-      consumersB <- consumersPM
-    } yield consumersA.toList ::: consumersB.toList)
-      .map {
-      _.filter(c => contentFilter(consumerPrefix, c.consumerId))
-        .filter(c => contentFilter(topicPrefix, c.topic))
-        .sortBy(c => (c.consumerId, c.topic, c.partition))
-    }
+    facade.getConsumers(consumerPrefix, topicPrefix)
   }
 
   /**
@@ -361,14 +314,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     val (topic, partition) = extractTopicAndPartition(params.args)
 
     // return the first message for the topic partition
-    getFirstOffset(topic, partition) map (getMessage(topic, partition, _, params))
-  }
-
-  /**
-   * Returns the first offset for a given topic
-   */
-  def getFirstOffset(topic: String, partition: Int): Option[Long] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getFirstOffset)
+    facade.getFirstOffset(topic, partition) map (getMessage(topic, partition, _, params))
   }
 
   /**
@@ -381,14 +327,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     val (topic, partition) = extractTopicAndPartition(params.args)
 
     // return the last message for the topic partition
-    getLastOffset(topic, partition) map (getMessage(topic, partition, _, params))
-  }
-
-  /**
-   * Returns the last offset for a given topic
-   */
-  def getLastOffset(topic: String, partition: Int): Option[Long] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getLastOffset)
+    facade.getLastOffset(topic, partition) map (getMessage(topic, partition, _, params))
   }
 
   /**
@@ -425,18 +364,18 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     // retrieve the message
     val messageData = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
       val myOffset: Long = instant flatMap (t => consumer.getOffsetsBefore(t).headOption) getOrElse offset
-      consumer.fetch(myOffset, defaultFetchSize).headOption
+      consumer.fetch(myOffset, getFetchSize(params)).headOption
     }
 
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
-    val decoder: Option[MessageDecoder[_]] =
-      Seq(params("-a") map (getAvroDecoder(_)(rt)), cursors.get(topic).flatMap(_.decoder)).find(_.isDefined).flatten
+    val decoder: Option[MessageDecoder[_]] = Seq(params("-a") map (getAvroDecoder(_)(config)), cursors.get(topic)
+      .flatMap(_.decoder)).find(_.isDefined).flatten
 
     // if a decoder was found, use it to decode the message
     val decodedMessage = decoder.flatMap(decodeMessage(messageData, _))
 
-    // write the message to an output handler
-    messageData.foreach(md => handleOutputFlag(params, decoder, md.key, md.message))
+    // write the message to an output source handler
+    messageData.foreach(md => handleOutputSourceFlag(params, decoder, md.key, md.message))
 
     // capture the message's offset and decoder
     setCursor(topic, partition, messageData, decoder)
@@ -445,6 +384,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     decodedMessage.map(Right(_)) getOrElse Left(messageData)
   }
 
+  /**
+   * Decodes the given message
+   * @param messageData the given option of a message
+   * @param aDecoder the given message decoder
+   * @return the decoded message
+   */
   private def decodeMessage(messageData: Option[MessageData], aDecoder: MessageDecoder[_]): Option[Seq[AvroRecord]] = {
     // only Avro decoders are supported
     val decoder: AvroDecoder = aDecoder match {
@@ -469,7 +414,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kgetkey" - Returns the message key for a given topic partition and offset
+   * Returns the message key for a given topic partition and offset
    * @example kget com.shocktrade.alerts 0 3456
    * @example kget 3456
    */
@@ -477,17 +422,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     // get the arguments
     val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
-    // get the fetch size
-    val fetchSize = getFetchSize(params)
-
     // retrieve the key
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
-      consumer.fetch(offset, fetchSize).headOption map (_.key)
-    }
+    facade.getMessageKey(topic, partition, offset, getFetchSize(params))
   }
 
   /**
-   * "kgetsize" - Returns the size of the message for a given topic partition and offset
+   * Returns the size of the message for a given topic partition and offset
    * @example kgetsize com.shocktrade.alerts 0 5567
    * @example kgetsize 5567
    */
@@ -495,17 +435,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     // get the arguments (topic, partition, groupId and offset)
     val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
-    // get the optional arguments
-    val fetchSize = getFetchSize(params)
-
     // perform the action
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use {
-      _.fetch(offset.toLong, fetchSize).headOption map (_.message.length)
-    }
+    facade.getMessageSize(topic, partition, offset, getFetchSize(params))
   }
 
   /**
-   * "kgetminmax" - Returns the minimum and maximum message size for a given topic partition and offset range
+   * Returns the minimum and maximum message size for a given topic partition and offset range
    * @example kgetmaxsize com.shocktrade.alerts 0 2100 5567
    * @example kgetmaxsize 2100 5567
    */
@@ -517,19 +452,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       case _ => dieSyntax(params)
     }
 
-    // get the optional arguments
-    val fetchSize = getFetchSize(params)
-
     // perform the action
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
-      val offsets = startOffset.toLong to endOffset.toLong
-      val messages = consumer.fetch(offsets, fetchSize).map(_.message.length)
-      if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Nil
-    }
+    facade.getMessageMinMaxSize(topic, partition, startOffset, endOffset, getFetchSize(params))
   }
 
   /**
-   * "knext" - Optionally returns the next message
+   * Optionally returns the next message
    * @example knext
    */
   def getNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
@@ -579,67 +507,27 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     results match {
       case Some((topic, partition0, partition1)) =>
         if (cursor.isEmpty) {
-          getFirstOffset(topic, partition0) ?? getLastOffset(topic, partition0) map (offset =>
+          facade.getFirstOffset(topic, partition0) ?? facade.getLastOffset(topic, partition0) map (offset =>
             KafkaCursor(topic, partition0, offset, offset + 1, None)) foreach (cursors(topic) = _)
           currentTopic = Option(topic)
         }
-        getStatisticsData(topic, partition0, partition1)
+        facade.getStatisticsData(topic, partition0, partition1)
       case _ => Nil
     }
   }
 
   /**
-   * Generates statistics for the partition range of a given topic
-   * @param topic the given topic (e.g. com.shocktrade.quotes.realtime)
-   * @param partition0 the starting partition
-   * @param partition1 the ending partition
-   * @return an iteration of statistics
-   */
-  private def getStatisticsData(topic: String, partition0: Int, partition1: Int): Iterable[TopicOffsets] = {
-    for {
-      partition <- partition0 to partition1
-      first <- getFirstOffset(topic, partition)
-      last <- getLastOffset(topic, partition)
-    } yield TopicOffsets(topic, partition, first, last, Math.max(0, last - first))
-  }
-
-  /**
-   * "kls" - Lists all existing topicList
+   * Returns a list of topics
    * @example kls com.shocktrade.alerts
    * @example kls
    */
   def getTopics(params: UnixLikeArgs): Either[Seq[TopicItem], Seq[TopicItemCompact]] = {
-    // get the prefix
+    // get the prefix and compact/detailed list indicator
     val prefix = params("-l") ?? params.args.headOption
+    val detailed = params.contains("-l")
 
     // get the raw topic data
-    val topicData = KafkaMicroConsumer.getTopicList(brokers, correlationId)
-
-    // is the detailed list flag set?
-    if (params.contains("-l")) {
-      Left {
-        topicData flatMap { t =>
-          val item = TopicItem(t.topic, t.partitionId, t.leader map (_.toString) getOrElse "N/A", t.replicas.size, t.isr.size)
-          if (prefix.isEmpty || prefix.exists(t.topic.startsWith)) Some(item) else None
-        }
-      }
-    }
-
-    // otherwise, create a detailed output
-    else {
-      Right {
-        topicData.groupBy(_.topic).toSeq flatMap { case (name, details) =>
-          val partitions = details.map(_.partitionId)
-          val inSync = {
-            val replicas = details.flatMap(_.replicas).length
-            val isr = details.flatMap(_.isr).length
-            if (replicas != 0) 100 * (isr.toDouble / replicas.toDouble) else 0
-          }
-          val item = TopicItemCompact(name, partitions.max + 1, f"$inSync%.0f%%")
-          if (prefix.isEmpty || prefix.exists(name.startsWith)) Some(item) else None
-        }
-      }
-    }
+    facade.getTopics(prefix, detailed)
   }
 
   /**
@@ -647,7 +535,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kimport com.shocktrade.alerts -t -f messages/mymessage.txt
    * @example kimport -a mySchema -f messages/mymessage.txt
    */
-  def importMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Long = {
+  def importMessages(params: UnixLikeArgs): Long = {
     // get the topic
     val topic = params.args match {
       case Nil => cursor.map(c => c.topic) getOrElse dieNoCursor()
@@ -727,12 +615,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param publisher the given Kafka publisher
    * @param filePath the given file path
    */
-  private def importMessagesFromTextFile(publisher: KafkaPublisher, topic: String, filePath: String)(implicit rt: TxRuntimeContext): Long = {
+  private def importMessagesFromTextFile(publisher: KafkaPublisher, topic: String, filePath: String): Long = {
     import scala.io.Source
 
     var messages = 0L
     Source.fromFile(filePath).getLines() foreach { message =>
-      publisher.publish(topic, toBytes(System.currentTimeMillis()), message.getBytes(rt.config.encoding))
+      publisher.publish(topic, toBytes(System.currentTimeMillis()), message.getBytes(config.encoding))
       messages += 1
     }
     messages
@@ -784,7 +672,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       val (beginPartition, endPartition) = (partitions.min, partitions.max)
 
       // retrieve the statistics for each topic
-      getStatisticsData(topic, beginPartition, endPartition) map { o =>
+      facade.getStatisticsData(topic, beginPartition, endPartition) map { o =>
         val prevInbound = incomingMessageCache.get(TopicAndPartition(o.topic, o.partition))
         val lastCheckTime = prevInbound.map(_.lastCheckTime.getTime) getOrElse System.currentTimeMillis()
         val currentTime = System.currentTimeMillis()
@@ -818,10 +706,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     val msgBytes = CommandParser parseDottedHex message
 
     // publish the message
-    KafkaPublisher(brokers) use { publisher =>
-      publisher.open()
-      publisher.publish(topic, keyBytes, msgBytes)
-    }
+    facade.publishMessage(topic, keyBytes, msgBytes)
   }
 
   /**
@@ -837,26 +722,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
 
     // get the partition range
-    val partitions = KafkaMicroConsumer.getTopicList(brokers, correlationId) filter (_.topic == topic) map (_.partitionId)
-    if (partitions.isEmpty)
-      throw new IllegalStateException(s"No partitions found for topic $topic")
-    val (start, end) = (partitions.min, partitions.max)
-
-    // reset the consumer group ID for each partition
-    (start to end) foreach { partition =>
-      new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId = 0) use { consumer =>
-        consumer.commitOffsets(groupId, offset = 0L, "resetting consumer ID")
-      }
-    }
+    facade.resetConsumerGroup(topic, groupId)
   }
 
   private def dieNoCursor[S](): S = die("No topic/partition specified and no cursor exists")
 
   private def dieNoInputSource[S](): S = die("No input source specified")
-
-  private def dieNoOutputSource[S](): S = die("No output source specified")
-
-  private def dieNotMessageComparator[S](): S = die("Decoder does not support logical operations")
 
   /**
    * Retrieves the topic and partition from the given arguments
@@ -897,27 +768,4 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    */
   private def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
 
-  ///////////////////////////////////////////////////////////////////
-  //    Case Classes
-  ///////////////////////////////////////////////////////////////////
-
-  case class AvroRecord(field: String, value: Any, `type`: String)
-
-  case class AvroVerification(verified: Int, failed: Int)
-
-  case class ConsumerDelta(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], messagesLeft: Option[Long])
-
-  case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
-
-  case class KafkaCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, decoder: Option[MessageDecoder[_]]) extends MessageCursor
-
-  case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
-
-  case class TopicItem(topic: String, partition: Int, leader: String, replicas: Int, inSync: Int)
-
-  case class TopicItemCompact(topic: String, partitions: Int, replicated: String)
-
-  case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
-
 }
-
