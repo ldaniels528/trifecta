@@ -49,7 +49,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "columns", columnWidthGetOrSet, SimpleParams(Nil, Seq("columnWidth")), help = "Retrieves or sets the column width for message output"),
     Command(this, "debug", debug, UnixLikeParams(Seq("enabled" -> false)), help = "Switches debugging on/off", undocumented = true),
     Command(this, "exit", exit, UnixLikeParams(), help = "Exits the shell"),
-    Command(this, "help", help, UnixLikeParams(Seq("search-term" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
+    Command(this, "help", help, UnixLikeParams(Seq("searchTerm" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
     Command(this, "history", listHistory, UnixLikeParams(Seq("count" -> false)), help = "Returns a list of previously issued commands"),
     Command(this, "jobs", manageJob, UnixLikeParams(Seq("jobNumber" -> false), Seq("-c" -> "clear jobs", "-d" -> "delete job", "-l" -> "list jobs", "-v" -> "result")), help = "Returns the list of currently running jobs"),
     Command(this, "ls", listFiles, SimpleParams(Nil, Seq("path")), help = "Retrieves the files from the current directory", promptAware = true),
