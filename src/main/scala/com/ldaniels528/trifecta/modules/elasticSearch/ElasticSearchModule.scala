@@ -178,7 +178,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     // retrieve the document
     setCursor(index, docType, Option(id), client.get(index, docType, id) map { js =>
       // handle the optional output directive
-      handleOutputFlag(params, decoder = None, id.getBytes("UTF8"), compact(render(js)).getBytes("UTF8"))
+      handleOutputSourceFlag(params, decoder = None, id.getBytes("UTF8"), compact(render(js)).getBytes("UTF8"))
       js
     })
   }

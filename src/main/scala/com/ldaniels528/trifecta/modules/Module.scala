@@ -89,7 +89,7 @@ trait Module {
     if (values.length > index) Some(values(index)) else None
   }
 
-  protected def handleOutputFlag(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]], key: Array[Byte], message: Array[Byte])(implicit rt: TxRuntimeContext, ec: ExecutionContext) = {
+  protected def handleOutputSourceFlag(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]], key: Array[Byte], message: Array[Byte])(implicit rt: TxRuntimeContext, ec: ExecutionContext) = {
     params("-o") map { url =>
       rt.getOutputHandler(url) match {
         case Some(device: MessageOutputHandler) => device use (_.write(decoder, key, message))
