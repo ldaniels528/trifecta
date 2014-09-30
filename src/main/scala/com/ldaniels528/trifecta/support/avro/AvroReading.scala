@@ -2,7 +2,7 @@ package com.ldaniels528.trifecta.support.avro
 
 import java.io.File
 
-import com.ldaniels528.trifecta.TxRuntimeContext
+import com.ldaniels528.trifecta.TxConfig
 
 import scala.io.Source
 
@@ -12,9 +12,9 @@ import scala.io.Source
  */
 trait AvroReading {
 
-  def getAvroDecoder(schemaVar: String)(implicit rt: TxRuntimeContext): AvroDecoder = {
+  def getAvroDecoder(schemaVar: String)(implicit config: TxConfig): AvroDecoder = {
     // get the decoder
-    implicit val scope = rt.config.scope
+    implicit val scope = config.scope
     scope.getVariable(schemaVar).map(_.value).flatMap(_.eval).map(_.asInstanceOf[AvroDecoder])
       .getOrElse(throw new IllegalArgumentException(s"Variable '$schemaVar' not found"))
   }
