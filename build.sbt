@@ -58,6 +58,7 @@ libraryDependencies ++= Seq(
 
 // Testing Dependencies
 libraryDependencies ++= Seq(
+  "com.github.tlrx" % "elasticsearch-test" % "1.2.1" % "test",
   "junit" % "junit" % "4.11" % "test",
   "org.apache.curator" % "curator-test" % "2.6.0" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test",
