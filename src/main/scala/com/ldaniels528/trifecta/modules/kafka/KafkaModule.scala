@@ -8,10 +8,9 @@ import java.util.Date
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.support.kafka._
-import KafkaFacade._
 import com.ldaniels528.trifecta.support.avro.{AvroDecoder, AvroReading}
 import com.ldaniels528.trifecta.support.io.BinaryOutputHandler
+import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
@@ -22,8 +21,8 @@ import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
+import org.apache.avro.generic.GenericRecord
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
@@ -199,7 +198,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * Returns the first message that corresponds to the given criteria
    * @example kfindone frequency > 5000
    */
-  def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Option[Either[Option[MessageData], Seq[AvroRecord]]]] = {
+  def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Option[Either[Option[MessageData], GenericRecord]]] = {
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 
     // get the topic and partition from the cursor
@@ -310,7 +309,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kfirst com.shocktrade.quotes.csv 0
    * @example kfirst
    */
-  def getFirstMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
+  def getFirstMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
     // get the arguments
     val (topic, partition) = extractTopicAndPartition(params.args)
 
@@ -323,7 +322,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example klast com.shocktrade.alerts 0
    * @example klast
    */
-  def getLastMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
+  def getLastMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
     // get the arguments
     val (topic, partition) = extractTopicAndPartition(params.args)
 
@@ -338,7 +337,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kget -f /tmp/output.txt
    * @example kget -o es:/quotes/quote/AAPL
    */
-  def getMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Seq[AvroRecord]] = {
+  def getMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], GenericRecord] = {
     // get the arguments
     val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
@@ -354,7 +353,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param params the given Unix-style argument
    * @return either a binary or decoded message
    */
-  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Seq[AvroRecord]] = {
+  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], GenericRecord] = {
     // requesting a message from an instance in time?
     val instant: Option[Long] = params("-d") map {
       case s if s.matches("\\d+") => s.toLong
@@ -391,7 +390,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param aDecoder the given message decoder
    * @return the decoded message
    */
-  private def decodeMessage(messageData: Option[MessageData], aDecoder: MessageDecoder[_]): Option[Seq[AvroRecord]] = {
+  private def decodeMessage(messageData: Option[MessageData], aDecoder: MessageDecoder[_]): Option[GenericRecord] = {
     // only Avro decoders are supported
     val decoder: AvroDecoder = aDecoder match {
       case avDecoder: AvroDecoder => avDecoder
@@ -402,12 +401,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     for {
       md <- messageData
       rec = decoder.decode(md.message) match {
-        case Success(record) =>
-          val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
-          fields map { f =>
-            val v = record.get(f)
-            AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
-          }
+        case Success(record) => record
         case Failure(e) =>
           throw new IllegalStateException(e.getMessage, e)
       }
@@ -461,7 +455,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * Optionally returns the next message
    * @example knext
    */
-  def getNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
+  def getNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, nextOffset, params)
     }
@@ -471,7 +465,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * "kprev" - Optionally returns the previous message
    * @example kprev
    */
-  def getPreviousMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], Seq[AvroRecord]]] = {
+  def getPreviousMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, Math.max(0, offset - 1), params)
     }
