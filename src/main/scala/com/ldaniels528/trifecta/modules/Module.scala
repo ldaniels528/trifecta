@@ -2,9 +2,10 @@ package com.ldaniels528.trifecta.modules
 
 import java.net.{URL, URLClassLoader}
 
-import com.ldaniels528.trifecta.TxRuntimeContext
+import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
-import com.ldaniels528.trifecta.support.io.{InputHandler, BinaryOutputHandler, MessageOutputHandler, OutputHandler}
+import com.ldaniels528.trifecta.support.avro.AvroDecoder
+import com.ldaniels528.trifecta.support.io.{BinaryOutputHandler, InputHandler, MessageOutputHandler, OutputHandler}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
@@ -16,7 +17,7 @@ import scala.util.{Failure, Success, Try}
  * Represents a dynamically loadable module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait Module {
+trait Module extends AvroReading {
 
   /**
    * Returns the commands that are bound to the module
@@ -95,6 +96,8 @@ trait Module {
   protected def extract[T](values: Seq[T], index: Int): Option[T] = {
     if (values.length > index) Some(values(index)) else None
   }
+
+  protected def handleAvroSourceFlag(params: UnixLikeArgs)(implicit config: TxConfig): Option[AvroDecoder] = params("-a") map getAvroDecoder
 
   protected def handleOutputSourceFlag(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]], key: Array[Byte], message: Array[Byte])(implicit rt: TxRuntimeContext, ec: ExecutionContext) = {
     params("-o") map { url =>

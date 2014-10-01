@@ -7,6 +7,7 @@ import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 import scala.collection.JavaConversions._
 import scala.io.Source
+import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
 /**

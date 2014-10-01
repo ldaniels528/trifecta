@@ -36,6 +36,6 @@ trait AvroReading {
     AvroDecoder(label, schemaString)
   }
 
-  private def anonymousId: String = s"A${System.currentTimeMillis()}"
+  protected def anonymousId: String = s"A${System.currentTimeMillis()}"
 
 }

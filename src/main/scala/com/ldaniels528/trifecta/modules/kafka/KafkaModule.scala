@@ -76,8 +76,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kcursor", getCursor, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix")), help = "Displays the message cursor(s)"),
     Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, UnixLikeParams(Seq("fetchSize" -> false)), help = "Retrieves or sets the default fetch size for all Kafka queries"),
-    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputSource")), "Finds messages matching a given condition and exports them to a topic"),
-    Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-o" -> "outputSource")), "Returns the first occurrence of a message matching a given condition"),
+    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
+    Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
     Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Returns the first message for a given topic"),
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "YYYY-MM-DDTHH:MM:SS", "-o" -> "outputSource")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
@@ -89,7 +89,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "detailed list")), help = "Lists all existing topics"),
     Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Attempts to retrieve the next message"),
     Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Attempts to retrieve the message at the previous offset"),
-    Command(this, "kput", publishMessage, UnixLikeParams(Seq("topic" -> false, "key" -> true, "message" -> true), Seq("-t" -> "topic")), help = "Publishes a message to a topic"),
+    Command(this, "kput", publishMessage, UnixLikeParams(Seq("topic" -> false, "key" -> true, "message" -> true)), help = "Publishes a message to a topic"),
     Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"),
     Command(this, "kswitch", switchCursor, UnixLikeParams(Seq("topic" -> true)), help = "Switches the currently active topic cursor"))
@@ -196,12 +196,20 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Returns the first message that corresponds to the given criteria
    * @example kfindone frequency > 5000
+   * @example kfindone -t shocktrade.quotes.avro -a file:avro/quotes.avsc volume > 1000000
    */
   def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Option[Either[Option[MessageData], GenericRecord]]] = {
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 
+    // was a topic and/or Avro decoder specified?
+    val topic_? = params("-t")
+    val avro_? = handleAvroSourceFlag(params)(config)
+
     // get the topic and partition from the cursor
-    val (topic, decoder_?) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
+    val (topic, decoder_?) = {
+      if (topic_?.isDefined) (topic_?.get, avro_?)
+      else cursor map (c => (c.topic, if (avro_?.isDefined) avro_? else c.decoder)) getOrElse dieNoCursor
+    }
 
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
@@ -218,16 +226,24 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Finds messages that corresponds to the given criteria and exports them to a topic
    * @example kfind frequency > 5000 -o topic:highFrequency.quotes
+   * @example kfind -t shocktrade.quotes.avro -a file:avro/quotes.avsc volume > 1000000 -o topic:hft.shocktrade.quotes.avro
    */
   def findMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Long] = {
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 
+    // was a topic and/or Avro decoder specified?
+    val topic_? = params("-t")
+    val avro_? = handleAvroSourceFlag(params)(config)
+
     // get the input topic and decoder from the cursor
-    val (topic, decoder) = cursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
+    val (topic, decoder_?) = {
+      if (topic_?.isDefined) (topic_?.get, avro_?)
+      else cursor map (c => (c.topic, if (avro_?.isDefined) avro_? else c.decoder)) getOrElse dieNoCursor
+    }
 
     // get the criteria
     val conditions = params.args match {
-      case field :: operator :: value :: Nil => Seq(compile(compile(field, operator, value), decoder))
+      case field :: operator :: value :: Nil => Seq(compile(compile(field, operator, value), decoder_?))
       case _ => dieSyntax(params)
     }
 
@@ -235,7 +251,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     val outputHandler = params("-o") flatMap rt.getOutputHandler getOrElse die("Output source URL expected")
 
     // find the messages
-    facade.findMessages(topic, decoder, conditions, outputHandler)
+    facade.findMessages(topic, decoder_?, conditions, outputHandler)
   }
 
   /**
@@ -692,12 +708,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   def publishMessage(params: UnixLikeArgs): Unit = {
     import com.ldaniels528.trifecta.command.CommandParser._
 
-    // was a topic specified?
-    val topic_? = params("-t")
-
-    // get the arguments
+    // get the topic, key and message
     val (topic, key, message) = params.args match {
-      case aKey :: aMessage :: Nil if topic_?.isDefined => (topic_?.get, aKey, aMessage)
       case aKey :: aMessage :: Nil => cursor map (c => (c.topic, aKey, aMessage)) getOrElse dieNoCursor
       case aTopic :: aKey :: aMessage :: Nil => (aTopic, aKey, aMessage)
       case _ => dieSyntax(params)
