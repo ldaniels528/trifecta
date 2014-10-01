@@ -29,17 +29,17 @@ class ZookeeperModule(config: TxConfig) extends Module {
   private val out: PrintStream = config.out
 
   override def getCommands(implicit rt: TxRuntimeContext) = Seq(
-    Command(this, "zcd", chdir, SimpleParams(Seq("key"), Seq.empty), help = "Changes the current path/directory in ZooKeeper"),
-    Command(this, "zexists", pathExists, SimpleParams(Seq("key"), Seq.empty), "Verifies the existence of a ZooKeeper key"),
+    Command(this, "zcd", chdir, UnixLikeParams(Seq("key" -> true)), help = "Changes the current path/directory in ZooKeeper"),
+    Command(this, "zexists", pathExists, UnixLikeParams(Seq("key" -> true)), "Verifies the existence of a ZooKeeper key"),
     Command(this, "zget", getData, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the contents of a specific Zookeeper key"),
-    Command(this, "zls", listKeys, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves the child nodes for a key from ZooKeeper"),
-    Command(this, "zmk", mkdir, SimpleParams(Seq("key"), Seq.empty), "Creates a new ZooKeeper sub-directory (key)"),
+    Command(this, "zls", listKeys, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the child nodes for a key from ZooKeeper"),
+    Command(this, "zmk", mkdir, UnixLikeParams(Seq("key" -> true)), "Creates a new ZooKeeper sub-directory (key)"),
     Command(this, "zput", publishMessage, UnixLikeParams(Seq("key" -> true, "value" -> true), Seq("-t" -> "type")), "Sets a key-value pair in ZooKeeper"),
-    Command(this, "zreconnect", reconnect, SimpleParams(Seq.empty, Seq.empty), help = "Re-establishes the connection to Zookeeper"),
+    Command(this, "zreconnect", reconnect, UnixLikeParams(Nil, Nil), help = "Re-establishes the connection to Zookeeper"),
     Command(this, "zrm", delete, UnixLikeParams(Seq("key" -> true), flags = Seq("-r" -> "recursive")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
-    Command(this, "zruok", ruok, SimpleParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
-    Command(this, "zstats", stats, SimpleParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
-    Command(this, "ztree", tree, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
+    Command(this, "zruok", ruok, UnixLikeParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
+    Command(this, "zstats", stats, UnixLikeParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
+    Command(this, "ztree", tree, UnixLikeParams(Seq("path" -> false)), help = "Retrieves Zookeeper directory structure"))
 
   /**
    * Returns a Zookeeper input source
@@ -217,7 +217,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
             s"children: ${stat.getNumChildren}",
             s"change time: ${new Date(stat.getCtime)}")
         case None =>
-          Seq.empty
+          Nil
       }
     } getOrElse Nil
   }
@@ -286,7 +286,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
   def tree(params: UnixLikeArgs): Seq[ZkItem] = {
 
     def unwind(path: String): List[String] = {
-      val children = Option(zk.getChildren(path, watch = false)) getOrElse Seq.empty
+      val children = Option(zk.getChildren(path, watch = false)) getOrElse Nil
       path :: (children flatMap (child => unwind(zkKeyToPath(path, child)))).toList
     }
 
