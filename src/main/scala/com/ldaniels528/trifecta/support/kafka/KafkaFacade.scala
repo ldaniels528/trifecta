@@ -1,18 +1,15 @@
-package com.ldaniels528.trifecta.modules.kafka
+package com.ldaniels528.trifecta.support.kafka
 
 import java.util.Date
 import java.util.concurrent.atomic.AtomicLong
 
 import com.ldaniels528.trifecta.TxRuntimeContext
-import com.ldaniels528.trifecta.command.UnixLikeArgs
-import com.ldaniels528.trifecta.modules.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.avro.AvroDecoder
 import com.ldaniels528.trifecta.support.io.{BinaryOutputHandler, MessageOutputHandler, OutputHandler}
+import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer._
-import com.ldaniels528.trifecta.support.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
-import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
-import com.ldaniels528.trifecta.support.messaging.{MessageCursor, MessageDecoder}
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
+import com.ldaniels528.trifecta.support.messaging.{MessageCursor, MessageDecoder}
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.TxUtils._
 import kafka.common.TopicAndPartition
