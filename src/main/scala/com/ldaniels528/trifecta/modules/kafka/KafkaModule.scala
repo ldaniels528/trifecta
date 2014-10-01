@@ -35,7 +35,7 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(config: TxConfig) extends Module with AvroReading {
-  implicit val zk: ZKProxy = ZKProxy(EndPoint(config.zooKeeperConnect))
+  implicit var zk: ZKProxy = ZKProxy(EndPoint(config.zooKeeperConnect))
   private val out: PrintStream = config.out
 
   // set the default correlation ID
@@ -71,6 +71,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", getConsumers, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix", "-c" -> "consumerPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
+    Command(this, "kconnect", zkConnect, UnixLikeParams(Nil, Nil), help = "Establishes a connection to Zookeeper"),
     Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true)), help = "Counts the messages matching a given condition"),
     Command(this, "kcursor", getCursor, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix")), help = "Displays the message cursor(s)"),
     Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
@@ -716,6 +717,16 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
     // get the partition range
     facade.resetConsumerGroup(topic, groupId)
+  }
+
+  /**
+   * Establishes a connection to Zookeeper
+   * @example kconnect
+   * @example kconnect localhost
+   * @example kconnect localhost 2181
+   */
+  def zkConnect(params: UnixLikeArgs) {
+    zk = ZKProxy(EndPoint(config.zooKeeperConnect))
   }
 
   private def dieNoCursor[S](): S = die("No topic/partition specified and no cursor exists")
