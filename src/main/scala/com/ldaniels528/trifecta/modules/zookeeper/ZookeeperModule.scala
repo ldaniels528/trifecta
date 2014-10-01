@@ -54,11 +54,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
    * @return the option of a Zookeeper output source
    */
   override def getOutputHandler(url: String): Option[ZookeeperOutputHandler] = {
-    if (url.startsWith("zk:")) {
-      val rootPath = url.substring(url.indexOf(":") + 1)
-      Option(new ZookeeperOutputHandler(zk, rootPath))
-    }
-    else None
+    url.extractProperty("zk:") map (new ZookeeperOutputHandler(zk, _))
   }
 
   override def getVariables: Seq[Variable] = Seq(

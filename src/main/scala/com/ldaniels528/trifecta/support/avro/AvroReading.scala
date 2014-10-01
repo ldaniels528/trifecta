@@ -3,6 +3,7 @@ package com.ldaniels528.trifecta.support.avro
 import java.io.File
 
 import com.ldaniels528.trifecta.TxConfig
+import com.ldaniels528.trifecta.util.TxUtils._
 
 import scala.io.Source
 
@@ -13,15 +14,9 @@ import scala.io.Source
 trait AvroReading {
 
   def getAvroDecoder(schemaVar: String)(implicit config: TxConfig): AvroDecoder = {
-    // is it an Avro input source
-    if (schemaVar.startsWith("file:")) {
-      val path = schemaVar.substring(schemaVar.indexOf(':') + 1)
-      loadAvroDecoder(s"A${System.currentTimeMillis()}", path)
-    }
-
-    // must be a variable reference
-    else {
-      // get the decoder
+    // is it an Avro file input source?
+    schemaVar.extractProperty("file:") map (loadAvroDecoder(anonymousId, _)) getOrElse {
+      // must be a variable reference - get the decoder
       implicit val scope = config.scope
       scope.getVariable(schemaVar).map(_.value).flatMap(_.eval).map(_.asInstanceOf[AvroDecoder])
         .getOrElse(throw new IllegalArgumentException(s"Variable '$schemaVar' not found"))
@@ -39,5 +34,7 @@ trait AvroReading {
     val schemaString = Source.fromFile(schemaFile).getLines() mkString "\n"
     AvroDecoder(label, schemaString)
   }
+
+  private def anonymousId: String = s"A${System.currentTimeMillis()}"
 
 }

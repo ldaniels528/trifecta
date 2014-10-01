@@ -9,7 +9,6 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.trifecta.support.avro.AvroReading
-import com.ldaniels528.trifecta.support.io.InputHandler
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}
@@ -72,11 +71,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @return the option of a file input source
    */
   override def getInputHandler(url: String): Option[FileInputHandler] = {
-    if (url.startsWith("file:")) {
-      val path = url.substring(url.indexOf(':') + 1)
-      Option(FileInputHandler(path))
-    }
-    else None
+    url.extractProperty("file:") map (FileInputHandler(_))
   }
 
   /**
@@ -85,11 +80,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @return the option of a file output source
    */
   override def getOutputHandler(url: String): Option[FileOutputHandler] = {
-    if (url.startsWith("file:")) {
-      val path = url.substring(url.indexOf(':') + 1)
-      Option(FileOutputHandler(path))
-    }
-    else None
+    url.extractProperty("file:") map (FileOutputHandler(_))
   }
 
   override def getVariables: Seq[Variable] = Seq(

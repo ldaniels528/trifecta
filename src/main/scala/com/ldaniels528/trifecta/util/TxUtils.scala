@@ -131,4 +131,16 @@ object TxUtils {
     }
   }
 
+  /**
+   * Convenience method for extracted the suffix of a string based on a matched prefix
+   * @param src the given source string
+   */
+  implicit class StringMagic(val src: String) extends AnyVal {
+
+    def extractProperty(prefix: String): Option[String] = {
+      if (src.startsWith(prefix)) Option(src.substring(src.indexOf(prefix) + 1)) else None
+    }
+
+  }
+
 }

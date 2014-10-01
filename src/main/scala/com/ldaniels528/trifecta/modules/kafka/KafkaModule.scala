@@ -9,7 +9,7 @@ import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.avro.{AvroDecoder, AvroReading}
-import com.ldaniels528.trifecta.support.io.{InputHandler, BinaryOutputHandler}
+import com.ldaniels528.trifecta.support.io.InputHandler
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
@@ -106,11 +106,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @return the option of a Kafka Topic output source
    */
   override def getOutputHandler(url: String): Option[KafkaTopicOutputHandler] = {
-    if (url.startsWith("topic:")) {
-      val outputTopic = url.substring(url.indexOf(':') + 1)
-      Option(new KafkaTopicOutputHandler(brokers, outputTopic))
-    }
-    else None
+    url.extractProperty("topic:") map (new KafkaTopicOutputHandler(brokers, _))
   }
 
   override def getVariables: Seq[Variable] = Seq(
