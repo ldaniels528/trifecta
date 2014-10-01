@@ -1,7 +1,6 @@
 package com.ldaniels528.trifecta.support.avro
 
 import com.ldaniels528.trifecta.modules.core.FileInputHandler
-import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
 import com.ldaniels528.trifecta.util.TxUtils._
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
@@ -30,14 +29,14 @@ class AvroDecoderSpec() extends FeatureSpec with GivenWhenThen {
       When("an Avro-encoded record is loaded")
       val encoded = FileInputHandler("/GDF.bin") use (_.read)
 
-      Then("it should be successfully decoded")
+      Then("it should be successfully decoded as a GenericRecord")
       val record = decoder.decode(encoded.message) match {
         case Success(rec) => rec
         case Failure(e) =>
           throw new IllegalStateException("Quote could not be decoded", e)
       }
 
-      And("fields match the expected value")
+      And("the GenericRecord's fields should match the expected value")
       (record.getSchema.getFields map (_.name()) toSeq) shouldBe Seq("symbol", "lastTrade",
         "tradeDate", "tradeTime", "ask", "bid", "change", "changePct", "prevClose", "open",
         "close", "high", "low", "volume", "marketCap", "errorMessage")
