@@ -4,10 +4,14 @@ import java.io.PrintStream
 
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.trifecta.support.avro.AvroTables
+import com.ldaniels528.trifecta.support.kafka.KafkaFacade.AvroRecord
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
 import com.ldaniels528.trifecta.util.BinaryMessaging
+import net.liftweb.json._
+import org.apache.avro.generic.GenericRecord
 
 import scala.collection.GenTraversableOnce
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -27,8 +31,6 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
    * @param ec the given execution context
    */
   def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) {
-    import net.liftweb.json._
-
     result match {
       // handle binary data
       case message: Array[Byte] if message.isEmpty => out.println("No data returned")
@@ -52,6 +54,13 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
         case Some(v) => handleResult(v, input)
         case None => out.println("No data returned")
       }
+
+      case r: GenericRecord =>
+        val fields = r.getSchema.getFields.asScala.map(_.name.trim).toSeq
+        fields map { f =>
+          val v = r.get(f)
+          AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
+        }
 
       // handle Try cases
       case t: Try[_] => t match {
