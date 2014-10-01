@@ -55,12 +55,13 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
         case None => out.println("No data returned")
       }
 
+      // handle Avro records
       case r: GenericRecord =>
         val fields = r.getSchema.getFields.asScala.map(_.name.trim).toSeq
-        fields map { f =>
+        tabular.transform(fields map { f =>
           val v = r.get(f)
           AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
-        }
+        }) foreach out.println
 
       // handle Try cases
       case t: Try[_] => t match {
