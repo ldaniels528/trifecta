@@ -19,8 +19,8 @@ class AvroDecoderSpec() extends FeatureSpec with GivenWhenThen {
   info("As an Avro Decoder")
   info("I want to be able to interact with Avro schemas")
 
-  feature("Ability to copy data from a Scala case class to a Java Bean") {
-    scenario("Copy values from a Scala case class to a Java Bean instance") {
+  feature("Ability to decode Avro messages") {
+    scenario("Decode a message containing a stock quote") {
       Given("an Avro Schema")
       val schemaString = Source.fromURL(getClass.getResource("/avro/quotes.avsc")).getLines() mkString "\n"
 
@@ -43,12 +43,5 @@ class AvroDecoderSpec() extends FeatureSpec with GivenWhenThen {
         "close", "high", "low", "volume", "marketCap", "errorMessage")
     }
   }
-
-  private def loadMessage(): MessageData = {
-    val key = new Array[Byte](0)
-    val message = new Array[Byte](0)
-    MessageData(offset = 0L, nextOffset = 1L, lastOffset = 2L, key, message)
-  }
-
 
 }
