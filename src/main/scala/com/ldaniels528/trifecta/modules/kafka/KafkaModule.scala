@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.modules.kafka
 
-import java.io.{File, PrintStream}
+import java.io.PrintStream
 import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -9,7 +9,7 @@ import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.avro.AvroDecoder
-import com.ldaniels528.trifecta.support.io.InputHandler
+import com.ldaniels528.trifecta.support.io.{InputHandler, KeyAndMessage}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
@@ -83,7 +83,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
-    Command(this, "kimport", importMessages, UnixLikeParams(Seq("topic" -> false), Seq("-a" -> "avro", "-b" -> "binary", "-f" -> "inputFile", "-t" -> "fileType")), help = "Imports messages into a new/existing topic", undocumented = true),
     Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-w" -> "wait-time")), help = "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Returns the last message for a given topic"),
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "detailed list")), help = "Lists all existing topics"),
@@ -99,7 +98,9 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param url the given input URL (e.g. "topic:shocktrade.quotes.avro")
    * @return the option of a Kafka Topic input source
    */
-  override def getInputHandler(url: String): Option[InputHandler] = None
+  override def getInputHandler(url: String): Option[InputHandler] = {
+    url.extractProperty("topic:") map (new KafkaTopicInputHandler(brokers, _))
+  }
 
   /**
    * Returns a Kafka Topic output source
@@ -195,15 +196,16 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Returns the first message that corresponds to the given criteria
-   * @example kfindone frequency > 5000
-   * @example kfindone -t shocktrade.quotes.avro -a file:avro/quotes.avsc volume > 1000000
+   * @example kfindone volume > 1000000
+   * @example kfindone volume > 1000000 -a file:avro/quotes.avsc
+   * @example kfindone volume > 1000000 -t shocktrade.quotes.avro -a file:avro/quotes.avsc
    */
   def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Option[Either[Option[MessageData], GenericRecord]]] = {
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
-    val avro_? = handleAvroSourceFlag(params)(config)
+    val avro_? = getAvroDecoder(params)(config)
 
     // get the topic and partition from the cursor
     val (topic, decoder_?) = {
@@ -233,7 +235,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
-    val avro_? = handleAvroSourceFlag(params)(config)
+    val avro_? = getAvroDecoder(params)(config)
 
     // get the input topic and decoder from the cursor
     val (topic, decoder_?) = {
@@ -383,14 +385,17 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
 
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
-    val decoder: Option[MessageDecoder[_]] = Seq(params("-a") map (getAvroDecoder(_)(config)), cursors.get(topic)
+    val decoder: Option[MessageDecoder[_]] = Seq(params("-a") map (lookupAvroDecoder(_)(config)), cursors.get(topic)
       .flatMap(_.decoder)).find(_.isDefined).flatten
 
     // if a decoder was found, use it to decode the message
     val decodedMessage = decoder.flatMap(decodeMessage(messageData, _))
 
     // write the message to an output source handler
-    messageData.foreach(md => handleOutputSourceFlag(params, decoder, md.key, md.message))
+    messageData.foreach { md =>
+      val outputSource = getOutputSource(params)
+      outputSource.foreach(_.write(KeyAndMessage(md.key, md.message), decoder))
+    }
 
     // capture the message's offset and decoder
     setCursor(topic, partition, messageData, decoder)
@@ -538,102 +543,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
     // get the raw topic data
     facade.getTopics(prefix, detailed)
-  }
-
-  /**
-   * Imports a message into a new/existing topic
-   * @example kimport com.shocktrade.alerts -t -f messages/mymessage.txt
-   * @example kimport -a mySchema -f messages/mymessage.txt
-   */
-  def importMessages(params: UnixLikeArgs): Long = {
-    // get the topic
-    val topic = params.args match {
-      case Nil => cursor.map(c => c.topic) getOrElse dieNoCursor()
-      case aTopic :: Nil => aTopic
-      case _ => dieSyntax(params)
-    }
-
-    // get the input file (expand the path)
-    val filePath = params("-f") map expandPath getOrElse dieNoInputSource
-
-    KafkaPublisher(brokers) use { publisher =>
-      publisher.open()
-
-      // import text file?
-      params("-t") map (na => importMessagesFromTextFile(publisher, topic, filePath)) getOrElse {
-        // import Avro file?
-        params("-a") map (schema => importMessagesFromAvroFile(publisher, schema, filePath)) getOrElse {
-          // let's assume it's a binary file
-          importMessagesFromBinaryFile(publisher, topic, filePath)
-        }
-      }
-    }
-  }
-
-  /**
-   * Imports Avro messages from the given file path
-   * @param publisher the given Kafka publisher
-   * @param filePath the given file path
-   */
-  private def importMessagesFromAvroFile(publisher: KafkaPublisher, schema: String, filePath: String): Long = {
-    import org.apache.avro.file.DataFileReader
-    import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
-
-    var messages = 0L
-    val reader = new DataFileReader[GenericRecord](new File(filePath), new GenericDatumReader[GenericRecord]())
-    while (reader.hasNext) {
-      val record = reader.next()
-      (Option(record.get("topic")) map (_.toString)).foreach { case topic =>
-        for {
-          partition <- Option(record.get("partition"))
-          offset <- Option(record.get("offset")) map (v => toBytes(v.asInstanceOf[Long]))
-          buf <- Option(record.get("message")) map (_.asInstanceOf[java.nio.Buffer])
-          message = buf.array().asInstanceOf[Array[Byte]]
-        } {
-          publisher.publish(topic, offset, message)
-          messages += 1
-        }
-      }
-    }
-    messages
-  }
-
-  /**
-   * Imports text messages from the given file path
-   * @param publisher the given Kafka publisher
-   * @param filePath the given file path
-   */
-  private def importMessagesFromBinaryFile(publisher: KafkaPublisher, topic: String, filePath: String): Long = {
-    import java.io.{DataInputStream, FileInputStream}
-
-    var messages = 0L
-    new DataInputStream(new FileInputStream(filePath)) use { in =>
-      // get the next message length and retrieve the message
-      val messageLength = in.readInt()
-      val message = new Array[Byte](messageLength)
-      in.read(message, 0, message.length)
-
-      // publish the message
-      publisher.publish(topic, toBytes(System.currentTimeMillis()), message)
-      messages += 1
-    }
-    messages
-  }
-
-  /**
-   * Imports text messages from the given file path
-   * @param publisher the given Kafka publisher
-   * @param filePath the given file path
-   */
-  private def importMessagesFromTextFile(publisher: KafkaPublisher, topic: String, filePath: String): Long = {
-    import scala.io.Source
-
-    var messages = 0L
-    Source.fromFile(filePath).getLines() foreach { message =>
-      publisher.publish(topic, toBytes(System.currentTimeMillis()), message.getBytes(config.encoding))
-      messages += 1
-    }
-    messages
   }
 
   /**

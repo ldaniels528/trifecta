@@ -7,7 +7,7 @@ import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO.{AddDocumentResponse, CountResponse}
-import com.ldaniels528.trifecta.support.io.InputHandler
+import com.ldaniels528.trifecta.support.io.{InputHandler, KeyAndMessage}
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
@@ -78,7 +78,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    */
   override def getVariables: Seq[Variable] = Nil
 
-  override def prompt = {
+  override def prompt: String = {
     def cursor(c: ElasticCursor) = "%s/%s%s".format(c.index, c.indexType, c.id.map(id => s"/$id") getOrElse "")
     s"${endPoint_? getOrElse "$"}/${cursor_? map cursor getOrElse ""}"
   }
@@ -187,7 +187,9 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     // retrieve the document
     setCursor(index, docType, Option(id), client.get(index, docType, id) map { js =>
       // handle the optional output directive
-      handleOutputSourceFlag(params, decoder = None, id.getBytes("UTF8"), compact(render(js)).getBytes("UTF8"))
+      val encoding = config.encoding
+      val outputSource = getOutputSource(params)
+      outputSource.foreach(_.write(KeyAndMessage(id.getBytes(encoding), compact(render(js)).getBytes(encoding))))
       js
     })
   }

@@ -3,9 +3,8 @@ package com.ldaniels528.trifecta.support.kafka
 import java.util.Date
 import java.util.concurrent.atomic.AtomicLong
 
-import com.ldaniels528.trifecta.TxRuntimeContext
 import com.ldaniels528.trifecta.support.avro.AvroDecoder
-import com.ldaniels528.trifecta.support.io.{BinaryOutputHandler, MessageOutputHandler, OutputHandler}
+import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputHandler}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer._
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
@@ -67,11 +66,7 @@ class KafkaFacade(correlationId: Int) {
     // find and export the messages matching our criteria
     val task = KafkaMicroConsumer.observe(topic, brokers, correlationId) { md =>
       if (conditions.forall(_.satisfies(md.message, md.key))) {
-        outputHandler match {
-          case device: MessageOutputHandler => device.write(decoder, md.key, md.message)
-          case device: BinaryOutputHandler => device.write(md.key, md.message)
-          case device => dieNoOutputHandler(device)
-        }
+        outputHandler.write(KeyAndMessage(md.key, md.message), decoder)
         counter.incrementAndGet()
         ()
       }
@@ -130,44 +125,6 @@ class KafkaFacade(correlationId: Int) {
    */
   def getLastOffset(topic: String, partition: Int)(implicit zk: ZKProxy): Option[Long] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getLastOffset)
-  }
-
-  /**
-   * Retrieves either a binary or decoded message
-   * @param topic the given topic
-   * @param partition the given partition
-   * @param offset the given offset
-   * @param fetchSize the given fetch size
-   * @return either a binary or decoded message
-   */
-  def getMessage(topic: String, partition: Int, offset: Long,
-                 instant: Option[Long],
-                 decoder: Option[MessageDecoder[_]],
-                 outputHandler: Option[OutputHandler],
-                 fetchSize: Int)(implicit zk: ZKProxy, rt: TxRuntimeContext, ec: ExecutionContext): Either[Option[MessageData], Seq[AvroRecord]] = {
-    // retrieve the message
-    val messageData = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
-      val myOffset: Long = instant flatMap (t => consumer.getOffsetsBefore(t).headOption) getOrElse offset
-      consumer.fetch(myOffset, fetchSize).headOption
-    }
-
-    // if a decoder was found, use it to decode the message
-    val decodedMessage = decoder.flatMap(decodeMessage(messageData, _))
-
-    // write the message to an output handler
-    messageData.foreach(md => handleOutputFlag(outputHandler, decoder, md.key, md.message))
-
-    // return either a binary message or a decoded message
-    decodedMessage.map(Right(_)) getOrElse Left(messageData)
-  }
-
-  private def handleOutputFlag(outputHandler: Option[OutputHandler], decoder: Option[MessageDecoder[_]], key: Array[Byte], message: Array[Byte])(implicit ec: ExecutionContext) = {
-    outputHandler match {
-      case Some(device: MessageOutputHandler) => device use (_.write(decoder, key, message))
-      case Some(device: BinaryOutputHandler) => device use (_.write(key, message))
-      case Some(unhandled) => dieNoOutputHandler(unhandled)
-      case None => die("No such output device")
-    }
   }
 
   /**

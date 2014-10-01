@@ -7,7 +7,7 @@ import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule
 import com.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
-import com.ldaniels528.trifecta.support.io.OutputHandler
+import com.ldaniels528.trifecta.support.io.{InputHandler, OutputHandler}
 import com.ldaniels528.trifecta.vscript.VScriptCompiler
 import org.slf4j.LoggerFactory
 
@@ -41,18 +41,21 @@ case class TxRuntimeContext(config: TxConfig) {
     moduleManager.setActiveModule(module)
   }
 
+  def getInputHandler(url: String): Option[InputHandler] = {
+    // get just the prefix
+    val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed input source URL: $url")
+
+    // locate the module
+    moduleManager.findModuleByPrefix(prefix) flatMap (_.getInputHandler(url))
+  }
+
   /**
    * Returns the output handler for the given output URL
    * @param url the given output URL (e.g. "es:/quotes/quote/GDF")
    */
   def getOutputHandler(url: String): Option[OutputHandler] = {
     // get just the prefix
-    val (prefix, _) = {
-      val index = url.indexOf(':')
-      if (index == -1)
-        throw new IllegalArgumentException(s"Malformed output URL: $url")
-      url.splitAt(index)
-    }
+    val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed output source URL: $url")
 
     // locate the module
     moduleManager.findModuleByPrefix(prefix) flatMap (_.getOutputHandler(url))
@@ -67,6 +70,8 @@ case class TxRuntimeContext(config: TxConfig) {
   }
 
   def shutdown(): Unit = moduleManager.shutdown()
+
+  private def die[S](message: String): S = throw new IllegalArgumentException(message)
 
   /**
    * Interprets command line input
@@ -113,6 +118,16 @@ case class TxRuntimeContext(config: TxConfig) {
       logger.info(s"opCode = $opCode (${opCode.getClass.getName}})")
     }
     opCode.eval
+  }
+
+  /**
+   * Parses the the prefix and path from the I/O source URL
+   * @param url the I/O source URL
+   * @return the tuple represents the prefix and path
+   */
+  private def parseSourceURL(url: String): Option[(String, String)] = {
+    val index = url.indexOf(':')
+    if (index == -1) None else Option(url.splitAt(index))
   }
 
 }

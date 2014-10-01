@@ -1,26 +1,26 @@
 package com.ldaniels528.trifecta.modules.kafka
 
-import com.ldaniels528.trifecta.support.io.BinaryOutputHandler
+import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputHandler}
 import com.ldaniels528.trifecta.support.kafka.{Broker, KafkaPublisher}
+import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 
 import scala.concurrent.ExecutionContext
 
 /**
- * Kafka Topic Output Writer
+ * Kafka Topic Output Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaTopicOutputHandler(brokers: Seq[Broker], outputTopic: String) extends BinaryOutputHandler {
+class KafkaTopicOutputHandler(brokers: Seq[Broker], outputTopic: String) extends OutputHandler {
   private val publisher = KafkaPublisher(brokers)
   publisher.open()
 
   /**
    * Writes the given key-message pair to the underlying stream
-   * @param key the given key
-   * @param message the given message
+   * @param data the given key and message
    * @return the response value
    */
-  override def write(key: Array[Byte], message: Array[Byte])(implicit ec: ExecutionContext) {
-    publisher.publish(outputTopic, key, message)
+  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) {
+    publisher.publish(outputTopic, data.key, data.message)
   }
 
   override def close() = publisher.close()

@@ -28,7 +28,8 @@ class AvroDecoderSpec() extends FeatureSpec with GivenWhenThen {
       val decoder = AvroDecoder("myDecoder", schemaString)
 
       When("an Avro-encoded record is loaded")
-      val encoded = FileInputHandler("/GDF.bin") use (_.read)
+      val encoded = (FileInputHandler("/GDF.bin") use (_.read))
+        .getOrElse(throw new IllegalStateException("Failed to load Avro-encoded record"))
 
       Then("it should be successfully decoded as a GenericRecord")
       val record = decoder.decode(encoded.message) match {

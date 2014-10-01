@@ -14,7 +14,7 @@ import scala.io.Source
  */
 trait AvroReading {
 
-  def getAvroDecoder(schemaVar: String)(implicit config: TxConfig): AvroDecoder = {
+  def lookupAvroDecoder(schemaVar: String)(implicit config: TxConfig): AvroDecoder = {
     // is it an Avro file input source?
     schemaVar.extractProperty("file:") map (loadAvroDecoder(anonymousId, _)) getOrElse {
       // must be a variable reference - get the decoder

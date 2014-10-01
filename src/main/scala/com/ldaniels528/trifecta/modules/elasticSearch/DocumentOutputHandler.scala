@@ -2,7 +2,7 @@ package com.ldaniels528.trifecta.modules.elasticSearch
 
 import com.ldaniels528.trifecta.support.avro.AvroDecoder
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO
-import com.ldaniels528.trifecta.support.io.MessageOutputHandler
+import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputHandler}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.util.TxUtils._
 
@@ -14,7 +14,7 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class DocumentOutputHandler(client: ElasticSearchDAO, index: String, indexType: String, id: Option[String])
-  extends MessageOutputHandler {
+  extends OutputHandler {
 
   /**
    * Returns the binary encoding
@@ -24,16 +24,15 @@ class DocumentOutputHandler(client: ElasticSearchDAO, index: String, indexType: 
 
   /**
    * Writes the given key and decoded message to the underlying stream
-   * @param key the given key
-   * @param message the given message
+   * @param data the given key and message
    * @return the response value
    */
-  override def write(decoder: Option[MessageDecoder[_]], key: Array[Byte], message: Array[Byte])(implicit ec: ExecutionContext): Future[_] = {
+  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext): Future[_] = {
     decoder match {
       case Some(av: AvroDecoder) =>
-        av.decode(message) match {
+        av.decode(data.message) match {
           case Success(record) =>
-            val myId = id ?? (Option(key) map (new String(_, encoding)))
+            val myId = id ?? (Option(data.key) map (new String(_, encoding)))
             client.createDocument(index, indexType, myId, record.toString, refresh = true)
           case Failure(e) =>
             throw new IllegalStateException(e.getMessage, e)

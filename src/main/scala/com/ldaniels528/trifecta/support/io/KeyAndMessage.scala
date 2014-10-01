@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.support.io
 
 /**
- * Represents a keyed message
+ * Represents a key and message
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class KeyedMessage(key: Array[Byte], message: Array[Byte])
+case class KeyAndMessage(key: Array[Byte], message: Array[Byte])

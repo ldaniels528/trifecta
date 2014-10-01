@@ -2,7 +2,8 @@ package com.ldaniels528.trifecta.modules.core
 
 import java.io._
 
-import com.ldaniels528.trifecta.support.io.BinaryOutputHandler
+import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputHandler}
+import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 
 import scala.concurrent.ExecutionContext
 
@@ -10,17 +11,17 @@ import scala.concurrent.ExecutionContext
  * File Output Handler
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class FileOutputHandler(out: OutputStream) extends BinaryOutputHandler {
+class FileOutputHandler(out: OutputStream) extends OutputHandler {
   private val dos = new DataOutputStream(out)
 
-  override def write(key: Array[Byte], message: Array[Byte])(implicit ec: ExecutionContext) = {
+  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) = {
     // persist the key
-    dos.writeInt(key.length)
-    dos.write(key)
+    dos.writeInt(data.key.length)
+    dos.write(data.key)
 
     // persist the message
-    dos.writeInt(message.length)
-    dos.write(message)
+    dos.writeInt(data.message.length)
+    dos.write(data.message)
   }
 
   override def close() = dos.close()

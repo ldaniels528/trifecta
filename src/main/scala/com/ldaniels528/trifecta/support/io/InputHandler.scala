@@ -8,6 +8,12 @@ package com.ldaniels528.trifecta.support.io
 trait InputHandler {
 
   /**
+   * Reads the given keyed-message from the underlying stream
+   * @return the option of a key-and-message
+   */
+  def read: Option[KeyAndMessage]
+
+  /**
    * Closes the underlying stream
    */
   def close(): Unit

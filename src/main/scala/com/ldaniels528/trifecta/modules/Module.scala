@@ -2,15 +2,13 @@ package com.ldaniels528.trifecta.modules
 
 import java.net.{URL, URLClassLoader}
 
-import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
 import com.ldaniels528.trifecta.support.avro.AvroDecoder
-import com.ldaniels528.trifecta.support.io.{BinaryOutputHandler, InputHandler, MessageOutputHandler, OutputHandler}
-import com.ldaniels528.trifecta.support.messaging.MessageDecoder
+import com.ldaniels528.trifecta.support.io._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
+import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
-import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -70,9 +68,11 @@ trait Module extends AvroReading {
 
   protected def die[S](message: String): S = throw new IllegalArgumentException(message)
 
-  protected def dieInvalidOutputURL(url: String, example: String) = die(s"Invalid output URL '$url' - Example usage: $example")
+  protected def dieInvalidOutputURL[S](url: String, example: String): S = die(s"Invalid output URL '$url' - Example usage: $example")
 
-  protected def dieNoOutputHandler(device: OutputHandler) = die(s"Unhandled output device $device")
+  protected def dieNoInputHandler[S](device: InputHandler): S = die(s"Unhandled input source $device")
+
+  protected def dieNoOutputHandler[S](device: OutputHandler): S = die(s"Unhandled output source $device")
 
   protected def dieSyntax[S](unixArgs: UnixLikeArgs): S = {
     die( s"""Invalid arguments - use "syntax ${unixArgs.commandName.get}" to see usage""")
@@ -97,17 +97,16 @@ trait Module extends AvroReading {
     if (values.length > index) Some(values(index)) else None
   }
 
-  protected def handleAvroSourceFlag(params: UnixLikeArgs)(implicit config: TxConfig): Option[AvroDecoder] = params("-a") map getAvroDecoder
+  protected def getAvroDecoder(params: UnixLikeArgs)(implicit config: TxConfig): Option[AvroDecoder] = {
+    params("-a") map lookupAvroDecoder
+  }
 
-  protected def handleOutputSourceFlag(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]], key: Array[Byte], message: Array[Byte])(implicit rt: TxRuntimeContext, ec: ExecutionContext) = {
-    params("-o") map { url =>
-      rt.getOutputHandler(url) match {
-        case Some(device: MessageOutputHandler) => device use (_.write(decoder, key, message))
-        case Some(device: BinaryOutputHandler) => device use (_.write(key, message))
-        case Some(unhandled) => dieNoOutputHandler(unhandled)
-        case None => die("No such output device")
-      }
-    }
+  protected def getInputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[InputHandler] = {
+    params("-i") flatMap rt.getInputHandler
+  }
+
+  protected def getOutputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[OutputHandler] = {
+    params("-o") flatMap rt.getOutputHandler
   }
 
   protected def parseDouble(label: String, value: String): Double = {

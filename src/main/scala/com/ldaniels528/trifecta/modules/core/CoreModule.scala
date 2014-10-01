@@ -6,8 +6,9 @@ import java.util.{Date, TimeZone}
 
 import com.ldaniels528.trifecta.JobManager.JobItem
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.modules.{AvroReading, Module}
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
+import com.ldaniels528.trifecta.modules.{AvroReading, Module}
+import com.ldaniels528.trifecta.support.io.KeyAndMessage
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}
@@ -45,6 +46,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "cd", changeDir, SimpleParams(Seq("path"), Nil), help = "Changes the local file system path/directory", promptAware = true),
     Command(this, "charset", charSet, SimpleParams(Nil, Seq("encoding")), help = "Retrieves or sets the character encoding"),
     Command(this, "columns", columnWidthGetOrSet, SimpleParams(Nil, Seq("columnWidth")), help = "Retrieves or sets the column width for message output"),
+    Command(this, "copy", copyMessages, UnixLikeParams(Nil, Seq("-a" -> "avroSchema", "-i" -> "inputSource", "-o" -> "outputSource", "-n" -> "numRecordsToCopy")), help = "Copies messages from an input source to an output source"),
     Command(this, "debug", debug, UnixLikeParams(Seq("enabled" -> false)), help = "Switches debugging on/off", undocumented = true),
     Command(this, "exit", exit, UnixLikeParams(), help = "Exits the shell"),
     Command(this, "help", help, UnixLikeParams(Seq("searchTerm" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
@@ -192,6 +194,41 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
       case Some(arg) => Left(config.columns = parseInt("columnWidth", arg))
       case None => Right(config.columns)
     }
+  }
+
+  /**
+   * Copy messages from the specified input source to an output source
+   * @example copy -i topic:shocktrade.quotes.avro -o file:messages/mymessage.bin
+   * @example copy -i topic:greetings -o topic:greetings2
+   */
+  def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Long = {
+    // get the input source
+    val in = getInputSource(params) getOrElse die("No input source defined")
+
+    // get the output source
+    val out = getOutputSource(params) getOrElse die("No output source defined")
+
+    // get an optional decoder
+    val decoder = getAvroDecoder(params)(rt.config)
+
+    // copy the messages from the input source to the output source
+    var count: Long = 0
+    var data: Option[KeyAndMessage] = None
+    do {
+      // read the record
+      data = in.read
+
+      // if defined ...
+      data.foreach { kam =>
+        // write the record
+        out.write(kam, decoder)
+
+        // count this record
+        count += 1
+      }
+    } while (data.isDefined)
+
+    count
   }
 
   /**
