@@ -138,7 +138,7 @@ object TxUtils {
   implicit class StringMagic(val src: String) extends AnyVal {
 
     def extractProperty(prefix: String): Option[String] = {
-      if (src.startsWith(prefix)) Option(src.substring(src.indexOf(prefix) + 1)) else None
+      if (src.startsWith(prefix)) Option(src.substring(prefix.length)) else None
     }
 
   }
