@@ -7,7 +7,7 @@ import java.util.Date
 import com.ldaniels528.trifecta.command.CommandParser._
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.support.io.OutputHandler
+import com.ldaniels528.trifecta.support.io.InputHandler
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.trifecta.util.EndPoint
@@ -42,22 +42,23 @@ class ZookeeperModule(config: TxConfig) extends Module {
     Command(this, "ztree", tree, SimpleParams(Seq.empty, Seq("path")), help = "Retrieves Zookeeper directory structure"))
 
   /**
-   * Returns an Zookeeper output handler
-   * @param url the given output URL (e.g. "zk:/messages/cache001")
+   * Returns a Zookeeper input source
+   * @param url the given input URL (e.g. "zk:/messages/cache001")
+   * @return the option of a Zookeeper input source
    */
-  override def getOutputHandler(url: String): Option[OutputHandler] = {
-    // extract the output topic
-    val rootPath: String = {
-      val index = url.indexOf(":")
-      if (index == -1) dieInvalidOutputURL(url, "zk:/messages/cache001")
-      else url.splitAt(index) match {
-        case (prefix, path) if prefix == "zk" => path
-        case _ => dieInvalidOutputURL(url, "zk:/messages/cache001")
-      }
-    }
+  override def getInputHandler(url: String): Option[InputHandler] = None
 
-    // return the output handler
-    Option(new ZookeeperOutputHandler(zk, rootPath))
+  /**
+   * Returns a Zookeeper output source
+   * @param url the given output URL (e.g. "zk:/messages/cache001")
+   * @return the option of a Zookeeper output source
+   */
+  override def getOutputHandler(url: String): Option[ZookeeperOutputHandler] = {
+    if (url.startsWith("zk:")) {
+      val rootPath = url.substring(url.indexOf(":") + 1)
+      Option(new ZookeeperOutputHandler(zk, rootPath))
+    }
+    else None
   }
 
   override def getVariables: Seq[Variable] = Seq(

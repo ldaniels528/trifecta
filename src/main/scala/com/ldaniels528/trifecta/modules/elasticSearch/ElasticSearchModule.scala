@@ -7,7 +7,7 @@ import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO.{AddDocumentResponse, CountResponse}
-import com.ldaniels528.trifecta.support.io.MessageOutputHandler
+import com.ldaniels528.trifecta.support.io.{InputHandler, MessageOutputHandler}
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json._
@@ -47,20 +47,31 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   )
 
   /**
-   * Returns an Elastic Search document output handler
-   * @param url the given output URL (e.g. "es:/quotes/quote/AAPL")
+   * Returns an Elastic Search document input source
+   * @param url the given input URL (e.g. "es:/quotes/quote/AAPL")
+   * @return the option of an Elastic Search document input source
    */
-  override def getOutputHandler(url: String): Option[MessageOutputHandler] = {
-    client_? flatMap { client =>
-      url.split("[/]").toList match {
-        case "es:" :: index :: indexType :: Nil =>
-          Option(new DocumentOutputHandler(client, index, indexType, id = None))
-        case "es:" :: index :: indexType :: id :: Nil =>
-          Option(new DocumentOutputHandler(client, index, indexType, Option(id)))
-        case _ =>
-          dieInvalidOutputURL(url, "es:/quotes/quote/AAPL")
+  override def getInputHandler(url: String): Option[InputHandler] = None
+
+  /**
+   * Returns an Elastic Search document output source
+   * @param url the given input URL (e.g. "es:/quotes/quote/AAPL")
+   * @return the option of an Elastic Search document output source
+   */
+  override def getOutputHandler(url: String): Option[DocumentOutputHandler] = {
+    if (url.startsWith("es:")) {
+      client_? flatMap { client =>
+        url.split("[/]").toList match {
+          case "es:" :: index :: indexType :: Nil =>
+            Option(new DocumentOutputHandler(client, index, indexType, id = None))
+          case "es:" :: index :: indexType :: id :: Nil =>
+            Option(new DocumentOutputHandler(client, index, indexType, Option(id)))
+          case _ =>
+            dieInvalidOutputURL(url, "es:/quotes/quote/AAPL")
+        }
       }
     }
+    else None
   }
 
   /**

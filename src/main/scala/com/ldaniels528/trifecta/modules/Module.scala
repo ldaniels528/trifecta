@@ -4,7 +4,7 @@ import java.net.{URL, URLClassLoader}
 
 import com.ldaniels528.trifecta.TxRuntimeContext
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
-import com.ldaniels528.trifecta.support.io.{BinaryOutputHandler, MessageOutputHandler, OutputHandler}
+import com.ldaniels528.trifecta.support.io.{InputHandler, BinaryOutputHandler, MessageOutputHandler, OutputHandler}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
@@ -29,6 +29,14 @@ trait Module {
    * @return the commands that are bound to the module
    */
   def getCommands(implicit rt: TxRuntimeContext): Seq[Command]
+
+  /**
+   * Attempts to retrieve an input handler for the given URL
+   * @param url the given input URL
+   * @return the option of an input handler
+   */
+  def getInputHandler(url: String): Option[InputHandler]
+
 
   /**
    * Attempts to retrieve an output handler for the given URL

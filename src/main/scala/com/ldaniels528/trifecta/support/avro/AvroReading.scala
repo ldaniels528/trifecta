@@ -14,7 +14,7 @@ trait AvroReading {
 
   def getAvroDecoder(schemaVar: String)(implicit config: TxConfig): AvroDecoder = {
     // is it an Avro input source
-    if (schemaVar.startsWith("avro:")) {
+    if (schemaVar.startsWith("file:")) {
       val path = schemaVar.substring(schemaVar.indexOf(':') + 1)
       loadAvroDecoder(s"A${System.currentTimeMillis()}", path)
     }

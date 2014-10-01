@@ -9,7 +9,7 @@ import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.avro.{AvroDecoder, AvroReading}
-import com.ldaniels528.trifecta.support.io.BinaryOutputHandler
+import com.ldaniels528.trifecta.support.io.{InputHandler, BinaryOutputHandler}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
@@ -94,21 +94,23 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kswitch", switchCursor, UnixLikeParams(Seq("topic" -> true)), help = "Switches the currently active topic cursor"))
 
   /**
-   * Returns an Kafka output writer
-   * topic:shocktrade.quotes.avro
+   * Returns a Kafka Topic input source
+   * @param url the given input URL (e.g. "topic:shocktrade.quotes.avro")
+   * @return the option of a Kafka Topic input source
    */
-  override def getOutputHandler(url: String): Option[BinaryOutputHandler] = {
-    // extract the output topic
-    val outputTopic: String = {
-      val index = url.indexOf(":")
-      if (index == -1) dieInvalidOutputURL(url, "topic:shocktrade.quotes.avro")
-      else url.splitAt(index) match {
-        case (prefix, topic) if prefix == "topic" => topic
-        case _ => dieInvalidOutputURL(url, "topic:shocktrade.quotes.avro")
-      }
-    }
+  override def getInputHandler(url: String): Option[InputHandler] = None
 
-    Option(new KafkaTopicOutputHandler(brokers, outputTopic))
+  /**
+   * Returns a Kafka Topic output source
+   * @param url the given output URL (e.g. "topic:shocktrade.quotes.avro")
+   * @return the option of a Kafka Topic output source
+   */
+  override def getOutputHandler(url: String): Option[KafkaTopicOutputHandler] = {
+    if (url.startsWith("topic:")) {
+      val outputTopic = url.substring(url.indexOf(':') + 1)
+      Option(new KafkaTopicOutputHandler(brokers, outputTopic))
+    }
+    else None
   }
 
   override def getVariables: Seq[Variable] = Seq(

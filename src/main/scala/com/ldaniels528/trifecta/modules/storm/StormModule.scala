@@ -4,11 +4,11 @@ import java.net.{URL, URLClassLoader}
 
 import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
-import com.ldaniels528.trifecta.support.io.BinaryOutputHandler
-import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.ldaniels528.trifecta.command.{Command, SimpleParams, UnixLikeArgs}
 import com.ldaniels528.trifecta.modules.Module
+import com.ldaniels528.trifecta.support.io.{InputHandler, OutputHandler}
 import com.ldaniels528.trifecta.vscript.Variable
+import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json._
 import org.slf4j.LoggerFactory
@@ -49,11 +49,18 @@ class StormModule(config: TxConfig) extends Module {
   )
 
   /**
-   * Returns an output writer for the given module
-   * @param path the given output path
-   * @return the option of an output writer
+   * Returns a Storm input source
+   * @param url the given input URL (e.g. "file:/tmp/messages.bin")
+   * @return the option of a Storm input source
    */
-  override def getOutputHandler(path: String): Option[BinaryOutputHandler] = None
+  override def getInputHandler(url: String): Option[InputHandler] = None
+
+  /**
+   * Returns a Storm output source
+   * @param url the given output URL (e.g. "file:/tmp/messages.bin")
+   * @return the option of a Storm output source
+   */
+  override def getOutputHandler(url: String): Option[OutputHandler] = None
 
   override def getVariables: Seq[Variable] = Nil
 
