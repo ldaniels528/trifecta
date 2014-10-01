@@ -187,10 +187,10 @@ To retrieve the document we've just created, use the `eget` command:
 ##### Elastic Search: Avro to JSON   
     
 Now let's do something slightly more advanced. Let's use _Trifecta's_ powerful search and copy features to copy
-a message from a Kafka Topic to create (or update) an Elastic Search document. First, let's find the Kafka message we want to copy.
-**NOTE**: Some steps have been omitted for brevity. See <a href="#kafka-advanced-search">Kafka Advanced Search</a> for full details.
+a message from a Kafka Topic to create (or update) an Elastic Search document. **NOTE**: Some setup steps have been 
+omitted for brevity. See <a href="#kafka-advanced-search">Kafka Advanced Search</a> for full details.
 
-    elasticSearch:localhost:9200/quotes/quote/AMD> kfindone symbol == "AAPL"    
+    elasticSearch:localhost:9200/quotes/quote/AMD> kfindone symbol == "AAPL" -o es:/quotes/quote/AAPL   
     + ------------------------------------- +
     | field         value          type     |
     + ------------------------------------- +
@@ -211,10 +211,6 @@ a message from a Kafka Topic to create (or update) an Elastic Search document. F
     | marketCap     6.033E11       Double   |
     | errorMessage                          |
     + ------------------------------------- +
-
-Next, let's copy the Kafka message as an Elastic Search document using the `kget` command:
-
-    kafka:shocktrade.quotes.avro/4:5429> kget -o es:/quotes/quote/AAPL
     
 Finally, let's view the document we've created:
    
@@ -238,6 +234,11 @@ Finally, let's view the document we've created:
       "marketCap":6.033E11,
       "errorMessage":null
     }    
+
+Please note we could also use any of the Kafka message retrieve commands (`kget`, `kfirst`, `knext`, `kprev` and `klast`) 
+to copy a Kafka message as an Elastic Search document. See the following example:
+
+    kafka:shocktrade.quotes.avro/4:5429> kget -o es:/quotes/quote/AAPL
 
 <a name="kafka-module"></a>
 #### Kakfa Module
