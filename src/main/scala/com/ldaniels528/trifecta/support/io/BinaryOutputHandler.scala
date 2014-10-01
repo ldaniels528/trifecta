@@ -4,7 +4,7 @@ import scala.concurrent.ExecutionContext
 
 /**
  * This trait should be implemented by classes that are interested in serving as an
- * output device for writing binary messages
+ * output source for writing binary messages
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait BinaryOutputHandler extends OutputHandler {

@@ -9,7 +9,7 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.trifecta.support.avro.AvroReading
-import com.ldaniels528.trifecta.support.io.BinaryOutputHandler
+import com.ldaniels528.trifecta.support.io.OutputHandler
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}
@@ -70,8 +70,13 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * Returns a file output writer
    * file:/tmp/messages.bin
    */
-  override def getOutputHandler(path: String): Option[BinaryOutputHandler] = {
-    Option(new FileOutputHandler(path))
+  override def getOutputHandler(url: String): Option[OutputHandler] = {
+    val index = url.indexOf(':')
+    if (index == -1) None
+    else {
+      val path = url.substring(index + 1)
+      Option(new FileOutputHandler(path))
+    }
   }
 
   override def getVariables: Seq[Variable] = Seq(
@@ -207,7 +212,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     val prefix = params.args.headOption
 
     // was the module switch used?
-   val commands = params("-m") match {
+    val commands = params("-m") match {
       case Some(moduleName) => commandSet.toSeq filter { case (name, cmd) => cmd.module.moduleName == moduleName}
       case None => commandSet.toSeq
     }
