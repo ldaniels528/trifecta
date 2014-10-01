@@ -89,7 +89,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "detailed list")), help = "Lists all existing topics"),
     Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Attempts to retrieve the next message"),
     Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Attempts to retrieve the message at the previous offset"),
-    Command(this, "kpublish", publishMessage, UnixLikeParams(Seq("topic" -> true, "key" -> true)), help = "Publishes a message to a topic", undocumented = true),
+    Command(this, "kput", publishMessage, UnixLikeParams(Seq("topic" -> false, "key" -> true, "message" -> true), Seq("-t" -> "topic")), help = "Publishes a message to a topic"),
     Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"),
     Command(this, "kswitch", switchCursor, UnixLikeParams(Seq("topic" -> true)), help = "Switches the currently active topic cursor"))
@@ -239,7 +239,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kbrokers" - Retrieves the list of Kafka brokers
+   * Retrieves the list of Kafka brokers
    */
   def getBrokers(args: UnixLikeArgs): Seq[BrokerDetails] = {
     KafkaMicroConsumer.getBrokerList
@@ -261,7 +261,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kcursor" - Displays the current message cursor
+   * Displays the current message cursor
    * @example kcursor shocktrade.keystats.avro
    * @example kcursor
    */
@@ -282,7 +282,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kswitch" - Switches between topic cursors
+   * Switches between topic cursors
    * @example kswitch shocktrade.keystats.avro
    */
   def switchCursor(params: UnixLikeArgs) {
@@ -304,7 +304,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kfirst" - Returns the first message for a given topic
+   * Returns the first message for a given topic
    * @example kfirst com.shocktrade.quotes.csv 0
    * @example kfirst
    */
@@ -317,7 +317,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "klast" - Returns the last offset for a given topic
+   * Returns the last offset for a given topic
    * @example klast com.shocktrade.alerts 0
    * @example klast
    */
@@ -330,7 +330,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kget" - Returns the message for a given topic partition and offset
+   * Returns the message for a given topic partition and offset
    * @example kget com.shocktrade.alerts 0 3456
    * @example kget 3456
    * @example kget -f /tmp/output.txt
@@ -461,7 +461,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kprev" - Optionally returns the previous message
+   * Optionally returns the previous message
    * @example kprev
    */
   def getPreviousMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
@@ -471,7 +471,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kstats" - Returns the number of available messages for a given topic
+   * Returns the number of available messages for a given topic
    * @example kstats com.shocktrade.alerts 0 4
    * @example kstats com.shocktrade.alerts
    * @example kstats
@@ -525,7 +525,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kimport" - Imports a message into a new/existing topic
+   * Imports a message into a new/existing topic
    * @example kimport com.shocktrade.alerts -t -f messages/mymessage.txt
    * @example kimport -a mySchema -f messages/mymessage.txt
    */
@@ -621,7 +621,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kinbound" - Retrieves a list of all topics with new messages (since last query)
+   * Retrieves a list of all topics with new messages (since last query)
    * @example kinbound com.shocktrade.quotes
    */
   def inboundMessages(params: UnixLikeArgs): Iterable[Inbound] = {
@@ -685,26 +685,34 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * "kpublish" - Returns the EOF offset for a given topic
+   * Publishes the given message to a given topic
+   * @example kput greetings a0.00.11.22.33.44.ef.11 "Hello World"
+   * @example kput a0.00.11.22.33.44.ef.11 "Hello World" (references cursor)
    */
   def publishMessage(params: UnixLikeArgs): Unit = {
+    import com.ldaniels528.trifecta.command.CommandParser._
+
+    // was a topic specified?
+    val topic_? = params("-t")
+
     // get the arguments
     val (topic, key, message) = params.args match {
+      case aKey :: aMessage :: Nil if topic_?.isDefined => (topic_?.get, aKey, aMessage)
       case aKey :: aMessage :: Nil => cursor map (c => (c.topic, aKey, aMessage)) getOrElse dieNoCursor
-      case aTopic :: aGroupId :: aKey :: aMessage :: Nil => (aTopic, aKey, aMessage)
+      case aTopic :: aKey :: aMessage :: Nil => (aTopic, aKey, aMessage)
       case _ => dieSyntax(params)
     }
 
     // convert the key and message to binary
-    val keyBytes = CommandParser parseDottedHex key
-    val msgBytes = CommandParser parseDottedHex message
+    val keyBytes = if (isDottedHex(key)) parseDottedHex(key) else key.getBytes(config.encoding)
+    val msgBytes = if (isDottedHex(message)) parseDottedHex(message) else message.getBytes(config.encoding)
 
     // publish the message
     facade.publishMessage(topic, keyBytes, msgBytes)
   }
 
   /**
-   * "kreset" - Sets the offset of a consumer group ID to zero for all partitions
+   * Sets the offset of a consumer group ID to zero for all partitions
    * @example kreset com.shocktrade.quotes.csv lld
    */
   def resetConsumerGroup(params: UnixLikeArgs): Unit = {

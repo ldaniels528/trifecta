@@ -23,6 +23,7 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaFacade(correlationId: Int) {
+  private var publisher_? : Option[KafkaPublisher] = None
 
   /**
    * Returns a collection of brokers
@@ -277,13 +278,18 @@ class KafkaFacade(correlationId: Int) {
   }
 
   /**
-   * "kpublish" - Returns the EOF offset for a given topic
+   * Publishes the given message to the given topic
    */
   def publishMessage(topic: String, key: Array[Byte], message: Array[Byte])(implicit zk: ZKProxy): Unit = {
-    KafkaPublisher(brokers) use { publisher =>
+    // if the publisher has not been created ...
+    if (publisher_?.isEmpty) publisher_? = Option {
+      val publisher = KafkaPublisher(brokers)
       publisher.open()
-      publisher.publish(topic, key, message)
+      publisher
     }
+
+    // publish the message
+    publisher_? foreach (_.publish(topic, key, message))
   }
 
   /**

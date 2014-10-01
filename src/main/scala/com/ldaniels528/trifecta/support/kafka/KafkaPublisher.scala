@@ -17,7 +17,7 @@ class KafkaPublisher(config: ProducerConfig) {
    * Opens the connection to the message publisher
    */
   def open() {
-    producer = Some(new Producer(config))
+    producer = Option(new Producer(config))
   }
 
   /**
@@ -25,17 +25,24 @@ class KafkaPublisher(config: ProducerConfig) {
    */
   def close() {
     producer.foreach(_.close)
+    producer = None
   }
 
   /**
    * Transports a message to the messaging server
-   * @param topic the given topic name (e.g. "flights")
+   * @param topic the given topic name (e.g. "greetings")
    * @param key the given message key
-   * @param value the given message value
+   * @param message the given message payload
    */
-  def publish(topic: String, key: Array[Byte], value: Array[Byte]) {
-    producer.foreach(_.send(new KeyedMessage(topic, key, value)))
+  def publish(topic: String, key: Array[Byte], message: Array[Byte]) {
+    producer.foreach(_.send(new KeyedMessage(topic = topic, key = key, message = message)))
   }
+
+  /**
+   * Transports a message to the messaging server
+   * @param km the given keyed message value
+   */
+  def publish(km: KeyedMessage[Array[Byte], Array[Byte]]): Unit = producer.foreach(_.send(km))
 
 }
 
