@@ -73,6 +73,12 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
           if (line.nonEmpty) {
             rt.interpret(line) match {
               case Success(result) =>
+                // if debug is enabled, display the object value and class name
+                if(config.debugOn) {
+                  out.println(s"result: $result ${Option(result) map(_.getClass.getName) getOrElse ""}")
+                }
+
+                // handle the result
                 rt.handleResult(result, line)
                 if (!ineligibleHistory(line)) SessionManagement.history += line
               case Failure(e: ConnectionLossException) =>
