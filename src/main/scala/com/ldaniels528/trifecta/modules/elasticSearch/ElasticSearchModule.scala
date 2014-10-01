@@ -61,15 +61,13 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    */
   override def getOutputHandler(url: String): Option[DocumentOutputHandler] = {
     url.extractProperty("es:") flatMap { path =>
-      client_? flatMap { client =>
-        url.split("[/]").toList match {
-          case "" :: index :: indexType :: Nil =>
-            Option(new DocumentOutputHandler(client, index, indexType, id = None))
-          case "" :: index :: indexType :: id :: Nil =>
-            Option(new DocumentOutputHandler(client, index, indexType, Option(id)))
-          case _ =>
-            dieInvalidOutputURL(url, "es:/quotes/quote/AAPL")
-        }
+      path.split("[/]").toList match {
+        case "" :: index :: indexType :: Nil =>
+          Option(new DocumentOutputHandler(client, index, indexType, id = None))
+        case "" :: index :: indexType :: id :: Nil =>
+          Option(new DocumentOutputHandler(client, index, indexType, Option(id)))
+        case _ =>
+          dieInvalidOutputURL(url, "es:/quotes/quote/AAPL")
       }
     }
   }
