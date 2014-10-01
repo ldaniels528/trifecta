@@ -6,9 +6,8 @@ import java.util.{Date, TimeZone}
 
 import com.ldaniels528.trifecta.JobManager.JobItem
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.modules.Module
+import com.ldaniels528.trifecta.modules.{AvroReading, Module}
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
-import com.ldaniels528.trifecta.support.avro.AvroReading
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}

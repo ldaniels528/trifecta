@@ -1,8 +1,9 @@
-package com.ldaniels528.trifecta.support.avro
+package com.ldaniels528.trifecta.modules
 
 import java.io.File
 
 import com.ldaniels528.trifecta.TxConfig
+import com.ldaniels528.trifecta.support.avro.AvroDecoder
 import com.ldaniels528.trifecta.util.TxUtils._
 
 import scala.io.Source

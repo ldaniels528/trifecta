@@ -8,7 +8,7 @@ import java.util.Date
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.support.avro.{AvroDecoder, AvroReading}
+import com.ldaniels528.trifecta.support.avro.AvroDecoder
 import com.ldaniels528.trifecta.support.io.InputHandler
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
