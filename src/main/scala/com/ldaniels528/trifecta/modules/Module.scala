@@ -19,12 +19,6 @@ import scala.util.{Failure, Success, Try}
 trait Module {
 
   /**
-   * Returns the name of the module (e.g. "kafka")
-   * @return the name of the module
-   */
-  def moduleName: String
-
-  /**
    * Returns the commands that are bound to the module
    * @return the commands that are bound to the module
    */
@@ -36,7 +30,6 @@ trait Module {
    * @return the option of an input handler
    */
   def getInputHandler(url: String): Option[InputHandler]
-
 
   /**
    * Attempts to retrieve an output handler for the given URL
@@ -50,6 +43,12 @@ trait Module {
    * @return the variables that are bound to the module
    */
   def getVariables: Seq[Variable]
+
+  /**
+   * Returns the name of the module (e.g. "kafka")
+   * @return the name of the module
+   */
+  def moduleName: String
 
   /**
    * Returns the the information that is to be displayed while the module is active
