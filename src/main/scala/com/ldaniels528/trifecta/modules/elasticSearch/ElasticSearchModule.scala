@@ -60,12 +60,12 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @return the option of an Elastic Search document output source
    */
   override def getOutputHandler(url: String): Option[DocumentOutputHandler] = {
-    url.extractProperty("es:") flatMap { path =>
+    url.extractProperty("es:") map { path =>
       path.split("[/]").toList match {
         case "" :: index :: indexType :: Nil =>
-          Option(new DocumentOutputHandler(client, index, indexType, id = None))
+          new DocumentOutputHandler(client, index, indexType, id = None)
         case "" :: index :: indexType :: id :: Nil =>
-          Option(new DocumentOutputHandler(client, index, indexType, Option(id)))
+          new DocumentOutputHandler(client, index, indexType, Option(id))
         case _ =>
           dieInvalidOutputURL(url, "es:/quotes/quote/AAPL")
       }
