@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext
 class FileInputHandler(in: InputStream) extends BinaryInputHandler {
   private val dis = new DataInputStream(in)
 
-  override def read(implicit ec: ExecutionContext): KeyedMessage = {
+  override def read: KeyedMessage = {
     // retrieve the key
     val key: Array[Byte] = {
       val key = new Array[Byte](dis.readInt())

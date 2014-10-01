@@ -75,7 +75,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     if (index == -1) None
     else {
       val path = url.substring(index + 1)
-      Option(new FileOutputHandler(path))
+      Option(FileOutputHandler(path))
     }
   }
 
