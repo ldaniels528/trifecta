@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.modules.kafka
 
-import com.ldaniels528.trifecta.support.io.{InputHandler, KeyAndMessage}
+import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.support.kafka.{Broker, KafkaMicroConsumer}
 import kafka.common.TopicAndPartition
 
@@ -8,8 +8,8 @@ import kafka.common.TopicAndPartition
  * Kafka Topic Input Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaTopicInputHandler(brokers: Seq[Broker], topic: String, partition: Int = 0, fetchSize: Int = 65536)
-  extends InputHandler {
+class KafkaTopicInputSource(brokers: Seq[Broker], topic: String, partition: Int = 0, fetchSize: Int = 65536)
+  extends InputSource {
   private val consumer = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId = 0)
   private var offset_? : Option[Long] = consumer.getFirstOffset
 

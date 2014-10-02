@@ -9,7 +9,7 @@ import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.avro.AvroDecoder
-import com.ldaniels528.trifecta.support.io.{InputHandler, KeyAndMessage}
+import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
@@ -98,8 +98,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param url the given input URL (e.g. "topic:shocktrade.quotes.avro")
    * @return the option of a Kafka Topic input source
    */
-  override def getInputHandler(url: String): Option[InputHandler] = {
-    url.extractProperty("topic:") map (new KafkaTopicInputHandler(brokers, _))
+  override def getInputHandler(url: String): Option[InputSource] = {
+    url.extractProperty("topic:") map (new KafkaTopicInputSource(brokers, _))
   }
 
   /**
@@ -107,8 +107,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param url the given output URL (e.g. "topic:shocktrade.quotes.avro")
    * @return the option of a Kafka Topic output source
    */
-  override def getOutputHandler(url: String): Option[KafkaTopicOutputHandler] = {
-    url.extractProperty("topic:") map (new KafkaTopicOutputHandler(brokers, _))
+  override def getOutputHandler(url: String): Option[KafkaTopicOutputSource] = {
+    url.extractProperty("topic:") map (new KafkaTopicOutputSource(brokers, _))
   }
 
   override def getVariables: Seq[Variable] = Seq(

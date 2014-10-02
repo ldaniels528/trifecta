@@ -3,13 +3,13 @@ package com.ldaniels528.trifecta.modules.core
 import java.io.{DataInputStream, File, FileInputStream, InputStream}
 import java.net.URL
 
-import com.ldaniels528.trifecta.support.io.{InputHandler, KeyAndMessage}
+import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 
 /**
- * File Input Handler
+ * File Input Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class FileInputHandler(in: InputStream) extends InputHandler {
+class FileInputSource(in: InputStream) extends InputSource {
   private val dis = new DataInputStream(in)
 
   override def read: Option[KeyAndMessage] = {
@@ -41,19 +41,19 @@ class FileInputHandler(in: InputStream) extends InputHandler {
  * File Input Handler Singleton
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object FileInputHandler {
+object FileInputSource {
 
-  def apply(resourcePath: String): FileInputHandler = {
+  def apply(resourcePath: String): FileInputSource = {
     val in = Option(getClass.getResource(resourcePath)) map (_.openStream()) getOrElse new FileInputStream(resourcePath)
-    new FileInputHandler(in)
+    new FileInputSource(in)
   }
 
-  def apply(file: File): FileInputHandler = {
-    new FileInputHandler(new FileInputStream(file))
+  def apply(file: File): FileInputSource = {
+    new FileInputSource(new FileInputStream(file))
   }
 
-  def apply(url: URL): FileInputHandler = {
-    new FileInputHandler(url.openStream())
+  def apply(url: URL): FileInputSource = {
+    new FileInputSource(url.openStream())
   }
 
 }

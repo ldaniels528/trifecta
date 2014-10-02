@@ -2,7 +2,7 @@ package com.ldaniels528.trifecta.modules.elasticSearch
 
 import com.ldaniels528.trifecta.support.avro.AvroDecoder
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO
-import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputHandler}
+import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.util.TxUtils._
 
@@ -10,11 +10,11 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
- * Elastic Search Document Output Handler
+ * Elastic Search Document Output Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class DocumentOutputHandler(client: ElasticSearchDAO, index: String, indexType: String, id: Option[String])
-  extends OutputHandler {
+class DocumentOutputSource(client: ElasticSearchDAO, index: String, indexType: String, id: Option[String])
+  extends OutputSource {
 
   /**
    * Returns the binary encoding

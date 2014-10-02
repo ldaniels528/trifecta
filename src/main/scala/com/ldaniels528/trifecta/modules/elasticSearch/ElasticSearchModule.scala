@@ -7,7 +7,7 @@ import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO
 import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO.{AddDocumentResponse, CountResponse}
-import com.ldaniels528.trifecta.support.io.{InputHandler, KeyAndMessage}
+import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
@@ -52,20 +52,20 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @param url the given input URL (e.g. "es:/quotes/quote/AAPL")
    * @return the option of an Elastic Search document input source
    */
-  override def getInputHandler(url: String): Option[InputHandler] = None
+  override def getInputHandler(url: String): Option[InputSource] = None
 
   /**
    * Returns an Elastic Search document output source
    * @param url the given input URL (e.g. "es:/quotes/quote/AAPL")
    * @return the option of an Elastic Search document output source
    */
-  override def getOutputHandler(url: String): Option[DocumentOutputHandler] = {
+  override def getOutputHandler(url: String): Option[DocumentOutputSource] = {
     url.extractProperty("es:") map { path =>
       path.split("[/]").toList match {
         case "" :: index :: indexType :: Nil =>
-          new DocumentOutputHandler(client, index, indexType, id = None)
+          new DocumentOutputSource(client, index, indexType, id = None)
         case "" :: index :: indexType :: id :: Nil =>
-          new DocumentOutputHandler(client, index, indexType, Option(id))
+          new DocumentOutputSource(client, index, indexType, Option(id))
         case _ =>
           dieInvalidOutputURL(url, "es:/quotes/quote/AAPL")
       }

@@ -7,7 +7,7 @@ import java.util.Date
 import com.ldaniels528.trifecta.command.CommandParser._
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.support.io.InputHandler
+import com.ldaniels528.trifecta.support.io.InputSource
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.trifecta.util.EndPoint
@@ -46,15 +46,15 @@ class ZookeeperModule(config: TxConfig) extends Module {
    * @param url the given input URL (e.g. "zk:/messages/cache001")
    * @return the option of a Zookeeper input source
    */
-  override def getInputHandler(url: String): Option[InputHandler] = None
+  override def getInputHandler(url: String): Option[InputSource] = None
 
   /**
    * Returns a Zookeeper output source
    * @param url the given output URL (e.g. "zk:/messages/cache001")
    * @return the option of a Zookeeper output source
    */
-  override def getOutputHandler(url: String): Option[ZookeeperOutputHandler] = {
-    url.extractProperty("zk:") map (new ZookeeperOutputHandler(zk, _))
+  override def getOutputHandler(url: String): Option[ZookeeperOutputSource] = {
+    url.extractProperty("zk:") map (new ZookeeperOutputSource(zk, _))
   }
 
   override def getVariables: Seq[Variable] = Seq(

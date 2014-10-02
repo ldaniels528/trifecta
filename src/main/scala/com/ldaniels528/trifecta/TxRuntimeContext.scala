@@ -7,7 +7,7 @@ import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule
 import com.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
-import com.ldaniels528.trifecta.support.io.{InputHandler, OutputHandler}
+import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
 import com.ldaniels528.trifecta.vscript.VScriptCompiler
 import org.slf4j.LoggerFactory
 
@@ -41,7 +41,7 @@ case class TxRuntimeContext(config: TxConfig) {
     moduleManager.setActiveModule(module)
   }
 
-  def getInputHandler(url: String): Option[InputHandler] = {
+  def getInputHandler(url: String): Option[InputSource] = {
     // get just the prefix
     val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed input source URL: $url")
 
@@ -53,7 +53,7 @@ case class TxRuntimeContext(config: TxConfig) {
    * Returns the output handler for the given output URL
    * @param url the given output URL (e.g. "es:/quotes/quote/GDF")
    */
-  def getOutputHandler(url: String): Option[OutputHandler] = {
+  def getOutputHandler(url: String): Option[OutputSource] = {
     // get just the prefix
     val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed output source URL: $url")
 

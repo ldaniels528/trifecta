@@ -4,7 +4,7 @@ import java.util.Date
 import java.util.concurrent.atomic.AtomicLong
 
 import com.ldaniels528.trifecta.support.avro.AvroDecoder
-import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputHandler}
+import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer._
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
@@ -59,7 +59,7 @@ class KafkaFacade(correlationId: Int) {
    * Finds messages that corresponds to the given criteria and exports them to a topic
    * @example kfind frequency > 5000 -o topic:highFrequency.quotes
    */
-  def findMessages(topic: String, decoder: Option[MessageDecoder[_]], conditions: Seq[Condition], outputHandler: OutputHandler)(implicit zk: ZKProxy, ec: ExecutionContext): Future[Long] = {
+  def findMessages(topic: String, decoder: Option[MessageDecoder[_]], conditions: Seq[Condition], outputHandler: OutputSource)(implicit zk: ZKProxy, ec: ExecutionContext): Future[Long] = {
     // define the counter
     val counter = new AtomicLong(0L)
 
@@ -275,7 +275,7 @@ class KafkaFacade(correlationId: Int) {
 
   private def dieNoOutputSource[S](): S = die("No output source specified")
 
-  private def dieNoOutputHandler(device: OutputHandler) = die(s"Unhandled output device $device")
+  private def dieNoOutputHandler(device: OutputSource) = die(s"Unhandled output device $device")
 
   private def dieNotMessageComparator[S](): S = die("Decoder does not support logical operations")
 

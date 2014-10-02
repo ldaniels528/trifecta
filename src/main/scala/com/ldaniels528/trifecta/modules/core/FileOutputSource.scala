@@ -2,16 +2,16 @@ package com.ldaniels528.trifecta.modules.core
 
 import java.io._
 
-import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputHandler}
+import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 
 import scala.concurrent.ExecutionContext
 
 /**
- * File Output Handler
+ * File Output Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class FileOutputHandler(out: OutputStream) extends OutputHandler {
+class FileOutputSource(out: OutputStream) extends OutputSource {
   private val dos = new DataOutputStream(out)
 
   override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) = {
@@ -32,14 +32,14 @@ class FileOutputHandler(out: OutputStream) extends OutputHandler {
  * File Output Handler Singleton
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object FileOutputHandler {
+object FileOutputSource {
 
-  def apply(path: String): FileOutputHandler = {
-    new FileOutputHandler(new FileOutputStream(path))
+  def apply(path: String): FileOutputSource = {
+    new FileOutputSource(new FileOutputStream(path))
   }
 
-  def apply(file: File): FileOutputHandler = {
-    new FileOutputHandler(new FileOutputStream(file))
+  def apply(file: File): FileOutputSource = {
+    new FileOutputSource(new FileOutputStream(file))
   }
 
 }

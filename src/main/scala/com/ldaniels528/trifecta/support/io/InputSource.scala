@@ -5,7 +5,7 @@ package com.ldaniels528.trifecta.support.io
  * input source for reading binary messages
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait InputHandler {
+trait InputSource {
 
   /**
    * Reads the given keyed-message from the underlying stream

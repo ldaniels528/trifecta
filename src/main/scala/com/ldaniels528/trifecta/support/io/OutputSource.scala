@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext
  * output device for writing binary messages
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait OutputHandler {
+trait OutputSource {
 
   /**
    * Writes the given key and decoded message to the underlying stream

@@ -8,7 +8,7 @@ import com.ldaniels528.trifecta.JobManager.JobItem
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.trifecta.modules.{AvroReading, Module}
-import com.ldaniels528.trifecta.support.io.KeyAndMessage
+import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}
@@ -67,12 +67,16 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "wget", httpGet, SimpleParams(required = Seq("url")), help = "Retrieves remote content via HTTP"))
 
   /**
-   * Returns a file input source
+   * Returns an input source
    * @param url the given input URL (e.g. "file:/tmp/messages.bin")
-   * @return the option of a file input source
+   * @return the option of an input source
    */
-  override def getInputHandler(url: String): Option[FileInputHandler] = {
-    url.extractProperty("file:") map (FileInputHandler(_))
+  override def getInputHandler(url: String): Option[InputSource] = {
+    url match {
+      case s if s.startsWith("http:") => Option(new HttpInputSource(url))
+      case s if s.startsWith("file:") => url.extractProperty("file:") map (FileInputSource(_))
+      case _ => None
+    }
   }
 
   /**
@@ -80,8 +84,8 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @param url the given output URL (e.g. "file:/tmp/messages.bin")
    * @return the option of a file output source
    */
-  override def getOutputHandler(url: String): Option[FileOutputHandler] = {
-    url.extractProperty("file:") map (FileOutputHandler(_))
+  override def getOutputHandler(url: String): Option[FileOutputSource] = {
+    url.extractProperty("file:") map (FileOutputSource(_))
   }
 
   override def getVariables: Seq[Variable] = Seq(
@@ -200,6 +204,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * Copy messages from the specified input source to an output source
    * @example copy -i topic:shocktrade.quotes.avro -o file:messages/mymessage.bin
    * @example copy -i topic:greetings -o topic:greetings2
+   * @example copy -i topic:shocktrade.quotes.avro -o es:/quotes/quote/$symbol -a file:avro/quotes.avsc
    */
   def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Long = {
     // get the input source

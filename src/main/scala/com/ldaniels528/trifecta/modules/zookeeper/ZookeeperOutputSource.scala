@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.modules.zookeeper
 
 import com.ldaniels528.trifecta.support.avro.AvroDecoder
-import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputHandler}
+import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 
@@ -9,10 +9,10 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 /**
- * Zookeeper Output Writer
+ * Zookeeper Output Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZookeeperOutputHandler(zk: ZKProxy, rootPath: String) extends OutputHandler {
+class ZookeeperOutputSource(zk: ZKProxy, rootPath: String) extends OutputSource {
 
   /**
    * Returns the binary encoding

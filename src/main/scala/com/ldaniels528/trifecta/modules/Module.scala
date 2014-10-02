@@ -28,14 +28,14 @@ trait Module extends AvroReading {
    * @param url the given input URL
    * @return the option of an input handler
    */
-  def getInputHandler(url: String): Option[InputHandler]
+  def getInputHandler(url: String): Option[InputSource]
 
   /**
    * Attempts to retrieve an output handler for the given URL
    * @param url the given output URL
    * @return the option of an output handler
    */
-  def getOutputHandler(url: String): Option[OutputHandler]
+  def getOutputHandler(url: String): Option[OutputSource]
 
   /**
    * Returns the variables that are bound to the module
@@ -70,9 +70,9 @@ trait Module extends AvroReading {
 
   protected def dieInvalidOutputURL[S](url: String, example: String): S = die(s"Invalid output URL '$url' - Example usage: $example")
 
-  protected def dieNoInputHandler[S](device: InputHandler): S = die(s"Unhandled input source $device")
+  protected def dieNoInputHandler[S](device: InputSource): S = die(s"Unhandled input source $device")
 
-  protected def dieNoOutputHandler[S](device: OutputHandler): S = die(s"Unhandled output source $device")
+  protected def dieNoOutputHandler[S](device: OutputSource): S = die(s"Unhandled output source $device")
 
   protected def dieSyntax[S](unixArgs: UnixLikeArgs): S = {
     die( s"""Invalid arguments - use "syntax ${unixArgs.commandName.get}" to see usage""")
@@ -101,11 +101,11 @@ trait Module extends AvroReading {
     params("-a") map lookupAvroDecoder
   }
 
-  protected def getInputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[InputHandler] = {
+  protected def getInputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[InputSource] = {
     params("-i") flatMap rt.getInputHandler
   }
 
-  protected def getOutputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[OutputHandler] = {
+  protected def getOutputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[OutputSource] = {
     params("-o") flatMap rt.getOutputHandler
   }
 

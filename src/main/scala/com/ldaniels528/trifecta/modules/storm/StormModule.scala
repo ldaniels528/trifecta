@@ -6,7 +6,7 @@ import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
 import com.ldaniels528.trifecta.command.{Command, SimpleParams, UnixLikeArgs}
 import com.ldaniels528.trifecta.modules.Module
-import com.ldaniels528.trifecta.support.io.{InputHandler, OutputHandler}
+import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JsonAST.JValue
@@ -53,14 +53,14 @@ class StormModule(config: TxConfig) extends Module {
    * @param url the given input URL (e.g. "file:/tmp/messages.bin")
    * @return the option of a Storm input source
    */
-  override def getInputHandler(url: String): Option[InputHandler] = None
+  override def getInputHandler(url: String): Option[InputSource] = None
 
   /**
    * Returns a Storm output source
    * @param url the given output URL (e.g. "file:/tmp/messages.bin")
    * @return the option of a Storm output source
    */
-  override def getOutputHandler(url: String): Option[OutputHandler] = None
+  override def getOutputHandler(url: String): Option[OutputSource] = None
 
   override def getVariables: Seq[Variable] = Nil
 

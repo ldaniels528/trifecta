@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.modules.kafka
 
-import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputHandler}
+import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.kafka.{Broker, KafkaPublisher}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 
@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContext
  * Kafka Topic Output Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaTopicOutputHandler(brokers: Seq[Broker], outputTopic: String) extends OutputHandler {
+class KafkaTopicOutputSource(brokers: Seq[Broker], outputTopic: String) extends OutputSource {
   private val publisher = KafkaPublisher(brokers)
   publisher.open()
 
