@@ -117,6 +117,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   override def moduleName = "kafka"
 
+  override def moduleLabel = "kafka"
+
   override def prompt: String = cursor map (c => s"${c.topic}/${c.partition}:${c.offset}") getOrElse "/"
 
   override def shutdown() = {

@@ -34,8 +34,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   private val PID_Linux_r = "^\\s*(\\S+)\\s*(\\d+)\\s*(\\d+)\\s*(\\d+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
   private val NET_STAT_r = "^\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
 
-  override def moduleName = "core"
-
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "$", executeCommand, UnboundedParams(1), help = "Executes a local system command"),
     Command(this, "!", executeHistory, UnixLikeParams(Seq("!" -> false, "?" -> false, "index|count" -> false), Nil), help = "Executes a previously issued command"),
@@ -96,11 +94,23 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Variable("encoding", ConstantValue(Option("UTF8")))
   )
 
+  /**
+   * Returns the name of the module (e.g. "kafka")
+   * @return the name of the module
+   */
+  override def moduleName = "core"
+
+  /**
+   * Returns the label of the module (e.g. "kafka")
+   * @return the label of the module
+   */
+  override def moduleLabel = "core"
+
   override def prompt: String = cwd
 
   override def shutdown() = ()
 
-  override def supportedPrefixes: Seq[String] = Seq("file")
+  override def supportedPrefixes: Seq[String] = Seq("file", "http")
 
   // load the commands from the modules
   private def commandSet(implicit rt: TxRuntimeContext): Map[String, Command] = rt.moduleManager.commandSet

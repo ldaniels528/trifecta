@@ -50,6 +50,12 @@ trait Module extends AvroReading {
   def moduleName: String
 
   /**
+   * Returns the label of the module (e.g. "kafka")
+   * @return the label of the module
+   */
+  def moduleLabel: String
+
+  /**
    * Returns the the information that is to be displayed while the module is active
    * @return the the information that is to be displayed while the module is active
    */

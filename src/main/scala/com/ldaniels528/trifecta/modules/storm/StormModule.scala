@@ -66,6 +66,8 @@ class StormModule(config: TxConfig) extends Module {
 
   override def moduleName = "storm"
 
+  override def moduleLabel = "storm"
+
   override def prompt: String = nimbusHost getOrElse super.prompt
 
   override def shutdown(): Unit = ()

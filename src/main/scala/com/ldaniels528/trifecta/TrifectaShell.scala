@@ -69,7 +69,7 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
 
       // read a line from the console
       Try {
-        Option(consoleReader.readLine("%s:%s> ".format(module.moduleName, module.prompt))) map (_.trim) foreach { line =>
+        Option(consoleReader.readLine("%s:%s> ".format(module.moduleLabel, module.prompt))) map (_.trim) foreach { line =>
           if (line.nonEmpty) {
             rt.interpret(line) match {
               case Success(result) =>
@@ -82,7 +82,7 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
                 rt.handleResult(result, line)
                 if (!ineligibleHistory(line)) SessionManagement.history += line
               case Failure(e: ConnectionLossException) =>
-                err.println("Zookeeper connect loss error - use 'zreconnect' to re-establish a connection")
+                err.println("Zookeeper connect loss error - use 'zconnect' to re-establish a connection")
               case Failure(e: IllegalArgumentException) =>
                 if (rt.config.debugOn) e.printStackTrace()
                 err.println(s"Syntax error: ${e.getMessage}")

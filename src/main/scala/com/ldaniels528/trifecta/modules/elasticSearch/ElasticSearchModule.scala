@@ -28,12 +28,6 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   private var cursor_? : Option[ElasticCursor] = None
 
   /**
-   * Returns the name of the module (e.g. "kafka")
-   * @return the name of the module
-   */
-  override def moduleName: String = "elasticSearch"
-
-  /**
    * Returns the commands that are bound to the module
    * @return the commands that are bound to the module
    */
@@ -77,6 +71,18 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @return the variables that are bound to the module
    */
   override def getVariables: Seq[Variable] = Nil
+
+  /**
+   * Returns the name of the module (e.g. "kafka")
+   * @return the name of the module
+   */
+  override def moduleName: String = "elasticSearch"
+
+  /**
+   * Returns the label of the module (e.g. "kafka")
+   * @return the label of the module
+   */
+  override def moduleLabel = "es"
 
   override def prompt: String = {
     def cursor(c: ElasticCursor) = "%s/%s%s".format(c.index, c.indexType, c.id.map(id => s"/$id") getOrElse "")

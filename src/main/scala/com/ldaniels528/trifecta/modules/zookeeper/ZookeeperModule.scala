@@ -30,12 +30,12 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   override def getCommands(implicit rt: TxRuntimeContext) = Seq(
     Command(this, "zcd", chdir, UnixLikeParams(Seq("key" -> true)), help = "Changes the current path/directory in ZooKeeper"),
+    Command(this, "zconnect", connect, UnixLikeParams(Nil, Nil), help = "Establishes a connection to Zookeeper"),
     Command(this, "zexists", pathExists, UnixLikeParams(Seq("key" -> true)), "Verifies the existence of a ZooKeeper key"),
     Command(this, "zget", getData, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the contents of a specific Zookeeper key"),
     Command(this, "zls", listKeys, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the child nodes for a key from ZooKeeper"),
     Command(this, "zmk", mkdir, UnixLikeParams(Seq("key" -> true)), "Creates a new ZooKeeper sub-directory (key)"),
     Command(this, "zput", publishMessage, UnixLikeParams(Seq("key" -> true, "value" -> true), Seq("-t" -> "type")), "Sets a key-value pair in ZooKeeper"),
-    Command(this, "zreconnect", reconnect, UnixLikeParams(Nil, Nil), help = "Re-establishes the connection to Zookeeper"),
     Command(this, "zrm", delete, UnixLikeParams(Seq("key" -> true), flags = Seq("-r" -> "recursive")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
     Command(this, "zruok", ruok, UnixLikeParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
     Command(this, "zstats", stats, UnixLikeParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
@@ -62,6 +62,8 @@ class ZookeeperModule(config: TxConfig) extends Module {
     Variable("zkCwd", ConstantValue(Option("/"))))
 
   override def moduleName = "zookeeper"
+
+  override def moduleLabel = "zk"
 
   override def prompt: String = s"${config.zooKeeperConnect}$zkCwd"
 
@@ -131,6 +133,11 @@ class ZookeeperModule(config: TxConfig) extends Module {
       case None => Left(zkCwd)
     }
   }
+
+  /**
+   * Establishes a connection to Zookeeper
+   */
+  def connect(params: UnixLikeArgs): Unit = zk.reconnect()
 
   /**
    * "zrm" - Removes a key-value from ZooKeeper
@@ -249,11 +256,6 @@ class ZookeeperModule(config: TxConfig) extends Module {
     }
     ()
   }
-
-  /**
-   * Re-establishes the connection to Zookeeper
-   */
-  def reconnect(params: UnixLikeArgs): Unit = zk.reconnect()
 
   /**
    * "zruok" - Checks the status of a Zookeeper instance
