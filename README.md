@@ -528,13 +528,10 @@ _Trifecta_ supports Avro integration for Kafka. The next few examples make use o
         "doc": "A schema for stock quotes"
     }
       
-Let's load the Avro schema into memory as the variable "schema":
- 
-    kafka:/> avload schema avro/quotes.avsc
+Let's retrieve the first message from topic _Shocktrade.quotes.avro_ (partition 0) using an Avro schema as 
+our optional message decoder:
 
-Next, let's use the variable (containing the Avro schema) to decode a Kafka message:
-
-    kafka:/> kfirst Shocktrade.quotes.avro 0 -a schema
+    kafka:/> kfirst Shocktrade.quotes.avro 0 -a file:avro/quotes.avsc
     + ------------------------------------- +
     | field         value          type     |
     + ------------------------------------- +
@@ -781,10 +778,6 @@ Finally, let's take a look at the connection properties for this session:
     | nimbus.inbox.jar.expiration.secs               3600                                                        |
     .                                                                                                            .
     .                                                                                                            .
-    | nimbus.topology.validator                      backtype.storm.nimbus.DefaultTopologyValidator              |
-    | storm.cluster.mode                             distributed                                                 |
-    | storm.local.dir                                storm-local                                                 |
-    .                                                                                                            .
     .                                                                                                            .
     | worker.heartbeat.frequency.secs                1                                                           |
     | zmq.hwm                                        0                                                           |
@@ -798,21 +791,21 @@ Finally, let's take a look at the connection properties for this session:
 To view all of the Zookeeper commands, use the `-m` switch and the module name (`zookeeper` in this case):
 
     zookeeper:localhost:2181/> ? -m zookeeper
-   + ----------------------------------------------------------------------------------------- +
-   | command     module     description                                                        |
-   + ----------------------------------------------------------------------------------------- +
-   | zcd         zookeeper  Changes the current path/directory in ZooKeeper                    |
-   | zexists     zookeeper  Verifies the existence of a ZooKeeper key                          |
-   | zget        zookeeper  Retrieves the contents of a specific Zookeeper key                 |
-   | zls         zookeeper  Retrieves the child nodes for a key from ZooKeeper                 |
-   | zmk         zookeeper  Creates a new ZooKeeper sub-directory (key)                        |
-   | zput        zookeeper  Sets a key-value pair in ZooKeeper                                 |
-   | zreconnect  zookeeper  Re-establishes the connection to Zookeeper                         |
-   | zrm         zookeeper  Removes a key-value from ZooKeeper (DESTRUCTIVE)                   |
-   | zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)        |
-   | zstats      zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)   |
-   | ztree       zookeeper  Retrieves Zookeeper directory structure                            |
-   + ----------------------------------------------------------------------------------------- +
+    + ----------------------------------------------------------------------------------------- +
+    | command     module     description                                                        |
+    + ----------------------------------------------------------------------------------------- +
+    | zcd         zookeeper  Changes the current path/directory in ZooKeeper                    |
+    | zexists     zookeeper  Verifies the existence of a ZooKeeper key                          |
+    | zget        zookeeper  Retrieves the contents of a specific Zookeeper key                 |
+    | zls         zookeeper  Retrieves the child nodes for a key from ZooKeeper                 |
+    | zmk         zookeeper  Creates a new ZooKeeper sub-directory (key)                        |
+    | zput        zookeeper  Sets a key-value pair in ZooKeeper                                 |
+    | zreconnect  zookeeper  Re-establishes the connection to Zookeeper                         |
+    | zrm         zookeeper  Removes a key-value from ZooKeeper (DESTRUCTIVE)                   |
+    | zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)        |
+    | zstats      zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)   |
+    | ztree       zookeeper  Retrieves Zookeeper directory structure                            |
+    + ----------------------------------------------------------------------------------------- +
 
 <a name="zookeeper-list"></a>    
 ##### Zookeeper: Navigating directories and keys 
