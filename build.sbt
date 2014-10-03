@@ -53,6 +53,7 @@ libraryDependencies ++= Seq(
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
   "org.fusesource.jansi" % "jansi" % "1.11",
   "org.slf4j" % "slf4j-api" % "1.7.7",
+  "net.databinder.dispatch" %% "dispatch-core" % "0.11.2",
   "wabisabi" %% "wabisabi" % "2.0.10"
 )
 
