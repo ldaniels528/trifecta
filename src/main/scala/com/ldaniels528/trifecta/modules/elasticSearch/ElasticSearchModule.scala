@@ -5,13 +5,14 @@ import java.io.PrintStream
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
-import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO
-import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO.{AddDocumentResponse, CountResponse}
+import com.ldaniels528.trifecta.support.elasticsearch.TxElasticSearchClient
 import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
+import com.ning.http.client.Response
 import net.liftweb.json._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,8 +23,10 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class ElasticSearchModule(config: TxConfig) extends Module {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
+  private implicit val formats = DefaultFormats
   private val out: PrintStream = config.out
-  private var client_? : Option[ElasticSearchDAO] = None
+  private var client_? : Option[TxElasticSearchClient] = None
   private var endPoint_? : Option[String] = None
   private var cursor_? : Option[ElasticCursor] = None
 
@@ -35,12 +38,14 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     Command(this, "econnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Connects to an Elastic Search server"),
     Command(this, "ecount", count, UnixLikeParams(Seq("path" -> true, "query" -> true)), help = "Counts documents based on a query"),
     Command(this, "ecursor", showCursor, UnixLikeParams(), help = "Displays the navigable cursor"),
+    Command(this, "edelete", deleteDocumentOrIndex, UnixLikeParams(Seq("index" -> true)), help = "Deletes a new index (DESTRUCTIVE)"),
     Command(this, "eget", getDocument, UnixLikeParams(Seq("path" -> false), Seq("-o" -> "outputTo")), help = "Retrieves a document"),
-    Command(this, "eindex", createIndex, UnixLikeParams(Seq("name" -> true, "shards" -> false, "replicas" -> false)), help = "Creates a new index"),
+    Command(this, "eindex", createIndex, UnixLikeParams(Seq("index" -> true, "shards" -> false, "replicas" -> false)), help = "Creates a new index"),
     Command(this, "ematchall", matchAll, UnixLikeParams(Seq("index" -> true)), help = "Retrieves all documents for a given index"),
     Command(this, "enodes", showNodes, UnixLikeParams(), help = "Returns information about the nodes in the cluster"),
     Command(this, "eput", createDocument, UnixLikeParams(Seq("path" -> true, "data" -> true)), help = "Creates or updates a document"),
-    Command(this, "esearch", searchDocument, UnixLikeParams(Seq("index" -> false, "type" -> false, "field" -> true, "==" -> true, "value" -> true)), help = "Searches for document via a user-defined query")
+    Command(this, "esearch", searchDocument, UnixLikeParams(Seq("index" -> false, "type" -> false, "field" -> true, "==" -> true, "value" -> true)), help = "Searches for document via a user-defined query"),
+    Command(this, "eserverinfo", serverInfo, UnixLikeParams(), help = "Retrieves server information")
   )
 
   /**
@@ -112,10 +117,10 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
     // connect to the server, return the health statistics
     out.println(s"Connecting to Elastic Search at '$host:$port'...")
-    client_? = Option(ElasticSearchDAO(host, port))
+    client_? = Option(new TxElasticSearchClient(host, port))
     client_?.map { client =>
       endPoint_? = Option(s"$host:$port")
-      client.health() map { response =>
+      client.health map convert[ClusterStatusResponse] map { response =>
         Seq(
           NameValuePair("Cluster Name", response.cluster_name),
           NameValuePair("Status", response.status),
@@ -144,7 +149,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       case _ => dieSyntax(params)
     }
 
-    client.count(index, docType, query) map (Seq(_))
+    client.count(index, docType, query) map convert[CountResponse] map (Seq(_))
   }
 
   /**
@@ -164,14 +169,14 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       case _ => dieSyntax(params)
     }
 
-    setCursor(index, docType, Option(id), client.create(index, docType, id, data)) map (Seq(_))
+    setCursor(index, docType, Option(id), client.create(index, docType, id, data)) map convert[AddDocumentResponse] map (Seq(_))
   }
 
   /**
    * Creates a new index
-   * @example eindex "foo2" 1 2
+   * @example eindex foo2 1 2
    */
-  def createIndex(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Boolean] = {
+  def createIndex(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Seq[AddDocumentResponse]] = {
     val (index, shards, replicas) = params.args match {
       case aName :: Nil => (aName, 1, 1)
       case aName :: aShards :: Nil => (aName, parseInt("shards", aShards), parseInt("replicas", aShards))
@@ -179,7 +184,23 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       case _ => dieSyntax(params)
     }
 
-    client.createIndex(index, shards, replicas)
+    client.createIndex(index, shards, replicas) map convert[AddDocumentResponse] map (Seq(_))
+  }
+
+  /**
+   * Deletes a document or index
+   * @example edelete quotes              [Delete the index "quotes"]
+   * @example edelete /quotes/quote/AAPL  [Delete the document "AAPL" from "/quotes/quote"]
+   */
+  def deleteDocumentOrIndex(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[_] = {
+    params.args match {
+      case path :: Nil => extractPathComponents(params, path) match {
+        case (index, None, None) => client.deleteIndex(index) map convert[DeleteResponse] map (Seq(_))
+        case (index, Some(indexType), Some(id)) => client.delete(index, indexType, id)
+        case _ => dieSyntax(params)
+      }
+      case _ => dieSyntax(params)
+    }
   }
 
   /**
@@ -193,7 +214,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     }
 
     // retrieve the document
-    setCursor(index, docType, Option(id), client.get(index, docType, id) map { js =>
+    setCursor(index, docType, Option(id), client.get(index, docType, id) map parse map (_ \ "_source") map { js =>
       // handle the optional output directive
       val encoding = config.encoding
       val outputSource = getOutputSource(params)
@@ -232,6 +253,21 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   }
 
   /**
+   * Retrieve server information for the currently connected host
+   * @example eServerInfo
+   * @example eServerInfo dev501 9200
+   */
+  def serverInfo(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
+    val host_port = params.args match {
+      case Nil => None
+      case host :: Nil => Option((host, 9200))
+      case host :: port :: Nil => Option((host, parseInt("port", port)))
+      case _ => dieSyntax(params)
+    }
+    client.serverInfo
+  }
+
+  /**
    * Returns the navigable cursor
    * @example ecursor
    */
@@ -243,11 +279,27 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     client.nodes
   }
 
-  private def client: ElasticSearchDAO = client_? getOrElse die("No Elastic Search connection. Use 'econnect'")
+  private def client: TxElasticSearchClient = client_? getOrElse die("No Elastic Search connection. Use 'econnect'")
 
   private def dieCursor[S](): S = die[S]("No Elastic Search navigable cursor found")
 
   private def dieNoId[S](): S = die[S]("No Elastic Search document ID found")
+
+  /**
+   * Attempts to extract up to 3 components from the given path (index, type and ID)
+   * @param params the given [[UnixLikeArgs]](Unix Style arguments)
+   * @param path the given path (e.g. "/quotes/quote/AAPL")
+   * @return the path components
+   */
+  private def extractPathComponents(params: UnixLikeArgs, path: String) = {
+    val myPath = if (path.startsWith("/")) path.substring(1) else path
+    myPath.split("[/]").toList match {
+      case index :: Nil => (index, None, None)
+      case index :: indexType :: Nil => (index, Option(indexType), None)
+      case index :: indexType :: id :: Nil => (index, Option(indexType), Option(id))
+      case _ => dieSyntax(params)
+    }
+  }
 
   private def parsePath(params: UnixLikeArgs, path: String): ESPath = {
     val (index, docType, id) = path.split("[/]").toList match {
@@ -267,11 +319,64 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     response
   }
 
+  private def convert[T](response: String)(implicit m: Manifest[T]): T = {
+    parse(response).extract[T]
+  }
+
+  private def show(response: Response): Response = {
+    logger.info(s"response = ${response.getResponseBody}")
+    response
+  }
+
   /**
    * Elastic Search Navigable Cursor
    */
   case class ElasticCursor(index: String, indexType: String, id: Option[String])
 
   case class ESPath(index: String, docType: String, id: String)
+
+  /**
+   * {"acknowledged":true}
+   */
+  case class AcknowledgeResponse(acknowledged: Boolean)
+
+  /**
+   * {"_index":"foo2","_type":"foo2","_id":"foo2","_version":1,"created":true}
+   */
+  case class AddDocumentResponse(created: Boolean, _index: String, _type: String, _id: String, _version: Int)
+
+  /**
+   * {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
+   */
+  case class CountResponse(count: Int, _shards: Shards)
+
+  /**
+   * {"total":5,"successful":5,"failed":0}
+   */
+  case class Shards(total: Int, successful: Int, failed: Int)
+
+  /**
+   * {"found":true,"_index":"foo2","_type":"foo2","_id":"foo2","_version":2}
+   */
+  case class DeleteResponse(found: Boolean, _index: String, _type: String, _id: String, _version: Int)
+
+  /**
+   * {"error":"IndexAlreadyExistsException[ [foo] already exists]", "status" : 400}
+   */
+  case class ErrorResponse(error: String, status: Int)
+
+  /**
+   * {"_index":"foo2","_type":"foo2","_id":"foo2","_version":1,"found":true,"_source":{"foo2":"bar"}}
+   */
+  case class FetchResponse(found: Boolean, _source: String, _index: String, _type: String, _id: String, _version: Int)
+
+  /**
+   * {"cluster_name":"elasticsearch","status":"green","timed_out":false,"number_of_nodes":1,"number_of_data_nodes":1,
+   * "active_primary_shards":0,"active_shards":0,"relocating_shards":0,"initializing_shards":0,"unassigned_shards":0}
+   */
+  case class ClusterStatusResponse(cluster_name: String, status: String, timed_out: Boolean, number_of_nodes: Int,
+                                   number_of_data_nodes: Int, active_primary_shards: Int, active_shards: Int, relocating_shards: Int,
+                                   initializing_shards: Int, unassigned_shards: Int)
+
 
 }
