@@ -40,6 +40,7 @@ libraryDependencies ++= Seq(
   "com.twitter" %% "bijection-core" % "0.7.0",
   "com.twitter" %% "bijection-avro" % "0.7.0",
   "com.typesafe.akka" %% "akka-actor" % "2.3.5",
+  "io.spray" %%  "spray-json" % "1.2.6",
   "jline" % "jline" % "2.12",
   "net.liftweb" %% "lift-json" % "2.5.1",
   "org.apache.avro" % "avro" % "1.7.7",
