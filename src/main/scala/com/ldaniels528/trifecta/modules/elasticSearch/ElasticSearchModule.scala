@@ -36,9 +36,11 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     Command(this, "ecount", count, UnixLikeParams(Seq("path" -> true, "query" -> true)), help = "Counts documents based on a query"),
     Command(this, "ecursor", showCursor, UnixLikeParams(), help = "Displays the navigable cursor"),
     Command(this, "eget", getDocument, UnixLikeParams(Seq("path" -> false), Seq("-o" -> "outputTo")), help = "Retrieves a document"),
-    Command(this, "eindex", createIndex, UnixLikeParams(Seq("name" -> true, "settings" -> false)), help = "Retrieves a document"),
+    Command(this, "eindex", createIndex, UnixLikeParams(Seq("name" -> true, "shards" -> false, "replicas" -> false)), help = "Creates a new index"),
+    Command(this, "ematchall", matchAll, UnixLikeParams(Seq("index" -> true)), help = "Retrieves all documents for a given index"),
+    Command(this, "enodes", showNodes, UnixLikeParams(), help = "Returns information about the nodes in the cluster"),
     Command(this, "eput", createDocument, UnixLikeParams(Seq("path" -> true, "data" -> true)), help = "Creates or updates a document"),
-    Command(this, "esearch", searchDocument, UnixLikeParams(Seq("index" -> false, "query" -> true)), help = "Searches for document via a user-defined query")
+    Command(this, "esearch", searchDocument, UnixLikeParams(Seq("index" -> false, "type" -> false, "field" -> true, "==" -> true, "value" -> true)), help = "Searches for document via a user-defined query")
   )
 
   /**
@@ -142,7 +144,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       case _ => dieSyntax(params)
     }
 
-    client.count(indices = Seq(index), types = Seq(docType), query) map (Seq(_))
+    client.count(index, docType, query) map (Seq(_))
   }
 
   /**
@@ -154,30 +156,30 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   def createDocument(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Seq[AddDocumentResponse]] = {
     val (index, docType, id, data) = params.args match {
       case aPath :: someData :: Nil => aPath.split("[/]").toList match {
-        case "" :: anIndex :: aType :: anId :: Nil => (anIndex, aType, Option(anId), someData)
-        case anIndex :: aType :: anId :: Nil => (anIndex, aType, Option(anId), someData)
-        case anIndex :: aType :: Nil => (anIndex, aType, None, someData)
-        case anId :: Nil => cursor_? map (c => (c.index, c.indexType, Option(anId), someData)) getOrElse dieCursor()
+        case "" :: anIndex :: aType :: anId :: Nil => (anIndex, aType, anId, someData)
+        case anIndex :: aType :: anId :: Nil => (anIndex, aType, anId, someData)
+        case anId :: Nil => cursor_? map (c => (c.index, c.indexType, anId, someData)) getOrElse dieCursor()
         case _ => dieSyntax(params)
       }
       case _ => dieSyntax(params)
     }
 
-    setCursor(index, docType, id, client.createDocument(index, docType, id, data, refresh = true)) map (Seq(_))
+    setCursor(index, docType, Option(id), client.create(index, docType, id, data)) map (Seq(_))
   }
 
   /**
    * Creates a new index
-   * @example eindex "foo2"
+   * @example eindex "foo2" 1 2
    */
   def createIndex(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Boolean] = {
-    val (index, settings) = params.args match {
-      case aName :: Nil => (aName, None)
-      case aName :: aSetting :: Nil => (aName, Option(aSetting))
+    val (index, shards, replicas) = params.args match {
+      case aName :: Nil => (aName, 1, 1)
+      case aName :: aShards :: Nil => (aName, parseInt("shards", aShards), parseInt("replicas", aShards))
+      case aName :: aShards :: aReplicas :: Nil => (aName, parseInt("shards", aShards), parseInt("replicas", aReplicas))
       case _ => dieSyntax(params)
     }
 
-    client.createIndex(index, settings)
+    client.createIndex(index, shards, replicas)
   }
 
   /**
@@ -201,17 +203,32 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   }
 
   /**
-   * Searches for document via a user-defined query
-   * @example esearch myIndex { "query": { "match_all": { } } }
+   * Retrieves all documents for a given index
+   * @example ematchall quotes
    */
-  def searchDocument(params: UnixLikeArgs): Future[JValue] = {
-    val (index, query) = params.args match {
-      case anIndex :: aQuery :: Nil => (anIndex, aQuery)
-      case aQuery :: Nil => cursor_? map (c => (c.index, aQuery)) getOrElse dieCursor()
+  def matchAll(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
+    val index = params.args match {
+      case anIndex :: Nil => anIndex
       case _ => dieSyntax(params)
     }
 
-    client.search(index, query)
+    client.matchAll(index)
+  }
+
+  /**
+   * Searches for document via a user-defined query
+   * @example esearch field == value
+   * @example esearch myIndex myType field == value
+   */
+  def searchDocument(params: UnixLikeArgs): Future[String] = {
+    val (index, indexType, field, value) = params.args match {
+      case anIndex :: aType :: aField :: "==" :: aValue :: Nil => (anIndex, aType, aField, aValue)
+      case aType :: aField :: "==" :: aValue :: Nil => cursor_? map (c => (c.index, aType, aField, aValue)) getOrElse dieCursor()
+      case aField :: "==" :: aValue :: Nil => cursor_? map (c => (c.index, c.indexType, aField, aValue)) getOrElse dieCursor()
+      case _ => dieSyntax(params)
+    }
+
+    client.search(index, indexType, field -> value)
   }
 
   /**
@@ -220,6 +237,10 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    */
   def showCursor(params: UnixLikeArgs): Option[Seq[ElasticCursor]] = {
     cursor_? map (Seq(_))
+  }
+
+  def showNodes(params: UnixLikeArgs): Future[String] = {
+    client.nodes
   }
 
   private def client: ElasticSearchDAO = client_? getOrElse die("No Elastic Search connection. Use 'econnect'")

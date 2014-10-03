@@ -1,11 +1,8 @@
 package com.ldaniels528.trifecta.support.elasticsearch
 
 import com.ldaniels528.tabular.Tabular
-import org.scalatest.Matchers._
-import org.scalatest.{GivenWhenThen, FeatureSpec}
-import wabisabi.Client
+import org.scalatest.{FeatureSpec, GivenWhenThen}
 
-import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -15,7 +12,7 @@ import scala.concurrent.{Await, Future}
  */
 class ElasticSearchDAOSpec() extends FeatureSpec with GivenWhenThen {
   val tabular = new Tabular()
-  val client = new ElasticSearchDAO(new Client("http://dev501:9200"))
+  val client = new ElasticSearchDAO(new TxElasticSearchClient("dev501", 9200))
 
   info("As a user of ElasticSearch")
   info("I want to be able to execute ElasticSearch queries")

@@ -32,8 +32,8 @@ class DocumentOutputSource(client: ElasticSearchDAO, index: String, indexType: S
       case Some(av: AvroDecoder) =>
         av.decode(data.message) match {
           case Success(record) =>
-            val myId = id ?? (Option(data.key) map (new String(_, encoding)))
-            client.createDocument(index, indexType, myId, record.toString, refresh = true)
+            val myId = (id ?? (Option(data.key) map (new String(_, encoding)))) getOrElse(throw new IllegalStateException("No ID specified"))
+            client.create(index, indexType, myId, record.toString)
           case Failure(e) =>
             throw new IllegalStateException(e.getMessage, e)
         }

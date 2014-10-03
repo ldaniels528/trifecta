@@ -4,7 +4,6 @@ import com.ldaniels528.trifecta.support.elasticsearch.ElasticSearchDAO._
 import com.ning.http.client.Response
 import net.liftweb.json._
 import org.slf4j.LoggerFactory
-import wabisabi.Client
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -12,59 +11,52 @@ import scala.concurrent.{ExecutionContext, Future}
  * Elastic Search Data Access Object
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ElasticSearchDAO(val client: Client) {
+class ElasticSearchDAO(val client: TxElasticSearchClient) {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   implicit val formats = DefaultFormats
 
-  def count(indices: Seq[String], types: Seq[String], query: String)(implicit ec: ExecutionContext): Future[CountResponse] = {
-    client.count(indices, types, query) map convert[CountResponse]
+  def count(index: String, indexType: String, query: String)(implicit ec: ExecutionContext): Future[CountResponse] = {
+    client.count(index, indexType, query) map convert[CountResponse]
   }
 
-  def createDocument(index: String, `type`: String, id: Option[String], data: String, refresh: Boolean)(implicit ec: ExecutionContext): Future[AddDocumentResponse] = {
-    client.index(index, `type`, id, data, refresh) map convert[AddDocumentResponse]
+  def create(index: String, indexType: String, id: String, doc: String)(implicit ec: ExecutionContext): Future[AddDocumentResponse] = {
+    client.create(index, indexType, id, doc) map convert[AddDocumentResponse]
   }
 
-  def createIndex(name: String, settings: Option[String] = None)(implicit ec: ExecutionContext): Future[Boolean] = {
-    client.createIndex(name, settings) map convert[AcknowledgeResponse] map (_.acknowledged)
+  def createIndex(name: String, shards: Int = 1, replicas: Int = 1)(implicit ec: ExecutionContext): Future[Boolean] = {
+    client.createIndex(name, shards, replicas) map convert[AcknowledgeResponse] map (_.acknowledged)
   }
 
-  def delete(index: String, `type`: String, id: String)(implicit ec: ExecutionContext): Future[DeleteResponse] = {
-    client.delete(index, `type`, id) map convert[DeleteResponse]
+  def deleteIndex(index: String)(implicit ec: ExecutionContext): Future[DeleteResponse] = {
+    client.deleteIndex(index) map convert[DeleteResponse]
   }
 
-  def get(index: String, `type`: String, id: String)(implicit ec: ExecutionContext): Future[JValue] = {
+  def delete(index: String, indexType: String, id: String)(implicit ec: ExecutionContext): Future[DeleteResponse] = {
+    client.delete(index, indexType, id) map convert[DeleteResponse]
+  }
+
+  def get(index: String, indexType: String, id: String)(implicit ec: ExecutionContext): Future[JValue] = {
     // response: {"_index":"quotes","_type":"quote","_id":"MSFT","_version":1,"found":true,
     //            "_source":{ symbol : "MSFT", lastSale : 31.33 }}
-    client.get(index, `type`, id) map (_.getResponseBody) map parse map (_ \ "_source")
-  }
-
-  def matchAll(index: String)(implicit ec: ExecutionContext): Future[Response] = {
-    client.search(index, query = """"query": { "match_all": { } }""")
+    client.get(index, indexType, id) map parse map (_ \ "_source")
   }
 
   def health()(implicit ec: ExecutionContext): Future[ClusterStatusResponse] = {
-    client.health() map convert[ClusterStatusResponse]
+    client.health map convert[ClusterStatusResponse]
   }
 
-  def search(index: String, query: String)(implicit ec: ExecutionContext): Future[JValue] = {
-    client.search(index, query) map checkForError map (_.getResponseBody) map parse
+  def matchAll(index: String)(implicit ec: ExecutionContext): Future[String] = {
+    client.matchAll(index)
   }
 
-  private def convert[T](response: Response)(implicit m: Manifest[T]): T = {
-    checkForError(response)
-    parse(response.getResponseBody).extract[T]
+  def nodes(implicit ec: ExecutionContext) = client.nodes
+
+  def search(index: String, indexType: String, term: (String, String))(implicit ec: ExecutionContext): Future[String] = {
+    client.search(index, indexType, term)
   }
 
-  /**
-   * Checks the response for errors
-   * @param response the given [[Response]]
-   */
-  private def checkForError(response: Response): Response = {
-    if (response.getStatusCode < 200 || response.getStatusCode >= 300) {
-      val errorStatus = parse(response.getResponseBody).extract[ErrorResponse]
-      throw new IllegalStateException(errorStatus.error)
-    }
-    response
+  private def convert[T](response: String)(implicit m: Manifest[T]): T = {
+    parse(response).extract[T]
   }
 
   private def show(response: Response): Response = {
@@ -87,7 +79,7 @@ object ElasticSearchDAO {
    * @return a new Elastic Search DAO instance
    */
   def apply(host: String, port: Int = 9200): ElasticSearchDAO = {
-    new ElasticSearchDAO(new Client(s"http://$host:$port"))
+    new ElasticSearchDAO(new TxElasticSearchClient(host, port))
   }
 
   /**
