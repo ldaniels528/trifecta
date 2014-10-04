@@ -183,7 +183,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     params.args match {
       case path :: Nil => extractPathComponents(params, path) match {
         case (index, None, None) => client.deleteIndex(index) map convert[DeleteResponse] map (Seq(_))
-        case (index, Some(indexType), Some(id)) => client.delete(index, indexType, id)
+        case (index, Some(indexType), Some(id)) => client.delete(index, indexType, id) map convert[String]
         case _ => dieSyntax(params)
       }
       case _ => dieSyntax(params)
@@ -219,7 +219,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     }
 
     // retrieve the document
-    setCursor(index, docType, Option(id), client.get(index, docType, id) map parse map (_ \ "_source") map { js =>
+    setCursor(index, docType, Option(id), client.get(index, docType, id) map convert[JValue] map (_ \ "_source") map { js =>
       // handle the optional output directive
       val encoding = config.encoding
       val outputSource = getOutputSource(params)
@@ -258,7 +258,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       case _ => dieSyntax(params)
     }
 
-    client.matchAll(index)
+    client.matchAll(index) map convert[String]
   }
 
   /**
@@ -274,7 +274,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       case _ => dieSyntax(params)
     }
 
-    client.search(index, indexType, field -> value)
+    client.search(index, indexType, field -> value) map convert[String]
   }
 
   /**
@@ -289,7 +289,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       case host :: port :: Nil => Option((host, parseInt("port", port)))
       case _ => dieSyntax(params)
     }
-    client.serverInfo
+    client.serverInfo map convert[String]
   }
 
   /**
@@ -301,7 +301,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   }
 
   def showNodes(params: UnixLikeArgs): Future[String] = {
-    client.nodes
+    client.nodes map convert[String]
   }
 
   private def client: TxElasticSearchClient = client_? getOrElse die("No Elastic Search connection. Use 'econnect'")
@@ -344,14 +344,25 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     response
   }
 
-  private def convert[T](response: String)(implicit m: Manifest[T]): T = {
-    parse(response).extract[T]
+  private def convert[T](response: Response)(implicit m: Manifest[T]): T = {
+    // was there a failure?
+    response.getStatusCode match {
+      case 404 =>
+        throw new IllegalStateException("Document or index not found")
+      case code if code >= 200 && code < 300 =>
+      case code =>
+        throw new IllegalStateException(s"General failure invoking command (status code = $code)")
+    }
+
+    // parse the response body
+    val responseBody = response.getResponseBody
+    m.runtimeClass match {
+      case c if c == classOf[String] => responseBody.asInstanceOf[T]
+      case c if c == classOf[JValue] => parse(responseBody).asInstanceOf[T]
+      case _ => parse(responseBody).extract[T]
+    }
   }
 
-  private def show(response: Response): Response = {
-    logger.info(s"response = ${response.getResponseBody}")
-    response
-  }
 }
 
 /**

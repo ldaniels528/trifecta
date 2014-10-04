@@ -18,7 +18,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
    * @example GET /quotes/quote/_count?pretty
    */
-  def count(index: String, indexType: String)(implicit ec: ExecutionContext): Future[String] = {
+  def count(index: String, indexType: String)(implicit ec: ExecutionContext): Future[Response] = {
     GET(s"$index/$indexType/_count?pretty")
   }
 
@@ -27,7 +27,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
    * @example GET /quotes/quote/_count?pretty <- { "query" : { "term" : { "symbol" : "AAPL" } } }
    */
-  def count(index: String, indexType: String, query: String)(implicit ec: ExecutionContext): Future[String] = {
+  def count(index: String, indexType: String, query: String)(implicit ec: ExecutionContext): Future[Response] = {
     GET(s"$index/$indexType/_count?pretty", query)
   }
 
@@ -36,7 +36,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the JSON results
    * @example PUT /website/blog/123/_create
    */
-  def create(index: String, indexType: String, id: String, doc: String)(implicit ec: ExecutionContext): Future[String] = {
+  def create(index: String, indexType: String, id: String, doc: String)(implicit ec: ExecutionContext): Future[Response] = {
     PUT(s"$index/$indexType/$id/_create", doc)
   }
 
@@ -46,7 +46,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the JSON results
    * @example PUT /quotes
    */
-  def createIndex(index: String)(implicit ec: ExecutionContext): Future[String] = {
+  def createIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = {
     PUT(s"$index")
   }
 
@@ -58,7 +58,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the JSON results
    * @example PUT /quotes <- { "settings" : { "number_of_shards" : 5, "number_of_replicas" : 5 } }
    */
-  def createIndex(index: String, shards: Int, replicas: Int)(implicit ec: ExecutionContext): Future[String] = {
+  def createIndex(index: String, shards: Int, replicas: Int)(implicit ec: ExecutionContext): Future[Response] = {
     PUT(s"$index", s"""{ "settings" : { "number_of_shards" : $shards, "number_of_replicas" : $replicas } }""")
   }
 
@@ -70,7 +70,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return {"found":true,"_index":"foo2","_type":"foo2","_id":"foo2","_version":2}
    * @example DELETE /quotes/quote/MSFT
    */
-  def delete(index: String, indexType: String, id: String)(implicit ec: ExecutionContext): Future[String] = {
+  def delete(index: String, indexType: String, id: String)(implicit ec: ExecutionContext): Future[Response] = {
     DELETE(s"$index/$indexType/$id")
   }
 
@@ -80,7 +80,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the JSON result
    * @example DELETE /twitter/
    */
-  def deleteIndex(index: String)(implicit ec: ExecutionContext): Future[String] = {
+  def deleteIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = {
     DELETE(index)
   }
 
@@ -128,7 +128,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return {"_index":"foo2","_type":"foo2","_id":"foo2","_version":1,"found":true,"_source":{"foo2":"bar"}}
    * @example GET /twitter/tweet/1
    */
-  def get(index: String, indexType: String, id: String)(implicit ec: ExecutionContext): Future[String] = {
+  def get(index: String, indexType: String, id: String)(implicit ec: ExecutionContext): Future[Response] = {
     GET(s"$index/$indexType/$id")
   }
 
@@ -137,7 +137,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @param index the given index
    * @return {"quotes":{"settings":{"index":{"uuid":"_6Xom8GoTJymn6qvA2UO_w","number_of_replicas":"1","number_of_shards":"1","version":{"created":"1030299"}}}}}
    */
-  def getSettings(index: String)(implicit ec: ExecutionContext): Future[String] = {
+  def getSettings(index: String)(implicit ec: ExecutionContext): Future[Response] = {
     GET(s"$index/_settings")
   }
 
@@ -146,28 +146,28 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the cluster's health information
    * @example GET /_cluster/health?pretty
    */
-  def health(implicit ec: ExecutionContext): Future[String] = GET("_cluster/health?pretty")
+  def health(implicit ec: ExecutionContext): Future[Response] = GET("_cluster/health?pretty")
 
   /**
    * Matches all results for the given index
    * @param index the given index (e.g. "quotes")
    * @example GET /quotes/_search?pretty
    */
-  def matchAll(index: String)(implicit ec: ExecutionContext): Future[String] = GET(s"$index/_search?pretty")
+  def matchAll(index: String)(implicit ec: ExecutionContext): Future[Response] = GET(s"$index/_search?pretty")
 
   /**
    * Queries all nodes
    * @return the nodes as JSON
    * @example GET /_nodes?pretty
    */
-  def nodes(implicit ec: ExecutionContext): Future[String] = GET("_nodes?pretty")
+  def nodes(implicit ec: ExecutionContext): Future[Response] = GET("_nodes?pretty")
 
   /**
    * Performs a search
    * @return the search results as JSON
    * @example GET /quotes/quote/_search?q=symbol:AAPL&pretty
    */
-  def search(index: String, indexType: String, searchTerm: (String, String))(implicit ec: ExecutionContext): Future[String] = {
+  def search(index: String, indexType: String, searchTerm: (String, String))(implicit ec: ExecutionContext): Future[Response] = {
     GET(s"$index/$indexType/_search?q=${searchTerm._1}:${searchTerm._2}&pretty")
   }
 
@@ -176,41 +176,41 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the server information as JSON
    * @example GET /
    */
-  def serverInfo(implicit ec: ExecutionContext): Future[String] = GET("/")
+  def serverInfo(implicit ec: ExecutionContext): Future[Response] = GET("/")
 
   /**
    * Updates the settings for the given index
    * @example PUT /my_index/_settings <- { "index" : { "number_of_replicas" : 4 } }
    */
-  def updateIndexSettings(index: String, replicas: Int)(implicit ec: ExecutionContext): Future[String] = {
+  def updateIndexSettings(index: String, replicas: Int)(implicit ec: ExecutionContext): Future[Response] = {
     PUT(s"$index/_settings", """{ "index" : { "number_of_replicas" : $replicas } }""")
   }
 
-  private def DELETE(command: String)(implicit ec: ExecutionContext): Future[String] = {
-    Http(url(s"$http/$command").DELETE OK dispatch.as.String)
+  private def DELETE(command: String)(implicit ec: ExecutionContext): Future[Response] = {
+    Http(url(s"$http/$command").DELETE)
   }
 
-  private def GET(command: String)(implicit ec: ExecutionContext): Future[String] = {
-    Http(url(s"$http/$command") OK dispatch.as.String)
+  private def GET(command: String)(implicit ec: ExecutionContext): Future[Response] = {
+    Http(url(s"$http/$command"))
   }
 
-  private def GET(command: String, params: String)(implicit ec: ExecutionContext): Future[String] = {
-    Http(url(s"$http/$command") << params OK dispatch.as.String)
+  private def GET(command: String, params: String)(implicit ec: ExecutionContext): Future[Response] = {
+    Http(url(s"$http/$command") << params)
   }
 
   private def HEAD(command: String)(implicit ec: ExecutionContext): Future[Response] = {
     Http(url(s"$http/$command").HEAD)
   }
 
-  private def PUT(command: String)(implicit ec: ExecutionContext): Future[String] = {
-    Http(url(s"$http/$command").PUT OK dispatch.as.String)
+  private def PUT(command: String)(implicit ec: ExecutionContext): Future[Response] = {
+    Http(url(s"$http/$command").PUT)
   }
 
-  private def PUT(command: String, params: String)(implicit ec: ExecutionContext): Future[String] = {
-    Http(url(s"$http/$command").PUT << params OK dispatch.as.String)
+  private def PUT(command: String, params: String)(implicit ec: ExecutionContext): Future[Response] = {
+    Http(url(s"$http/$command").PUT << params)
   }
 
-  private def toMap(response: Response): Map[String, Seq[String]] = {
+  private def toHeaders(response: Response): Map[String, Seq[String]] = {
     Map((response.getHeaders.iterator() map (e => (e.getKey, e.getValue.toSeq))).toSeq: _*)
   }
 

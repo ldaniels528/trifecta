@@ -5,6 +5,7 @@ import com.ldaniels528.trifecta.support.elasticsearch.TxElasticSearchClient
 import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.util.TxUtils._
+import com.ning.http.client.Response
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -27,7 +28,7 @@ class DocumentOutputSource(client: TxElasticSearchClient, index: String, indexTy
    * @param data the given key and message
    * @return the response value
    */
-  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext): Future[String] = {
+  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext): Future[Response] = {
     decoder match {
       case Some(av: AvroDecoder) =>
         av.decode(data.message) match {
