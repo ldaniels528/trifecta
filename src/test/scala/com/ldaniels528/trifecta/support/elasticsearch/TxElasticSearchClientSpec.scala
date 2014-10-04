@@ -19,6 +19,7 @@ class TxElasticSearchClientSpec() extends FeatureSpec with GivenWhenThen {
   info("As a user of ElasticSearch")
   info("I want to be able to execute ElasticSearch queries")
 
+  /*
   feature("Ability to retrieve health information") {
     scenario("Get the cluster's health") {
       When("a call is made for the cluster's health")
@@ -73,7 +74,7 @@ class TxElasticSearchClientSpec() extends FeatureSpec with GivenWhenThen {
       Then("the status code should be 200 OK")
       info(s"ResponseBody:  $result")
     }
-  }
+  }  */
 
   def wait[A](task: Future[A]): A = Await.result(task, 15.seconds)
 
