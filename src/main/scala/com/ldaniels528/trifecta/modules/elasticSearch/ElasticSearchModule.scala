@@ -5,6 +5,7 @@ import java.io.PrintStream
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
+import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule._
 import com.ldaniels528.trifecta.support.elasticsearch.TxElasticSearchClient
 import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.util.TxUtils._
@@ -27,7 +28,6 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   private implicit val formats = DefaultFormats
   private val out: PrintStream = config.out
   private var client_? : Option[TxElasticSearchClient] = None
-  private var endPoint_? : Option[String] = None
   private var cursor_? : Option[ElasticCursor] = None
 
   /**
@@ -40,12 +40,14 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     Command(this, "ecursor", showCursor, UnixLikeParams(), help = "Displays the navigable cursor"),
     Command(this, "edelete", deleteDocumentOrIndex, UnixLikeParams(Seq("index" -> true)), help = "Deletes a new index (DESTRUCTIVE)"),
     Command(this, "eget", getDocument, UnixLikeParams(Seq("path" -> false), Seq("-o" -> "outputTo")), help = "Retrieves a document"),
+    Command(this, "ehealth", health, UnixLikeParams(), help = "Retrieves the cluster's health information"),
     Command(this, "eindex", createIndex, UnixLikeParams(Seq("index" -> true, "shards" -> false, "replicas" -> false)), help = "Creates a new index"),
     Command(this, "ematchall", matchAll, UnixLikeParams(Seq("index" -> true)), help = "Retrieves all documents for a given index"),
     Command(this, "enodes", showNodes, UnixLikeParams(), help = "Returns information about the nodes in the cluster"),
     Command(this, "eput", createDocument, UnixLikeParams(Seq("path" -> true, "data" -> true)), help = "Creates or updates a document"),
     Command(this, "esearch", searchDocument, UnixLikeParams(Seq("index" -> false, "type" -> false, "field" -> true, "==" -> true, "value" -> true)), help = "Searches for document via a user-defined query"),
-    Command(this, "eserverinfo", serverInfo, UnixLikeParams(), help = "Retrieves server information")
+    Command(this, "eserverinfo", serverInfo, UnixLikeParams(), help = "Retrieves server information"),
+    Command(this, "eexists", existsDocumentOrIndex, UnixLikeParams(Seq("path" -> true)), help = "Tests whether the index or document exists")
   )
 
   /**
@@ -93,7 +95,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   override def prompt: String = {
     def cursor(c: ElasticCursor) = "%s/%s%s".format(c.index, c.indexType, c.id.map(id => s"/$id") getOrElse "")
-    s"${endPoint_? getOrElse "$"}/${cursor_? map cursor getOrElse ""}"
+    s"${client_? map (_.endPoint) getOrElse "$"}/${cursor_? map cursor getOrElse ""}"
   }
 
   /**
@@ -118,22 +120,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     // connect to the server, return the health statistics
     out.println(s"Connecting to Elastic Search at '$host:$port'...")
     client_? = Option(new TxElasticSearchClient(host, port))
-    client_?.map { client =>
-      endPoint_? = Option(s"$host:$port")
-      client.health map convert[ClusterStatusResponse] map { response =>
-        Seq(
-          NameValuePair("Cluster Name", response.cluster_name),
-          NameValuePair("Status", response.status),
-          NameValuePair("Timed Out", response.timed_out),
-          NameValuePair("Number of Nodes", response.number_of_nodes),
-          NameValuePair("Number of Data Nodes", response.number_of_data_nodes),
-          NameValuePair("Active Shards", response.active_shards),
-          NameValuePair("Active Primary Shards", response.active_primary_shards),
-          NameValuePair("Initializing Shards", response.initializing_shards),
-          NameValuePair("Relocating Shards", response.relocating_shards),
-          NameValuePair("Unassigned Shards", response.unassigned_shards))
-      }
-    }
+    client_?.map(client => health(params))
   }
 
   /**
@@ -204,6 +191,24 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   }
 
   /**
+   * Tests whether an index, type or document exists
+   * @example eexists quotes
+   * @example eexists /quotes/quote
+   * @example eexists /quotes/quote/AAPL
+   */
+  def existsDocumentOrIndex(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
+    params.args match {
+      case path :: Nil => extractPathComponents(params, path) match {
+        case (index, None, None) => client.existsIndex(index)
+        case (index, Some(indexType), None) => client.existsType(index, indexType)
+        case (index, Some(indexType), Some(id)) => client.existsDocument(index, indexType, id)
+        case _ => dieSyntax(params)
+      }
+      case _ => dieSyntax(params)
+    }
+  }
+
+  /**
    * Retrieves an existing document within an index
    * @example eget /quotes/quote/AAPL
    */
@@ -224,6 +229,26 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   }
 
   /**
+   * Retrieves the cluster's health information
+   * @example ehealth
+   */
+  def health(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Seq[NameValuePair]] = {
+    client.health map convert[ClusterStatusResponse] map { response =>
+      Seq(
+        NameValuePair("Cluster Name", response.cluster_name),
+        NameValuePair("Status", response.status),
+        NameValuePair("Timed Out", response.timed_out),
+        NameValuePair("Number of Nodes", response.number_of_nodes),
+        NameValuePair("Number of Data Nodes", response.number_of_data_nodes),
+        NameValuePair("Active Shards", response.active_shards),
+        NameValuePair("Active Primary Shards", response.active_primary_shards),
+        NameValuePair("Initializing Shards", response.initializing_shards),
+        NameValuePair("Relocating Shards", response.relocating_shards),
+        NameValuePair("Unassigned Shards", response.unassigned_shards))
+    }
+  }
+
+  /**
    * Retrieves all documents for a given index
    * @example ematchall quotes
    */
@@ -241,7 +266,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @example esearch field == value
    * @example esearch myIndex myType field == value
    */
-  def searchDocument(params: UnixLikeArgs): Future[String] = {
+  def searchDocument(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
     val (index, indexType, field, value) = params.args match {
       case anIndex :: aType :: aField :: "==" :: aValue :: Nil => (anIndex, aType, aField, aValue)
       case aType :: aField :: "==" :: aValue :: Nil => cursor_? map (c => (c.index, aType, aField, aValue)) getOrElse dieCursor()
@@ -327,6 +352,13 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     logger.info(s"response = ${response.getResponseBody}")
     response
   }
+}
+
+/**
+ * Elastic Search Module Singleton
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+object ElasticSearchModule {
 
   /**
    * Elastic Search Navigable Cursor
