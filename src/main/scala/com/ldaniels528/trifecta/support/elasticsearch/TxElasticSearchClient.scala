@@ -29,8 +29,8 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
    * @example GET /quotes/quote/_count?pretty
    */
-  def count(index: String, indexType: String)(implicit ec: ExecutionContext): Future[Response] = {
-    GET(s"$index/$indexType/_count?pretty")
+  def count(index: String, indexType: String, term: (String, String))(implicit ec: ExecutionContext): Future[Response] = {
+    GET(s"$index/$indexType/_count?q=${term._1}:${term._2}")
   }
 
   /**
@@ -41,7 +41,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @example GET /quotes/quote/_count?pretty <- { "query" : { "term" : { "symbol" : "AAPL" } } }
    */
   def count(index: String, indexType: String, query: String)(implicit ec: ExecutionContext): Future[Response] = {
-    GET(s"$index/$indexType/_count?pretty", query)
+    GET(s"$index/$indexType/_count", query)
   }
 
   /**
@@ -175,7 +175,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the nodes as JSON
    * @example GET /_nodes?pretty
    */
-  def nodes(implicit ec: ExecutionContext): Future[Response] = GET("_nodes?pretty")
+  def nodes(implicit ec: ExecutionContext): Future[Response] = GET("_nodes")
 
   /**
    * Opens an index
@@ -184,6 +184,15 @@ class TxElasticSearchClient(host: String, port: Int) {
    */
   def openIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = {
     POST(s"$index/_open")
+  }
+
+  /**
+   * Optimizes an index
+   * @param index the given index
+   * @return the [[Response]]
+   */
+  def optimizeIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = {
+    POST(s"$index/_optimize")
   }
 
   /**
@@ -207,7 +216,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the [[Response]]
    * @example GET /_status
    */
-  def serverStatus(implicit ec: ExecutionContext): Future[Response] = GET("/_status?pretty")
+  def serverStatus(implicit ec: ExecutionContext): Future[Response] = GET("/_status")
 
   /**
    * Returns the status of the given index
@@ -230,28 +239,35 @@ class TxElasticSearchClient(host: String, port: Int) {
     Http(url(s"$http/$command").DELETE)
   }
 
-  private def GET(command: String)(implicit ec: ExecutionContext): Future[Response] = {
-    Http(url(s"$http/$command"))
-  }
-
-  private def GET(command: String, params: String)(implicit ec: ExecutionContext): Future[Response] = {
-    Http(url(s"$http/$command") << params)
+  private def GET(command: String, params: String = "", pretty: Boolean = true)(implicit ec: ExecutionContext): Future[Response] = {
+    if (params.isEmpty)
+      Http(url(usePretty(s"$http/$command", pretty)))
+    else
+      Http(url(usePretty(s"$http/$command", pretty)) << params)
   }
 
   private def HEAD(command: String)(implicit ec: ExecutionContext): Future[Response] = {
     Http(url(s"$http/$command").HEAD)
   }
 
-  private def POST(command: String)(implicit ec: ExecutionContext): Future[Response] = {
-    Http(url(s"$http/$command").POST)
+  private def POST(command: String, params: String = "")(implicit ec: ExecutionContext): Future[Response] = {
+    if (params.isEmpty)
+      Http(url(s"$http/$command").POST)
+    else
+      Http(url(s"$http/$command").POST << params)
   }
 
-  private def PUT(command: String)(implicit ec: ExecutionContext): Future[Response] = {
-    Http(url(s"$http/$command").PUT)
+  private def PUT(command: String, params: String = "")(implicit ec: ExecutionContext): Future[Response] = {
+    if (params.isEmpty)
+      Http(url(s"$http/$command").PUT)
+    else
+      Http(url(s"$http/$command").PUT << params)
   }
 
-  private def PUT(command: String, params: String)(implicit ec: ExecutionContext): Future[Response] = {
-    Http(url(s"$http/$command").PUT << params)
+  private def usePretty(query: String, pretty: Boolean): String = {
+    if (!pretty) query
+    else if (query.contains("?")) s"$query&pretty"
+    else s"$query?pretty"
   }
 
   private def toHeaders(response: Response): Map[String, Seq[String]] = {
