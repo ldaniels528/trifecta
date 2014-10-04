@@ -38,7 +38,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     Command(this, "econnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Connects to an Elastic Search server"),
     Command(this, "ecount", count, UnixLikeParams(Seq("path" -> true, "query" -> true)), help = "Counts documents based on a query"),
     Command(this, "ecursor", showCursor, UnixLikeParams(), help = "Displays the navigable cursor"),
-    Command(this, "edelete", deleteDocumentOrIndex, UnixLikeParams(Seq("index" -> true)), help = "Deletes a new index (DESTRUCTIVE)"),
+    Command(this, "edelete", deleteDocumentOrIndex, UnixLikeParams(Seq("index" -> true)), help = "Deletes a document or index (DESTRUCTIVE)"),
     Command(this, "eget", getDocument, UnixLikeParams(Seq("path" -> false), Seq("-o" -> "outputTo")), help = "Retrieves a document"),
     Command(this, "ehealth", health, UnixLikeParams(), help = "Retrieves the cluster's health information"),
     Command(this, "eindex", createIndex, UnixLikeParams(Seq("index" -> true, "shards" -> false, "replicas" -> false)), help = "Creates a new index"),
@@ -47,6 +47,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     Command(this, "eput", createDocument, UnixLikeParams(Seq("path" -> true, "data" -> true)), help = "Creates or updates a document"),
     Command(this, "esearch", searchDocument, UnixLikeParams(Seq("index" -> false, "type" -> false, "field" -> true, "==" -> true, "value" -> true)), help = "Searches for document via a user-defined query"),
     Command(this, "eserverinfo", serverInfo, UnixLikeParams(), help = "Retrieves server information"),
+    Command(this, "eserverstatus", serverStatus, UnixLikeParams(), help = "Retrieves server status"),
     Command(this, "eexists", existsDocumentIndexOrType, UnixLikeParams(Seq("path" -> true)), help = "Tests whether the index or document exists")
   )
 
@@ -156,6 +157,10 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       case _ => dieSyntax(params)
     }
 
+    // validate the document
+    parse(data)
+
+    // execute the statement and capture the cursor
     setCursor(index, docType, Option(id), client.create(index, docType, id, data)) map convert[AddDocumentResponse] map (Seq(_))
   }
 
@@ -280,7 +285,6 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   /**
    * Retrieve server information for the currently connected host
    * @example eServerInfo
-   * @example eServerInfo dev501 9200
    */
   def serverInfo(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
     val host_port = params.args match {
@@ -289,7 +293,29 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       case host :: port :: Nil => Option((host, parseInt("port", port)))
       case _ => dieSyntax(params)
     }
-    client.serverInfo map convert[String]
+    host_port map { case (host, port) =>
+      new TxElasticSearchClient(host, port).serverInfo
+    } getOrElse {
+      client.serverInfo
+    } map convert[String]
+  }
+
+  /**
+   * Retrieve server information for the currently connected host
+   * @example eServerStatus
+   */
+  def serverStatus(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
+    val host_port = params.args match {
+      case Nil => None
+      case host :: Nil => Option((host, 9200))
+      case host :: port :: Nil => Option((host, parseInt("port", port)))
+      case _ => dieSyntax(params)
+    }
+    host_port map { case (host, port) =>
+      new TxElasticSearchClient(host, port).serverStatus
+    } getOrElse {
+      client.serverStatus
+    } map convert[String]
   }
 
   /**
