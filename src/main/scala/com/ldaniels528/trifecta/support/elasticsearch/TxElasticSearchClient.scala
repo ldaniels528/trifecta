@@ -1,7 +1,9 @@
 package com.ldaniels528.trifecta.support.elasticsearch
 
+import com.ning.http.client.Response
 import dispatch.{Http, url}
 
+import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -95,8 +97,8 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @param id the given index type
    * @return the JSON result
    */
-  def existsDocument(index: String, indexType: String, id: String)(implicit ec: ExecutionContext): Future[String] = {
-    HEAD(s"$index/$indexType/$id")
+  def existsDocument(index: String, indexType: String, id: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    HEAD(s"$index/$indexType/$id") map (_.getStatusCode == 200)
   }
 
   /**
@@ -104,8 +106,8 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @param index the given index
    * @return the JSON result
    */
-  def existsIndex(index: String)(implicit ec: ExecutionContext): Future[String] = {
-    HEAD(index)
+  def existsIndex(index: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    HEAD(index) map (_.getStatusCode == 200)
   }
 
   /**
@@ -114,8 +116,8 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @param indexType the given index type
    * @return the JSON result
    */
-  def existsType(index: String, indexType: String)(implicit ec: ExecutionContext): Future[String] = {
-    HEAD(s"$index/$indexType")
+  def existsType(index: String, indexType: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    HEAD(s"$index/$indexType") map (_.getStatusCode == 200)
   }
 
   /**
@@ -196,8 +198,8 @@ class TxElasticSearchClient(host: String, port: Int) {
     Http(url(s"$http/$command") << params OK dispatch.as.String)
   }
 
-  private def HEAD(command: String)(implicit ec: ExecutionContext): Future[String] = {
-    Http(url(s"$http/$command").HEAD OK dispatch.as.String)
+  private def HEAD(command: String)(implicit ec: ExecutionContext): Future[Response] = {
+    Http(url(s"$http/$command").HEAD)
   }
 
   private def PUT(command: String)(implicit ec: ExecutionContext): Future[String] = {
@@ -206,6 +208,10 @@ class TxElasticSearchClient(host: String, port: Int) {
 
   private def PUT(command: String, params: String)(implicit ec: ExecutionContext): Future[String] = {
     Http(url(s"$http/$command").PUT << params OK dispatch.as.String)
+  }
+
+  private def toMap(response: Response): Map[String, Seq[String]] = {
+    Map((response.getHeaders.iterator() map (e => (e.getKey, e.getValue.toSeq))).toSeq: _*)
   }
 
 }

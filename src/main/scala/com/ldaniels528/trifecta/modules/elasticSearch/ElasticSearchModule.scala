@@ -47,7 +47,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     Command(this, "eput", createDocument, UnixLikeParams(Seq("path" -> true, "data" -> true)), help = "Creates or updates a document"),
     Command(this, "esearch", searchDocument, UnixLikeParams(Seq("index" -> false, "type" -> false, "field" -> true, "==" -> true, "value" -> true)), help = "Searches for document via a user-defined query"),
     Command(this, "eserverinfo", serverInfo, UnixLikeParams(), help = "Retrieves server information"),
-    Command(this, "eexists", existsDocumentOrIndex, UnixLikeParams(Seq("path" -> true)), help = "Tests whether the index or document exists")
+    Command(this, "eexists", existsDocumentIndexOrType, UnixLikeParams(Seq("path" -> true)), help = "Tests whether the index or document exists")
   )
 
   /**
@@ -196,7 +196,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @example eexists /quotes/quote
    * @example eexists /quotes/quote/AAPL
    */
-  def existsDocumentOrIndex(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
+  def existsDocumentIndexOrType(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Boolean] = {
     params.args match {
       case path :: Nil => extractPathComponents(params, path) match {
         case (index, None, None) => client.existsIndex(index)
@@ -378,6 +378,14 @@ object ElasticSearchModule {
   case class AddDocumentResponse(created: Boolean, _index: String, _type: String, _id: String, _version: Int)
 
   /**
+   * {"cluster_name":"elasticsearch","status":"green","timed_out":false,"number_of_nodes":1,"number_of_data_nodes":1,
+   * "active_primary_shards":0,"active_shards":0,"relocating_shards":0,"initializing_shards":0,"unassigned_shards":0}
+   */
+  case class ClusterStatusResponse(cluster_name: String, status: String, timed_out: Boolean, number_of_nodes: Int,
+                                   number_of_data_nodes: Int, active_primary_shards: Int, active_shards: Int, relocating_shards: Int,
+                                   initializing_shards: Int, unassigned_shards: Int)
+
+  /**
    * {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
    */
   case class CountResponse(count: Int, _shards: Shards)
@@ -401,14 +409,5 @@ object ElasticSearchModule {
    * {"_index":"foo2","_type":"foo2","_id":"foo2","_version":1,"found":true,"_source":{"foo2":"bar"}}
    */
   case class FetchResponse(found: Boolean, _source: String, _index: String, _type: String, _id: String, _version: Int)
-
-  /**
-   * {"cluster_name":"elasticsearch","status":"green","timed_out":false,"number_of_nodes":1,"number_of_data_nodes":1,
-   * "active_primary_shards":0,"active_shards":0,"relocating_shards":0,"initializing_shards":0,"unassigned_shards":0}
-   */
-  case class ClusterStatusResponse(cluster_name: String, status: String, timed_out: Boolean, number_of_nodes: Int,
-                                   number_of_data_nodes: Int, active_primary_shards: Int, active_shards: Int, relocating_shards: Int,
-                                   initializing_shards: Int, unassigned_shards: Int)
-
 
 }
