@@ -12,12 +12,13 @@ import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.ning.http.client.Response
+import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Elastic Search Module
@@ -257,13 +258,18 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * Retrieves all documents for a given index
    * @example ematchall quotes
    */
-  def matchAll(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
+  def matchAll(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Either[JValue, String]] = {
     val index = params.args match {
       case anIndex :: Nil => anIndex
       case _ => dieSyntax(params)
     }
 
-    client.matchAll(index) map convert[String]
+    client.matchAll(index) map { response =>
+      Try(convert[JValue](response)) match {
+        case Success(js) => Left(js \ "hits")
+        case Failure(e) => Right(response.getResponseBody)
+      }
+    }
   }
 
   /**
@@ -271,7 +277,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @example esearch field == value
    * @example esearch myIndex myType field == value
    */
-  def searchDocument(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
+  def searchDocument(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Either[JValue, String]] = {
     val (index, indexType, field, value) = params.args match {
       case anIndex :: aType :: aField :: "==" :: aValue :: Nil => (anIndex, aType, aField, aValue)
       case aType :: aField :: "==" :: aValue :: Nil => cursor_? map (c => (c.index, aType, aField, aValue)) getOrElse dieCursor()
@@ -279,14 +285,19 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       case _ => dieSyntax(params)
     }
 
-    client.search(index, indexType, field -> value) map convert[String]
+    client.search(index, indexType, field -> value) map { response =>
+      Try(convert[JValue](response)) match {
+        case Success(js) => Left(js)
+        case Failure(e) => Right(response.getResponseBody)
+      }
+    }
   }
 
   /**
    * Retrieve server information for the currently connected host
    * @example eServerInfo
    */
-  def serverInfo(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
+  def serverInfo(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Either[JValue, String]] = {
     val host_port = params.args match {
       case Nil => None
       case host :: Nil => Option((host, 9200))
@@ -297,14 +308,19 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       new TxElasticSearchClient(host, port).serverInfo
     } getOrElse {
       client.serverInfo
-    } map convert[String]
+    } map { response =>
+      Try(convert[JValue](response)) match {
+        case Success(js) => Left(js)
+        case Failure(e) => Right(response.getResponseBody)
+      }
+    }
   }
 
   /**
    * Retrieve server information for the currently connected host
    * @example eServerStatus
    */
-  def serverStatus(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[String] = {
+  def serverStatus(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Either[JValue, String]] = {
     val host_port = params.args match {
       case Nil => None
       case host :: Nil => Option((host, 9200))
@@ -315,7 +331,12 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       new TxElasticSearchClient(host, port).serverStatus
     } getOrElse {
       client.serverStatus
-    } map convert[String]
+    } map { response =>
+      Try(convert[JValue](response)) match {
+        case Success(js) => Left(js)
+        case Failure(e) => Right(response.getResponseBody)
+      }
+    }
   }
 
   /**
@@ -326,8 +347,13 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     cursor_? map (Seq(_))
   }
 
-  def showNodes(params: UnixLikeArgs): Future[String] = {
-    client.nodes map convert[String]
+  def showNodes(params: UnixLikeArgs): Future[Either[JValue, String]] = {
+    client.nodes map { response =>
+      Try(convert[JValue](response)) match {
+        case Success(js) => Left(js)
+        case Failure(e) => Right(response.getResponseBody)
+      }
+    }
   }
 
   private def client: TxElasticSearchClient = client_? getOrElse die("No Elastic Search connection. Use 'econnect'")

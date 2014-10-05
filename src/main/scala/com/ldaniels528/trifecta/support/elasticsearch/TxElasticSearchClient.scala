@@ -14,7 +14,7 @@ class TxElasticSearchClient(host: String, port: Int) {
   private val http = s"http://$host:$port"
 
   /**
-   * Closes an index
+   * Closes the given index
    * @param index the given index
    * @return the [[Response]]
    */
@@ -37,6 +37,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * Counts matching documents within a given index of a give type based on the given query
    * @param index the given index
    * @param indexType the given index type
+   * @param query the given JSON query
    * @return {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
    * @example GET /quotes/quote/_count?pretty <- { "query" : { "term" : { "symbol" : "AAPL" } } }
    */
@@ -133,6 +134,15 @@ class TxElasticSearchClient(host: String, port: Int) {
    */
   def existsType(index: String, indexType: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     HEAD(s"$index/$indexType") map (_.getStatusCode == 200)
+  }
+
+  /**
+   * Expands the headers into a sequence of strings to sequence of strings
+   * @param response the given [[Response]]
+   * @return a sequence of strings to sequence of strings
+   */
+  def expandHeaders(response: Response): Seq[(String, Seq[String])] = {
+    (response.getHeaders.iterator() map (e => (e.getKey, e.getValue.toSeq))).toSeq
   }
 
   /**
@@ -235,10 +245,20 @@ class TxElasticSearchClient(host: String, port: Int) {
     PUT(s"$index/_settings", """{ "index" : { "number_of_replicas" : $replicas } }""")
   }
 
+  /**
+   * Performs an HTTP DELETE operation
+   * @param command the given command or query
+   * @return the [[Response]]
+   */
   private def DELETE(command: String)(implicit ec: ExecutionContext): Future[Response] = {
     Http(url(s"$http/$command").DELETE)
   }
 
+  /**
+   * Performs an HTTP GET operation
+   * @param command the given command or query
+   * @return the [[Response]]
+   */
   private def GET(command: String, params: String = "", pretty: Boolean = true)(implicit ec: ExecutionContext): Future[Response] = {
     if (params.isEmpty)
       Http(url(usePretty(s"$http/$command", pretty)))
@@ -246,10 +266,20 @@ class TxElasticSearchClient(host: String, port: Int) {
       Http(url(usePretty(s"$http/$command", pretty)) << params)
   }
 
+  /**
+   * Performs an HTTP HEAD operation
+   * @param command the given command or query
+   * @return the [[Response]]
+   */
   private def HEAD(command: String)(implicit ec: ExecutionContext): Future[Response] = {
     Http(url(s"$http/$command").HEAD)
   }
 
+  /**
+   * Performs an HTTP POST operation
+   * @param command the given command or query
+   * @return the [[Response]]
+   */
   private def POST(command: String, params: String = "")(implicit ec: ExecutionContext): Future[Response] = {
     if (params.isEmpty)
       Http(url(s"$http/$command").POST)
@@ -257,6 +287,11 @@ class TxElasticSearchClient(host: String, port: Int) {
       Http(url(s"$http/$command").POST << params)
   }
 
+  /**
+   * Performs an HTTP PUT operation
+   * @param command the given command or query
+   * @return the [[Response]]
+   */
   private def PUT(command: String, params: String = "")(implicit ec: ExecutionContext): Future[Response] = {
     if (params.isEmpty)
       Http(url(s"$http/$command").PUT)
@@ -268,10 +303,6 @@ class TxElasticSearchClient(host: String, port: Int) {
     if (!pretty) query
     else if (query.contains("?")) s"$query&pretty"
     else s"$query?pretty"
-  }
-
-  private def toHeaders(response: Response): Map[String, Seq[String]] = {
-    Map((response.getHeaders.iterator() map (e => (e.getKey, e.getValue.toSeq))).toSeq: _*)
   }
 
 }
