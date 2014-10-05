@@ -9,6 +9,7 @@ import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
 
 import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
@@ -74,9 +75,7 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
             rt.interpret(line) match {
               case Success(result) =>
                 // if debug is enabled, display the object value and class name
-                if(config.debugOn) {
-                  out.println(s"result: $result ${Option(result) map(_.getClass.getName) getOrElse ""}")
-                }
+                if (config.debugOn) showDebug(result)
 
                 // handle the result
                 rt.handleResult(result, line)
@@ -85,7 +84,7 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
                 err.println("Zookeeper connect loss error - use 'zconnect' to re-establish a connection")
               case Failure(e: IllegalArgumentException) =>
                 if (rt.config.debugOn) e.printStackTrace()
-                err.println(s"Syntax error: ${e.getMessage}")
+                err.println(s"Syntax error: ${getErrorMessage(e)}")
               case Failure(e) =>
                 if (rt.config.debugOn) e.printStackTrace()
                 err.println(s"Runtime error: ${getErrorMessage(e)}")
@@ -94,6 +93,16 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
         }
       }
     } while (config.alive)
+  }
+
+  private def showDebug(result: Any): Unit = {
+    result match {
+      case Failure(e) => e.printStackTrace(out)
+      case f: Future[_] => showDebug(f.value)
+      case Some(v) => showDebug(v)
+      case Success(v) => showDebug(v)
+      case v => out.println(s"result: $result ${Option(result) map (_.getClass.getName) getOrElse ""}")
+    }
   }
 
   /**
