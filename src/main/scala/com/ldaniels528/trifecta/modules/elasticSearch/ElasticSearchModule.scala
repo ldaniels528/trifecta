@@ -8,6 +8,7 @@ import com.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule._
 import com.ldaniels528.trifecta.support.elasticsearch.TxElasticSearchClient
 import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
+import com.ldaniels528.trifecta.support.messaging.MessageCursor
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
@@ -360,7 +361,9 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     client_? match {
       case Some(conn) => conn
       case None =>
-        val conn = new TxElasticSearchClient("localhost", 9200)
+        val (host, port) = ("localhost", 9200)
+        logger.info(s"Connecting to Elastic Search at $host:$port")
+        val conn = new TxElasticSearchClient(host, port)
         client_? = Option(conn)
         conn
     }
@@ -434,7 +437,7 @@ object ElasticSearchModule {
   /**
    * Elastic Search Navigable Cursor
    */
-  case class ElasticCursor(index: String, indexType: String, id: Option[String])
+  case class ElasticCursor(index: String, indexType: String, id: Option[String]) extends MessageCursor
 
   case class ESPath(index: String, docType: String, id: String)
 
