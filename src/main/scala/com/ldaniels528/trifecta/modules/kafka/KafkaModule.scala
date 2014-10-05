@@ -1,7 +1,6 @@
 package com.ldaniels528.trifecta.modules.kafka
 
 import java.io.PrintStream
-import java.nio.ByteBuffer._
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -35,7 +34,7 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(config: TxConfig) extends Module with AvroReading {
-  implicit var zk: ZKProxy = ZKProxy(EndPoint(config.zooKeeperConnect))
+  private var zkProxy_? : Option[ZKProxy] = None
   private val out: PrintStream = config.out
 
   // set the default correlation ID
@@ -121,7 +120,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   override def prompt: String = cursor map (c => s"${c.topic}/${c.partition}:${c.offset}") getOrElse "/"
 
-  override def shutdown() = {
+  override def shutdown() {
     Try(zk.close())
     ()
   }
@@ -267,9 +266,9 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Retrieves the list of Kafka consumers
-   * @example kconsumers -t shocktrade.keystats.avro
-   * @example kconsumers -c devGroup
    * @example kconsumers
+   * @example kconsumers -c devGroup
+   * @example kconsumers -t shocktrade.keystats.avro
    */
   def getConsumers(params: UnixLikeArgs): Future[List[ConsumerDelta]] = {
     // get the topic & consumer prefixes
@@ -282,8 +281,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Displays the current message cursor
-   * @example kcursor shocktrade.keystats.avro
    * @example kcursor
+   * @example kcursor shocktrade.keystats.avro
    */
   def getCursor(params: UnixLikeArgs): Seq[KafkaCursor] = {
     // get the topic & consumer prefixes
@@ -325,8 +324,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Returns the first message for a given topic
-   * @example kfirst com.shocktrade.quotes.csv 0
    * @example kfirst
+   * @example kfirst com.shocktrade.quotes.csv 0
    */
   def getFirstMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
     // get the arguments
@@ -338,8 +337,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Returns the last offset for a given topic
-   * @example klast com.shocktrade.alerts 0
    * @example klast
+   * @example klast com.shocktrade.alerts 0
    */
   def getLastMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
     // get the arguments
@@ -351,9 +350,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Returns the message for a given topic partition and offset
-   * @example kget com.shocktrade.alerts 0 3456
    * @example kget 3456
-   * @example kget -f /tmp/output.txt
+   * @example kget com.shocktrade.alerts 0 3456
    * @example kget -o es:/quotes/quote/AAPL
    */
   def getMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], GenericRecord] = {
@@ -657,7 +655,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kconnect localhost 2181
    */
   def zkConnect(params: UnixLikeArgs) {
-    zk = ZKProxy(EndPoint(config.zooKeeperConnect))
+    zkProxy_?.foreach(_.close())
+    zkProxy_? = Option(ZKProxy(EndPoint(config.zooKeeperConnect)))
   }
 
   private def dieNoCursor[S](): S = die("No topic/partition specified and no cursor exists")
@@ -697,10 +696,17 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   private def parseOffset(offset: String): Long = parseLong("offset", offset)
 
   /**
-   * Converts the given long value into a byte array
-   * @param value the given long value
-   * @return a byte array
+   * Returns the connected Zookeeper Proxy
+   * @return the connected Zookeeper Proxy
    */
-  private def toBytes(value: Long): Array[Byte] = allocate(8).putLong(value).array()
+  private implicit def zk: ZKProxy = {
+    zkProxy_? match {
+      case Some(zk) => zk
+      case None =>
+        val zk = ZKProxy(EndPoint(config.zooKeeperConnect))
+        zkProxy_? = Option(zk)
+        zk
+    }
+  }
 
 }

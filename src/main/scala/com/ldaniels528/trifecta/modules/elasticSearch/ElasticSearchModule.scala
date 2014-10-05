@@ -356,7 +356,15 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     }
   }
 
-  private def client: TxElasticSearchClient = client_? getOrElse die("No Elastic Search connection. Use 'econnect'")
+  private def client: TxElasticSearchClient = {
+    client_? match {
+      case Some(conn) => conn
+      case None =>
+        val conn = new TxElasticSearchClient("localhost", 9200)
+        client_? = Option(conn)
+        conn
+    }
+  }
 
   private def dieCursor[S](): S = die[S]("No Elastic Search navigable cursor found")
 

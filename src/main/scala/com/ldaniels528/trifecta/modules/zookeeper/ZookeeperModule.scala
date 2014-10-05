@@ -24,7 +24,7 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class ZookeeperModule(config: TxConfig) extends Module {
-  implicit val zk: ZKProxy = ZKProxy(EndPoint(config.zooKeeperConnect))
+  private var zkProxy_? : Option[ZKProxy] = None
   private val formatTypes = Seq("bytes", "char", "double", "float", "int", "json", "long", "short", "string")
   private val out: PrintStream = config.out
 
@@ -357,6 +357,20 @@ class ZookeeperModule(config: TxConfig) extends Module {
   private def zkKeyToPath(parent: String, child: String): String = {
     val parentWithSlash = if (parent.endsWith("/")) parent else parent + "/"
     parentWithSlash + child
+  }
+
+  /**
+   * Returns the connected Zookeeper Proxy
+   * @return the connected Zookeeper Proxy
+   */
+  private implicit def zk: ZKProxy = {
+    zkProxy_? match {
+      case Some(zk) => zk
+      case None =>
+        val zk = ZKProxy(EndPoint(config.zooKeeperConnect))
+        zkProxy_? = Option(zk)
+        zk
+    }
   }
 
 }
