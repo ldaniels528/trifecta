@@ -140,7 +140,7 @@ To see the syntax/usage of a command, use the `syntax` command:
 
     core:/home/ldaniels> syntax kget
     Description: Retrieves the message at the specified offset for a given topic partition
-    Usage: kget [-f outputFile] [-d YYYY-MM-DDTHH:MM:SS] [-a avroSchema] [topic] [partition] [offset]
+    Usage: kget [-o outputSource] [-d YYYY-MM-DDTHH:MM:SS] [-a avroSchema] [topic] [partition] [offset]
 
 <a name="elastic-search"></a>
 #### Elastic Search Module
