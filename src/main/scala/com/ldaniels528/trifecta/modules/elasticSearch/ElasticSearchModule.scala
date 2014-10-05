@@ -130,16 +130,32 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * Counts documents based on a query
    * @example ecount /quotes/quote { matchAll: { } }
    */
-  def count(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Seq[CountResponse]] = {
+  def count(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Either[Seq[CountResponse], String]] = {
     val (index, docType, query) = params.args match {
-      case aPath :: aQuery :: Nil => aPath.split("[/]").toList match {
-        case anIndex :: aType :: Nil => (anIndex, aType, aQuery)
+      case aPath :: aQuery :: Nil => extractPathComponents(params, aPath) match {
+        case (anIndex, Some(aType), None) => (anIndex, aType, aQuery)
         case _ => dieSyntax(params)
       }
       case _ => dieSyntax(params)
     }
 
-    client.count(index, docType, query) map convert[CountResponse] map (Seq(_))
+    client.count(index, docType, query) map { response =>
+      Try(convert[JValue](response)) match {
+        case Success(js) => Left {
+          out.println(s"js => ${compact(render(js))}")
+
+          // {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
+          (for {
+            count <- (js \ "count").extractOpt[Int]
+            shards = js \ "_shards"
+            total <- (shards \ "total").extractOpt[Int]
+            successful <- (shards \ "successful").extractOpt[Int]
+            failed <- (shards \ "failed").extractOpt[Int]
+          } yield Seq(CountResponse(count, total, successful, failed))) getOrElse Nil
+        }
+        case Failure(e) => Right(response.getResponseBody)
+      }
+    }
   }
 
   /**
@@ -462,12 +478,7 @@ object ElasticSearchModule {
   /**
    * {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
    */
-  case class CountResponse(count: Int, _shards: Shards)
-
-  /**
-   * {"total":5,"successful":5,"failed":0}
-   */
-  case class Shards(total: Int, successful: Int, failed: Int)
+  case class CountResponse(count: Int, total: Int, successful: Int, failed: Int)
 
   /**
    * {"found":true,"_index":"foo2","_type":"foo2","_id":"foo2","_version":2}
