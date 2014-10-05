@@ -455,12 +455,10 @@ object ElasticSearchModule {
    */
   case class ElasticCursor(index: String, indexType: String, id: Option[String]) extends MessageCursor
 
-  case class ESPath(index: String, docType: String, id: String)
-
   /**
-   * {"acknowledged":true}
+   * Represents an ElasticSearch path
    */
-  case class AcknowledgeResponse(acknowledged: Boolean)
+  case class ESPath(index: String, docType: String, id: String)
 
   /**
    * {"_index":"foo2","_type":"foo2","_id":"foo2","_version":1,"created":true}
