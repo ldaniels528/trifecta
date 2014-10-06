@@ -6,6 +6,7 @@ import java.util.{Date, TimeZone}
 
 import com.ldaniels528.trifecta.JobManager.JobItem
 import com.ldaniels528.trifecta.command._
+import com.ldaniels528.trifecta.modules.Module.IOCount
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.trifecta.modules.{AvroReading, Module}
 import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
@@ -20,7 +21,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.language.postfixOps
-import scala.util.{Properties, Try}
+import scala.util.{Failure, Properties, Success, Try}
 
 /**
  * Core Module
@@ -216,34 +217,44 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @example copy -i topic:greetings -o topic:greetings2
    * @example copy -i topic:shocktrade.quotes.avro -o es:/quotes/quote/$symbol -a file:avro/quotes.avsc
    */
-  def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Long = {
+  def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[IOCount] = {
     // get the input source
-    val in = getInputSource(params) getOrElse die("No input source defined")
+    val reader = getInputSource(params) getOrElse die("No input source defined")
 
     // get the output source
-    val out = getOutputSource(params) getOrElse die("No output source defined")
+    val writer = getOutputSource(params) getOrElse die("No output source defined")
 
     // get an optional decoder
     val decoder = getAvroDecoder(params)(rt.config)
 
     // copy the messages from the input source to the output source
-    var count: Long = 0
-    var data: Option[KeyAndMessage] = None
-    do {
-      // read the record
-      data = in.read
+    Future {
+      var count: Long = 0
+      var failures: Long = 0
+      var data: Option[KeyAndMessage] = None
+      do {
+        // read the record
+        data = reader.read
 
-      // if defined ...
-      data.foreach { kam =>
-        // write the record
-        out.write(kam, decoder)
+        // if defined ...
+        data.foreach { kam =>
+          // write the record
+          writer.write(kam, decoder) match {
+            case f: Future[_] => Try(Await.result(f, 15.seconds))  match {
+              case Success(_) =>
+              case Failure(e) => failures += 1
+            }
+            case _ =>
+          }
 
-        // count this record
-        count += 1
-      }
-    } while (data.isDefined)
+          // count this record
+          count += 1
+        }
+      } while (data.isDefined)
 
-    count
+      // return the I/O results
+      IOCount(count, failures)
+    }
   }
 
   /**
