@@ -8,7 +8,7 @@ import com.ldaniels528.trifecta.vscript.Scope
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
 
-import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -141,7 +141,7 @@ object TrifectaShell {
 
     // if arguments were not passed, stop.
     args.toList match {
-      case Nil => System.out.println("Usage: trifecta <zookeeperHost>")
+      case Nil => System.out.println("Usage: Trifecta <zookeeperHost>")
       case params =>
         // were host and port argument passed?
         val host: String = params.head
