@@ -3,7 +3,6 @@ package com.ldaniels528.trifecta.support.elasticsearch
 import com.ldaniels528.tabular.Tabular
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 import org.scalatest.Matchers._
-import wabisabi._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
