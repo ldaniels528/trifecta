@@ -500,7 +500,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
           case a if a.contains("storm supervisor") => "Storm Supervisor"
           case a if a.contains("storm ui") => "Storm UI"
           case a if a.contains("storm") => "Storm"
-          case a if a.contains("org.elasticsearch.bootstrap.Elasticsearch") => "Elasticsearch"
+          case a if a.contains("org.elasticsearch.bootstrap.Elasticsearch") => "ElasticSearch"
           case a if a.contains("trifecta.jar") => "Trifecta"
           case a if a.contains("/usr/local/java/zookeeper") => "Zookeeper"
           case _ => s"java [$args]"
