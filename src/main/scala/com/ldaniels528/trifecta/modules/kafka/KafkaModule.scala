@@ -23,7 +23,7 @@ import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import org.apache.avro.generic.GenericRecord
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
