@@ -4,7 +4,7 @@ import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.kafka.{Broker, KafkaPublisher}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Kafka Topic Output Source
@@ -19,7 +19,7 @@ class KafkaTopicOutputSource(brokers: Seq[Broker], outputTopic: String) extends 
    * @param data the given key and message
    * @return the response value
    */
-  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) {
+  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) = Future {
     publisher.publish(outputTopic, data.key, data.message)
   }
 

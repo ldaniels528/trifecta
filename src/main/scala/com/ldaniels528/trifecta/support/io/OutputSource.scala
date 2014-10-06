@@ -3,7 +3,7 @@ package com.ldaniels528.trifecta.support.io
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import org.apache.avro.generic.GenericRecord
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * This trait should be implemented by classes that are interested in serving as an
@@ -17,7 +17,7 @@ trait OutputSource {
    * @param data the given key and message
    * @return the response value
    */
-  def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]] = None)(implicit ec: ExecutionContext): Any
+  def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]] = None)(implicit ec: ExecutionContext): Future[_]
 
   /**
    * Closes the underlying stream

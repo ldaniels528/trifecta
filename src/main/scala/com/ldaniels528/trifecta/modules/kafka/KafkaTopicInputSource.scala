@@ -8,7 +8,7 @@ import kafka.common.TopicAndPartition
  * Kafka Topic Input Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaTopicInputSource(brokers: Seq[Broker], topic: String, partition: Int = 0, fetchSize: Int = 0xFFFF)
+class KafkaTopicInputSource(brokers: Seq[Broker], topic: String, partition: Int = 0, fetchSize: Int = 2048)
   extends InputSource {
   private val consumer = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId = 0)
   private var offset_? : Option[Long] = consumer.getFirstOffset

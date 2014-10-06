@@ -5,7 +5,7 @@ import java.io._
 import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * File Output Source
@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext
 class FileOutputSource(out: OutputStream) extends OutputSource {
   private val dos = new DataOutputStream(out)
 
-  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) = {
+  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) = Future {
     // persist the key
     dos.writeInt(data.key.length)
     dos.write(data.key)
