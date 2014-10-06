@@ -15,10 +15,11 @@ import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}
 import com.ldaniels528.trifecta.{SessionManagement, TrifectaShell, TxConfig, TxRuntimeContext}
 import org.apache.commons.io.IOUtils
+import org.slf4j.LoggerFactory
 
-import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent._
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 import scala.io.Source
 import scala.language.postfixOps
 import scala.util.{Failure, Properties, Success, Try}
@@ -28,6 +29,7 @@ import scala.util.{Failure, Properties, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CoreModule(config: TxConfig) extends Module with AvroReading {
+  private val logger = LoggerFactory.getLogger(getClass)
   private val out: PrintStream = config.out
 
   // define the process parsing regular expression
@@ -213,6 +215,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Copy messages from the specified input source to an output source
+   * @return the I/O count
    * @example copy -i topic:shocktrade.quotes.avro -o file:messages/mymessage.bin
    * @example copy -i topic:greetings -o topic:greetings2
    * @example copy -i topic:shocktrade.quotes.avro -o es:/quotes/quote/$symbol -a file:avro/quotes.avsc
@@ -229,31 +232,30 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
     // copy the messages from the input source to the output source
     Future {
-      var count: Long = 0
-      var failures: Long = 0
-      var data: Option[KeyAndMessage] = None
-      do {
-        // read the record
-        data = reader.read
+      blocking {
+        var count: Long = 0
+        var failures: Long = 0
+        var data: Option[KeyAndMessage] = None
+        do {
+          Try {
+            // read the record
+            data = reader.read
+            data.foreach { kam =>
+              logger.info(s"Read ${kam.key.length + kam.message.length} bytes")
 
-        // if defined ...
-        data.foreach { kam =>
-          // write the record
-          writer.write(kam, decoder) match {
-            case f: Future[_] => Try(Await.result(f, 15.seconds))  match {
-              case Success(_) =>
-              case Failure(e) => failures += 1
+              // write the record
+              Await.result(writer.write(kam, decoder), 60.seconds)
+              System.gc()
             }
-            case _ =>
+          } match {
+            case Success(_) => count += 1
+            case Failure(e) => failures += 1
           }
+        } while (data.isDefined)
 
-          // count this record
-          count += 1
-        }
-      } while (data.isDefined)
-
-      // return the I/O results
-      IOCount(count, failures)
+        // return the I/O results
+        IOCount(count, failures)
+      }
     }
   }
 
