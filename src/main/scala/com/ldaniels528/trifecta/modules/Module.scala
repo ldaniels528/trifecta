@@ -177,4 +177,11 @@ object Module {
    */
   case class NameValuePair(name: String, value: Any)
 
+  /**
+   * Represents the results of an I/O operation
+   * @param records the number of records processed
+   * @param failed the number of failed records
+   */
+  case class IOCount(records: Long, failed: Long)
+
 }
