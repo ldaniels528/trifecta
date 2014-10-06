@@ -17,7 +17,7 @@ import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json._
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
@@ -67,11 +67,9 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    */
   override def getOutputHandler(url: String): Option[DocumentOutputSource] = {
     url.extractProperty("es:") map { path =>
-      path.split("[/]").toList match {
-        case "" :: index :: indexType :: Nil =>
-          new DocumentOutputSource(client, index, indexType, id = None)
-        case "" :: index :: indexType :: id :: Nil =>
-          new DocumentOutputSource(client, index, indexType, Option(id))
+      extractPathComponents(path) match {
+        case (Some(index), Some(indexType), Some(id)) =>
+          new DocumentOutputSource(client, index, indexType, id)
         case _ =>
           dieInvalidOutputURL(url, "es:/quotes/quote/AAPL")
       }
@@ -131,19 +129,21 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @example ecount /quotes/quote { matchAll: { } }
    */
   def count(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Either[Seq[CountResponse], String]] = {
-    val (index, docType, query) = params.args match {
-      case aPath :: aQuery :: Nil => extractPathComponents(params, aPath) match {
-        case (anIndex, Some(aType), None) => (anIndex, aType, aQuery)
+    val result = params.args match {
+      case path :: field :: "==" :: value :: Nil => extractPathComponents(path) match {
+        case (Some(index), Some(objType), None) => client.count(index, objType, field -> value)
+        case _ => dieSyntax(params)
+      }
+      case path :: query :: Nil => extractPathComponents(path) match {
+        case (Some(index), Some(objType), None) => client.count(index, objType, query)
         case _ => dieSyntax(params)
       }
       case _ => dieSyntax(params)
     }
 
-    client.count(index, docType, query) map { response =>
+    result map { response =>
       Try(convert[JValue](response)) match {
         case Success(js) => Left {
-          out.println(s"js => ${compact(render(js))}")
-
           // {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
           (for {
             count <- (js \ "count").extractOpt[Int]
@@ -204,9 +204,9 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    */
   def deleteDocumentOrIndex(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[_] = {
     params.args match {
-      case path :: Nil => extractPathComponents(params, path) match {
-        case (index, None, None) => client.deleteIndex(index) map convert[DeleteResponse] map (Seq(_))
-        case (index, Some(indexType), Some(id)) => client.delete(index, indexType, id) map convert[String]
+      case path :: Nil => extractPathComponents(path) match {
+        case (Some(index), None, None) => client.deleteIndex(index) map convert[DeleteResponse] map (Seq(_))
+        case (Some(index), Some(indexType), Some(id)) => client.delete(index, indexType, id) map convert[String]
         case _ => dieSyntax(params)
       }
       case _ => dieSyntax(params)
@@ -221,10 +221,10 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    */
   def existsDocumentIndexOrType(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Boolean] = {
     params.args match {
-      case path :: Nil => extractPathComponents(params, path) match {
-        case (index, None, None) => client.existsIndex(index)
-        case (index, Some(indexType), None) => client.existsType(index, indexType)
-        case (index, Some(indexType), Some(id)) => client.existsDocument(index, indexType, id)
+      case path :: Nil => extractPathComponents(path) match {
+        case (Some(index), None, None) => client.existsIndex(index)
+        case (Some(index), Some(indexType), None) => client.existsType(index, indexType)
+        case (Some(index), Some(indexType), Some(id)) => client.existsDocument(index, indexType, id)
         case _ => dieSyntax(params)
       }
       case _ => dieSyntax(params)
@@ -391,17 +391,16 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   /**
    * Attempts to extract up to 3 components from the given path (index, type and ID)
-   * @param params the given [[UnixLikeArgs]](Unix Style arguments)
    * @param path the given path (e.g. "/quotes/quote/AAPL")
    * @return the path components
    */
-  private def extractPathComponents(params: UnixLikeArgs, path: String) = {
+  private def extractPathComponents(path: String) = {
     val myPath = if (path.startsWith("/")) path.substring(1) else path
     myPath.split("[/]").toList match {
-      case index :: Nil => (index, None, None)
-      case index :: indexType :: Nil => (index, Option(indexType), None)
-      case index :: indexType :: id :: Nil => (index, Option(indexType), Option(id))
-      case _ => dieSyntax(params)
+      case index :: Nil => (Option(index), None, None)
+      case index :: indexType :: Nil => (Option(index), Option(indexType), None)
+      case index :: indexType :: id :: Nil => (Option(index), Option(indexType), Option(id))
+      case _ => (None, None, None)
     }
   }
 
