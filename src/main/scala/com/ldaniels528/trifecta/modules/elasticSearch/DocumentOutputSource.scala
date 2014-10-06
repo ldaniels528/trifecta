@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
  * Elastic Search Document Output Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class DocumentOutputSource(client: TxElasticSearchClient, index: String, indexType: String, id: String)
+class DocumentOutputSource(client: TxElasticSearchClient, index: String, objType: String, id: String)
   extends OutputSource {
 
   /**
@@ -26,7 +26,11 @@ class DocumentOutputSource(client: TxElasticSearchClient, index: String, indexTy
       case Some(av: AvroDecoder) =>
         av.decode(data.message) match {
           case Success(record) =>
-            client.create(index, indexType, escape(id, record), record.toString)
+            client.create(
+              index = escape(index, record),
+              indexType = escape(objType, record),
+              id = escape(id, record),
+              doc = record.toString)
           case Failure(e) =>
             throw new IllegalStateException(e.getMessage, e)
         }
