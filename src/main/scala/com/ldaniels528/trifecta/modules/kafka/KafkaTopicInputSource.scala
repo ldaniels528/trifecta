@@ -8,7 +8,7 @@ import kafka.common.TopicAndPartition
  * Kafka Topic Input Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaTopicInputSource(brokers: Seq[Broker], topic: String, partition: Int = 0, fetchSize: Int = 65536)
+class KafkaTopicInputSource(brokers: Seq[Broker], topic: String, partition: Int = 0, fetchSize: Int = 0xFFFF)
   extends InputSource {
   private val consumer = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId = 0)
   private var offset_? : Option[Long] = consumer.getFirstOffset
@@ -20,9 +20,9 @@ class KafkaTopicInputSource(brokers: Seq[Broker], topic: String, partition: Int 
   override def read: Option[KeyAndMessage] = {
     for {
       offset <- offset_?
-      md <- consumer.fetch(offset, 65536).headOption
+      md <- consumer.fetch(offset, fetchSize).headOption
     } yield {
-      offset_? = Option(md.nextOffset)
+      offset_? = offset_? map(_ + 1) //Option(md.nextOffset)
       KeyAndMessage(md.key, md.message)
     }
   }
