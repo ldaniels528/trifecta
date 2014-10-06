@@ -18,12 +18,6 @@ class DocumentOutputSource(client: TxElasticSearchClient, index: String, indexTy
   extends OutputSource {
 
   /**
-   * Returns the binary encoding
-   * @return the binary encoding
-   */
-  val encoding: String = "UTF8"
-
-  /**
    * Writes the given key and decoded message to the underlying stream
    * @param data the given key and message
    * @return the response value
