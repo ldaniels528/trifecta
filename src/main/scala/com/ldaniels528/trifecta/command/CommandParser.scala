@@ -5,7 +5,7 @@ package com.ldaniels528.trifecta.command
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object CommandParser {
-  private val SYMBOLS = Set('!', '$', '@', '?', '&')
+  private val SYMBOLS = Set('!', '?', '&')
 
   /**
    * Parses the given input string into tokens
