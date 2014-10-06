@@ -1,9 +1,10 @@
 package com.ldaniels528.trifecta.support.elasticsearch
 
-import com.ning.http.client.Response
-import dispatch.{Http, url}
+import java.util.concurrent.Executors
 
-import scala.collection.JavaConversions._
+import com.ning.http.client.Response
+import dispatch._
+
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -11,6 +12,8 @@ import scala.concurrent.{ExecutionContext, Future}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxElasticSearchClient(host: String, port: Int) {
+  private val pool = Executors.newFixedThreadPool(8)
+  private val http$ = createHttpClient()
   private val http = s"http://$host:$port"
 
   /**
@@ -137,15 +140,6 @@ class TxElasticSearchClient(host: String, port: Int) {
   }
 
   /**
-   * Expands the headers into a sequence of strings to sequence of strings
-   * @param response the given [[Response]]
-   * @return a sequence of strings to sequence of strings
-   */
-  def expandHeaders(response: Response): Seq[(String, Seq[String])] = {
-    (response.getHeaders.iterator() map (e => (e.getKey, e.getValue.toSeq))).toSeq
-  }
-
-  /**
    * Retrieves a document by ID
    * @param index the given index
    * @param indexType the given index type
@@ -251,7 +245,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the [[Response]]
    */
   private def DELETE(command: String)(implicit ec: ExecutionContext): Future[Response] = {
-    Http(url(s"$http/$command").DELETE)
+    http$(url(s"$http/$command").DELETE)
   }
 
   /**
@@ -261,9 +255,9 @@ class TxElasticSearchClient(host: String, port: Int) {
    */
   private def GET(command: String, params: String = "", pretty: Boolean = true)(implicit ec: ExecutionContext): Future[Response] = {
     if (params.isEmpty)
-      Http(url(usePretty(s"$http/$command", pretty)))
+      http$(url(usePretty(s"$http/$command", pretty)))
     else
-      Http(url(usePretty(s"$http/$command", pretty)) << params)
+      http$(url(usePretty(s"$http/$command", pretty)) << params)
   }
 
   /**
@@ -272,7 +266,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the [[Response]]
    */
   private def HEAD(command: String)(implicit ec: ExecutionContext): Future[Response] = {
-    Http(url(s"$http/$command").HEAD)
+    http$(url(s"$http/$command").HEAD)
   }
 
   /**
@@ -282,9 +276,9 @@ class TxElasticSearchClient(host: String, port: Int) {
    */
   private def POST(command: String, params: String = "")(implicit ec: ExecutionContext): Future[Response] = {
     if (params.isEmpty)
-      Http(url(s"$http/$command").POST)
+      http$(url(s"$http/$command").POST)
     else
-      Http(url(s"$http/$command").POST << params)
+      http$(url(s"$http/$command").POST << params)
   }
 
   /**
@@ -294,9 +288,18 @@ class TxElasticSearchClient(host: String, port: Int) {
    */
   private def PUT(command: String, params: String = "")(implicit ec: ExecutionContext): Future[Response] = {
     if (params.isEmpty)
-      Http(url(s"$http/$command").PUT)
+      http$(url(s"$http/$command").PUT)
     else
-      Http(url(s"$http/$command").PUT << params)
+      http$(url(s"$http/$command").PUT << params)
+  }
+
+  private def createHttpClient(): Http = {
+    new Http() //with thread.Safety
+      .configure(
+        _.setAllowPoolingConnection(true)
+          .setFollowRedirects(true)
+          .setConnectionTimeoutInMs(1000)
+          .setExecutorService(pool))
   }
 
   private def usePretty(query: String, pretty: Boolean): String = {
