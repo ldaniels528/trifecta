@@ -40,13 +40,12 @@ libraryDependencies ++= Seq(
   "com.twitter" %% "bijection-core" % "0.7.0",
   "com.twitter" %% "bijection-avro" % "0.7.0",
   "com.typesafe.akka" %% "akka-actor" % "2.3.5",
-  "io.spray" %%  "spray-json" % "1.2.6",
   "jline" % "jline" % "2.12",
   "net.liftweb" %% "lift-json" % "2.5.1",
   "org.apache.avro" % "avro" % "1.7.7",
   "org.apache.httpcomponents" % "httpclient" % "4.3.2",
   "org.apache.httpcomponents" % "httpcore" % "4.3.2",
-  "org.apache.kafka" % "kafka_2.10" % "0.8.1.1"
+  "org.apache.kafka" %% "kafka" % "0.8.1.1"
     exclude("org.apache.zookeeper", "zookeeper"),
   "org.apache.storm" % "storm-core" % "0.9.2-incubating"
     exclude("org.apache.zookeeper", "zookeeper")
@@ -54,8 +53,7 @@ libraryDependencies ++= Seq(
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
   "org.fusesource.jansi" % "jansi" % "1.11",
   "org.slf4j" % "slf4j-api" % "1.7.7",
-  "net.databinder.dispatch" %% "dispatch-core" % "0.11.2",
-  "wabisabi" %% "wabisabi" % "2.0.10"
+  "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
 )
 
 // Testing Dependencies
