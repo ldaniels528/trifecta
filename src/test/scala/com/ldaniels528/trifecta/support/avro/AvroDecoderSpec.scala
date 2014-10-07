@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.support.avro
 
-import com.ldaniels528.trifecta.modules.core.FileInputSource
+import com.ldaniels528.trifecta.modules.core.JSONFileInputSource
 import com.ldaniels528.trifecta.util.TxUtils._
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
@@ -28,7 +28,7 @@ class AvroDecoderSpec() extends FeatureSpec with GivenWhenThen {
       val decoder = AvroDecoder("myDecoder", schemaString)
 
       When("an Avro-encoded record is loaded")
-      val encoded = (FileInputSource("/GDF.bin") use (_.read))
+      val encoded = (JSONFileInputSource("/GDF.bin") use (_.read))
         .getOrElse(throw new IllegalStateException("Failed to load Avro-encoded record"))
 
       Then("it should be successfully decoded as a GenericRecord")
