@@ -251,11 +251,11 @@ ID for the Elastic Search document.
 Once the operation has completed, the copy statistics are displayed:
 
     es:localhost:9200/> Job #1845 completed (use 'jobs -v 1845' to view results)
-    + ------------------------------------- +
-    | records  failures  recordsPerSecond   |
-    + ------------------------------------- +
-    | 3367     0         142.9              |
-    + ------------------------------------- +
+    + -------------------------------------------------- +
+    | runTimeSecs  records  failures  recordsPerSecond   |
+    + -------------------------------------------------- +
+    | 27.0         3367     0         143.3              |
+    + -------------------------------------------------- +
 
 <a name="kafka-module"></a>
 #### Kakfa Module

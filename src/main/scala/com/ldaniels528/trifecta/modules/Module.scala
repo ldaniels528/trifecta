@@ -182,6 +182,6 @@ object Module {
    * @param records the number of records processed
    * @param failures the number of failed records
    */
-  case class IOCount(records: Long, failures: Long, recordsPerSecond: Double)
+  case class IOCount(runTimeSecs: Double, records: Long, failures: Long, recordsPerSecond: Double)
 
 }
