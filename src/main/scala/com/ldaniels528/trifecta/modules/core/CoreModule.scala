@@ -9,7 +9,7 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules.Module.IOCount
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.trifecta.modules.{AvroReading, Module}
-import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
+import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}
@@ -69,24 +69,30 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
   /**
    * Returns an input source
-   * @param url the given input URL (e.g. "file:/tmp/messages.bin")
+   * @param url the given input URL (e.g. "file:avro:/tmp/messages.avro")
    * @return the option of an input source
    */
   override def getInputHandler(url: String): Option[InputSource] = {
     url match {
+      case s if s.startsWith("file:avro:") => url.extractProperty("file:avro:") map (AvroFileInputSource(_))
+      case s if s.startsWith("file:json:") => url.extractProperty("file:json:") map (JSONFileInputSource(_))
       case s if s.startsWith("http:") => Option(new HttpInputSource(url))
-      case s if s.startsWith("file:") => url.extractProperty("file:") map (FileInputSource(_))
       case _ => None
     }
   }
 
   /**
-   * Returns a file output source
-   * @param url the given output URL (e.g. "file:/tmp/messages.bin")
-   * @return the option of a file output source
+   * Returns an output source
+   * @param url the given output URL (e.g. "file:avro:/tmp/messages.avro")
+   * @return the option of an output source
    */
-  override def getOutputHandler(url: String): Option[FileOutputSource] = {
-    url.extractProperty("file:") map (FileOutputSource(_))
+  override def getOutputHandler(url: String): Option[OutputSource] = {
+    url match {
+      case s if s.startsWith("file:avro:") => url.extractProperty("file:avro:") map (AvroFileOutputSource(_))
+      case s if s.startsWith("file:json:") => url.extractProperty("file:json:") map (JSONFileOutputSource(_))
+      // TODO http: for file upload
+      case _ => None
+    }
   }
 
   override def getVariables: Seq[Variable] = Seq(
@@ -216,8 +222,8 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Copy messages from the specified input source to an output source
    * @return the I/O count
-   * @example copy -i topic:shocktrade.quotes.avro -o file:messages/mymessage.bin
    * @example copy -i topic:greetings -o topic:greetings2
+   * @example copy -i topic:shocktrade.quotes.avro -o file:json:/tmp/quotes.json -a file:avro/quotes.avsc
    * @example copy -i topic:shocktrade.quotes.avro -o es:/quotes/quote/$symbol -a file:avro/quotes.avsc
    */
   def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[IOCount] = {
@@ -230,33 +236,46 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     // get an optional decoder
     val decoder = getAvroDecoder(params)(rt.config)
 
+    def copy(kam: KeyAndMessage) = {
+      logger.info(s"Read ${kam.key.length + kam.message.length} bytes")
+      showMemory()
+
+      // write the record
+      Await.result(writer.write(kam, decoder), 60.seconds)
+      System.gc()
+    }
+
     // copy the messages from the input source to the output source
     Future {
       blocking {
         var count: Long = 0
         var failures: Long = 0
-        var data: Option[KeyAndMessage] = None
-        do {
-          Try {
-            // read the record
-            data = reader.read
-            data.foreach { kam =>
-              logger.info(s"Read ${kam.key.length + kam.message.length} bytes")
+        var found: Boolean = true
+        while (found) Try {
+          // read the record
+          val data = reader.read
+          found = data.isDefined
 
-              // write the record
-              Await.result(writer.write(kam, decoder), 60.seconds)
-              System.gc()
-            }
-          } match {
-            case Success(_) => count += 1
-            case Failure(e) => failures += 1
-          }
-        } while (data.isDefined)
+          // copy the record
+          data.foreach(copy)
+        } match {
+          case Success(_) => count += 1
+          case Failure(e) => failures += 1
+        }
 
         // return the I/O results
         IOCount(count, failures)
       }
     }
+  }
+
+  private def showMemory(): Unit = {
+    val rt = Runtime.getRuntime
+    val MEGABYTE = 1024 * 1024
+    val free = rt.freeMemory() / MEGABYTE
+    val total = rt.totalMemory() / MEGABYTE
+    val used_% = ((total - free).toDouble / total.toDouble) * 100d
+    logger.info(f"Memory: free $free M, total $total M used %%: ${used_%}%.1f%%")
   }
 
   /**
