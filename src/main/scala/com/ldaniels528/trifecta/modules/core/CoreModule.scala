@@ -9,7 +9,7 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules.Module.IOCount
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.trifecta.modules.{AvroReading, Module}
-import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage, OutputSource}
+import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}
@@ -22,7 +22,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
-import scala.util.{Failure, Properties, Success, Try}
+import scala.util.{Properties, Try}
 
 /**
  * Core Module
@@ -223,6 +223,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * Copy messages from the specified input source to an output source
    * @return the I/O count
    * @example copy -i topic:greetings -o topic:greetings2
+   * @example copy -i topic:shocktrade.keystats.avro -o file:json:/tmp/keystats.json -a file:avro/keyStatistics.avsc
    * @example copy -i topic:shocktrade.quotes.avro -o file:json:/tmp/quotes.json -a file:avro/quotes.avsc
    * @example copy -i topic:shocktrade.quotes.avro -o es:/quotes/quote/$symbol -a file:avro/quotes.avsc
    */
@@ -236,46 +237,25 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     // get an optional decoder
     val decoder = getAvroDecoder(params)(rt.config)
 
-    def copy(kam: KeyAndMessage) = {
-      logger.info(s"Read ${kam.key.length + kam.message.length} bytes")
-      showMemory()
-
-      // write the record
-      Await.result(writer.write(kam, decoder), 60.seconds)
-      System.gc()
-    }
-
     // copy the messages from the input source to the output source
     Future {
       blocking {
         var count: Long = 0
-        var failures: Long = 0
         var found: Boolean = true
-        while (found) Try {
+        while (found) {
           // read the record
           val data = reader.read
           found = data.isDefined
 
-          // copy the record
-          data.foreach(copy)
-        } match {
-          case Success(_) => count += 1
-          case Failure(e) => failures += 1
+          // write the record
+          data.foreach(writer.write(_, decoder))
+          count += 1
         }
 
         // return the I/O results
         IOCount(count, failures = 0)
       }
     }
-  }
-
-  private def showMemory(): Unit = {
-    val rt = Runtime.getRuntime
-    val MEGABYTE = 1024 * 1024
-    val free = rt.freeMemory() / MEGABYTE
-    val total = rt.totalMemory() / MEGABYTE
-    val used_% = ((total - free).toDouble / total.toDouble) * 100d
-    logger.info(f"Memory: free $free M, total $total M used %%: ${used_%}%.1f%%")
   }
 
   /**
