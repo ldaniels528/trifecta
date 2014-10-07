@@ -227,7 +227,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @example copy -i topic:shocktrade.quotes.avro -o file:json:/tmp/quotes.json -a file:avro/quotes.avsc
    * @example copy -i topic:shocktrade.quotes.avro -o es:/quotes/quote/$symbol -a file:avro/quotes.avsc
    */
-  def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[IOCount] = {
+  def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Seq[IOCount]] = {
     // get the input source
     val reader = getInputSource(params) getOrElse die("No input source defined")
 
@@ -241,19 +241,26 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Future {
       blocking {
         var count: Long = 0
-        var found: Boolean = true
-        while (found) {
-          // read the record
-          val data = reader.read
-          found = data.isDefined
 
-          // write the record
-          data.foreach(writer.write(_, decoder))
-          count += 1
+        try {
+          var found: Boolean = true
+          while (found) {
+            // read the record
+            val data = reader.read
+            found = data.isDefined
+
+            // write the record
+            data.foreach(writer.write(_, decoder))
+            count += 1
+          }
+        } finally {
+          // close the reader and writer
+          Try(reader.close())
+          Try(writer.close())
         }
 
         // return the I/O results
-        IOCount(count, failures = 0)
+        Seq(IOCount(count, failures = 0))
       }
     }
   }
