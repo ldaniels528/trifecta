@@ -6,10 +6,10 @@ import java.net.URL
 import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 
 /**
- * File Input Source
+ * Avro File Input Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class FileInputSource(in: InputStream) extends InputSource {
+class AvroFileInputSource(in: InputStream) extends InputSource {
   private val dis = new DataInputStream(in)
 
   override def read: Option[KeyAndMessage] = {
@@ -41,19 +41,19 @@ class FileInputSource(in: InputStream) extends InputSource {
  * File Input Handler Singleton
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object FileInputSource {
+object AvroFileInputSource {
 
-  def apply(resourcePath: String): FileInputSource = {
+  def apply(resourcePath: String): AvroFileInputSource = {
     val in = Option(getClass.getResource(resourcePath)) map (_.openStream()) getOrElse new FileInputStream(resourcePath)
-    new FileInputSource(in)
+    new AvroFileInputSource(in)
   }
 
-  def apply(file: File): FileInputSource = {
-    new FileInputSource(new FileInputStream(file))
+  def apply(file: File): AvroFileInputSource = {
+    new AvroFileInputSource(new FileInputStream(file))
   }
 
-  def apply(url: URL): FileInputSource = {
-    new FileInputSource(url.openStream())
+  def apply(url: URL): AvroFileInputSource = {
+    new AvroFileInputSource(url.openStream())
   }
 
 }

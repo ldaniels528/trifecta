@@ -8,10 +8,10 @@ import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import scala.concurrent.{Future, ExecutionContext}
 
 /**
- * File Output Source
+ * Avro File Output Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class FileOutputSource(out: OutputStream) extends OutputSource {
+class AvroFileOutputSource(out: OutputStream) extends OutputSource {
   private val dos = new DataOutputStream(out)
 
   override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) = Future {
@@ -32,14 +32,14 @@ class FileOutputSource(out: OutputStream) extends OutputSource {
  * File Output Handler Singleton
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object FileOutputSource {
+object AvroFileOutputSource {
 
-  def apply(path: String): FileOutputSource = {
-    new FileOutputSource(new FileOutputStream(path))
+  def apply(path: String): AvroFileOutputSource = {
+    new AvroFileOutputSource(new FileOutputStream(path))
   }
 
-  def apply(file: File): FileOutputSource = {
-    new FileOutputSource(new FileOutputStream(file))
+  def apply(file: File): AvroFileOutputSource = {
+    new AvroFileOutputSource(new FileOutputStream(file))
   }
 
 }
