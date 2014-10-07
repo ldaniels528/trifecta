@@ -179,9 +179,12 @@ object Module {
 
   /**
    * Represents the results of an I/O operation
-   * @param records the number of records processed
+   * @param read the number of records read
+   * @param written the number of records written
    * @param failures the number of failed records
+   * @param recordsPerSecond the transfer rate (in records/second)
+   * @param runTimeSecs the complete process run time (in seconds)
    */
-  case class IOCount(runTimeSecs: Double, records: Long, failures: Long, recordsPerSecond: Double)
+  case class IOCount(read: Long, written: Long, failures: Long, recordsPerSecond: Double, runTimeSecs: Double)
 
 }

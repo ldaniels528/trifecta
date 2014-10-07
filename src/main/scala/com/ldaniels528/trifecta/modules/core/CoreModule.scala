@@ -241,10 +241,11 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     // copy the messages from the input source to the output source
     Future {
       val startTime = System.currentTimeMillis()
-      var count: Long = 0
-      var lastCheck = startTime
-      var lastCount: Long = 0
+      var read: Long = 0
+      var written: Long = 0
       var rps: Double = 0
+      var lastCount: Long = 0
+      var lastCheck = startTime
       var found: Boolean = true
 
       blocking {
@@ -253,16 +254,19 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
             // read the record
             val data = reader.read
             found = data.isDefined
+            if (found) read += 1
 
             // write the record
-            data.foreach(writer.write(_, decoder))
-            if (found) count += 1
+            data.foreach { rec =>
+              writer.write(rec, decoder)
+              written += 1
+            }
 
             // compute the records/second statistics
             val elapsedTime = (System.currentTimeMillis() - lastCheck).toDouble / 1000d
             if (elapsedTime >= 1) {
-              rps = Math.round(10d * (count - lastCount).toDouble / elapsedTime) / 10d
-              lastCount = count
+              rps = Math.round(10d * (read - lastCount).toDouble / elapsedTime) / 10d
+              lastCount = read
               lastCheck = System.currentTimeMillis()
             }
           }
@@ -270,11 +274,12 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
           // close the reader and writer
           Try(reader.close())
           Try(writer.close())
+          ()
         }
 
         // return the I/O results
         val runTimeSecs = Math.round(10d * ((System.currentTimeMillis() - startTime).toDouble / 1000d)) / 10d
-        Seq(IOCount(runTimeSecs, count, failures = 0, rps))
+        Seq(IOCount(read, written, failures = 0, rps, runTimeSecs))
       }
     }
   }
