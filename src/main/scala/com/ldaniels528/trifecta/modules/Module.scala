@@ -180,8 +180,8 @@ object Module {
   /**
    * Represents the results of an I/O operation
    * @param records the number of records processed
-   * @param failed the number of failed records
+   * @param failures the number of failed records
    */
-  case class IOCount(records: Long, failed: Long)
+  case class IOCount(records: Long, failures: Long)
 
 }

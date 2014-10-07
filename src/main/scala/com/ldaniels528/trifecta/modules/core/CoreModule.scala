@@ -264,7 +264,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
         }
 
         // return the I/O results
-        IOCount(count, failures)
+        IOCount(count, failures = 0)
       }
     }
   }
