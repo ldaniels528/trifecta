@@ -36,7 +36,10 @@ class JSONFileOutputSource(out: OutputStream) extends OutputSource {
   /**
    * Closes the underlying stream
    */
-  override def close(): Unit = writer.close()
+  override def close(): Unit = {
+    writer.flush()
+    writer.close()
+  }
 
 }
 
