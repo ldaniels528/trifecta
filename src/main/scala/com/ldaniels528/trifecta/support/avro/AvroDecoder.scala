@@ -17,8 +17,8 @@ import scala.util.Try
  */
 case class AvroDecoder(label: String, schemaString: String) extends MessageDecoder[GenericRecord]
 with MessageEvaluation {
-  val schema: Schema = new Schema.Parser().parse(schemaString)
-  val converter: Injection[GenericRecord, Array[Byte]] = GenericAvroCodecs.toBinary(schema)
+  private val schema: Schema = new Schema.Parser().parse(schemaString)
+  private val converter: Injection[GenericRecord, Array[Byte]] = GenericAvroCodecs.toBinary(schema)
 
   /**
    * Compiles the given operation into a condition
