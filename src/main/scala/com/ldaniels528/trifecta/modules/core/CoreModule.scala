@@ -241,6 +241,9 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Future {
       blocking {
         var count: Long = 0
+        var lastCheck = System.currentTimeMillis()
+        var lastCount: Long = 0
+        var rps: Double = 0
 
         try {
           var found: Boolean = true
@@ -251,7 +254,14 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
             // write the record
             data.foreach(writer.write(_, decoder))
-            count += 1
+            if (found) count += 1
+
+            val elapsedTime = (System.currentTimeMillis() - lastCheck).toDouble / 1000d
+            if (elapsedTime >= 1) {
+              rps = Math.round(10.0d * (count - lastCount).toDouble / elapsedTime) / 10.0d
+              lastCount = count
+              lastCheck = System.currentTimeMillis()
+            }
           }
         } finally {
           // close the reader and writer
@@ -260,7 +270,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
         }
 
         // return the I/O results
-        Seq(IOCount(count, failures = 0))
+        Seq(IOCount(count, failures = 0, rps))
       }
     }
   }
