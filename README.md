@@ -239,6 +239,23 @@ Please note we could also use any of the Kafka message retrieve commands (`kget`
 to copy a Kafka message as an Elastic Search document. See the following example:
 
     kafka:shocktrade.quotes.avro/4:5429> kget -o es:/quotes/quote/AAPL
+    
+Sometimes we need to copy a set of messages, and copying them one-by-one can be tedious and time-consuming; however, there
+is a command for just this sort of use-case. The `copy` command can be used to copy messages from any Avro- or JSON-capable
+input source (e.g. Kafka or Elastic Search) to any Avro- or JSON-capable output source. Consider the following example.
+Here we're copying messages from a Kafka topic to an Elastic Search index using the symbol field of the message as the
+ID for the Elastic Search document.
+
+    es:localhost:9200/> copy -i topic:shocktrade.quotes.avro -o es:/quotes/quote/$symbol -a file:avro/quotes.avsc
+
+Once the operation has completed, the copy statistics are displayed:
+
+    es:localhost:9200/> Job #1845 completed (use 'jobs -v 1845' to view results)
+    + ------------------------------------- +
+    | records  failures  recordsPerSecond   |
+    + ------------------------------------- +
+    | 3367     0         142.9              |
+    + ------------------------------------- +
 
 <a name="kafka-module"></a>
 #### Kakfa Module
