@@ -38,7 +38,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    */
   override def getCommands(implicit rt: TxRuntimeContext) = Seq[Command](
     Command(this, "econnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Connects to an Elastic Search server"),
-    Command(this, "ecount", count, UnixLikeParams(Seq("path" -> true, "query" -> true)), help = "Counts documents based on a query"),
+    Command(this, "ecount", count, UnixLikeParams(Seq("path" -> true, "query" -> false)), help = "Counts documents based on a query"),
     Command(this, "ecursor", showCursor, UnixLikeParams(), help = "Displays the navigable cursor"),
     Command(this, "edelete", deleteDocumentOrIndex, UnixLikeParams(Seq("index" -> true)), help = "Deletes a document or index (DESTRUCTIVE)"),
     Command(this, "eget", getDocument, UnixLikeParams(Seq("path" -> false), Seq("-o" -> "outputTo")), help = "Retrieves a document"),
@@ -126,16 +126,30 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   /**
    * Counts documents based on a query
-   * @example ecount /quotes/quote { matchAll: { } }
+   * @example ecount /quotes/quote { query: { matchAll: { } } }
+   * @example ecount /quotes/quote symbol == "AAPL"
    */
   def count(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Either[Seq[CountResponse], String]] = {
     val result = params.args match {
+      case path :: Nil => extractPathComponents(path) match {
+        // ecount /quotes
+        case (Some(index), None, None) => client.count(index)
+        // ecount /quotes/quote
+        case (Some(index), Some(objType), None) => client.count(index, indexType = objType)
+        case _ => dieSyntax(params)
+      }
       case path :: field :: "==" :: value :: Nil => extractPathComponents(path) match {
-        case (Some(index), Some(objType), None) => client.count(index, objType, field -> value)
+        // ecount /quotes symbol == "AAPL"
+        case (Some(index), None, None) => client.count(index, indexType = "", term = Option(field -> value))
+        // ecount /quotes/quote symbol == "AAPL"
+        case (Some(index), Some(objType), None) => client.count(index, indexType = objType, term = Option(field -> value))
         case _ => dieSyntax(params)
       }
       case path :: query :: Nil => extractPathComponents(path) match {
-        case (Some(index), Some(objType), None) => client.count(index, objType, query)
+        // ecount /quotes { query: { matchAll: { } } }
+        case (Some(index), None, None) => client.count(index, indexType = "", query = query)
+        // ecount /quotes/quote { query: { matchAll: { } } }
+        case (Some(index), Some(objType), None) => client.count(index, indexType = objType, query = query)
         case _ => dieSyntax(params)
       }
       case _ => dieSyntax(params)
