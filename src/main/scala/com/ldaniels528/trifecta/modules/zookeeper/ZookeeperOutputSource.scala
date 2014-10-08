@@ -32,7 +32,7 @@ class ZookeeperOutputSource(zk: ZKProxy, rootPath: String) extends OutputSource 
           case Success(record) =>
             val path = s"$rootPath/${new String(data.key, encoding)}"
             Future {
-              zk.create(path, data.message)
+              zk.create(path, data.message); ()
             }
           case Failure(e) =>
             throw new IllegalStateException(e.getMessage, e)
@@ -42,7 +42,7 @@ class ZookeeperOutputSource(zk: ZKProxy, rootPath: String) extends OutputSource 
       case None =>
         val path = s"$rootPath/${new String(data.key, encoding)}"
         Future {
-          zk.create(path, data.message)
+          zk.create(path, data.message); ()
         }
     }
   }

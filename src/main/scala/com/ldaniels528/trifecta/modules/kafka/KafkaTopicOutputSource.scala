@@ -20,7 +20,7 @@ class KafkaTopicOutputSource(brokers: Seq[Broker], outputTopic: String) extends 
    * @return the response value
    */
   override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) = Future {
-    publisher.publish(outputTopic, data.key, data.message)
+    publisher.publish(outputTopic, data.key, data.message) ; ()
   }
 
   override def close() = publisher.close()

@@ -22,6 +22,7 @@ class AvroFileOutputSource(out: OutputStream) extends OutputSource {
     // persist the message
     dos.writeInt(data.message.length)
     dos.write(data.message)
+    ()
   }
 
   override def close() = {
