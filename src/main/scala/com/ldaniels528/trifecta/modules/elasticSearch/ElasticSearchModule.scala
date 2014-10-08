@@ -130,22 +130,25 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @example ecount /quotes/quote symbol == "AAPL"
    */
   def count(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Either[Seq[CountResponse], String]] = {
+    // parse the mandatory path
+    val esPath = params.args.headOption map extractPathComponents getOrElse dieSyntax(params)
+
     val result = params.args match {
-      case path :: Nil => extractPathComponents(path) match {
+      case path :: Nil => esPath match {
         // ecount /quotes
         case (Some(index), None, None) => client.count(index)
         // ecount /quotes/quote
         case (Some(index), Some(objType), None) => client.count(index, indexType = objType)
         case _ => dieSyntax(params)
       }
-      case path :: field :: "==" :: value :: Nil => extractPathComponents(path) match {
+      case path :: field :: "==" :: value :: Nil => esPath match {
         // ecount /quotes symbol == "AAPL"
         case (Some(index), None, None) => client.count(index, indexType = "", term = Option(field -> value))
         // ecount /quotes/quote symbol == "AAPL"
         case (Some(index), Some(objType), None) => client.count(index, indexType = objType, term = Option(field -> value))
         case _ => dieSyntax(params)
       }
-      case path :: query :: Nil => extractPathComponents(path) match {
+      case path :: query :: Nil => esPath match {
         // ecount /quotes { query: { matchAll: { } } }
         case (Some(index), None, None) => client.count(index, indexType = "", query = query)
         // ecount /quotes/quote { query: { matchAll: { } } }
@@ -250,19 +253,28 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @example eget /quotes/quote/AAPL
    */
   def getDocument(params: UnixLikeArgs)(implicit rt: TxRuntimeContext, ec: ExecutionContext): Future[JValue] = {
-    val ESPath(index, docType, id) = params.args match {
-      case path :: Nil => parsePath(params, path)
+    val (index, docType, id) = params.args match {
+      case Nil => cursor_? map (c => (c.index, c.indexType, c.id getOrElse dieNoId())) getOrElse dieCursor()
+      case path :: Nil => extractPathComponents(path) match {
+        case (Some(anIndex), Some(aDocType), Some(anId)) => (anIndex, aDocType, anId)
+        case (Some(aDocType), Some(anId), None) => cursor_? map (c => (c.index, aDocType, anId)) getOrElse dieCursor()
+        case (Some(anId), None, None) => cursor_? map (c => (c.index, c.indexType, anId)) getOrElse dieCursor()
+        case _ => dieSyntax(params)
+      }
       case _ => dieSyntax(params)
     }
 
     // retrieve the document
-    setCursor(index, docType, Option(id), client.get(index, docType, id) map convert[JValue] map (_ \ "_source") map { js =>
+    val task = client.get(index, docType, id) map convert[JValue] map (_ \ "_source") map { js =>
       // handle the optional output directive
       val encoding = config.encoding
       val outputSource = getOutputSource(params)
       outputSource.foreach(_.write(KeyAndMessage(id.getBytes(encoding), compact(render(js)).getBytes(encoding))))
       js
-    })
+    }
+
+    // update the cursor
+    setCursor(index, docType, Option(id), task)
   }
 
   /**
@@ -400,6 +412,8 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   }
 
   private def dieCursor[S](): S = die[S]("No Elastic Search navigable cursor found")
+
+  private def dieNoId[S](): S = die[S]("No Elastic Search document ID found")
 
   /**
    * Attempts to extract up to 3 components from the given path (index, type and ID)
