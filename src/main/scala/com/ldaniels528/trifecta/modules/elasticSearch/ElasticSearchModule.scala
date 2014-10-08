@@ -401,8 +401,6 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   private def dieCursor[S](): S = die[S]("No Elastic Search navigable cursor found")
 
-  private def dieNoId[S](): S = die[S]("No Elastic Search document ID found")
-
   /**
    * Attempts to extract up to 3 components from the given path (index, type and ID)
    * @param path the given path (e.g. "/quotes/quote/AAPL")
