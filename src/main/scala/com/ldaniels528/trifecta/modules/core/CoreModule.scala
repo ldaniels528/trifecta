@@ -226,7 +226,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @example copy -i topic:shocktrade.keystats.avro -o file:json:/tmp/keystats.json -a file:avro/keyStatistics.avsc
    * @example copy -i topic:shocktrade.keystats.avro -o es:/quotes/keystats/$symbol -a file:avro/keyStatistics.avsc
    * @example copy -i topic:shocktrade.quotes.avro -o file:json:/tmp/quotes.json -a file:avro/quotes.avsc
-   * @example copy -i topic:shocktrade.quotes.avro -o es:/quotes/quote/$symbol -a file:avro/quotes.avsc
+   * @example copy -i topic:quotes.avro -o es:/quotes/$exchange/$symbol -a file:avro/quotes.avsc
    */
   def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Seq[IOCount]] = {
     // get the input source
