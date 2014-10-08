@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.support.elasticsearch
 
+import java.net.URLEncoder.encode
 import java.util.concurrent.Executors
 
 import com.ning.http.client.Response
@@ -30,22 +31,15 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @param index the given index
    * @param indexType the given index type
    * @return {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
-   * @example GET /quotes/quote/_count?pretty
-   */
-  def count(index: String, indexType: String, term: (String, String))(implicit ec: ExecutionContext): Future[Response] = {
-    GET(s"$index/$indexType/_count?q=${term._1}:${term._2}")
-  }
-
-  /**
-   * Counts matching documents within a given index of a give type based on the given query
-   * @param index the given index
-   * @param indexType the given index type
-   * @param query the given JSON query
-   * @return {"count":1,"_shards":{"total":5,"successful":5,"failed":0}}
+   * @example GET /quotes/_count?pretty
+   * @example GET /quotes/_count?q=symbol:AAPL&pretty
    * @example GET /quotes/quote/_count?pretty <- { "query" : { "term" : { "symbol" : "AAPL" } } }
    */
-  def count(index: String, indexType: String, query: String)(implicit ec: ExecutionContext): Future[Response] = {
-    GET(s"$index/$indexType/_count", query)
+  def count(index: String, indexType: String = "", query: String = "", term: Option[(String, String)] = None)(implicit ec: ExecutionContext): Future[Response] = {
+    val myType = if (indexType.nonEmpty) indexType + "/" else ""
+    val myTerm = term map { case (key, value) => s"?q=$key:${encode(value, "UTF8")}"} getOrElse ""
+    val url = s"$index/${myType}_count$myTerm"
+    GET(url, query)
   }
 
   /**
@@ -145,7 +139,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @param indexType the given index type
    * @param id the given document ID
    * @return {"_index":"foo2","_type":"foo2","_id":"foo2","_version":1,"found":true,"_source":{"foo2":"bar"}}
-   * @example GET /twitter/tweet/1
+   * @example GET /quotes/quote/AAPL
    */
   def get(index: String, indexType: String, id: String)(implicit ec: ExecutionContext): Future[Response] = {
     GET(s"$index/$indexType/$id")
