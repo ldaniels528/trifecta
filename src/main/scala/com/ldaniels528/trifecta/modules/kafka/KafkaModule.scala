@@ -87,8 +87,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-w" -> "wait-time")), help = "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-t" -> "type", "-o" -> "outputSource")), help = "Returns the last message for a given topic"),
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "detailed list")), help = "Lists all existing topics"),
-    Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-t" -> "type", "-o" -> "outputSource")), help = "Attempts to retrieve the next message"),
-    Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-t" -> "type", "-o" -> "outputSource")), help = "Attempts to retrieve the message at the previous offset"),
+    Command(this, "knext", getNextMessage, UnixLikeParams(Seq("delta" -> false), flags = Seq("-a" -> "avroSchema", "-t" -> "type", "-o" -> "outputSource")), help = "Attempts to retrieve the next message"),
+    Command(this, "kprev", getPreviousMessage, UnixLikeParams(Seq("delta" -> false), flags = Seq("-a" -> "avroSchema", "-t" -> "type", "-o" -> "outputSource")), help = "Attempts to retrieve the message at the previous offset"),
     Command(this, "kput", publishMessage, UnixLikeParams(Seq("topic" -> false, "key" -> true, "message" -> true)), help = "Publishes a message to a topic"),
     Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"),
@@ -482,10 +482,13 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Optionally returns the next message
    * @example knext
+   * @example knext +10
    */
   def getNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
-      getMessage(topic, partition, nextOffset, params)
+      val delta = params.args.headOption map (parseDelta("position delta", _))
+      val theOffset = delta map (nextOffset + _) getOrElse nextOffset
+      getMessage(topic, partition, theOffset, params)
     }
   }
 
@@ -495,7 +498,9 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    */
   def getPreviousMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
-      getMessage(topic, partition, Math.max(0, offset - 1), params)
+      val delta = params.args.headOption map (parseDelta("position delta", _))
+      val theOffset = Math.max(0, delta map (offset - _) getOrElse nextOffset - 1)
+      getMessage(topic, partition, theOffset, params)
     }
   }
 

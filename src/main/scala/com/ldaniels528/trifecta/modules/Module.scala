@@ -115,6 +115,13 @@ trait Module extends AvroReading {
     params("-o") flatMap rt.getOutputHandler
   }
 
+  protected def parseDelta(label:String, value: String): Int = {
+    value.head match {
+      case '+' => parseInt(label, value.tail)
+      case _ => parseInt(label, value)
+    }
+  }
+
   protected def parseDouble(label: String, value: String): Double = {
     Try(value.toDouble) match {
       case Success(v) => v

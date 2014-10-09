@@ -117,7 +117,7 @@ object CommandParser {
     val args = if (items.nonEmpty) items.tail else Nil
     val result = args.foldLeft[Accumulator](Accumulator()) { case (acc: Accumulator, item) =>
       // is the item flag?
-      if (item.startsWith("-") && item.length > 1) {
+      if (item.startsWith("-") && item.length > 1 && !item.matches("-?\\d+")) {
         if (acc.flag.isDefined) {
           acc.flag foreach (flag => acc.flags = (flag -> None) :: acc.flags)
         }
