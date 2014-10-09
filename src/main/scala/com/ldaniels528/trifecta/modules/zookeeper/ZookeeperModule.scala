@@ -162,6 +162,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
   /**
    * "zget" - Dumps the contents of a specific Zookeeper key to the console
    * @example zget /storm/workerbeats/my-test-topology-17-1407973634
+   * @example zget /storm/workerbeats/my-test-topology-17-1407973634 -t json
    */
   def getData(params: UnixLikeArgs): Option[Any] = {
     // get the key
@@ -169,7 +170,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
       // convert the key to a fully-qualified path
       val path = zkKeyToPath(key)
 
-      // retrieve (or guess) the value's type
+      // retrieve (or guess) the value's format
       val valueType = params("-t") getOrElse "bytes"
 
       // perform the action
