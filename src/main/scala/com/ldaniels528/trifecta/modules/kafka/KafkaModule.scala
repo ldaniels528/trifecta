@@ -495,6 +495,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Optionally returns the previous message
    * @example kprev
+   * @example kprev +10
    */
   def getPreviousMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
