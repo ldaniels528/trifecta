@@ -500,7 +500,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   def getPreviousMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
       val delta = params.args.headOption map (parseDelta("position delta", _))
-      val theOffset = Math.max(0, delta map (offset - _) getOrElse nextOffset - 1)
+      val theOffset = Math.max(0, delta map (offset - _) getOrElse (offset - 1))
       getMessage(topic, partition, theOffset, params)
     }
   }
