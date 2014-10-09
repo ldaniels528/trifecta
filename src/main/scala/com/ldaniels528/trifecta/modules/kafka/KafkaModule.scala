@@ -20,6 +20,7 @@ import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
+import net.liftweb.json.JValue
 import org.apache.avro.generic.GenericRecord
 
 import scala.collection.mutable
@@ -34,6 +35,7 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(config: TxConfig) extends Module with AvroReading {
+  private implicit val formats = net.liftweb.json.DefaultFormats
   private var zkProxy_? : Option[ZKProxy] = None
   private val out: PrintStream = config.out
 
@@ -77,16 +79,16 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kfetchsize", fetchSizeGetOrSet, UnixLikeParams(Seq("fetchSize" -> false)), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
     Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
-    Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Returns the first message for a given topic"),
+    Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "format", "-o" -> "outputSource")), help = "Returns the first message for a given topic"),
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "YYYY-MM-DDTHH:MM:SS", "-o" -> "outputSource")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-w" -> "wait-time")), help = "Retrieves a list of topics with new messages (since last query)"),
-    Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Returns the last message for a given topic"),
+    Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "format", "-o" -> "outputSource")), help = "Returns the last message for a given topic"),
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "detailed list")), help = "Lists all existing topics"),
-    Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Attempts to retrieve the next message"),
-    Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-o" -> "outputSource")), help = "Attempts to retrieve the message at the previous offset"),
+    Command(this, "knext", getNextMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "format", "-o" -> "outputSource")), help = "Attempts to retrieve the next message"),
+    Command(this, "kprev", getPreviousMessage, UnixLikeParams(flags = Seq("-a" -> "avroSchema", "-f" -> "format", "-o" -> "outputSource")), help = "Attempts to retrieve the message at the previous offset"),
     Command(this, "kput", publishMessage, UnixLikeParams(Seq("topic" -> false, "key" -> true, "message" -> true)), help = "Publishes a message to a topic"),
     Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
     Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"),
@@ -198,7 +200,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kfindone volume > 1000000 -a file:avro/quotes.avsc
    * @example kfindone volume > 1000000 -t shocktrade.quotes.avro -a file:avro/quotes.avsc
    */
-  def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Option[Either[Option[MessageData], GenericRecord]]] = {
+  def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 
     // was a topic and/or Avro decoder specified?
@@ -324,7 +326,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kfirst
    * @example kfirst com.shocktrade.quotes.csv 0
    */
-  def getFirstMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
+  def getFirstMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     // get the arguments
     val (topic, partition) = extractTopicAndPartition(params.args)
 
@@ -337,7 +339,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example klast
    * @example klast com.shocktrade.alerts 0
    */
-  def getLastMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
+  def getLastMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     // get the arguments
     val (topic, partition) = extractTopicAndPartition(params.args)
 
@@ -351,7 +353,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kget com.shocktrade.alerts 0 3456
    * @example kget -o es:/quotes/quote/AAPL
    */
-  def getMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], GenericRecord] = {
+  def getMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Either[Option[GenericRecord], Option[JValue]]] = {
     // get the arguments
     val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
@@ -367,7 +369,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param params the given Unix-style argument
    * @return either a binary or decoded message
    */
-  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], GenericRecord] = {
+  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Either[Option[GenericRecord], Option[JValue]]] = {
     // requesting a message from an instance in time?
     val instant: Option[Long] = params("-d") map {
       case s if s.matches("\\d+") => s.toLong
@@ -394,11 +396,20 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       outputSource.foreach(_.write(KeyAndMessage(md.key, md.message), decoder))
     }
 
+    // was a format parameter specified?
+    val jsonMessage = for {
+      format <- params("-f")
+      message <- decodedMessage if format == "json"
+      jsonMessage = net.liftweb.json.parse(message.toString)
+    } yield jsonMessage
+
     // capture the message's offset and decoder
     setCursor(topic, partition, messageData, decoder)
 
     // return either a binary message or a decoded message
-    decodedMessage.map(Right(_)) getOrElse Left(messageData)
+    if (jsonMessage.isDefined) Right(Right(jsonMessage))
+    else if (decodedMessage.isDefined) Right(Left(decodedMessage))
+    else Left(messageData)
   }
 
   /**
@@ -472,7 +483,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * Optionally returns the next message
    * @example knext
    */
-  def getNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
+  def getNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, nextOffset, params)
     }
@@ -482,7 +493,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * Optionally returns the previous message
    * @example kprev
    */
-  def getPreviousMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], GenericRecord]] = {
+  def getPreviousMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     cursor map { case KafkaCursor(topic, partition, offset, nextOffset, decoder) =>
       getMessage(topic, partition, Math.max(0, offset - 1), params)
     }
