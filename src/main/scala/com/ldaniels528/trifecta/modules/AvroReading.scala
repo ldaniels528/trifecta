@@ -16,7 +16,7 @@ trait AvroReading {
 
   def lookupAvroDecoder(schemaVar: String)(implicit config: TxConfig): AvroDecoder = {
     // is it an Avro file input source?
-    schemaVar.extractProperty("file:") map (loadAvroDecoder(anonymousId, _)) getOrElse {
+    schemaVar.extractProperty("file:") map (path => loadAvroDecoder(new File(path).getName, path)) getOrElse {
       // must be a variable reference - get the decoder
       implicit val scope = config.scope
       scope.getVariable(schemaVar).map(_.value).flatMap(_.eval).map(_.asInstanceOf[AvroDecoder])
@@ -35,7 +35,5 @@ trait AvroReading {
     val schemaString = Source.fromFile(schemaFile).getLines() mkString "\n"
     AvroDecoder(label, schemaString)
   }
-
-  protected def anonymousId: String = s"A${System.currentTimeMillis()}"
 
 }
