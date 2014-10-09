@@ -398,7 +398,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
     // was a format parameter specified?
     val jsonMessage = for {
-      format <- params("-f")
+      format <- params("-t")
       message <- decodedMessage if format == "json"
       jsonMessage = net.liftweb.json.parse(message.toString)
     } yield jsonMessage
