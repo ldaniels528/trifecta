@@ -15,9 +15,9 @@ import scala.concurrent.Future
 case class AsyncIO(startTime: Long, task: Future[_], read: AtomicLong, written: AtomicLong, rps: AtomicDouble) {
   val endTime = new AtomicLong(0L)
 
-  def getCount: IOCount = {
+  def getCount: Seq[IOCount] = {
     val runTimeSecs = Math.round(10d * ((System.currentTimeMillis() - startTime).toDouble / 1000d)) / 10d
-    IOCount(read.get, written.get, failures = 0, rps.get, runTimeSecs)
+    Seq(IOCount(read.get, written.get, failures = 0, rps.get, runTimeSecs))
   }
 
 }

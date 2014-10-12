@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta
 
 import java.util.Random
-import java.util.concurrent.atomic.{AtomicLong, AtomicInteger}
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
 import com.ldaniels528.trifecta.JobManager._
 
@@ -10,11 +10,11 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
- * Job Manager
+ * Background Job/Task Manager
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class JobManager() {
-  private val jobIdGen = new AtomicInteger(new Random().nextInt(1000) + 1000)
+  private val jobIdGen = new AtomicInteger(new Random().nextInt(1000) + 100)
   private val jobs = mutable.Map[Int, JobItem]()
 
   /**
@@ -24,28 +24,23 @@ class JobManager() {
 
   /**
    * Creates a new asynchronous job
-   * @param startTime the start time of the job
-   * @param f the asynchronous task
+   * @param asyncIO the asynchronous I/O job
    * @param command the command that resulted in an asynchronous task
-   * @return  a new job
+   * @return a new job
    */
-  def createJob(startTime: Long, f: Future[_], command: String)(implicit ec: ExecutionContext): JobItem = {
-    // create the job
-    val job = JobItem(
-      jobId = jobIdGen.incrementAndGet(),
-      startTime = startTime,
-      task = f,
-      command = command)
+  def createJob(asyncIO: AsyncIO, command: String)(implicit ec: ExecutionContext): JobItem = {
+    registerJob(AsyncIOJob(jobId = nextJobID, asyncIO, command))
+  }
 
-    // trigger the update for the end time
-    f.onComplete {
-      case Success(v) => job.endTime.set(System.currentTimeMillis())
-      case Failure(_) => job.endTime.set(System.currentTimeMillis())
-    }
-
-    // add the job to the mapping
-    jobs += (job.jobId -> job)
-    job
+  /**
+   * Creates a new asynchronous job
+   * @param startTime the start time of the job
+   * @param task the asynchronous task
+   * @param command the command that resulted in an asynchronous task
+   * @return a new job
+   */
+  def createJob(startTime: Long, task: Future[_], command: String)(implicit ec: ExecutionContext): JobItem = {
+    registerJob(AsyncJob(jobId = nextJobID, startTime, task, command))
   }
 
   /**
@@ -73,7 +68,31 @@ class JobManager() {
    * @param jobId the given job ID
    */
   def killJobById(jobId: Int): Unit = {
-    jobs -= jobId; ()
+    jobs -= jobId
+    ()
+  }
+
+  /**
+   * Returns the next unique job ID
+   * @return the next job ID
+   */
+  private def nextJobID : Int = jobIdGen.incrementAndGet()
+
+  /**
+   * Registers a job for processing
+   * @param job the given [[JobItem]]
+   * @return the registered job
+   */
+  private def registerJob(job: JobItem)(implicit ec: ExecutionContext): JobItem = {
+    // trigger the update for the end time
+    job.task.onComplete {
+      case Success(v) => job.endTime.set(System.currentTimeMillis())
+      case Failure(_) => job.endTime.set(System.currentTimeMillis())
+    }
+
+    // add the job to the mapping
+    jobs += (job.jobId -> job)
+    job
   }
 
 }
@@ -84,8 +103,43 @@ class JobManager() {
  */
 object JobManager {
 
-  case class JobItem(jobId: Int, startTime: Long, task: Future[_], command: String) {
+  /**
+   * Represents a job
+   */
+  trait JobItem {
+
+    def jobId: Int
+
+    def command: String
+
+    def task: Future[_]
+
+    def startTime: Long
+
+    def endTime: AtomicLong
+
+  }
+
+  /**
+   * Represents an asynchronous job
+   */
+  case class AsyncJob(jobId: Int, startTime: Long, task: Future[_], command: String) extends JobItem {
+
     val endTime = new AtomicLong(0L)
+
+  }
+
+  /**
+   * Represents an asynchronous I/O job
+   */
+  case class AsyncIOJob(jobId: Int, asyncIO: AsyncIO, command: String) extends JobItem {
+
+    def task: Future[_] = asyncIO.task
+
+    def startTime: Long = asyncIO.startTime
+
+    def endTime: AtomicLong = asyncIO.endTime
+
   }
 
 }

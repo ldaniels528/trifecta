@@ -2,18 +2,19 @@ package com.ldaniels528.trifecta.modules.core
 
 import java.io.{File, PrintStream}
 import java.text.SimpleDateFormat
+import java.util.concurrent.atomic.AtomicLong
 import java.util.{Date, TimeZone}
 
-import com.ldaniels528.trifecta.JobManager.JobItem
+import com.google.common.util.concurrent.AtomicDouble
+import com.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
+import com.ldaniels528.trifecta._
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.modules.Module.IOCount
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.trifecta.modules.{AvroReading, Module}
 import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}
-import com.ldaniels528.trifecta.{SessionManagement, TrifectaShell, TxConfig, TxRuntimeContext}
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 
@@ -228,7 +229,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @example copy -i topic:shocktrade.quotes.avro -o file:json:/tmp/quotes.json -a file:avro/quotes.avsc
    * @example copy -i topic:quotes.avro -o es:/quotes/$exchange/$symbol -a file:avro/quotes.avsc
    */
-  def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Seq[IOCount]] = {
+  def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): AsyncIO = {
     // get the input source
     val reader = getInputSource(params) getOrElse die("No input source defined")
 
@@ -239,11 +240,11 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     val decoder = getAvroDecoder(params)(rt.config)
 
     // copy the messages from the input source to the output source
-    Future {
-      val startTime = System.currentTimeMillis()
-      var read: Long = 0
-      var written: Long = 0
-      var rps: Double = 0
+    val startTime = System.currentTimeMillis()
+    val read = new AtomicLong(0)
+    val written = new AtomicLong(0)
+    val rps = new AtomicDouble(0)
+    val task = Future {
       var lastCount: Long = 0
       var lastCheck = startTime
       var found: Boolean = true
@@ -254,19 +255,19 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
             // read the record
             val data = reader.read
             found = data.isDefined
-            if (found) read += 1
+            if (found) read.incrementAndGet()
 
             // write the record
             data.foreach { rec =>
               writer.write(rec, decoder)
-              written += 1
+              written.incrementAndGet()
             }
 
             // compute the records/second statistics
             val elapsedTime = (System.currentTimeMillis() - lastCheck).toDouble / 1000d
             if (elapsedTime >= 1) {
-              rps = Math.round(10d * (read - lastCount).toDouble / elapsedTime) / 10d
-              lastCount = read
+              rps.set(Math.round(10d * (read.get - lastCount).toDouble / elapsedTime) / 10d)
+              lastCount = read.get
               lastCheck = System.currentTimeMillis()
             }
           }
@@ -276,12 +277,10 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
           Try(writer.close())
           ()
         }
-
-        // return the I/O results
-        val runTimeSecs = Math.round(10d * ((System.currentTimeMillis() - startTime).toDouble / 1000d)) / 10d
-        Seq(IOCount(read, written, failures = 0, rps, runTimeSecs))
       }
     }
+
+    AsyncIO(startTime, task, read, written, rps)
   }
 
   /**
@@ -432,8 +431,16 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
       // retrieve the job's value?
       else if (params.contains("-v")) {
         val jobId = params("-v") map parseJobId getOrElse die(s"${params.commandName.get} -v jobId")
-        val task = jobMgr.getJobTaskById(jobId) getOrElse die(s"Job #$jobId not found")
-        if (task.isCompleted) task.value else jobMgr.getJobById(jobId) map toJobDetail
+        jobMgr.getJobById(jobId) match {
+          case Some(aio@AsyncIOJob(_, asyncIO, _)) =>
+            val task = asyncIO.task
+            if (task.isCompleted) asyncIO.getCount else toJobDetail(aio)
+          case Some(job) =>
+            val task = job.task
+            if (task.isCompleted) task.value else toJobDetail(job)
+          case None =>
+            die(s"Job #$jobId not found")
+        }
       }
 
       // clear all jobs?
@@ -702,27 +709,40 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   }
 
   private def toJobDetail(job: JobItem): JobDetail = {
-    val task = job.task
-
-    def jobStatus: String = if (task.isCompleted) "Completed" else "Running"
-    def jobElapsedTime: Option[Long] = {
-      if (task.isCompleted) Option(job.endTime) map (_.get - job.startTime)
-      else Option(job.startTime) map (System.currentTimeMillis() - _)
+    val myTask = job.task
+    val jobStatus: String = if (myTask.isCompleted) "Completed" else "Running"
+    val jobElapsedTime: Option[Double] = {
+      val millis: Option[Long] =
+        if (myTask.isCompleted) Option(job.endTime) map (_.get - job.startTime)
+        else Option(job.startTime) map (System.currentTimeMillis() - _)
+      millis map (t => Math.round(10d * (t.toDouble / 1000d)) / 10d)
     }
 
-    JobDetail(
-      jobId = job.jobId,
-      status = jobStatus,
-      started = new Date(job.startTime),
-      runTimeMSecs = jobElapsedTime,
-      command = job.command)
+    job match {
+      case AsyncIOJob(jobId, asyncIO, command) =>
+        JobDetail(
+          jobId = job.jobId,
+          status = jobStatus,
+          runTimeSecs = jobElapsedTime,
+          read = Option(asyncIO.read),
+          written = Option(asyncIO.written),
+          command = job.command)
+      case _ =>
+        JobDetail(
+          jobId = job.jobId,
+          status = jobStatus,
+          runTimeSecs = jobElapsedTime,
+          read = None,
+          written = None,
+          command = job.command)
+    }
   }
 
   case class CommandItem(command: String, module: String, description: String)
 
   case class HistoryItem(uid: Int, command: String)
 
-  case class JobDetail(jobId: Int, status: String, started: Date, runTimeMSecs: Option[Long], command: String)
+  case class JobDetail(jobId: Int, read: Option[AtomicLong], written: Option[AtomicLong], runTimeSecs: Option[Double], status: String, command: String)
 
   case class ModuleItem(name: String, className: String, loaded: Boolean, active: Boolean)
 

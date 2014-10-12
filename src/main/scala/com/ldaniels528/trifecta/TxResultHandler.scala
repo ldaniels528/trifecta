@@ -37,6 +37,9 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
       case message: Array[Byte] => dumpMessage(message)(config)
       case MessageData(offset, _, _, _, message) => dumpMessage(offset, message)(config)
 
+      // handle the asynchronous I/O cases
+      case aio: AsyncIO => handleAsyncResult(aio, input)
+
       // handle Either cases
       case e: Either[_, _] => e match {
         case Left(v) => handleResult(v, input)
@@ -81,6 +84,11 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
     }
   }
 
+  /**
+   * Handles an asynchronous result
+   * @param task the given asynchronous task
+   * @param input the executing command
+   */
   private def handleAsyncResult(task: Future[_], input: String)(implicit ec: ExecutionContext) {
     // capture the start time
     val startTime = System.currentTimeMillis()
@@ -96,6 +104,31 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
           case Success(value) =>
             out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
             handleResult(value, input)
+          case Failure(e2) =>
+            out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
+        }
+    }
+  }
+
+  /**
+   * Handles an asynchronous I/O result
+   * @param asyncIO the given asynchronous I/O task
+   * @param input the executing command
+   */
+  private def handleAsyncResult(asyncIO: AsyncIO, input: String)(implicit ec: ExecutionContext) {
+    import asyncIO._
+
+    // initially, wait for 5 seconds for the task to complete.
+    // if it fails to complete in that time, queue it as an asynchronous job
+    Try(Await.result(task, 5.seconds)) match {
+      case Success(value) => handleResult(value, input)
+      case Failure(e1) =>
+        out.println("Task is now running in the background (use 'jobs' to view)")
+        val job = config.jobManager.createJob(asyncIO, input)
+        task.onComplete {
+          case Success(value) =>
+            out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
+            handleResult(asyncIO.getCount, input)
           case Failure(e2) =>
             out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
         }
