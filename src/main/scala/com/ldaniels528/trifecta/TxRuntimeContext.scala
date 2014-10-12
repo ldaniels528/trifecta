@@ -41,6 +41,11 @@ case class TxRuntimeContext(config: TxConfig) {
     moduleManager.setActiveModule(module)
   }
 
+  /**
+   * Returns the input handler for the given output URL
+   * @param url the given input URL (e.g. "es:/quotes/quote/GDF")
+   * @return an option of an [[InputSource]]
+   */
   def getInputHandler(url: String): Option[InputSource] = {
     // get just the prefix
     val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed input source URL: $url")
@@ -51,7 +56,8 @@ case class TxRuntimeContext(config: TxConfig) {
 
   /**
    * Returns the output handler for the given output URL
-   * @param url the given output URL (e.g. "es:/quotes/quote/GDF")
+   * @param url the given output URL (e.g. "es:/quotes/$exchange/$symbol")
+   * @return an option of an [[OutputSource]]
    */
   def getOutputHandler(url: String): Option[OutputSource] = {
     // get just the prefix
