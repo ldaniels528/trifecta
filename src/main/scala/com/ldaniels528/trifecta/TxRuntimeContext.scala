@@ -36,10 +36,8 @@ case class TxRuntimeContext(config: TxConfig) {
     new StormModule(config),
     new ZookeeperModule(config))
 
-  // set the zookeeper module as the "active" module
-  moduleManager.findModuleByName("zookeeper") foreach { module =>
-    moduleManager.setActiveModule(module)
-  }
+  // set the "active" module
+  moduleManager.findModuleByName("core") foreach moduleManager.setActiveModule
 
   /**
    * Returns the input handler for the given output URL
