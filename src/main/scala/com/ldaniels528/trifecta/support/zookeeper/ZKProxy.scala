@@ -11,6 +11,10 @@ import scala.language.implicitConversions
  */
 trait ZKProxy {
 
+  def host: String
+
+  def port: Int
+
   def close(): Unit
 
   def create(tuples: (String, Array[Byte])*): Iterable[String]

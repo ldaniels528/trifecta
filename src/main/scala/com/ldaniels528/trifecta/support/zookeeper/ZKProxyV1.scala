@@ -20,7 +20,7 @@ import scala.util.Try
  * ZooKeeper Proxy (Version 1.0)
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZKProxyV1(host: String, port: Int, callback: Option[ZkProxyCallBack] = None) extends ZKProxy {
+class ZKProxyV1(val host: String, val port: Int, callback: Option[ZkProxyCallBack] = None) extends ZKProxy {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   var acl: util.ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
   var mode: CreateMode = PERSISTENT

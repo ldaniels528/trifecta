@@ -18,7 +18,7 @@ import scala.util.Try
  * ZooKeeper Proxy (Version 2.0)
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZKProxyV2(host: String, port: Int) extends ZKProxy {
+case class ZKProxyV2(host: String, port: Int) extends ZKProxy {
   private val logger = LoggerFactory.getLogger(getClass)
   private val NO_DATA = new Array[Byte](0)
   private var zk = new ZkClient(s"$host:$port")
