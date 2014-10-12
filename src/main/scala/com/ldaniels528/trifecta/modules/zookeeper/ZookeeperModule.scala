@@ -30,7 +30,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   override def getCommands(implicit rt: TxRuntimeContext) = Seq(
     Command(this, "zcd", chdir, UnixLikeParams(Seq("key" -> true)), help = "Changes the current path/directory in ZooKeeper"),
-    Command(this, "zconnect", connect, UnixLikeParams(Nil, Nil), help = "Establishes a connection to Zookeeper"),
+    Command(this, "zconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to Zookeeper"),
     Command(this, "zexists", pathExists, UnixLikeParams(Seq("key" -> true)), "Verifies the existence of a ZooKeeper key"),
     Command(this, "zget", getData, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the contents of a specific Zookeeper key"),
     Command(this, "zls", listKeys, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the child nodes for a key from ZooKeeper"),
@@ -65,7 +65,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   override def moduleLabel = "zk"
 
-  override def prompt: String = s"${config.zooKeeperConnect}$zkCwd"
+  override def prompt: String = zkProxy_? map(zk => s"${zk.host}:${zk.port}$zkCwd") getOrElse zkCwd
 
   override def shutdown() = zkProxy_?.foreach(_.close())
 
@@ -133,8 +133,23 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   /**
    * Establishes a connection to Zookeeper
+   * @example zconnect
+   * @example zconnect localhost
+   * @example zconnect localhost 2181
    */
-  def connect(params: UnixLikeArgs): Unit = zk.reconnect()
+  def connect(params: UnixLikeArgs): Unit = {
+    // determine the requested end-point
+    val endPoint = params.args match {
+      case Nil => EndPoint(config.zooKeeperConnect)
+      case path :: Nil => EndPoint(path, 2181)
+      case path :: port :: Nil => EndPoint(path, parseInt("port", port))
+      case _ => dieSyntax(params)
+    }
+
+    // connect to the remote peer
+    zkProxy_?.foreach(_.close())
+    zkProxy_? = Option(ZKProxy(endPoint))
+  }
 
   /**
    * "zrm" - Removes a key-value from ZooKeeper

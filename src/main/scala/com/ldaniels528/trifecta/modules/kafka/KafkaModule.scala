@@ -72,7 +72,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
     Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
     Command(this, "kconsumers", getConsumers, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix", "-c" -> "consumerPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
-    Command(this, "kconnect", zkConnect, UnixLikeParams(Nil, Nil), help = "Establishes a connection to Zookeeper"),
+    Command(this, "kconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to Zookeeper"),
     Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true)), help = "Counts the messages matching a given condition"),
     Command(this, "kcursor", getCursor, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix")), help = "Displays the message cursor(s)"),
     Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
@@ -147,6 +147,26 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
     // commit the offset
     facade.commitOffset(topic, partition, groupId, offset, params("-m"))
+  }
+
+  /**
+   * Establishes a connection to Zookeeper
+   * @example kconnect
+   * @example kconnect localhost
+   * @example kconnect localhost 2181
+   */
+  def connect(params: UnixLikeArgs) {
+    // determine the requested end-point
+    val endPoint = params.args match {
+      case Nil => EndPoint(config.zooKeeperConnect)
+      case path :: Nil => EndPoint(path, 2181)
+      case path :: port :: Nil => EndPoint(path, parseInt("port", port))
+      case _ => dieSyntax(params)
+    }
+
+    // connect to the remote peer
+    zkProxy_?.foreach(_.close())
+    zkProxy_? = Option(ZKProxy(endPoint))
   }
 
   /**
@@ -660,17 +680,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
     // get the partition range
     facade.resetConsumerGroup(topic, groupId)
-  }
-
-  /**
-   * Establishes a connection to Zookeeper
-   * @example kconnect
-   * @example kconnect localhost
-   * @example kconnect localhost 2181
-   */
-  def zkConnect(params: UnixLikeArgs) {
-    zkProxy_?.foreach(_.close())
-    zkProxy_? = Option(ZKProxy(EndPoint(config.zooKeeperConnect)))
   }
 
   private def dieNoCursor[S](): S = die("No topic/partition specified and no cursor exists")
