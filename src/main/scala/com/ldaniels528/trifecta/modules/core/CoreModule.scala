@@ -14,7 +14,7 @@ import com.ldaniels528.trifecta.modules.{AvroReading, Module}
 import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
-import com.ldaniels528.trifecta.vscript.{OpCode, Scope, Variable}
+import com.ldaniels528.trifecta.vscript.Variable
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 
@@ -43,7 +43,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "!", executeHistory, UnixLikeParams(Seq("!" -> false, "?" -> false, "index|count" -> false), Nil), help = "Executes a previously issued command"),
     Command(this, "?", help, UnixLikeParams(Seq("search-term" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, SimpleParams(Nil, Seq("state")), help = "Automatically switches to the module of the most recently executed command"),
-    Command(this, "avload", avroLoadSchema, UnixLikeParams(Seq("variable" -> true, "schemaPath" -> true)), help = "Loads an Avro schema into memory", promptAware = false),
     Command(this, "cat", cat, SimpleParams(Seq("file"), Nil), help = "Dumps the contents of the given file", promptAware = true),
     Command(this, "cd", changeDir, SimpleParams(Seq("path"), Nil), help = "Changes the local file system path/directory", promptAware = true),
     Command(this, "charset", charSet, SimpleParams(Nil, Seq("encoding")), help = "Retrieves or sets the character encoding"),
@@ -143,28 +142,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   def autoSwitch(params: UnixLikeArgs): String = {
     params.args.headOption map (_.toBoolean) foreach (config.autoSwitching = _)
     s"auto switching is ${if (config.autoSwitching) "On" else "Off"}"
-  }
-
-  /**
-   * Loads an Avro schema into memory
-   * @example avload qschema "avro/quotes.avsc"
-   */
-  def avroLoadSchema(params: UnixLikeArgs) {
-    // get the variable name, schema and decoder
-    val (name, decoder) = params.args match {
-      case aName :: aSchemaPath :: Nil => (aName, loadAvroDecoder(aName, aSchemaPath))
-      case _ => dieSyntax(params)
-    }
-
-    // create the variable and attach it to the scope
-    config.scope += Variable(name, new OpCode {
-      val value = Some(decoder)
-
-      override def eval(implicit scope: Scope): Option[Any] = value
-
-      override def toString = s"[$name]"
-    })
-    ()
   }
 
   /**
