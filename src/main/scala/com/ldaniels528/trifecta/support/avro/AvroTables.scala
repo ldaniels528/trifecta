@@ -13,7 +13,7 @@ trait AvroTables {
   self: Tabular =>
 
   def transformAvro(records: Seq[GenericRecord], reqFields: Seq[String]): Seq[String] = {
-    if (records.isEmpty) Seq.empty
+    if (records.isEmpty) Nil
     else {
       val fields = if (reqFields.nonEmpty) reqFields else records.head.getSchema.getFields.map(_.name.trim).toSeq
       val rows = records map { r =>
