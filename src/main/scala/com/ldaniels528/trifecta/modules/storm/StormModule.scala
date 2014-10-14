@@ -4,7 +4,7 @@ import java.net.{URL, URLClassLoader}
 
 import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
-import com.ldaniels528.trifecta.command.{Command, SimpleParams, UnixLikeArgs}
+import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
 import com.ldaniels528.trifecta.vscript.Variable
@@ -37,15 +37,15 @@ class StormModule(config: TxConfig) extends Module {
 
   // the bound commands
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
-    Command(this, "sbolts", getTopologyBolts, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the list of bolts for s given topology by ID", promptAware = true),
-    Command(this, "sconf", showConfig, SimpleParams(Seq.empty, Seq("key", "value")), help = "Lists, retrieves or sets the configuration keys", promptAware = true),
-    Command(this, "sconnect", createConnection, SimpleParams(Seq.empty, Seq("nimbusHost")), help = "Establishes (or re-establishes) a connect to the Storm Nimbus Host", promptAware = true),
-    Command(this, "sdeploy", deployTopology, SimpleParams(Seq("jarfile", "topology"), Seq("arguments")), help = "Deploys a topology to the Storm server (EXPERIMENTAL)", promptAware = true, undocumented = true),
-    Command(this, "sget", getTopologyInfo, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the information for a topology", promptAware = true),
-    Command(this, "skill", killTopology, SimpleParams(Seq("topologyID"), Seq.empty), help = "Kills a running topology", promptAware = true),
-    Command(this, "sls", listTopologies, SimpleParams(Seq.empty, Seq("prefix")), help = "Lists available topologies", promptAware = true),
-    Command(this, "spouts", getTopologySpouts, SimpleParams(Seq("topologyID"), Seq.empty), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true),
-    Command(this, "srun", runTopology, SimpleParams(Seq("jarPath", "className"), Seq("arg0", "arg1", "arg2")), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true, undocumented = true)
+    Command(this, "sbolts", getTopologyBolts, UnixLikeParams(Seq("topologyID" -> true)), help = "Retrieves the list of bolts for s given topology by ID", promptAware = true),
+    Command(this, "sconf", showConfig, UnixLikeParams(Seq("key" -> false, "value" -> false)), help = "Lists, retrieves or sets the configuration keys", promptAware = true),
+    Command(this, "sconnect", createConnection, UnixLikeParams(Seq("nimbusHost" -> false)), help = "Establishes (or re-establishes) a connect to the Storm Nimbus Host", promptAware = true),
+    Command(this, "sdeploy", deployTopology, UnixLikeParams(Seq("jarfile" -> true, "topology" -> true, "arguments" -> false)), help = "Deploys a topology to the Storm server (EXPERIMENTAL)", promptAware = true, undocumented = true),
+    Command(this, "sget", getTopologyInfo, UnixLikeParams(Seq("topologyID" -> true)), help = "Retrieves the information for a topology", promptAware = true),
+    Command(this, "skill", killTopology, UnixLikeParams(Seq("topologyID"->true)), help = "Kills a running topology", promptAware = true),
+    Command(this, "sls", listTopologies, UnixLikeParams( Seq("prefix"->false)), help = "Lists available topologies", promptAware = true),
+    Command(this, "spouts", getTopologySpouts, UnixLikeParams(Seq("topologyID"->true)), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true),
+    Command(this, "srun", runTopology, UnboundedParams(2), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true, undocumented = true)
   )
 
   /**
