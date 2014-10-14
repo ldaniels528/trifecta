@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.support.avro
 
-import java.io.ByteArrayOutputStream
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream}
 import java.lang.reflect.Method
 
 import com.ldaniels528.trifecta.util.TxUtils._
@@ -38,6 +38,30 @@ object AvroConversion {
       Try {
         val setterName = "set%c%s".format(name.head.toUpper, name.tail)
         setValue(value, valueClass, builder, builderClass, setterName)
+      }
+    }
+  }
+
+  /**
+   * Transforms the given JSON string into an Avro encoded-message using the given Avro schema
+   * @param json the given JSON string
+   * @param schema the given [[Schema]]
+   * @return a byte array representing an Avro-encoded message
+   */
+  def transcodeJsonToAvro(json: String, schema: Schema, encoding: String = "UTF8"): Array[Byte] = {
+    new DataInputStream(new ByteArrayInputStream(json.getBytes(encoding))) use { in =>
+      new ByteArrayOutputStream(json.length) use { out =>
+        // setup the reader, writer, encoder and decoder
+        val reader = new GenericDatumReader[Object](schema)
+        val writer = new GenericDatumWriter[Object](schema)
+        val decoder = DecoderFactory.get().jsonDecoder(schema, in)
+        val encoder = EncoderFactory.get().binaryEncoder(out, null)
+
+        // transcode the JSON into Avro
+        val datum = reader.read(null, decoder)
+        writer.write(datum, encoder)
+        encoder.flush()
+        out.toByteArray
       }
     }
   }
