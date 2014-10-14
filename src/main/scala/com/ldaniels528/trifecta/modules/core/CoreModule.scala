@@ -76,6 +76,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     url match {
       case s if s.startsWith("file:avro:") => url.extractProperty("file:avro:") map (AvroFileInputSource(_))
       case s if s.startsWith("file:json:") => url.extractProperty("file:json:") map (JSONFileInputSource(_))
+      case s if s.startsWith("file:text:") => url.extractProperty("file:text:") map (TextFileInputSource(_))
       case s if s.startsWith("http:") => Option(new HttpInputSource(url))
       case _ => None
     }
