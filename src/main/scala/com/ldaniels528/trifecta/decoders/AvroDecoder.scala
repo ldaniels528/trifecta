@@ -1,4 +1,4 @@
-package com.ldaniels528.trifecta.support.avro
+package com.ldaniels528.trifecta.decoders
 
 import com.ldaniels528.trifecta.support.avro.AvroConditions._
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
