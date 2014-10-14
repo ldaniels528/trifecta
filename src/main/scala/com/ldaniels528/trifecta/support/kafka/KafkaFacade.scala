@@ -2,8 +2,7 @@ package com.ldaniels528.trifecta.support.kafka
 
 import java.util.Date
 import java.util.concurrent.atomic.AtomicLong
-
-import com.ldaniels528.trifecta.support.avro.AvroDecoder
+import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer._

@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.support.avro
 
+import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.modules.core.JSONFileInputSource
 import com.ldaniels528.trifecta.util.TxUtils._
 import org.scalatest.Matchers._
