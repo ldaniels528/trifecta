@@ -46,14 +46,14 @@ class ZookeeperModule(config: TxConfig) extends Module {
    * @param url the given input URL (e.g. "zk:/messages/cache001")
    * @return the option of a Zookeeper input source
    */
-  override def getInputHandler(url: String): Option[InputSource] = None
+  override def getInputSource(url: String): Option[InputSource] = None
 
   /**
    * Returns a Zookeeper output source
    * @param url the given output URL (e.g. "zk:/messages/cache001")
    * @return the option of a Zookeeper output source
    */
-  override def getOutputHandler(url: String): Option[ZookeeperOutputSource] = {
+  override def getOutputSource(url: String): Option[ZookeeperOutputSource] = {
     url.extractProperty("zk:") map (new ZookeeperOutputSource(zk, _))
   }
 

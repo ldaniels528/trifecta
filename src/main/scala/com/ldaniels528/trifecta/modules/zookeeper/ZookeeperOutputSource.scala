@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.modules.zookeeper
 
-import com.ldaniels528.trifecta.support.avro.AvroDecoder
+import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy

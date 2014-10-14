@@ -72,7 +72,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @param url the given input URL (e.g. "file:avro:/tmp/messages.avro")
    * @return the option of an input source
    */
-  override def getInputHandler(url: String): Option[InputSource] = {
+  override def getInputSource(url: String): Option[InputSource] = {
     url match {
       case s if s.startsWith("file:avro:") => url.extractProperty("file:avro:") map (AvroFileInputSource(_))
       case s if s.startsWith("file:json:") => url.extractProperty("file:json:") map (JSONFileInputSource(_))
@@ -87,7 +87,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @param url the given output URL (e.g. "file:avro:/tmp/messages.avro")
    * @return the option of an output source
    */
-  override def getOutputHandler(url: String): Option[OutputSource] = {
+  override def getOutputSource(url: String): Option[OutputSource] = {
     url match {
       case s if s.startsWith("file:avro:") => url.extractProperty("file:avro:") map (AvroFileOutputSource(_))
       case s if s.startsWith("file:json:") => url.extractProperty("file:json:") map (JSONFileOutputSource(_))

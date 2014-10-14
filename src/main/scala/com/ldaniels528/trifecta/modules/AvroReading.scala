@@ -3,7 +3,7 @@ package com.ldaniels528.trifecta.modules
 import java.io.File
 
 import com.ldaniels528.trifecta.TxConfig
-import com.ldaniels528.trifecta.support.avro.AvroDecoder
+import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.util.TxUtils._
 
 import scala.io.Source
@@ -14,13 +14,19 @@ import scala.io.Source
  */
 trait AvroReading {
 
-  def lookupAvroDecoder(schemaVar: String)(implicit config: TxConfig): AvroDecoder = {
-    // is it an Avro file input source?
-    schemaVar.extractProperty("file:") map (path => loadAvroDecoder(new File(path).getName, path)) getOrElse {
-      // must be a variable reference - get the decoder
-      implicit val scope = config.scope
-      scope.getVariable(schemaVar).map(_.value).flatMap(_.eval).map(_.asInstanceOf[AvroDecoder])
-        .getOrElse(throw new IllegalArgumentException(s"Variable '$schemaVar' not found"))
+  def lookupAvroDecoder(url: String)(implicit config: TxConfig): AvroDecoder = {
+    // create an implicit reference to the scope
+    implicit val scope = config.scope
+
+    // is it a valid Avro input source?
+    url match {
+      case s if s.startsWith("file:") =>
+        (s.extractProperty("file:") map (path => loadAvroDecoder(new File(path).getName, path)))
+          .getOrElse(throw new IllegalStateException(s"Unrecognized Avro URL - $s"))
+      case s if s.startsWith("http:") =>
+        throw new IllegalStateException("HTTP URLs are not yet supported")
+      case s =>
+        throw new IllegalStateException(s"Unrecognized Avro URL - $s")
     }
   }
 

@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.modules.elasticSearch
 
-import com.ldaniels528.trifecta.support.avro.AvroDecoder
+import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.support.elasticsearch.TxElasticSearchClient
 import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder

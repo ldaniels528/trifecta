@@ -49,7 +49,7 @@ case class TxRuntimeContext(config: TxConfig) {
     val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed input source URL: $url")
 
     // locate the module
-    moduleManager.findModuleByPrefix(prefix) flatMap (_.getInputHandler(url))
+    moduleManager.findModuleByPrefix(prefix) flatMap (_.getInputSource(url))
   }
 
   /**
@@ -62,7 +62,7 @@ case class TxRuntimeContext(config: TxConfig) {
     val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed output source URL: $url")
 
     // locate the module
-    moduleManager.findModuleByPrefix(prefix) flatMap (_.getOutputHandler(url))
+    moduleManager.findModuleByPrefix(prefix) flatMap (_.getOutputSource(url))
   }
 
   def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) = {

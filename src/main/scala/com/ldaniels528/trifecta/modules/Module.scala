@@ -3,7 +3,7 @@ package com.ldaniels528.trifecta.modules
 import java.net.{URL, URLClassLoader}
 
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
-import com.ldaniels528.trifecta.support.avro.AvroDecoder
+import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.support.io._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
@@ -24,18 +24,18 @@ trait Module extends AvroReading {
   def getCommands(implicit rt: TxRuntimeContext): Seq[Command]
 
   /**
-   * Attempts to retrieve an input handler for the given URL
+   * Attempts to retrieve an input source for the given URL
    * @param url the given input URL
-   * @return the option of an input handler
+   * @return the option of an input source
    */
-  def getInputHandler(url: String): Option[InputSource]
+  def getInputSource(url: String): Option[InputSource]
 
   /**
-   * Attempts to retrieve an output handler for the given URL
+   * Attempts to retrieve an output source for the given URL
    * @param url the given output URL
-   * @return the option of an output handler
+   * @return the option of an output source
    */
-  def getOutputHandler(url: String): Option[OutputSource]
+  def getOutputSource(url: String): Option[OutputSource]
 
   /**
    * Returns the variables that are bound to the module
@@ -115,7 +115,7 @@ trait Module extends AvroReading {
     params("-o") flatMap rt.getOutputHandler
   }
 
-  protected def parseDelta(label:String, value: String): Int = {
+  protected def parseDelta(label: String, value: String): Int = {
     value.head match {
       case '+' => parseInt(label, value.tail)
       case _ => parseInt(label, value)

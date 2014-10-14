@@ -53,14 +53,14 @@ class StormModule(config: TxConfig) extends Module {
    * @param url the given input URL (e.g. "file:/tmp/messages.bin")
    * @return the option of a Storm input source
    */
-  override def getInputHandler(url: String): Option[InputSource] = None
+  override def getInputSource(url: String): Option[InputSource] = None
 
   /**
    * Returns a Storm output source
    * @param url the given output URL (e.g. "file:/tmp/messages.bin")
    * @return the option of a Storm output source
    */
-  override def getOutputHandler(url: String): Option[OutputSource] = None
+  override def getOutputSource(url: String): Option[OutputSource] = None
 
   override def getVariables: Seq[Variable] = Nil
 

@@ -58,14 +58,14 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @param url the given input URL (e.g. "es:/quotes/quote/AAPL")
    * @return the option of an Elastic Search document input source
    */
-  override def getInputHandler(url: String): Option[InputSource] = None
+  override def getInputSource(url: String): Option[InputSource] = None
 
   /**
    * Returns an Elastic Search document output source
    * @param url the given input URL (e.g. "es:/quotes/quote/AAPL")
    * @return the option of an Elastic Search document output source
    */
-  override def getOutputHandler(url: String): Option[DocumentOutputSource] = {
+  override def getOutputSource(url: String): Option[DocumentOutputSource] = {
     url.extractProperty("es:") map { path =>
       extractPathComponents(path) match {
         case (Some(index), Some(indexType), Some(id)) =>

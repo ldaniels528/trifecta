@@ -6,8 +6,8 @@ import java.util.Date
 
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
+import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.support.avro.AvroDecoder
 import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
@@ -80,7 +80,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
     Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
     Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-t" -> "type", "-o" -> "outputSource")), help = "Returns the first message for a given topic"),
-    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-d" -> "YYYY-MM-DDTHH:MM:SS", "-o" -> "outputSource")), help = "Retrieves the message at the specified offset for a given topic partition"),
+    Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-ts" -> "YYYY-MM-DDTHH:MM:SS")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
@@ -99,7 +99,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param url the given input URL (e.g. "topic:shocktrade.quotes.avro")
    * @return the option of a Kafka Topic input source
    */
-  override def getInputHandler(url: String): Option[InputSource] = {
+  override def getInputSource(url: String): Option[InputSource] = {
     url.extractProperty("topic:") map (new KafkaTopicInputSource(brokers, _))
   }
 
@@ -108,7 +108,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param url the given output URL (e.g. "topic:shocktrade.quotes.avro")
    * @return the option of a Kafka Topic output source
    */
-  override def getOutputHandler(url: String): Option[KafkaTopicOutputSource] = {
+  override def getOutputSource(url: String): Option[KafkaTopicOutputSource] = {
     url.extractProperty("topic:") map (new KafkaTopicOutputSource(brokers, _))
   }
 
@@ -391,7 +391,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    */
   def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Either[Option[GenericRecord], Option[JValue]]] = {
     // requesting a message from an instance in time?
-    val instant: Option[Long] = params("-d") map {
+    val instant: Option[Long] = params("-ts") map {
       case s if s.matches("\\d+") => s.toLong
       case s if s.matches("\\d{4}[-]\\d{2}-\\d{2}[T]\\d{2}[:]\\d{2}[:]\\d{2}") => new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(s).getTime
       case s => throw die(s"Illegal timestamp format '$s' - expected either EPOC (Long) or yyyy-MM-dd'T'HH:mm:ss format")
