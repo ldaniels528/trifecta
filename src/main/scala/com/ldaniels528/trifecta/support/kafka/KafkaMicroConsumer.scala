@@ -246,6 +246,36 @@ object KafkaMicroConsumer {
   }
 
   /**
+   * Returns the promise of the option of a message based on the given search criteria
+   * @param tap the given [[TopicAndPartition]]
+   * @param brokers the given replica brokers
+   * @param correlationId the given correlation ID
+   * @param conditions the given search criteria
+   * @return the promise of the option of a message based on the given search criteria
+   */
+  def findNext(tap: TopicAndPartition, brokers: Seq[Broker], correlationId: Int, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[MessageData]] = {
+    Future {
+      var message: Option[MessageData] = None
+      new KafkaMicroConsumer(tap, brokers, correlationId) use { subs =>
+        var offset: Option[Long] = subs.getFirstOffset
+        val lastOffset: Option[Long] = subs.getLastOffset
+        def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
+        while (!message.isDefined && !eof) {
+          for {
+            ofs <- offset
+            msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
+          } {
+            if (conditions.forall(_.satisfies(msg.message, msg.key))) message = Option(msg)
+          }
+
+          offset = offset map (_ + 1)
+        }
+      }
+      message
+    }
+  }
+
+  /**
    * Retrieves the list of defined brokers from Zookeeper
    */
   def getBrokerList(implicit zk: ZKProxy): Seq[BrokerDetails] = {

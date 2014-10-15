@@ -4,15 +4,16 @@ import java.io.PrintStream
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.decoders.AvroDecoder
+import kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
+import com.ldaniels528.trifecta.support.messaging.logic.Condition
 import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.EndPoint
@@ -79,6 +80,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kfetchsize", fetchSizeGetOrSet, UnixLikeParams(Seq("fetchSize" -> false)), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
     Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
+    Command(this, "kfindnext", findNextMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-p" -> "partition", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
     Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-t" -> "type", "-o" -> "outputSource")), help = "Returns the first message for a given topic"),
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-o" -> "outputSource", "-ts" -> "YYYY-MM-DDTHH:MM:SS")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
@@ -242,6 +244,36 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       _ map { case (partition, md) =>
         getMessage(topic, partition, md.offset, params)
       }
+    }
+  }
+
+  /**
+   * Returns the first next message that corresponds to the given criteria starting from the current position
+   * within the current partition.
+   * @example kfindnext volume > 1000000
+   * @example kfindnext volume > 1000000 -a file:avro/quotes.avsc
+   * @example kfindnext volume > 1000000 -t shocktrade.quotes.avro -p 5 -a file:avro/quotes.avsc
+   */
+  def findNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
+    // was a topic, partition and/or Avro decoder specified?
+    val topic_? = params("-t")
+    val partition_? = params("-p") map parsePartition
+    val avro_? = getAvroDecoder(params)(config)
+
+    // get the topic and partition from the cursor
+    val (topic, partition, decoder_?) = {
+      cursor.map(c => (topic_? getOrElse c.topic, partition_? getOrElse c.partition, avro_?))
+        .getOrElse {
+        topic_?.map(t => (t, partition_? getOrElse 0, avro_?)) getOrElse dieNoCursor
+      }
+    }
+
+    // get the criteria
+    val conditions = parseCondition(params, decoder_?)
+
+    // perform the search
+    KafkaMicroConsumer.findNext(TopicAndPartition(topic, partition), brokers, correlationId, conditions: _*) map {
+      _ map (md => getMessage(topic, partition, md.offset, params))
     }
   }
 
