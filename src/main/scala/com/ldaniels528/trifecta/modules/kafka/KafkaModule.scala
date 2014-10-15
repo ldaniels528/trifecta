@@ -83,7 +83,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kfindnext", findNextMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroSchema", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
     Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroSchema", "-f" -> "format", "-o" -> "outputSource")), help = "Returns the first message for a given topic"),
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroSchema", "-f" -> "format", "-o" -> "outputSource", "-ts" -> "YYYY-MM-DDTHH:MM:SS")), help = "Retrieves the message at the specified offset for a given topic partition"),
-    Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
+    Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-f" -> "format", "-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
     Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-w" -> "wait-time")), help = "Retrieves a list of topics with new messages (since last query)"),
@@ -491,12 +491,15 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kget com.shocktrade.alerts 0 3456
    * @example kget 3456
    */
-  def getMessageKey(params: UnixLikeArgs): Option[Array[Byte]] = {
+  def getMessageKey(params: UnixLikeArgs): Option[Any] = {
     // get the arguments
     val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
 
+    // retrieve (or guess) the value's format
+    val valueType = params("-f") getOrElse "bytes"
+
     // retrieve the key
-    facade.getMessageKey(topic, partition, offset, getFetchSize(params))
+    facade.getMessageKey(topic, partition, offset, getFetchSize(params)) map (decodeValue(_, valueType))
   }
 
   /**
