@@ -572,7 +572,7 @@ our optional message decoder:
 
 Let's view the cursor:
     
-    kafka:Shocktrade.quotes.avro/0:0> kcursor
+    kafka:shocktrade.quotes.avro/2:9728> kcursor
     + ---------------------------------------------------------------------------------- +
     | topic                         partition  offset  nextOffset  decoder               |
     + ---------------------------------------------------------------------------------- +
@@ -581,27 +581,51 @@ Let's view the cursor:
 
 The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro integration:
 
-    kafka:Shocktrade.quotes.avro/0:0> knext
-    + ------------------------------------- +
-    | field         value          type     |
-    + ------------------------------------- +
-    | symbol        FNF            Utf8     |
-    | lastTrade     27.75          Double   |
-    | tradeDate     1410505200000  Long     |
-    | tradeTime                             |
-    | ask                                   |
-    | bid                                   |
-    | change        -0.24          Double   |
-    | changePct     -0.86          Double   |
-    | prevClose     27.99          Double   |
-    | open          28.13          Double   |
-    | close         27.75          Double   |
-    | high          28.23          Double   |
-    | low           27.71          Double   |
-    | volume        1157144        Long     |
-    | marketCap     7.7E9          Double   |
-    | errorMessage                          |
-    + ------------------------------------- +
+    kafka:shocktrade.quotes.avro/2:9728> knext
+    + ------------------------------ +
+    | field         value   type     |
+    + ------------------------------ +
+    | symbol        FNF     Utf8     |
+    | exchange      NYSE    Utf8     |
+    | lastTrade     26.67   Double   |
+    | tradeDate                      |
+    | tradeTime     4:00pm  Utf8     |
+    | ask                            |
+    | bid                            |
+    | change        -0.02   Double   |
+    | changePct     -0.07   Double   |
+    | prevClose     26.69   Double   |
+    | open          26.67   Double   |
+    | close         26.67   Double   |
+    | high          26.91   Double   |
+    | low           26.57   Double   |
+    | volume        921234  Long     |
+    | marketCap     7.4E9   Double   |
+    | errorMessage                   |
+    + ------------------------------ +
+   
+Since Avro is based on JSON, we can also express the same data in native JSON format:
+
+    kafka:shocktrade.quotes.avro/2:9728> kget -f json
+    {
+      "symbol":"FNF",
+      "exchange":"NYSE",
+      "lastTrade":26.67,
+      "tradeDate":null,
+      "tradeTime":"4:00pm",
+      "ask":null,
+      "bid":null,
+      "change":-0.02,
+      "changePct":-0.07,
+      "prevClose":26.69,
+      "open":26.67,
+      "close":26.67,
+      "high":26.91,
+      "low":26.57,
+      "volume":921234,
+      "marketCap":7.4E9,
+      "errorMessage":null
+    }    
 
 <a name="kafka-search-by-key"></a>
 ##### Kafka Search by Key
@@ -692,10 +716,35 @@ Suppose you want to find a message for Apple (ticker: "AAPL"), you could issue t
     | marketCap     6.082E11       Double   |
     | errorMessage                          |
     + ------------------------------------- +
+    
+You can also specify complex queries by combining multiple expressions with the `and` keyword:
+    
+    kafka:Shocktrade.quotes.avro/1234:4> kfindone lastTrade < 1 and volume > 1000000 -a file:avro/quotes.avsc
+    + --------------------------------- +
+    | field         value      type     |
+    + --------------------------------- +
+    | symbol        TAGG       Utf8     |
+    | exchange      OTHER OTC  Utf8     |
+    | lastTrade     1.0E-4     Double   |
+    | tradeDate                         |
+    | tradeTime     1:48pm     Utf8     |
+    | ask                               |
+    | bid                               |
+    | change        0.0        Double   |
+    | changePct     0.0        Double   |
+    | prevClose     1.0E-4     Double   |
+    | open          1.0E-4     Double   |
+    | close         1.0E-4     Double   |
+    | high          1.0E-4     Double   |
+    | low           1.0E-4     Double   |
+    | volume        12987999   Long     |
+    | marketCap     423000.0   Double   |
+    | errorMessage                      |
+    + --------------------------------- +
 
 Now suppose you want to copy the messages having high volume (1,000,000 or more) to another topic:
 
-    kfind volume >= 1000000 -o topic:hft.Shocktrade.quotes.avro
+    kafka:Shocktrade.quotes.avro/3300:3> kfind volume >= 1000000 -o topic:hft.Shocktrade.quotes.avro
 
 Finally, let's look at the results:
 
