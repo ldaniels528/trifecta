@@ -1,13 +1,17 @@
 package com.ldaniels528.trifecta.modules
 
 import java.net.{URL, URLClassLoader}
+import java.nio.ByteBuffer
 
+import com.ldaniels528.trifecta.command.CommandParser._
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
 import com.ldaniels528.trifecta.decoders.AvroDecoder
+import com.ldaniels528.trifecta.modules.Module.formatTypes
 import com.ldaniels528.trifecta.support.io._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
+import net.liftweb.json._
 
 import scala.util.{Failure, Success, Try}
 
@@ -84,6 +88,37 @@ trait Module extends AvroReading {
     die( s"""Invalid arguments - use "syntax ${unixArgs.commandName.get}" to see usage""")
   }
 
+  protected def decodeValue(bytes: Array[Byte], valueType: String): Any = {
+    valueType match {
+      case "bytes" => bytes
+      case "char" => ByteBuffer.wrap(bytes).getChar
+      case "double" => ByteBuffer.wrap(bytes).getDouble
+      case "float" => ByteBuffer.wrap(bytes).getFloat
+      case "int" | "integer" => ByteBuffer.wrap(bytes).getInt
+      case "json" => formatJson(new String(bytes))
+      case "long" => ByteBuffer.wrap(bytes).getLong
+      case "short" => ByteBuffer.wrap(bytes).getShort
+      case "string" | "text" => new String(bytes)
+      case _ => throw new IllegalArgumentException(s"Invalid type format '$valueType'. Acceptable values are: ${formatTypes mkString ", "}")
+    }
+  }
+
+  protected def encodeValue(value: String, valueType: String): Array[Byte] = {
+    import java.nio.ByteBuffer.allocate
+
+    valueType match {
+      case "bytes" => parseDottedHex(value)
+      case "char" => allocate(2).putChar(value.head).array()
+      case "double" => allocate(8).putDouble(value.toDouble).array()
+      case "float" => allocate(4).putFloat(value.toFloat).array()
+      case "int" | "integer" => allocate(4).putInt(value.toInt).array()
+      case "long" => allocate(8).putLong(value.toLong).array()
+      case "short" => allocate(2).putShort(value.toShort).array()
+      case "string" | "text" => value.getBytes
+      case _ => throw new IllegalArgumentException(s"Invalid type '$valueType'")
+    }
+  }
+
   /**
    * Expands the UNIX path into a JVM-safe value
    * @param path the UNIX path (e.g. "~/ldaniels")
@@ -102,6 +137,8 @@ trait Module extends AvroReading {
   protected def extract[T](values: Seq[T], index: Int): Option[T] = {
     if (values.length > index) Some(values(index)) else None
   }
+
+  private def formatJson(value: String): String = pretty(render(parse(value)))
 
   protected def getAvroDecoder(params: UnixLikeArgs)(implicit config: TxConfig): Option[AvroDecoder] = {
     params("-a") map lookupAvroDecoder
@@ -176,6 +213,7 @@ trait Module extends AvroReading {
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object Module {
+  val formatTypes = Seq("bytes", "char", "double", "float", "int", "json", "long", "short", "string")
 
   /**
    * A simple name-value pair

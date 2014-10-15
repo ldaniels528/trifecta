@@ -1,7 +1,6 @@
 package com.ldaniels528.trifecta.modules.zookeeper
 
 import java.io.PrintStream
-import java.nio.ByteBuffer
 import java.util.Date
 
 import com.ldaniels528.trifecta.command.CommandParser._
@@ -9,13 +8,11 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.io.InputSource
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
-import com.ldaniels528.trifecta.support.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
-import net.liftweb.json._
 
 import scala.util.Try
 
@@ -25,14 +22,13 @@ import scala.util.Try
  */
 class ZookeeperModule(config: TxConfig) extends Module {
   private var zkProxy_? : Option[ZKProxy] = None
-  private val formatTypes = Seq("bytes", "char", "double", "float", "int", "json", "long", "short", "string")
   private val out: PrintStream = config.out
 
   override def getCommands(implicit rt: TxRuntimeContext) = Seq(
     Command(this, "zcd", chdir, UnixLikeParams(Seq("key" -> true)), help = "Changes the current path/directory in ZooKeeper"),
     Command(this, "zconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to Zookeeper"),
     Command(this, "zexists", pathExists, UnixLikeParams(Seq("key" -> true)), "Verifies the existence of a ZooKeeper key"),
-    Command(this, "zget", getData, UnixLikeParams(Seq("key" -> true), Seq("-t" -> "type")), "Retrieves the contents of a specific Zookeeper key"),
+    Command(this, "zget", getData, UnixLikeParams(Seq("key" -> true), Seq("-f" -> "format")), "Retrieves the contents of a specific Zookeeper key"),
     Command(this, "zls", listKeys, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the child nodes for a key from ZooKeeper"),
     Command(this, "zmk", mkdir, UnixLikeParams(Seq("key" -> true)), "Creates a new ZooKeeper sub-directory (key)"),
     Command(this, "zput", publishMessage, UnixLikeParams(Seq("key" -> true, "value" -> true), Seq("-t" -> "type")), "Sets a key-value pair in ZooKeeper"),
@@ -65,7 +61,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   override def moduleLabel = "zk"
 
-  override def prompt: String = zkProxy_? map(zk => s"${zk.host}:${zk.port}$zkCwd") getOrElse zkCwd
+  override def prompt: String = zkProxy_? map (zk => s"${zk.host}:${zk.port}$zkCwd") getOrElse zkCwd
 
   override def shutdown() = zkProxy_?.foreach(_.close())
 
@@ -186,7 +182,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
       val path = zkKeyToPath(key)
 
       // retrieve (or guess) the value's format
-      val valueType = params("-t") getOrElse "bytes"
+      val valueType = params("-f") getOrElse "bytes"
 
       // perform the action
       zk.read(path) map (decodeValue(_, valueType))
@@ -312,39 +308,6 @@ class ZookeeperModule(config: TxConfig) extends Module {
     val paths = unwind(path)
     paths.map(subPath => ZkItem(subPath, zk.getCreationTime(subPath).map(new Date(_))))
   }
-
-  private def decodeValue(bytes: Array[Byte], valueType: String): Any = {
-    valueType match {
-      case "bytes" => bytes
-      case "char" => ByteBuffer.wrap(bytes).getChar
-      case "double" => ByteBuffer.wrap(bytes).getDouble
-      case "float" => ByteBuffer.wrap(bytes).getFloat
-      case "int" | "integer" => ByteBuffer.wrap(bytes).getInt
-      case "json" => formatJson(new String(bytes))
-      case "long" => ByteBuffer.wrap(bytes).getLong
-      case "short" => ByteBuffer.wrap(bytes).getShort
-      case "string" | "text" => new String(bytes)
-      case _ => throw new IllegalArgumentException(s"Invalid type format '$valueType'. Acceptable values are: ${formatTypes mkString ", "}")
-    }
-  }
-
-  private def encodeValue(value: String, valueType: String): Array[Byte] = {
-    import java.nio.ByteBuffer.allocate
-
-    valueType match {
-      case "bytes" => parseDottedHex(value)
-      case "char" => allocate(2).putChar(value.head)
-      case "double" => allocate(8).putDouble(value.toDouble)
-      case "float" => allocate(4).putFloat(value.toFloat)
-      case "int" | "integer" => allocate(4).putInt(value.toInt)
-      case "long" => allocate(8).putLong(value.toLong)
-      case "short" => allocate(2).putShort(value.toShort)
-      case "string" | "text" => value.getBytes
-      case _ => throw new IllegalArgumentException(s"Invalid type '$valueType'")
-    }
-  }
-
-  private def formatJson(value: String): String = pretty(render(parse(value)))
 
   /**
    * Guesses the given value's type
