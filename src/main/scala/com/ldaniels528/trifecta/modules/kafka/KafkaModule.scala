@@ -221,10 +221,9 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kfindone volume > 1000000
    * @example kfindone volume > 1000000 -a file:avro/quotes.avsc
    * @example kfindone volume > 1000000 -t shocktrade.quotes.avro -a file:avro/quotes.avsc
+   * @example kfindone lastTrade < 1 and volume > 1000000 -a file:avro/quotes.avsc
    */
   def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
-    import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
-
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
     val avro_? = getAvroDecoder(params)(config)
@@ -236,8 +235,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
 
     // get the criteria
-    val Seq(field, operator, value, _*) = params.args
-    val conditions = Seq(compile(compile(field, operator, value), decoder_?))
+    val conditions = parseCondition(params, decoder_?)
 
     // perform the search
     KafkaMicroConsumer.findOne(topic, brokers, correlationId, conditions: _*) map {
@@ -744,6 +742,35 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       case aTopic :: aPartition :: anOffset :: Nil => (aTopic, parsePartition(aPartition), parseOffset(anOffset))
       case _ => die("Invalid arguments")
     }
+  }
+
+  /**
+   * Parses a condition statement
+   * @param params the given [[UnixLikeArgs]]
+   * @param decoder the optional [[MessageDecoder]]
+   * @example lastTrade < 1 and volume > 1000000
+   * @return a collection of [[Condition]] objects
+   */
+  private def parseCondition(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]]): Seq[Condition] = {
+    import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
+
+    val conditions = mutable.Buffer[Condition]()
+    val it = params.args.iterator
+    while (it.hasNext) {
+      it.take(3).toList match {
+        case List(field, operator, value) =>
+          conditions += compile(compile(field, operator, value), decoder)
+        case arg =>
+          throw new IllegalArgumentException(s"Invalid expression near $arg")
+      }
+      if (it.hasNext) {
+        it.next() match {
+          case "and" =>
+          case arg => new IllegalArgumentException("Invalid expression near $arg")
+        }
+      }
+    }
+    conditions
   }
 
   private def parsePartition(partition: String): Int = parseInt("partition", partition)
