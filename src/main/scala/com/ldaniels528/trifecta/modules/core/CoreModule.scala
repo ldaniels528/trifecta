@@ -298,14 +298,17 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Retrieves remote content via HTTP
    * @example wget "http://www.example.com/"
+   * @example wget -f json "http://localhost:9000/api/tasks"
    */
-  def httpGet(params: UnixLikeArgs): Option[Array[Byte]] = {
+  def httpGet(params: UnixLikeArgs): Option[Any] = {
     import java.io.ByteArrayOutputStream
     import java.net._
 
-    // get the URL string
-    params.args.headOption map { urlString =>
-      // download the content
+    // retrieve (or guess) the value's format
+    val valueType = params("-f") getOrElse "bytes"
+
+    // download the content from the remote peer
+    val bytes = params.args.headOption map { urlString =>
       new URL(urlString).openConnection().asInstanceOf[HttpURLConnection] use { conn =>
         conn.getInputStream use { in =>
           val out = new ByteArrayOutputStream(1024)
@@ -314,6 +317,9 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
         }
       }
     }
+
+    // return either the byte array or the decoded value
+    bytes map (decodeValue(_, valueType))
   }
 
   /**
