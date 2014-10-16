@@ -2,6 +2,7 @@ package com.ldaniels528.trifecta
 
 import com.ldaniels528.trifecta.command.CommandParser
 import com.ldaniels528.trifecta.modules.ModuleManager
+import com.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.ldaniels528.trifecta.modules.core.CoreModule
 import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule
 import com.ldaniels528.trifecta.modules.kafka.KafkaModule
@@ -30,6 +31,7 @@ case class TxRuntimeContext(config: TxConfig) {
 
   // load the built-in modules
   moduleManager ++= Seq(
+    new CassandraModule(config),
     new CoreModule(config),
     new ElasticSearchModule(config),
     new KafkaModule(config),
