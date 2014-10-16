@@ -446,6 +446,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     val activeModule = rt.moduleManager.activeModule
     rt.moduleManager.modules.map(m =>
       ModuleItem(m.moduleName, m.getClass.getName, loaded = true, activeModule.exists(_.moduleName == m.moduleName)))
+    .sortBy(_.name)
   }
 
   def listScope(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[ScopeItem] = {
