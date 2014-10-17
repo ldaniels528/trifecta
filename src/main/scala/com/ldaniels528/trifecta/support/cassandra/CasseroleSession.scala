@@ -11,7 +11,7 @@ import scala.concurrent.{Future, Promise}
  * Casserole Session
  * @author lawrence.daniels@gmail.com
  */
-class CasseroleSession(session: Session, threadPool: ExecutorService) {
+case class CasseroleSession(session: Session, threadPool: ExecutorService) {
   private val psCache = new TrieMap[String, PreparedStatement]()
 
   /**

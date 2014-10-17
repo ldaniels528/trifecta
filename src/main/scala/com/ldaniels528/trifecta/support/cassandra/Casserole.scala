@@ -8,7 +8,7 @@ import com.datastax.driver.core.Cluster
  * Casserole: DataStax/Cassandra Scala Client
  * @author lawrence.daniels@gmail.com
  */
-class Casserole(cluster: Cluster, threadPool: ExecutorService) {
+case class Casserole(cluster: Cluster, threadPool: ExecutorService) {
 
   /**
    * Closes the connection
@@ -20,7 +20,7 @@ class Casserole(cluster: Cluster, threadPool: ExecutorService) {
    * @param keySpace the given key space
    * @return a new [[CasseroleSession]]
    */
-  def getSession(keySpace: String): CasseroleSession = new CasseroleSession(cluster.connect(keySpace), threadPool)
+  def getSession(keySpace: String): CasseroleSession = CasseroleSession(cluster.connect(keySpace), threadPool)
 
 }
 
