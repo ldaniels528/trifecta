@@ -71,6 +71,24 @@ class Tabular() {
    * Transforms the given mapping of objects into a sequence of string that
    * represent a table.
    */
+  def transformMaps[A](values: Seq[Map[String, A]]): Seq[String] = {
+    if (values.isEmpty) Nil
+    else {
+      // get the headers, data rows, and column widths
+      val headers = values.head.map(_._1).toSeq
+
+      // generate the rows of data
+      val rows = values map (_ map { case (k, v) => (k, String.valueOf(v))})
+
+      // create the table
+      makeTable(headers, rows)
+    }
+  }
+
+  /**
+   * Transforms the given mapping of objects into a sequence of string that
+   * represent a table.
+   */
   def transformMap[A](values: Map[String, A]): Seq[String] = {
     if (values.isEmpty) Nil
     else {
