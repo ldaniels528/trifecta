@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.modules.cassandra
 
-import com.datastax.driver.core.ConsistencyLevel
+import com.datastax.driver.core.{ConsistencyLevel, ResultSet}
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
@@ -11,6 +11,8 @@ import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
 import scala.collection.JavaConversions._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Apache Cassandra Module
@@ -29,7 +31,7 @@ class CassandraModule(config: TxConfig) extends Module {
     Command(this, "clusterinfo", clusterInfo, UnixLikeParams(), help = "Retrieves the cluster information"),
     Command(this, "cqconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to Cassandra"),
     Command(this, "cql", cql, UnixLikeParams(Seq("query" -> false), Seq("-cl" -> "consistencyLevel")), help = "Executes a CQL query"),
-    Command(this, "columnfamilies", columnFamilies, UnixLikeParams(Seq("query" -> false), Seq("-cl" -> "consistencyLevel")), help = "Executes a CQL query"),
+    Command(this, "columnfamilies", columnFamilies, UnixLikeParams(Seq("query" -> false), Seq("-cl" -> "consistencyLevel")), help = "Displays the list of column families for the current keyspace"),
     Command(this, "describe", describe, UnixLikeParams(Seq("tableName" -> false)), help = "Displays the creation CQL for a table"),
     Command(this, "keyspace", useKeySpace, UnixLikeParams(Seq("keySpaceName" -> false)), help = "Opens a session to a given Cassandra keyspace"),
     Command(this, "keyspaces", keySpaces, UnixLikeParams(), help = "Retrieves the key spaces for the cluster"))
@@ -107,6 +109,10 @@ class CassandraModule(config: TxConfig) extends Module {
       NameValuePair("JMX Reporting Enabled", conf.getMetricsOptions.isJMXReportingEnabled) :: Nil
   }
 
+  /**
+   * Displays the list of column families for the current keyspace
+   * @example columnfamilies
+   */
   def columnFamilies(params: UnixLikeArgs) = {
     val c = connection.cluster
     val k = session.session.getLoggedKeyspace
@@ -146,9 +152,9 @@ class CassandraModule(config: TxConfig) extends Module {
    * Executes a CQL query
    * @example cql "select * from quotes where exchange = 'NASDAQ'"
    */
-  def cql(params: UnixLikeArgs) = {
+  def cql(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[ResultSet] = {
     val cl = params("-cl") map consistencyLevel getOrElse ConsistencyLevel.ONE
-    val query = params.args.headOption map (_.replace('\'', '"')) getOrElse dieSyntax(params)
+    val query = params.args.headOption getOrElse dieSyntax(params)
     session.executeQuery(query)(cl)
   }
 
@@ -169,7 +175,7 @@ class CassandraModule(config: TxConfig) extends Module {
   private def describeKeySpace(name: String): Option[String] = {
     val c = connection.cluster
     val meta = c.getMetadata
-    Option(meta.getKeyspace(name)) map(_.asCQLQuery())
+    Option(meta.getKeyspace(name)) map (_.asCQLQuery())
   }
 
   private def describeTable(name: String): Option[String] = {
@@ -216,7 +222,7 @@ class CassandraModule(config: TxConfig) extends Module {
 
   private def connection: Casserole = conn_? getOrElse die(s"No Cassandra connection. Use: cqconnect <host>")
 
-  private def getKeySpaceName: Option[String] = session_? map(_.session.getLoggedKeyspace)
+  private def getKeySpaceName: Option[String] = session_? map (_.session.getLoggedKeyspace)
 
   private def session: CasseroleSession = {
     connection
