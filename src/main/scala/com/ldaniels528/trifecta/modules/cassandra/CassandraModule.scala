@@ -153,7 +153,7 @@ class CassandraModule(config: TxConfig) extends Module {
    * @example cql "select * from quotes where exchange = 'NASDAQ'"
    */
   def cql(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[ResultSet] = {
-    val cl = params("-cl") map consistencyLevel getOrElse ConsistencyLevel.ONE
+    val cl = params("-cl") map getConsistencyLevelByName getOrElse getDefaultConsistencyLevel
     val query = params.args.headOption getOrElse dieSyntax(params)
     session.executeQuery(query)(cl)
   }
@@ -216,11 +216,15 @@ class CassandraModule(config: TxConfig) extends Module {
     session_? = Option(connection.getSession(keySpace))
   }
 
-  private def consistencyLevel(name: String): ConsistencyLevel = {
+  private def connection: Casserole = conn_? getOrElse die(s"No Cassandra connection. Use: cqconnect <host>")
+
+  private def getConsistencyLevelByName(name: String): ConsistencyLevel = {
     consistencyLevels.getOrElse(name, die(s"Invalid consistency level (valid values are: ${consistencyLevels.map(_._2).mkString(", ")})"))
   }
 
-  private def connection: Casserole = conn_? getOrElse die(s"No Cassandra connection. Use: cqconnect <host>")
+  private def getDefaultConsistencyLevel: ConsistencyLevel = {
+    connection.cluster.getConfiguration.getQueryOptions.getConsistencyLevel
+  }
 
   private def getKeySpaceName: Option[String] = session_? map (_.session.getLoggedKeyspace)
 
