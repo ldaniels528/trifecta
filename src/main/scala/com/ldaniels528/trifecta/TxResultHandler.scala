@@ -2,6 +2,7 @@ package com.ldaniels528.trifecta
 
 import java.io.PrintStream
 
+import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.trifecta.support.avro.AvroTables
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade.AvroRecord
@@ -11,6 +12,7 @@ import net.liftweb.json._
 import org.apache.avro.generic.GenericRecord
 
 import scala.collection.GenTraversableOnce
+import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -38,7 +40,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
       case MessageData(offset, _, _, _, message) => dumpMessage(offset, message)(config)
 
       // handle the asynchronous I/O cases
-      case aio: AsyncIO => handleAsyncResult(aio, input)
+      case a: AsyncIO => handleAsyncResult(a, input)
 
       // handle Either cases
       case e: Either[_, _] => e match {
@@ -49,6 +51,14 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
       // handle Future cases
       case f: Future[_] => handleAsyncResult(f, input)
 
+      // handle Avro records
+      case g: GenericRecord =>
+        val fields = g.getSchema.getFields.asScala.map(_.name.trim).toSeq
+        tabular.transform(fields map { f =>
+          val v = g.get(f)
+          AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
+        }) foreach out.println
+
       // handle JSON values
       case js: JValue => out.println(pretty(render(js)))
 
@@ -58,13 +68,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
         case None => out.println("No data returned")
       }
 
-      // handle Avro records
-      case r: GenericRecord =>
-        val fields = r.getSchema.getFields.asScala.map(_.name.trim).toSeq
-        tabular.transform(fields map { f =>
-          val v = r.get(f)
-          AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
-        }) foreach out.println
+      case r: ResultSet => handleCassandraResultSet(r)
 
       // handle Try cases
       case t: Try[_] => t match {
@@ -133,6 +137,40 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
             out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
         }
     }
+  }
+
+  /**
+   * Handles a Cassandra Result Set
+   * @param rs the given [[ResultSet]]
+   */
+  private def handleCassandraResultSet(rs: ResultSet): Unit = {
+    val cds = rs.getColumnDefinitions.asList().toSeq
+    val records = rs.all() map (decodeRow(_, cds))
+    tabular.transformMaps(records) foreach out.println
+  }
+
+  private def decodeRow(row: Row, cds: Seq[ColumnDefinitions.Definition]): Map[String, Any] = {
+    Map(cds map { cd =>
+      val name = cd.getName
+      val value = cd.getType.asJavaClass() match {
+        case c if c == classOf[Array[Byte]] => row.getBytes(name)
+        case c if c == classOf[java.math.BigDecimal] => row.getDecimal(name)
+        case c if c == classOf[java.math.BigInteger] => row.getVarint(name)
+        case c if c == classOf[java.lang.Boolean] => row.getBool(name)
+        case c if c == classOf[java.util.Date] => row.getDate(name)
+        case c if c == classOf[java.lang.Double] => row.getDouble(name)
+        case c if c == classOf[java.lang.Float] => row.getFloat(name)
+        case c if c == classOf[java.lang.Integer] => row.getInt(name)
+        case c if c == classOf[java.lang.Long] => row.getLong(name)
+        case c if c == classOf[java.util.Map[_, _]] => row.getMap(name, classOf[String], classOf[Object])
+        case c if c == classOf[java.util.Set[_]] => row.getSet(name, classOf[Object])
+        case c if c == classOf[String] => row.getString(name)
+        case c if c == classOf[java.util.UUID] => row.getUUID(name)
+        case c =>
+          throw new IllegalStateException(s"Unsupported class type ${c.getName} for column ${cd.getTable}.$name")
+      }
+      (name, value)
+    }: _*)
   }
 
 }
