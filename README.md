@@ -15,6 +15,7 @@ Table of Contents
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
+    * <a href="#cassandra">Cassandra Module</a>
     * <a href="#elastic-search">Elastic Search Module</a>  
         * <a href="#es-avro-to-json">Avro-to-Document support</a>
     * <a href="#kafka-module">Kafka Module</a>  
@@ -141,6 +142,52 @@ To see the syntax/usage of a command, use the `syntax` command:
     core:/home/ldaniels> syntax kget
     Description: Retrieves the message at the specified offset for a given topic partition
     Usage: kget [-o outputSource] [-d YYYY-MM-DDTHH:MM:SS] [-a avroSchema] [topic] [partition] [offset]
+
+<a name="cassandra"></a>
+#### Cassandra Module
+
+_Trifecta_ has basic built-in support for querying and inspecting the state of Apache Cassandra clusters. To establish a 
+connection to a Cassandra cluster, use the `cqconnect` command:
+
+    core:/home/ldaniels> cqconnect dev528
+    
+From this point, you need to select a keyspace to execute queries against. To do this, use the `keyspace` command:
+
+    cql:cluster1:/> keyspace shocktrade
+    
+Now that a keyspace has been selected, you can execute queries against the column families (tables) found within 
+the keyspace.
+
+    cql:cluster1:shocktrade> cql "select name, symbol, exchange, lastTrade, volume from stocks where symbol = 'AAPL' limit 5"
+    + --------------------------------------------------- +
+    | name        lasttrade  exchange  symbol  volume     |
+    + --------------------------------------------------- +
+    | Apple Inc.  557.36     NASDAQ    AAPL    14067517   |
+    + --------------------------------------------------- +
+    
+You can view basic cluster information by issuing the `clusterinfo` command: 
+  
+    cql:cluster1:shocktrade> clusterinfo
+    + -------------------------------------------------------------------- +
+    | name                   value                                         |
+    + -------------------------------------------------------------------- +
+    | Cluster Name           cluster1                                      |
+    | Partitioner            org.apache.cassandra.dht.Murmur3Partitioner   |
+    | Consistency Level      ONE                                           |
+    | Fetch Size             5000                                          |
+    | JMX Reporting Enabled  true                                          |
+    + -------------------------------------------------------------------- +    
+    
+You can describe keyspaces and tables with the `describe` command:
+    
+    cql:cluster1:shocktrade> describe keyspace shocktrade 
+    
+    CREATE KEYSPACE shocktrade WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 
+    'replication_factor': '3' } AND DURABLE_WRITES = true;
+
+You can retrieve the list of all the commands that Cassandra Module offers with the help (?) command.
+
+    ? -m cassandra
 
 <a name="elastic-search"></a>
 #### Elastic Search Module
