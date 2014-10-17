@@ -54,6 +54,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "history", listHistory, UnixLikeParams(Seq("count" -> false)), help = "Returns a list of previously issued commands"),
     Command(this, "jobs", manageJob, UnixLikeParams(Seq("jobNumber" -> false), Seq("-c" -> "clear jobs", "-d" -> "delete job", "-l" -> "list jobs", "-v" -> "result")), help = "Returns the list of currently running jobs"),
     Command(this, "ls", listFiles, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the files from the current directory", promptAware = true),
+    Command(this, "module", useModule, UnixLikeParams(Seq("module" -> true)), help = "Switches the active module"),
     Command(this, "modules", listModules, UnixLikeParams(), help = "Returns a list of configured modules"),
     Command(this, "ps", processList, UnixLikeParams(Seq("node" -> false, "timeout" -> false)), help = "Displays a list of \"configured\" running processes", undocumented = true),
     Command(this, "pwd", printWorkingDirectory, UnixLikeParams(), help = "Displays current working directory"),
@@ -63,7 +64,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "time", time, UnixLikeParams(Seq("sysTime" -> false)), help = "Returns the system time"),
     Command(this, "timeutc", timeUTC, UnixLikeParams(Seq("sysTime" -> false)), help = "Returns the system time in UTC"),
     Command(this, "undoc", listUndocumented, UnixLikeParams(), help = "Displays undocumented commands", undocumented = true),
-    Command(this, "use", useModule, UnixLikeParams(Seq("module" -> true)), help = "Switches the active module"),
     Command(this, "version", version, UnixLikeParams(), help = "Returns the application version"),
     Command(this, "wget", httpGet, UnixLikeParams(Seq("url" -> true)), help = "Retrieves remote content via HTTP"))
 
