@@ -5,8 +5,9 @@ import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.ldaniels528.trifecta.support.cassandra.{Casserole, CasseroleSession}
-import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
+import com.ldaniels528.trifecta.support.io.InputSource
 import com.ldaniels528.trifecta.util.EndPoint
+import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
@@ -46,9 +47,14 @@ class CassandraModule(config: TxConfig) extends Module {
   /**
    * Attempts to retrieve an output source for the given URL
    * @param url the given output URL
-   * @return the option of an output source
+   * @return the option of a [[CassandraOutputSource]]
    */
-  override def getOutputSource(url: String): Option[OutputSource] = None
+  override def getOutputSource(url: String): Option[CassandraOutputSource] = {
+    for {
+      columnFamily <- url.extractProperty("cassandra:")
+      keySpace <- getKeySpaceName
+    } yield new CassandraOutputSource(connection, keySpace, columnFamily, getDefaultConsistencyLevel)
+  }
 
   /**
    * Returns the variables that are bound to the module

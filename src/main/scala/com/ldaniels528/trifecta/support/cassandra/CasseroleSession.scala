@@ -44,7 +44,7 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
    * @param cl the given [[ConsistencyLevel]]
    * @return
    */
-  def insert(columnFamily: String, keyValues: (String, Any)*)(implicit cl: ConsistencyLevel): Future[ResultSet] = {
+  def insert[T](columnFamily: String, keyValues: (String, T)*)(implicit cl: ConsistencyLevel): Future[ResultSet] = {
     //props foreach { case (k,v) => System.out.println(s"$k = $v (${if(v != null) v.getClass.getName else "<null>"})") }
     //System.out.println("*"*40)
     val props = Map(keyValues: _*)
