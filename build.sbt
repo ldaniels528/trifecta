@@ -51,6 +51,8 @@ libraryDependencies ++= Seq(
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
+  "org.mongodb" % "casbah-commons_2.10" % "2.6.4",
+  "org.mongodb" % "casbah-core_2.10" % "2.6.4",
   "org.fusesource.jansi" % "jansi" % "1.11",
   "org.slf4j" % "slf4j-api" % "1.7.7",
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
