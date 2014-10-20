@@ -8,7 +8,7 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.decoders.AvroDecoder
 import kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
+import com.ldaniels528.trifecta.support.io.KeyAndMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
@@ -101,7 +101,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param url the given input URL (e.g. "topic:shocktrade.quotes.avro")
    * @return the option of a Kafka Topic input source
    */
-  override def getInputSource(url: String): Option[InputSource] = {
+  override def getInputSource(url: String): Option[KafkaTopicInputSource] = {
     url.extractProperty("topic:") map (new KafkaTopicInputSource(brokers, _))
   }
 
