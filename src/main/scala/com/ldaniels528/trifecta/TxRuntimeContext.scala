@@ -5,6 +5,7 @@ import com.ldaniels528.trifecta.modules.ModuleManager
 import com.ldaniels528.trifecta.modules.core.CoreModule
 import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule
 import com.ldaniels528.trifecta.modules.kafka.KafkaModule
+import com.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
@@ -33,6 +34,7 @@ case class TxRuntimeContext(config: TxConfig) {
     new CoreModule(config),
     new ElasticSearchModule(config),
     new KafkaModule(config),
+    new MongoModule(config),
     new StormModule(config),
     new ZookeeperModule(config))
 
