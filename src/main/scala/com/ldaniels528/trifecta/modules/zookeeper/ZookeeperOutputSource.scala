@@ -5,7 +5,7 @@ import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 /**
@@ -25,15 +25,14 @@ class ZookeeperOutputSource(zk: ZKProxy, rootPath: String) extends OutputSource 
    * @param data the given key and message
    * @return the response value
    */
-  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) = {
+  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) {
     decoder match {
       case Some(av: AvroDecoder) =>
         av.decode(data.message) match {
           case Success(record) =>
             val path = s"$rootPath/${new String(data.key, encoding)}"
-            Future {
-              zk.create(path, data.message); ()
-            }
+            zk.create(path, data.message)
+            ()
           case Failure(e) =>
             throw new IllegalStateException(e.getMessage, e)
         }
@@ -41,9 +40,8 @@ class ZookeeperOutputSource(zk: ZKProxy, rootPath: String) extends OutputSource 
         throw new IllegalStateException(s"Unhandled decoder '$unhandled'")
       case None =>
         val path = s"$rootPath/${new String(data.key, encoding)}"
-        Future {
-          zk.create(path, data.message); ()
-        }
+        zk.create(path, data.message)
+        ()
     }
   }
 
