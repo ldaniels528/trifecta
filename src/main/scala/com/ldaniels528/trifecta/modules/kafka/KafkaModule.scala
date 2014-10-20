@@ -64,10 +64,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   def defaultFetchSize_=(sizeInBytes: Int) = config.set("defaultFetchSize", sizeInBytes)
 
-  def parallelism: Int = config.getOrElse("parallelism", 4)
-
-  def parallelism_=(parallelism: Int) = config.set("parallelism", parallelism)
-
   // the bound commands
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
