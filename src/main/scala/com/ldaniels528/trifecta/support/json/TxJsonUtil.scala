@@ -13,6 +13,8 @@ object TxJsonUtil {
 
   def toJson(jsonString: String): JValue = parse(jsonString)
 
+  def toJson(result: Q): JValue = toJson(result.toString)
+
   def toDocument(js: JValue): Q = {
     js.values match {
       case m: Map[String, Any] => convertToMDB(m).asInstanceOf[Q]

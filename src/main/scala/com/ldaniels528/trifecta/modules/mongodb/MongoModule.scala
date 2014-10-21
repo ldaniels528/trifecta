@@ -10,6 +10,7 @@ import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
+import com.mongodb.WriteResult
 
 /**
  * MongoDB Module
@@ -25,7 +26,8 @@ class MongoModule(config: TxConfig) extends Module {
    */
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "mconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to a MongoDB cluster"),
-    Command(this, "mput", insertDocument, UnixLikeParams(Seq("json" -> true)), help = "Inserts a record into MongoDB"),
+    Command(this, "mget", getDocument, UnixLikeParams(Seq("collection" -> true, "query" -> true)), help = "Retrieves a document from MongoDB"),
+    Command(this, "mput", insertDocument, UnixLikeParams(Seq("collection" -> true, "json" -> true)), help = "Inserts a document into MongoDB"),
     Command(this, "use", selectDatabase, UnixLikeParams(Seq("database" -> true)), help = "Sets the current MongoDB database")
   )
 
@@ -86,7 +88,7 @@ class MongoModule(config: TxConfig) extends Module {
     // determine the requested end-point
     val endPoint = params.args match {
       case Nil => EndPoint(config.zooKeeperConnect)
-      case path :: Nil => EndPoint(path)
+      case path :: Nil => EndPoint(path, 27017)
       case path :: port :: Nil => EndPoint(path, parseInt("port", port))
       case _ => dieSyntax(params)
     }
@@ -96,17 +98,27 @@ class MongoModule(config: TxConfig) extends Module {
     cluster_? = Option(TxMongoCluster(Seq(endPoint)))
   }
 
-  /**
-   * Inserts a document into the database
-   * @example mput quotes { "symbol" : "AAPL", "lastTrade":99.56, "exchange":"NYSE" }
-   */
-  def insertDocument(params: UnixLikeArgs): Unit = {
+  def getDocument(params: UnixLikeArgs) = {
     val (tableName, json) = params.args match {
       case List(collectionName, jsonString) => (collectionName, toJson(jsonString))
       case _ => dieSyntax(params)
     }
 
-    // insert the record into the collection
+    // retrieve the document from the collection
+    database.getCollection(tableName).findOne(json)
+  }
+
+  /**
+   * Inserts a document into the database
+   * @example mput quotes { "symbol" : "AAPL", "lastTrade":99.56, "exchange":"NYSE" }
+   */
+  def insertDocument(params: UnixLikeArgs): WriteResult = {
+    val (tableName, json) = params.args match {
+      case List(collectionName, jsonString) => (collectionName, toJson(jsonString))
+      case _ => dieSyntax(params)
+    }
+
+    // insert the document into the collection
     database.getCollection(tableName).insert(json)
   }
 

@@ -28,8 +28,8 @@ case class TxMongoCollection(mc: MongoCollection) {
    * @tparam T the template type of the values
    * @return the resultant document
    */
-  def findOne[T](criteria: JValue) = {
-    mc.findOne(toDocument(criteria))
+  def findOne[T](criteria: JValue): Option[JValue] = {
+    mc.findOne(toDocument(criteria)) map toJson
   }
 
   /**
