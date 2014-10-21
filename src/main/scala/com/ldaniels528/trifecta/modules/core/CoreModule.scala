@@ -55,7 +55,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "ls", listFiles, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "module", useModule, UnixLikeParams(Seq("module" -> true)), help = "Switches the active module"),
     Command(this, "modules", listModules, UnixLikeParams(), help = "Returns a list of configured modules"),
-    Command(this, "ps", processList, UnixLikeParams(Seq("node" -> false, "timeout" -> false), Seq("-i" -> "identityFile", "-u" -> "userName")), help = "Displays a list of \"configured\" running processes", undocumented = true),
+    Command(this, "ps", processList, UnixLikeParams(Seq("node" -> false), Seq("-i" -> "identityFile", "-u" -> "userName")), help = "Displays a list of \"configured\" running processes", undocumented = true),
     Command(this, "pwd", printWorkingDirectory, UnixLikeParams(), help = "Displays current working directory"),
     Command(this, "scope", listScope, UnixLikeParams(), help = "Returns the contents of the current scope"),
     Command(this, "syntax", syntax, UnixLikeParams(Seq("command" -> true)), help = "Returns the syntax/usage for a given command"),
@@ -487,11 +487,10 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     import scala.util.Properties
 
     // this command only works on Linux
-    if (Properties.isMac || Properties.isWin) throw new IllegalStateException("Unsupported platform for this command")
+    if (Properties.isMac || Properties.isWin) die("Unsupported platform for this command")
 
     // get the node
-    val args = params.args
-    val node = extract(args, 0) getOrElse "."
+    val node = extract(params.args, 0) getOrElse "."
     out.println(s"Gathering process info from host: ${if (node == ".") "localhost" else node}")
 
     // parse the process and port mapping data
