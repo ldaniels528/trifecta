@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.support.mongodb
 
 import com.ldaniels528.trifecta.support.json.TxJsonUtil._
-import com.mongodb.casbah.Imports.{DBObject => Q, _}
+import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.MongoCollection
 import net.liftweb.json.JsonAST.JValue
 
@@ -15,21 +15,28 @@ case class TxMongoCollection(mc: MongoCollection) {
   /**
    * Retrieves documents matching the given criteria
    * @param criteria the given criteria
-   * @tparam T the template type of the values
    * @return the resultant documents
    */
-  def find[T](criteria: JValue) = {
-    mc.find(toDocument(criteria))
+  def find(criteria: JValue): Iterator[JValue] = {
+    mc.find(toDocument(criteria)).map(toJson)
   }
 
   /**
    * Retrieves a document matching the given criteria
    * @param criteria the given criteria
-   * @tparam T the template type of the values
    * @return the resultant document
    */
-  def findOne[T](criteria: JValue): Option[JValue] = {
-    mc.findOne(toDocument(criteria)) map toJson
+  def findOne(criteria: JValue, fields: JValue): Option[JValue] = {
+    mc.findOne(o = toDocument(criteria), fields = toDocument(fields)) map toJson
+  }
+
+  /**
+   * Retrieves a document matching the given criteria
+   * @param criteria the given criteria
+   * @return the resultant document
+   */
+  def findOne(criteria: JValue): Option[JValue] = {
+    mc.findOne(o = toDocument(criteria)) map toJson
   }
 
   /**

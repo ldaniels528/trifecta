@@ -2,21 +2,24 @@ package com.ldaniels528.trifecta.modules.mongodb
 
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.modules.Module
-import com.ldaniels528.trifecta.support.io.InputSource
-import com.ldaniels528.trifecta.support.json.TxJsonUtil
+import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
+import com.ldaniels528.trifecta.support.json.TxJsonUtil._
+import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.mongodb.{TxMongoCluster, TxMongoDB}
-import TxJsonUtil._
-import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.TxUtils._
+import com.ldaniels528.trifecta.util.{BinaryMessaging, EndPoint}
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.mongodb.WriteResult
+import net.liftweb.json.JsonAST.JValue
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * MongoDB Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class MongoModule(config: TxConfig) extends Module {
+class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
   private var cluster_? : Option[TxMongoCluster] = None
   private var database_? : Option[TxMongoDB] = None
 
@@ -26,7 +29,8 @@ class MongoModule(config: TxConfig) extends Module {
    */
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "mconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to a MongoDB cluster"),
-    Command(this, "mget", getDocument, UnixLikeParams(Seq("collection" -> true, "query" -> true)), help = "Retrieves a document from MongoDB"),
+    Command(this, "mfindone", getDocument, UnixLikeParams(Seq("collection" -> true, "query" -> true, "fields" -> false), Seq("-o" -> "outputSource")), help = "Retrieves a document from MongoDB"),
+    Command(this, "mget", getDocument, UnixLikeParams(Seq("collection" -> true, "query" -> true, "fields" -> false), Seq("-o" -> "outputSource")), help = "Retrieves a document from MongoDB"),
     Command(this, "mput", insertDocument, UnixLikeParams(Seq("collection" -> true, "json" -> true)), help = "Inserts a document into MongoDB"),
     Command(this, "use", selectDatabase, UnixLikeParams(Seq("database" -> true)), help = "Sets the current MongoDB database")
   )
@@ -98,14 +102,34 @@ class MongoModule(config: TxConfig) extends Module {
     cluster_? = Option(TxMongoCluster(Seq(endPoint)))
   }
 
-  def getDocument(params: UnixLikeArgs) = {
-    val (tableName, json) = params.args match {
-      case List(collectionName, jsonString) => (collectionName, toJson(jsonString))
+  /**
+   * Retrieves a MongoDB document
+   * @example mget Stocks { "symbol" : "AAPL" }
+   * @example mget Stocks { "symbol" : "AAPL" } { "symbol":true, "exchange":true, "lastTrade":true }
+   * @example mget Stocks { "symbol" : "AAPL" } -o es:/quotes/quote/AAPL
+   */
+  def getDocument(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[JValue] = {
+    // retrieve the document from the collection
+    val doc = params.args match {
+      case List(tableName, query) => database.getCollection(tableName).findOne(toJson(query))
+      case List(tableName, query, fields) => database.getCollection(tableName).findOne(toJson(query), toJson(fields))
       case _ => dieSyntax(params)
     }
 
-    // retrieve the document from the collection
-    database.getCollection(tableName).findOne(json)
+    // determine which decoder to use; either the user specified decoder, cursor's decoder or none
+    val decoder: Option[MessageDecoder[_]] = params("-a") map (lookupAvroDecoder(_)(config))
+
+    // write the document to an output source?
+    for {
+      mydoc <- doc
+      outputSource <- getOutputSource(params)
+    } {
+      val key = hexToBytes((mydoc \ "_id" \ "$oid").values.toString)
+      val value = mydoc.toString.getBytes(config.encoding)
+      outputSource.write(KeyAndMessage(key, value), decoder)
+    }
+
+    doc
   }
 
   /**
