@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
 import scala.util.{Properties, Try}
@@ -56,7 +55,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "ls", listFiles, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "module", useModule, UnixLikeParams(Seq("module" -> true)), help = "Switches the active module"),
     Command(this, "modules", listModules, UnixLikeParams(), help = "Returns a list of configured modules"),
-    Command(this, "ps", processList, UnixLikeParams(Seq("node" -> false, "timeout" -> false)), help = "Displays a list of \"configured\" running processes", undocumented = true),
+    Command(this, "ps", processList, UnixLikeParams(Seq("node" -> false, "timeout" -> false), Seq("-i" -> "identityFile", "-u" -> "userName")), help = "Displays a list of \"configured\" running processes", undocumented = true),
     Command(this, "pwd", printWorkingDirectory, UnixLikeParams(), help = "Displays current working directory"),
     Command(this, "scope", listScope, UnixLikeParams(), help = "Returns the contents of the current scope"),
     Command(this, "syntax", syntax, UnixLikeParams(Seq("command" -> true)), help = "Returns the syntax/usage for a given command"),
@@ -482,8 +481,10 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Display a list of "configured" running processes
    * @example ps
+   * @example ps -u ldaniels dev528
+   * @example ps -i /home/ubuntu/aws.pem -u ubuntu dev528
    */
-  def processList(params: UnixLikeArgs): Seq[String] = {
+  def processList(params: UnixLikeArgs): Future[Seq[String]] = {
     import scala.util.Properties
 
     // this command only works on Linux
@@ -492,27 +493,20 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     // get the node
     val args = params.args
     val node = extract(args, 0) getOrElse "."
-    val timeout = extract(args, 1) map (_.toInt) getOrElse 60
     out.println(s"Gathering process info from host: ${if (node == ".") "localhost" else node}")
 
     // parse the process and port mapping data
-    val outcome = for {
+    for {
     // retrieve the process and port map data
-      (psData, portMap) <- parseNetStatData(node)
-
-      // process the raw output
-      lines = psData map (seq => if (Properties.isMac) seq.tail else seq)
+      (psData, portMap) <- parseNetStatData(node, params)
 
       // filter the data, and produce the results
-      result = lines filter (s => s.contains("mysqld") || s.contains("java") || s.contains("python")) flatMap {
+      result = psData filter (s => s.contains("mysqld") || s.contains("java") || s.contains("python")) flatMap {
         case PID_MacOS_r(user, pid, _, _, time1, _, time2, cmd, fargs) => Some(parsePSData(pid, cmd, fargs, portMap.get(pid)))
         case PID_Linux_r(user, pid, _, _, time1, _, time2, cmd, fargs) => Some(parsePSData(pid, cmd, fargs, portMap.get(pid)))
         case _ => None
       }
     } yield result
-
-    // and let's wait for the result...
-    Await.result(outcome, timeout.seconds)
   }
 
   /**
@@ -555,14 +549,20 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    * @param node the given remote node (e.g. "Verify")
    * @return a future containing the data
    */
-  private def parseNetStatData(node: String): Future[(Seq[String], Map[String, String])] = {
+  private def parseNetStatData(node: String, params: UnixLikeArgs): Future[(Seq[String], Map[String, String])] = {
     import scala.sys.process._
+
+    // get the user name
+    val userName = params("-u") getOrElse Properties.userName
+
+    // get the optional identity file (.pem)
+    val identityFile = params("-i") map (pem => s"-i $pem") getOrElse ""
 
     // asynchronously get the raw output from 'ps -ef'
     val psdataF: Future[Seq[String]] = Future {
       Source.fromString((node match {
         case "." => "ps -ef"
-        case host => s"ssh -i /home/ubuntu/dev.pem ubuntu@$host ps -ef"
+        case host => s"ssh $identityFile $userName@$host ps -ef"
       }).!!).getLines().toSeq
     }
 
@@ -572,7 +572,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
       val netStat = Source.fromString((node match {
         case "." if Properties.isMac => "netstat -gilns"
         case "." => "netstat -ptln"
-        case host => s"ssh -i /home/ubuntu/dev.pem ubuntu@$host netstat -ptln"
+        case host => s"ssh $identityFile $userName@$host netstat -ptln"
       }).!!).getLines().toSeq.tail
 
       // build the port mapping
