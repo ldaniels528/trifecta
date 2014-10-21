@@ -611,8 +611,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
     rt.moduleManager.findCommandByName(commandName) match {
       case Some(command) => Seq(s"Description: ${command.help}", s"Usage: ${command.prototype}")
-      case None =>
-        throw new IllegalStateException(s"Command '$commandName' not found")
+      case None => die(s"Command '$commandName' not found")
     }
   }
 
@@ -671,8 +670,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     val moduleName = params.args.head
     rt.moduleManager.findModuleByName(moduleName) match {
       case Some(module) => rt.moduleManager.activeModule = module
-      case None =>
-        throw new IllegalArgumentException(s"Module '$moduleName' not found")
+      case None => die(s"Module '$moduleName' not found")
     }
   }
 
