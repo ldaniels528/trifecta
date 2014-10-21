@@ -55,7 +55,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "ls", listFiles, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "module", useModule, UnixLikeParams(Seq("module" -> true)), help = "Switches the active module"),
     Command(this, "modules", listModules, UnixLikeParams(), help = "Returns a list of configured modules"),
-    Command(this, "ps", processList, UnixLikeParams(Seq("node" -> false, "timeout" -> false), Seq("-i" -> "identityFile", "-u" -> "userName")), help = "Displays a list of \"configured\" running processes", undocumented = true),
+    Command(this, "ps", processList, UnixLikeParams(Seq("node" -> false), Seq("-i" -> "identityFile", "-u" -> "userName")), help = "Displays a list of \"configured\" running processes", undocumented = true),
     Command(this, "pwd", printWorkingDirectory, UnixLikeParams(), help = "Displays current working directory"),
     Command(this, "scope", listScope, UnixLikeParams(), help = "Returns the contents of the current scope"),
     Command(this, "syntax", syntax, UnixLikeParams(Seq("command" -> true)), help = "Returns the syntax/usage for a given command"),
@@ -445,7 +445,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     val activeModule = rt.moduleManager.activeModule
     rt.moduleManager.modules.map(m =>
       ModuleItem(m.moduleName, m.getClass.getName, loaded = true, activeModule.exists(_.moduleName == m.moduleName)))
-    .sortBy(_.name)
+      .sortBy(_.name)
   }
 
   def listScope(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[ScopeItem] = {
@@ -488,11 +488,10 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     import scala.util.Properties
 
     // this command only works on Linux
-    if (Properties.isMac || Properties.isWin) throw new IllegalStateException("Unsupported platform for this command")
+    if (Properties.isMac || Properties.isWin) die("Unsupported platform for this command")
 
     // get the node
-    val args = params.args
-    val node = extract(args, 0) getOrElse "."
+    val node = extract(params.args, 0) getOrElse "."
     out.println(s"Gathering process info from host: ${if (node == ".") "localhost" else node}")
 
     // parse the process and port mapping data
@@ -613,8 +612,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
     rt.moduleManager.findCommandByName(commandName) match {
       case Some(command) => Seq(s"Description: ${command.help}", s"Usage: ${command.prototype}")
-      case None =>
-        throw new IllegalStateException(s"Command '$commandName' not found")
+      case None => die(s"Command '$commandName' not found")
     }
   }
 
@@ -673,8 +671,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
     val moduleName = params.args.head
     rt.moduleManager.findModuleByName(moduleName) match {
       case Some(module) => rt.moduleManager.activeModule = module
-      case None =>
-        throw new IllegalArgumentException(s"Module '$moduleName' not found")
+      case None => die(s"Module '$moduleName' not found")
     }
   }
 

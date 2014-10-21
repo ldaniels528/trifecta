@@ -52,6 +52,15 @@ trait BinaryMessaging {
   }
 
   /**
+   * Converts the given hexadecimal string into a byte array
+   * @param hex the given hexadecimal string (e.g. "51002b2d84aebf0342cfb659")
+   * @return the byte array
+   */
+  protected def hexToBytes(hex: String): Array[Byte] = {
+    (hex.sliding(2, 2) map (Integer.parseInt(_, 16).toByte)).toArray
+  }
+
+  /**
    * Returns the ASCII array as a character string
    * @param bytes the byte array
    * @return a character string representing the given byte array
