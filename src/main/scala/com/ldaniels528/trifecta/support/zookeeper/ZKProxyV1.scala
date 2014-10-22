@@ -24,7 +24,7 @@ class ZKProxyV1(val host: String, val port: Int, callback: Option[ZkProxyCallBac
   private lazy val logger = LoggerFactory.getLogger(getClass)
   var acl: util.ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
   var mode: CreateMode = PERSISTENT
-  var encoding: String = "UTF8"
+  var encoding: String = "UTF-8"
 
   logger.info(s"Connecting to ZooKeeper at '$host:$port'...")
   private var zk = new ZooKeeper(s"$host:$port", 5000, new MyWatcher(callback))
