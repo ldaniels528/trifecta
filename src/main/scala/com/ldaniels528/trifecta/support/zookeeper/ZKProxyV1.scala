@@ -108,7 +108,7 @@ class ZKProxyV1(val host: String, val port: Int, callback: Option[ZkProxyCallBac
 
   override def reconnect() {
     Try(zk.close())
-    zk = new ZooKeeper(host, port, new MyWatcher(callback))
+    zk = new ZooKeeper(s"$host:$port", 5000, new MyWatcher(callback))
   }
 
   override def remoteHost = s"$host:$port"
