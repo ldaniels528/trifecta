@@ -3,7 +3,6 @@ package com.ldaniels528.trifecta
 import java.io.PrintStream
 
 import com.ldaniels528.trifecta.TxConsole._
-import com.ldaniels528.trifecta.command.Command
 import com.ldaniels528.trifecta.vscript.Scope
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
@@ -29,9 +28,6 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
   val history: History = SessionManagement.history
   history.load(TxConfig.historyFile)
   SessionManagement.setupHistoryUpdates(TxConfig.historyFile, 60 seconds)
-
-  // load the commands from the modules
-  private def commandSet: Map[String, Command] = rt.moduleManager.commandSet
 
   // make sure we shutdown the ZooKeeper connection
   Runtime.getRuntime.addShutdownHook(new Thread {
