@@ -1,9 +1,10 @@
 package com.ldaniels528.trifecta
 
 import java.io.File._
-import java.io.{File, FileInputStream}
+import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
 
+import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.RootScope
 
 import scala.util.Properties._
@@ -13,7 +14,7 @@ import scala.util.Try
  * Trifecta Configuration
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class TxConfig(zkHost: String, zkPort: Int) {
+class TxConfig(val configProps: Properties) {
   // the default state of the application is "alive"
   var alive = true
 
@@ -24,18 +25,11 @@ class TxConfig(zkHost: String, zkPort: Int) {
   // create the root-level scope
   implicit val scope = RootScope()
 
-  // Zookeeper connection string
-  val zooKeeperConnect = s"$zkHost:$zkPort"
-
   // define the job manager
   val jobManager = new JobManager()
 
-  // define the history properties
-  var historyFile = new File(s"$userHome$separator.trifecta${separator}history.txt")
-
-  // define the configuration file & properties
-  val configFile = new File(s"$userHome$separator.trifecta${separator}config.properties")
-  val configProps = loadConfiguration(configFile)
+  // Zookeeper connection string
+  def zooKeeperConnect = configProps.getProperty("trifecta.zookeeper.host")
 
   // various shared state variables
   def autoSwitching: Boolean = scope.getValue[Boolean]("autoSwitching") getOrElse false
@@ -62,15 +56,58 @@ class TxConfig(zkHost: String, zkPort: Int) {
   def set[T](name: String, value: T): Unit = scope.setValue[T](name, Option(value))
 
   /**
+   * Saves the current configuration to disk
+   * @param configFile the configuration file
+   */
+  def save(configFile: File): Unit = {
+    new FileOutputStream(configFile) use { fos =>
+      configProps.store(fos, "Trifecta configuration properties")
+    }
+  }
+
+}
+
+/**
+ * Trifecta Configuration Singleton
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+object TxConfig {
+
+  // define the history properties
+  var historyFile = new File(s"$userHome$separator.trifecta${separator}history.txt")
+
+  // define the configuration file & properties
+  var configFile = new File(s"$userHome$separator.trifecta${separator}config.properties")
+
+  /**
+   * Returns the default configuration
+   * @return the default configuration
+   */
+  def defaultConfig: TxConfig = new TxConfig(getDefaultProperties)
+
+  /**
    * Loads the configuration file
    * @param configFile the configuration file
    */
-  def loadConfiguration(configFile: File): Properties = {
-    val p = new Properties()
+  def load(configFile: File): TxConfig = {
+    val p = getDefaultProperties
     if (configFile.exists()) {
       Try(p.load(new FileInputStream(configFile)))
     }
-    p
+    new TxConfig(p)
+  }
+
+  private def getDefaultProperties: java.util.Properties = {
+    Map(
+      "trifecta.zookeeper.host" -> "localhost:2181",
+      "trifecta.kafka.zookeeper.host" -> "localhost:2181",
+      "trifecta.elasticsearch.hosts" -> "localhost",
+      "trifecta.cassandra.hosts" -> "localhost ",
+      "trifecta.storm.hosts" -> "localhost",
+      "trifecta.autoSwitching" -> "true",
+      "trifecta.columns" -> "25",
+      "trifecta.debugOn" -> "true",
+      "trifecta.encoding" -> "UTF-8").toProps
   }
 
 }
