@@ -164,7 +164,7 @@ object TrifectaShell {
     }
 
     // load the configuration
-    val config = TxConfig.load(TxConfig.configFile)
+    val config = TxConfig.load()
 
     // create the runtime context
     val rt = new TxRuntimeContext(config)
