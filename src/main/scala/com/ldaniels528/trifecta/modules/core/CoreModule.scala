@@ -362,7 +362,7 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
    */
   def exit(params: UnixLikeArgs) {
     config.alive = false
-    SessionManagement.history.store(config.historyFile)
+    SessionManagement.history.store(TxConfig.historyFile)
   }
 
   /**

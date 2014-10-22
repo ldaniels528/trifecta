@@ -27,8 +27,8 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
 
   // load the history, then schedule session history file updates
   val history: History = SessionManagement.history
-  history.load(config.historyFile)
-  SessionManagement.setupHistoryUpdates(config.historyFile, 60 seconds)
+  history.load(TxConfig.historyFile)
+  SessionManagement.setupHistoryUpdates(TxConfig.historyFile, 60 seconds)
 
   // load the commands from the modules
   private def commandSet: Map[String, Command] = rt.moduleManager.commandSet
@@ -43,6 +43,30 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
       rt.moduleManager.shutdown()
     }
   })
+
+  /**
+   * Executes the given command line expression
+   * @param line the given command line expression
+   */
+  def execute(line: String): Unit = {
+    rt.interpret(line) match {
+      case Success(result) =>
+        // if debug is enabled, display the object value and class name
+        if (config.debugOn) showDebug(result)
+
+        // handle the result
+        rt.handleResult(result, line)
+        if (!ineligibleHistory(line)) SessionManagement.history += line
+      case Failure(e: ConnectionLossException) =>
+        err.println("Zookeeper connect loss error - use 'zconnect' to re-establish a connection")
+      case Failure(e: IllegalArgumentException) =>
+        if (rt.config.debugOn) e.printStackTrace()
+        err.println(s"Syntax error: ${getErrorMessage(e)}")
+      case Failure(e) =>
+        if (rt.config.debugOn) e.printStackTrace()
+        err.println(s"Runtime error: ${getErrorMessage(e)}")
+    }
+  }
 
   /**
    * Interactive shell
@@ -139,23 +163,22 @@ object TrifectaShell {
       System.out.println(a"${RED}Tri${GREEN}fect${CYAN}a ${YELLOW}v$VERSION")
     }
 
+    // load the configuration
+    val config = TxConfig.load(TxConfig.configFile)
+
+    // create the runtime context
+    val rt = new TxRuntimeContext(config)
+
+    // initialize the shell
+    val console = new TrifectaShell(config, rt)
+
     // if arguments were not passed, stop.
     args.toList match {
-      case Nil => System.out.println("Usage: Trifecta <zookeeperHost>")
-      case params =>
-        // were host and port argument passed?
-        val host: String = params.head
-        val port: Int = if (params.length > 1) params(1).toInt else 2181
-
-        // load the configuration
-        val config = new TxConfig(host, port)
-
-        // create the runtime context
-        val rt = new TxRuntimeContext(config)
-
-        // start the shell
-        val console = new TrifectaShell(config, rt)
+      case Nil =>
         console.shell()
+      case params =>
+        val line = params mkString " "
+        console.execute(line)
     }
 
     // make sure all threads die
