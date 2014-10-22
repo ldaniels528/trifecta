@@ -24,12 +24,12 @@ class ZKProxyV1(val host: String, val port: Int, callback: Option[ZkProxyCallBac
   private lazy val logger = LoggerFactory.getLogger(getClass)
   var acl: util.ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
   var mode: CreateMode = PERSISTENT
-  var encoding: String = "UTF8"
+  var encoding: String = "UTF-8"
 
   logger.info(s"Connecting to ZooKeeper at '$host:$port'...")
-  private var zk = new ZooKeeper(host, port, new MyWatcher(callback))
+  private var zk = new ZooKeeper(s"$host:$port", 5000, new MyWatcher(callback))
 
-  def batch(ops: Op*): Seq[OpResult] = Seq.empty // zk.multi(ops)
+  def batch(ops: Op*): Seq[OpResult] = ??? // zk.multi(ops)
 
   def client: ZooKeeper = zk
 
@@ -108,7 +108,7 @@ class ZKProxyV1(val host: String, val port: Int, callback: Option[ZkProxyCallBac
 
   override def reconnect() {
     Try(zk.close())
-    zk = new ZooKeeper(host, port, new MyWatcher(callback))
+    zk = new ZooKeeper(s"$host:$port", 5000, new MyWatcher(callback))
   }
 
   override def remoteHost = s"$host:$port"
