@@ -27,9 +27,9 @@ class ZKProxyV1(val host: String, val port: Int, callback: Option[ZkProxyCallBac
   var encoding: String = "UTF8"
 
   logger.info(s"Connecting to ZooKeeper at '$host:$port'...")
-  private var zk = new ZooKeeper(host, port, new MyWatcher(callback))
+  private var zk = new ZooKeeper(s"$host:$port", 5000, new MyWatcher(callback))
 
-  def batch(ops: Op*): Seq[OpResult] = Seq.empty // zk.multi(ops)
+  def batch(ops: Op*): Seq[OpResult] = ??? // zk.multi(ops)
 
   def client: ZooKeeper = zk
 
