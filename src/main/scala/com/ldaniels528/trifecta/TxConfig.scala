@@ -87,9 +87,8 @@ object TxConfig {
 
   /**
    * Loads the configuration file
-   * @param configFile the configuration file
    */
-  def load(configFile: File): TxConfig = {
+  def load(): TxConfig = {
     val p = getDefaultProperties
     if (configFile.exists()) {
       Try(p.load(new FileInputStream(configFile)))

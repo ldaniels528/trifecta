@@ -149,7 +149,7 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object TrifectaShell {
-  val VERSION = "0.1.6.1"
+  val VERSION = "0.1.7"
 
   /**
    * Application entry point
@@ -164,7 +164,7 @@ object TrifectaShell {
     }
 
     // load the configuration
-    val config = TxConfig.load(TxConfig.configFile)
+    val config = TxConfig.load()
 
     // create the runtime context
     val rt = new TxRuntimeContext(config)
