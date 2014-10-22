@@ -5,7 +5,7 @@ import java.io._
 import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.ExecutionContext
 
 /**
  * Avro File Output Source
@@ -14,7 +14,7 @@ import scala.concurrent.{Future, ExecutionContext}
 class AvroFileOutputSource(out: OutputStream) extends OutputSource {
   private val dos = new DataOutputStream(out)
 
-  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) = Future {
+  override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) = {
     // persist the key
     dos.writeInt(data.key.length)
     dos.write(data.key)
@@ -22,7 +22,6 @@ class AvroFileOutputSource(out: OutputStream) extends OutputSource {
     // persist the message
     dos.writeInt(data.message.length)
     dos.write(data.message)
-    ()
   }
 
   override def close() = {
