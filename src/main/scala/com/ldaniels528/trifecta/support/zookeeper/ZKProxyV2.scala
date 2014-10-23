@@ -18,10 +18,10 @@ import scala.util.Try
  * ZooKeeper Proxy (Version 2.0)
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class ZKProxyV2(host: String, port: Int) extends ZKProxy {
+case class ZKProxyV2(connectionString: String) extends ZKProxy {
   private val logger = LoggerFactory.getLogger(getClass)
   private val NO_DATA = new Array[Byte](0)
-  private var zk = new ZkClient(s"$host:$port")
+  private var zk = new ZkClient(connectionString)
   var acl: util.ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
   var mode: CreateMode = PERSISTENT
   var encoding: String = "UTF8"
@@ -65,7 +65,7 @@ case class ZKProxyV2(host: String, port: Int) extends ZKProxy {
 
   override def reconnect() {
     Try(zk.close())
-    zk = new ZkClient(s"$host:$port")
+    zk = new ZkClient(connectionString)
   }
 
   override def update(path: String, data: Array[Byte]): Iterable[String] = ???
@@ -78,7 +78,7 @@ case class ZKProxyV2(host: String, port: Int) extends ZKProxy {
 
   override def getFamily(path: String): List[String] = ???
 
-  override def remoteHost: String = s"$host:$port"
+  override def remoteHost: String = connectionString
 
 
 }

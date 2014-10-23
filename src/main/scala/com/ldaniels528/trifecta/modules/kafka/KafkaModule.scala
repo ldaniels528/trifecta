@@ -151,20 +151,19 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * Establishes a connection to Zookeeper
    * @example kconnect
    * @example kconnect localhost
-   * @example kconnect localhost 2181
+   * @example kconnect localhost:2181
    */
   def connect(params: UnixLikeArgs) {
     // determine the requested end-point
-    val endPoint = params.args match {
-      case Nil => EndPoint(config.zooKeeperConnect)
-      case path :: Nil => EndPoint(path, 2181)
-      case path :: port :: Nil => EndPoint(path, parseInt("port", port))
+    val connectionString = params.args match {
+      case Nil => config.zooKeeperConnect
+      case zconnectString :: Nil => zconnectString
       case _ => dieSyntax(params)
     }
 
     // connect to the remote peer
     zkProxy_?.foreach(_.close())
-    zkProxy_? = Option(ZKProxy(endPoint))
+    zkProxy_? = Option(ZKProxy(connectionString))
   }
 
   /**
@@ -787,7 +786,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     zkProxy_? match {
       case Some(zk) => zk
       case None =>
-        val zk = ZKProxy(EndPoint(config.zooKeeperConnect))
+        val zk = ZKProxy(config.zooKeeperConnect)
         zkProxy_? = Option(zk)
         zk
     }

@@ -61,7 +61,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   override def moduleLabel = "zk"
 
-  override def prompt: String = zkProxy_? map (zk => s"${zk.host}:${zk.port}$zkCwd") getOrElse zkCwd
+  override def prompt: String = zkProxy_? map (zk => s"$zkCwd") getOrElse zkCwd
 
   override def shutdown() = zkProxy_?.foreach(_.close())
 
@@ -131,20 +131,19 @@ class ZookeeperModule(config: TxConfig) extends Module {
    * Establishes a connection to Zookeeper
    * @example zconnect
    * @example zconnect localhost
-   * @example zconnect localhost 2181
+   * @example zconnect localhost:2181
    */
   def connect(params: UnixLikeArgs): Unit = {
     // determine the requested end-point
-    val endPoint = params.args match {
-      case Nil => EndPoint(config.zooKeeperConnect)
-      case path :: Nil => EndPoint(path, 2181)
-      case path :: port :: Nil => EndPoint(path, parseInt("port", port))
+    val connectionString = params.args match {
+      case Nil => config.zooKeeperConnect
+      case zconnectString :: Nil => zconnectString
       case _ => dieSyntax(params)
     }
 
     // connect to the remote peer
     zkProxy_?.foreach(_.close())
-    zkProxy_? = Option(ZKProxy(endPoint))
+    zkProxy_? = Option(ZKProxy(connectionString))
   }
 
   /**
@@ -343,7 +342,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
     zkProxy_? match {
       case Some(zk) => zk
       case None =>
-        val zk = ZKProxy(EndPoint(config.zooKeeperConnect))
+        val zk = ZKProxy(config.zooKeeperConnect)
         zkProxy_? = Option(zk)
         zk
     }

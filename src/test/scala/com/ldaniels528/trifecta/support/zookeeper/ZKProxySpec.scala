@@ -1,6 +1,5 @@
 package com.ldaniels528.trifecta.support.zookeeper
 
-import com.ldaniels528.trifecta.util.EndPoint
 import org.apache.curator.framework.CuratorFramework
 import org.apache.curator.test.TestingServer
 import org.scalatest.Matchers._
@@ -26,7 +25,7 @@ class ZKProxySpec() extends FeatureSpec with GivenWhenThen {
         server = new TestingServer(2181)
 
         And("a Zookeeper Proxy client")
-        val zk = ZKProxy(EndPoint(server.getConnectString))
+        val zk = ZKProxy(server.getConnectString)
 
         And("a data set to insert")
         val basePath = "/brokers/topics/test2/partitions"
