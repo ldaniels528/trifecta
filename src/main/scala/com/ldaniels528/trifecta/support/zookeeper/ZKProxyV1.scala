@@ -20,14 +20,14 @@ import scala.util.Try
  * ZooKeeper Proxy (Version 1.0)
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZKProxyV1(val host: String, val port: Int, callback: Option[ZkProxyCallBack] = None) extends ZKProxy {
+class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = None) extends ZKProxy {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   var acl: util.ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
   var mode: CreateMode = PERSISTENT
   var encoding: String = "UTF-8"
 
-  logger.info(s"Connecting to ZooKeeper at '$host:$port'...")
-  private var zk = new ZooKeeper(s"$host:$port", 5000, new MyWatcher(callback))
+  logger.info(s"Connecting to ZooKeeper at '$connectionString'...")
+  private var zk = new ZooKeeper(connectionString, 5000, new MyWatcher(callback))
 
   def batch(ops: Op*): Seq[OpResult] = ??? // zk.multi(ops)
 
@@ -108,10 +108,10 @@ class ZKProxyV1(val host: String, val port: Int, callback: Option[ZkProxyCallBac
 
   override def reconnect() {
     Try(zk.close())
-    zk = new ZooKeeper(s"$host:$port", 5000, new MyWatcher(callback))
+    zk = new ZooKeeper(connectionString, 5000, new MyWatcher(callback))
   }
 
-  override def remoteHost = s"$host:$port"
+  override def remoteHost = connectionString
 
   /**
    * Updates the given path

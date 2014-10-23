@@ -1,6 +1,5 @@
 package com.ldaniels528.trifecta.support.zookeeper
 
-import com.ldaniels528.trifecta.util.EndPoint
 import org.apache.zookeeper.data.Stat
 
 import scala.language.implicitConversions
@@ -10,10 +9,6 @@ import scala.language.implicitConversions
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait ZKProxy {
-
-  def host: String
-
-  def port: Int
 
   def close(): Unit
 
@@ -65,13 +60,9 @@ trait ZKProxy {
  */
 object ZKProxy {
 
-  def apply(host: String, port: Int): ZKProxyV1 = new ZKProxyV1(host, port, None)
+  def apply(connectionString: String): ZKProxyV1 = new ZKProxyV1(connectionString, None)
 
-  def apply(host: String, port: Int, callback: Option[ZkProxyCallBack]): ZKProxyV1 = new ZKProxyV1(host, port, callback)
-
-  def apply(ep: EndPoint): ZKProxyV1 = new ZKProxyV1(ep.host, ep.port, None)
-
-  def apply(ep: EndPoint, callback: Option[ZkProxyCallBack]): ZKProxyV1 = new ZKProxyV1(ep.host, ep.port, callback)
+  def apply(connectionString: String, callback: Option[ZkProxyCallBack]): ZKProxyV1 = new ZKProxyV1(connectionString, callback)
 
   /**
    * All implicit definitions are declared here
@@ -98,7 +89,6 @@ object ZKProxy {
         }
         list.reverse map (s => "/" + s)
       }
-
     }
 
   }

@@ -23,7 +23,7 @@ class ZookeeperModuleSpec() extends FeatureSpec with BeforeAndAfterEach with Giv
     scenario("Recursively delete a path from Zookeeper") {
       Given("The initial Zookeeper environment")
       /*
-      val zk = ZKProxy(EndPoint("localhost", 2181))
+      val zk = ZKProxy("localhost:2181")
       zk.ensurePath("/brokers/ids")
       zk.ensurePath("/consumers/otherTestId")
       zk.ensurePath("/consumers/myTestId/someSubPath")
