@@ -1,6 +1,5 @@
 package com.ldaniels528.trifecta.modules.zookeeper
 
-import java.io.PrintStream
 import java.util.Date
 
 import com.ldaniels528.trifecta.command.CommandParser._
@@ -23,7 +22,6 @@ import scala.util.Try
  */
 class ZookeeperModule(config: TxConfig) extends Module {
   private var zkProxy_? : Option[ZKProxy] = None
-  private val out: PrintStream = config.out
 
   override def getCommands(implicit rt: TxRuntimeContext) = Seq(
     Command(this, "zcd", chdir, UnixLikeParams(Seq("key" -> true)), help = "Changes the current path/directory in ZooKeeper"),
