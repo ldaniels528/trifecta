@@ -29,7 +29,9 @@ class TxConfig(val configProps: Properties) {
   val jobManager = new JobManager()
 
   // Zookeeper connection string
-  def zooKeeperConnect = configProps.getProperty("trifecta.zookeeper.host")
+  def zooKeeperConnect = configProps.getOrElse("trifecta.zookeeper.host", "127.0.0.1:2181")
+
+  def kafkaZkConnect = configProps.getOrElse("trifecta.kafka.zookeeper.host", zooKeeperConnect)
 
   // various shared state variables
   def autoSwitching: Boolean = scope.getValue[Boolean]("autoSwitching") getOrElse false
