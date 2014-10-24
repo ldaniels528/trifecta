@@ -1,13 +1,12 @@
 package com.ldaniels528.trifecta.support.zookeeper
 
-import java.nio.ByteBuffer
 import java.util
 
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy.Implicits._
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxyV1._
+import com.ldaniels528.trifecta.support.zookeeper.ZkSupportHelper._
 import org.apache.zookeeper.CreateMode._
 import org.apache.zookeeper.ZooDefs.Ids
-import org.apache.zookeeper.ZooKeeper.States
 import org.apache.zookeeper._
 import org.apache.zookeeper.data.{ACL, Stat}
 import org.slf4j.LoggerFactory
@@ -46,7 +45,18 @@ class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = No
 
   override def createDirectory(path: String): String = zk.create(path, NO_DATA, acl, mode)
 
-  override def delete(path: String) = exists_?(path) foreach (stat => zk.delete(path, stat.getVersion))
+  override def delete(path: String): Boolean = {
+    exists_?(path) exists { stat =>
+      zk.delete(path, stat.getVersion)
+      true
+    }
+  }
+
+  override def deleteRecursive(path: String) = {
+    val outcomes = zk.getChildren(path, false) map (subPath => deleteRecursive(zkKeyToPath(path, subPath)))
+    delete(path)
+    outcomes.forall(_ == true)
+  }
 
   def delete(path: String, stat: Stat) = zk.delete(path, stat.getVersion)
 
@@ -66,12 +76,12 @@ class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = No
 
   override def exists(path: String): Boolean = Option(zk.exists(path, false)).isDefined
 
-  override def exists_?(path: String, watch: Boolean = false): Option[Stat] = Option(zk.exists(path, watch))
+  def exists_?(path: String, watch: Boolean = false): Option[Stat] = Option(zk.exists(path, watch))
 
   override def getChildren(path: String, watch: Boolean = false): Seq[String] = zk.getChildren(path, watch)
 
   override def getCreationTime(path: String): Option[Long] = {
-    Option(zk.exists(path, false)) map(_.getCtime)
+    Option(zk.exists(path, false)) map (_.getCtime)
   }
 
   override def getFamily(path: String): List[String] = {
@@ -82,27 +92,7 @@ class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = No
     path :: (children flatMap (child => getFamily(zkKeyToPath(path, child)))).toList
   }
 
-  def getSessionId: Long = zk.getSessionId
-
-  def getState: States = zk.getState
-
-  def read(path: String, stat: Stat): Option[Array[Byte]] = Option(zk.getData(path, false, stat))
-
   override def read(path: String): Option[Array[Byte]] = exists_?(path) flatMap (stat => Option(zk.getData(path, false, stat)))
-
-  def readDouble(path: String, stat: Stat): Option[Double] = read(path, stat) map ByteBuffer.wrap map (_.getDouble)
-
-  override def readDouble(path: String): Option[Double] = read(path) map ByteBuffer.wrap map (_.getDouble)
-
-  def readInt(path: String, stat: Stat): Option[Int] = read(path, stat) map ByteBuffer.wrap map (_.getInt)
-
-  override def readInt(path: String): Option[Int] = read(path) map ByteBuffer.wrap map (_.getInt)
-
-  def readLong(path: String, stat: Stat): Option[Long] = read(path, stat) map ByteBuffer.wrap map (_.getLong)
-
-  override def readLong(path: String): Option[Long] = read(path) map ByteBuffer.wrap map (_.getLong)
-
-  def readString(path: String, stat: Stat): Option[String] = read(path, stat) map (new String(_, encoding))
 
   override def readString(path: String): Option[String] = read(path) map (new String(_, encoding))
 
@@ -125,15 +115,6 @@ class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = No
   override def update(path: String, data: Array[Byte]): Iterable[String] = {
     delete(path)
     create(path -> data)
-  }
-
-  override def updateLong(path: String, value: Long): Iterable[String] = {
-    // write the value to a byte array
-    val data = new Array[Byte](8)
-    ByteBuffer.wrap(data).putLong(value)
-
-    // perform the update
-    update(path, data)
   }
 
 }
