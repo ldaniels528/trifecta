@@ -3,7 +3,7 @@ package com.ldaniels528.trifecta.support.zookeeper
 import java.util
 
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy.Implicits._
-import com.ldaniels528.trifecta.support.zookeeper.ZKProxyV1._
+import com.ldaniels528.trifecta.support.zookeeper.ZKProxyNative._
 import com.ldaniels528.trifecta.support.zookeeper.ZkSupportHelper._
 import org.apache.zookeeper.CreateMode._
 import org.apache.zookeeper.ZooDefs.Ids
@@ -16,10 +16,10 @@ import scala.language.implicitConversions
 import scala.util.Try
 
 /**
- * ZooKeeper Proxy (Version 1.0)
+ * ZooKeeper Proxy (Apache Zookeeper native client)
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = None) extends ZKProxy {
+case class ZKProxyNative(connectionString: String, callback: Option[ZkProxyCallBack] = None) extends ZKProxy {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   var acl: util.ArrayList[ACL] = Ids.OPEN_ACL_UNSAFE
   var mode: CreateMode = PERSISTENT
@@ -28,17 +28,12 @@ class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = No
   logger.info(s"Connecting to ZooKeeper at '$connectionString'...")
   private var zk = new ZooKeeper(connectionString, 5000, new MyWatcher(callback))
 
-  def batch(ops: Op*): Seq[OpResult] = ??? // zk.multi(ops)
-
   def client: ZooKeeper = zk
 
   override def close(): Unit = zk.close()
 
-  override def create(tuples: (String, Array[Byte])*): Iterable[String] = {
-    tuples map {
-      case (node, data) =>
-        zk.create(node, data, acl, mode)
-    }
+  override def create(tupleSeq: (String, Array[Byte])*): Iterable[String] = {
+    tupleSeq map { case (path, bytes) => zk.create(path, bytes, acl, mode)}
   }
 
   override def create(path: String, data: Array[Byte]): String = zk.create(path, data, acl, mode)
@@ -52,19 +47,11 @@ class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = No
     }
   }
 
-  override def deleteRecursive(path: String) = {
-    val outcomes = zk.getChildren(path, false) map (subPath => deleteRecursive(zkKeyToPath(path, subPath)))
-    delete(path)
-    outcomes.forall(_ == true)
-  }
-
   def delete(path: String, stat: Stat) = zk.delete(path, stat.getVersion)
 
-  override def ensurePath(path: String): List[String] = {
-    val items = path.splitNodes map (p => (p, NO_DATA))
-    items flatMap {
-      case (node, data) => Option(zk.create(node, data, acl, mode))
-    }
+  override def deleteRecursive(path: String): Boolean = {
+    val outcomes = zk.getChildren(path, false) map (subPath => deleteRecursive(zkKeyToPath(path, subPath)))
+    delete(path) && outcomes.forall(_ == true)
   }
 
   override def ensureParents(path: String): List[String] = {
@@ -74,9 +61,14 @@ class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = No
     }
   }
 
-  override def exists(path: String): Boolean = Option(zk.exists(path, false)).isDefined
+  override def ensurePath(path: String): List[String] = {
+    val items = path.splitNodes map (p => (p, NO_DATA))
+    items flatMap {
+      case (node, data) => Option(zk.create(node, data, acl, mode))
+    }
+  }
 
-  def exists_?(path: String, watch: Boolean = false): Option[Stat] = Option(zk.exists(path, watch))
+  override def exists(path: String): Boolean = Option(zk.exists(path, false)).isDefined
 
   override def getChildren(path: String, watch: Boolean = false): Seq[String] = zk.getChildren(path, watch)
 
@@ -96,26 +88,23 @@ class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = No
 
   override def readString(path: String): Option[String] = read(path) map (new String(_, encoding))
 
-  override def reconnect() {
+  override def connect() {
     Try(zk.close())
     zk = new ZooKeeper(connectionString, 5000, new MyWatcher(callback))
   }
 
-  override def remoteHost = connectionString
-
-  /**
-   * Updates the given path
-   */
-  def updateAtomic(path: String, data: Array[Byte], stat: Stat): Seq[OpResult] = {
-    batch(
-      Op.delete(path, stat.getVersion),
-      Op.create(path, data, acl, mode))
+  override def update(path: String, data: Array[Byte]): Option[String] = {
+    exists_?(path, watch = false) map { stat =>
+      batch(
+        Op.delete(path, stat.getVersion),
+        Op.create(path, data, acl, mode))
+    }
+    None
   }
 
-  override def update(path: String, data: Array[Byte]): Iterable[String] = {
-    delete(path)
-    create(path -> data)
-  }
+  private def batch(ops: Op*): Seq[OpResult] = zk.multi(ops)
+
+  private def exists_?(path: String, watch: Boolean = false): Option[Stat] = Option(zk.exists(path, watch))
 
 }
 
@@ -123,7 +112,7 @@ class ZKProxyV1(connectionString: String, callback: Option[ZkProxyCallBack] = No
  * Zookeeper Proxy Singleton
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object ZKProxyV1 {
+object ZKProxyNative {
   private val NO_DATA = new Array[Byte](0)
 
   /**

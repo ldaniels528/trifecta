@@ -10,7 +10,11 @@ trait ZKProxy {
 
   def close(): Unit
 
-  def create(tuples: (String, Array[Byte])*): Iterable[String]
+  def connect(): Unit
+
+  def connectionString: String
+
+  def create(tupleSeq: (String, Array[Byte])*): Iterable[String]
 
   def create(path: String, data: Array[Byte]): String
 
@@ -36,11 +40,7 @@ trait ZKProxy {
 
   def readString(path: String): Option[String]
 
-  def reconnect(): Unit
-
-  def remoteHost: String
-
-  def update(path: String, data: Array[Byte]): Iterable[String]
+  def update(path: String, data: Array[Byte]): Option[String]
 
 }
 
@@ -50,9 +50,7 @@ trait ZKProxy {
  */
 object ZKProxy {
 
-  def apply(connectionString: String): ZKProxyV1 = new ZKProxyV1(connectionString)
-
-  //def apply(connectionString: String, callback: Option[ZkProxyCallBack]): ZKProxyV1 = new ZKProxyV1(connectionString, callback)
+  def apply(connectionString: String) = new ZkProxyCurator(connectionString)
 
   /**
    * All implicit definitions are declared here

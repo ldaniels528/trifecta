@@ -262,7 +262,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
     import scala.sys.process._
 
     // echo ruok | nc zookeeper 2181
-    val (host, port) = EndPoint(zk.remoteHost).unapply()
+    val (host, port) = EndPoint(zk.connectionString).unapply()
     ("echo ruok" #> s"nc $host $port").!!
   }
 
@@ -274,7 +274,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
     import scala.sys.process._
 
     // echo stat | nc zookeeper 2181
-    val (host, port) = EndPoint(zk.remoteHost).unapply()
+    val (host, port) = EndPoint(zk.connectionString).unapply()
     ("echo stat" #> s"nc $host $port").!!
   }
 

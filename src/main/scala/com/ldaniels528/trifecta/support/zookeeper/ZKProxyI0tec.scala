@@ -2,8 +2,8 @@ package com.ldaniels528.trifecta.support.zookeeper
 
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy.Implicits._
 import org.I0Itec.zkclient.ZkClient
-import org.apache.zookeeper.CreateMode
 import org.apache.zookeeper.CreateMode._
+import org.apache.zookeeper.{CreateMode, OpResult}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
@@ -11,10 +11,10 @@ import scala.language.implicitConversions
 import scala.util.Try
 
 /**
- * ZooKeeper Proxy (Version 2.0)
+ * ZooKeeper Proxy (I0Itec client)
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class ZKProxyV2(connectionString: String) extends ZKProxy {
+case class ZKProxyI0tec(connectionString: String) extends ZKProxy {
   private val logger = LoggerFactory.getLogger(getClass)
   private val NO_DATA = new Array[Byte](0)
 
@@ -49,14 +49,14 @@ case class ZKProxyV2(connectionString: String) extends ZKProxy {
 
   override def readString(path: String): Option[String] = Option(zk.readData[String](path, true))
 
-  override def reconnect() {
+  override def connect() {
     Try(zk.close())
     zk = new ZkClient(connectionString)
   }
 
-  override def update(path: String, data: Array[Byte]): Iterable[String] = {
+  override def update(path: String, data: Array[Byte]): Option[String] = {
     delete(path)
-    create(path -> data)
+    create(path -> data).headOption
   }
 
   override def ensurePath(path: String): List[String] = {
@@ -80,7 +80,5 @@ case class ZKProxyV2(connectionString: String) extends ZKProxy {
     val children = Option(getChildren(path)) getOrElse Seq.empty
     path :: (children flatMap (child => getFamily(zkKeyToPath(path, child)))).toList
   }
-
-  override def remoteHost: String = connectionString
 
 }
