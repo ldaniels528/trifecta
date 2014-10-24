@@ -37,6 +37,7 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
 
 // General Dependencies
 libraryDependencies ++= Seq(
+  "com.101tec" % "zkclient" % "0.4",
   "com.twitter" %% "bijection-core" % "0.7.0",
   "com.twitter" %% "bijection-avro" % "0.7.0",
   "com.typesafe.akka" %% "akka-actor" % "2.3.5",
@@ -69,8 +70,8 @@ libraryDependencies ++= Seq(
 resolvers ++= Seq(
   "Clojars" at "http://clojars.org/repo/",
   "Clojars Project" at "http://clojars.org/org.clojars.pepijndevos/jnativehook",
-  "Clojure-Releases" at "http://build.clojure.org/releases/",
-  "gphat" at "https://raw.github.com/gphat/mvn-repo/master/releases/",
+  "Clojure Releases" at "http://build.clojure.org/releases/",
+  "GPhat" at "https://raw.github.com/gphat/mvn-repo/master/releases/",
   "Java Net" at "http://download.java.net/maven/2/",
   "Maven Central Server" at "http://repo1.maven.org/maven2",
   "Sonatype Repository" at "http://oss.sonatype.org/content/repositories/releases/",
