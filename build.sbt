@@ -44,6 +44,7 @@ libraryDependencies ++= Seq(
   "jline" % "jline" % "2.12",
   "net.liftweb" %% "lift-json" % "2.5.1",
   "org.apache.avro" % "avro" % "1.7.7",
+  "org.apache.curator" % "curator-framework" % "2.6.0",
   "org.apache.httpcomponents" % "httpclient" % "4.3.2",
   "org.apache.httpcomponents" % "httpcore" % "4.3.2",
   "org.apache.kafka" %% "kafka" % "0.8.1.1"
