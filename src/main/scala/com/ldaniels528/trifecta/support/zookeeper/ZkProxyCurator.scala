@@ -3,8 +3,8 @@ package com.ldaniels528.trifecta.support.zookeeper
 import org.apache.curator.RetryPolicy
 import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
 import org.apache.curator.retry.ExponentialBackoffRetry
+import org.apache.zookeeper.CreateMode
 import org.apache.zookeeper.CreateMode._
-import org.apache.zookeeper.{CreateMode, OpResult}
 
 import scala.collection.JavaConversions._
 
@@ -53,7 +53,7 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
   }
 
   override def exists(path: String): Boolean = {
-    Option(client.checkExists().forPath(path)) exists(_.getCtime > 0)
+    Option(client.checkExists().forPath(path)) exists (_.getCtime > 0)
   }
 
   override def ensurePath(path: String): List[String] = {
@@ -69,14 +69,14 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
   }
 
   override def getCreationTime(path: String): Option[Long] = {
-    Option(client.checkExists().forPath(path)) map(_.getCtime)
+    Option(client.checkExists().forPath(path)) map (_.getCtime)
   }
 
   override def getFamily(path: String): List[String] = {
 
     def zkKeyToPath(parent: String, child: String): String = (if (parent.endsWith("/")) parent else parent + "/") + child
 
-    val children = Option(getChildren(path)) getOrElse Seq.empty
+    val children = Option(getChildren(path)) getOrElse Nil
     path :: (children flatMap (child => getFamily(zkKeyToPath(path, child)))).toList
   }
 
@@ -87,7 +87,7 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
   }
 
   override def update(path: String, bytes: Array[Byte]): Option[String] = {
-    Option(client.checkExists().forPath(path)) map {  stat =>
+    Option(client.checkExists().forPath(path)) map { stat =>
       client.delete().forPath(path)
       client.create().forPath(path, bytes)
     }
