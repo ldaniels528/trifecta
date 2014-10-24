@@ -1,6 +1,5 @@
 package com.ldaniels528.trifecta.modules.zookeeper
 
-import java.io.PrintStream
 import java.util.Date
 
 import com.ldaniels528.trifecta.command.CommandParser._
@@ -8,6 +7,7 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.io.InputSource
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.support.zookeeper.ZkSupportHelper._
 import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
@@ -22,17 +22,17 @@ import scala.util.Try
  */
 class ZookeeperModule(config: TxConfig) extends Module {
   private var zkProxy_? : Option[ZKProxy] = None
-  private val out: PrintStream = config.out
 
   override def getCommands(implicit rt: TxRuntimeContext) = Seq(
     Command(this, "zcd", chdir, UnixLikeParams(Seq("key" -> true)), help = "Changes the current path/directory in ZooKeeper"),
     Command(this, "zconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to Zookeeper"),
+    Command(this, "zdel", delete, UnixLikeParams(Seq("key" -> true)), "Deletes a key-value from ZooKeeper (DESTRUCTIVE)"),
+    Command(this, "zdelall", deleteRecursively, UnixLikeParams(Seq("key" -> true)), "Recursively deletes all children for a given key in ZooKeeper (DESTRUCTIVE)"),
     Command(this, "zexists", pathExists, UnixLikeParams(Seq("key" -> true)), "Verifies the existence of a ZooKeeper key"),
     Command(this, "zget", getData, UnixLikeParams(Seq("key" -> true), Seq("-f" -> "format")), "Retrieves the contents of a specific Zookeeper key"),
     Command(this, "zls", listKeys, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the child nodes for a key from ZooKeeper"),
     Command(this, "zmk", mkdir, UnixLikeParams(Seq("key" -> true)), "Creates a new ZooKeeper sub-directory (key)"),
     Command(this, "zput", publishMessage, UnixLikeParams(Seq("key" -> true, "value" -> true), Seq("-t" -> "type")), "Sets a key-value pair in ZooKeeper"),
-    Command(this, "zrm", delete, UnixLikeParams(Seq("key" -> true), flags = Seq("-r" -> "recursive")), "Removes a key-value from ZooKeeper (DESTRUCTIVE)"),
     Command(this, "zruok", ruok, UnixLikeParams(), help = "Checks the status of a Zookeeper instance (requires netcat)"),
     Command(this, "zstats", stats, UnixLikeParams(), help = "Returns the statistics of a Zookeeper instance (requires netcat)"),
     Command(this, "ztree", tree, UnixLikeParams(Seq("path" -> false)), help = "Retrieves Zookeeper directory structure"))
@@ -112,7 +112,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
             val aPath = a.init.mkString("/")
             if (aPath.trim.isEmpty) "/" else aPath
         }
-      case path => zkKeyToPath(path)
+      case path => zkExpandKeyToPath(path)
     }
 
     // if argument was a dot (.) return the current path
@@ -147,30 +147,29 @@ class ZookeeperModule(config: TxConfig) extends Module {
   }
 
   /**
-   * "zrm" - Removes a key-value from ZooKeeper
-   * @example zrm /consumer/GRP000a2ce
-   * @example zrm -r /consumer/GRP000a2ce
+   * Deletes a key-value pair in ZooKeeper
+   * @example zdel /consumer/GRP000a2ce
    */
-  def delete(params: UnixLikeArgs) {
-    (params("-r") ?? params.args.headOption) map zkKeyToPath foreach { path =>
-      // recursive delete?
-      if (params.contains("-r")) deleteRecursively(path) else zk.delete(path)
+  def delete(params: UnixLikeArgs): Boolean = {
+    params.args match {
+      case List(path) => zk.delete(zkExpandKeyToPath(path, zkCwd))
+      case _ => dieSyntax(params)
     }
   }
 
   /**
-   * Performs a recursive delete
-   * @param path the path to delete
+   * Recursively deletes all children for a given key in ZooKeeper
+   * @example zdelr /test
    */
-  private def deleteRecursively(path: String) {
-    zk.getChildren(path) foreach (subPath => deleteRecursively(zkKeyToPath(path, subPath)))
-
-    out.println(s"Deleting '$path'...")
-    zk.delete(path)
+  def deleteRecursively(params: UnixLikeArgs): Boolean = {
+    params.args match {
+      case List(path) => zk.deleteRecursive(zkExpandKeyToPath(path, zkCwd))
+      case _ => dieSyntax(params)
+    }
   }
 
   /**
-   * "zget" - Dumps the contents of a specific Zookeeper key to the console
+   * Dumps the contents of a specific Zookeeper key to the console
    * @example zget /storm/workerbeats/my-test-topology-17-1407973634
    * @example zget /storm/workerbeats/my-test-topology-17-1407973634 -t json
    */
@@ -178,7 +177,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
     // get the key
     params.args.headOption flatMap { key =>
       // convert the key to a fully-qualified path
-      val path = zkKeyToPath(key)
+      val path = zkExpandKeyToPath(key)
 
       // retrieve (or guess) the value's format
       val valueType = params("-f") getOrElse "bytes"
@@ -194,7 +193,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
    */
   def listKeys(params: UnixLikeArgs): Seq[ZkItem] = {
     // get the argument
-    val path = params.args.headOption map zkKeyToPath getOrElse zkCwd
+    val path = params.args.headOption map (zkExpandKeyToPath(_, zkCwd)) getOrElse zkCwd
 
     // perform the action
     zk.getChildren(path, watch = false) map { subPath =>
@@ -209,32 +208,22 @@ class ZookeeperModule(config: TxConfig) extends Module {
    * @example zmk /path/to/data
    */
   def mkdir(params: UnixLikeArgs): List[String] = {
-    params.args.headOption map (key => zk.ensurePath(zkKeyToPath(key))) getOrElse Nil
+    params.args.headOption map (key => zk.ensurePath(zkExpandKeyToPath(key))) getOrElse Nil
   }
 
   /**
    * "zexists" - Returns the status of a Zookeeper key if it exists
    * @example zexists /path/to/data
    */
-  def pathExists(params: UnixLikeArgs): Seq[String] = {
+  def pathExists(params: UnixLikeArgs): Boolean = {
     // get the argument
-    params.args.headOption map { key =>
+    params.args.headOption.exists { key =>
       // convert the key to a fully-qualified path
-      val path = zkKeyToPath(key)
+      val path = zkExpandKeyToPath(key)
 
       // perform the action
-      zk.exists_?(path) match {
-        case Some(stat) =>
-          Seq(
-            s"Aversion: ${stat.getAversion}",
-            s"version: ${stat.getVersion}",
-            s"data length: ${stat.getDataLength}",
-            s"children: ${stat.getNumChildren}",
-            s"change time: ${new Date(stat.getCtime)}")
-        case None =>
-          Nil
-      }
-    } getOrElse Nil
+      zk.exists(path)
+    }
   }
 
   /**
@@ -249,7 +238,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
     params.args match {
       case key :: value :: Nil =>
         // convert the key to a fully-qualified path
-        val path = zkKeyToPath(key)
+        val path = zkExpandKeyToPath(key)
 
         // retrieve (or guess) the value's type
         val valueType = params("-t") getOrElse guessValueType(value)
@@ -301,7 +290,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
     }
 
     // get the optional path argument
-    val path = params.args.headOption map zkKeyToPath getOrElse zkCwd
+    val path = params.args.headOption map (zkExpandKeyToPath(_, zkCwd)) getOrElse zkCwd
 
     // perform the action
     val paths = unwind(path)
@@ -320,18 +309,6 @@ class ZookeeperModule(config: TxConfig) extends Module {
       case s if isDottedHex(s) => "bytes"
       case _ => "string"
     }
-  }
-
-  private def zkKeyToPath(key: String): String = {
-    key match {
-      case s if s.startsWith("/") => key
-      case s => (if (zkCwd.endsWith("/")) zkCwd else zkCwd + "/") + s
-    }
-  }
-
-  private def zkKeyToPath(parent: String, child: String): String = {
-    val parentWithSlash = if (parent.endsWith("/")) parent else parent + "/"
-    parentWithSlash + child
   }
 
   /**

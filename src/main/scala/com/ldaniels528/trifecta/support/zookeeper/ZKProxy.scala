@@ -1,7 +1,5 @@
 package com.ldaniels528.trifecta.support.zookeeper
 
-import org.apache.zookeeper.data.Stat
-
 import scala.language.implicitConversions
 
 /**
@@ -22,11 +20,11 @@ trait ZKProxy {
 
   def ensureParents(path: String): List[String]
 
-  def delete(path: String): Unit
+  def delete(path: String): Boolean
+
+  def deleteRecursive(path: String): Boolean
 
   def exists(path: String): Boolean
-
-  def exists_?(path: String, watch: Boolean = false): Option[Stat]
 
   def getChildren(path: String, watch: Boolean = false): Seq[String]
 
@@ -36,12 +34,6 @@ trait ZKProxy {
 
   def read(path: String): Option[Array[Byte]]
 
-  def readDouble(path: String): Option[Double]
-
-  def readInt(path: String): Option[Int]
-
-  def readLong(path: String): Option[Long]
-
   def readString(path: String): Option[String]
 
   def reconnect(): Unit
@@ -49,8 +41,6 @@ trait ZKProxy {
   def remoteHost: String
 
   def update(path: String, data: Array[Byte]): Iterable[String]
-
-  def updateLong(path: String, value: Long): Iterable[String]
 
 }
 
@@ -60,9 +50,9 @@ trait ZKProxy {
  */
 object ZKProxy {
 
-  def apply(connectionString: String): ZKProxyV1 = new ZKProxyV1(connectionString, None)
+  def apply(connectionString: String): ZKProxyV1 = new ZKProxyV1(connectionString)
 
-  def apply(connectionString: String, callback: Option[ZkProxyCallBack]): ZKProxyV1 = new ZKProxyV1(connectionString, callback)
+  //def apply(connectionString: String, callback: Option[ZkProxyCallBack]): ZKProxyV1 = new ZKProxyV1(connectionString, callback)
 
   /**
    * All implicit definitions are declared here

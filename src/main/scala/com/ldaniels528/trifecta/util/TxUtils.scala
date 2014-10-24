@@ -129,6 +129,11 @@ object TxUtils {
     def asOpt[T](key: String): Option[T] = {
       Option(props.get(key)) map (_.asInstanceOf[T])
     }
+
+    def getOrElse(key: String, default: => String): String = {
+      Option(props.getProperty(key)).getOrElse(default)
+    }
+
   }
 
   /**

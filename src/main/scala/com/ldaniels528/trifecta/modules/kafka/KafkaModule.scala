@@ -16,7 +16,6 @@ import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
 import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
-import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
 import com.ldaniels528.trifecta.vscript.Variable
@@ -786,7 +785,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     zkProxy_? match {
       case Some(zk) => zk
       case None =>
-        val zk = ZKProxy(config.zooKeeperConnect)
+        val zk = ZKProxy(config.kafkaZkConnect)
         zkProxy_? = Option(zk)
         zk
     }
