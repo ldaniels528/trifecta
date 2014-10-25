@@ -7,6 +7,7 @@ import com.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.ldaniels528.trifecta.support.cassandra.{Casserole, CasseroleSession}
 import com.ldaniels528.trifecta.support.io.InputSource
 import com.ldaniels528.trifecta.util.EndPoint
+import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
