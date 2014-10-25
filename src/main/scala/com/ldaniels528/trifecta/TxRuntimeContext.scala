@@ -6,6 +6,7 @@ import com.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.ldaniels528.trifecta.modules.core.CoreModule
 import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule
 import com.ldaniels528.trifecta.modules.kafka.KafkaModule
+import com.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
@@ -35,6 +36,7 @@ case class TxRuntimeContext(config: TxConfig) {
     new CoreModule(config),
     new ElasticSearchModule(config),
     new KafkaModule(config),
+    new MongoModule(config),
     new StormModule(config),
     new ZookeeperModule(config))
 
@@ -72,12 +74,26 @@ case class TxRuntimeContext(config: TxConfig) {
   }
 
   def interpret(input: String): Try[Any] = {
-    if (input.startsWith("#")) interpretVScript(input.tail) else interpretCommandLine(input)
+    input match {
+      case s if s.startsWith("`") && s.endsWith("`") => executeCommand(s.drop(1).dropRight(1))
+      case s if s.startsWith("#") => interpretVScript(input.tail)
+      case s => interpretCommandLine(s)
+    }
   }
 
   def shutdown(): Unit = moduleManager.shutdown()
 
   private def die[S](message: String): S = throw new IllegalArgumentException(message)
+
+  /**
+   * Executes a local system command
+   * @example `ps -ef`
+   */
+  private def executeCommand(command: String): Try[String] = {
+    import scala.sys.process._
+
+    Try(command.!!)
+  }
 
   /**
    * Interprets command line input

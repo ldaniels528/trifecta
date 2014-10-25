@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.modules.core
 
+import com.ldaniels528.trifecta.util.ParsingHelper._
 import java.io.{File, PrintStream}
 import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicLong
@@ -38,7 +39,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
   private val NET_STAT_r = "^\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
 
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
-    Command(this, "$", executeCommand, UnboundedParams(1), help = "Executes a local system command"),
     Command(this, "!", executeHistory, UnixLikeParams(Seq("!" -> false, "?" -> false, "index|count" -> false), Nil), help = "Executes a previously issued command"),
     Command(this, "?", help, UnixLikeParams(Seq("search-term" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, UnixLikeParams(Seq("state" -> false)), help = "Automatically switches to the module of the most recently executed command"),
@@ -319,16 +319,6 @@ class CoreModule(config: TxConfig) extends Module with AvroReading {
 
     // return either the byte array or the decoded value
     bytes map (decodeValue(_, valueType))
-  }
-
-  /**
-   * Executes a local system command
-   * @example $ps -ef
-   */
-  def executeCommand(params: UnixLikeArgs): String = {
-    import scala.sys.process._
-
-    (params.args mkString " ").!!
   }
 
   /**

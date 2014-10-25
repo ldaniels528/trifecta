@@ -152,37 +152,6 @@ trait Module extends AvroReading {
     params("-o") flatMap rt.getOutputHandler
   }
 
-  protected def parseDelta(label: String, value: String): Int = {
-    value.head match {
-      case '+' => parseInt(label, value.tail)
-      case _ => parseInt(label, value)
-    }
-  }
-
-  protected def parseDouble(label: String, value: String): Double = {
-    Try(value.toDouble) match {
-      case Success(v) => v
-      case Failure(e) =>
-        throw new IllegalArgumentException(s"$label: Expected an decimal value, found '$value'")
-    }
-  }
-
-  protected def parseInt(label: String, value: String): Int = {
-    Try(value.toInt) match {
-      case Success(v) => v
-      case Failure(e) =>
-        throw new IllegalArgumentException(s"$label: Expected an integer value, found '$value'")
-    }
-  }
-
-  protected def parseLong(label: String, value: String): Long = {
-    Try(value.toLong) match {
-      case Success(v) => v
-      case Failure(e) =>
-        throw new IllegalArgumentException(s"$label: Expected an long integer value, found '$value'")
-    }
-  }
-
   /**
    * Executes a Java application via its "main" method
    * @param className the name of the class to invoke

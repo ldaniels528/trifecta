@@ -22,9 +22,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @param index the given index
    * @return the [[Response]]
    */
-  def closeIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = {
-    POST(s"$index/_close")
-  }
+  def closeIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = POST(s"$index/_close")
 
   /**
    * Counts all documents within a given index of a give type
@@ -59,9 +57,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the JSON results
    * @example PUT /quotes
    */
-  def createIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = {
-    PUT(s"$index")
-  }
+  def createIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = PUT(index)
 
   /**
    * Creates a new index
@@ -93,9 +89,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @return the JSON result
    * @example DELETE /twitter/
    */
-  def deleteIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = {
-    DELETE(index)
-  }
+  def deleteIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = DELETE(index)
 
   /**
    * Returns the connected end-point
@@ -150,9 +144,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @param index the given index
    * @return {"quotes":{"settings":{"index":{"uuid":"_6Xom8GoTJymn6qvA2UO_w","number_of_replicas":"1","number_of_shards":"1","version":{"created":"1030299"}}}}}
    */
-  def getSettings(index: String)(implicit ec: ExecutionContext): Future[Response] = {
-    GET(s"$index/_settings")
-  }
+  def getSettings(index: String)(implicit ec: ExecutionContext): Future[Response] = GET(s"$index/_settings")
 
   /**
    * Returns the cluster's health information
@@ -180,18 +172,14 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @param index the given index
    * @return the [[Response]]
    */
-  def openIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = {
-    POST(s"$index/_open")
-  }
+  def openIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = POST(s"$index/_open")
 
   /**
    * Optimizes an index
    * @param index the given index
    * @return the [[Response]]
    */
-  def optimizeIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = {
-    POST(s"$index/_optimize")
-  }
+  def optimizeIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = POST(s"$index/_optimize")
 
   /**
    * Performs a search
@@ -221,9 +209,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @param index the given index
    * @return the [[Response]]
    */
-  def statusIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = {
-    GET(s"$index/_status")
-  }
+  def statusIndex(index: String)(implicit ec: ExecutionContext): Future[Response] = GET(s"$index/_status")
 
   /**
    * Updates the settings for the given index

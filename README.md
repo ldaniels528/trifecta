@@ -13,6 +13,7 @@ Table of Contents
 	* <a href="#configuring-your-ide">Configuring the project for your IDE</a>
 	* <a href="#building-the-code">Building the code</a>
 	* <a href="#testing-the-code">Running the tests</a>	
+	* <a href="#configuring-the-app">Configuring the application</a>
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#cassandra">Cassandra Module</a>
@@ -27,6 +28,7 @@ Table of Contents
         * <a href="#kafka-avro-module">Avro Integration</a>
         * <a href="#kafka-search-by-key">Searching By Key</a>
         * <a href="#kafka-advanced-search">Advanced Search</a>
+    * <a href="#mongodb-module">MongoDB Module</a>  
     * <a href="#storm-module">Storm Module</a>     
     * <a href="#zookeeper-module">Zookeeper Module</a>
         * <a href="#zookeeper-list">Navigating directories and keys</a>    
@@ -94,10 +96,46 @@ risk! To retrieve a list of these _undocumented_ commands, use the `undoc` comma
 
     $ sbt clean test    
 
+<a name="configuring-the-app"></a>
+### Configuring the application
+
+On startup, Trifecta reads $HOME/.trifecta/config.properties (or creates the file if it doesn't exist). This file 
+contains the configuration properties and connection strings for all supported systems.
+
+    # common properties
+    trifecta.autoSwitching = true
+    trifecta.columns = 25
+    trifecta.debugOn = true
+    trifecta.encoding = UTF-8
+    
+    # Zookeeper properties
+    trifecta.zookeeper.host = localhost:2181
+    
+    # Kafka properties
+    trifecta.kafka.zookeeper.host = localhost:2181
+    
+    # Cassandra properties
+    trifecta.cassandra.hosts = localhost
+    
+    # ElasticSearch properties
+    trifecta.elasticsearch.hosts = localhost:9200
+    
+    # MongoDB properties
+    trifecta.mongodb.hosts = localhost
+    
+    # Storm properties
+    trifecta.storm.hosts = localhost
+
 <a name="Running-the-app"></a> 
 ### Run the application
 
-	$ java -jar trifecta.jar <zookeeperHost>
+To start the _Trifecta_ REPL:
+
+	$ java -jar trifecta.jar
+	
+Optionally, you can execute _Trifecta_ instructions (commands) right from the command line:
+	
+	$ java -jar trifecta.jar kls -l
 
 <a name="usage"></a>
 ### Usage Examples	
@@ -115,9 +153,9 @@ _Trifecta_ exposes its commands through modules. At any time to see which module
     | storm          com.ldaniels528.trifecta.modules.storm.StormModule                  true    false    |
     + --------------------------------------------------------------------------------------------------- +
 
-To execute local system commands, use the `$` symbol followed by the command you'd like to execute:
+To execute local system commands, enclose the command you'd like to execute using the back-ticks (`) symbol:
     
-    core:/home/ldaniels> $ "netstat -ptln"
+    core:/home/ldaniels> `netstat -ptln`
     
 To see all available commands, use the `help` command (`?` is a shortcut):
 
@@ -134,8 +172,6 @@ To see all available commands, use the `help` command (`?` is a shortcut):
     .                                                                                                                        .                                          
     | ztree       zookeeper  Retrieves Zookeeper directory structure                                                         |
     + ---------------------------------------------------------------------------------------------------------------------- +
-
-**NOTE**: Although the commands are shown in lowercase, they are case insensitive.
 
 To see the syntax/usage of a command, use the `syntax` command:
 
@@ -819,23 +855,65 @@ Let's see how these statistics compares to the original:
     | Shocktrade.quotes.avro       4          0            4431       4431                |
     + ----------------------------------------------------------------------------------- +   
             
+<a name="mongodb-module"></a>            
+#### MongoDB Module
+            
+Let's start by connecting to a MongoDB instance:
+
+    mongo:mongodb$> mconnect dev601
+    
+Next, let's choose a database to work in:
+         
+    mongo:mongodb$> use shocktrade
+    
+    
+Finally, let's retrieve a document. In this example, we'll retrieve a stock quote for Apple Inc. (ticker: AAPL)    
+
+    mongo:mongodb$> mget Stocks { "symbol" : "AAPL" }
+    {
+      "_id":{
+        "$oid":"51002b2d84aebf0342cfb659"
+      },
+      "EBITDA":5.913E10,
+      "active":true,
+      "ask":98.77,
+      "askSize":null,
+      "assetClass":"Equity",
+      "assetType":"Common Stock",
+      "avgVolume":null,
+      "avgVolume10Day":59306900,
+      "avgVolume3Month":54995300,
+      "baseSymbol":null,
+      "beta":1.03,
+      "bid":98.76,
+      "bidSize":null,
+      "bookValuePerShare":20.19,
+      "businessSummary":"\n    Apple Inc. designs, manufactures, and markets personal computers and related personal computing and mobile communication devices along with a variety of related software, services, peripherals, and networking solutions. The Company sells its products worldwide through its online stores, its retail stores, its direct sales force, third-party wholesalers, and resellers.\n  ",
+      "change":-0.42,
+      "change52Week":44.37,
+      "change52WeekHigh":null,
+      "change52WeekLow":null,
+      "change52WeekSNP500":16.41,
+      "changePct":-0.42,
+      "cikNumber":320193,
+      "close":98.76
+    }
+     
+To view all of the MongoDB commands, use the `-m` switch and the module name (`mongodb` in this case):     
+     
+    mongo:mongodb$> ? -m mongodb
+    + ------------------------------------------------------------------ +
+    | command   module   description                                     |
+    + ------------------------------------------------------------------ +
+    | mconnect  mongodb  Establishes a connection to a MongoDB cluster   |
+    | mfindone  mongodb  Retrieves a document from MongoDB               |
+    | mget      mongodb  Retrieves a document from MongoDB               |
+    | mput      mongodb  Inserts a document into MongoDB                 |
+    | use       mongodb  Sets the current MongoDB database               |
+    + ------------------------------------------------------------------ +            
+                            
 <a name="storm-module"></a>
 #### Storm Module
-
-To view all of the Storm commands, use the `-m` switch and the module name (`storm` in this case):
-
-    storm:localhost> ? -m storm
-     + -------------------------------------------------------------------------------------- +
-     | command   module  description                                                          |
-     + -------------------------------------------------------------------------------------- +
-     | sbolts    storm   Retrieves the list of bolts for s given topology by ID               |
-     | sconf     storm   Lists, retrieves or sets the configuration keys                      |
-     | sconnect  storm   Establishes (or re-establishes) a connect to the Storm Nimbus Host   |
-     | sget      storm   Retrieves the information for a topology                             |
-     | skill     storm   Kills a running topology                                             |
-     | sls       storm   Lists available topologies                                           |
-     | spouts    storm   Retrieves the list of spouts for a given topology by ID              |
-     + -------------------------------------------------------------------------------------- +
 
 Let's view the currently running topologies:
 
@@ -898,27 +976,23 @@ Finally, let's take a look at the connection properties for this session:
     | zmq.threads                                    1                                                           |
     + ---------------------------------------------------------------------------------------------------------- +
 
+To view all of the Storm commands, use the `-m` switch and the module name (`storm` in this case):
+
+    storm:localhost> ? -m storm
+     + -------------------------------------------------------------------------------------- +
+     | command   module  description                                                          |
+     + -------------------------------------------------------------------------------------- +
+     | sbolts    storm   Retrieves the list of bolts for s given topology by ID               |
+     | sconf     storm   Lists, retrieves or sets the configuration keys                      |
+     | sconnect  storm   Establishes (or re-establishes) a connect to the Storm Nimbus Host   |
+     | sget      storm   Retrieves the information for a topology                             |
+     | skill     storm   Kills a running topology                                             |
+     | sls       storm   Lists available topologies                                           |
+     | spouts    storm   Retrieves the list of spouts for a given topology by ID              |
+     + -------------------------------------------------------------------------------------- +
+
 <a name="zookeeper-module"></a>
 #### Zookeeper Module
-
-To view all of the Zookeeper commands, use the `-m` switch and the module name (`zookeeper` in this case):
-
-    zookeeper:localhost:2181/> ? -m zookeeper
-    + ----------------------------------------------------------------------------------------- +
-    | command     module     description                                                        |
-    + ----------------------------------------------------------------------------------------- +
-    | zcd         zookeeper  Changes the current path/directory in ZooKeeper                    |
-    | zexists     zookeeper  Verifies the existence of a ZooKeeper key                          |
-    | zget        zookeeper  Retrieves the contents of a specific Zookeeper key                 |
-    | zls         zookeeper  Retrieves the child nodes for a key from ZooKeeper                 |
-    | zmk         zookeeper  Creates a new ZooKeeper sub-directory (key)                        |
-    | zput        zookeeper  Sets a key-value pair in ZooKeeper                                 |
-    | zreconnect  zookeeper  Re-establishes the connection to Zookeeper                         |
-    | zrm         zookeeper  Removes a key-value from ZooKeeper (DESTRUCTIVE)                   |
-    | zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)        |
-    | zstats      zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)   |
-    | ztree       zookeeper  Retrieves Zookeeper directory structure                            |
-    + ----------------------------------------------------------------------------------------- +
 
 <a name="zookeeper-list"></a>    
 ##### Zookeeper: Navigating directories and keys 
@@ -1028,3 +1102,22 @@ To verify that all of the key-value pairs were inserted we use the `zls` command
     data
     message
     data2
+
+To view all of the Zookeeper commands, use the `-m` switch and the module name (`zookeeper` in this case):
+
+    zookeeper:localhost:2181/> ? -m zookeeper
+    + ----------------------------------------------------------------------------------------- +
+    | command     module     description                                                        |
+    + ----------------------------------------------------------------------------------------- +
+    | zcd         zookeeper  Changes the current path/directory in ZooKeeper                    |
+    | zexists     zookeeper  Verifies the existence of a ZooKeeper key                          |
+    | zget        zookeeper  Retrieves the contents of a specific Zookeeper key                 |
+    | zls         zookeeper  Retrieves the child nodes for a key from ZooKeeper                 |
+    | zmk         zookeeper  Creates a new ZooKeeper sub-directory (key)                        |
+    | zput        zookeeper  Sets a key-value pair in ZooKeeper                                 |
+    | zreconnect  zookeeper  Re-establishes the connection to Zookeeper                         |
+    | zrm         zookeeper  Removes a key-value from ZooKeeper (DESTRUCTIVE)                   |
+    | zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)        |
+    | zstats      zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)   |
+    | ztree       zookeeper  Retrieves Zookeeper directory structure                            |
+    + ----------------------------------------------------------------------------------------- +
