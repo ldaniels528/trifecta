@@ -151,9 +151,9 @@ _Trifecta_ exposes its commands through modules. At any time to see which module
     | storm          com.ldaniels528.trifecta.modules.storm.StormModule                  true    false    |
     + --------------------------------------------------------------------------------------------------- +
 
-To execute local system commands, use the `$` symbol followed by the command you'd like to execute:
+To execute local system commands, enclose the command you'd like to execute using the back-ticks (`) symbol:
     
-    core:/home/ldaniels> $ "netstat -ptln"
+    core:/home/ldaniels> `netstat -ptln`
     
 To see all available commands, use the `help` command (`?` is a shortcut):
 

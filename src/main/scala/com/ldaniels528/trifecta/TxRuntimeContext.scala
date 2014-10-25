@@ -72,12 +72,26 @@ case class TxRuntimeContext(config: TxConfig) {
   }
 
   def interpret(input: String): Try[Any] = {
-    if (input.startsWith("#")) interpretVScript(input.tail) else interpretCommandLine(input)
+    input match {
+      case s if s.startsWith("`") && s.endsWith("`") => executeCommand(s.drop(1).dropRight(1))
+      case s if s.startsWith("#") => interpretVScript(input.tail)
+      case s => interpretCommandLine(s)
+    }
   }
 
   def shutdown(): Unit = moduleManager.shutdown()
 
   private def die[S](message: String): S = throw new IllegalArgumentException(message)
+
+  /**
+   * Executes a local system command
+   * @example `ps -ef`
+   */
+  private def executeCommand(command: String): Try[String] = {
+    import scala.sys.process._
+
+    Try(command.!!)
+  }
 
   /**
    * Interprets command line input

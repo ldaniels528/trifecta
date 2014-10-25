@@ -14,11 +14,28 @@ object CommandParser {
   def parseTokens(input: String): Seq[String] = {
     val sb = new StringBuilder()
     var inQuotes = false
+    var inBackTicks = false
     var jsonLevel = 0
 
     // extract the tokens
     val list = input.foldLeft[List[String]](Nil) { (list, ch) =>
       val result: Option[String] = ch match {
+        // back ticks (start)
+        case c if c == '`' && !inQuotes =>
+          inBackTicks = !inBackTicks
+          sb += c
+          if(!inBackTicks) {
+            val s = sb.toString()
+            sb.clear()
+            Option(s)
+          }
+          else None
+
+        // back ticks (inclusion)
+        case c if inBackTicks =>
+          sb += c
+          None
+
         // JSON open
         case c if c == '{' && !inQuotes =>
           sb += c
