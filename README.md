@@ -172,8 +172,6 @@ To see all available commands, use the `help` command (`?` is a shortcut):
     | ztree       zookeeper  Retrieves Zookeeper directory structure                                                         |
     + ---------------------------------------------------------------------------------------------------------------------- +
 
-**NOTE**: Although the commands are shown in lowercase, they are case insensitive.
-
 To see the syntax/usage of a command, use the `syntax` command:
 
     core:/home/ldaniels> syntax kget
