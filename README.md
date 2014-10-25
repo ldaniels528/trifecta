@@ -116,7 +116,7 @@ contains the configuration properties and connection strings for all supported s
     trifecta.cassandra.hosts = localhost
     
     # ElasticSearch properties
-    trifecta.elasticsearch.hosts = localhost
+    trifecta.elasticsearch.hosts = localhost:9200
     
     # Storm properties
     trifecta.storm.hosts = localhost
