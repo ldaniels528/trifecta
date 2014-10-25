@@ -43,6 +43,8 @@ object EndPoint {
     }
   }
 
+  def parseList(hosts: String): Seq[EndPoint] = hosts.split("[,]") map (EndPoint(_))
+
   def unapply(e: EndPoint) = (e.host, e.port)
 
   /**
