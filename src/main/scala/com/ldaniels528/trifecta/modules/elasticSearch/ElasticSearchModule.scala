@@ -9,6 +9,7 @@ import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule._
 import com.ldaniels528.trifecta.support.elasticsearch.TxElasticSearchClient
 import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.support.messaging.MessageCursor
+import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
@@ -406,7 +407,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   private def getConfigHostAndPort: (String, Int) = {
     config.configProps.getProperty("trifecta.elasticsearch.hosts", "localhost:9200").split("[:]").toList match {
-      case host :: port :: Nil => (host, parseInt("port", port))
+      case host :: port :: Nil => (host, parsePort(port))
       case host :: Nil => (host, 9200)
       case _ => ("localhost", 9200)
     }
@@ -414,8 +415,8 @@ class ElasticSearchModule(config: TxConfig) extends Module {
 
   private def getHostAndPort(params: UnixLikeArgs): (String, Int) = {
     params.args match {
-      case aHost :: aPort :: Nil => (aHost, parseInt("port", aPort))
-      case aHost :: Nil => (aHost, 9200)
+      case host :: port :: Nil => (host, parsePort(port))
+      case host :: Nil => (host, 9200)
       case Nil => getConfigHostAndPort
       case _ => dieSyntax(params)
     }

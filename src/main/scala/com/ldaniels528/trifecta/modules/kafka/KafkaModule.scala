@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.modules.kafka
 
+import com.ldaniels528.trifecta.util.ParsingHelper._
 import java.io.PrintStream
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -772,10 +773,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
     conditions
   }
-
-  private def parsePartition(partition: String): Int = parseInt("partition", partition)
-
-  private def parseOffset(offset: String): Long = parseLong("offset", offset)
 
   /**
    * Returns the connected Zookeeper Proxy

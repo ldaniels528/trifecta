@@ -118,6 +118,9 @@ contains the configuration properties and connection strings for all supported s
     # ElasticSearch properties
     trifecta.elasticsearch.hosts = localhost:9200
     
+    # MongoDB properties
+    trifecta.mongodb.hosts = localhost
+    
     # Storm properties
     trifecta.storm.hosts = localhost
 

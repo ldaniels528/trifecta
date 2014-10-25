@@ -4,7 +4,7 @@ package com.ldaniels528.trifecta.util
  * Represents a type-safe remote peer end-point
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait EndPoint extends java.io.Serializable {
+trait EndPoint extends Serializable {
 
   /**
    * Decomposes the end-point into its host and port components
@@ -42,6 +42,8 @@ object EndPoint {
         throw new IllegalStateException(s"Invalid end-point '$pair'; Format 'host:port' expected")
     }
   }
+
+  def parseList(hosts: String): Seq[EndPoint] = hosts.split("[,]") map (EndPoint(_))
 
   def unapply(e: EndPoint) = (e.host, e.port)
 
