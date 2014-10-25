@@ -127,7 +127,13 @@ contains the configuration properties and connection strings for all supported s
 <a name="Running-the-app"></a> 
 ### Run the application
 
-	$ java -jar trifecta.jar <zookeeperHost>
+To start the _Trifecta_ REPL:
+
+	$ java -jar trifecta.jar
+	
+Optionally, you can execute _Trifecta_ instructions (commands) right from the command line:
+	
+	$ java -jar trifecta.jar kls -l
 
 <a name="usage"></a>
 ### Usage Examples	
