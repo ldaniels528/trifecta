@@ -4,7 +4,7 @@ package com.ldaniels528.trifecta.util
  * Represents a type-safe remote peer end-point
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait EndPoint extends java.io.Serializable {
+trait EndPoint extends Serializable {
 
   /**
    * Decomposes the end-point into its host and port components
