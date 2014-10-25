@@ -6,8 +6,9 @@ import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.support.json.TxJsonUtil._
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.mongodb.{TxMongoCluster, TxMongoDB}
+import com.ldaniels528.trifecta.util.BinaryMessaging
+import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.util.{BinaryMessaging, EndPoint}
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.mongodb.WriteResult
@@ -90,16 +91,16 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
    */
   def connect(params: UnixLikeArgs): Unit = {
     // determine the requested end-point
-    val endPoint = params.args match {
-      case Nil => EndPoint(config.zooKeeperConnect)
-      case path :: Nil => EndPoint(path, 27017)
-      case path :: port :: Nil => EndPoint(path, parseInt("port", port))
+    val hosts = params.args match {
+      case Nil => config.configProps.getProperty("trifecta.mongodb.hosts", "localhost:27017")
+      case path :: Nil => s"$path:27017"
+      case path :: port :: Nil => s"$path:${parsePort(port)}"
       case _ => dieSyntax(params)
     }
 
     // connect to the remote peer
-    //cluster_?.foreach(_.close())
-    cluster_? = Option(TxMongoCluster(Seq(endPoint)))
+    cluster_?.foreach(_.close())
+    cluster_? = Option(TxMongoCluster(hosts))
   }
 
   /**
@@ -162,7 +163,16 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
     database_? = Option(cluster.connect(databaseName))
   }
 
-  private def cluster: TxMongoCluster = cluster_? getOrElse die("No MongoDB cluster defined; use 'mconnect <hosts>'")
+  private def cluster: TxMongoCluster = {
+    val myCluster_? : Option[TxMongoCluster] =
+      if (cluster_?.isDefined) cluster_?
+      else {
+        val hosts = config.configProps.getProperty("trifecta.mongodb.hosts", "localhost")
+        Option(TxMongoCluster(hosts))
+      }
+
+    myCluster_? getOrElse die("No MongoDB cluster defined; use 'mconnect <hosts>'")
+  }
 
   private def database: TxMongoDB = database_? getOrElse die("No MongoDB database defined; use 'use <databseName>'")
 
