@@ -13,6 +13,7 @@ Table of Contents
 	* <a href="#configuring-your-ide">Configuring the project for your IDE</a>
 	* <a href="#building-the-code">Building the code</a>
 	* <a href="#testing-the-code">Running the tests</a>	
+	* <a href="#configuring-the-app">Configuring the application</a>
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#elastic-search">Elastic Search Module</a>  
@@ -92,6 +93,33 @@ risk! To retrieve a list of these _undocumented_ commands, use the `undoc` comma
 ### Running the tests
 
     $ sbt clean test    
+
+<a name="configuring-the-app"></a>
+### Configuring the application
+
+On startup, Trifecta reads $HOME/.trifecta/config.properties (or creates the file if it doesn't exist). This file 
+contains the configuration properties and connection strings for all supported systems.
+
+    # common properties
+    trifecta.autoSwitching = true
+    trifecta.columns = 25
+    trifecta.debugOn = true
+    trifecta.encoding = UTF-8
+    
+    # Zookeeper properties
+    trifecta.zookeeper.host = localhost:2181
+    
+    # Kafka properties
+    trifecta.kafka.zookeeper.host = localhost:2181
+    
+    # Cassandra properties
+    trifecta.cassandra.hosts = localhost
+    
+    # ElasticSearch properties
+    trifecta.elasticsearch.hosts = localhost:9200
+    
+    # Storm properties
+    trifecta.storm.hosts = localhost
 
 <a name="Running-the-app"></a> 
 ### Run the application
