@@ -111,12 +111,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
    * @example econnect dev501 9200
    */
   def connect(params: UnixLikeArgs)(implicit ec: ExecutionContext): Option[Future[Seq[NameValuePair]]] = {
-    val (host, port) = params.args match {
-      case aHost :: aPort :: Nil => (aHost, parseInt("port", aPort))
-      case aHost :: Nil => (aHost, 9200)
-      case Nil => ("localhost", 9200)
-      case _ => dieSyntax(params)
-    }
+    val (host, port) = getHostAndPort(params)
 
     // connect to the server, return the health statistics
     out.println(s"Connecting to Elastic Search at '$host:$port'...")
@@ -343,10 +338,9 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   def serverInfo(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Either[JValue, String]] = {
     val host_port = params.args match {
       case Nil => None
-      case host :: Nil => Option((host, 9200))
-      case host :: port :: Nil => Option((host, parseInt("port", port)))
-      case _ => dieSyntax(params)
+      case _ => Option(getHostAndPort(params))
     }
+
     host_port map { case (host, port) =>
       new TxElasticSearchClient(host, port).serverInfo
     } getOrElse {
@@ -366,10 +360,9 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   def serverStatus(params: UnixLikeArgs)(implicit ec: ExecutionContext): Future[Either[JValue, String]] = {
     val host_port = params.args match {
       case Nil => None
-      case host :: Nil => Option((host, 9200))
-      case host :: port :: Nil => Option((host, parseInt("port", port)))
-      case _ => dieSyntax(params)
+      case _ => Option(getHostAndPort(params))
     }
+
     host_port map { case (host, port) =>
       new TxElasticSearchClient(host, port).serverStatus
     } getOrElse {
@@ -403,11 +396,28 @@ class ElasticSearchModule(config: TxConfig) extends Module {
     client_? match {
       case Some(conn) => conn
       case None =>
-        val (host, port) = ("localhost", 9200)
+        val (host, port) = getConfigHostAndPort
         logger.info(s"Connecting to Elastic Search at $host:$port")
         val conn = new TxElasticSearchClient(host, port)
         client_? = Option(conn)
         conn
+    }
+  }
+
+  private def getConfigHostAndPort: (String, Int) = {
+    config.configProps.getProperty("trifecta.elasticsearch.hosts", "localhost:9200").split("[:]").toList match {
+      case host :: port :: Nil => (host, parseInt("port", port))
+      case host :: Nil => (host, 9200)
+      case _ => ("localhost", 9200)
+    }
+  }
+
+  private def getHostAndPort(params: UnixLikeArgs): (String, Int) = {
+    params.args match {
+      case aHost :: aPort :: Nil => (aHost, parseInt("port", aPort))
+      case aHost :: Nil => (aHost, 9200)
+      case Nil => getConfigHostAndPort
+      case _ => dieSyntax(params)
     }
   }
 
