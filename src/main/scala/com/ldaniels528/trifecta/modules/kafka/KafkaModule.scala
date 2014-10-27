@@ -1,12 +1,12 @@
 package com.ldaniels528.trifecta.modules.kafka
 
-import com.ldaniels528.trifecta.util.ParsingHelper._
 import java.io.PrintStream
 import java.text.SimpleDateFormat
 import java.util.Date
 
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.decoders.AvroDecoder
+import com.ldaniels528.trifecta.util.ParsingHelper._
 import kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.io.KeyAndMessage
@@ -369,11 +369,15 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Returns the first message for a given topic
    * @example kfirst
+   * @example kfirst -p 5
    * @example kfirst com.shocktrade.quotes.csv 0
    */
   def getFirstMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     // get the arguments
-    val (topic, partition) = extractTopicAndPartition(params.args)
+    val (topic, partition0) = extractTopicAndPartition(params.args)
+
+    // check for a partition override flag
+    val partition: Int = params("-p") map parsePartition getOrElse partition0
 
     // return the first message for the topic partition
     facade.getFirstOffset(topic, partition) map (getMessage(topic, partition, _, params))
@@ -382,11 +386,15 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Returns the last offset for a given topic
    * @example klast
+   * @example klast -p 5
    * @example klast com.shocktrade.alerts 0
    */
   def getLastMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     // get the arguments
-    val (topic, partition) = extractTopicAndPartition(params.args)
+    val (topic, partition0) = extractTopicAndPartition(params.args)
+
+    // check for a partition override flag
+    val partition: Int = params("-p") map parsePartition getOrElse partition0
 
     // return the last message for the topic partition
     facade.getLastOffset(topic, partition) map (getMessage(topic, partition, _, params))
@@ -400,7 +408,10 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    */
   def getMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Either[Option[GenericRecord], Option[JValue]]] = {
     // get the arguments
-    val (topic, partition, offset) = extractTopicPartitionAndOffset(params.args)
+    val (topic, partition0, offset) = extractTopicPartitionAndOffset(params.args)
+
+    // check for a partition override flag
+    val partition: Int = params("-p") map parsePartition getOrElse partition0
 
     // generate and return the message
     getMessage(topic, partition, offset, params)
@@ -409,15 +420,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   /**
    * Retrieves either a binary or decoded message
    * @param topic the given topic
-   * @param partition0 the given partition
+   * @param partition the given partition
    * @param offset the given offset
    * @param params the given Unix-style argument
    * @return either a binary or decoded message
    */
-  def getMessage(topic: String, partition0: Int, offset: Long, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Either[Option[GenericRecord], Option[JValue]]] = {
-    // check for a partition override flag
-    val partition: Int = params("-p") map parsePartition getOrElse partition0
-
+  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Either[Option[GenericRecord], Option[JValue]]] = {
     // requesting a message from an instance in time?
     val instant: Option[Long] = params("-ts") map {
       case s if s.matches("\\d+") => s.toLong
