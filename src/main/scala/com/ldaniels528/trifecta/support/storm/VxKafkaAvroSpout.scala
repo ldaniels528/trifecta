@@ -10,7 +10,6 @@ import backtype.storm.topology.base.BaseRichSpout
 import backtype.storm.tuple.{Fields, Values}
 import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer
 import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
-import com.ldaniels528.trifecta.util.EndPoint
 import org.apache.avro.Schema
 import org.slf4j.LoggerFactory
 
@@ -22,10 +21,10 @@ import scala.language.postfixOps
  * Verify Kafka-Avro Spout
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class VxKafkaAvroSpout(zkHost: EndPoint, topic: String, parallelism: Int, consumerId: String, outputField: String, schemaString: String)
+class VxKafkaAvroSpout(zookeeperConnect: String, topic: String, parallelism: Int, consumerId: String, outputField: String, schemaString: String)
   extends BaseRichSpout {
   @transient private lazy val logger = LoggerFactory.getLogger(getClass)
-  @transient private lazy val consumer = KafkaMacroConsumer(zkHost, consumerId)
+  @transient private lazy val consumer = KafkaMacroConsumer(zookeeperConnect, consumerId)
   @transient private lazy val queue = new util.LinkedList[StreamedMessage]()
   @transient private lazy val schema = new Schema.Parser().parse(schemaString)
   private var conf: JMap[String, Object] = _
