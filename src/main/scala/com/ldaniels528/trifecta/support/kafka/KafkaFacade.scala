@@ -305,7 +305,15 @@ object KafkaFacade {
 
   case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
 
-  case class KafkaCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, decoder: Option[MessageDecoder[_]]) extends MessageCursor
+  case class KafkaNavigableCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, decoder: Option[MessageDecoder[_]])
+    extends MessageCursor
+
+  case class KafkaWatchCursor(topic: String, groupId: String, consumer: KafkaMacroConsumer, iterator: Iterator[StreamedMessage])
+    extends MessageCursor {
+
+    def close() = consumer.close()
+
+  }
 
   case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
 
