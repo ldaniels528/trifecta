@@ -1,11 +1,10 @@
 package com.ldaniels528.trifecta.support.kafka
 
-import KafkaMacroConsumerTest._
 import akka.actor.{Actor, ActorSystem, Props}
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
+import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumerTest._
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
-import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.TxUtils._
 import kafka.common.TopicAndPartition
 import org.junit.{After, Before, Test}
@@ -20,8 +19,8 @@ import scala.concurrent.duration._
  */
 class KafkaMacroConsumerTest {
   // setup our Zookeeper connection
-  private val zkEndPoint = EndPoint("dev501", 2181)
-  private implicit val zk = ZKProxy("dev:501")
+  private val zkConnect = "dev501:2181"
+  private implicit val zk = ZKProxy(zkConnect)
   private val consumerId = "dev"
   private val parallelism = 4
 
@@ -35,13 +34,13 @@ class KafkaMacroConsumerTest {
     val streamingActor = system.actorOf(Props[StreamingMessageActor], name = "streamingActor")
 
     // start streaming the data
-    val consumer = KafkaMacroConsumer(zkEndPoint, consumerId)
+    val consumer = KafkaMacroConsumer(zkConnect, consumerId)
     consumer.stream("com.shocktrade.quotes.csv", parallelism, streamingActor)
   }
 
   @Test
   def iteratePatternTest(): Unit = {
-    val consumer = KafkaMacroConsumer(zkEndPoint, consumerId)
+    val consumer = KafkaMacroConsumer(zkConnect, consumerId)
     for (message <- consumer.iterate("com.shocktrade.quotes.csv", parallelism = 1)) {
       tabular.transform(Seq(message)) foreach logger.info
     }
@@ -50,7 +49,7 @@ class KafkaMacroConsumerTest {
   @Test
   def observerPatternTest(): Unit = {
     // start streaming the data
-    val consumer = KafkaMacroConsumer(zkEndPoint, consumerId)
+    val consumer = KafkaMacroConsumer(zkConnect, consumerId)
     consumer.observe("com.shocktrade.quotes.csv", parallelism) { message =>
       tabular.transform(Seq(message)) foreach logger.info
     }
