@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
+import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer._
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
 import com.ldaniels528.trifecta.support.messaging.{MessageCursor, MessageDecoder}
@@ -264,7 +265,7 @@ class KafkaFacade(correlationId: Int) {
    */
   def resetConsumerGroup(topic: String, groupId: String)(implicit zk: ZKProxy): Unit = {
     // get the partition range
-    val partitions = KafkaMicroConsumer.getTopicList(brokers, correlationId) filter (_.topic == topic) map (_.partitionId)
+    val partitions = KafkaMicroConsumer.getTopicPartitions(topic)
     if (partitions.isEmpty)
       throw new IllegalStateException(s"No partitions found for topic $topic")
     val (start, end) = (partitions.min, partitions.max)
@@ -272,22 +273,12 @@ class KafkaFacade(correlationId: Int) {
     // reset the consumer group ID for each partition
     (start to end) foreach { partition =>
       new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId = 0) use { consumer =>
-        consumer.commitOffsets(groupId, offset = 0L, "resetting consumer ID")
+        consumer.getFirstOffset foreach { offset =>
+          consumer.commitOffsets(groupId, offset, "resetting consumer ID")
+        }
       }
     }
   }
-
-  protected def die[S](message: String): S = throw new IllegalArgumentException(message)
-
-  private def dieNoCursor[S](): S = die("No topic/partition specified and no cursor exists")
-
-  private def dieNoInputSource[S](): S = die("No input source specified")
-
-  private def dieNoOutputSource[S](): S = die("No output source specified")
-
-  private def dieNoOutputHandler(device: OutputSource) = die(s"Unhandled output device $device")
-
-  private def dieNotMessageComparator[S](): S = die("Decoder does not support logical operations")
 
 }
 
