@@ -71,8 +71,8 @@ class KafkaMacroConsumer(consumerConfig: ConsumerConfig) {
       override def hasNext: Boolean = streams.exists(_.hasNext())
 
       override def next(): StreamedMessage = {
-        (streams.find(_.hasNext()) map { stream =>
-          val mam = stream.next()
+        (streams.find(_.hasNext()) map { consumerIterator =>
+          val mam = consumerIterator.next()
           StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message())
         }).getOrElse(throw new IllegalStateException("Unexpected end of stream"))
       }
