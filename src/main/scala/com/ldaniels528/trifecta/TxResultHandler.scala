@@ -138,3 +138,15 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
   }
 
 }
+
+/**
+ * Trifecta Result Handler Singleton
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+object TxResultHandler {
+
+  case class Ok() {
+    override def toString = "Ok"
+  }
+
+}
