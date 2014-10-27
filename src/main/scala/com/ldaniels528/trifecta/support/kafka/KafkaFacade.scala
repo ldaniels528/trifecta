@@ -2,6 +2,7 @@ package com.ldaniels528.trifecta.support.kafka
 
 import java.util.Date
 import java.util.concurrent.atomic.AtomicLong
+
 import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
@@ -231,6 +232,16 @@ class KafkaFacade(correlationId: Int) {
         }
       }
     }
+  }
+
+  /**
+   * Returns a tuple containing the minimum and maximum partition indices respectively for the given topic
+   * @param topic the given topic name
+   * @return a tuple containing the minimum and maximum partition indices
+   */
+  def getTopicPartitionRange(topic: String)(implicit zk: ZKProxy): Option[(Int, Int)] = {
+    val partitions = KafkaMicroConsumer.getTopicPartitions(topic)
+    if (partitions.isEmpty) None else Option((partitions.min, partitions.max))
   }
 
   /**
