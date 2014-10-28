@@ -862,7 +862,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     watchCursors(key) = KafkaWatchCursor(c.topic, c.groupId, partition, offset, c.consumer, c.iterator, c.decoder)
 
     // update the navigable cursor for the given topic
-    navigableCursors(c.topic) = KafkaNavigableCursor(c.topic, c.partition, c.offset, c.offset, c.decoder)
+    navigableCursors(c.topic) = KafkaNavigableCursor(c.topic, partition, offset, offset + 1, c.decoder)
     currentTopic = Option(c.topic)
     watching = true
   }
