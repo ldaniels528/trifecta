@@ -31,14 +31,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Apache Kafka Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(config: TxConfig) extends Module with AvroReading {
-  private implicit val formats = net.liftweb.json.DefaultFormats
   private var zkProxy_? : Option[ZKProxy] = None
   private val out: PrintStream = config.out
 
@@ -51,9 +50,10 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   // define the offset for message cursor navigation commands
   private val navigableCursors = mutable.Map[String, KafkaNavigableCursor]()
-  private val watchCursors = mutable.Map[GroupIdAndTopic, KafkaWatchCursor]()
+  private val watchCursors = mutable.Map[TopicAndGroup, KafkaWatchCursor]()
   private var currentTopic: Option[String] = None
-  private var groupIdAndTopic: Option[GroupIdAndTopic] = None
+  private var currentTopicAndGroup: Option[TopicAndGroup] = None
+  private var watching: Boolean = false
 
   // create the facade
   private[kafka] val facade = new KafkaFacade(correlationId)
@@ -138,10 +138,14 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   override def moduleLabel = "kafka"
 
   override def prompt: String = {
-    watchCursor map (g => s"${g.topic}/${g.partition}:${g.offset}") getOrElse {
-      navigableCursor map (c => s"${c.topic}/${c.partition}:${c.offset}") getOrElse "/"
-    }
+    (if (!navigableCursor.isDefined || (watching && watchCursor.isDefined)) promptForWatchCursor
+    else promptForNavigableCursor) getOrElse "/"
   }
+
+  private def promptForNavigableCursor: Option[String] = navigableCursor map (c => s"${c.topic}/${c.partition}:${c.offset}")
+
+  private def promptForWatchCursor: Option[String] = watchCursor map (g => s"[w]${g.topic}/${g.partition}:${g.offset}")
+
 
   override def shutdown() = zkProxy_?.foreach(_.close())
 
@@ -157,7 +161,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * Returns the cursor for the current topic partition
    * @return the cursor for the current topic partition
    */
-  private def watchCursor: Option[KafkaWatchCursor] = groupIdAndTopic.flatMap(watchCursors.get)
+  private def watchCursor: Option[KafkaWatchCursor] = currentTopicAndGroup.flatMap(watchCursors.get)
 
   /**
    * Commits the offset for a given topic and group ID
@@ -338,21 +342,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * Retrieves the list of Kafka consumers
-   * @example kconsumers
-   * @example kconsumers -c devGroup
-   * @example kconsumers -t shocktrade.keystats.avro
-   */
-  def getConsumers(params: UnixLikeArgs): Future[List[ConsumerDelta]] = {
-    // get the topic & consumer prefixes
-    val consumerPrefix = params("-c")
-    val topicPrefix = params("-t")
-
-    // get the Kafka consumer groups
-    facade.getConsumers(consumerPrefix, topicPrefix)
-  }
-
-  /**
    * Displays the current message cursor
    * @example kcursor
    * @example kcursor shocktrade.keystats.avro
@@ -383,6 +372,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       cursor <- navigableCursors.get(topic)
     } {
       currentTopic = Option(topic)
+      watching = false
     }
   }
 
@@ -751,18 +741,28 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
+   * Retrieves the list of Kafka consumers
+   * @example kconsumers
+   * @example kconsumers -c ld_group
+   * @example kconsumers -t shocktrade.keystats.avro
+   */
+  def getConsumers(params: UnixLikeArgs): Future[List[ConsumerDelta]] = {
+    // get the topic & consumer prefixes
+    val consumerPrefix = params("-c")
+    val topicPrefix = params("-t")
+
+    // get the Kafka consumer groups
+    facade.getConsumers(consumerPrefix, topicPrefix)
+  }
+
+  /**
    * Sets the offset of a consumer group ID to zero for all partitions
-   * @example kreset com.shocktrade.quotes.csv lld
+   * @example kreset
+   * @example kreset ld_group
+   * @example kreset com.shocktrade.quotes.csv ld_group
    */
   def resetConsumerGroup(params: UnixLikeArgs): Unit = {
-    // get the arguments
-    val (topic, groupId) = params.args match {
-      case aGroupId :: Nil => navigableCursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor
-      case aTopic :: aGroupId :: Nil => (aTopic, aGroupId)
-      case _ => dieSyntax(params)
-    }
-
-    // get the partition range
+    val TopicAndGroup(topic, groupId) = getTopicAndGroup(params)
     facade.resetConsumerGroup(topic, groupId)
   }
 
@@ -775,17 +775,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    */
   def watchConsumerGroup(params: UnixLikeArgs): Either[Iterable[WatchCursorItem], Option[Ok]] = {
     if (params.args.isEmpty) Left {
-      watchCursors.values.map { case KafkaWatchCursor(topic, groupId, partition, offset, _, _, decoder) =>
+      watchCursors map { case (tag, KafkaWatchCursor(topic, groupId, partition, offset, _, _, decoder)) =>
         WatchCursorItem(groupId, topic, partition, offset, decoder)
       }
     }
     else Right {
-      // get the arguments
-      val (topic, groupId) = params.args match {
-        case aGroupId :: Nil => navigableCursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor
-        case aTopic :: aGroupId :: Nil => (aTopic, aGroupId)
-        case _ => dieSyntax(params)
-      }
+      val TopicAndGroup(topic, groupId) = getTopicAndGroup(params)
 
       for {
         (min, max) <- facade.getTopicPartitionRange(topic)
@@ -794,7 +789,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
         decoder = params("-a") map (lookupAvroDecoder(_)(config))
       } yield {
         val cursor = KafkaWatchCursor(topic, groupId, partition = 0, offset = 0L, consumer, iterator, decoder)
-        updateWatchCursor(cursor, cursor.partition, cursor.offset)
+        updateWatchCursor(cursor, cursor.partition, cursor.offset, autoClose = false)
         Ok()
       }
     }
@@ -809,19 +804,13 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    */
   def watchNext(params: UnixLikeArgs): Future[Option[Object]] = {
     // get the arguments
-    val (topic, groupId) = params.args match {
-      case Nil => watchCursor map (c => (c.topic, c.groupId)) getOrElse dieNoCursor
-      case aGroupId :: Nil if watchCursor.isDefined => watchCursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor
-      case aGroupId :: Nil => navigableCursor map (c => (c.topic, aGroupId)) getOrElse dieNoCursor
-      case aTopic :: aGroupId :: Nil => (aTopic, aGroupId)
-      case _ => dieSyntax(params)
-    }
+    val topicAndGroup = getTopicAndGroup(params)
 
     // was a decoder defined?
     val decoder_? = params("-a") map (lookupAvroDecoder(_)(config))
 
     Future {
-      watchCursors.get(GroupIdAndTopic(groupId, topic)) flatMap { cursor =>
+      watchCursors.get(topicAndGroup) flatMap { cursor =>
         val iterator = cursor.iterator
         if (!iterator.hasNext) None
         else {
@@ -838,10 +827,40 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
   }
 
-  private def updateWatchCursor(c: KafkaWatchCursor, partition: Int, offset: Long) {
-    groupIdAndTopic = Option(GroupIdAndTopic(c.groupId, c.topic))
-    val newCursor = KafkaWatchCursor(c.topic, c.groupId, partition, offset, c.consumer, c.iterator, c.decoder)
-    watchCursors += (GroupIdAndTopic(c.groupId, c.topic) -> newCursor)
+  /**
+   * Stops watching a consumer for a given topic
+   * @example kwatchstop
+   * @example kwatchstop ld_group
+   * @example kwatchstop com.shocktrade.quotes.avro ld_group
+   */
+  def watchStop(params: UnixLikeArgs): Try[Option[Ok]] = {
+    // get the arguments
+    val key = getTopicAndGroup(params)
+
+    // if there's already a registered topic & group, close it
+    Try(watchCursors.remove(key) map (_.consumer.close()) map (t => Ok()))
+  }
+
+  private def getTopicAndGroup(params: UnixLikeArgs): TopicAndGroup = {
+    params.args match {
+      case Nil => watchCursor map (c => TopicAndGroup(c.topic, c.groupId)) getOrElse dieNoCursor
+      case groupId :: Nil if watchCursor.isDefined => watchCursor map (c => TopicAndGroup(c.topic, groupId)) getOrElse dieNoCursor
+      case groupId :: Nil => navigableCursor map (c => TopicAndGroup(c.topic, groupId)) getOrElse dieNoCursor
+      case topic :: groupId :: Nil => TopicAndGroup(topic, groupId)
+      case _ => dieSyntax(params)
+    }
+  }
+
+  private def updateWatchCursor(c: KafkaWatchCursor, partition: Int, offset: Long, autoClose: Boolean = true) {
+    val key = TopicAndGroup(c.topic, c.groupId)
+
+    // if there's already a registered topic & group, close it
+    if (autoClose) Try(watchCursors.remove(key) foreach (_.consumer.close()))
+
+    // set the current topic & group and create a new cursor
+    currentTopicAndGroup = Option(key)
+    watchCursors(key) = KafkaWatchCursor(c.topic, c.groupId, partition, offset, c.consumer, c.iterator, c.decoder)
+    watching = true
   }
 
   /**
