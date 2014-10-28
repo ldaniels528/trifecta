@@ -9,7 +9,7 @@ import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer._
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
-import com.ldaniels528.trifecta.support.messaging.{MessageCursor, MessageDecoder}
+import com.ldaniels528.trifecta.support.messaging.{BinaryMessage, MessageCursor, MessageDecoder}
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.TxUtils._
 import kafka.common.TopicAndPartition
@@ -134,7 +134,7 @@ class KafkaFacade(correlationId: Int) {
    * @param aDecoder the given message decoder
    * @return the decoded message
    */
-  private def decodeMessage(messageData: Option[MessageData], aDecoder: MessageDecoder[_]): Option[Seq[AvroRecord]] = {
+  private def decodeMessage(messageData: Option[BinaryMessage], aDecoder: MessageDecoder[_]): Option[Seq[AvroRecord]] = {
     // only Avro decoders are supported
     val decoder: AvroDecoder = aDecoder match {
       case avDecoder: AvroDecoder => avDecoder
@@ -296,16 +296,28 @@ object KafkaFacade {
 
   case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
 
+  sealed trait KafkaMessageCursor extends MessageCursor {
+
+    def topic: String
+
+    def partition: Int
+
+    def offset: Long
+
+    def  decoder: Option[MessageDecoder[_]]
+
+  }
+
   case class KafkaNavigableCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, decoder: Option[MessageDecoder[_]])
-    extends MessageCursor
+    extends KafkaMessageCursor
 
   case class KafkaWatchCursor(topic: String,
                               groupId: String,
-                              partition: Option[Int],
-                              offset: Option[Long],
+                              partition: Int,
+                              offset: Long,
                               consumer: KafkaMacroConsumer,
                               iterator: Iterator[StreamedMessage],
-                              decoder: Option[MessageDecoder[_]]) extends MessageCursor
+                              decoder: Option[MessageDecoder[_]]) extends KafkaMessageCursor
 
   case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
 
@@ -315,6 +327,6 @@ object KafkaFacade {
 
   case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
 
-  case class WatchCursorItem(groupId: String, topic: String, partition: Option[Int], offset: Option[Long], decoder: Option[MessageDecoder[_]])
+  case class WatchCursorItem(groupId: String, topic: String, partition: Int, offset: Long, decoder: Option[MessageDecoder[_]])
 
 }

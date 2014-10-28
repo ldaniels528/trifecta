@@ -6,6 +6,4 @@ package com.ldaniels528.trifecta.support.messaging
  */
 trait MessageCursor {
 
-  // TODO create an interface that will work for any system
-
 }
