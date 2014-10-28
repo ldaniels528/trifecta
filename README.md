@@ -522,8 +522,8 @@ Finally, let's use the `kfetch` to retrieve just the offset for the consumer gro
     kafka:Shocktrade.quotes.csv/0:10795> kfetch dev
     6000
    
-The Kafka Module also provides the capability for _watching_ messages as they become available. This functionality is
- accomplished through the use of two commands: `kwatch` and `kwatchnext`.
+The Kafka Module also provides the capability for _watching_ messages (in near real-time) as they become available. 
+You can take advantage of this feature by using two built-in commands: `kwatch` and `kwatchnext`.
  
 First, `kwatch` is used to create a connection to a consumer group:
 
