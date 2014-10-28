@@ -89,7 +89,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     Command(this, "kwatchstop", watchStop, UnixLikeParams(Seq("topic" -> false, "groupId" -> false)), help = "Stops watching a consumer for a given topic"),
 
     // navigable cursor-related commands
-    Command(this, "kcursor", getCursor, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix")), help = "Displays the message cursor(s)"),
+    Command(this, "kcursor", getNavigableCursor, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix")), help = "Displays the message cursor(s)"),
     Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition")), help = "Returns the first message for a given topic"),
     Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition")), help = "Returns the last message for a given topic"),
     Command(this, "knext", getNextMessage, UnixLikeParams(Seq("delta" -> false), flags = Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource")), help = "Attempts to retrieve the next message"),
@@ -145,7 +145,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   private def promptForNavigableCursor: Option[String] = navigableCursor map (c => s"${c.topic}/${c.partition}:${c.offset}")
 
   private def promptForWatchCursor: Option[String] = watchCursor map (g => s"[w]${g.topic}/${g.partition}:${g.offset}")
-
 
   override def shutdown() = zkProxy_?.foreach(_.close())
 
@@ -342,11 +341,11 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * Displays the current message cursor
+   * Retrieves the navigable message cursor for the current topic
    * @example kcursor
    * @example kcursor shocktrade.keystats.avro
    */
-  def getCursor(params: UnixLikeArgs): Seq[KafkaNavigableCursor] = {
+  def getNavigableCursor(params: UnixLikeArgs): Seq[KafkaNavigableCursor] = {
     // get the topic & consumer prefixes
     val topicPrefix = params("-t")
 
@@ -355,11 +354,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * Sets the cursor
+   * Sets the navigable message cursor
    */
-  private def setCursor(topic: String, partition: Int, messageData: Option[MessageData], decoder: Option[MessageDecoder[_]]) {
+  private def setNavigableCursor(topic: String, partition: Int, messageData: Option[MessageData], decoder: Option[MessageDecoder[_]]) {
     messageData map (m => KafkaNavigableCursor(topic, partition, m.offset, m.nextOffset, decoder)) foreach (navigableCursors(topic) = _)
     currentTopic = Option(topic)
+    watching = false
   }
 
   /**
@@ -479,7 +479,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     } yield jsonMessage
 
     // capture the message's offset and decoder
-    setCursor(topic, partition, messageData, decoder)
+    setNavigableCursor(topic, partition, messageData, decoder)
 
     // return either a binary message or a decoded message
     if (jsonMessage.isDefined) Right(Right(jsonMessage))
@@ -611,17 +611,17 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       case Nil =>
         val topic = navigableCursor map (_.topic) getOrElse dieNoCursor
         val partitions = KafkaMicroConsumer.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
-        if (partitions.nonEmpty) Some((topic, partitions.min, partitions.max)) else None
+        if (partitions.nonEmpty) Option((topic, partitions.min, partitions.max)) else None
 
       case topic :: Nil =>
         val partitions = KafkaMicroConsumer.getTopicList(brokers, correlationId).filter(_.topic == topic).map(_.partitionId)
-        if (partitions.nonEmpty) Some((topic, partitions.min, partitions.max)) else None
+        if (partitions.nonEmpty) Option((topic, partitions.min, partitions.max)) else None
 
       case topic :: aPartition :: Nil =>
-        Some((topic, parsePartition(aPartition), parsePartition(aPartition)))
+        Option((topic, parsePartition(aPartition), parsePartition(aPartition)))
 
       case topic :: partitionA :: partitionB :: Nil =>
-        Some((topic, parsePartition(partitionA), parsePartition(partitionB)))
+        Option((topic, parsePartition(partitionA), parsePartition(partitionB)))
 
       case _ =>
         dieSyntax(params)
@@ -773,7 +773,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kwatch com.shocktrade.quotes.avro ld_group
    * @example kwatch com.shocktrade.quotes.avro ld_group -a file:avro/quotes.avsc
    */
-  def watchConsumerGroup(params: UnixLikeArgs): Either[Iterable[WatchCursorItem], Option[Ok]] = {
+  def watchConsumerGroup(params: UnixLikeArgs): Either[Iterable[WatchCursorItem], Option[Future[Any]]] = {
     if (params.args.isEmpty) Left {
       watchCursors map { case (tag, KafkaWatchCursor(topic, groupId, partition, offset, _, _, decoder)) =>
         WatchCursorItem(groupId, topic, partition, offset, decoder)
@@ -790,7 +790,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       } yield {
         val cursor = KafkaWatchCursor(topic, groupId, partition = 0, offset = 0L, consumer, iterator, decoder)
         updateWatchCursor(cursor, cursor.partition, cursor.offset, autoClose = false)
-        Ok()
+        watchNext(params)
       }
     }
   }
@@ -860,6 +860,10 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     // set the current topic & group and create a new cursor
     currentTopicAndGroup = Option(key)
     watchCursors(key) = KafkaWatchCursor(c.topic, c.groupId, partition, offset, c.consumer, c.iterator, c.decoder)
+
+    // update the navigable cursor for the given topic
+    navigableCursors(c.topic) = KafkaNavigableCursor(c.topic, c.partition, c.offset, c.offset, c.decoder)
+    currentTopic = Option(c.topic)
     watching = true
   }
 
