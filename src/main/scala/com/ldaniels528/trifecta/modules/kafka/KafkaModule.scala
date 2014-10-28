@@ -12,12 +12,11 @@ import com.ldaniels528.trifecta.modules.ModuleHelper._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.io.KeyAndMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
-import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
-import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
 import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
+import com.ldaniels528.trifecta.support.messaging.{BinaryMessage, MessageDecoder}
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
@@ -480,7 +479,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @param aDecoder the given message decoder
    * @return the decoded message
    */
-  private def decodeMessage(messageData: Option[MessageData], aDecoder: MessageDecoder[_]): Option[GenericRecord] = {
+  private def decodeMessage(messageData: Option[BinaryMessage], aDecoder: MessageDecoder[_]): Option[GenericRecord] = {
     // only Avro decoders are supported
     val decoder: AvroDecoder = aDecoder match {
       case avDecoder: AvroDecoder => avDecoder
@@ -748,11 +747,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * through new messages.
    * @example kwatch ld_group
    * @example kwatch com.shocktrade.quotes.avro ld_group
+   * @example kwatch com.shocktrade.quotes.avro ld_group -a file:avro/quotes.avsc
    */
   def watchConsumerGroup(params: UnixLikeArgs): Either[Iterable[WatchCursorItem], Option[Ok]] = {
     if (params.args.isEmpty) Left {
-      watchCursors.values.map { case KafkaWatchCursor(topic, groupId, _, iterator) =>
-        WatchCursorItem(topic, groupId, messagesAvailable = true /*iterator.hasNext*/)
+      watchCursors.values.map { case KafkaWatchCursor(topic, groupId, partition, offset, _, _, decoder) =>
+        WatchCursorItem(groupId, topic, partition, offset, decoder)
       }
     }
     else Right {
@@ -767,7 +767,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
         (min, max) <- facade.getTopicPartitionRange(topic)
         consumer = KafkaMacroConsumer(zk.connectionString, groupId, Nil: _*)
         iterator = consumer.iterate(topic, (max - min) + 1)
-        cursor = KafkaWatchCursor(topic, groupId, consumer, iterator)
+        decoder = params("-a") map (lookupAvroDecoder(_)(config))
+        cursor = KafkaWatchCursor(topic, groupId, partition = None, offset = None, consumer, iterator, decoder)
       } yield {
         watchCursors += (groupId -> cursor)
         Ok()
@@ -775,25 +776,44 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
   }
 
-  case class WatchCursorItem(topic: String, groupId: String, messagesAvailable: Boolean)
+  case class WatchCursorItem(groupId: String, topic: String, partition: Option[Int], offset: Option[Long], decoder: Option[MessageDecoder[_]])
 
   /**
    * Reads the next message from the watch cursor
    * @example kwatchnext ld_group
+   * @example kwatchnext ld_group -a file:avro/quotes.avsc
    */
-  def watchNext(params: UnixLikeArgs): Future[Option[StreamedMessage]] = {
+  def watchNext(params: UnixLikeArgs): Future[Option[Object]] = {
     // get the arguments
     val groupId = params.args match {
       case aGroupId :: Nil => aGroupId
       case _ => dieSyntax(params)
     }
 
+    // was a decoder defined?
+    val decoder_? = params("-a") map (lookupAvroDecoder(_)(config))
+
     Future {
       watchCursors.get(groupId) flatMap { cursor =>
         val iterator = cursor.iterator
-        if (iterator.hasNext) Option(iterator.next()) else None
+        if (!iterator.hasNext) None
+        else {
+          val binaryMessage = Option(iterator.next())
+          updateWatchCursor(cursor, binaryMessage.map(_.partition), binaryMessage.map(_.offset))
+
+          // if a decoder is defined, use it to decode the message
+          val decodedMessage = (if (decoder_?.isDefined) decoder_? else cursor.decoder).flatMap(decodeMessage(binaryMessage, _))
+
+          // return either the decoded message or the binary message
+          if (decodedMessage.isDefined) decodedMessage else binaryMessage
+        }
       }
     }
+  }
+
+  private def updateWatchCursor(c: KafkaWatchCursor, partition: Option[Int], offset: Option[Long]) {
+    val newCursor = KafkaWatchCursor(c.topic, c.groupId, partition, offset, c.consumer, c.iterator, c.decoder)
+    watchCursors += (c.groupId -> newCursor)
   }
 
   /**
