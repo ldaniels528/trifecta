@@ -527,7 +527,7 @@ You can take advantage of this feature by using two built-in commands: `kwatch` 
  
 First, `kwatch` is used to create a connection to a consumer group:
 
-    core:/usr/local/java/trifecta> kwatch shocktrade.quotes.avro dev -a file:avro/quotes.avsc
+    kafka:Shocktrade.quotes.csv/0:10795> kwatch shocktrade.quotes.avro dev -a file:avro/quotes.avsc
 
 Some output will likely follow as the connection is established. Then, if a message is already available, 
 it will be returned immediately:
@@ -557,6 +557,11 @@ it will be returned immediately:
 To retrieve any subsequent messages, you use the `kwatchnext` command:
     
     kafka:[w]shocktrade.quotes.avro/4:23070> kwatchnext
+
+Did you notice the "[w]" you see in the prompt? This indicates a _watch cursor_ is active. However, because each call to 
+`kwatchnext` will also update the _navigable cursor_, you are free to also use the bi-directional navigation commands 
+`knext` and `kprev` (as well as `kfirst` and `klast`). Be aware though, that changes to the _navigable cursor_ do not 
+affect the _watch cursor_. Thus after a subsequent use of `kwatchnext`, the _navigable cursor_ will be overwritten.
 
 <a name="kafka-inbound-traffic"></a>
 ##### Kafka Inbound Traffic
