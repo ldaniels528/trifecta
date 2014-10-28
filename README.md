@@ -519,8 +519,8 @@ Notice that the committed offset, for consumer group _dev_, has been changed to 
 
 Finally, let's use the `kfetch` to retrieve just the offset for the consumer group ID:
 
-   kafka:Shocktrade.quotes.csv/0:10795> kfetch dev
-   6000
+    kafka:Shocktrade.quotes.csv/0:10795> kfetch dev
+    6000
    
 The Kafka Module also provides the capability for _watching_ messages as they become available. This functionality is
  accomplished through the use of two commands: `kwatch` and `kwatchnext`.
