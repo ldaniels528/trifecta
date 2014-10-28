@@ -566,8 +566,77 @@ Notice that the committed offset, for consumer group _dev_, has been changed to 
 
 Finally, let's use the `kfetch` to retrieve just the offset for the consumer group ID:
 
-   kafka:Shocktrade.quotes.csv/0:10795> kfetch dev
-   6000
+    kafka:Shocktrade.quotes.csv/0:10795> kfetch dev
+    6000
+   
+The Kafka Module also provides the capability for _watching_ messages (in near real-time) as they become available. When
+you watch a topic, a _watch cursor_ is created, which allows you to move forward through the topic as new messages appear.
+This differs from _navigable cursors_, which allow you to move back and forth through a topic at will. You can take 
+advantage of this feature by using two built-in commands: `kwatch` and `kwatchnext`.
+ 
+First, `kwatch` is used to create a connection to a consumer group:
+
+    kafka:Shocktrade.quotes.csv/0:10795> kwatch shocktrade.quotes.avro dev -a file:avro/quotes.avsc
+
+Some output will likely follow as the connection (and _watch cursor_) are established. Next, if a message is already 
+available, it will be returned immediately:
+
+    + --------------------------------- +
+    | field         value      type     |
+    + --------------------------------- +
+    | symbol        L          Utf8     |
+    | exchange      NYSE       Utf8     |
+    | lastTrade     42.6       Double   |
+    | tradeDate                         |
+    | tradeTime     4:04pm     Utf8     |
+    | ask                               |
+    | bid                               |
+    | change        0.1        Double   |
+    | changePct     0.24       Double   |
+    | prevClose     42.5       Double   |
+    | open          42.42      Double   |
+    | close         42.6       Double   |
+    | high          42.705     Double   |
+    | low           42.21      Double   |
+    | volume        702711     Long     |
+    | marketCap     1.6235E10  Double   |
+    | errorMessage                      |
+    + --------------------------------- +    
+    
+    kafka:[w]shocktrade.quotes.avro/4:23070> _
+    
+To retrieve any subsequent messages, you use the `kwatchnext` command:
+    
+    kafka:[w]shocktrade.quotes.avro/4:23070> kwatchnext
+    
+    + --------------------------------- +
+    | field         value      type     |
+    + --------------------------------- +
+    | symbol        GIS        Utf8     |
+    | exchange      NYSE       Utf8     |
+    | lastTrade     51.16      Double   |
+    | tradeDate                         |
+    | tradeTime     4:07pm     Utf8     |
+    | ask                               |
+    | bid                               |
+    | change        0.13       Double   |
+    | changePct     0.25       Double   |
+    | prevClose     51.03      Double   |
+    | open          51.0       Double   |
+    | close         51.16      Double   |
+    | high          51.45      Double   |
+    | low           50.837     Double   |
+    | volume        1366336    Long     |
+    | marketCap     3.0888E10  Double   |
+    | errorMessage                      |
+    + --------------------------------- +
+    
+    kafka:[w]shocktrade.quotes.avro/4:23071> _
+
+Did you notice the "[w]" you see in the prompt? This indicates a _watch cursor_ is active. However, because each call to 
+`kwatchnext` will also update the _navigable cursor_, you are free to also use the bi-directional navigation commands 
+`knext` and `kprev` (as well as `kfirst` and `klast`). Be aware though, that changes to the _navigable cursor_ do not 
+affect the _watch cursor_. Thus after a subsequent use of `kwatchnext`, the _navigable cursor_ will be overwritten.
 
 <a name="kafka-inbound-traffic"></a>
 ##### Kafka Inbound Traffic

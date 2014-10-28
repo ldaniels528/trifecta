@@ -13,8 +13,6 @@ import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json._
 
-import scala.util.{Failure, Success, Try}
-
 /**
  * Represents a dynamically loadable module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>

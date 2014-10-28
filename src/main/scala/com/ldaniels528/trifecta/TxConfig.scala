@@ -93,7 +93,10 @@ object TxConfig {
   def load(): TxConfig = {
     val p = getDefaultProperties
     if (configFile.exists()) {
-      Try(p.load(new FileInputStream(configFile)))
+      new FileInputStream(configFile) use (in => Try(p.load(in)))
+    }
+    else {
+      new FileOutputStream(configFile) use (out => Try(p.store(out, "Trifecta configuration file")))
     }
     new TxConfig(p)
   }

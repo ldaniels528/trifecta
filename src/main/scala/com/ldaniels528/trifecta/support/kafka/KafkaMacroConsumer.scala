@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import akka.actor.ActorRef
 import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
+import com.ldaniels528.trifecta.support.messaging.BinaryMessage
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
-import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.TxUtils._
 import kafka.consumer.{Consumer, ConsumerConfig}
 
@@ -72,8 +72,8 @@ class KafkaMacroConsumer(consumerConfig: ConsumerConfig) {
       override def hasNext: Boolean = streams.exists(_.hasNext())
 
       override def next(): StreamedMessage = {
-        (streams.find(_.hasNext()) map { stream =>
-          val mam = stream.next()
+        (streams.find(_.hasNext()) map { consumerIterator =>
+          val mam = consumerIterator.next()
           StreamedMessage(mam.topic, mam.partition, mam.offset, mam.key(), mam.message())
         }).getOrElse(throw new IllegalStateException("Unexpected end of stream"))
       }
@@ -181,14 +181,14 @@ object KafkaMacroConsumer {
 
   /**
    * Convenience method   for creating Streaming Consumer instances
-   * @param zkEndPoint the given Zookeeper endpoint
+   * @param connectionString the given Zookeeper connection string (e.g. "localhost:2181")
    * @param groupId the given consumer group ID
    * @return a new Streaming Consumer instance
    * @see http://kafka.apache.org/07/configuration.html
    */
-  def apply(zkEndPoint: EndPoint, groupId: String, params: (String, Any)*): KafkaMacroConsumer = {
+  def apply(connectionString: String, groupId: String, params: (String, Any)*): KafkaMacroConsumer = {
     val props = Map(
-      "zookeeper.connect" -> zkEndPoint.toString,
+      "zookeeper.connect" -> connectionString,
       "group.id" -> groupId,
       "zookeeper.session.timeout.ms" -> "400",
       "zookeeper.sync.time.ms" -> "200",
@@ -200,5 +200,6 @@ object KafkaMacroConsumer {
    * Represents a stream message
    */
   case class StreamedMessage(topic: String, partition: Int, offset: Long, key: Array[Byte], message: Array[Byte])
+    extends BinaryMessage
 
 }

@@ -2,12 +2,14 @@ package com.ldaniels528.trifecta.support.kafka
 
 import java.util.Date
 import java.util.concurrent.atomic.AtomicLong
+
 import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
+import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer._
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
-import com.ldaniels528.trifecta.support.messaging.{MessageCursor, MessageDecoder}
+import com.ldaniels528.trifecta.support.messaging.{BinaryMessage, MessageCursor, MessageDecoder}
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.TxUtils._
 import kafka.common.TopicAndPartition
@@ -132,7 +134,7 @@ class KafkaFacade(correlationId: Int) {
    * @param aDecoder the given message decoder
    * @return the decoded message
    */
-  private def decodeMessage(messageData: Option[MessageData], aDecoder: MessageDecoder[_]): Option[Seq[AvroRecord]] = {
+  private def decodeMessage(messageData: Option[BinaryMessage], aDecoder: MessageDecoder[_]): Option[Seq[AvroRecord]] = {
     // only Avro decoders are supported
     val decoder: AvroDecoder = aDecoder match {
       case avDecoder: AvroDecoder => avDecoder
@@ -234,6 +236,16 @@ class KafkaFacade(correlationId: Int) {
   }
 
   /**
+   * Returns a tuple containing the minimum and maximum partition indices respectively for the given topic
+   * @param topic the given topic name
+   * @return a tuple containing the minimum and maximum partition indices
+   */
+  def getTopicPartitionRange(topic: String)(implicit zk: ZKProxy): Option[(Int, Int)] = {
+    val partitions = KafkaMicroConsumer.getTopicPartitions(topic)
+    if (partitions.isEmpty) None else Option((partitions.min, partitions.max))
+  }
+
+  /**
    * Publishes the given message to the given topic
    */
   def publishMessage(topic: String, key: Array[Byte], message: Array[Byte])(implicit zk: ZKProxy): Unit = {
@@ -253,7 +265,7 @@ class KafkaFacade(correlationId: Int) {
    */
   def resetConsumerGroup(topic: String, groupId: String)(implicit zk: ZKProxy): Unit = {
     // get the partition range
-    val partitions = KafkaMicroConsumer.getTopicList(brokers, correlationId) filter (_.topic == topic) map (_.partitionId)
+    val partitions = KafkaMicroConsumer.getTopicPartitions(topic)
     if (partitions.isEmpty)
       throw new IllegalStateException(s"No partitions found for topic $topic")
     val (start, end) = (partitions.min, partitions.max)
@@ -261,22 +273,12 @@ class KafkaFacade(correlationId: Int) {
     // reset the consumer group ID for each partition
     (start to end) foreach { partition =>
       new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId = 0) use { consumer =>
-        consumer.commitOffsets(groupId, offset = 0L, "resetting consumer ID")
+        consumer.getFirstOffset foreach { offset =>
+          consumer.commitOffsets(groupId, offset, "resetting consumer ID")
+        }
       }
     }
   }
-
-  protected def die[S](message: String): S = throw new IllegalArgumentException(message)
-
-  private def dieNoCursor[S](): S = die("No topic/partition specified and no cursor exists")
-
-  private def dieNoInputSource[S](): S = die("No input source specified")
-
-  private def dieNoOutputSource[S](): S = die("No output source specified")
-
-  private def dieNoOutputHandler(device: OutputSource) = die(s"Unhandled output device $device")
-
-  private def dieNotMessageComparator[S](): S = die("Decoder does not support logical operations")
 
 }
 
@@ -294,14 +296,42 @@ object KafkaFacade {
 
   case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
 
-  case class KafkaCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, decoder: Option[MessageDecoder[_]]) extends MessageCursor
+  sealed trait KafkaMessageCursor extends MessageCursor {
+
+    def topic: String
+
+    def partition: Int
+
+    def offset: Long
+
+    def decoder: Option[MessageDecoder[_]]
+
+  }
+
+  case class KafkaNavigableCursor(topic: String,
+                                  partition: Int,
+                                  offset: Long,
+                                  nextOffset: Long,
+                                  decoder: Option[MessageDecoder[_]]) extends KafkaMessageCursor
+
+  case class KafkaWatchCursor(topic: String,
+                              groupId: String,
+                              partition: Int,
+                              offset: Long,
+                              consumer: KafkaMacroConsumer,
+                              iterator: Iterator[StreamedMessage],
+                              decoder: Option[MessageDecoder[_]]) extends KafkaMessageCursor
 
   case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
+
+  case class TopicAndGroup(topic: String, groupId: String)
 
   case class TopicItem(topic: String, partition: Int, leader: String, replicas: Int, inSync: Int)
 
   case class TopicItemCompact(topic: String, partitions: Int, replicated: String)
 
   case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
+
+  case class WatchCursorItem(groupId: String, topic: String, partition: Int, offset: Long, decoder: Option[MessageDecoder[_]])
 
 }

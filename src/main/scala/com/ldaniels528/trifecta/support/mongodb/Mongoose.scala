@@ -8,7 +8,7 @@ import scala.util.{Failure, Success, Try}
 
 /**
  * Casbah/MongoDB Deserialization Library
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object Mongoose extends ScalaBeanUtil {
 

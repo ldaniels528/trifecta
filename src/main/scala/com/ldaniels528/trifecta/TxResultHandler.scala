@@ -6,6 +6,7 @@ import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.trifecta.support.avro.AvroTables
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade.AvroRecord
+import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
 import com.ldaniels528.trifecta.util.BinaryMessaging
 import net.liftweb.json._
@@ -38,6 +39,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
       case message: Array[Byte] if message.isEmpty => out.println("No data returned")
       case message: Array[Byte] => dumpMessage(message)(config)
       case MessageData(offset, _, _, _, message) => dumpMessage(offset, message)(config)
+      case StreamedMessage(_, _, offset, _, message) => dumpMessage(offset, message)(config)
 
       // handle the asynchronous I/O cases
       case a: AsyncIO => handleAsyncResult(a, input)
@@ -171,6 +173,18 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
       }
       (name, value)
     }: _*)
+  }
+
+}
+
+/**
+ * Trifecta Result Handler Singleton
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+object TxResultHandler {
+
+  case class Ok() {
+    override def toString = "Ok"
   }
 
 }
