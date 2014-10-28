@@ -743,7 +743,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   }
 
   /**
-   * Watches a consumer group allowing the user to navigable one-direction (forward)
+   * Watches a consumer group allowing the user to navigate one-direction (forward)
    * through new messages.
    * @example kwatch ld_group
    * @example kwatch com.shocktrade.quotes.avro ld_group
@@ -775,8 +775,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
       }
     }
   }
-
-  case class WatchCursorItem(groupId: String, topic: String, partition: Option[Int], offset: Option[Long], decoder: Option[MessageDecoder[_]])
 
   /**
    * Reads the next message from the watch cursor

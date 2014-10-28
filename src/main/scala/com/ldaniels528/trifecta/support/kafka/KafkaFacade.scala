@@ -315,4 +315,6 @@ object KafkaFacade {
 
   case class TopicOffsets(topic: String, partition: Int, startOffset: Long, endOffset: Long, messagesAvailable: Long)
 
+  case class WatchCursorItem(groupId: String, topic: String, partition: Option[Int], offset: Option[Long], decoder: Option[MessageDecoder[_]])
+
 }
