@@ -664,7 +664,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     val waitTime = params("-w") map (parseInt("wait time in seconds", _))
 
     // is this the initial call to this command?
-    if (waitTime.isDefined || incomingMessageCache.isEmpty || (System.currentTimeMillis() - lastInboundCheck) >= 30.minutes) {
+    if (waitTime.isDefined || incomingMessageCache.isEmpty || (System.currentTimeMillis() - lastInboundCheck) >= 1.hour) {
       out.println("Sampling data; this may take a few seconds...")
 
       // generate some data to fill the cache
