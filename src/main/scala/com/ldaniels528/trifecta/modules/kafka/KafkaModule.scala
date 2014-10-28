@@ -70,33 +70,46 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
 
   // the bound commands
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
-    Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
-    Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
-    Command(this, "kconsumers", getConsumers, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix", "-c" -> "consumerPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
+    // connection-related commands
     Command(this, "kconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to Zookeeper"),
-    Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true)), help = "Counts the messages matching a given condition"),
-    Command(this, "kcursor", getCursor, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix")), help = "Displays the message cursor(s)"),
-    Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
-    Command(this, "kfetchsize", fetchSizeGetOrSet, UnixLikeParams(Seq("fetchSize" -> false)), help = "Retrieves or sets the default fetch size for all Kafka queries"),
-    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
-    Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
-    Command(this, "kfindnext", findNextMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
-    Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition")), help = "Returns the first message for a given topic"),
+
+    // basic message creation & retrieval commands
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-ts" -> "YYYY-MM-DDTHH:MM:SS")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-f" -> "format", "-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
-    Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
-    Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-w" -> "wait-time")), help = "Retrieves a list of topics with new messages (since last query)"),
+    Command(this, "kput", publishMessage, UnixLikeParams(Seq("topic" -> false, "key" -> true, "message" -> true)), help = "Publishes a message to a topic"),
+
+    // consumer group-related commands
+    Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
+    Command(this, "kconsumers", getConsumers, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix", "-c" -> "consumerPrefix")), help = "Returns a list of the consumers from ZooKeeper"),
+    Command(this, "kfetch", fetchOffsets, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true)), help = "Retrieves the offset for a given topic and group"),
+    Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> false)), help = "Sets a consumer group ID to zero for all partitions"),
+    Command(this, "kwatch", watchConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> false), Seq("-a" -> "avroCodec")), help = "Creates a message watch cursor for a given topic"),
+    Command(this, "kwatchnext", watchNext, UnixLikeParams(Seq("topic" -> false, "groupId" -> false), Seq("-a" -> "avroCodec")), help = "Returns the next message from the watch cursor"),
+    Command(this, "kwatchstop", watchStop, UnixLikeParams(Seq("topic" -> false, "groupId" -> false)), help = "Stops watching a consumer for a given topic"),
+
+    // navigable cursor-related commands
+    Command(this, "kcursor", getCursor, UnixLikeParams(Nil, Seq("-t" -> "topicPrefix")), help = "Displays the message cursor(s)"),
+    Command(this, "kfirst", getFirstMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition")), help = "Returns the first message for a given topic"),
     Command(this, "klast", getLastMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition")), help = "Returns the last message for a given topic"),
-    Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "listMode")), help = "Lists all existing topics"),
     Command(this, "knext", getNextMessage, UnixLikeParams(Seq("delta" -> false), flags = Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource")), help = "Attempts to retrieve the next message"),
     Command(this, "kprev", getPreviousMessage, UnixLikeParams(Seq("delta" -> false), flags = Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource")), help = "Attempts to retrieve the message at the previous offset"),
-    Command(this, "kput", publishMessage, UnixLikeParams(Seq("topic" -> false, "key" -> true, "message" -> true)), help = "Publishes a message to a topic"),
-    Command(this, "kreset", resetConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> true)), help = "Sets a consumer group ID to zero for all partitions"),
-    Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic"),
     Command(this, "kswitch", switchCursor, UnixLikeParams(Seq("topic" -> true)), help = "Switches the currently active topic cursor"),
-    Command(this, "kwatch", watchConsumerGroup, UnixLikeParams(Seq("topic" -> false, "groupId" -> false), Seq("-a" -> "avroCodec")), help = "Creates a message watch cursor for a given topic"),
-    Command(this, "kwatchnext", watchNext, UnixLikeParams(Seq("groupId" -> true), Seq("-a" -> "avroCodec")), help = "Returns the next message from the watch cursor"))
+
+    // query-related commands
+    Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true)), help = "Counts the messages matching a given condition"),
+    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
+    Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
+    Command(this, "kfindnext", findNextMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
+    Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
+
+    // topic/message information and statistics commands
+    Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
+    Command(this, "kfetchsize", fetchSizeGetOrSet, UnixLikeParams(Seq("fetchSize" -> false)), help = "Retrieves or sets the default fetch size for all Kafka queries"),
+    Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-w" -> "wait-time")), help = "Retrieves a list of topics with new messages (since last query)"),
+    Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "listMode")), help = "Lists all existing topics"),
+    Command(this, "kstats", getStatistics, UnixLikeParams(Seq("topic" -> false, "beginPartition" -> false, "endPartition" -> false)), help = "Returns the partition details for a given topic")
+  )
 
   /**
    * Returns a Kafka Topic input source
