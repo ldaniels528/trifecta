@@ -299,12 +299,13 @@ object KafkaFacade {
   case class KafkaNavigableCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, decoder: Option[MessageDecoder[_]])
     extends MessageCursor
 
-  case class KafkaWatchCursor(topic: String, groupId: String, consumer: KafkaMacroConsumer, iterator: Iterator[StreamedMessage])
-    extends MessageCursor {
-
-    def close() = consumer.close()
-
-  }
+  case class KafkaWatchCursor(topic: String,
+                              groupId: String,
+                              partition: Option[Int],
+                              offset: Option[Long],
+                              consumer: KafkaMacroConsumer,
+                              iterator: Iterator[StreamedMessage],
+                              decoder: Option[MessageDecoder[_]]) extends MessageCursor
 
   case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
 
