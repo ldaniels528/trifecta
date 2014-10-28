@@ -3,6 +3,7 @@ package com.ldaniels528.trifecta.support.kafka
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer._
+import com.ldaniels528.trifecta.support.messaging.BinaryMessage
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.ByteBufferUtils._
@@ -499,6 +500,7 @@ object KafkaMicroConsumer {
    * @param message the message
    */
   case class MessageData(offset: Long, nextOffset: Long, lastOffset: Long, key: Array[Byte], message: Array[Byte])
+    extends BinaryMessage
 
   /**
    * Represents the details for a Kafka topic
