@@ -304,12 +304,15 @@ object KafkaFacade {
 
     def offset: Long
 
-    def  decoder: Option[MessageDecoder[_]]
+    def decoder: Option[MessageDecoder[_]]
 
   }
 
-  case class KafkaNavigableCursor(topic: String, partition: Int, offset: Long, nextOffset: Long, decoder: Option[MessageDecoder[_]])
-    extends KafkaMessageCursor
+  case class KafkaNavigableCursor(topic: String,
+                                  partition: Int,
+                                  offset: Long,
+                                  nextOffset: Long,
+                                  decoder: Option[MessageDecoder[_]]) extends KafkaMessageCursor
 
   case class KafkaWatchCursor(topic: String,
                               groupId: String,
