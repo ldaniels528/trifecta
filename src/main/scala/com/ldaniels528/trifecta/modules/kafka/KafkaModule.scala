@@ -915,6 +915,4 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
   }
 
-  case class GroupIdAndTopic(groupId: String, topic: String)
-
 }

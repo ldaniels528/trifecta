@@ -321,6 +321,8 @@ object KafkaFacade {
 
   case class MessageMaxMin(minimumSize: Int, maximumSize: Int)
 
+  case class TopicAndGroup(topic: String, groupId: String)
+
   case class TopicItem(topic: String, partition: Int, leader: String, replicas: Int, inSync: Int)
 
   case class TopicItemCompact(topic: String, partitions: Int, replicated: String)
