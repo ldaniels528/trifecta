@@ -8,8 +8,6 @@ import com.ldaniels528.trifecta.util.TxUtils._
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{DecoderFactory, EncoderFactory}
-import org.apache.avro.specific.SpecificRecordBase
-import org.slf4j.LoggerFactory
 
 import scala.language.existentials
 import scala.util.Try
@@ -19,7 +17,6 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object AvroConversion {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
 
   /**
    * Copies data from a Scala case class to a Java Bean (Avro Builder)
@@ -65,6 +62,15 @@ object AvroConversion {
         out.toByteArray
       }
     }
+  }
+
+  /**
+   * Transforms the given Avro-encoded binary message into an Avro-specific JSON string
+   * @param record the given [[GenericRecord]]
+   * @return an Avro-specific JSON string
+   */
+  def transcodeRecordToAvroJson(record: GenericRecord, encoding: String = "UTF8"): String = {
+    transcodeAvroBytesToAvroJson(record.getSchema, encodeRecord(record), encoding)
   }
 
   /**
@@ -148,13 +154,12 @@ object AvroConversion {
 
   /**
    * Converts an Avro Java Bean into a byte array
-   * @param schema the given Avro Schema
    * @param datum the given Avro Java Bean
    * @return a byte array
    */
-  def encodeRecord[T <: SpecificRecordBase](schema: Schema, datum: T): Array[Byte] = {
+  def encodeRecord[T <: GenericRecord](datum: T): Array[Byte] = {
     new ByteArrayOutputStream(1024) use { out =>
-      val writer = new GenericDatumWriter[GenericRecord](schema)
+      val writer = new GenericDatumWriter[GenericRecord](datum.getSchema)
       val encoder = EncoderFactory.get().binaryEncoder(out, null)
       writer.write(datum, encoder)
       encoder.flush()

@@ -10,6 +10,7 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.modules.ModuleHelper._
 import com.ldaniels528.trifecta.modules._
+import com.ldaniels528.trifecta.support.avro.AvroConversion._
 import com.ldaniels528.trifecta.support.io.KeyAndMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
@@ -472,11 +473,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
 
     // was a format parameter specified?
-    val jsonMessage = for {
-      format <- params("-f")
-      message <- decodedMessage if format == "json"
-      jsonMessage = net.liftweb.json.parse(message.toString)
-    } yield jsonMessage
+    val jsonMessage = decodeMessageAsJson(decodedMessage, params)
 
     // capture the message's offset and decoder
     setNavigableCursor(topic, partition, messageData, decoder)
@@ -509,6 +506,19 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
           throw new IllegalStateException(e.getMessage, e)
       }
     } yield rec
+  }
+
+  private def decodeMessageAsJson(decodedMessage: Option[GenericRecord], params: UnixLikeArgs) = {
+    import net.liftweb.json.parse
+    for {
+      format <- params("-f")
+      record <- decodedMessage
+      jsonMessage <- format match {
+        case "json" => Option(parse(record.toString))
+        case "avro_json" => Option(parse(transcodeRecordToAvroJson(record, config.encoding)))
+        case _ => die(s"""Invalid format type "$format"""")
+      }
+    } yield jsonMessage
   }
 
   /**
