@@ -69,7 +69,7 @@ object AvroConversion {
 
   private def setValue[A, B](value: Any, valueClass: Class[A], dstInst: Any, dstClass: Class[B], setterName: String) {
     val results = value match {
-      case d: Date => Option((d.getTime, classOf[java.lang.Long]))
+      case d: Date => Option((d.getTime.asInstanceOf[Object], classOf[java.lang.Long]))
       case o: Option[_] =>
         o.map { myValue =>
           val myObjectValue = myValue.asInstanceOf[Object]
