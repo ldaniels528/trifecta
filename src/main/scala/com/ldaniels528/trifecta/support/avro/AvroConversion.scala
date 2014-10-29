@@ -2,6 +2,7 @@ package com.ldaniels528.trifecta.support.avro
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream}
 import java.lang.reflect.Method
+import java.util.Date
 
 import com.ldaniels528.trifecta.util.TxUtils._
 import org.apache.avro.Schema
@@ -68,6 +69,7 @@ object AvroConversion {
 
   private def setValue[A, B](value: Any, valueClass: Class[A], dstInst: Any, dstClass: Class[B], setterName: String) {
     val results = value match {
+      case d: Date => Option((d.getTime, classOf[java.lang.Long]))
       case o: Option[_] =>
         o.map { myValue =>
           val myObjectValue = myValue.asInstanceOf[Object]
@@ -98,6 +100,7 @@ object AvroConversion {
     if (typeA == typeB) true
     else
       typeA match {
+        case c if c == classOf[Date] => typeB == classOf[java.lang.Long]
         case c if c == classOf[Byte] => typeB == classOf[java.lang.Byte]
         case c if c == classOf[Char] => typeB == classOf[java.lang.Character]
         case c if c == classOf[Double] => typeB == classOf[java.lang.Double]
