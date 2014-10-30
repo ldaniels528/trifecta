@@ -2,13 +2,12 @@ package com.ldaniels528.trifecta.support.avro
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream}
 import java.lang.reflect.Method
+import java.util.Date
 
 import com.ldaniels528.trifecta.util.TxUtils._
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{DecoderFactory, EncoderFactory}
-import org.apache.avro.specific.SpecificRecordBase
-import org.slf4j.LoggerFactory
 
 import scala.language.existentials
 import scala.util.Try
@@ -18,7 +17,6 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object AvroConversion {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
 
   /**
    * Copies data from a Scala case class to a Java Bean (Avro Builder)
@@ -48,16 +46,16 @@ object AvroConversion {
    * @param schema the given [[Schema]]
    * @return a byte array representing an Avro-encoded message
    */
-  def transcodeJsonToAvro(json: String, schema: Schema, encoding: String = "UTF8"): Array[Byte] = {
+  def transcodeJsonToAvroBytes(json: String, schema: Schema, encoding: String = "UTF8"): Array[Byte] = {
     new DataInputStream(new ByteArrayInputStream(json.getBytes(encoding))) use { in =>
       new ByteArrayOutputStream(json.length) use { out =>
         // setup the reader, writer, encoder and decoder
         val reader = new GenericDatumReader[Object](schema)
         val writer = new GenericDatumWriter[Object](schema)
-        val decoder = DecoderFactory.get().jsonDecoder(schema, in)
-        val encoder = EncoderFactory.get().binaryEncoder(out, null)
 
         // transcode the JSON into Avro
+        val decoder = DecoderFactory.get().jsonDecoder(schema, in)
+        val encoder = EncoderFactory.get().binaryEncoder(out, null)
         val datum = reader.read(null, decoder)
         writer.write(datum, encoder)
         encoder.flush()
@@ -66,8 +64,39 @@ object AvroConversion {
     }
   }
 
+  /**
+   * Transforms the given Avro-encoded binary message into an Avro-specific JSON string
+   * @param record the given [[GenericRecord]]
+   * @return an Avro-specific JSON string
+   */
+  def transcodeRecordToAvroJson(record: GenericRecord, encoding: String = "UTF8"): String = {
+    transcodeAvroBytesToAvroJson(record.getSchema, encodeRecord(record), encoding)
+  }
+
+  /**
+   * Transforms the given Avro-encoded binary message into an Avro-specific JSON string
+   * @param schema the given [[Schema]]
+   * @param bytes the given Avro-encoded binary message
+   * @return an Avro-specific JSON string
+   */
+  def transcodeAvroBytesToAvroJson(schema: Schema, bytes: Array[Byte], encoding: String = "UTF8"): String = {
+    new ByteArrayOutputStream(bytes.length * 4) use { out =>
+      val decoder = DecoderFactory.get().binaryDecoder(bytes, null)
+      val encoder = EncoderFactory.get().jsonEncoder(schema, out)
+
+      // transcode the bytes into Avro-specific JSON
+      val reader = new GenericDatumReader[Object](schema)
+      val writer = new GenericDatumWriter[Object](schema)
+      val datum = reader.read(null, decoder)
+      writer.write(datum, encoder)
+      encoder.flush()
+      out.toString(encoding)
+    }
+  }
+
   private def setValue[A, B](value: Any, valueClass: Class[A], dstInst: Any, dstClass: Class[B], setterName: String) {
     val results = value match {
+      case d: Date => Option((d.getTime.asInstanceOf[Object], classOf[java.lang.Long]))
       case o: Option[_] =>
         o.map { myValue =>
           val myObjectValue = myValue.asInstanceOf[Object]
@@ -98,6 +127,7 @@ object AvroConversion {
     if (typeA == typeB) true
     else
       typeA match {
+        case c if c == classOf[Date] => typeB == classOf[java.lang.Long]
         case c if c == classOf[Byte] => typeB == classOf[java.lang.Byte]
         case c if c == classOf[Char] => typeB == classOf[java.lang.Character]
         case c if c == classOf[Double] => typeB == classOf[java.lang.Double]
@@ -124,13 +154,12 @@ object AvroConversion {
 
   /**
    * Converts an Avro Java Bean into a byte array
-   * @param schema the given Avro Schema
    * @param datum the given Avro Java Bean
    * @return a byte array
    */
-  def encodeRecord[T <: SpecificRecordBase](schema: Schema, datum: T): Array[Byte] = {
+  def encodeRecord[T <: GenericRecord](datum: T): Array[Byte] = {
     new ByteArrayOutputStream(1024) use { out =>
-      val writer = new GenericDatumWriter[GenericRecord](schema)
+      val writer = new GenericDatumWriter[GenericRecord](datum.getSchema)
       val encoder = EncoderFactory.get().binaryEncoder(out, null)
       writer.write(datum, encoder)
       encoder.flush()

@@ -10,6 +10,8 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.modules.ModuleHelper._
 import com.ldaniels528.trifecta.modules._
+import com.ldaniels528.trifecta.sandboxes.KafkaSandbox
+import com.ldaniels528.trifecta.support.avro.AvroConversion._
 import com.ldaniels528.trifecta.support.io.KeyAndMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
@@ -72,6 +74,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     // connection-related commands
     Command(this, "kconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to Zookeeper"),
+    Command(this, "ksandbox", sandBox, UnixLikeParams(), help = "Launches a Kafka Sandbox (local server instance)"),
 
     // basic message creation & retrieval commands
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-ts" -> "YYYY-MM-DDTHH:MM:SS")), help = "Retrieves the message at the specified offset for a given topic partition"),
@@ -196,6 +199,15 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     // connect to the remote peer
     zkProxy_?.foreach(_.close())
     zkProxy_? = Option(ZKProxy(connectionString))
+  }
+
+  /**
+   * Launches a Kafka Sandbox (local server instance)
+   * @example ksandbox
+   */
+  def sandBox(params: UnixLikeArgs): Unit = {
+    val instance = KafkaSandbox()
+    connect(UnixLikeArgs(Some("ksandbox"), List(instance.getConnectString)))
   }
 
   /**
@@ -472,11 +484,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     }
 
     // was a format parameter specified?
-    val jsonMessage = for {
-      format <- params("-f")
-      message <- decodedMessage if format == "json"
-      jsonMessage = net.liftweb.json.parse(message.toString)
-    } yield jsonMessage
+    val jsonMessage = decodeMessageAsJson(decodedMessage, params)
 
     // capture the message's offset and decoder
     setNavigableCursor(topic, partition, messageData, decoder)
@@ -509,6 +517,19 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
           throw new IllegalStateException(e.getMessage, e)
       }
     } yield rec
+  }
+
+  private def decodeMessageAsJson(decodedMessage: Option[GenericRecord], params: UnixLikeArgs) = {
+    import net.liftweb.json.parse
+    for {
+      format <- params("-f")
+      record <- decodedMessage
+      jsonMessage <- format match {
+        case "json" => Option(parse(record.toString))
+        case "avro_json" => Option(parse(transcodeRecordToAvroJson(record, config.encoding)))
+        case _ => die( s"""Invalid format type "$format"""")
+      }
+    } yield jsonMessage
   }
 
   /**
@@ -664,7 +685,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
     val waitTime = params("-w") map (parseInt("wait time in seconds", _))
 
     // is this the initial call to this command?
-    if (waitTime.isDefined || incomingMessageCache.isEmpty || (System.currentTimeMillis() - lastInboundCheck) >= 30.minutes) {
+    if (waitTime.isDefined || incomingMessageCache.isEmpty || (System.currentTimeMillis() - lastInboundCheck) >= 1.hour) {
       out.println("Sampling data; this may take a few seconds...")
 
       // generate some data to fill the cache
