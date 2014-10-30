@@ -5,6 +5,7 @@ import java.util.Date
 import com.ldaniels528.trifecta.command.CommandParser._
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
+import com.ldaniels528.trifecta.sandboxes.KafkaSandbox
 import com.ldaniels528.trifecta.support.io.InputSource
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.support.zookeeper.ZkSupportHelper._
@@ -159,7 +160,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   /**
    * Recursively deletes all children for a given key in ZooKeeper
-   * @example zdelr /test
+   * @example zdelall /test
    */
   def deleteRecursively(params: UnixLikeArgs): Boolean = {
     params.args match {
@@ -318,6 +319,9 @@ class ZookeeperModule(config: TxConfig) extends Module {
   private implicit def zk: ZKProxy = {
     zkProxy_? match {
       case Some(zk) => zk
+      case None if KafkaSandbox.getInstance.isDefined =>
+        zkProxy_? = KafkaSandbox.getInstance.map(kl => ZKProxy(kl.getConnectString))
+        zkProxy_?.get
       case None =>
         val zk = ZKProxy(config.zooKeeperConnect)
         zkProxy_? = Option(zk)

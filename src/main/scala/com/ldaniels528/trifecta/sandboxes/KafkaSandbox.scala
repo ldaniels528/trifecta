@@ -17,10 +17,21 @@ import scala.util.Try
  */
 object KafkaSandbox {
   private val logger = LoggerFactory.getLogger(getClass)
+  private var instance: Option[KafkaLocal] = None
 
-  def apply(): KafkaLocal = new KafkaLocal()
+  def apply(): KafkaLocal = {
+    instance.getOrElse {
+      val kafkaLocal = new KafkaLocal()
+      instance = Option(kafkaLocal)
+      kafkaLocal
+    }
+  }
 
-  def main(args: Array[String]) = KafkaSandbox()
+  /**
+   * Optionally returns an instance of the local Kafka instance
+   * @return the option of a local Kafka instance
+   */
+  def getInstance: Option[KafkaLocal] = instance
 
   /**
    * Kafka Local Server
