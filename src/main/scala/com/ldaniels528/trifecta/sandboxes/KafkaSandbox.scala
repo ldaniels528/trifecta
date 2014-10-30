@@ -19,6 +19,10 @@ object KafkaSandbox {
   private val logger = LoggerFactory.getLogger(getClass)
   private var instance: Option[KafkaLocal] = None
 
+  /**
+   * Creates or retrieves a local Kafka server instance
+   * @return a local Kafka server instance
+   */
   def apply(): KafkaLocal = {
     instance.getOrElse {
       val kafkaLocal = new KafkaLocal()
