@@ -45,6 +45,7 @@ libraryDependencies ++= Seq(
   "net.liftweb" %% "lift-json" % "2.5.1",
   "org.apache.avro" % "avro" % "1.7.7",
   "org.apache.curator" % "curator-framework" % "2.6.0",
+  "org.apache.curator" % "curator-test" % "2.6.0",
   "org.apache.httpcomponents" % "httpclient" % "4.3.2",
   "org.apache.httpcomponents" % "httpcore" % "4.3.2",
   "org.apache.kafka" %% "kafka" % "0.8.1.1"
@@ -64,7 +65,6 @@ libraryDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "com.github.tlrx" % "elasticsearch-test" % "1.2.1" % "test",
   "junit" % "junit" % "4.11" % "test",
-  "org.apache.curator" % "curator-test" % "2.6.0" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test",
   "org.scalatest" %% "scalatest" % "2.2.2" % "test"
 )
