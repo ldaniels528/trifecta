@@ -17,7 +17,7 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
   info("I want to be able to extract/process tokens as a stream")
 
   feature("Ability to parse JSON streams") {
-    scenario("A string containing JSON data including quoted string") {
+    scenario("A sequence of tokens from a BDQL query") {
       Given("A sequence of tokens from a parsed selection query")
       val tokens = BigDataQueryTokenizer.parse(
         """
