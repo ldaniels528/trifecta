@@ -1,4 +1,4 @@
-package com.ldaniels528.trifecta.command
+package com.ldaniels528.trifecta.command.parser
 
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}

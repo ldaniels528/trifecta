@@ -1,4 +1,4 @@
-package com.ldaniels528.trifecta.command
+package com.ldaniels528.trifecta.command.parser.bdql
 
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
@@ -7,7 +7,7 @@ import org.scalatest.{FeatureSpec, GivenWhenThen}
  * Big Data Query Language (BD-QL) Parser Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class BigDataQLParserSpec() extends FeatureSpec with GivenWhenThen {
+class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
 
   info("As a Big Data Query Parser")
   info("I want to be able to parse Big Data queries into query objects")
@@ -26,14 +26,10 @@ class BigDataQLParserSpec() extends FeatureSpec with GivenWhenThen {
           | """.stripMargin
 
       When("The queries is parsed into a BD-QL object")
-      val tokens = BigDataQueryParser.parse(line)
+      val selection = BigDataQueryParser.parse(line)
 
       Then("The arguments should be successfully verified")
-      info(s"results: ${tokens map (s => s""""$s"""") mkString " "}")
-      tokens shouldBe Seq(
-        "select", "symbol", ",", "exchange", ",", "lastTrade", ",", "volume", "from",
-        "kafka_queries", "where", "exchange", "=", "'OTCBB'", "and", "lastTrade", "<=",
-        "1.0", "and", "volume", ">=", "1000000", "limit", "10")
+      info(s"selection = $selection")
     }
   }
 

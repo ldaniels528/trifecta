@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.support.messaging.logic
 
+import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.messaging.logic.Operations._
 
@@ -39,7 +40,7 @@ object ConditionCompiler {
   }
 
   private def translateValue(value: String, encoding: String = "UTF-8"): Array[Byte] = {
-    import com.ldaniels528.trifecta.command.CommandParser._
+    import CommandParser._
     if (isDottedHex(value)) parseDottedHex(value) else value.getBytes(encoding)
   }
 

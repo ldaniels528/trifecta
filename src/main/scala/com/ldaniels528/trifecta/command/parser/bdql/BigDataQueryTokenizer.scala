@@ -1,14 +1,14 @@
-package com.ldaniels528.trifecta.command
+package com.ldaniels528.trifecta.command.parser.bdql
 
-import com.ldaniels528.trifecta.command.BigDataQueryParser._
+import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryTokenizer._
 
 import scala.collection.mutable.ListBuffer
 
 /**
- * Big Data Query Language Parser
+ * Big Data Query Language Tokenizer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class BigDataQueryParser(queryString: String) {
+class BigDataQueryTokenizer(queryString: String) {
   private val parsers: Seq[ListBuffer[String] => Boolean] = Seq(
     parseDoubleQuotedSequence, parseSingleQuotedSequence, parseNumeric, parseAlphaNumeric, parseSymbols)
   private val ca = queryString.toCharArray
@@ -110,18 +110,16 @@ class BigDataQueryParser(queryString: String) {
 }
 
 /**
- * Big Data Query Language Parser
+ * Big Data Query Language Tokenizer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object BigDataQueryParser {
+object BigDataQueryTokenizer {
   private val Symbols = ",=<>"
   private val Operators = Seq(">=", "<=", "<>")
   private val WhiteSpace = " \t\r\n"
 
   def parse(queryString: String): List[String] = {
-    new BigDataQueryParser(queryString).parse()
+    new BigDataQueryTokenizer(queryString).parse()
   }
-
-  sealed trait BdQLQuery
 
 }

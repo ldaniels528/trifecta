@@ -1,4 +1,6 @@
-package com.ldaniels528.trifecta.command
+package com.ldaniels528.trifecta.command.parser
+
+import com.ldaniels528.trifecta.command.UnixLikeArgs
 
 /**
  * Command Parser

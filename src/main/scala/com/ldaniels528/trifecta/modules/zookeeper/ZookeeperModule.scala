@@ -2,7 +2,8 @@ package com.ldaniels528.trifecta.modules.zookeeper
 
 import java.util.Date
 
-import com.ldaniels528.trifecta.command.CommandParser._
+import com.ldaniels528.trifecta.command.parser.CommandParser
+import CommandParser._
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.sandboxes.KafkaSandbox

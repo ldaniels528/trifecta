@@ -3,7 +3,8 @@ package com.ldaniels528.trifecta.modules
 import java.net.{URL, URLClassLoader}
 import java.nio.ByteBuffer
 
-import com.ldaniels528.trifecta.command.CommandParser._
+import com.ldaniels528.trifecta.command.parser.CommandParser
+import CommandParser._
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
 import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.modules.Module.formatTypes

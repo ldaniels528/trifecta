@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.command
 
+import com.ldaniels528.trifecta.command.parser.CommandParser
 import CommandParser.parseUnixLikeArgs
 
 /**

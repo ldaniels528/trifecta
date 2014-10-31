@@ -7,6 +7,7 @@ import java.util.Date
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.TxResultHandler.Ok
 import com.ldaniels528.trifecta.command._
+import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.modules.ModuleHelper._
 import com.ldaniels528.trifecta.modules._
@@ -744,7 +745,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroReading {
    * @example kput a0.00.11.22.33.44.ef.11 "Hello World" (references cursor)
    */
   def publishMessage(params: UnixLikeArgs): Unit = {
-    import com.ldaniels528.trifecta.command.CommandParser._
+    import CommandParser._
 
     // get the topic, key and message
     val (topic, key, message) = params.args match {

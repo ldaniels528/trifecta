@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta
 
-import com.ldaniels528.trifecta.command.CommandParser
+import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.modules.ModuleManager
 import com.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.ldaniels528.trifecta.modules.core.CoreModule
