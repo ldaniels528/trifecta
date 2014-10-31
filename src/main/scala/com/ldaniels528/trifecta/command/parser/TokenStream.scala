@@ -5,7 +5,7 @@ package com.ldaniels528.trifecta.command.parser
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class TokenStream(tokens: Seq[String]) {
-  var pos = 0
+  private var pos = 0
 
   /**
    * Indicates whether the stream contains at least one instance of the given token
@@ -70,7 +70,7 @@ case class TokenStream(tokens: Seq[String]) {
     pos = index
     list
   }
-  
+
   /**
    * Indicates whether at least one more token exists
    * @return true, if at least one more token exists
