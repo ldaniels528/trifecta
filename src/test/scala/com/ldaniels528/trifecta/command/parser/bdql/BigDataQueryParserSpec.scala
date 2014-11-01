@@ -13,8 +13,8 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
   info("I want to be able to parse Big Data queries into query objects")
 
   feature("Ability to parse Big Data queries into BD-QL objects") {
-    scenario("A string containing a Big Data selection queries") {
-      Given("A Big Data selection query")
+    scenario("A string containing a Big Data selection query") {
+      Given("a Big Data selection query")
       val queryString =
         """
           |select symbol, exchange, lastTrade, volume
@@ -29,7 +29,11 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
       val selection = BigDataQueryParser.parse(queryString)
 
       Then("The arguments should be successfully verified")
-      info(s"selection = $selection")
+      selection shouldBe BigDataSelection(
+        source = "kafka_queries",
+        fields = List("symbol", "exchange", "lastTrade", "volume"),
+        conditions = List(),
+        limit = Some(10))
     }
   }
 

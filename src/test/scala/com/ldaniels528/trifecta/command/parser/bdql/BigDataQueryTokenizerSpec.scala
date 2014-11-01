@@ -13,9 +13,9 @@ class BigDataQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
   info("I want to be able to parse Big Data queries into query objects")
 
   feature("Ability to parse Big Data queries into BD-QL objects") {
-    scenario("A string containing a Big Data selection queries") {
-      Given("A Big Data selection query")
-      val line =
+    scenario("A string containing a Big Data selection query") {
+      Given("a Big Data query string")
+      val queryString =
         """
           |select symbol, exchange, lastTrade, volume
           |from kafka_queries
@@ -25,8 +25,8 @@ class BigDataQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
           |limit 10
           | """.stripMargin
 
-      When("The queries is parsed into a BD-QL object")
-      val tokens = BigDataQueryTokenizer.parse(line)
+      When("The query is parsed into tokens")
+      val tokens = BigDataQueryTokenizer.parse(queryString)
 
       Then("The arguments should be successfully verified")
       info(s"results: ${tokens map (s => s""""$s"""") mkString " "}")

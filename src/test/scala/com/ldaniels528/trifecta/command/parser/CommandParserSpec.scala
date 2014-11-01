@@ -14,7 +14,7 @@ class CommandParserSpec() extends FeatureSpec with GivenWhenThen {
 
   feature("Ability to parse JSON streams") {
     scenario("A string containing JSON data including quoted string") {
-      Given("A string containing JSON data and atoms")
+      Given("a string containing JSON data and atoms")
       val line = """eput bucket randomData 1234 { 1 : [ "A", "B", "C" ], 2 : [ "D", "E", "F" ] }  """
 
       When("The string is parsed into tokens")
@@ -28,7 +28,7 @@ class CommandParserSpec() extends FeatureSpec with GivenWhenThen {
 
   feature("Ability to distinguish symbols from atoms") {
     scenario("A string contains both symbols and atoms") {
-      Given("A string containing symbols and atoms")
+      Given("a string containing symbols and atoms")
       val line = "!?100+1"
 
       When("The string is parsed into tokens")
@@ -42,7 +42,7 @@ class CommandParserSpec() extends FeatureSpec with GivenWhenThen {
 
   feature("Ability to parse a string of mixed tokens (atoms, operators, symbols and labels)") {
     scenario("A string contains both atoms, operators and symbols") {
-      Given("A string containing atoms, operators and symbols")
+      Given("a string containing atoms, operators and symbols")
       val line = """kdumpa avro/schema.avsc `backticks` 9 1799020 a+b+c+d+e+f "Hello World""""
 
       When("The string is parsed into tokens")
