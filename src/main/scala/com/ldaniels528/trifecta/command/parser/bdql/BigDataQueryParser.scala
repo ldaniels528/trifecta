@@ -48,7 +48,7 @@ object BigDataQueryParser {
       ts.next().toInt
     }
 
-    BigDataSelection(fields, source, conditions getOrElse Nil, limit)
+    BigDataSelection(source, fields, conditions getOrElse Nil, limit)
   }
 
 }

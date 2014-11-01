@@ -33,7 +33,7 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
       And("a token stream")
       val ts = TokenStream(tokens)
 
-      When("'select' is expected")
+      When("keyword 'select' is expected")
       val expect1 = Try(ts.expect("select"))
 
       Then("the 'expect(\"select\")' function should complete without errors")
@@ -46,19 +46,19 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
       fields shouldBe Seq("symbol", "exchange", "lastTrade", "volume")
 
       // expect: from <source>
-      When("'from' is expected")
+      When("keyword 'from' is expected")
       val expect2 = Try(ts.expect("from"))
 
       Then("the 'expect(\"from\")' function should complete without errors")
       expect2 shouldBe Success(())
 
-      When("the source is extracted")
+      When("the source is extracted from the 'from' clause")
       val source = ts.getOrElse(throw new IllegalArgumentException("Query source expected"))
 
       Then("the source should match the expected value")
       source shouldBe "kafka_queries"
 
-      When("the conditions are extracted")
+      When("the conditions are extracted from the 'where' clause")
       val conditions = ts.ifNext("where") {
         ts.getUntil("limit").foldLeft[Seq[Condition]](Nil) { (criteria, token) =>
           criteria
@@ -68,7 +68,7 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
       Then("the conditions should match the expected values")
       conditions shouldBe Some(List())
 
-      When("the limit is extracted")
+      When("the limit is extracted from the 'limit' clause")
       val limit = ts.ifNext("limit") {
         ts.next().toInt
       }
