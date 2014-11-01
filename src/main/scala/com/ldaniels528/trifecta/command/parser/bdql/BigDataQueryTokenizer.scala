@@ -82,8 +82,8 @@ class BigDataQueryTokenizer(queryString: String) {
     else {
       val start = pos
       pos += 1
-      while (hasNext && (currentChar.isDigit || currentChar == '.')) pos += 1
-      tokens += nextSpan(start)
+      while (hasNext && (currentChar.isDigit || currentChar == ',' || currentChar == '.')) pos += 1
+      tokens += nextSpan(start).replaceAll(",", "")
       true
     }
   }
@@ -114,8 +114,8 @@ class BigDataQueryTokenizer(queryString: String) {
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object BigDataQueryTokenizer {
-  private val Symbols = ",=<>"
-  private val Operators = Seq(">=", "<=", "<>")
+  private val Symbols = "!,=<>"
+  private val Operators = Seq(">=", "<=", "!=", "==")
   private val WhiteSpace = " \t\r\n"
 
   def parse(queryString: String): List[String] = {

@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.command.parser.bdql
 
+import com.ldaniels528.trifecta.support.messaging.logic.Operations._
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
@@ -18,21 +19,23 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
       val queryString =
         """
           |select symbol, exchange, lastTrade, volume
-          |from kafka_queries
-          |where exchange = 'OTCBB'
+          |from kafka_quotes
+          |into elastic_search_quotes
+          |where exchange == 'OTCBB'
           |and lastTrade <= 1.0
-          |and volume >= 1000000
+          |and volume >= 1,000,000
           |limit 10
           | """.stripMargin
 
       When("The queries is parsed into a BD-QL object")
-      val selection = BigDataQueryParser.parse(queryString)
+      val query = BigDataQueryParser.parse(queryString)
 
       Then("The arguments should be successfully verified")
-      selection shouldBe BigDataSelection(
-        source = "kafka_queries",
+      query shouldBe BigDataSelection(
+        source = "kafka_quotes",
+        destination = Some("elastic_search_quotes"),
         fields = List("symbol", "exchange", "lastTrade", "volume"),
-        conditions = List(),
+        criteria = List(EQ("exchange", "'OTCBB'"), LE("lastTrade", "1.0"), GE("volume", "1000000")),
         limit = Some(10))
     }
   }

@@ -18,10 +18,11 @@ class BigDataQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
       val queryString =
         """
           |select symbol, exchange, lastTrade, volume
-          |from kafka_queries
+          |from kafka_quotes
+          |into elastic_search_quotes
           |where exchange = 'OTCBB'
           |and lastTrade <= 1.0
-          |and volume >= 1000000
+          |and volume >= 1,000,000
           |limit 10
           | """.stripMargin
 
@@ -32,7 +33,7 @@ class BigDataQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
       info(s"results: ${tokens map (s => s""""$s"""") mkString " "}")
       tokens shouldBe Seq(
         "select", "symbol", ",", "exchange", ",", "lastTrade", ",", "volume", "from",
-        "kafka_queries", "where", "exchange", "=", "'OTCBB'", "and", "lastTrade", "<=",
+        "kafka_quotes", "into", "elastic_search_quotes", "where", "exchange", "=", "'OTCBB'", "and", "lastTrade", "<=",
         "1.0", "and", "volume", ">=", "1000000", "limit", "10")
     }
   }

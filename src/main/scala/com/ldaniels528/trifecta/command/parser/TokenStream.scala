@@ -8,6 +8,13 @@ case class TokenStream(tokens: Seq[String]) {
   private var pos = 0
 
   /**
+   * Returns an option of a token at the given index
+   * @param index the given index
+   * @return the option of a token at the given index
+   */
+  def apply(index: Int): Option[String] = if (index < tokens.size) Option(tokens(index)) else None
+
+  /**
    * Indicates whether the stream contains at least one instance of the given token
    * @param token the given string token
    * @return true, if the stream contains at least one instance of the token
@@ -41,11 +48,17 @@ case class TokenStream(tokens: Seq[String]) {
   }
 
   /**
+   * Retrieves the option of the next token in the stream
+   * @return the option of the next token
+   */
+  def get: Option[String] = if (hasNext) Option(next()) else None
+
+  /**
    * Retrieves the next token or the default value
    * @param otherwise the default value
    * @return the next token or the default value
    */
-  def getOrElse(otherwise: => String): String = if (hasNext) next() else otherwise
+  def getOrElse(otherwise: => String): String = get.getOrElse(otherwise)
 
   /**
    * Retrieves all tokens up to the limit token or end-of-line is reached
@@ -94,6 +107,18 @@ case class TokenStream(tokens: Seq[String]) {
   }
 
   /**
+   * Returns the option of the index of the next occurrence of the given token
+   * @param token the token being searched for
+   * @return the option of the index of the next occurrence of the given token
+   */
+  def indexOf(token: String): Option[Int] = {
+    tokens.indexOf(token, pos) match {
+      case -1 => None
+      case index => Some(index + pos)
+    }
+  }
+
+  /**
    * Returns the next token in the stream or an error if none exists
    * @return the next token in the stream or an error if none exists
    */
@@ -111,5 +136,28 @@ case class TokenStream(tokens: Seq[String]) {
    * @return the next token in the stream
    */
   def peek: Option[String] = if (hasNext) Option(tokens(pos)) else None
+
+  /**
+   * Returns the cursor's position within the stream
+   * @return the cursor's position
+   */
+  def position: Int = pos
+
+  /**
+   * Rewinds the cursor back by the given count
+   * @param count the given count
+   * @return this [[TokenStream]] instance
+   */
+  def rewind(count: Int): TokenStream = {
+    if(pos > count) pos -= count else pos = 0
+    this
+  }
+
+  /**
+   * Retrieves the count number of tokens if possible
+   * @param count the number of tokens desired
+   * @return the sequence of tokens
+   */
+  def take(count: Int): List[String] = (1 to count).flatMap(n => get).toList
 
 }

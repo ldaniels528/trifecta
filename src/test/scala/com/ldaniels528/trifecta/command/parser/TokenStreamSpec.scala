@@ -25,7 +25,7 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
           |from kafka_queries
           |where exchange = 'OTCBB'
           |and lastTrade <= 1.0
-          |and volume >= 1000000
+          |and volume >= 1,000,000
           |limit 10
           | """.stripMargin
       )
@@ -70,7 +70,7 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
 
       When("the limit is extracted from the 'limit' clause")
       val limit = ts.ifNext("limit") {
-        ts.next().toInt
+        ts.getOrElse(throw new IllegalArgumentException("Limit value expected near 'limit'")).toInt
       }
 
       Then("the limit should match the expected value")
