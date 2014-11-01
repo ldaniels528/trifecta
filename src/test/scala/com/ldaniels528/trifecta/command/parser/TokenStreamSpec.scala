@@ -36,7 +36,7 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
       When("'select' is expected")
       val expect1 = Try(ts.expect("select"))
 
-      Then("the 'expect(\"select\")' function should complete with errors")
+      Then("the 'expect(\"select\")' function should complete without errors")
       expect1 shouldBe Success(())
 
       When("the fields are extracted")
@@ -49,7 +49,7 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
       When("'from' is expected")
       val expect2 = Try(ts.expect("from"))
 
-      Then("the 'expect(\"from\")' function should complete with errors")
+      Then("the 'expect(\"from\")' function should complete without errors")
       expect2 shouldBe Success(())
 
       When("the source is extracted")
