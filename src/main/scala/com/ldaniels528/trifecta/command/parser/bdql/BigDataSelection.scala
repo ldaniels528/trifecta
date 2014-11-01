@@ -6,8 +6,8 @@ import com.ldaniels528.trifecta.support.messaging.logic.Condition
  * Big Data Selection Query
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class BigDataSelection(fields: List[String],
-                            source: String,
+case class BigDataSelection(source: String,
+                            fields: List[String],
                             conditions: Seq[Condition],
                             limit: Option[Int]) {
   override def toString = {
