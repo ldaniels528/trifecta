@@ -8,8 +8,8 @@ import com.ldaniels528.trifecta.support.messaging.logic.Operations.Operation
  */
 case class BigDataSelection(source: String,
                             destination: Option[String] = None,
-                            fields: List[String],
-                            criteria: Seq[Operation],
+                            fields: Seq[String],
+                            criteria: Option[Operation],
                             limit: Option[Int]) {
   override def toString = {
     val sb = new StringBuilder(s"select ${fields.mkString(", ")} from $source")

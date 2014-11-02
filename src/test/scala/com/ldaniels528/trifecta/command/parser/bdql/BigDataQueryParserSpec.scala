@@ -35,7 +35,7 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
         source = "kafka_quotes",
         destination = Some("elastic_search_quotes"),
         fields = List("symbol", "exchange", "lastTrade", "volume"),
-        criteria = List(EQ("exchange", "'OTCBB'"), LE("lastTrade", "1.0"), GE("volume", "1000000")),
+        criteria = Some(AND(AND(EQ("exchange", "'OTCBB'"), LE("lastTrade", "1.0")), GE("volume", "1000000"))),
         limit = Some(10))
     }
   }
