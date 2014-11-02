@@ -31,13 +31,13 @@ case class BigDataSelection(source: IOSource,
     val outputSource = destination.flatMap(src => rt.getOutputHandler(src.deviceURL))
     val encoder: Option[MessageDecoder[_]] = destination.flatMap(src => MessageCodecs.getDecoder(src.decoderURL))
 
-    // get all other properties
+    // compile conditions & get all other properties
     val conditions = criteria.map(compile(_, decoder))
-    val count = limit.getOrElse(10)
+    val maximum = limit.getOrElse(20)
 
     // perform the query/copy operation
     inputSource.foreach { in =>
-      for (n <- 1 to count) {
+      for (n <- 1 to maximum) {
         for {
           block <- in.read
           condition <- conditions
