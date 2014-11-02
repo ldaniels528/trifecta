@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.support.messaging.logic
 
-import com.ldaniels528.trifecta.support.messaging.logic.Operations._
+import com.ldaniels528.trifecta.support.messaging.logic.Expressions._
 
 /**
  * Message Evaluation
@@ -13,6 +13,6 @@ trait MessageEvaluation {
    * @param operation the given operation
    * @return a condition
    */
-  def compile(operation: Operation): Condition
+  def compile(operation: Expression): Condition
 
 }

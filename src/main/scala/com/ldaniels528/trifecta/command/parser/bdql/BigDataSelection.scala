@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.command.parser.bdql
 
-import com.ldaniels528.trifecta.support.messaging.logic.Operations.Operation
+import com.ldaniels528.trifecta.support.messaging.logic.Expressions.Expression
 
 /**
  * Big Data Selection Query
@@ -9,7 +9,7 @@ import com.ldaniels528.trifecta.support.messaging.logic.Operations.Operation
 case class BigDataSelection(source: String,
                             destination: Option[String] = None,
                             fields: Seq[String],
-                            criteria: Option[Operation],
+                            criteria: Option[Expression],
                             limit: Option[Int]) {
   override def toString = {
     val sb = new StringBuilder(s"select ${fields.mkString(", ")} from $source")

@@ -2,7 +2,7 @@ package com.ldaniels528.trifecta.command.parser.bdql
 
 import com.ldaniels528.trifecta.command.parser.TokenStream
 import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
-import com.ldaniels528.trifecta.support.messaging.logic.Operations._
+import com.ldaniels528.trifecta.support.messaging.logic.Expressions._
 
 /**
  * Big Data Query Language Parser
@@ -79,18 +79,18 @@ object BigDataQueryParser {
   /**
    * Parses the "where" expression (e.g. "where price >= 5")
    * @param ts the given [[TokenStream]]
-   * @return the option of an [[Operation]]
+   * @return the option of an [[Expression]]
    */
-  private def parseWhereExpression(ts: TokenStream): Option[Operation] = {
+  private def parseWhereExpression(ts: TokenStream): Option[Expression] = {
     ts.ifNext("where") {
       // where lastTrade >= 1 and volume >= 1,000,000
-      var criteria: Option[Operation] = None
+      var criteria: Option[Expression] = None
       val it = TokenStream(ts.getUntil("limit"))
       while (it.hasNext) {
-        val args = if (criteria.isEmpty) it.take(3) else it.take(4)
+        val args = it.take(criteria.size + 3)
         args match {
-          case List("and", field, operator, value) => criteria = criteria.map(op => AND(op, compile(field, operator, value)))
-          case List("or", field, operator, value) => criteria = criteria.map(op => OR(op, compile(field, operator, value)))
+          case List("and", field, operator, value) => criteria = criteria.map(AND(_, compile(field, operator, value)))
+          case List("or", field, operator, value) => criteria = criteria.map(OR(_, compile(field, operator, value)))
           case List(field, operator, value) => criteria = Option(compile(field, operator, value))
           case _ =>
             throw new IllegalArgumentException(s"Invalid expression near ${it.rewind(4).take(4).mkString(" ")}")

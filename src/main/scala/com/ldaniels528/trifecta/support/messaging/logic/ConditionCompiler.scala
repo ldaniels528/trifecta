@@ -2,7 +2,7 @@ package com.ldaniels528.trifecta.support.messaging.logic
 
 import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
-import com.ldaniels528.trifecta.support.messaging.logic.Operations._
+import com.ldaniels528.trifecta.support.messaging.logic.Expressions._
 
 /**
  * Condition Compiler
@@ -10,7 +10,7 @@ import com.ldaniels528.trifecta.support.messaging.logic.Operations._
  */
 object ConditionCompiler {
 
-  def compile(operation: Operation, decoder: Option[MessageDecoder[_]]): Condition = {
+  def compile(operation: Expression, decoder: Option[MessageDecoder[_]]): Condition = {
     operation match {
       case AND(a, b) => Conditions.AND(compile(a, decoder), compile(b, decoder))
       case KEY_EQ(v) => Conditions.KeyIs(translateValue(v))
@@ -24,7 +24,7 @@ object ConditionCompiler {
     }
   }
 
-  def compile(field: String, operator: String, value: String): Operation = {
+  def compile(field: String, operator: String, value: String): Expression = {
     operator match {
       case "==" => EQ(field, value)
       case "!=" => NE(field, value)

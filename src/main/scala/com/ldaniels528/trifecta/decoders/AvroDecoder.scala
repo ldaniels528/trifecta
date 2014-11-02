@@ -2,7 +2,7 @@ package com.ldaniels528.trifecta.decoders
 
 import com.ldaniels528.trifecta.decoders.AvroDecoder._
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
-import com.ldaniels528.trifecta.support.messaging.logic.Operations._
+import com.ldaniels528.trifecta.support.messaging.logic.Expressions._
 import com.ldaniels528.trifecta.support.messaging.logic.{Condition, MessageEvaluation}
 import com.twitter.bijection.Injection
 import com.twitter.bijection.avro.GenericAvroCodecs
@@ -27,7 +27,7 @@ with JsonTranscoding with MessageEvaluation {
    * @param operation the given operation
    * @return a condition
    */
-  override def compile(operation: Operation): Condition = {
+  override def compile(operation: Expression): Condition = {
     operation match {
       case EQ(field, value) => AvroEQ(this, field, value)
       case GE(field, value) => AvroGE(this, field, value)
