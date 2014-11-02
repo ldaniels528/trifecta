@@ -8,7 +8,7 @@ import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.TxResultHandler.Ok
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.command.parser.CommandParser
-import com.ldaniels528.trifecta.decoders.AvroDecoder
+import com.ldaniels528.trifecta.decoders.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.modules.ModuleHelper._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.sandboxes.KafkaSandbox
@@ -40,7 +40,7 @@ import scala.util.{Failure, Success, Try}
  * Apache Kafka Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaModule(config: TxConfig) extends Module with AvroReading {
+class KafkaModule(config: TxConfig) extends Module with AvroCodec {
   private var zkProxy_? : Option[ZKProxy] = None
   private val out: PrintStream = config.out
 

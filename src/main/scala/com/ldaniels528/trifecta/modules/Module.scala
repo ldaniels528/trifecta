@@ -6,7 +6,7 @@ import java.nio.ByteBuffer
 import com.ldaniels528.trifecta.command.parser.CommandParser
 import CommandParser._
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
-import com.ldaniels528.trifecta.decoders.AvroDecoder
+import com.ldaniels528.trifecta.decoders.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.modules.Module.formatTypes
 import com.ldaniels528.trifecta.support.io._
 import com.ldaniels528.trifecta.util.TxUtils._
@@ -18,7 +18,7 @@ import net.liftweb.json._
  * Represents a dynamically loadable module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait Module extends AvroReading {
+trait Module extends AvroCodec {
 
   /**
    * Returns the commands that are bound to the module

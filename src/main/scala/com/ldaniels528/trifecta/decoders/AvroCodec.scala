@@ -1,18 +1,17 @@
-package com.ldaniels528.trifecta.modules
+package com.ldaniels528.trifecta.decoders
 
 import java.io.File
 
 import com.ldaniels528.trifecta.TxConfig
-import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.util.TxUtils._
 
 import scala.io.Source
 
 /**
- * Avro Reading Trait
+ * Avro Codec Trait
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait AvroReading {
+trait AvroCodec {
 
   def lookupAvroDecoder(url: String)(implicit config: TxConfig): AvroDecoder = {
     // create an implicit reference to the scope

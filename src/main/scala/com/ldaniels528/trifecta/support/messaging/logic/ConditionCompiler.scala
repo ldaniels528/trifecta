@@ -10,8 +10,8 @@ import com.ldaniels528.trifecta.support.messaging.logic.Expressions._
  */
 object ConditionCompiler {
 
-  def compile(operation: Expression, decoder: Option[MessageDecoder[_]]): Condition = {
-    operation match {
+  def compile(expression: Expression, decoder: Option[MessageDecoder[_]]): Condition = {
+    expression match {
       case AND(a, b) => Conditions.AND(compile(a, decoder), compile(b, decoder))
       case KEY_EQ(v) => Conditions.KeyIs(translateValue(v))
       case OR(a, b) => Conditions.OR(compile(a, decoder), compile(b, decoder))

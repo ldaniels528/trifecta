@@ -19,8 +19,8 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
       val queryString =
         """
           |select symbol, exchange, lastTrade, volume
-          |from kafka_quotes
-          |into elastic_search_quotes
+          |from "kafka:quotes" with "avro:file:avro/quotes.avsc"
+          |into "es:/quotes/quote/AAPL" with json
           |where exchange == 'OTCBB'
           |and lastTrade <= 1.0
           |and volume >= 1,000,000
@@ -28,12 +28,12 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
           | """.stripMargin
 
       When("The queries is parsed into a BD-QL object")
-      val query = BigDataQueryParser.parse(queryString)
+      val query = BigDataQueryParser(queryString)
 
       Then("The arguments should be successfully verified")
       query shouldBe BigDataSelection(
-        source = "kafka_quotes",
-        destination = Some("elastic_search_quotes"),
+        source = IOSource(deviceURL = "kafka:quotes", decoderURL = "avro:file:avro/quotes.avsc"),
+        destination = Some(IOSource(deviceURL = "es:/quotes/quote/AAPL", decoderURL = "json")),
         fields = List("symbol", "exchange", "lastTrade", "volume"),
         criteria = Some(AND(AND(EQ("exchange", "'OTCBB'"), LE("lastTrade", "1.0")), GE("volume", "1000000"))),
         limit = Some(10))

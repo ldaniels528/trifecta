@@ -4,6 +4,7 @@ import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Core Module Specification

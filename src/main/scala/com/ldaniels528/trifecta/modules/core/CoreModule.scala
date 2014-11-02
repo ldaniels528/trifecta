@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.modules.core
 
+import com.ldaniels528.trifecta.decoders.AvroCodec
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import java.io.{File, PrintStream}
 import java.text.SimpleDateFormat
@@ -11,7 +12,7 @@ import com.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.ldaniels528.trifecta._
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
-import com.ldaniels528.trifecta.modules.{AvroReading, Module}
+import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
@@ -29,7 +30,7 @@ import scala.util.{Properties, Try}
  * Core Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class CoreModule(config: TxConfig) extends Module with AvroReading {
+class CoreModule(config: TxConfig) extends Module with AvroCodec {
   private val logger = LoggerFactory.getLogger(getClass)
   private val out: PrintStream = config.out
 

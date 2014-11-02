@@ -1,6 +1,7 @@
 package com.ldaniels528.trifecta
 
 import com.ldaniels528.trifecta.command.parser.CommandParser
+import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser
 import com.ldaniels528.trifecta.modules.ModuleManager
 import com.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.ldaniels528.trifecta.modules.core.CoreModule
@@ -20,7 +21,7 @@ import scala.util.Try
  * Trifecta Runtime Context
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class TxRuntimeContext(config: TxConfig) {
+case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   private[trifecta] val logger = LoggerFactory.getLogger(getClass)
   private implicit val scope = config.scope
 
@@ -103,29 +104,33 @@ case class TxRuntimeContext(config: TxConfig) {
   private def interpretCommandLine(input: String): Try[Any] = Try {
     implicit val rtc = this
 
-    // parse the input into tokens
-    val tokens = CommandParser.parseTokens(input)
+    // is the input a query?
+    if (input.startsWith("select")) BigDataQueryParser(input).execute
+    else {
+      // parse the input into tokens
+      val tokens = CommandParser.parseTokens(input)
 
-    // convert the tokens into Unix-style arguments
-    val unixArgs = CommandParser.parseUnixLikeArgs(tokens)
+      // convert the tokens into Unix-style arguments
+      val unixArgs = CommandParser.parseUnixLikeArgs(tokens)
 
-    // match the command
-    val commandSet = moduleManager.commandSet
+      // match the command
+      val commandSet = moduleManager.commandSet
 
-    for {
-      commandName <- unixArgs.commandName
-      command = commandSet.getOrElse(commandName, throw new IllegalArgumentException(s"command '$commandName' not found"))
+      for {
+        commandName <- unixArgs.commandName
+        command = commandSet.getOrElse(commandName, throw new IllegalArgumentException(s"command '$commandName' not found"))
 
-    } yield {
-      // trifecta and execute the command
-      command.params.checkArgs(command, tokens)
-      val result = command.fx(unixArgs)
+      } yield {
+        // verify and execute the command
+        command.params.checkArgs(command, tokens)
+        val result = command.fx(unixArgs)
 
-      // auto-switch modules?
-      if (config.autoSwitching && (command.promptAware || command.module.moduleName != "core")) {
-        moduleManager.setActiveModule(command.module)
+        // auto-switch modules?
+        if (config.autoSwitching && (command.promptAware || command.module.moduleName != "core")) {
+          moduleManager.setActiveModule(command.module)
+        }
+        result
       }
-      result
     }
   }
 

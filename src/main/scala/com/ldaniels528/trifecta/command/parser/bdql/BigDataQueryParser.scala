@@ -15,14 +15,14 @@ object BigDataQueryParser {
    * @param queryString the given query string
    * @return the [[BigDataSelection]]
    */
-  def parse(queryString: String): BigDataSelection = {
+  def apply(queryString: String): BigDataSelection = {
     // parse the query string
     val ts = TokenStream(BigDataQueryTokenizer.parse(queryString))
 
     /*
      * select symbol, exchange, lastTrade, volume
-     * from kafka_quotes
-     * into elastic_search_quotes
+     * from "kafka:quotes" with "avro:file:avro/quotes.avsc"
+     * into "es:/quotes/quote/AAPL" with json
      * where exchange == 'OTCBB'
      * and lastTrade <= 1.0
      * and volume >= 1,000,000
@@ -48,20 +48,24 @@ object BigDataQueryParser {
   /**
    * Parses the "from" expression (e.g. "from kafka_quotes")
    * @param ts the given [[TokenStream]]
-   * @return the option of an integer value
+   * @return an [[IOSource]]
    */
-  private def parseFromExpression(ts: TokenStream): String = {
-    ts.expect("from").getOrElse(throw new IllegalArgumentException("Input source expected near 'from'"))
+  private def parseFromExpression(ts: TokenStream): IOSource = {
+    val deviceURL = ts.expect("from").getOrElse(throw new IllegalArgumentException("Device URL expected near 'from'"))
+    val decoderURL = ts.expect("with").getOrElse(throw new IllegalArgumentException("Decoder URL expected near 'with'"))
+    IOSource(deQuote(deviceURL), deQuote(decoderURL))
   }
 
   /**
    * Parses the "into" expression (e.g. "into elastic_search_quotes")
    * @param ts the given [[TokenStream]]
-   * @return the option of an integer value
+   * @return the option of an [[IOSource]]
    */
-  private def parseIntoExpression(ts: TokenStream): Option[String] = {
+  private def parseIntoExpression(ts: TokenStream): Option[IOSource] = {
     ts.ifNext("into") {
-      ts.getOrElse(throw new IllegalArgumentException("Output source expected near 'into'"))
+      val deviceURL = ts.getOrElse(throw new IllegalArgumentException("Output source expected near 'into'"))
+      val decoderURL = ts.expect("with").getOrElse(throw new IllegalArgumentException("Decoder URL expected near 'with'"))
+      IOSource(deQuote(deviceURL), deQuote(decoderURL))
     }
   }
 
@@ -98,6 +102,14 @@ object BigDataQueryParser {
       }
       criteria
     }.flatten
+  }
+
+  private def deQuote(quotedString: String): String = {
+    quotedString match {
+      case s if s.startsWith("\"") && s.endsWith("\"") => s.drop(1).dropRight(1)
+      case s if s.startsWith("'") && s.endsWith("'") => s.drop(1).dropRight(1)
+      case s => s
+    }
   }
 
 }
