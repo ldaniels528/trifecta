@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.command.parser.bdql
 
-import com.ldaniels528.trifecta.TxRuntimeContext
+import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.ldaniels528.trifecta.decoders.MessageCodecs
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
@@ -22,7 +22,7 @@ case class BigDataSelection(source: IOSource,
    * Executes the selection query
    * @param rt the given runtime context
    */
-  def execute(implicit rt: TxRuntimeContext, ec: ExecutionContext) = {
+  def execute(implicit config: TxConfig, rt: TxRuntimeContext, ec: ExecutionContext) = {
     // get the input source and its decoder
     val inputSource = rt.getInputHandler(source.deviceURL)
     val decoder: Option[MessageDecoder[_]] = MessageCodecs.getDecoder(source.decoderURL)
