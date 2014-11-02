@@ -25,13 +25,14 @@ case class TokenStream(tokens: Seq[String]) {
    * The given token must be the next token in the stream to avoid an error
    * @param expectedToken the given string token
    */
-  def expect(expectedToken: String): Unit = {
+  def expect(expectedToken: String): TokenStream = {
     if (!hasNext) throw new IllegalArgumentException("Unexpected end of statement")
     else {
       val actualToken = next()
       if (!actualToken.equalsIgnoreCase(expectedToken)) {
         throw new IllegalArgumentException(s"Expected '$expectedToken' near '$actualToken'")
       }
+      this
     }
   }
 
@@ -39,11 +40,12 @@ case class TokenStream(tokens: Seq[String]) {
    * The given token must be the next token in the stream to avoid an error
    * @param expectedToken the given string token
    */
-  def expectOrElse(expectedToken: String, otherwise: => Unit): Unit = {
+  def expectOrElse(expectedToken: String, otherwise: => Unit): TokenStream = {
     if (!hasNext) throw new IllegalArgumentException("Unexpected end of statement")
     else {
       val actualToken = next()
       if (actualToken.equalsIgnoreCase(expectedToken)) otherwise
+      this
     }
   }
 
