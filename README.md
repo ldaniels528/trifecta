@@ -1123,9 +1123,9 @@ Let's view the contents of one of the keys:
     [50] 65.72.5f.65.70.6f.63.68.22.3a.30.2c.22.69.73.72.22.3a.5b.35.5d.7d          | er_epoch":0,"isr":[5]}         
 
 Since we now know the contents of the key is text-based (JSON in this case), let's look at the JSON value using
-the type flag (`-t json`) to transform the JSON in a nice human-readable format.
+the format flag (`-f json`) to transform the JSON in a nice human-readable format.
 
-    zookeeper:localhost:2181/brokers> zget topics/Shocktrade.quotes.csv/partitions/4/state -t json
+    zookeeper:localhost:2181/brokers> zget topics/Shocktrade.quotes.csv/partitions/4/state -f json
     {
       "controller_epoch": 3,
       "leader": 6,
