@@ -162,7 +162,7 @@ object VScriptRuntime {
    * Represents an asynchronous operation
    */
   case class AsyncOp(opCode: OpCode) extends OpCode {
-    override def eval(implicit scope: Scope) = Some(future(opCode.eval))
+    override def eval(implicit scope: Scope) = Some(Future(opCode.eval))
 
     override def toString = s"async $opCode"
   }

@@ -939,7 +939,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
       if (it.hasNext) {
         it.next() match {
           case "and" =>
-          case arg => new IllegalArgumentException("Invalid expression near $arg")
+          case arg => new IllegalArgumentException(s"Invalid expression near $arg")
         }
       }
     }

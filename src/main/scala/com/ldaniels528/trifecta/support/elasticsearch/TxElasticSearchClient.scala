@@ -216,7 +216,7 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @example PUT /my_index/_settings <- { "index" : { "number_of_replicas" : 4 } }
    */
   def updateIndexSettings(index: String, replicas: Int)(implicit ec: ExecutionContext): Future[Response] = {
-    PUT(s"$index/_settings", """{ "index" : { "number_of_replicas" : $replicas } }""")
+    PUT(s"$index/_settings", s"""{ "index" : { "number_of_replicas" : $replicas } }""")
   }
 
   /**

@@ -58,7 +58,7 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
 
     // create & populate the bound statement
     val bs = new BoundStatement(ps)
-    val values = fields map (f => props.get(f).getOrElse(null).asInstanceOf[Object])
+    val values = fields map (f => props.getOrElse(f, null).asInstanceOf[Object])
     bs.bind(values: _*)
 
     // execute the statement
@@ -86,6 +86,7 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
     rsf.addListener(new Runnable {
       override def run(): Unit = {
         promise.success(rsf.getUninterruptibly)
+        ()
       }
     }, threadPool)
     promise.future
