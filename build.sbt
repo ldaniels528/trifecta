@@ -41,22 +41,20 @@ libraryDependencies ++= Seq(
   "com.101tec" % "zkclient" % "0.4",
   "com.twitter" %% "bijection-core" % "0.7.0",
   "com.twitter" %% "bijection-avro" % "0.7.0",
-  "com.typesafe.akka" %% "akka-actor" % "2.3.5",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.6",
   "jline" % "jline" % "2.12",
   "net.liftweb" %% "lift-json" % "2.6-RC1",
   "org.apache.avro" % "avro" % "1.7.7",
   "org.apache.curator" % "curator-framework" % "2.6.0",
   "org.apache.curator" % "curator-test" % "2.6.0",
-  "org.apache.httpcomponents" % "httpclient" % "4.3.2",
-  "org.apache.httpcomponents" % "httpcore" % "4.3.2",
   "org.apache.kafka" %% "kafka" % "0.8.2-beta"
     exclude("org.apache.zookeeper", "zookeeper"),
   "org.apache.storm" % "storm-core" % "0.9.2-incubating"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
-  "org.mongodb" % "casbah-commons_2.10" % "2.6.4",
-  "org.mongodb" % "casbah-core_2.10" % "2.6.4",
+  "org.mongodb" %% "casbah-commons" % "2.7.3",
+  "org.mongodb" %% "casbah-core" % "2.7.3",
   "org.fusesource.jansi" % "jansi" % "1.11",
   "org.slf4j" % "slf4j-api" % "1.7.7",
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
