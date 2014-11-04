@@ -230,7 +230,7 @@ You can retrieve the list of all the commands that Cassandra Module offers with 
 
 To establish a connection to a local/remote Elastic Search peer, use the `econnect` command:
 
-     core:/home/ldaniels> econnect dev501 9200    
+     core:/home/ldaniels> econnect dev501:9200    
      + ----------------------------------- +
      | name                   value        |
      + ----------------------------------- +
