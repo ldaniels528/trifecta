@@ -13,7 +13,7 @@ organization := "com.ldaniels528"
 
 version := "0.1.7"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.4"
 
 scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.6", "-unchecked",
   "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint")
@@ -43,13 +43,13 @@ libraryDependencies ++= Seq(
   "com.twitter" %% "bijection-avro" % "0.7.0",
   "com.typesafe.akka" %% "akka-actor" % "2.3.5",
   "jline" % "jline" % "2.12",
-  "net.liftweb" %% "lift-json" % "2.5.1",
+  "net.liftweb" %% "lift-json" % "2.6-RC1",
   "org.apache.avro" % "avro" % "1.7.7",
   "org.apache.curator" % "curator-framework" % "2.6.0",
   "org.apache.curator" % "curator-test" % "2.6.0",
   "org.apache.httpcomponents" % "httpclient" % "4.3.2",
   "org.apache.httpcomponents" % "httpcore" % "4.3.2",
-  "org.apache.kafka" %% "kafka" % "0.8.1.1"
+  "org.apache.kafka" %% "kafka" % "0.8.2-beta"
     exclude("org.apache.zookeeper", "zookeeper"),
   "org.apache.storm" % "storm-core" % "0.9.2-incubating"
     exclude("org.apache.zookeeper", "zookeeper")
