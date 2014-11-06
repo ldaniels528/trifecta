@@ -8,8 +8,7 @@ import backtype.storm.task.TopologyContext
 import backtype.storm.topology.OutputFieldsDeclarer
 import backtype.storm.topology.base.BaseRichSpout
 import backtype.storm.tuple.{Fields, Values}
-import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer
-import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
+import com.ldaniels528.trifecta.support.kafka.{StreamedMessage, KafkaMacroConsumer}
 import org.apache.avro.Schema
 import org.slf4j.LoggerFactory
 

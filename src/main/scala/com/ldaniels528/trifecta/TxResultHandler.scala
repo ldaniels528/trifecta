@@ -5,9 +5,10 @@ import java.io.PrintStream
 import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.trifecta.support.avro.AvroTables
+import com.ldaniels528.trifecta.support.io.query.QueryResult
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade.AvroRecord
-import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
+import com.ldaniels528.trifecta.support.kafka.StreamedMessage
 import com.ldaniels528.trifecta.util.BinaryMessaging
 import net.liftweb.json._
 import org.apache.avro.generic.GenericRecord
@@ -38,7 +39,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
       // handle binary data
       case message: Array[Byte] if message.isEmpty => out.println("No data returned")
       case message: Array[Byte] => dumpMessage(message)(config)
-      case MessageData(offset, _, _, _, message) => dumpMessage(offset, message)(config)
+      case MessageData(_, offset, _, _, _, message) => dumpMessage(offset, message)(config)
       case StreamedMessage(_, _, offset, _, message) => dumpMessage(offset, message)(config)
 
       // handle the asynchronous I/O cases
@@ -69,6 +70,9 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
         case Some(v) => handleResult(v, input)
         case None => out.println("No data returned")
       }
+
+      case QueryResult(fields, values) =>
+        tabular.transform(fields, values) foreach out.println
 
       case r: ResultSet => handleCassandraResultSet(r)
 

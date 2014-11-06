@@ -10,6 +10,7 @@ import com.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
+import com.ldaniels528.trifecta.support.io.query.QuerySource
 import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
 import com.ldaniels528.trifecta.vscript.VScriptCompiler
 import org.slf4j.LoggerFactory

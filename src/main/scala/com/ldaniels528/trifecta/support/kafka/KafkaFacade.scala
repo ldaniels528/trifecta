@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicLong
 import com.ldaniels528.trifecta.decoders.AvroDecoder
 import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
-import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer._
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
 import com.ldaniels528.trifecta.support.messaging.{BinaryMessage, MessageCursor, MessageDecoder}

@@ -28,6 +28,15 @@ class Tabular() {
    * Transforms the given sequence of objects into a sequence of string that
    * represent a table.
    */
+  def transform(headers: Seq[String], values: Seq[Map[String, Any]]): Seq[String] = {
+    val rows = values.map(_ map { case (name, value) => (name, asString(value))})
+    makeTable(headers, rows)
+  }
+
+  /**
+   * Transforms the given sequence of objects into a sequence of string that
+   * represent a table.
+   */
   def transform[A](values: Option[A]): Seq[String] = {
     values map { value =>
       // get the headers, data rows, and column widths

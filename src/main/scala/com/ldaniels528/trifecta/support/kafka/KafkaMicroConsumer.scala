@@ -34,7 +34,10 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
   /**
    * Closes the underlying consumer instance
    */
-  def close(): Unit = consumer.close()
+  def close(): Unit = {
+    Try(consumer.close())
+    ()
+  }
 
   /**
    * Commits an offset for the given consumer group
@@ -96,7 +99,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
       response.messageSet(topicAndPartition.topic, topicAndPartition.partition) map { msgAndOffset =>
         val key: Array[Byte] = Option(msgAndOffset.message) map (_.key) map toArray getOrElse Array.empty
         val message: Array[Byte] = Option(msgAndOffset.message) map (_.payload) map toArray getOrElse Array.empty
-        MessageData(msgAndOffset.offset, msgAndOffset.nextOffset, lastOffset, key, message)
+        MessageData(topicAndPartition.partition, msgAndOffset.offset, msgAndOffset.nextOffset, lastOffset, key, message)
       }
     }
   }
@@ -201,6 +204,50 @@ object KafkaMicroConsumer {
     // check for the failure to complete the count
     Future.sequence(tasks).onComplete {
       case Success(v) => promise.success(counter.get)
+      case Failure(e) => promise.failure(e)
+    }
+    promise.future
+  }
+
+  /**
+   * Returns the promise of the option of a message based on the given search criteria
+   * @param topic the given topic name
+   * @param brokers the given replica brokers
+   * @param correlationId the given correlation ID
+   * @param conditions the given search criteria
+   * @return the promise of the option of a message based on the given search criteria
+   */
+  def findAll(topic: String, brokers: Seq[Broker], correlationId: Int, conditions: Seq[Condition], limit: Option[Int])(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[MessageData]] = {
+    val promise = Promise[Seq[MessageData]]()
+    val count = new AtomicLong(0L)
+    val tasks = getTopicPartitions(topic) map { partition =>
+      Future {
+        var messages: List[MessageData] = Nil
+        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { subs =>
+          var offset: Option[Long] = subs.getFirstOffset
+          val lastOffset: Option[Long] = subs.getLastOffset
+          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || limit.exists(count.get >= _)
+          while (!eof) {
+            for {
+              ofs <- offset
+              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
+            } {
+              if (conditions.forall(_.satisfies(msg.message, msg.key))) {
+                messages = msg :: messages
+                count.incrementAndGet()
+              }
+            }
+
+            offset = offset map (_ + 1)
+          }
+          messages
+        }
+      }
+    }
+
+    // check for the failure to find a message
+    Future.sequence(tasks).onComplete {
+      case Success(messages) => promise.success(messages.flatten)
       case Failure(e) => promise.failure(e)
     }
     promise.future
@@ -499,7 +546,7 @@ object KafkaMicroConsumer {
    * @param nextOffset the next available offset
    * @param message the message
    */
-  case class MessageData(offset: Long, nextOffset: Long, lastOffset: Long, key: Array[Byte], message: Array[Byte])
+  case class MessageData(partition: Int, offset: Long, nextOffset: Long, lastOffset: Long, key: Array[Byte], message: Array[Byte])
     extends BinaryMessage
 
   /**

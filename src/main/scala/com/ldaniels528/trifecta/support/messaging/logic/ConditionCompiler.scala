@@ -35,7 +35,7 @@ object ConditionCompiler {
       case "is" =>
         if (field == "key") KEY_EQ(value)
         else throw new IllegalArgumentException("Only 'key' can be used with the verb 'is'")
-      case _ => throw new IllegalArgumentException(s"Illegal operator '$operator'")
+      case _ => throw new IllegalArgumentException(s"Illegal operator '$operator' near '$field'")
     }
   }
 

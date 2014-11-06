@@ -11,7 +11,6 @@ import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.decoders.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.modules.ModuleHelper._
 import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.sandboxes.KafkaSandbox
 import com.ldaniels528.trifecta.support.avro.AvroConversion._
 import com.ldaniels528.trifecta.support.io.KeyAndMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
@@ -134,7 +133,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
   }
 
   override def getVariables: Seq[Variable] = Seq(
-    Variable("defaultFetchSize", ConstantValue(Option(65536)))
+    Variable("defaultFetchSize", ConstantValue(Some(65536)))
   )
 
   override def moduleName = "kafka"

@@ -71,7 +71,8 @@ case class TokenStream(tokens: Seq[String]) {
   def getUntil(token: String, delimiter: Option[String] = None): Seq[String] = {
     // get the qualified sequence of tokens
     val index = tokens.indexOf(token)
-    val subList = if (index != -1) tokens.slice(pos, index) else tokens
+    val limit = if (index != -1) index else tokens.size
+    val subList = tokens.slice(pos, limit)
 
     // if a delimiter is specified, extract only the even values
     val list = delimiter.map { delim =>
@@ -82,7 +83,7 @@ case class TokenStream(tokens: Seq[String]) {
       }.reverse
     } getOrElse subList
 
-    pos = index
+    pos = limit
     list
   }
 
@@ -160,6 +161,6 @@ case class TokenStream(tokens: Seq[String]) {
    * @param count the number of tokens desired
    * @return the sequence of tokens
    */
-  def take(count: Int): List[String] = (1 to count).flatMap(n => get).toList
+  def take(count: Int): Seq[String] = (1 to count).flatMap(n => get)
 
 }
