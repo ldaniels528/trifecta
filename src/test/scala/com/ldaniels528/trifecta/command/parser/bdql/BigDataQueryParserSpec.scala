@@ -12,9 +12,31 @@ import org.scalatest.{FeatureSpec, GivenWhenThen}
 class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
 
   info("As a Big Data Query Parser")
-  info("I want to be able to parse Big Data queries into query objects")
+  info("I want to be able to parse Big Data queries")
 
-  feature("Ability to parse Big Data queries into BD-QL objects") {
+  feature("Ability to parse Big Data query") {
+    scenario("A string containing a Big Data selection query") {
+      Given("a Big Data selection query")
+      val queryString =
+        """
+          |select symbol, exchange, lastTrade, volume
+          |from "kafka:quotes" with "avro:file:avro/quotes.avsc" where exchange == "OTCBB"
+          | """.stripMargin
+
+      When("The queries is parsed into a BD-QL object")
+      val query = BigDataQueryParser(queryString)
+
+      Then("The arguments should be successfully verified")
+      query shouldBe BigDataSelection(
+        source = IOSource(deviceURL = "kafka:quotes", decoderURL = "avro:file:avro/quotes.avsc"),
+        destination = None,
+        fields = List("symbol", "exchange", "lastTrade", "volume"),
+        criteria = Some(EQ("exchange", "OTCBB")),
+        limit = None)
+    }
+  }
+
+  feature("Ability to parse Big Data queries with an embedded insert") {
     scenario("A string containing a Big Data selection query") {
       Given("a Big Data selection query")
       val queryString =
@@ -22,7 +44,7 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
           |select symbol, exchange, lastTrade, volume
           |from "kafka:quotes" with "avro:file:avro/quotes.avsc"
           |into "es:/quotes/quote/AAPL" with json
-          |where exchange == 'OTCBB'
+          |where exchange == "OTCBB"
           |and lastTrade <= 1.0
           |and volume >= 1,000,000
           |limit 10
@@ -36,7 +58,7 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
         source = IOSource(deviceURL = "kafka:quotes", decoderURL = "avro:file:avro/quotes.avsc"),
         destination = Some(IOSource(deviceURL = "es:/quotes/quote/AAPL", decoderURL = "json")),
         fields = List("symbol", "exchange", "lastTrade", "volume"),
-        criteria = Some(AND(AND(EQ("exchange", "'OTCBB'"), LE("lastTrade", "1.0")), GE("volume", "1000000"))),
+        criteria = Some(AND(AND(EQ("exchange", "OTCBB"), LE("lastTrade", "1.0")), GE("volume", "1000000"))),
         limit = Some(10))
     }
   }
