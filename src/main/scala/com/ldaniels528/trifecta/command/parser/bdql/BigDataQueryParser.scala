@@ -1,6 +1,7 @@
 package com.ldaniels528.trifecta.command.parser.bdql
 
 import com.ldaniels528.trifecta.command.parser.TokenStream
+import com.ldaniels528.trifecta.support.io.query.{IOSource, BigDataSelection}
 import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.support.messaging.logic.Expressions._
 
@@ -21,8 +22,8 @@ object BigDataQueryParser {
 
     /*
      * select symbol, exchange, lastTrade, volume
-     * from "kafka:quotes" with "avro:file:avro/quotes.avsc"
-     * into "es:/quotes/quote/AAPL" with json
+     * from "topic:quotes" with "avro:file:avro/quotes.avsc"
+     * into "es:/quotes/quote/AAPL" with "json"
      * where exchange == 'OTCBB'
      * and lastTrade <= 1.0
      * and volume >= 1,000,000
@@ -93,9 +94,9 @@ object BigDataQueryParser {
       while (it.hasNext) {
         val args = it.take(criteria.size + 3)
         args match {
-          case List("and", field, operator, value) => criteria = criteria.map(AND(_, compile(field, operator, value)))
-          case List("or", field, operator, value) => criteria = criteria.map(OR(_, compile(field, operator, value)))
-          case List(field, operator, value) => criteria = Option(compile(field, operator, value))
+          case List("and", field, operator, value) => criteria = criteria.map(AND(_, compile(field, operator, deQuote(value))))
+          case List("or", field, operator, value) => criteria = criteria.map(OR(_, compile(field, operator, deQuote(value))))
+          case List(field, operator, value) => criteria = Option(compile(field, operator, deQuote(value)))
           case _ =>
             throw new IllegalArgumentException(s"Invalid expression near ${it.rewind(4).take(4).mkString(" ")}")
         }

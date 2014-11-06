@@ -1,5 +1,7 @@
 package com.ldaniels528.trifecta.support.io
 
+import com.ldaniels528.trifecta.support.io.query.QuerySource
+
 /**
  * This trait should be implemented by classes that are interested in serving as an
  * input source for reading binary messages
@@ -12,6 +14,12 @@ trait InputSource {
    * @return the option of a key-and-message
    */
   def read: Option[KeyAndMessage]
+
+  /**
+   * Returns a source for querying via Big Data Query Language (BDQL)
+   * @return the option of a query source
+   */
+  def getQuerySource: Option[QuerySource] = None
 
   /**
    * Closes the underlying stream

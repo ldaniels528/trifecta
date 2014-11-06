@@ -80,6 +80,8 @@ object AvroDecoder {
         case Failure(e) => false
       }
     }
+
+    override def toString = s"$field == '$value'"
   }
 
   /**
@@ -100,6 +102,8 @@ object AvroDecoder {
         case Failure(e) => false
       }
     }
+
+    override def toString = s"$field > $value'"
   }
 
   /**
@@ -120,6 +124,8 @@ object AvroDecoder {
         case Failure(e) => false
       }
     }
+
+    override def toString = s"$field >= '$value'"
   }
 
   /**
@@ -140,6 +146,8 @@ object AvroDecoder {
         case Failure(e) => false
       }
     }
+
+    override def toString = s"$field < '$value'"
   }
 
   /**
@@ -160,6 +168,8 @@ object AvroDecoder {
         case Failure(e) => false
       }
     }
+
+    override def toString = s"$field <= '$value'"
   }
 
   /**
@@ -180,6 +190,8 @@ object AvroDecoder {
         case Failure(e) => false
       }
     }
+
+    override def toString = s"$field != '$value'"
   }
 
 }

@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.command.parser.bdql
 
+import com.ldaniels528.trifecta.support.io.query.{IOSource, BigDataSelection}
 import com.ldaniels528.trifecta.support.messaging.logic.Expressions._
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}

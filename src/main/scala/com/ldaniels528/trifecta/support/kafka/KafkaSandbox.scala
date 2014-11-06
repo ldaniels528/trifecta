@@ -1,9 +1,9 @@
-package com.ldaniels528.trifecta.sandboxes
+package com.ldaniels528.trifecta.support.kafka
 
-import KafkaSandbox._
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import com.ldaniels528.trifecta.support.kafka.KafkaSandbox._
 import kafka.server.{KafkaConfig, KafkaServerStartable}
 import org.apache.curator.framework.CuratorFrameworkFactory
 import org.apache.curator.retry.RetryOneTime

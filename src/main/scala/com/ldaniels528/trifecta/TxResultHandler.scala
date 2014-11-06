@@ -5,6 +5,7 @@ import java.io.PrintStream
 import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.trifecta.support.avro.AvroTables
+import com.ldaniels528.trifecta.support.io.query.QueryResult
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade.AvroRecord
 import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
@@ -69,6 +70,9 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
         case Some(v) => handleResult(v, input)
         case None => out.println("No data returned")
       }
+
+      case QueryResult(fields, values) =>
+        tabular.transform(fields, values) foreach out.println
 
       case r: ResultSet => handleCassandraResultSet(r)
 
