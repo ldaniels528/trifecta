@@ -99,7 +99,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
       response.messageSet(topicAndPartition.topic, topicAndPartition.partition) map { msgAndOffset =>
         val key: Array[Byte] = Option(msgAndOffset.message) map (_.key) map toArray getOrElse Array.empty
         val message: Array[Byte] = Option(msgAndOffset.message) map (_.payload) map toArray getOrElse Array.empty
-        MessageData(msgAndOffset.offset, msgAndOffset.nextOffset, lastOffset, key, message)
+        MessageData(topicAndPartition.partition, msgAndOffset.offset, msgAndOffset.nextOffset, lastOffset, key, message)
       }
     }
   }
@@ -546,7 +546,7 @@ object KafkaMicroConsumer {
    * @param nextOffset the next available offset
    * @param message the message
    */
-  case class MessageData(offset: Long, nextOffset: Long, lastOffset: Long, key: Array[Byte], message: Array[Byte])
+  case class MessageData(partition: Int, offset: Long, nextOffset: Long, lastOffset: Long, key: Array[Byte], message: Array[Byte])
     extends BinaryMessage
 
   /**

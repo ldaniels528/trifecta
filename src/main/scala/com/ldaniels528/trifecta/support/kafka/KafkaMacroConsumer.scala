@@ -3,8 +3,6 @@ package com.ldaniels528.trifecta.support.kafka
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import akka.actor.ActorRef
-import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
-import com.ldaniels528.trifecta.support.messaging.BinaryMessage
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
 import com.ldaniels528.trifecta.util.TxUtils._
 import kafka.consumer.{Consumer, ConsumerConfig}
@@ -195,11 +193,5 @@ object KafkaMacroConsumer {
       "auto.commit.interval.ms" -> "1000") ++ Map(params.map { case (k, v) => (k, String.valueOf(v))}: _*)
     new KafkaMacroConsumer(new ConsumerConfig(props.toProps))
   }
-
-  /**
-   * Represents a stream message
-   */
-  case class StreamedMessage(topic: String, partition: Int, offset: Long, key: Array[Byte], message: Array[Byte])
-    extends BinaryMessage
 
 }

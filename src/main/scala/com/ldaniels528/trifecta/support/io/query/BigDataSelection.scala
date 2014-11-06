@@ -49,6 +49,7 @@ case class BigDataSelection(source: IOSource,
   /**
    * Returns the string representation of the query
    * @example select strategy, groupedBy, vip, site, qName, srcIP, frequency from "topic:dns.query.topHitters" with "avro:file:avro/topTalkers.avsc" where strategy == "IPv4-CMS" and groupedBy == "vip,site" limit 35
+   * @example select strategy, groupedBy, vip, site, qName, srcIP, frequency from "topic:dns.query.topHitters" with "avro:file:avro/topTalkers.avsc" where strategy == "IPv4-CMS"
    * @return the string representation
    */
   override def toString = {

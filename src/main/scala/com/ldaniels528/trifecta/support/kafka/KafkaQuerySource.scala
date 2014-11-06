@@ -18,11 +18,13 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
   extends QuerySource {
 
   override def findAll(fields: Seq[String], decoder: MessageDecoder[_], conditions: Seq[Condition], limit: Option[Int])(implicit ec: ExecutionContext) = {
-     KafkaMicroConsumer.findAll(topic, brokers, correlationId, conditions, limit) map {
-      _ map (message => decodeMessage(message, decoder)) map { record =>
-        Map(fields map (field => (field, record.get(field))): _*)
+    val myFields = List("partition", "offset") ::: fields.toList
+    KafkaMicroConsumer.findAll(topic, brokers, correlationId, conditions, limit) map {
+      _ map { md =>
+        val record = decodeMessage(md, decoder)
+        Map(fields map (field => (field, record.get(field))): _*) ++ Map("partition" -> md.partition, "offset" -> md.offset)
       }
-    } map (QueryResult(fields, _))
+    } map (QueryResult(myFields, _))
   }
 
   /**

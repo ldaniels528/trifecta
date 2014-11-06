@@ -2,7 +2,6 @@ package com.ldaniels528.trifecta.support.kafka
 
 import akka.actor.{Actor, ActorSystem, Props}
 import com.ldaniels528.tabular.Tabular
-import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumer.StreamedMessage
 import com.ldaniels528.trifecta.support.kafka.KafkaMacroConsumerTest._
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.TxUtils._
