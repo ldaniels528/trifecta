@@ -273,27 +273,27 @@ Now let's do something slightly more advanced. Let's use _Trifecta's_ powerful s
 a message from a Kafka Topic to create (or update) an Elastic Search document. **NOTE**: Some setup steps have been 
 omitted for brevity. See <a href="#kafka-advanced-search">Kafka Advanced Search</a> for full details.
 
-    elasticSearch:localhost:9200/quotes/quote/AMD> kfindone symbol == "AAPL" -o es:/quotes/quote/AAPL   
-    + ------------------------------------- +
-    | field         value          type     |
-    + ------------------------------------- +
-    | symbol        AAPL           Utf8     |
-    | lastTrade     100.75         Double   |
-    | tradeDate     1411714800000  Long     |
-    | tradeTime                             |
-    | ask           100.66         Double   |
-    | bid           100.62         Double   |
-    | change        2.88           Double   |
-    | changePct     2.94           Double   |
-    | prevClose     97.87          Double   |
-    | open          98.55          Double   |
-    | close         100.75         Double   |
-    | high          100.75         Double   |
-    | low           98.4           Double   |
-    | volume        62336772       Long     |
-    | marketCap     6.033E11       Double   |
-    | errorMessage                          |
-    + ------------------------------------- +
+    elasticSearch:localhost:9200/quotes/quote/AMD> kfindone symbol == "AAPL" -o es:/quotes/quote/AAPL
+
+    {
+      "symbol":"AAPL",
+      "exchange":"NASDAQNM",
+      "lastTrade":109.01,
+      "tradeDate":null,
+      "tradeTime":"4:00pm",
+      "ask":109.03,
+      "bid":109.01,
+      "change":0.31,
+      "changePct":0.29,
+      "prevClose":108.7,
+      "open":108.72,
+      "close":109.01,
+      "high":109.32,
+      "low":108.55,
+      "volume":33691536,
+      "marketCap":6.393E11,
+      "errorMessage":null
+    }
     
 Finally, let's view the document we've created:
    
@@ -301,22 +301,23 @@ Finally, let's view the document we've created:
      
     {
       "symbol":"AAPL",
-      "lastTrade":100.75,
-      "tradeDate":1411714800000,
-      "tradeTime":null,
-      "ask":100.66,
-      "bid":100.62,
-      "change":2.88,
-      "changePct":2.94,
-      "prevClose":97.87,
-      "open":98.55,
-      "close":100.75,
-      "high":100.75,
-      "low":98.4,
-      "volume":62336772,
-      "marketCap":6.033E11,
+      "exchange":"NASDAQNM",
+      "lastTrade":109.01,
+      "tradeDate":null,
+      "tradeTime":"4:00pm",
+      "ask":109.03,
+      "bid":109.01,
+      "change":0.31,
+      "changePct":0.29,
+      "prevClose":108.7,
+      "open":108.72,
+      "close":109.01,
+      "high":109.32,
+      "low":108.55,
+      "volume":33691536,
+      "marketCap":6.393E11,
       "errorMessage":null
-    }    
+    }
 
 Please note we could also use any of the Kafka message retrieve commands (`kget`, `kfirst`, `knext`, `kprev` and `klast`) 
 to copy a Kafka message as an Elastic Search document. See the following example:
@@ -581,27 +582,25 @@ First, `kwatch` is used to create a connection to a consumer group:
 Some output will likely follow as the connection (and _watch cursor_) are established. Next, if a message is already 
 available, it will be returned immediately:
 
-    + --------------------------------- +
-    | field         value      type     |
-    + --------------------------------- +
-    | symbol        L          Utf8     |
-    | exchange      NYSE       Utf8     |
-    | lastTrade     42.6       Double   |
-    | tradeDate                         |
-    | tradeTime     4:04pm     Utf8     |
-    | ask                               |
-    | bid                               |
-    | change        0.1        Double   |
-    | changePct     0.24       Double   |
-    | prevClose     42.5       Double   |
-    | open          42.42      Double   |
-    | close         42.6       Double   |
-    | high          42.705     Double   |
-    | low           42.21      Double   |
-    | volume        702711     Long     |
-    | marketCap     1.6235E10  Double   |
-    | errorMessage                      |
-    + --------------------------------- +    
+    {
+      "symbol":"MNLDF",
+      "exchange":"OTHER OTC",
+      "lastTrade":1.18,
+      "tradeDate":null,
+      "tradeTime":"1:50pm",
+      "ask":null,
+      "bid":null,
+      "change":0.0,
+      "changePct":0.0,
+      "prevClose":1.18,
+      "open":null,
+      "close":1.18,
+      "high":null,
+      "low":null,
+      "volume":0,
+      "marketCap":null,
+      "errorMessage":null
+    }
     
     kafka:[w]shocktrade.quotes.avro/4:23070> _
     
@@ -609,27 +608,25 @@ To retrieve any subsequent messages, you use the `kwatchnext` command:
     
     kafka:[w]shocktrade.quotes.avro/4:23070> kwatchnext
     
-    + --------------------------------- +
-    | field         value      type     |
-    + --------------------------------- +
-    | symbol        GIS        Utf8     |
-    | exchange      NYSE       Utf8     |
-    | lastTrade     51.16      Double   |
-    | tradeDate                         |
-    | tradeTime     4:07pm     Utf8     |
-    | ask                               |
-    | bid                               |
-    | change        0.13       Double   |
-    | changePct     0.25       Double   |
-    | prevClose     51.03      Double   |
-    | open          51.0       Double   |
-    | close         51.16      Double   |
-    | high          51.45      Double   |
-    | low           50.837     Double   |
-    | volume        1366336    Long     |
-    | marketCap     3.0888E10  Double   |
-    | errorMessage                      |
-    + --------------------------------- +
+    {
+      "symbol":"PXYN",
+      "exchange":"OTHER OTC",
+      "lastTrade":0.075,
+      "tradeDate":null,
+      "tradeTime":"3:57pm",
+      "ask":null,
+      "bid":null,
+      "change":0.01,
+      "changePct":15.38,
+      "prevClose":0.065,
+      "open":0.064,
+      "close":0.075,
+      "high":0.078,
+      "low":0.064,
+      "volume":1325779,
+      "marketCap":2.45E7,
+      "errorMessage":null
+    }
     
     kafka:[w]shocktrade.quotes.avro/4:23071> _
 
@@ -701,26 +698,26 @@ Let's retrieve the first message from topic _Shocktrade.quotes.avro_ (partition 
 our optional message decoder:
 
     kafka:/> kfirst Shocktrade.quotes.avro 0 -a file:avro/quotes.avsc
-    + ------------------------------------- +
-    | field         value          type     |
-    + ------------------------------------- +
-    | symbol        M              Utf8     |
-    | lastTrade     59.59          Double   |
-    | tradeDate     1410505200000  Long     |
-    | tradeTime                             |
-    | ask                                   |
-    | bid                                   |
-    | change        -0.23          Double   |
-    | changePct     -0.38          Double   |
-    | prevClose     59.82          Double   |
-    | open          59.91          Double   |
-    | close         59.59          Double   |
-    | high          60.06          Double   |
-    | low           59.27          Double   |
-    | volume        3811771        Long     |
-    | marketCap     2.1043E10      Double   |
-    | errorMessage                          |
-    + ------------------------------------- +
+
+    {
+      "symbol":"GES",
+      "exchange":"NYSE",
+      "lastTrade":21.75,
+      "tradeDate":null,
+      "tradeTime":"4:03pm",
+      "ask":null,
+      "bid":null,
+      "change":-0.41,
+      "changePct":-1.85,
+      "prevClose":22.16,
+      "open":21.95,
+      "close":21.75,
+      "high":22.16,
+      "low":21.69,
+      "volume":650298,
+      "marketCap":1.853E9,
+      "errorMessage":null
+    }
 
 Let's view the cursor:
     
@@ -734,50 +731,75 @@ Let's view the cursor:
 The `kfirst`, `klast`, `kprev` and `knext` commands also work with the Avro integration:
 
     kafka:shocktrade.quotes.avro/2:9728> knext
-    + ------------------------------ +
-    | field         value   type     |
-    + ------------------------------ +
-    | symbol        FNF     Utf8     |
-    | exchange      NYSE    Utf8     |
-    | lastTrade     26.67   Double   |
-    | tradeDate                      |
-    | tradeTime     4:00pm  Utf8     |
-    | ask                            |
-    | bid                            |
-    | change        -0.02   Double   |
-    | changePct     -0.07   Double   |
-    | prevClose     26.69   Double   |
-    | open          26.67   Double   |
-    | close         26.67   Double   |
-    | high          26.91   Double   |
-    | low           26.57   Double   |
-    | volume        921234  Long     |
-    | marketCap     7.4E9   Double   |
-    | errorMessage                   |
-    + ------------------------------ +
-   
-Since Avro is based on JSON, we can also express the same data in native JSON format:
 
-    kafka:shocktrade.quotes.avro/2:9728> kget -f json
     {
-      "symbol":"FNF",
+      "symbol":"GEO",
       "exchange":"NYSE",
-      "lastTrade":26.67,
+      "lastTrade":41.4,
       "tradeDate":null,
-      "tradeTime":"4:00pm",
+      "tradeTime":"4:03pm",
       "ask":null,
       "bid":null,
-      "change":-0.02,
-      "changePct":-0.07,
-      "prevClose":26.69,
-      "open":26.67,
-      "close":26.67,
-      "high":26.91,
-      "low":26.57,
-      "volume":921234,
-      "marketCap":7.4E9,
+      "change":0.76,
+      "changePct":1.87,
+      "prevClose":40.64,
+      "open":40.55,
+      "close":41.4,
+      "high":41.49,
+      "low":40.01,
+      "volume":896757,
+      "marketCap":2.973E9,
       "errorMessage":null
-    }    
+    }
+   
+Since Avro is based on JSON, we can also express the same data in Avro compatible JSON format:
+
+    kafka:shocktrade.quotes.avro/2:9728> kget -f avro_json
+
+    {
+      "symbol":"GEO",
+      "exchange":{
+        "string":"NYSE"
+      },
+      "lastTrade":{
+        "double":41.4
+      },
+      "tradeDate":null,
+      "tradeTime":{
+        "string":"4:03pm"
+      },
+      "ask":null,
+      "bid":null,
+      "change":{
+        "double":0.76
+      },
+      "changePct":{
+        "double":1.87
+      },
+      "prevClose":{
+        "double":40.64
+      },
+      "open":{
+        "double":40.55
+      },
+      "close":{
+        "double":41.4
+      },
+      "high":{
+        "double":41.49
+      },
+      "low":{
+        "double":40.01
+      },
+      "volume":{
+        "long":896757
+      },
+      "marketCap":{
+        "double":2.973E9
+      },
+      "errorMessage":null
+    }
+
 
 <a name="kafka-search-by-key"></a>
 ##### Kafka Search by Key
@@ -848,51 +870,50 @@ The response was 1350, meaning there are 1350 messages containing a volume great
 Suppose you want to find a message for Apple (ticker: "AAPL"), you could issue the `kfindone` command:
 
     kafka:Shocktrade.quotes.avro/0:1> kfindone symbol == "AAPL"
-    + ------------------------------------- +
-    | field         value          type     |
-    + ------------------------------------- +
-    | symbol        AAPL           Utf8     |
-    | lastTrade     101.58         Double   |
-    | tradeDate     1410937200000  Long     |
-    | tradeTime                             |
-    | ask           101.64         Double   |
-    | bid           101.5          Double   |
-    | change        0.72           Double   |
-    | changePct     0.71           Double   |
-    | prevClose     100.86         Double   |
-    | open          101.32         Double   |
-    | close         101.58         Double   |
-    | high          101.8          Double   |
-    | low           100.5922       Double   |
-    | volume        60926496       Long     |
-    | marketCap     6.082E11       Double   |
-    | errorMessage                          |
-    + ------------------------------------- +
+
+    {
+      "symbol":"AAPL",
+      "exchange":"NASDAQNM",
+      "lastTrade":109.01,
+      "tradeDate":null,
+      "tradeTime":"4:00pm",
+      "ask":109.03,
+      "bid":109.01,
+      "change":0.31,
+      "changePct":0.29,
+      "prevClose":108.7,
+      "open":108.72,
+      "close":109.01,
+      "high":109.32,
+      "low":108.55,
+      "volume":33691536,
+      "marketCap":6.393E11,
+      "errorMessage":null
+    }
     
 You can also specify complex queries by combining multiple expressions with the `and` keyword:
     
     kafka:Shocktrade.quotes.avro/1234:4> kfindone lastTrade < 1 and volume > 1000000 -a file:avro/quotes.avsc
-    + --------------------------------- +
-    | field         value      type     |
-    + --------------------------------- +
-    | symbol        TAGG       Utf8     |
-    | exchange      OTHER OTC  Utf8     |
-    | lastTrade     1.0E-4     Double   |
-    | tradeDate                         |
-    | tradeTime     1:48pm     Utf8     |
-    | ask                               |
-    | bid                               |
-    | change        0.0        Double   |
-    | changePct     0.0        Double   |
-    | prevClose     1.0E-4     Double   |
-    | open          1.0E-4     Double   |
-    | close         1.0E-4     Double   |
-    | high          1.0E-4     Double   |
-    | low           1.0E-4     Double   |
-    | volume        12987999   Long     |
-    | marketCap     423000.0   Double   |
-    | errorMessage                      |
-    + --------------------------------- +
+
+    {
+      "symbol":"MDTV",
+      "exchange":"OTHER OTC",
+      "lastTrade":0.022,
+      "tradeDate":null,
+      "tradeTime":"3:27pm",
+      "ask":null,
+      "bid":null,
+      "change":0.0099,
+      "changePct":81.82,
+      "prevClose":0.0121,
+      "open":0.015,
+      "close":0.022,
+      "high":0.027,
+      "low":0.015,
+      "volume":1060005,
+      "marketCap":125000.0,
+      "errorMessage":null
+    }
 
 Now suppose you want to copy the messages having high volume (1,000,000 or more) to another topic:
 
