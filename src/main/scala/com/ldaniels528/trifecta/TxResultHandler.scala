@@ -4,7 +4,7 @@ import java.io.PrintStream
 
 import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
 import com.ldaniels528.tabular.Tabular
-import com.ldaniels528.trifecta.support.avro.{AvroConversion, AvroTables}
+import com.ldaniels528.trifecta.support.avro.AvroTables
 import com.ldaniels528.trifecta.support.io.query.QueryResult
 import com.ldaniels528.trifecta.support.json.TxJsonUtil
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
@@ -55,7 +55,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
 
       // handle Avro records
       case g: GenericRecord =>
-        Try(TxJsonUtil.toJson(g.toString)) match {
+        Try(TxJsonUtil.toJson(g)) match {
           case Success(js) => out.println(pretty(render(js)))
           case Failure(e) => out.println(g)
         }
