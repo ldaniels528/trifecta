@@ -4,9 +4,9 @@ import java.io.PrintStream
 
 import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
 import com.ldaniels528.tabular.Tabular
-import com.ldaniels528.trifecta.support.avro.AvroTables
+import com.ldaniels528.trifecta.support.avro.{AvroConversion, AvroTables}
 import com.ldaniels528.trifecta.support.io.query.QueryResult
-import com.ldaniels528.trifecta.support.kafka.KafkaFacade.AvroRecord
+import com.ldaniels528.trifecta.support.json.TxJsonUtil
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
 import com.ldaniels528.trifecta.support.kafka.StreamedMessage
 import com.ldaniels528.trifecta.util.BinaryMessaging
@@ -15,7 +15,6 @@ import org.apache.avro.generic.GenericRecord
 
 import scala.collection.GenTraversableOnce
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -56,11 +55,10 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
 
       // handle Avro records
       case g: GenericRecord =>
-        val fields = g.getSchema.getFields.asScala.map(_.name.trim).toSeq
-        tabular.transform(fields map { f =>
-          val v = g.get(f)
-          AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")
-        }) foreach out.println
+        Try(TxJsonUtil.toJson(g.toString)) match {
+          case Success(js) => out.println(pretty(render(js)))
+          case Failure(e) => out.println(g)
+        }
 
       // handle JSON values
       case js: JValue => out.println(pretty(render(js)))
