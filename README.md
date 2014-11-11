@@ -969,8 +969,10 @@ Let's look at another example:
     kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, lastTrade, open, close, high, low
                                           from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
                                           where lastTrade <= 1 and volume >= 1,000,000
-                                          limit 20
+                                          limit 25
 
+    Task is now running in the background (use 'jobs' to view)
+    kafka:shocktrade.quotes.avro/0:32050> Job #873 completed (use 'jobs -v 873' to view results)
     + --------------------------------------------------------------------------------- +
     | partition  offset  symbol  exchange   lastTrade  open    close   high    low      |
     + --------------------------------------------------------------------------------- +
