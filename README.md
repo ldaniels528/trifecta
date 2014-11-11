@@ -28,6 +28,7 @@ Table of Contents
         * <a href="#kafka-avro-module">Avro Integration</a>
         * <a href="#kafka-search-by-key">Searching By Key</a>
         * <a href="#kafka-advanced-search">Advanced Search</a>
+        * <a href="#kafka-search-by-query">Searching By Query</a>
     * <a href="#mongodb-module">MongoDB Module</a>  
     * <a href="#storm-module">Storm Module</a>     
     * <a href="#zookeeper-module">Zookeeper Module</a>
@@ -943,8 +944,33 @@ Let's see how these statistics compares to the original:
     | Shocktrade.quotes.avro       2          0            4500       4500                |
     | Shocktrade.quotes.avro       3          0            4670       4670                |
     | Shocktrade.quotes.avro       4          0            4431       4431                |
-    + ----------------------------------------------------------------------------------- +   
-            
+    + ----------------------------------------------------------------------------------- +
+
+<a name="kafka-search-by-query"></a>
+#### Searching By Query
+
+Trifecta provides the ability to perform SQL-like queries against Kafka topics. The syntax is very similar to SQL except
+for a few minor differences. Here's the basic syntax:
+
+    select *<fields list>*
+    from *<topic>*
+    where *<condition>*
+    limit *<numberOfRows>*
+
+Consider the following example:
+
+    kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, open, close, high, low from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc" where symbol == "AAPL"
+
+As with most potentially long-running statements, if the query takes long than a few seconds to complete, it will be
+executed in the background.
+
+    kafka:shocktrade.quotes.avro/0:32050> Job #607 completed (use 'jobs -v 607' to view results)
+    + --------------------------------------------------------------------- +
+    | partition  offset  symbol  exchange  open    close   high    low      |
+    + --------------------------------------------------------------------- +
+    | 0          32946   AAPL    NASDAQNM  108.72  109.01  109.32  108.55   |
+    + --------------------------------------------------------------------- +
+
 <a name="mongodb-module"></a>            
 #### MongoDB Module
             
