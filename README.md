@@ -1,8 +1,9 @@
 Trifecta 
 =======
 
-Trifecta (formerly Verify) is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect
-and verify Kafka messages, ElasticSearch documents, Storm topologies and Zookeeper data.
+Trifecta is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, verify and even query
+Kafka messages. In addition, Trifecta offers data import/export functions for copying data between
+Kafka topics and many other Big Data Systems (including Cassandra, ElasticSearch, MongoDB and others).
 
 Table of Contents
 
