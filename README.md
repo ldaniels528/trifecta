@@ -938,8 +938,9 @@ Let's see how these statistics compares to the original:
 <a name="kafka-search-by-query"></a>
 #### Searching By Query
 
-Trifecta provides the ability to perform SQL-like queries against Kafka topics. The syntax is very similar to SQL except
-for a few minor differences. Here's the basic syntax:
+Trifecta provides the ability to perform SQL-like queries against Avro-encoded Kafka topics (Read more about Trifecta's
+Kafka-Avro integration <a href="#kafka-avro-module">here</a>). The syntax is very similar to SQL except for a few minor
+differences. Here's the basic syntax:
 
     select <fieldsToDisplay>
     from <topic> with <decoder>
@@ -952,8 +953,11 @@ Consider the following example:
                                           from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
                                           where symbol == "AAPL"
 
-As with most potentially long-running statements, if the query takes long than a few seconds to complete, it will be
-executed in the background.
+**NOTE**: Because we didn't specify a limit for the number of results that could be returned, the default value (25) is
+used.
+
+As with most potentially long-running statements in Trifecta, if the query takes longer than a few seconds to complete,
+it will be executed in the background.
 
     kafka:shocktrade.quotes.avro/0:32050> Job #607 completed (use 'jobs -v 607' to view results)
     + --------------------------------------------------------------------- +
