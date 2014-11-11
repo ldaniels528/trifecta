@@ -38,16 +38,17 @@ case class BigDataSelection(source: IOSource,
     val maximum = limit ?? Some(25)
 
     // perform the query/copy operation
-    if (outputSource.isEmpty) {
+    if (outputSource.nonEmpty) throw new IllegalStateException("Insert is not yet supported")
+    else {
       val querySource = inputSource.flatMap(_.getQuerySource).orDie(s"No query compatible source found for URL '${source.deviceURL}'")
       val decoder = inputDecoder.orDie(s"No decoder found for URL ${source.decoderURL}")
       querySource.findAll(fields, decoder, conditions, maximum)
     }
-    else throw new IllegalStateException("Insert is not yet supported")
   }
 
   /**
    * Returns the string representation of the query
+   * @example select symbol, exchange, open, close, high, low from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc" where exchange == "NASDAQ"
    * @example select strategy, groupedBy, vip, site, qName, srcIP, frequency from "topic:dns.query.topHitters" with "avro:file:avro/topTalkers.avsc" where strategy == "IPv4-CMS" and groupedBy == "vip,site" limit 35
    * @example select strategy, groupedBy, vip, site, qName, srcIP, frequency from "topic:dns.query.topHitters" with "avro:file:avro/topTalkers.avsc" where strategy == "IPv4-CMS"
    * @return the string representation
