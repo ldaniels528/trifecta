@@ -948,7 +948,8 @@ for a few minor differences. Here's the basic syntax:
 Consider the following example:
 
     kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, open, close, high, low
-                                          from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+                                          from "topic:shocktrade.quotes.avro"
+                                          with "avro:file:avro/quotes.avsc"
                                           where symbol == "AAPL"
 
 As with most potentially long-running statements, if the query takes long than a few seconds to complete, it will be
@@ -961,7 +962,8 @@ executed in the background.
     | 0          32946   AAPL    NASDAQNM  108.72  109.01  109.32  108.55   |
     + --------------------------------------------------------------------- +
 
-**NOTE**: Although the `partition` and `offset` fields weren't specified, they are always included in the query results.
+**NOTE**: Although the `partition` and `offset` fields weren't specified in the query, they are always included in
+the query results.
 
 <a name="mongodb-module"></a>            
 #### MongoDB Module
