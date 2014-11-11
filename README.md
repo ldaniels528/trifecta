@@ -950,7 +950,8 @@ differences. Here's the basic syntax:
 Consider the following example:
 
     kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, open, close, high, low
-                                          from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+                                          from "topic:shocktrade.quotes.avro"
+                                          with "avro:file:avro/quotes.avsc"
                                           where symbol == "AAPL"
 
 **NOTE**: Because we didn't specify a limit for the number of results that could be returned, the default value (25) is
@@ -972,7 +973,8 @@ the query results.
 Let's look at another example:
 
     kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, lastTrade, open, close, high, low
-                                          from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+                                          from "topic:shocktrade.quotes.avro"
+                                          with "avro:file:avro/quotes.avsc"
                                           where lastTrade <= 1 and volume >= 1,000,000
                                           limit 25
 
