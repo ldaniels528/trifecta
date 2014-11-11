@@ -940,16 +940,15 @@ Let's see how these statistics compares to the original:
 Trifecta provides the ability to perform SQL-like queries against Kafka topics. The syntax is very similar to SQL except
 for a few minor differences. Here's the basic syntax:
 
-    select <fieldsList>
-    from <topic>
-    where <condition>
-    limit <numberOfRows>
+    select <fieldsToDisplay>
+    from <topic> with <decoder>
+    where <searchCriteria>
+    limit <maximumNumberOfResultsToReturn>
 
 Consider the following example:
 
     kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, open, close, high, low
-                                          from "topic:shocktrade.quotes.avro"
-                                          with "avro:file:avro/quotes.avsc"
+                                          from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
                                           where symbol == "AAPL"
 
 As with most potentially long-running statements, if the query takes long than a few seconds to complete, it will be
@@ -964,6 +963,43 @@ executed in the background.
 
 **NOTE**: Although the `partition` and `offset` fields weren't specified in the query, they are always included in
 the query results.
+
+Let's look at another example:
+
+    kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, lastTrade, open, close, high, low
+                                          from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+                                          where lastTrade <= 1 and volume >= 1,000,000
+                                          limit 20
+
+    + --------------------------------------------------------------------------------- +
+    | partition  offset  symbol  exchange   lastTrade  open    close   high    low      |
+    + --------------------------------------------------------------------------------- +
+    | 3          34047   NIHDQ   OTHER OTC  0.0509     0.0452  0.0509  0.0549  0.0452   |
+    | 3          33853   IMRS    NASDAQNM   0.2768     0.25    0.2768  0.28    0.2138   |
+    | 3          33818   VTMB    OTHER OTC  0.0014     0.0013  0.0014  0.0014  0.0012   |
+    | 3          33780   MLHC    OTHER OTC  4.0E-4     5.0E-4  4.0E-4  5.0E-4  3.0E-4   |
+    | 3          33709   ECDC    OTHER OTC  1.0E-4     1.0E-4  1.0E-4  1.0E-4  1.0E-4   |
+    | 3          33640   PWDY    OTC BB     0.0037     0.0032  0.0037  0.0043  0.003    |
+    | 3          33534   BPZ     NYSE       0.9599     1.02    0.9599  1.0201  0.92     |
+    | 3          33520   TAGG    OTHER OTC  2.0E-4     1.0E-4  2.0E-4  2.0E-4  1.0E-4   |
+    | 3          33515   MDMN    OTHER OTC  0.055      0.051   0.055   0.059   0.051    |
+    | 3          33469   MCET    OTHER OTC  5.0E-4     5.0E-4  5.0E-4  5.0E-4  5.0E-4   |
+    | 3          33460   GGSM    OTHER OTC  3.0E-4     3.0E-4  3.0E-4  4.0E-4  3.0E-4   |
+    | 3          33404   TDCP    OTHER OTC  0.0041     0.0041  0.0041  0.0041  0.0038   |
+    | 3          33337   GSS     AMEX       0.305      0.27    0.305   0.31    0.266    |
+    | 3          33254   MDTV    OTHER OTC  0.022      0.015   0.022   0.027   0.015    |
+    | 2          33246   AMRN    NGM        0.9        0.9128  0.9     0.93    0.88     |
+    | 2          33110   TRTC    OTHER OTC  0.38       0.3827  0.38    0.405   0.373    |
+    | 2          33068   AEMD    OTHER OTC  0.2419     0.26    0.2419  0.2625  0.23     |
+    | 2          33060   ZBB     AMEX       0.6101     0.65    0.6101  0.65    0.55     |
+    | 2          33058   TUNG    OTHER OTC  0.0019     0.0021  0.0019  0.0021  0.0016   |
+    | 2          33011   DKAM    OTHER OTC  1.0E-4     2.0E-4  1.0E-4  2.0E-4  1.0E-4   |
+    | 2          32984   ADMD    OTHER OTC  0.001      0.001   0.001   0.0011  9.0E-4   |
+    | 2          32905   GLDG    OTHER OTC  2.0E-4     2.0E-4  2.0E-4  2.0E-4  2.0E-4   |
+    | 2          32808   RBY     AMEX       0.9349     0.821   0.9349  0.94    0.821    |
+    | 2          32751   PZG     AMEX       0.708      0.6     0.708   0.73    0.5834   |
+    | 2          32731   PAL     AMEX       0.15       0.15    0.15    0.1555  0.145    |
+    + --------------------------------------------------------------------------------- +
 
 <a name="mongodb-module"></a>            
 #### MongoDB Module
