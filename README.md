@@ -952,10 +952,10 @@ Let's see how these statistics compares to the original:
 Trifecta provides the ability to perform SQL-like queries against Kafka topics. The syntax is very similar to SQL except
 for a few minor differences. Here's the basic syntax:
 
-    select *<fields list>*
-    from *<topic>*
-    where *<condition>*
-    limit *<numberOfRows>*
+    select <fields list>
+    from <topic>
+    where <condition>
+    limit <numberOfRows>
 
 Consider the following example:
 
