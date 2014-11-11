@@ -973,6 +973,8 @@ executed in the background.
     | 0          32946   AAPL    NASDAQNM  108.72  109.01  109.32  108.55   |
     + --------------------------------------------------------------------- +
 
+**NOTE**: Although the `partition` and `offset` fields weren't specified, they are always included in the query results.
+
 <a name="mongodb-module"></a>            
 #### MongoDB Module
             
