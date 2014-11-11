@@ -952,14 +952,16 @@ Let's see how these statistics compares to the original:
 Trifecta provides the ability to perform SQL-like queries against Kafka topics. The syntax is very similar to SQL except
 for a few minor differences. Here's the basic syntax:
 
-    select <fields list>
+    select <fieldsList>
     from <topic>
     where <condition>
     limit <numberOfRows>
 
 Consider the following example:
 
-    kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, open, close, high, low from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc" where symbol == "AAPL"
+    kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, open, close, high, low
+                                          from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+                                          where symbol == "AAPL"
 
 As with most potentially long-running statements, if the query takes long than a few seconds to complete, it will be
 executed in the background.
