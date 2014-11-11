@@ -39,20 +39,8 @@ Table of Contents
 ## Motivations
 
 The motivations behind creating _Trifecta_ are simple; testing, verifying and managing Kafka topics and Zookeeper 
-key-value pairs is an arduous task. The goal of this project is to ease the pain of developing applications that 
-make use of Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like commands.
-
-## Status
-
-I'm currently using _Trifecta_ as part of my daily development workflow, and the application itself is undergoing heavy 
-development as I define (and at times redefine) its API and command sets. As such, new commands will appear, and older 
-commands may be merged with a newer command or disappear altogether. I apologize in advance if a command you were 
-fond of has been removed, and if there isn't a suitable replacement command, drop me a note, and perhaps I'll re-add 
-the unit of functionality. 
- 
-**NOTE**: There are a set of hidden commands called _undocumented_ commands. These commands are hidden either because 
-they are experimental, work-in-progress, or not yet fully implemented, so use them at your own
-risk! To retrieve a list of these _undocumented_ commands, use the `undoc` command.
+key-value pairs is an arduous task. The goal of this project is to ease the pain of developing applications that
+make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like (or SQL-like) commands.
 
 <a name="features"></a>
 ## Features
