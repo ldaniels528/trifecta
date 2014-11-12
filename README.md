@@ -1,8 +1,9 @@
 Trifecta 
 =======
 
-Trifecta (formerly Verify) is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect
-and verify Kafka messages, ElasticSearch documents, Storm topologies and Zookeeper data.
+Trifecta is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, verify and even query
+Kafka messages. In addition, Trifecta offers data import/export functions for transferring data between
+Kafka topics and many other Big Data Systems (including Cassandra, ElasticSearch, MongoDB and others).
 
 Table of Contents
 
@@ -28,6 +29,7 @@ Table of Contents
         * <a href="#kafka-avro-module">Avro Integration</a>
         * <a href="#kafka-search-by-key">Searching By Key</a>
         * <a href="#kafka-advanced-search">Advanced Search</a>
+        * <a href="#kafka-search-by-query">Searching By Query</a>
     * <a href="#mongodb-module">MongoDB Module</a>  
     * <a href="#storm-module">Storm Module</a>     
     * <a href="#zookeeper-module">Zookeeper Module</a>
@@ -38,20 +40,8 @@ Table of Contents
 ## Motivations
 
 The motivations behind creating _Trifecta_ are simple; testing, verifying and managing Kafka topics and Zookeeper 
-key-value pairs is an arduous task. The goal of this project is to ease the pain of developing applications that 
-make use of Kafka/Storm/ZooKeeper-based via a console-based tool using simple Unix-like commands.
-
-## Status
-
-I'm currently using _Trifecta_ as part of my daily development workflow, and the application itself is undergoing heavy 
-development as I define (and at times redefine) its API and command sets. As such, new commands will appear, and older 
-commands may be merged with a newer command or disappear altogether. I apologize in advance if a command you were 
-fond of has been removed, and if there isn't a suitable replacement command, drop me a note, and perhaps I'll re-add 
-the unit of functionality. 
- 
-**NOTE**: There are a set of hidden commands called _undocumented_ commands. These commands are hidden either because 
-they are experimental, work-in-progress, or not yet fully implemented, so use them at your own
-risk! To retrieve a list of these _undocumented_ commands, use the `undoc` command.
+key-value pairs is an arduous task. The goal of this project is to ease the pain of developing applications that
+make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like (or SQL-like) commands.
 
 <a name="features"></a>
 ## Features
@@ -943,8 +933,83 @@ Let's see how these statistics compares to the original:
     | Shocktrade.quotes.avro       2          0            4500       4500                |
     | Shocktrade.quotes.avro       3          0            4670       4670                |
     | Shocktrade.quotes.avro       4          0            4431       4431                |
-    + ----------------------------------------------------------------------------------- +   
-            
+    + ----------------------------------------------------------------------------------- +
+
+<a name="kafka-search-by-query"></a>
+#### Searching By Query
+
+Trifecta provides the ability to perform SQL-like queries against Avro-encoded Kafka topics (Read more about Trifecta's
+Kafka-Avro integration <a href="#kafka-avro-module">here</a>). The syntax is very similar to SQL except for a few minor
+differences. Here's the basic syntax:
+
+    select <fieldsToDisplay>
+    from <topic> with <decoder>
+    where <searchCriteria>
+    limit <maximumNumberOfResultsToReturn>
+
+Consider the following example:
+
+    kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, open, close, high, low
+                                          from "topic:shocktrade.quotes.avro"
+                                          with "avro:file:avro/quotes.avsc"
+                                          where symbol == "AAPL"
+
+**NOTE**: Because we didn't specify a limit for the number of results that could be returned, the default value (25) is
+used.
+
+As with most potentially long-running statements in Trifecta, if the query takes longer than a few seconds to complete,
+it will be executed in the background.
+
+    kafka:shocktrade.quotes.avro/0:32050> Job #607 completed (use 'jobs -v 607' to view results)
+    + --------------------------------------------------------------------- +
+    | partition  offset  symbol  exchange  open    close   high    low      |
+    + --------------------------------------------------------------------- +
+    | 0          32946   AAPL    NASDAQNM  108.72  109.01  109.32  108.55   |
+    + --------------------------------------------------------------------- +
+
+**NOTE**: Although the `partition` and `offset` fields weren't specified in the query, they are always included in
+the query results.
+
+Let's look at another example:
+
+    kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, lastTrade, open, close, high, low
+                                          from "topic:shocktrade.quotes.avro"
+                                          with "avro:file:avro/quotes.avsc"
+                                          where lastTrade <= 1 and volume >= 1,000,000
+                                          limit 25
+
+    Task is now running in the background (use 'jobs' to view)
+    kafka:shocktrade.quotes.avro/0:32050> Job #873 completed (use 'jobs -v 873' to view results)
+    + --------------------------------------------------------------------------------- +
+    | partition  offset  symbol  exchange   lastTrade  open    close   high    low      |
+    + --------------------------------------------------------------------------------- +
+    | 3          34047   NIHDQ   OTHER OTC  0.0509     0.0452  0.0509  0.0549  0.0452   |
+    | 3          33853   IMRS    NASDAQNM   0.2768     0.25    0.2768  0.28    0.2138   |
+    | 3          33818   VTMB    OTHER OTC  0.0014     0.0013  0.0014  0.0014  0.0012   |
+    | 3          33780   MLHC    OTHER OTC  4.0E-4     5.0E-4  4.0E-4  5.0E-4  3.0E-4   |
+    | 3          33709   ECDC    OTHER OTC  1.0E-4     1.0E-4  1.0E-4  1.0E-4  1.0E-4   |
+    | 3          33640   PWDY    OTC BB     0.0037     0.0032  0.0037  0.0043  0.003    |
+    | 3          33534   BPZ     NYSE       0.9599     1.02    0.9599  1.0201  0.92     |
+    | 3          33520   TAGG    OTHER OTC  2.0E-4     1.0E-4  2.0E-4  2.0E-4  1.0E-4   |
+    | 3          33515   MDMN    OTHER OTC  0.055      0.051   0.055   0.059   0.051    |
+    | 3          33469   MCET    OTHER OTC  5.0E-4     5.0E-4  5.0E-4  5.0E-4  5.0E-4   |
+    | 3          33460   GGSM    OTHER OTC  3.0E-4     3.0E-4  3.0E-4  4.0E-4  3.0E-4   |
+    | 3          33404   TDCP    OTHER OTC  0.0041     0.0041  0.0041  0.0041  0.0038   |
+    | 3          33337   GSS     AMEX       0.305      0.27    0.305   0.31    0.266    |
+    | 3          33254   MDTV    OTHER OTC  0.022      0.015   0.022   0.027   0.015    |
+    | 2          33246   AMRN    NGM        0.9        0.9128  0.9     0.93    0.88     |
+    | 2          33110   TRTC    OTHER OTC  0.38       0.3827  0.38    0.405   0.373    |
+    | 2          33068   AEMD    OTHER OTC  0.2419     0.26    0.2419  0.2625  0.23     |
+    | 2          33060   ZBB     AMEX       0.6101     0.65    0.6101  0.65    0.55     |
+    | 2          33058   TUNG    OTHER OTC  0.0019     0.0021  0.0019  0.0021  0.0016   |
+    | 2          33011   DKAM    OTHER OTC  1.0E-4     2.0E-4  1.0E-4  2.0E-4  1.0E-4   |
+    | 2          32984   ADMD    OTHER OTC  0.001      0.001   0.001   0.0011  9.0E-4   |
+    | 2          32905   GLDG    OTHER OTC  2.0E-4     2.0E-4  2.0E-4  2.0E-4  2.0E-4   |
+    | 2          32808   RBY     AMEX       0.9349     0.821   0.9349  0.94    0.821    |
+    | 2          32751   PZG     AMEX       0.708      0.6     0.708   0.73    0.5834   |
+    | 2          32731   PAL     AMEX       0.15       0.15    0.15    0.1555  0.145    |
+    + --------------------------------------------------------------------------------- +
+
 <a name="mongodb-module"></a>            
 #### MongoDB Module
             

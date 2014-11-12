@@ -70,7 +70,10 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
       }
 
       case QueryResult(fields, values) =>
-        tabular.transform(fields, values) foreach out.println
+        if (values.nonEmpty)
+          tabular.transform(fields, values) foreach out.println
+        else
+          out.println("No data returned")
 
       case r: ResultSet => handleCassandraResultSet(r)
 
