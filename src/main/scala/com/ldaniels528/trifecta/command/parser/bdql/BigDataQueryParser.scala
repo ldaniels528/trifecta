@@ -105,10 +105,11 @@ object BigDataQueryParser {
     }.flatten
   }
 
-  private def deQuote(quotedString: String): String = {
+  def deQuote(quotedString: String): String = {
     quotedString match {
       case s if s.startsWith("\"") && s.endsWith("\"") => s.drop(1).dropRight(1)
       case s if s.startsWith("'") && s.endsWith("'") => s.drop(1).dropRight(1)
+      case s if s.contains(",") && s.replaceAll(",", "").matches("\\d+") => s.replaceAll(",", "")
       case s => s
     }
   }

@@ -1,8 +1,11 @@
 package com.ldaniels528.trifecta.decoders
 
-import java.io.File
+import java.io.{File, FileInputStream, InputStream}
+import java.net.URL
 
 import com.ldaniels528.trifecta.TxConfig
+import com.ldaniels528.trifecta.support.io.Resource
+import com.ldaniels528.trifecta.support.io.Resource.expandPath
 import com.ldaniels528.trifecta.util.TxUtils._
 
 import scala.io.Source
@@ -18,27 +21,29 @@ trait AvroCodec {
     implicit val scope = config.scope
 
     // is it a valid Avro input source?
-    url match {
+    val resource_? = url match {
+      case s if s.startsWith("classpath:") =>
+        for {
+          path <- s.extractProperty("classpath:")
+          resource <- Resource(path)
+        } yield loadAvroDecoder(resource)
       case s if s.startsWith("file:") =>
-        (s.extractProperty("file:") map (path => loadAvroDecoder(new File(path).getName, path)))
-          .getOrElse(throw new IllegalStateException(s"Unrecognized Avro URL - $s"))
+        s.extractProperty("file:") map expandPath map (path => loadAvroDecoder(new File(path)))
       case s if s.startsWith("http:") =>
-        throw new IllegalStateException("HTTP URLs are not yet supported")
+        Option(loadAvroDecoder(new URL(s)))
       case s =>
         throw new IllegalStateException(s"Unrecognized Avro URL - $s")
     }
+
+    resource_?.getOrElse(throw new IllegalStateException(s"Malformed Avro URL - $url"))
   }
 
-  def loadAvroDecoder(label: String, schemaPath: String): AvroDecoder = {
-    // ensure the file exists
-    val schemaFile = new File(schemaPath)
-    if (!schemaFile.exists()) {
-      throw new IllegalStateException(s"Schema file '${schemaFile.getAbsolutePath}' not found")
-    }
+  def loadAvroDecoder(file: File): AvroDecoder = new FileInputStream(file) use (loadAvroDecoder(file.getName, _))
 
-    // retrieve the schema as a string
-    val schemaString = Source.fromFile(schemaFile).getLines() mkString "\n"
-    AvroDecoder(label, schemaString)
+  def loadAvroDecoder(url: URL): AvroDecoder = url.openStream() use (loadAvroDecoder(url.toURI.toString, _))
+
+  def loadAvroDecoder(label: String, in: InputStream): AvroDecoder = {
+    AvroDecoder(label, schemaString = Source.fromInputStream(in).getLines().mkString)
   }
 
 }

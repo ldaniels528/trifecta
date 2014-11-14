@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.command.parser.bdql
 
 import org.scalatest.Matchers._
-import org.scalatest.{GivenWhenThen, FeatureSpec}
+import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 /**
  * Big Data Query Language (BD-QL) Tokenizer Specification
@@ -18,7 +18,7 @@ class BigDataQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
       val queryString =
         """
           |select symbol, exchange, lastTrade, volume
-          |from kafka_quotes
+          |from "topic:shocktrade.quotes.avro" with "avro:file:~/avro/quotes.avsc"
           |into elastic_search_quotes
           |where exchange = 'OTCBB'
           |and lastTrade <= 1.0
@@ -33,8 +33,9 @@ class BigDataQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
       info(s"results: ${tokens map (s => s""""$s"""") mkString " "}")
       tokens shouldBe Seq(
         "select", "symbol", ",", "exchange", ",", "lastTrade", ",", "volume", "from",
-        "kafka_quotes", "into", "elastic_search_quotes", "where", "exchange", "=", "'OTCBB'", "and", "lastTrade", "<=",
-        "1.0", "and", "volume", ">=", "1000000", "limit", "10")
+        "\"topic:shocktrade.quotes.avro\"", "with", "\"avro:file:~/avro/quotes.avsc\"",
+        "into", "elastic_search_quotes", "where", "exchange", "=", "'OTCBB'", "and", "lastTrade", "<=",
+        "1.0", "and", "volume", ">=", "1,000,000", "limit", "10")
     }
   }
 

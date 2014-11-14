@@ -1,14 +1,6 @@
 package com.ldaniels528.trifecta.support.io.query
 
-import com.ldaniels528.trifecta.decoders.MessageCodecs
-import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
-import com.ldaniels528.trifecta.support.messaging.MessageDecoder
-import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.support.messaging.logic.Expressions.Expression
-import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Big Data Selection Query
@@ -18,33 +10,8 @@ case class BigDataSelection(source: IOSource,
                             destination: Option[IOSource] = None,
                             fields: Seq[String],
                             criteria: Option[Expression],
-                            limit: Option[Int]) {
-
-  /**
-   * Executes the selection query
-   * @param rt the given runtime context
-   */
-  def execute(implicit config: TxConfig, rt: TxRuntimeContext, ec: ExecutionContext): Future[QueryResult] = {
-    // get the input source and its decoder
-    val inputSource: Option[InputSource] = rt.getInputHandler(source.deviceURL)
-    val inputDecoder: Option[MessageDecoder[_]] = MessageCodecs.getDecoder(source.decoderURL)
-
-    // get the output source and its encoder
-    val outputSource: Option[OutputSource] = destination.flatMap(src => rt.getOutputHandler(src.deviceURL))
-    val outputDecoder: Option[MessageDecoder[_]] = destination.flatMap(src => MessageCodecs.getDecoder(src.decoderURL))
-
-    // compile conditions & get all other properties
-    val conditions = criteria.map(compile(_, inputDecoder)).toSeq
-    val maximum = limit ?? Some(25)
-
-    // perform the query/copy operation
-    if (outputSource.nonEmpty) throw new IllegalStateException("Insert is not yet supported")
-    else {
-      val querySource = inputSource.flatMap(_.getQuerySource).orDie(s"No query compatible source found for URL '${source.deviceURL}'")
-      val decoder = inputDecoder.orDie(s"No decoder found for URL ${source.decoderURL}")
-      querySource.findAll(fields, decoder, conditions, maximum)
-    }
-  }
+                            limit: Option[Int])
+  extends BigDataQuery {
 
   /**
    * Returns the string representation of the query

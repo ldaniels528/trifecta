@@ -69,11 +69,12 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
         case None => out.println("No data returned")
       }
 
-      case QueryResult(fields, values) =>
-        if (values.nonEmpty)
+      case QueryResult(fields, values, runTimeMillis) =>
+        if (values.isEmpty) out.println("No data returned")
+        else {
+          out.println(f"[Query completed in $runTimeMillis%.1f msec]")
           tabular.transform(fields, values) foreach out.println
-        else
-          out.println("No data returned")
+        }
 
       case r: ResultSet => handleCassandraResultSet(r)
 

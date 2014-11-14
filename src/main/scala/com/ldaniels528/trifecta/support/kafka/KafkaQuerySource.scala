@@ -19,12 +19,16 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
 
   override def findAll(fields: Seq[String], decoder: MessageDecoder[_], conditions: Seq[Condition], limit: Option[Int])(implicit ec: ExecutionContext) = {
     val myFields = List("partition", "offset") ::: fields.toList
+    val startTime = System.nanoTime()
     KafkaMicroConsumer.findAll(topic, brokers, correlationId, conditions, limit) map {
       _ map { md =>
         val record = decodeMessage(md, decoder)
         Map(fields map (field => (field, record.get(field))): _*) ++ Map("partition" -> md.partition, "offset" -> md.offset)
       }
-    } map (QueryResult(myFields, _))
+    } map { values =>
+      val elapsedTimeMillis = (System.nanoTime() - startTime).toDouble / 1e9
+      QueryResult(myFields, values, elapsedTimeMillis)
+    }
   }
 
   /**
