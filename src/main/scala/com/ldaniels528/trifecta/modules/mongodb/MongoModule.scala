@@ -1,14 +1,13 @@
 package com.ldaniels528.trifecta.modules.mongodb
 
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
-import com.ldaniels528.trifecta.modules.Module
-import com.ldaniels528.trifecta.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.io.json.TxJsonUtil._
-import com.ldaniels528.trifecta.messages.{BinaryMessaging, MessageDecoder}
 import com.ldaniels528.trifecta.io.mongodb.{MongoOutputSource, TxMongoCluster, TxMongoDB}
+import com.ldaniels528.trifecta.io.{InputSource, KeyAndMessage}
+import com.ldaniels528.trifecta.messages.{BinaryMessaging, MessageDecoder}
+import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.mongodb.WriteResult
 import net.liftweb.json.JsonAST.JValue
@@ -34,12 +33,6 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
     Command(this, "mput", insertDocument, UnixLikeParams(Seq("collection" -> true, "json" -> true)), help = "Inserts a document into MongoDB"),
     Command(this, "use", selectDatabase, UnixLikeParams(Seq("database" -> true)), help = "Sets the current MongoDB database")
   )
-
-  /**
-   * Returns the variables that are bound to the module
-   * @return the variables that are bound to the module
-   */
-  override def getVariables: Seq[Variable] = Nil
 
   /**
    * Attempts to retrieve an input source for the given URL

@@ -26,14 +26,13 @@ import scala.util.Try
  */
 case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   private[trifecta] val logger = LoggerFactory.getLogger(getClass)
-  private implicit val scope = config.scope
   private implicit val cfg = config
 
   // create the result handler
   private val resultHandler = new TxResultHandler(config)
 
   // create the module manager
-  val moduleManager = new ModuleManager(scope)(this)
+  val moduleManager = new ModuleManager()(this)
 
   // load the built-in modules
   moduleManager ++= Seq(

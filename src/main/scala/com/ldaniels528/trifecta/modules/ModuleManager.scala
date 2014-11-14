@@ -2,17 +2,14 @@ package com.ldaniels528.trifecta.modules
 
 import com.ldaniels528.trifecta.TxRuntimeContext
 import com.ldaniels528.trifecta.command.Command
-import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.{Scope, Variable}
 
 /**
  * Module Manager
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class ModuleManager(scope: Scope)(implicit rt: TxRuntimeContext) {
+class ModuleManager()(implicit rt: TxRuntimeContext) {
   private var commands = Map[String, Command]()
-  private var variables = Seq[ModuleVariable]()
   private var moduleSet = Set[Module]()
   private var currentModule: Option[Module] = None
 
@@ -61,12 +58,6 @@ class ModuleManager(scope: Scope)(implicit rt: TxRuntimeContext) {
   def modules: Seq[Module] = moduleSet.toSeq
 
   /**
-   * Returns a collection of module variables
-   * @return a collection of module variables
-   */
-  def variableSet = variables
-
-  /**
    * Retrieves a command by name
    * @param name the name of the desired module
    * @return an option of a command
@@ -101,24 +92,6 @@ class ModuleManager(scope: Scope)(implicit rt: TxRuntimeContext) {
   private def updateCollections(): Unit = {
     // update the command collection
     commands = Map(moduleSet.toSeq flatMap (_.getCommands map (c => (c.name, c))): _*)
-
-    // update the variable collection
-    variables = moduleSet.toSeq flatMap { m =>
-      m.getVariables map (v => ModuleVariable(m.moduleName, v))
-    }
-
-    // put the variables in the scope
-    variables foreach (scope += _.variable)
   }
-
-}
-
-/**
- * Module Manager
- * @author Lawrence Daniels <lawrence.daniels@gmail.com>
- */
-object ModuleManager {
-
-  case class ModuleVariable(moduleName: String, variable: Variable)
 
 }

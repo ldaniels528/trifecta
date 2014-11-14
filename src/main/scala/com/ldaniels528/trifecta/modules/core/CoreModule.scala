@@ -9,18 +9,14 @@ import com.google.common.util.concurrent.AtomicDouble
 import com.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.ldaniels528.trifecta._
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.modules.Module
-import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
-import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroFileOutputSource, AvroFileInputSource}
 import com.ldaniels528.trifecta.io.Resource.expandPath
 import com.ldaniels528.trifecta.io._
-import com.ldaniels528.trifecta.io.json.{JSONFileOutputSource, JSONFileInputSource}
+import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroFileInputSource, AvroFileOutputSource}
+import com.ldaniels528.trifecta.io.json.{JSONFileInputSource, JSONFileOutputSource}
+import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
-import com.ldaniels528.trifecta.vscript.Variable
 import org.apache.commons.io.IOUtils
-import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
@@ -33,7 +29,6 @@ import scala.util.{Properties, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CoreModule(config: TxConfig) extends Module with AvroCodec {
-  private val logger = LoggerFactory.getLogger(getClass)
   private val out: PrintStream = config.out
 
   // define the process parsing regular expression
@@ -60,7 +55,6 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
     Command(this, "modules", listModules, UnixLikeParams(), help = "Returns a list of configured modules"),
     Command(this, "ps", processList, UnixLikeParams(Seq("node" -> false), Seq("-i" -> "identityFile", "-u" -> "userName")), help = "Displays a list of \"configured\" running processes", undocumented = true),
     Command(this, "pwd", printWorkingDirectory, UnixLikeParams(), help = "Displays current working directory"),
-    Command(this, "scope", listScope, UnixLikeParams(), help = "Returns the contents of the current scope"),
     Command(this, "syntax", syntax, UnixLikeParams(Seq("command" -> true)), help = "Returns the syntax/usage for a given command"),
     Command(this, "systime", systemTime, UnixLikeParams(Seq("date" -> false)), help = "Returns the system time as an EPOC in milliseconds"),
     Command(this, "time", time, UnixLikeParams(Seq("sysTime" -> false)), help = "Returns the system time"),
@@ -98,14 +92,6 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
     }
   }
 
-  override def getVariables: Seq[Variable] = Seq(
-    Variable("autoSwitching", ConstantValue(Option(true))),
-    Variable("columns", ConstantValue(Option(25))),
-    Variable("cwd", ConstantValue(Option(new File(".").getCanonicalPath))),
-    Variable("debugOn", ConstantValue(Option(false))),
-    Variable("encoding", ConstantValue(Option("UTF8")))
-  )
-
   /**
    * Returns the name of the module (e.g. "kafka")
    * @return the name of the module
@@ -118,7 +104,7 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
    */
   override def moduleLabel = "core"
 
-  override def prompt: String = cwd
+  override def prompt: String = config.cwd
 
   override def shutdown() = ()
 
@@ -126,17 +112,6 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
 
   // load the commands from the modules
   private def commandSet(implicit rt: TxRuntimeContext): Map[String, Command] = rt.moduleManager.commandSet
-
-  /**
-   * Retrieves the current working directory
-   */
-  def cwd: String = config.getOrElse("cwd", ".")
-
-  /**
-   * Sets the current working directory
-   * @param path the path to set
-   */
-  def cwd_=(path: String) = config.set("cwd", path)
 
   /**
    * Automatically switches to the module of the most recently executed command
@@ -166,9 +141,9 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
    * @example cd "/home/ldaniels/examples"
    */
   def changeDir(params: UnixLikeArgs): Option[String] = {
-    params.args.headOption map {
+    val cwd = params.args.headOption map {
       case path if path == ".." =>
-        cwd.split("[/]") match {
+        config.cwd.split("[/]") match {
           case a if a.length <= 1 => "/"
           case a =>
             val newPath = a.init.mkString("/")
@@ -176,6 +151,11 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
         }
       case path => setupPath(path)
     }
+
+    cwd foreach { path =>
+      config.cwd = path
+    }
+    cwd
   }
 
   /**
@@ -365,7 +345,7 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
    */
   def listFiles(params: UnixLikeArgs): Option[Seq[String]] = {
     // get the optional path argument
-    val path: String = params.args.headOption map expandPath map setupPath getOrElse cwd
+    val path: String = params.args.headOption map expandPath map setupPath getOrElse config.cwd
 
     // perform the action
     Option(new File(path).list) map { files =>
@@ -439,22 +419,6 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
     rt.moduleManager.modules.map(m =>
       ModuleItem(m.moduleName, m.getClass.getName, loaded = true, activeModule.exists(_.moduleName == m.moduleName)))
       .sortBy(_.name)
-  }
-
-  def listScope(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[ScopeItem] = {
-    implicit val scope = config.scope
-
-    // get the variables (filter out duplicates)
-    val varsA: Seq[ModuleVariable] = rt.moduleManager.variableSet
-    val varsB: Seq[Variable] = {
-      val names: Set[String] = varsA.map(_.variable.name).toSet
-      scope.getVariables filterNot (v => names.contains(v.name))
-    }
-
-    // build the list of functions, variables, etc.
-    (varsA map (v => ScopeItem(v.variable.name, v.moduleName, "variable", v.variable.eval))) ++
-      (varsB map (v => ScopeItem(v.name, "", "variable", v.eval))) ++
-      (scope.getFunctions map (f => ScopeItem(f.name, "", "function"))) sortBy (_.name)
   }
 
   /**
@@ -594,7 +558,7 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
    * Print the current working directory
    * @example pwd
    */
-  def printWorkingDirectory(args: UnixLikeArgs) = new File(cwd).getCanonicalPath
+  def printWorkingDirectory(args: UnixLikeArgs) = new File(config.cwd).getCanonicalPath
 
   /**
    * Returns the usage for a command
@@ -677,6 +641,7 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
   private def parseJobId(id: String): Int = parseInt("job number", id)
 
   private def setupPath(key: String): String = {
+    val cwd = config.cwd
     key match {
       case s if s.startsWith("/") => key
       case s => (if (cwd.endsWith("/")) cwd else cwd + "/") + s

@@ -21,8 +21,6 @@ import com.ldaniels528.trifecta.modules.ModuleHelper._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
-import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JValue
 import org.apache.avro.generic.GenericRecord
@@ -65,9 +63,9 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
    */
   private lazy val brokers: Seq[Broker] = facade.brokers
 
-  def defaultFetchSize: Int = config.getOrElse("defaultFetchSize", 65536)
+  def defaultFetchSize: Int = config.getOrElse("defaultFetchSize", "65536").toInt
 
-  def defaultFetchSize_=(sizeInBytes: Int) = config.set("defaultFetchSize", sizeInBytes)
+  def defaultFetchSize_=(sizeInBytes: Int) = config.set("defaultFetchSize", sizeInBytes.toString)
 
   // the bound commands
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
@@ -130,10 +128,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
   override def getOutputSource(url: String): Option[KafkaTopicOutputSource] = {
     url.extractProperty("topic:") map (new KafkaTopicOutputSource(brokers, _))
   }
-
-  override def getVariables: Seq[Variable] = Seq(
-    Variable("defaultFetchSize", ConstantValue(Some(65536)))
-  )
 
   override def moduleName = "kafka"
 

@@ -5,9 +5,8 @@ import java.net.{URL, URLClassLoader}
 import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.io.{InputSource, OutputSource}
-import com.ldaniels528.trifecta.vscript.Variable
+import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json._
@@ -42,9 +41,9 @@ class StormModule(config: TxConfig) extends Module {
     Command(this, "sconnect", createConnection, UnixLikeParams(Seq("nimbusHost" -> false)), help = "Establishes (or re-establishes) a connect to the Storm Nimbus Host", promptAware = true),
     Command(this, "sdeploy", deployTopology, UnixLikeParams(Seq("jarfile" -> true, "topology" -> true, "arguments" -> false)), help = "Deploys a topology to the Storm server (EXPERIMENTAL)", promptAware = true, undocumented = true),
     Command(this, "sget", getTopologyInfo, UnixLikeParams(Seq("topologyID" -> true)), help = "Retrieves the information for a topology", promptAware = true),
-    Command(this, "skill", killTopology, UnixLikeParams(Seq("topologyID"->true)), help = "Kills a running topology", promptAware = true),
-    Command(this, "sls", listTopologies, UnixLikeParams( Seq("prefix"->false)), help = "Lists available topologies", promptAware = true),
-    Command(this, "spouts", getTopologySpouts, UnixLikeParams(Seq("topologyID"->true)), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true),
+    Command(this, "skill", killTopology, UnixLikeParams(Seq("topologyID" -> true)), help = "Kills a running topology", promptAware = true),
+    Command(this, "sls", listTopologies, UnixLikeParams(Seq("prefix" -> false)), help = "Lists available topologies", promptAware = true),
+    Command(this, "spouts", getTopologySpouts, UnixLikeParams(Seq("topologyID" -> true)), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true),
     Command(this, "srun", runTopology, UnboundedParams(2), help = "Retrieves the list of spouts for a given topology by ID", promptAware = true, undocumented = true)
   )
 
@@ -61,8 +60,6 @@ class StormModule(config: TxConfig) extends Module {
    * @return the option of a Storm output source
    */
   override def getOutputSource(url: String): Option[OutputSource] = None
-
-  override def getVariables: Seq[Variable] = Nil
 
   override def moduleName = "storm"
 

@@ -2,14 +2,13 @@ package com.ldaniels528.trifecta.modules.cassandra
 
 import com.datastax.driver.core.{ConsistencyLevel, ResultSet}
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
+import com.ldaniels528.trifecta.io.InputSource
+import com.ldaniels528.trifecta.io.cassandra.{CassandraOutputSource, Casserole, CasseroleSession}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
-import com.ldaniels528.trifecta.io.cassandra.{CassandraOutputSource, Casserole, CasseroleSession}
-import com.ldaniels528.trifecta.io.InputSource
 import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
 import scala.collection.JavaConversions._
@@ -56,12 +55,6 @@ class CassandraModule(config: TxConfig) extends Module {
       keySpace <- getKeySpaceName
     } yield new CassandraOutputSource(connection, keySpace, columnFamily, getDefaultConsistencyLevel)
   }
-
-  /**
-   * Returns the variables that are bound to the module
-   * @return the variables that are bound to the module
-   */
-  override def getVariables: Seq[Variable] = Nil
 
   /**
    * Returns the name of the prefix (e.g. Seq("file"))

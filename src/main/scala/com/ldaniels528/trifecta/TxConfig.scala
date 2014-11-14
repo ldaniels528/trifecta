@@ -5,7 +5,6 @@ import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
 
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.RootScope
 
 import scala.util.Properties._
 import scala.util.Try
@@ -15,15 +14,15 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxConfig(val configProps: Properties) {
+  // set the current working directory
+  configProps.setProperty("cwd", new File(".").getCanonicalPath)
+
   // the default state of the application is "alive"
   var alive = true
 
   // capture standard output
   val out = System.out
   val err = System.err
-
-  // create the root-level scope
-  implicit val scope = RootScope()
 
   // define the job manager
   val jobManager = new JobManager()
@@ -34,28 +33,30 @@ class TxConfig(val configProps: Properties) {
   def kafkaZkConnect = configProps.getOrElse("trifecta.kafka.zookeeper.host", zooKeeperConnect)
 
   // various shared state variables
-  def autoSwitching: Boolean = scope.getValue[Boolean]("autoSwitching") getOrElse false
+  def autoSwitching: Boolean = configProps.getOrElse("autoSwitching", "false").toBoolean
 
-  def autoSwitching_=(enabled: Boolean) = scope.setValue("autoSwitching", Option(enabled))
+  def autoSwitching_=(enabled: Boolean) = configProps.setProperty("autoSwitching", enabled.toString)
 
   // the number of columns to display when displaying bytes
-  def columns: Int = getOrElse("columns", 25)
+  def columns: Int = configProps.getOrElse("columns", "25").toInt
 
-  def columns_=(width: Int): Unit = set("columns", width)
+  def columns_=(width: Int): Unit = configProps.setProperty("columns", width.toString)
 
-  def debugOn: Boolean = getOrElse("debugOn", false)
+  def cwd: String = configProps.getProperty("cwd")
 
-  def debugOn_=(enabled: Boolean): Unit = set("debugOn", enabled)
+  def cwd_=(path: String) = configProps.setProperty("cwd", path)
 
-  def encoding: String = getOrElse("encoding", "UTF-8")
+  def debugOn: Boolean = configProps.getOrElse("debugOn", "false").toBoolean
 
-  def encoding_=(charSet: String): Unit = set("encoding", charSet)
+  def debugOn_=(enabled: Boolean): Unit = configProps.setProperty("debugOn", enabled.toString)
 
-  def get[T](name: String): Option[T] = scope.getValue[T](name)
+  def encoding: String = configProps.getOrElse("encoding", "UTF-8")
 
-  def getOrElse[T](name: String, default: T): T = scope.getValue[T](name) getOrElse default
+  def encoding_=(charSet: String): Unit = configProps.setProperty("encoding", charSet)
 
-  def set[T](name: String, value: T): Unit = scope.setValue[T](name, Option(value))
+  def getOrElse(key: String, default: => String): String = configProps.getOrElse(key, default)
+
+  def set(key: String, value: String) = configProps.setProperty(key, value)
 
   /**
    * Saves the current configuration to disk

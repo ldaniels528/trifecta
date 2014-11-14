@@ -2,18 +2,15 @@ package com.ldaniels528.trifecta.modules.zookeeper
 
 import java.util.Date
 
-import com.ldaniels528.trifecta.command.parser.CommandParser
-import CommandParser._
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.modules._
+import com.ldaniels528.trifecta.command.parser.CommandParser._
 import com.ldaniels528.trifecta.io.InputSource
 import com.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.io.zookeeper.ZkSupportHelper._
+import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
-import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
 import scala.util.Try
@@ -55,10 +52,6 @@ class ZookeeperModule(config: TxConfig) extends Module {
     url.extractProperty("zk:") map (new ZookeeperOutputSource(zk, _))
   }
 
-  override def getVariables: Seq[Variable] = Seq(
-    Variable("zkPrevCwd", ConstantValue(Option("/"))),
-    Variable("zkCwd", ConstantValue(Option("/"))))
-
   override def moduleName = "zookeeper"
 
   override def moduleLabel = "zk"
@@ -69,28 +62,12 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   override def supportedPrefixes: Seq[String] = Seq("zk")
 
-  /**
-   * Returns the ZooKeeper previous working directory
-   * @return the previous working directory
-   */
   def prevCwd: String = config.getOrElse("zkPrevCwd", "/")
 
-  /**
-   * Sets the ZooKeeper previous working directory
-   * @param path the path to set
-   */
   def prevCwd_=(path: String) = config.set("zkPrevCwd", path)
 
-  /**
-   * Returns the ZooKeeper current working directory
-   * @return the current working directory
-   */
   def zkCwd: String = config.getOrElse("zkCwd", "/")
 
-  /**
-   * Sets the ZooKeeper current working directory
-   * @param path the path to set
-   */
   def zkCwd_=(path: String) = config.set("zkCwd", path)
 
   /**

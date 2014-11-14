@@ -3,15 +3,14 @@ package com.ldaniels528.trifecta.modules.elasticSearch
 import java.io.PrintStream
 
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
-import com.ldaniels528.trifecta.modules.Module
-import com.ldaniels528.trifecta.modules.Module.NameValuePair
-import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule._
 import com.ldaniels528.trifecta.io.elasticsearch.{DocumentOutputSource, TxElasticSearchClient}
 import com.ldaniels528.trifecta.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.messages.MessageCursor
+import com.ldaniels528.trifecta.modules.Module
+import com.ldaniels528.trifecta.modules.Module.NameValuePair
+import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule._
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.ning.http.client.Response
 import net.liftweb.json.JsonAST.JValue
@@ -76,12 +75,6 @@ class ElasticSearchModule(config: TxConfig) extends Module {
       }
     }
   }
-
-  /**
-   * Returns the variables that are bound to the module
-   * @return the variables that are bound to the module
-   */
-  override def getVariables: Seq[Variable] = Nil
 
   /**
    * Returns the name of the module (e.g. "kafka")

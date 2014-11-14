@@ -9,7 +9,6 @@ import com.ldaniels528.trifecta.io._
 import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.modules.Module.formatTypes
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json._
 
@@ -38,12 +37,6 @@ trait Module extends AvroCodec {
    * @return the option of an output source
    */
   def getOutputSource(url: String): Option[OutputSource]
-
-  /**
-   * Returns the variables that are bound to the module
-   * @return the variables that are bound to the module
-   */
-  def getVariables: Seq[Variable]
 
   /**
    * Returns the name of the module (e.g. "kafka")

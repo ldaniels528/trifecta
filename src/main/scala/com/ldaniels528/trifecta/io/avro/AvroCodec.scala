@@ -17,9 +17,6 @@ import scala.io.Source
 trait AvroCodec {
 
   def lookupAvroDecoder(url: String)(implicit config: TxConfig): AvroDecoder = {
-    // create an implicit reference to the scope
-    implicit val scope = config.scope
-
     // is it a valid Avro input source?
     val resource_? = url match {
       case s if s.startsWith("classpath:") =>

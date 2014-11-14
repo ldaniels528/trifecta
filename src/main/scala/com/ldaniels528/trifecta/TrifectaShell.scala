@@ -3,7 +3,6 @@ package com.ldaniels528.trifecta
 import java.io.PrintStream
 
 import com.ldaniels528.trifecta.TxConsole._
-import com.ldaniels528.trifecta.vscript.Scope
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
 
@@ -18,8 +17,6 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
-  private implicit val scope: Scope = config.scope
-
   // redirect standard output
   val out: PrintStream = rt.config.out
   val err: PrintStream = rt.config.err
