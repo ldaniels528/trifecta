@@ -1,10 +1,9 @@
-package com.ldaniels528.trifecta.modules.cassandra
+package com.ldaniels528.trifecta.modules
 
 import com.datastax.driver.core.{ConsistencyLevel, ResultSet}
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.io.InputSource
 import com.ldaniels528.trifecta.io.cassandra.{CassandraOutputSource, Casserole, CasseroleSession}
-import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.ParsingHelper._

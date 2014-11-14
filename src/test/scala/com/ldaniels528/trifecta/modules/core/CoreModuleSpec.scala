@@ -1,6 +1,7 @@
 package com.ldaniels528.trifecta.modules.core
 
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.modules.CoreModule
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}

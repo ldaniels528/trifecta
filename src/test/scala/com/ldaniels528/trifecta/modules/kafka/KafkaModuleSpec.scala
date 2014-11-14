@@ -1,8 +1,8 @@
 package com.ldaniels528.trifecta.modules.kafka
 
 import com.ldaniels528.trifecta.command.UnixLikeArgs
-import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.modules.ZookeeperModule
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import org.mockito.Mockito.{when => when$}
 import org.scalatest.Matchers._

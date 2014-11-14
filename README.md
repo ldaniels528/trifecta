@@ -133,15 +133,17 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 _Trifecta_ exposes its commands through modules. At any time to see which modules are available one could issue the `modules` command.
 
     core:/home/ldaniels> modules
-    + --------------------------------------------------------------------------------------------------- +
-    | name           className                                                           loaded  active   |
-    + --------------------------------------------------------------------------------------------------- +
-    | kafka          com.ldaniels528.trifecta.modules.kafka.KafkaModule                  true    true     |
-    | zookeeper      com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule          true    false    |
-    | elasticSearch  com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule  true    false    |
-    | core           com.ldaniels528.trifecta.modules.core.CoreModule                    true    false    |
-    | storm          com.ldaniels528.trifecta.modules.storm.StormModule                  true    false    |
-    + --------------------------------------------------------------------------------------------------- +
+    + ------------------------------------------------------------------------------------- +
+    | name           className                                             loaded  active   |
+    + ------------------------------------------------------------------------------------- +
+    | cassandra      com.ldaniels528.trifecta.modules.CassandraModule      true    false    |
+    | core           com.ldaniels528.trifecta.modules.CoreModule           true    true     |
+    | elasticSearch  com.ldaniels528.trifecta.modules.ElasticSearchModule  true    false    |
+    | kafka          com.ldaniels528.trifecta.modules.KafkaModule          true    false    |
+    | mongodb        com.ldaniels528.trifecta.modules.MongoModule          true    false    |
+    | storm          com.ldaniels528.trifecta.modules.StormModule          true    false    |
+    | zookeeper      com.ldaniels528.trifecta.modules.ZookeeperModule      true    false    |
+    + ------------------------------------------------------------------------------------- +
 
 To execute local system commands, enclose the command you'd like to execute using the back-ticks (`) symbol:
     

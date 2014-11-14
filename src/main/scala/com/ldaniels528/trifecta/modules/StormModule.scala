@@ -1,4 +1,4 @@
-package com.ldaniels528.trifecta.modules.storm
+package com.ldaniels528.trifecta.modules
 
 import java.net.{URL, URLClassLoader}
 
@@ -6,7 +6,6 @@ import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.io.{InputSource, OutputSource}
-import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json._

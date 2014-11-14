@@ -1,4 +1,4 @@
-package com.ldaniels528.trifecta.modules.kafka
+package com.ldaniels528.trifecta.modules
 
 import java.io.PrintStream
 import java.text.SimpleDateFormat
@@ -9,18 +9,17 @@ import _root_.kafka.common.TopicAndPartition
 import com.google.common.util.concurrent.AtomicDouble
 import com.ldaniels528.trifecta.TxResultHandler.Ok
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.io.{AsyncIO, KeyAndMessage}
 import com.ldaniels528.trifecta.io.avro.AvroConversion._
 import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.io.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.io.kafka._
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.io.{AsyncIO, KeyAndMessage}
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import com.ldaniels528.trifecta.modules.ModuleHelper._
-import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
@@ -57,7 +56,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
   private var watching: Boolean = false
 
   // create the facade
-  private[kafka] val facade = new KafkaFacade(correlationId)
+  private val facade = new KafkaFacade(correlationId)
 
   /**
    * Returns the list of brokers from Zookeeper

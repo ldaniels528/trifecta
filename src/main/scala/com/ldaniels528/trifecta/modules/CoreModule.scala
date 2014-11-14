@@ -1,11 +1,10 @@
-package com.ldaniels528.trifecta.modules.core
+package com.ldaniels528.trifecta.modules
 
 import java.io.{File, PrintStream}
 import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicLong
 import java.util.{Date, TimeZone}
 
-import com.google.common.util.concurrent.AtomicDouble
 import com.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.ldaniels528.trifecta._
 import com.ldaniels528.trifecta.command._
@@ -13,7 +12,6 @@ import com.ldaniels528.trifecta.io.Resource.expandPath
 import com.ldaniels528.trifecta.io._
 import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroFileInputSource, AvroFileOutputSource}
 import com.ldaniels528.trifecta.io.json.{JSONFileInputSource, JSONFileOutputSource}
-import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
 import org.apache.commons.io.IOUtils
