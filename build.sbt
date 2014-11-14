@@ -53,6 +53,7 @@ libraryDependencies ++= Seq(
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
+  "org.eclipse.jetty" % "jetty-server" % "9.3.0.M1",
   "org.mongodb" %% "casbah-commons" % "2.6.4",
   "org.mongodb" %% "casbah-core" % "2.6.4",
   "org.fusesource.jansi" % "jansi" % "1.11",
