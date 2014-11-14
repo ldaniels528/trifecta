@@ -1,9 +1,8 @@
-package com.ldaniels528.trifecta.modules.core
+package com.ldaniels528.trifecta.support.io
 
 import java.io._
 import java.net.URL
 
-import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.util.ByteBufferUtils
 
 /**

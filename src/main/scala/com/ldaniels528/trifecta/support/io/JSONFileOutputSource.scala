@@ -1,8 +1,7 @@
-package com.ldaniels528.trifecta.modules.core
+package com.ldaniels528.trifecta.support.io
 
 import java.io._
 
-import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 
 import scala.concurrent.ExecutionContext

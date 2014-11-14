@@ -1,6 +1,5 @@
-package com.ldaniels528.trifecta.modules.kafka
+package com.ldaniels528.trifecta.support.io
 
-import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.support.kafka.{Broker, KafkaPublisher}
 import com.ldaniels528.trifecta.support.messaging.MessageDecoder
 

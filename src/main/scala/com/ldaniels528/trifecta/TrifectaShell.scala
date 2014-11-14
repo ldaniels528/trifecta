@@ -115,10 +115,6 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
     } while (config.alive)
   }
 
-  private def startWebServer(): Unit = {
-
-  }
-
   private def showDebug(result: Any): Unit = {
     result match {
       case Failure(e) => e.printStackTrace(out)

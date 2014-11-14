@@ -1,7 +1,6 @@
-package com.ldaniels528.trifecta.modules.kafka
+package com.ldaniels528.trifecta.support.io
 
 import com.ldaniels528.trifecta.support.io.query.QuerySource
-import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.support.kafka.{Broker, KafkaMicroConsumer, KafkaQuerySource}
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import kafka.common.TopicAndPartition

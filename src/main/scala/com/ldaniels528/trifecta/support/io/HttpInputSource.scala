@@ -1,10 +1,8 @@
-package com.ldaniels528.trifecta.modules.core
+package com.ldaniels528.trifecta.support.io
 
 import java.io.{BufferedReader, InputStreamReader}
 import java.net.{HttpURLConnection, URL}
 import java.nio.ByteBuffer
-
-import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 
 /**
  * HTTP Input Source

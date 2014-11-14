@@ -11,7 +11,7 @@ import com.ldaniels528.trifecta.decoders.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.modules.ModuleHelper._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.support.avro.AvroConversion._
-import com.ldaniels528.trifecta.support.io.KeyAndMessage
+import com.ldaniels528.trifecta.support.io.{KafkaTopicOutputSource, KafkaTopicInputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._

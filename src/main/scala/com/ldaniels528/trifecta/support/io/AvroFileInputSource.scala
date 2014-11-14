@@ -1,9 +1,7 @@
-package com.ldaniels528.trifecta.modules.core
+package com.ldaniels528.trifecta.support.io
 
 import java.io.{DataInputStream, File, FileInputStream, InputStream}
 import java.net.URL
-
-import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
 
 /**
  * Avro File Input Source
