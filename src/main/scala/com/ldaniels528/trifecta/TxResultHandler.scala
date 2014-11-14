@@ -4,6 +4,7 @@ import java.io.PrintStream
 
 import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
 import com.ldaniels528.tabular.Tabular
+import com.ldaniels528.trifecta.io.AsyncIO
 import com.ldaniels528.trifecta.io.avro.AvroTables
 import com.ldaniels528.trifecta.messages.query.QueryResult
 import com.ldaniels528.trifecta.io.json.TxJsonUtil

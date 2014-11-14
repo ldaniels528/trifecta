@@ -4,6 +4,7 @@ import java.util.Random
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
 import com.ldaniels528.trifecta.JobManager._
+import com.ldaniels528.trifecta.io.AsyncIO
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}

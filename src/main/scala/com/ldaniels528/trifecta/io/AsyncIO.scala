@@ -1,4 +1,4 @@
-package com.ldaniels528.trifecta
+package com.ldaniels528.trifecta.io
 
 import java.util.concurrent.atomic.AtomicLong
 
