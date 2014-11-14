@@ -6,9 +6,9 @@ import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule._
-import com.ldaniels528.trifecta.support.elasticsearch.TxElasticSearchClient
-import com.ldaniels528.trifecta.support.io.{InputSource, KeyAndMessage}
-import com.ldaniels528.trifecta.support.messaging.MessageCursor
+import com.ldaniels528.trifecta.io.elasticsearch.{DocumentOutputSource, TxElasticSearchClient}
+import com.ldaniels528.trifecta.io.{InputSource, KeyAndMessage}
+import com.ldaniels528.trifecta.messages.MessageCursor
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable

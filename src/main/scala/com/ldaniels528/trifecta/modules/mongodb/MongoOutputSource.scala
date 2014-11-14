@@ -1,10 +1,10 @@
 package com.ldaniels528.trifecta.modules.mongodb
 
-import com.ldaniels528.trifecta.decoders.AvroDecoder
-import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
-import com.ldaniels528.trifecta.support.json.TxJsonUtil
-import com.ldaniels528.trifecta.support.messaging.MessageDecoder
-import com.ldaniels528.trifecta.support.mongodb.TxMongoCollection
+import com.ldaniels528.trifecta.io.avro.AvroDecoder
+import com.ldaniels528.trifecta.io.{KeyAndMessage, OutputSource}
+import com.ldaniels528.trifecta.io.json.TxJsonUtil
+import com.ldaniels528.trifecta.messages.MessageDecoder
+import com.ldaniels528.trifecta.io.mongodb.TxMongoCollection
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}

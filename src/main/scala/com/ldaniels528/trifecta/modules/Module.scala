@@ -3,12 +3,11 @@ package com.ldaniels528.trifecta.modules
 import java.net.{URL, URLClassLoader}
 import java.nio.ByteBuffer
 
-import com.ldaniels528.trifecta.command.parser.CommandParser
-import CommandParser._
+import com.ldaniels528.trifecta.command.parser.CommandParser._
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
-import com.ldaniels528.trifecta.decoders.{AvroCodec, AvroDecoder}
+import com.ldaniels528.trifecta.io._
+import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.modules.Module.formatTypes
-import com.ldaniels528.trifecta.support.io._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}

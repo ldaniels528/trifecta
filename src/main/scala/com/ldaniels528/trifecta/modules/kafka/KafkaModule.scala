@@ -7,18 +7,18 @@ import java.util.Date
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.TxResultHandler.Ok
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.decoders.{AvroCodec, AvroDecoder}
+import com.ldaniels528.trifecta.io.KeyAndMessage
+import com.ldaniels528.trifecta.io.avro.AvroConversion._
+import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
+import com.ldaniels528.trifecta.io.kafka.KafkaFacade._
+import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
+import com.ldaniels528.trifecta.io.kafka._
+import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.messages.logic.Condition
+import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
+import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import com.ldaniels528.trifecta.modules.ModuleHelper._
 import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.support.avro.AvroConversion._
-import com.ldaniels528.trifecta.support.io.KeyAndMessage
-import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
-import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
-import com.ldaniels528.trifecta.support.kafka._
-import com.ldaniels528.trifecta.support.messaging.logic.Condition
-import com.ldaniels528.trifecta.support.messaging.logic.Expressions.{AND, Expression, OR}
-import com.ldaniels528.trifecta.support.messaging.{BinaryMessage, MessageDecoder}
-import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
@@ -927,7 +927,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
    */
   private def parseCondition(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]]): Condition = {
     import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser.deQuote
-    import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
+    import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 
     val it = params.args.iterator
     var criteria: Option[Expression] = None

@@ -2,7 +2,10 @@ package com.ldaniels528.trifecta
 
 import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser
-import com.ldaniels528.trifecta.decoders.MessageCodecs
+import com.ldaniels528.trifecta.messages.query.{BigDataQuery, BigDataSelection, QueryResult}
+import com.ldaniels528.trifecta.io.{InputSource, OutputSource}
+import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
+import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.modules.ModuleManager
 import com.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.ldaniels528.trifecta.modules.core.CoreModule
@@ -11,10 +14,6 @@ import com.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
-import com.ldaniels528.trifecta.support.io.query.{BigDataQuery, BigDataSelection, QueryResult}
-import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
-import com.ldaniels528.trifecta.support.messaging.MessageDecoder
-import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptCompiler
 import org.slf4j.LoggerFactory

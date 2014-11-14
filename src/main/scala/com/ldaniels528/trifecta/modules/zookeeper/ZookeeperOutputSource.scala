@@ -1,9 +1,9 @@
 package com.ldaniels528.trifecta.modules.zookeeper
 
-import com.ldaniels528.trifecta.decoders.AvroDecoder
-import com.ldaniels528.trifecta.support.io.{KeyAndMessage, OutputSource}
-import com.ldaniels528.trifecta.support.messaging.MessageDecoder
-import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.io.avro.AvroDecoder
+import com.ldaniels528.trifecta.io.{KeyAndMessage, OutputSource}
+import com.ldaniels528.trifecta.messages.MessageDecoder
+import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}

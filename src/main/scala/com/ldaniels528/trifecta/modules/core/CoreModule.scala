@@ -9,11 +9,12 @@ import com.google.common.util.concurrent.AtomicDouble
 import com.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.ldaniels528.trifecta._
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.decoders.AvroCodec
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
-import com.ldaniels528.trifecta.support.io.Resource.expandPath
-import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
+import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroFileOutputSource, AvroFileInputSource}
+import com.ldaniels528.trifecta.io.Resource.expandPath
+import com.ldaniels528.trifecta.io._
+import com.ldaniels528.trifecta.io.json.{JSONFileOutputSource, JSONFileInputSource}
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue

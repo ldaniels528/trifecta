@@ -6,7 +6,7 @@ import backtype.storm.generated.{Grouping, Nimbus}
 import backtype.storm.utils.{NimbusClient, Utils}
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.modules.Module
-import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
+import com.ldaniels528.trifecta.io.{InputSource, OutputSource}
 import com.ldaniels528.trifecta.vscript.Variable
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JsonAST.JValue

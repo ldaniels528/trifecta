@@ -4,6 +4,7 @@ import com.ldaniels528.trifecta.vscript.VScriptParser._
 import com.ldaniels528.trifecta.vscript.VScriptRuntime._
 
 import scala.collection.mutable
+import scala.io.Source
 
 /**
  * VScript Compiler
@@ -43,7 +44,7 @@ object VScriptCompiler {
     args foreach { arg =>
       val scriptFile = new File(arg)
       val classFile = getClassFile(scriptFile)
-      val sourceCode = (io.Source.fromFile(scriptFile).getLines() mkString "\n").trim
+      val sourceCode = (Source.fromFile(scriptFile).getLines() mkString "\n").trim
       logger.info(s"Compiling '$scriptFile'...")
       VScriptByteCodeUtil.saveClass(classFile, compile(sourceCode, debug))
     }
