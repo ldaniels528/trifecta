@@ -122,10 +122,6 @@ trait Module extends AvroCodec {
 
   private def formatJson(value: String): String = pretty(render(parse(value)))
 
-  protected def getAvroDecoder(params: UnixLikeArgs)(implicit config: TxConfig): Option[AvroDecoder] = {
-    params("-a") map lookupAvroDecoder
-  }
-
   protected def getInputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[InputSource] = {
     params("-i") flatMap rt.getInputHandler
   }

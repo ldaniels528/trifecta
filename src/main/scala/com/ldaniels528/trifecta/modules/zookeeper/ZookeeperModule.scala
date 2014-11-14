@@ -6,7 +6,7 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.command.parser.CommandParser._
 import com.ldaniels528.trifecta.io.InputSource
 import com.ldaniels528.trifecta.io.kafka.KafkaSandbox
-import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.io.zookeeper.{ZookeeperOutputSource, ZKProxy}
 import com.ldaniels528.trifecta.io.zookeeper.ZkSupportHelper._
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.util.EndPoint

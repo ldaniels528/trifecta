@@ -44,7 +44,6 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
     Command(this, "cd", changeDir, UnixLikeParams(Seq("path" -> true)), help = "Changes the local file system path/directory", promptAware = true),
     Command(this, "charset", charSet, UnixLikeParams(Seq("encoding" -> false)), help = "Retrieves or sets the character encoding"),
     Command(this, "columns", columnWidthGetOrSet, UnixLikeParams(Seq("columnWidth" -> false)), help = "Retrieves or sets the column width for message output"),
-    Command(this, "copy", copyMessages, UnixLikeParams(Nil, Seq("-a" -> "avroSchema", "-i" -> "inputSource", "-o" -> "outputSource", "-n" -> "numRecordsToCopy")), help = "Copies messages from an input source to an output source"),
     Command(this, "debug", debug, UnixLikeParams(Seq("enabled" -> false)), help = "Switches debugging on/off", undocumented = true),
     Command(this, "exit", exit, UnixLikeParams(), help = "Exits the shell"),
     Command(this, "help", help, UnixLikeParams(Seq("searchTerm" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
@@ -178,69 +177,6 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
       case Some(arg) => Left(config.columns = parseInt("columnWidth", arg))
       case None => Right(config.columns)
     }
-  }
-
-  /**
-   * Copy messages from the specified input source to an output source
-   * @return the I/O count
-   * @example copy -i topic:greetings -o topic:greetings2
-   * @example copy -i topic:shocktrade.keystats.avro -o file:json:/tmp/keystats.json -a file:avro/keyStatistics.avsc
-   * @example copy -i topic:shocktrade.keystats.avro -o es:/quotes/keystats/$symbol -a file:avro/keyStatistics.avsc
-   * @example copy -i topic:shocktrade.quotes.avro -o file:json:/tmp/quotes.json -a file:avro/quotes.avsc
-   * @example copy -i topic:quotes.avro -o es:/quotes/$exchange/$symbol -a file:avro/quotes.avsc
-   */
-  def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): AsyncIO = {
-    // get the input source
-    val reader = getInputSource(params) getOrElse die("No input source defined")
-
-    // get the output source
-    val writer = getOutputSource(params) getOrElse die("No output source defined")
-
-    // get an optional decoder
-    val decoder = getAvroDecoder(params)(rt.config)
-
-    // copy the messages from the input source to the output source
-    val startTime = System.currentTimeMillis()
-    val read = new AtomicLong(0)
-    val written = new AtomicLong(0)
-    val rps = new AtomicDouble(0)
-    val task = Future {
-      var lastCount: Long = 0
-      var lastCheck = startTime
-      var found: Boolean = true
-
-      blocking {
-        try {
-          while (found) {
-            // read the record
-            val data = reader.read
-            found = data.isDefined
-            if (found) read.incrementAndGet()
-
-            // write the record
-            data.foreach { rec =>
-              writer.write(rec, decoder)
-              written.incrementAndGet()
-            }
-
-            // compute the records/second statistics
-            val elapsedTime = (System.currentTimeMillis() - lastCheck).toDouble / 1000d
-            if (elapsedTime >= 1) {
-              rps.set(Math.round(10d * (read.get - lastCount).toDouble / elapsedTime) / 10d)
-              lastCount = read.get
-              lastCheck = System.currentTimeMillis()
-            }
-          }
-        } finally {
-          // close the reader and writer
-          Try(reader.close())
-          Try(writer.close())
-          ()
-        }
-      }
-    }
-
-    AsyncIO(startTime, task, read, written, rps)
   }
 
   /**

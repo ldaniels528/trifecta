@@ -33,7 +33,7 @@ class TxConfig(val configProps: Properties) {
   def kafkaZkConnect = configProps.getOrElse("trifecta.kafka.zookeeper.host", zooKeeperConnect)
 
   // various shared state variables
-  def autoSwitching: Boolean = configProps.getOrElse("autoSwitching", "false").toBoolean
+  def autoSwitching: Boolean = configProps.getOrElse("autoSwitching", "true").toBoolean
 
   def autoSwitching_=(enabled: Boolean) = configProps.setProperty("autoSwitching", enabled.toString)
 

@@ -3,11 +3,13 @@ package com.ldaniels528.trifecta.modules.kafka
 import java.io.PrintStream
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.concurrent.atomic.AtomicLong
 
 import _root_.kafka.common.TopicAndPartition
+import com.google.common.util.concurrent.AtomicDouble
 import com.ldaniels528.trifecta.TxResultHandler.Ok
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.io.KeyAndMessage
+import com.ldaniels528.trifecta.io.{AsyncIO, KeyAndMessage}
 import com.ldaniels528.trifecta.io.avro.AvroConversion._
 import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.io.kafka.KafkaFacade._
@@ -27,7 +29,7 @@ import org.apache.avro.generic.GenericRecord
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
@@ -97,6 +99,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     Command(this, "kswitch", switchCursor, UnixLikeParams(Seq("topic" -> true)), help = "Switches the currently active topic cursor"),
 
     // query-related commands
+    Command(this, "copy", copyMessages, UnixLikeParams(Nil, Seq("-a" -> "avroSchema", "-i" -> "inputSource", "-o" -> "outputSource", "-n" -> "numRecordsToCopy")), help = "Copies messages from an input source to an output source"),
     Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-t" -> "topic")), help = "Counts the messages matching a given condition"),
     Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
     Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
@@ -192,6 +195,69 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     // connect to the remote peer
     zkProxy_?.foreach(_.close())
     zkProxy_? = Option(ZKProxy(connectionString))
+  }
+
+  /**
+   * Copy messages from the specified input source to an output source
+   * @return the I/O count
+   * @example copy -i topic:greetings -o topic:greetings2
+   * @example copy -i topic:shocktrade.keystats.avro -o file:json:/tmp/keystats.json -a file:avro/keyStatistics.avsc
+   * @example copy -i topic:shocktrade.keystats.avro -o es:/quotes/keystats/$symbol -a file:avro/keyStatistics.avsc
+   * @example copy -i topic:shocktrade.quotes.avro -o file:json:/tmp/quotes.json -a file:avro/quotes.avsc
+   * @example copy -i topic:quotes.avro -o es:/quotes/$exchange/$symbol -a file:avro/quotes.avsc
+   */
+  def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): AsyncIO = {
+    // get the input source
+    val reader = getInputSource(params) getOrElse die("No input source defined")
+
+    // get the output source
+    val writer = getOutputSource(params) getOrElse die("No output source defined")
+
+    // get an optional decoder
+    val decoder = getAvroDecoder(params)(rt.config)
+
+    // copy the messages from the input source to the output source
+    val startTime = System.currentTimeMillis()
+    val read = new AtomicLong(0)
+    val written = new AtomicLong(0)
+    val rps = new AtomicDouble(0)
+    val task = Future {
+      var lastCount: Long = 0
+      var lastCheck = startTime
+      var found: Boolean = true
+
+      blocking {
+        try {
+          while (found) {
+            // read the record
+            val data = reader.read
+            found = data.isDefined
+            if (found) read.incrementAndGet()
+
+            // write the record
+            data.foreach { rec =>
+              writer.write(rec, decoder)
+              written.incrementAndGet()
+            }
+
+            // compute the records/second statistics
+            val elapsedTime = (System.currentTimeMillis() - lastCheck).toDouble / 1000d
+            if (elapsedTime >= 1) {
+              rps.set(Math.round(10d * (read.get - lastCount).toDouble / elapsedTime) / 10d)
+              lastCount = read.get
+              lastCheck = System.currentTimeMillis()
+            }
+          }
+        } finally {
+          // close the reader and writer
+          Try(reader.close())
+          Try(writer.close())
+          ()
+        }
+      }
+    }
+
+    AsyncIO(startTime, task, read, written, rps)
   }
 
   /**
@@ -856,6 +922,10 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
 
     // if there's already a registered topic & group, close it
     Try(watchCursors.remove(key) map (_.consumer.close()) map (t => Ok()))
+  }
+
+  private def getAvroDecoder(params: UnixLikeArgs)(implicit config: TxConfig): Option[AvroDecoder] = {
+    params("-a") map lookupAvroDecoder
   }
 
   private def getTopicAndGroup(params: UnixLikeArgs): TopicAndGroup = {
