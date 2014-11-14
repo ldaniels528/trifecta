@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.support.kafka
 
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
+import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer._
 import com.ldaniels528.trifecta.support.messaging.BinaryMessage
@@ -12,8 +12,10 @@ import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
 import net.liftweb.json._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -170,6 +172,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaMicroConsumer {
+  private val logger = LoggerFactory.getLogger(getClass)
   private implicit val formats = net.liftweb.json.DefaultFormats
   private val DEFAULT_FETCH_SIZE: Int = 65536
 
@@ -179,13 +182,12 @@ object KafkaMicroConsumer {
    * @param brokers the given replica brokers
    * @param correlationId the given correlation ID
    * @param conditions the given search criteria
-   * @return the promise of the total number of a messages that the given search criteria
+   * @return the promise of the total number of messages that match the given search criteria
    */
   def count(topic: String, brokers: Seq[Broker], correlationId: Int, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Long] = {
-    val promise = Promise[Long]()
-    val counter = new AtomicLong(0)
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
+        var counter = 0L
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
@@ -193,20 +195,17 @@ object KafkaMicroConsumer {
           while (!eof) {
             for {
               ofs <- offset
-              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
-            } if (conditions.forall(_.satisfies(msg.message, msg.key))) counter.incrementAndGet()
+              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE)
+            } if (conditions.forall(_.satisfies(msg.message, msg.key))) counter += 1
             offset = offset map (_ + 1)
           }
         }
+        counter
       }
     }
 
-    // check for the failure to complete the count
-    Future.sequence(tasks).onComplete {
-      case Success(v) => promise.success(counter.get)
-      case Failure(e) => promise.failure(e)
-    }
-    promise.future
+    // return the summed count
+    Future.sequence(tasks).map(_.sum)
   }
 
   /**
@@ -215,10 +214,9 @@ object KafkaMicroConsumer {
    * @param brokers the given replica brokers
    * @param correlationId the given correlation ID
    * @param conditions the given search criteria
-   * @return the promise of the option of a message based on the given search criteria
+   * @return the promise of a sequence of messages based on the given search criteria
    */
   def findAll(topic: String, brokers: Seq[Broker], correlationId: Int, conditions: Seq[Condition], limit: Option[Int])(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[MessageData]] = {
-    val promise = Promise[Seq[MessageData]]()
     val count = new AtomicLong(0L)
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
@@ -230,7 +228,7 @@ object KafkaMicroConsumer {
           while (!eof) {
             for {
               ofs <- offset
-              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
+              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE)
             } {
               if (conditions.forall(_.satisfies(msg.message, msg.key))) {
                 messages = msg :: messages
@@ -240,17 +238,13 @@ object KafkaMicroConsumer {
 
             offset = offset map (_ + 1)
           }
-          messages
+          messages.reverse
         }
       }
     }
 
-    // check for the failure to find a message
-    Future.sequence(tasks).onComplete {
-      case Success(messages) => promise.success(messages.flatten)
-      case Failure(e) => promise.failure(e)
-    }
-    promise.future
+    // return a promise of the messages
+    Future.sequence(tasks) map (_.flatten)
   }
 
   /**
@@ -263,20 +257,19 @@ object KafkaMicroConsumer {
    */
   def findOne(topic: String, brokers: Seq[Broker], correlationId: Int, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[(Int, MessageData)]] = {
     val promise = Promise[Option[(Int, MessageData)]]()
-    val found = new AtomicBoolean(false)
-    var message: Option[(Int, MessageData)] = None
+    val message = new AtomicReference[Option[(Int, MessageData)]](None)
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
-          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
-          while (!found.get && !eof) {
+          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || message.get.isDefined
+          while (!eof) {
             for {
               ofs <- offset
-              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
-            } {
-              if (conditions.forall(_.satisfies(msg.message, msg.key)) && found.compareAndSet(false, true)) message = Option((partition, msg))
+              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE)
+            } if (conditions.forall(_.satisfies(msg.message, msg.key))) {
+              message.compareAndSet(None, Option((partition, msg)))
             }
 
             offset = offset map (_ + 1)
@@ -287,7 +280,7 @@ object KafkaMicroConsumer {
 
     // check for the failure to find a message
     Future.sequence(tasks).onComplete {
-      case Success(v) => promise.success(message)
+      case Success(v) => promise.success(message.get)
       case Failure(e) => promise.failure(e)
     }
     promise.future
@@ -302,24 +295,24 @@ object KafkaMicroConsumer {
    * @return the promise of the option of a message based on the given search criteria
    */
   def findNext(tap: TopicAndPartition, brokers: Seq[Broker], correlationId: Int, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[MessageData]] = {
+    val message = new AtomicReference[Option[MessageData]](None)
     Future {
-      var message: Option[MessageData] = None
       new KafkaMicroConsumer(tap, brokers, correlationId) use { subs =>
         var offset: Option[Long] = subs.getFirstOffset
         val lastOffset: Option[Long] = subs.getLastOffset
-        def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
-        while (!message.isDefined && !eof) {
+        def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || message.get.isDefined
+        while (!eof) {
           for {
             ofs <- offset
-            msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption
+            msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE)
           } {
-            if (conditions.forall(_.satisfies(msg.message, msg.key))) message = Option(msg)
+            if (conditions.forall(_.satisfies(msg.message, msg.key))) message.compareAndSet(None, Option(msg))
           }
 
           offset = offset map (_ + 1)
         }
       }
-      message
+      message.get
     }
   }
 
@@ -439,6 +432,15 @@ object KafkaMicroConsumer {
   }
 
   /**
+   * Returns the list of summarized topics for the given brokers
+   */
+  def getTopicSummaryList(brokers: Seq[Broker], correlationId: Int)(implicit zk: ZKProxy): Iterable[TopicSummary] = {
+    getTopicList(brokers, correlationId) groupBy (_.topic) map { case (name, partitions) =>
+      TopicSummary(name, partitions.map(_.partitionId).max)
+    }
+  }
+
+  /**
    * Returns the promise of the option of a message based on the given search criteria
    * @param topic the given topic name
    * @param brokers the given replica brokers
@@ -553,6 +555,8 @@ object KafkaMicroConsumer {
    * Represents the details for a Kafka topic
    */
   case class TopicDetails(topic: String, partitionId: Int, leader: Option[Broker], replicas: Seq[Broker], isr: Seq[Broker], sizeInBytes: Int)
+
+  case class TopicSummary(topic: String, partitions: Int)
 
   /**
    * Object representation of the broker information JSON

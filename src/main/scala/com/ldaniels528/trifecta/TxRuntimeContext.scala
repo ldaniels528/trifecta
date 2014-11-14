@@ -2,6 +2,7 @@ package com.ldaniels528.trifecta
 
 import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser
+import com.ldaniels528.trifecta.decoders.MessageCodecs
 import com.ldaniels528.trifecta.modules.ModuleManager
 import com.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.ldaniels528.trifecta.modules.core.CoreModule
@@ -10,12 +11,15 @@ import com.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
-import com.ldaniels528.trifecta.support.io.query.QuerySource
+import com.ldaniels528.trifecta.support.io.query.{BigDataQuery, BigDataSelection, QueryResult}
 import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
+import com.ldaniels528.trifecta.support.messaging.MessageDecoder
+import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
+import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.VScriptCompiler
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 /**
@@ -99,6 +103,37 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   }
 
   /**
+   * Executes the given query
+   * @param query the given [[BigDataQuery]]
+   */
+  def executeQuery(query: BigDataQuery)(implicit ec: ExecutionContext): Future[QueryResult] = {
+    query match {
+      case BigDataSelection(source, destination, fields, criteria, limit) =>
+        // get the input source and its decoder
+        val inputSource: Option[InputSource] = getInputHandler(source.deviceURL)
+        val inputDecoder: Option[MessageDecoder[_]] = MessageCodecs.getDecoder(source.decoderURL)
+
+        // get the output source and its encoder
+        val outputSource: Option[OutputSource] = destination.flatMap(src => getOutputHandler(src.deviceURL))
+        val outputDecoder: Option[MessageDecoder[_]] = destination.flatMap(src => MessageCodecs.getDecoder(src.decoderURL))
+
+        // compile conditions & get all other properties
+        val conditions = criteria.map(compile(_, inputDecoder)).toSeq
+        val maximum = limit ?? Some(25)
+
+        // perform the query/copy operation
+        if (outputSource.nonEmpty) throw new IllegalStateException("Insert is not yet supported")
+        else {
+          val querySource = inputSource.flatMap(_.getQuerySource).orDie(s"No query compatible source found for URL '${source.deviceURL}'")
+          val decoder = inputDecoder.orDie(s"No decoder found for URL ${source.decoderURL}")
+          querySource.findAll(fields, decoder, conditions, maximum)
+        }
+      case _ =>
+        throw new IllegalStateException(s"Invalid query type - ${query.getClass.getName}")
+    }
+  }
+
+  /**
    * Interprets command line input
    * @param input the given line of input
    * @return a try-monad wrapped result
@@ -107,7 +142,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     implicit val rtc = this
 
     // is the input a query?
-    if (input.startsWith("select")) BigDataQueryParser(input).execute
+    if (input.startsWith("select")) executeQuery(BigDataQueryParser(input))
     else {
       // parse the input into tokens
       val tokens = CommandParser.parseTokens(input)

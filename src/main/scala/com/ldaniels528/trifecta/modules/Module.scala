@@ -119,15 +119,6 @@ trait Module extends AvroCodec {
   }
 
   /**
-   * Expands the UNIX path into a JVM-safe value
-   * @param path the UNIX path (e.g. "~/ldaniels")
-   * @return a JVM-safe value (e.g. "/home/ldaniels")
-   */
-  protected def expandPath(path: String): String = {
-    path.replaceFirst("[~]", scala.util.Properties.userHome)
-  }
-
-  /**
    * Attempts to extract the value from the sequence at the given index
    * @param values the given sequence of values
    * @param index the given index

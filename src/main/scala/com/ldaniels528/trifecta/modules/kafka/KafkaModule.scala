@@ -7,7 +7,6 @@ import java.util.Date
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.TxResultHandler.Ok
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.decoders.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.modules.ModuleHelper._
 import com.ldaniels528.trifecta.modules._
@@ -17,7 +16,7 @@ import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.support.kafka._
 import com.ldaniels528.trifecta.support.messaging.logic.Condition
-import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
+import com.ldaniels528.trifecta.support.messaging.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.support.messaging.{BinaryMessage, MessageDecoder}
 import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.ParsingHelper._
@@ -100,7 +99,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     Command(this, "kswitch", switchCursor, UnixLikeParams(Seq("topic" -> true)), help = "Switches the currently active topic cursor"),
 
     // query-related commands
-    Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true)), help = "Counts the messages matching a given condition"),
+    Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-t" -> "topic")), help = "Counts the messages matching a given condition"),
     Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
     Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
     Command(this, "kfindnext", findNextMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
@@ -215,12 +214,19 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
    * @example kcount frequency >= 1200
    */
   def countMessages(params: UnixLikeArgs): Future[Long] = {
-    // get the topic and partition from the cursor
-    val (topic, decoder) = navigableCursor map (c => (c.topic, c.decoder)) getOrElse dieNoCursor
+    // was a topic and/or Avro decoder specified?
+    val topic_? = params("-t")
+    val avro_? = getAvroDecoder(params)(config)
+
+    // get the input topic and decoder from the cursor
+    val (topic, decoder) = {
+      if (topic_?.isDefined) (topic_?.get, avro_?)
+      else navigableCursor map (c => (c.topic, if (avro_?.isDefined) avro_? else c.decoder)) getOrElse dieNoCursor
+    }
 
     // get the criteria
     val Seq(field, operator, value, _*) = params.args
-    val conditions = Seq(compile(compile(field, operator, value), decoder))
+    val conditions = Seq(parseCondition(params, decoder))
 
     // perform the count
     facade.countMessages(topic, conditions, decoder)
@@ -274,10 +280,10 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     }
 
     // get the criteria
-    val conditions = parseCondition(params, decoder_?)
+    val condition = parseCondition(params, decoder_?)
 
     // perform the search
-    KafkaMicroConsumer.findOne(topic, brokers, correlationId, conditions: _*) map {
+    KafkaMicroConsumer.findOne(topic, brokers, correlationId, condition) map {
       _ map { case (partition, md) =>
         getMessage(topic, partition, md.offset, params)
       }
@@ -306,10 +312,10 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     }
 
     // get the criteria
-    val conditions = parseCondition(params, decoder_?)
+    val condition = parseCondition(params, decoder_?)
 
     // perform the search
-    KafkaMicroConsumer.findNext(TopicAndPartition(topic, partition), brokers, correlationId, conditions: _*) map {
+    KafkaMicroConsumer.findNext(TopicAndPartition(topic, partition), brokers, correlationId, condition) map {
       _ map (md => getMessage(topic, partition, md.offset, params))
     }
   }
@@ -320,7 +326,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
    * @example kfind -t shocktrade.quotes.avro -a file:avro/quotes.avsc volume > 1000000 -o topic:hft.shocktrade.quotes.avro
    */
   def findMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Long] = {
-    import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
@@ -333,10 +338,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     }
 
     // get the criteria
-    val conditions = params.args match {
-      case field :: operator :: value :: Nil => Seq(compile(compile(field, operator, value), decoder_?))
-      case _ => dieSyntax(params)
-    }
+    val conditions = Seq(parseCondition(params, decoder_?))
 
     // get the output handler
     val outputHandler = params("-o") flatMap rt.getOutputHandler getOrElse die("Output source URL expected")
@@ -744,7 +746,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
    * @example kput a0.00.11.22.33.44.ef.11 "Hello World" (references cursor)
    */
   def publishMessage(params: UnixLikeArgs): Unit = {
-    import CommandParser._
+    import com.ldaniels528.trifecta.command.parser.CommandParser._
 
     // get the topic, key and message
     val (topic, key, message) = params.args match {
@@ -923,26 +925,22 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
    * @example lastTrade < 1 and volume > 1000000
    * @return a collection of [[Condition]] objects
    */
-  private def parseCondition(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]]): Seq[Condition] = {
+  private def parseCondition(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]]): Condition = {
+    import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser.deQuote
     import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
 
-    val conditions = mutable.Buffer[Condition]()
     val it = params.args.iterator
+    var criteria: Option[Expression] = None
     while (it.hasNext) {
-      it.take(3).toList match {
-        case List(field, operator, value) =>
-          conditions += compile(compile(field, operator, value), decoder)
-        case arg =>
-          throw new IllegalArgumentException(s"Invalid expression near $arg")
-      }
-      if (it.hasNext) {
-        it.next() match {
-          case "and" =>
-          case arg => new IllegalArgumentException(s"Invalid expression near $arg")
-        }
+      val args = it.take(criteria.size + 3).toList
+      criteria = args match {
+        case List("and", field, operator, value) => criteria.map(AND(_, compile(field, operator, deQuote(value))))
+        case List("or", field, operator, value) => criteria.map(OR(_, compile(field, operator, deQuote(value))))
+        case List(field, operator, value) => Option(compile(field, operator, deQuote(value)))
+        case _ => dieSyntax(params)
       }
     }
-    conditions
+    criteria.map(compile(_, decoder)).getOrElse(dieSyntax(params))
   }
 
   /**
