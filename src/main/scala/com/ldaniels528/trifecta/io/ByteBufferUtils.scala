@@ -1,4 +1,4 @@
-package com.ldaniels528.trifecta.util
+package com.ldaniels528.trifecta.io
 
 import java.nio.ByteBuffer
 

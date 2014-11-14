@@ -3,8 +3,7 @@ package com.ldaniels528.trifecta.io.json
 import java.io._
 import java.net.URL
 
-import com.ldaniels528.trifecta.io.{InputSource, KeyAndMessage}
-import com.ldaniels528.trifecta.util.ByteBufferUtils
+import com.ldaniels528.trifecta.io.{ByteBufferUtils, InputSource, KeyAndMessage}
 
 /**
  * JSON File Input Source

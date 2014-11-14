@@ -3,8 +3,6 @@ package com.ldaniels528.trifecta.io
 import java.io._
 import java.net.URL
 
-import com.ldaniels528.trifecta.util.ByteBufferUtils
-
 /**
  * Text File Input Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>

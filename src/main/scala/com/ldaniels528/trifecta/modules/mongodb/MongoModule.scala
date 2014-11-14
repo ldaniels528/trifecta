@@ -4,9 +4,8 @@ import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.modules.Module
 import com.ldaniels528.trifecta.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.io.json.TxJsonUtil._
-import com.ldaniels528.trifecta.messages.MessageDecoder
+import com.ldaniels528.trifecta.messages.{BinaryMessaging, MessageDecoder}
 import com.ldaniels528.trifecta.io.mongodb.{MongoOutputSource, TxMongoCluster, TxMongoDB}
-import com.ldaniels528.trifecta.util.BinaryMessaging
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.TxUtils._
 import com.ldaniels528.trifecta.vscript.Variable

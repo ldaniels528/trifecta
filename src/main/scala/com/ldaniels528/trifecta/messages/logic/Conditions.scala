@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.messages.logic
 
-import com.ldaniels528.trifecta.util.BinaryMessaging
+import com.ldaniels528.trifecta.messages.BinaryMessaging
 
 /**
  * Represents a collection of logical condition operators

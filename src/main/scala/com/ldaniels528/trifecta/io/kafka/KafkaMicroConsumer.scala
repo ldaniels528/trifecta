@@ -2,11 +2,12 @@ package com.ldaniels528.trifecta.io.kafka
 
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 
+import com.ldaniels528.trifecta.io.ByteBufferUtils
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer._
 import com.ldaniels528.trifecta.messages.BinaryMessage
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
-import com.ldaniels528.trifecta.util.ByteBufferUtils._
+import ByteBufferUtils._
 import com.ldaniels528.trifecta.util.TxUtils._
 import kafka.api._
 import kafka.common._

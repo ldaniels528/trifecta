@@ -2,10 +2,10 @@ package com.ldaniels528.trifecta
 
 import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser
-import com.ldaniels528.trifecta.messages.query.{BigDataQuery, BigDataSelection, QueryResult}
 import com.ldaniels528.trifecta.io.{InputSource, OutputSource}
-import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
 import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
+import com.ldaniels528.trifecta.messages.query.{BigDataQuery, BigDataSelection, QueryResult}
+import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
 import com.ldaniels528.trifecta.modules.ModuleManager
 import com.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.ldaniels528.trifecta.modules.core.CoreModule
@@ -15,7 +15,6 @@ import com.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.ldaniels528.trifecta.modules.storm.StormModule
 import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.VScriptCompiler
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -82,7 +81,6 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   def interpret(input: String): Try[Any] = {
     input match {
       case s if s.startsWith("`") && s.endsWith("`") => executeCommand(s.drop(1).dropRight(1))
-      case s if s.startsWith("#") => interpretVScript(input.tail)
       case s => interpretCommandLine(s)
     }
   }
@@ -168,19 +166,6 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
         result
       }
     }
-  }
-
-  /**
-   * Interprets VScript input
-   * @param line the given line of input
-   * @return a try-monad wrapped result
-   */
-  private def interpretVScript(line: String): Try[Any] = Try {
-    val opCode = VScriptCompiler.compile(line, config.debugOn)
-    if (config.debugOn) {
-      logger.info(s"opCode = $opCode (${opCode.getClass.getName}})")
-    }
-    opCode.eval
   }
 
   /**

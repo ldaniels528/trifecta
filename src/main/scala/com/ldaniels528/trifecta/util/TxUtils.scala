@@ -15,31 +15,6 @@ import scala.util.{Failure, Success, Try}
 object TxUtils {
 
   /**
-   * Indicates whether the string is blank (null or empty or whitespace)
-   */
-  def isBlank(s: String) = (s == null) || (s.trim.length == 0)
-
-  /**
-   * Attempts the given <tt>task</tt> up to <tt>count</tt> times before
-   * throwing the exception produced by the final attempt.
-   */
-  def attempt[S](count: Int, delay: FiniteDuration)(task: => S): S = {
-
-    def invoke(task: => S, attempts: Int): S = {
-      Try(task) match {
-        case Success(outcome) => outcome
-        case Failure(e) =>
-          if (attempts < count) {
-            Thread.sleep(delay)
-            invoke(task, attempts + 1)
-          } else throw new IllegalStateException(s"Action failed $count times: ${e.getMessage}", e)
-      }
-    }
-
-    invoke(task, 0)
-  }
-
-  /**
    * Executes a block; capturing any generated output to STDOUT and/or STDERR
    * @param initialSize the initial size of the buffer
    * @param block the code block to execute
