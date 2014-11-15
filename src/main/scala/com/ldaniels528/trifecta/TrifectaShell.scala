@@ -29,6 +29,9 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
   // make sure we shutdown the ZooKeeper connection
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() {
+      // save the configuration
+      config.save(TxConfig.configFile)
+
       // shutdown the ZooKeeper instance
       rt.shutdown()
 
@@ -157,7 +160,7 @@ object TrifectaShell {
     }
 
     // load the configuration
-    val config = TxConfig.load()
+    val config = TxConfig.load(TxConfig.configFile)
 
     // create the runtime context
     val rt = new TxRuntimeContext(config)

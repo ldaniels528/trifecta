@@ -60,13 +60,13 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   override def supportedPrefixes: Seq[String] = Seq("zk")
 
-  def prevCwd: String = config.getOrElse("zkPrevCwd", "/")
+  def prevCwd: String = config.getOrElse("trifecta.zookeeper.prevCwd", "/")
 
-  def prevCwd_=(path: String) = config.set("zkPrevCwd", path)
+  def prevCwd_=(path: String) = config.set("trifecta.zookeeper.prevCwd", path)
 
-  def zkCwd: String = config.getOrElse("zkCwd", "/")
+  def zkCwd: String = config.getOrElse("trifecta.zookeeper.cwd", "/")
 
-  def zkCwd_=(path: String) = config.set("zkCwd", path)
+  def zkCwd_=(path: String) = config.set("trifecta.zookeeper.cwd", path)
 
   /**
    * "zcd" - Changes the current path/directory in ZooKeeper
