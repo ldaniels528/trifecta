@@ -1,9 +1,7 @@
 package com.ldaniels528.trifecta.io.kafka
 
-import com.ldaniels528.trifecta.util.EndPoint
-
 /**
- * Type-safe Broker implementation
+ * Type-safe Broker representation
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class Broker(host: String, port: Int, brokerId: Int = 0) extends EndPoint
+case class Broker(host: String, port: Int, brokerId: Int = 0)

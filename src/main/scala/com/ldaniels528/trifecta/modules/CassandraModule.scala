@@ -5,8 +5,6 @@ import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.io.InputSource
 import com.ldaniels528.trifecta.io.cassandra.{CassandraOutputSource, Casserole, CasseroleSession}
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
-import com.ldaniels528.trifecta.util.EndPoint
-import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
@@ -132,19 +130,18 @@ class CassandraModule(config: TxConfig) extends Module {
    * Establishes a connection to Zookeeper
    * @example cqconnect
    * @example cqconnect localhost
+   * @example cqconnect dev601,dev602,dev603
    */
   def connect(params: UnixLikeArgs): Unit = {
     // determine the requested end-point
-    val endPoint = params.args match {
-      case Nil => EndPoint(config.zooKeeperConnect)
-      case path :: Nil => EndPoint(path)
-      case path :: port :: Nil => EndPoint(path, parseInt("port", port))
+    val endPoints = params.args match {
+      case path :: Nil => path.split(",")
       case _ => dieSyntax(params)
     }
 
     // connect to the remote peer
     conn_?.foreach(_.close())
-    conn_? = Option(Casserole(Seq(endPoint.host)))
+    conn_? = Option(Casserole(endPoints))
   }
 
   /**

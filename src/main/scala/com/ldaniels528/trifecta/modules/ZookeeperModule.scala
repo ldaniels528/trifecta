@@ -8,7 +8,6 @@ import com.ldaniels528.trifecta.io.InputSource
 import com.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.ldaniels528.trifecta.io.zookeeper.ZkSupportHelper._
 import com.ldaniels528.trifecta.io.zookeeper.{ZKProxy, ZookeeperOutputSource}
-import com.ldaniels528.trifecta.util.EndPoint
 import com.ldaniels528.trifecta.util.StringHelper._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
@@ -240,7 +239,7 @@ class ZookeeperModule(config: TxConfig) extends Module {
     import scala.sys.process._
 
     // echo ruok | nc zookeeper 2181
-    val (host, port) = EndPoint(zk.connectionString).unapply()
+    val (host, port) = splitHostAndPort(params, zk.connectionString)
     ("echo ruok" #> s"nc $host $port").!!
   }
 
@@ -252,8 +251,22 @@ class ZookeeperModule(config: TxConfig) extends Module {
     import scala.sys.process._
 
     // echo stat | nc zookeeper 2181
-    val (host, port) = EndPoint(zk.connectionString).unapply()
+    val (host, port) = splitHostAndPort(params, zk.connectionString)
     ("echo stat" #> s"nc $host $port").!!
+  }
+
+  /**
+   * Splits the host and port arguments into a tuple
+   * @param params the given [[UnixLikeArgs]]
+   * @param endPoint the given end point (e.g. "localhost:2181")
+   * @return the host and port arguments as a tuple (e.g. ("localhost", "2181"))
+   */
+  private def splitHostAndPort(params: UnixLikeArgs, endPoint: String): (String, String) = {
+    endPoint.split("[:]").toList match {
+      case host :: Nil => (host, "2181")
+      case host :: port :: Nil => (host, port)
+      case _ => dieSyntax(params)
+    }
   }
 
   /**
