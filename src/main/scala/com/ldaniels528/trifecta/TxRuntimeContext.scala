@@ -9,6 +9,7 @@ import com.ldaniels528.trifecta.messages.query.{BigDataQuery, BigDataSelection}
 import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.util.OptionHelper._
+import com.ldaniels528.trifecta.util.StringHelper._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext
@@ -48,7 +49,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
    */
   def getInputHandler(url: String): Option[InputSource] = {
     // get just the prefix
-    val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed input source URL: $url")
+    val (prefix, _) = parseSourceURL(url).orDie(s"Malformed input source URL: $url")
 
     // locate the module
     moduleManager.findModuleByPrefix(prefix) flatMap (_.getInputSource(url))
@@ -61,7 +62,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
    */
   def getOutputHandler(url: String): Option[OutputSource] = {
     // get just the prefix
-    val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed output source URL: $url")
+    val (prefix, _) = parseSourceURL(url).orDie(s"Malformed output source URL: $url")
 
     // locate the module
     moduleManager.findModuleByPrefix(prefix) flatMap (_.getOutputSource(url))
@@ -79,8 +80,6 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   }
 
   def shutdown(): Unit = moduleManager.shutdown()
-
-  private def die[S](message: String): S = throw new IllegalArgumentException(message)
 
   /**
    * Executes a local system command
@@ -167,8 +166,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
    * @return the tuple represents the prefix and path
    */
   private def parseSourceURL(url: String): Option[(String, String)] = {
-    val index = url.indexOf(':')
-    if (index == -1) None else Option(url.splitAt(index))
+    url.indexOptionOf(":") map url.splitAt
   }
 
 }
