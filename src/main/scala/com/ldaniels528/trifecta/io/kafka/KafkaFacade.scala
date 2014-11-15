@@ -10,7 +10,7 @@ import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.io.{AsyncIO, KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageCursor, MessageDecoder}
-import com.ldaniels528.trifecta.util.TxUtils._
+import com.ldaniels528.trifecta.util.ResourceHelper._
 import kafka.common.TopicAndPartition
 
 import scala.collection.JavaConverters._

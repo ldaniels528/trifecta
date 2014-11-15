@@ -1,8 +1,7 @@
 package com.ldaniels528.trifecta.io.avro
 
-import com.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.ldaniels528.trifecta.io.json.JSONFileInputSource
-import com.ldaniels528.trifecta.util.TxUtils._
+import com.ldaniels528.trifecta.util.ResourceHelper._
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 

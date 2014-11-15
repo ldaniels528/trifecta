@@ -4,9 +4,10 @@ import java.io.{File, FileInputStream, InputStream}
 import java.net.URL
 
 import com.ldaniels528.trifecta.TxConfig
-import com.ldaniels528.trifecta.io.Resource
-import com.ldaniels528.trifecta.io.Resource.expandPath
-import com.ldaniels528.trifecta.util.TxUtils._
+import com.ldaniels528.trifecta.util.FileHelper._
+import com.ldaniels528.trifecta.util.Resource
+import com.ldaniels528.trifecta.util.ResourceHelper._
+import com.ldaniels528.trifecta.util.StringHelper._
 
 import scala.io.Source
 

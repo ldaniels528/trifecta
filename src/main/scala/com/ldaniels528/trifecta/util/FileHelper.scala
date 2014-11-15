@@ -1,14 +1,10 @@
-package com.ldaniels528.trifecta.io
-
-import java.net.URL
+package com.ldaniels528.trifecta.util
 
 /**
- * Trifecta Resource
+ * File/Path Helper Utility Class
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object Resource {
-
-  def apply(path: String): Option[URL] = Option(getClass.getResource(path))
+object FileHelper {
 
   /**
    * Expands the UNIX path into a JVM-safe value

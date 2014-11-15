@@ -2,7 +2,7 @@ package com.ldaniels528.trifecta.modules
 
 import com.ldaniels528.trifecta.TxRuntimeContext
 import com.ldaniels528.trifecta.command.Command
-import com.ldaniels528.trifecta.util.TxUtils._
+import com.ldaniels528.trifecta.util.OptionHelper._
 
 /**
  * Module Manager

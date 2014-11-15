@@ -4,7 +4,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream}
 import java.lang.reflect.Method
 import java.util.Date
 
-import com.ldaniels528.trifecta.util.TxUtils._
+import com.ldaniels528.trifecta.util.ResourceHelper._
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{DecoderFactory, EncoderFactory}

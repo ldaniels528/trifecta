@@ -4,7 +4,8 @@ import java.io.File._
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
 
-import com.ldaniels528.trifecta.util.TxUtils._
+import com.ldaniels528.trifecta.util.PropertiesHelper._
+import com.ldaniels528.trifecta.util.ResourceHelper._
 
 import scala.util.Properties._
 import scala.util.Try

@@ -8,12 +8,13 @@ import java.util.{Date, TimeZone}
 import com.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.ldaniels528.trifecta._
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.io.Resource.expandPath
 import com.ldaniels528.trifecta.io._
 import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroFileInputSource, AvroFileOutputSource}
 import com.ldaniels528.trifecta.io.json.{JSONFileInputSource, JSONFileOutputSource}
+import com.ldaniels528.trifecta.util.FileHelper._
 import com.ldaniels528.trifecta.util.ParsingHelper._
-import com.ldaniels528.trifecta.util.TxUtils._
+import com.ldaniels528.trifecta.util.ResourceHelper._
+import com.ldaniels528.trifecta.util.StringHelper._
 import org.apache.commons.io.IOUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global

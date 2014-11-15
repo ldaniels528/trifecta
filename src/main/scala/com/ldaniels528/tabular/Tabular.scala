@@ -161,7 +161,7 @@ class Tabular() {
     import java.text.SimpleDateFormat
     import java.util.Date
 
-    handlers.find(_.handles(value)) flatMap (_.format(value)) match {
+    val output = handlers.find(_.handles(value)) flatMap (_.format(value)) match {
       case Some(formattedValue) => formattedValue
       case None =>
         value match {
@@ -171,6 +171,7 @@ class Tabular() {
           case v => String.valueOf(v)
         }
     }
+    if(output.length > 140) output.substring(0, 140) + "..." else output
   }
 
   protected def getHeaders[A](value: A): Seq[String] = {

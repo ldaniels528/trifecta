@@ -1,10 +1,11 @@
 package com.ldaniels528.trifecta.io.kafka
 
+import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
-import com.ldaniels528.trifecta.messages.query.{QueryResult, QuerySource}
-import com.ldaniels528.trifecta.messages.logic.Condition
-import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.messages.logic.Condition
+import com.ldaniels528.trifecta.messages.query.{QueryResult, QuerySource}
+import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import org.apache.avro.generic.GenericRecord
 
 import scala.concurrent.ExecutionContext
@@ -17,11 +18,16 @@ import scala.util.{Failure, Success}
 case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: Int = 0)(implicit zk: ZKProxy)
   extends QuerySource {
 
-  override def findAll(fields: Seq[String], decoder: MessageDecoder[_], conditions: Seq[Condition], limit: Option[Int])(implicit ec: ExecutionContext) = {
+  override def findAll(fields: Seq[String],
+                       decoder: MessageDecoder[_],
+                       conditions: Seq[Condition],
+                       limit: Option[Int],
+                       counter: IOCounter)(implicit ec: ExecutionContext) = {
     val myFields = List("partition", "offset") ::: fields.toList
     val startTime = System.nanoTime()
-    KafkaMicroConsumer.findAll(topic, brokers, correlationId, conditions, limit) map {
+    KafkaMicroConsumer.findAll(topic, brokers, correlationId, conditions, limit, counter) map {
       _ map { md =>
+        counter.updateWriteCount(1)
         val record = decodeMessage(md, decoder)
         Map(fields map (field => (field, record.get(field))): _*) ++ Map("partition" -> md.partition, "offset" -> md.offset)
       }

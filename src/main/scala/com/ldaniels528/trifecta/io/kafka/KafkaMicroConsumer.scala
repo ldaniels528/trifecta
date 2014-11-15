@@ -2,13 +2,14 @@ package com.ldaniels528.trifecta.io.kafka
 
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 
-import com.ldaniels528.trifecta.io.ByteBufferUtils
+import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
+import com.ldaniels528.trifecta.io.ByteBufferUtils._
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer._
+import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.BinaryMessage
 import com.ldaniels528.trifecta.messages.logic.Condition
-import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
-import ByteBufferUtils._
-import com.ldaniels528.trifecta.util.TxUtils._
+import com.ldaniels528.trifecta.util.OptionHelper._
+import com.ldaniels528.trifecta.util.ResourceHelper._
 import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
@@ -217,7 +218,12 @@ object KafkaMicroConsumer {
    * @param conditions the given search criteria
    * @return the promise of a sequence of messages based on the given search criteria
    */
-  def findAll(topic: String, brokers: Seq[Broker], correlationId: Int, conditions: Seq[Condition], limit: Option[Int])(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[MessageData]] = {
+  def findAll(topic: String,
+              brokers: Seq[Broker],
+              correlationId: Int,
+              conditions: Seq[Condition],
+              limit: Option[Int],
+              counter: IOCounter)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[MessageData]] = {
     val count = new AtomicLong(0L)
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
@@ -231,6 +237,7 @@ object KafkaMicroConsumer {
               ofs <- offset
               msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE)
             } {
+              counter.updateReadCount(1)
               if (conditions.forall(_.satisfies(msg.message, msg.key))) {
                 messages = msg :: messages
                 count.incrementAndGet()
