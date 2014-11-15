@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta
 
 import java.util.Random
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
+import java.util.concurrent.atomic.AtomicInteger
 
 import com.ldaniels528.trifecta.JobManager._
 import com.ldaniels528.trifecta.io.AsyncIO
@@ -77,7 +77,7 @@ class JobManager() {
    * Returns the next unique job ID
    * @return the next job ID
    */
-  private def nextJobID : Int = jobIdGen.incrementAndGet()
+  private def nextJobID: Int = jobIdGen.incrementAndGet()
 
   /**
    * Registers a job for processing
@@ -87,8 +87,8 @@ class JobManager() {
   private def registerJob(job: JobItem)(implicit ec: ExecutionContext): JobItem = {
     // trigger the update for the end time
     job.task.onComplete {
-      case Success(v) => job.endTime.set(System.currentTimeMillis())
-      case Failure(_) => job.endTime.set(System.currentTimeMillis())
+      case Success(v) => job.endTime = System.currentTimeMillis()
+      case Failure(_) => job.endTime = System.currentTimeMillis()
     }
 
     // add the job to the mapping
@@ -117,18 +117,14 @@ object JobManager {
 
     def startTime: Long
 
-    def endTime: AtomicLong
+    var endTime: Long = _
 
   }
 
   /**
    * Represents an asynchronous job
    */
-  case class AsyncJob(jobId: Int, startTime: Long, task: Future[_], command: String) extends JobItem {
-
-    val endTime = new AtomicLong(0L)
-
-  }
+  case class AsyncJob(jobId: Int, startTime: Long, task: Future[_], command: String) extends JobItem
 
   /**
    * Represents an asynchronous I/O job
@@ -138,8 +134,6 @@ object JobManager {
     def task: Future[_] = asyncIO.task
 
     def startTime: Long = asyncIO.startTime
-
-    def endTime: AtomicLong = asyncIO.endTime
 
   }
 

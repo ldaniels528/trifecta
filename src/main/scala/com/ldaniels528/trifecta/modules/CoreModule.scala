@@ -587,7 +587,7 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
     val jobStatus: String = if (myTask.isCompleted) "Completed" else "Running"
     val jobElapsedTime: Option[Double] = {
       val millis: Option[Long] =
-        if (myTask.isCompleted) Option(job.endTime) map (_.get - job.startTime)
+        if (myTask.isCompleted) Option(job.endTime) map (_ - job.startTime)
         else Option(job.startTime) map (System.currentTimeMillis() - _)
       millis map (t => Math.round(10d * (t.toDouble / 1000d)) / 10d)
     }
@@ -598,8 +598,8 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
           jobId = job.jobId,
           status = jobStatus,
           runTimeSecs = jobElapsedTime,
-          read = Option(asyncIO.read),
-          written = Option(asyncIO.written),
+          read = Option(asyncIO.counter.read),
+          written = Option(asyncIO.counter.written),
           command = job.command)
       case _ =>
         JobDetail(

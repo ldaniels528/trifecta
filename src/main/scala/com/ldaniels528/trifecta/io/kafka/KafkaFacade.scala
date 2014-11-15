@@ -1,14 +1,15 @@
 package com.ldaniels528.trifecta.io.kafka
 
 import java.util.Date
-import java.util.concurrent.atomic.AtomicLong
+
+import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
-import com.ldaniels528.trifecta.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.io.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer._
+import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.io.{AsyncIO, KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageCursor, MessageDecoder}
-import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.TxUtils._
 import kafka.common.TopicAndPartition
 
@@ -58,24 +59,26 @@ class KafkaFacade(correlationId: Int) {
    * Finds messages that corresponds to the given criteria and exports them to a topic
    * @example kfind frequency > 5000 -o topic:highFrequency.quotes
    */
-  def findMessages(topic: String, decoder: Option[MessageDecoder[_]], conditions: Seq[Condition], outputHandler: OutputSource)(implicit zk: ZKProxy, ec: ExecutionContext): Future[Long] = {
+  def findMessages(topic: String, decoder: Option[MessageDecoder[_]], conditions: Seq[Condition], outputHandler: OutputSource)(implicit zk: ZKProxy, ec: ExecutionContext): AsyncIO = {
     // define the counter
-    val counter = new AtomicLong(0L)
+    val counter = IOCounter(System.currentTimeMillis())
 
     // find and export the messages matching our criteria
     val task = KafkaMicroConsumer.observe(topic, brokers, correlationId) { md =>
+      counter.updateReadCount(1)
       if (conditions.forall(_.satisfies(md.message, md.key))) {
         outputHandler.write(KeyAndMessage(md.key, md.message), decoder)
-        counter.incrementAndGet()
+        counter.updateWriteCount(1)
         ()
       }
     }
 
     // upon completion, close the output device and return the count
-    task.map { u =>
+    task.foreach { u =>
       outputHandler.close()
-      counter.get
     }
+
+    AsyncIO(task, counter)
   }
 
   /**

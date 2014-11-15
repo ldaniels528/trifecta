@@ -3,13 +3,13 @@ package com.ldaniels528.trifecta.modules
 import java.net.{URL, URLClassLoader}
 import java.nio.ByteBuffer
 
+import com.ldaniels528.trifecta.TxRuntimeContext
 import com.ldaniels528.trifecta.command.parser.CommandParser._
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
 import com.ldaniels528.trifecta.io._
-import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
+import com.ldaniels528.trifecta.io.avro.AvroCodec
 import com.ldaniels528.trifecta.modules.Module.formatTypes
 import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json._
 
 /**
@@ -168,15 +168,5 @@ object Module {
    * @param value the value of the property
    */
   case class NameValuePair(name: String, value: Any)
-
-  /**
-   * Represents the results of an I/O operation
-   * @param read the number of records read
-   * @param written the number of records written
-   * @param failures the number of failed records
-   * @param recordsPerSecond the transfer rate (in records/second)
-   * @param runTimeSecs the complete process run time (in seconds)
-   */
-  case class IOCount(read: Long, written: Long, failures: Long, recordsPerSecond: Double, runTimeSecs: Double)
 
 }

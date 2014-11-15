@@ -3,19 +3,18 @@ package com.ldaniels528.trifecta.modules
 import java.io.PrintStream
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.concurrent.atomic.AtomicLong
 
 import _root_.kafka.common.TopicAndPartition
-import com.google.common.util.concurrent.AtomicDouble
 import com.ldaniels528.trifecta.TxResultHandler.Ok
 import com.ldaniels528.trifecta.command._
+import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroConversion._
 import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.io.kafka.KafkaFacade._
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.io.kafka._
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
-import com.ldaniels528.trifecta.io.{AsyncIO, KeyAndMessage}
+import com.ldaniels528.trifecta.io.{AsyncIO, InputSource, KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
@@ -207,22 +206,27 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
    */
   def copyMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): AsyncIO = {
     // get the input source
-    val reader = getInputSource(params) getOrElse die("No input source defined")
+    val inputSource = getInputSource(params) getOrElse die("No input source defined")
 
     // get the output source
-    val writer = getOutputSource(params) getOrElse die("No output source defined")
+    val outputSource = getOutputSource(params) getOrElse die("No output source defined")
 
     // get an optional decoder
     val decoder = getAvroDecoder(params)(rt.config)
 
     // copy the messages from the input source to the output source
+    copyOperation(inputSource, outputSource, decoder)
+  }
+
+  /**
+   * Copies messages from the input source to the output source
+   * @return an asynchronous I/O result
+   */
+  private def copyOperation(reader: InputSource, writer: OutputSource, decoder: Option[AvroDecoder]): AsyncIO = {
     val startTime = System.currentTimeMillis()
-    val read = new AtomicLong(0)
-    val written = new AtomicLong(0)
-    val rps = new AtomicDouble(0)
+    val counter = new IOCounter(startTime)
+
     val task = Future {
-      var lastCount: Long = 0
-      var lastCheck = startTime
       var found: Boolean = true
 
       blocking {
@@ -231,20 +235,12 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
             // read the record
             val data = reader.read
             found = data.isDefined
-            if (found) read.incrementAndGet()
+            if (found) counter.updateReadCount(1)
 
             // write the record
             data.foreach { rec =>
               writer.write(rec, decoder)
-              written.incrementAndGet()
-            }
-
-            // compute the records/second statistics
-            val elapsedTime = (System.currentTimeMillis() - lastCheck).toDouble / 1000d
-            if (elapsedTime >= 1) {
-              rps.set(Math.round(10d * (read.get - lastCount).toDouble / elapsedTime) / 10d)
-              lastCount = read.get
-              lastCheck = System.currentTimeMillis()
+              counter.updateWriteCount(1)
             }
           }
         } finally {
@@ -256,7 +252,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
       }
     }
 
-    AsyncIO(startTime, task, read, written, rps)
+    AsyncIO(task, counter)
   }
 
   /**
@@ -384,8 +380,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
    * @example kfind frequency > 5000 -o topic:highFrequency.quotes
    * @example kfind -t shocktrade.quotes.avro -a file:avro/quotes.avsc volume > 1000000 -o topic:hft.shocktrade.quotes.avro
    */
-  def findMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Long] = {
-
+  def findMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): AsyncIO = {
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
     val avro_? = getAvroDecoder(params)(config)
