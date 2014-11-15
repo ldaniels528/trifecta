@@ -10,17 +10,16 @@ import scala.collection.JavaConverters._
 object PropertiesHelper {
 
   /**
-   * Properties Conversion
+   * Map to Properties Conversion
    */
   implicit class PropertiesConversion[T <: Object](val m: Map[String, T]) extends AnyVal {
-
-    import java.util.Properties
 
     def toProps: Properties = {
       val p = new Properties()
       p.putAll(m.asJava)
       p
     }
+
   }
 
   /**

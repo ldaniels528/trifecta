@@ -1,10 +1,10 @@
 package com.ldaniels528.trifecta.util
 
 /**
- * File/Path Helper Utility Class
+ * Path Helper Utility Class
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object FileHelper {
+object PathHelper {
 
   /**
    * Expands the UNIX path into a JVM-safe value

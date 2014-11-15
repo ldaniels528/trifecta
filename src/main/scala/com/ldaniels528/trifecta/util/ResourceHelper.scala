@@ -19,7 +19,6 @@ object ResourceHelper {
 
   /**
    * Automatically closes a resource after completion of a code block
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   implicit class AutoDisconnect[T <: {def disconnect()}](val resource: T) extends AnyVal {
 

@@ -14,6 +14,7 @@ object OptionHelper {
     def ??(opB: => Option[T]) = if (opA.isDefined) opA else opB
 
     def orDie(message: String): T = opA.getOrElse(throw new IllegalStateException(message))
+
   }
 
 }

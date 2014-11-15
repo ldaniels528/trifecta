@@ -11,7 +11,7 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.io._
 import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroFileInputSource, AvroFileOutputSource}
 import com.ldaniels528.trifecta.io.json.{JSONFileInputSource, JSONFileOutputSource}
-import com.ldaniels528.trifecta.util.FileHelper._
+import com.ldaniels528.trifecta.util.PathHelper._
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
