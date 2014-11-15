@@ -4,8 +4,8 @@ import java.io.File._
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
 
-import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.RootScope
+import com.ldaniels528.trifecta.util.PropertiesHelper._
+import com.ldaniels528.trifecta.util.ResourceHelper._
 
 import scala.util.Properties._
 import scala.util.Try
@@ -15,15 +15,15 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxConfig(val configProps: Properties) {
+  // set the current working directory
+  configProps.setProperty("trifecta.common.cwd", new File(".").getCanonicalPath)
+
   // the default state of the application is "alive"
   var alive = true
 
   // capture standard output
   val out = System.out
   val err = System.err
-
-  // create the root-level scope
-  implicit val scope = RootScope()
 
   // define the job manager
   val jobManager = new JobManager()
@@ -34,28 +34,62 @@ class TxConfig(val configProps: Properties) {
   def kafkaZkConnect = configProps.getOrElse("trifecta.kafka.zookeeper.host", zooKeeperConnect)
 
   // various shared state variables
-  def autoSwitching: Boolean = scope.getValue[Boolean]("autoSwitching") getOrElse false
+  def autoSwitching: Boolean = configProps.getOrElse("trifecta.common.autoSwitching", "true").toBoolean
 
-  def autoSwitching_=(enabled: Boolean) = scope.setValue("autoSwitching", Option(enabled))
+  def autoSwitching_=(enabled: Boolean) = configProps.setProperty("trifecta.common.autoSwitching", enabled.toString)
 
   // the number of columns to display when displaying bytes
-  def columns: Int = getOrElse("columns", 25)
+  def columns: Int = configProps.getOrElse("trifecta.common.columns", "25").toInt
 
-  def columns_=(width: Int): Unit = set("columns", width)
+  def columns_=(width: Int): Unit = configProps.setProperty("trifecta.common.columns", width.toString)
 
-  def debugOn: Boolean = getOrElse("debugOn", false)
+  def cwd: String = configProps.getProperty("trifecta.common.cwd")
 
-  def debugOn_=(enabled: Boolean): Unit = set("debugOn", enabled)
+  def cwd_=(path: String) = configProps.setProperty("trifecta.common.cwd", path)
 
-  def encoding: String = getOrElse("encoding", "UTF-8")
+  def debugOn: Boolean = configProps.getOrElse("trifecta.common.debugOn", "false").toBoolean
 
-  def encoding_=(charSet: String): Unit = set("encoding", charSet)
+  def debugOn_=(enabled: Boolean): Unit = configProps.setProperty("trifecta.common.debugOn", enabled.toString)
 
-  def get[T](name: String): Option[T] = scope.getValue[T](name)
+  def encoding: String = configProps.getOrElse("trifecta.common.encoding", "UTF-8")
 
-  def getOrElse[T](name: String, default: T): T = scope.getValue[T](name) getOrElse default
+  def encoding_=(charSet: String): Unit = configProps.setProperty("trifecta.common.encoding", charSet)
 
-  def set[T](name: String, value: T): Unit = scope.setValue[T](name, Option(value))
+  /**
+   * Returns an option of the value corresponding to the given key
+   * @param key the given key
+   * @return an option of the value
+   */
+  def get(key: String): Option[String] = Option(configProps.getProperty(key))
+
+  /**
+   * Retrieves the value of the key or the default value
+   * @param key the given key
+   * @param default the given value
+   * @return the value of the key or the default value
+   */
+  def getOrElse(key: String, default: => String): String = configProps.getOrElse(key, default)
+
+  /**
+   * Retrieves either the value of the key or the default value
+   * @param key the given key
+   * @param default the given value
+   * @return either the value of the key or the default value
+   */
+  def getEither[T](key: String, default: => T): Either[String, T] = {
+    Option(configProps.getProperty(key)) match {
+      case Some(value) => Left(value)
+      case None => Right(default)
+    }
+  }
+
+  /**
+   * Sets the value for the given key
+   * @param key the given key
+   * @param value the given value
+   * @return an option of the previous value for the key
+   */
+  def set(key: String, value: String): Option[AnyRef] = Option(configProps.setProperty(key, value))
 
   /**
    * Saves the current configuration to disk
@@ -76,10 +110,10 @@ class TxConfig(val configProps: Properties) {
 object TxConfig {
 
   // define the history properties
-  var historyFile = new File(s"$userHome$separator.trifecta${separator}history.txt")
+  var historyFile: File = new File(s"$userHome$separator.trifecta${separator}history.txt")
 
   // define the configuration file & properties
-  var configFile = new File(s"$userHome$separator.trifecta${separator}config.properties")
+  var configFile: File = new File(s"$userHome$separator.trifecta${separator}config.properties")
 
   /**
    * Returns the default configuration
@@ -90,14 +124,10 @@ object TxConfig {
   /**
    * Loads the configuration file
    */
-  def load(): TxConfig = {
+  def load(configFile: File): TxConfig = {
     val p = getDefaultProperties
-    if (configFile.exists()) {
-      new FileInputStream(configFile) use (in => Try(p.load(in)))
-    }
-    else {
-      new FileOutputStream(configFile) use (out => Try(p.store(out, "Trifecta configuration file")))
-    }
+    if (configFile.exists()) new FileInputStream(configFile) use (in => Try(p.load(in)))
+    else new FileOutputStream(configFile) use (out => Try(p.store(out, "Trifecta configuration file")))
     new TxConfig(p)
   }
 
@@ -108,10 +138,10 @@ object TxConfig {
       "trifecta.elasticsearch.hosts" -> "localhost",
       "trifecta.cassandra.hosts" -> "localhost ",
       "trifecta.storm.hosts" -> "localhost",
-      "trifecta.autoSwitching" -> "true",
-      "trifecta.columns" -> "25",
-      "trifecta.debugOn" -> "true",
-      "trifecta.encoding" -> "UTF-8").toProps
+      "trifecta.common.autoSwitching" -> "true",
+      "trifecta.common.columns" -> "25",
+      "trifecta.common.debugOn" -> "false",
+      "trifecta.common.encoding" -> "UTF-8").toProps
   }
 
 }

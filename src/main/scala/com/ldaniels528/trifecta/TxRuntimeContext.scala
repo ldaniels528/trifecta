@@ -2,24 +2,17 @@ package com.ldaniels528.trifecta
 
 import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser
-import com.ldaniels528.trifecta.decoders.MessageCodecs
-import com.ldaniels528.trifecta.modules.ModuleManager
-import com.ldaniels528.trifecta.modules.cassandra.CassandraModule
-import com.ldaniels528.trifecta.modules.core.CoreModule
-import com.ldaniels528.trifecta.modules.elasticSearch.ElasticSearchModule
-import com.ldaniels528.trifecta.modules.kafka.KafkaModule
-import com.ldaniels528.trifecta.modules.mongodb.MongoModule
-import com.ldaniels528.trifecta.modules.storm.StormModule
-import com.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
-import com.ldaniels528.trifecta.support.io.query.{BigDataQuery, BigDataSelection, QueryResult}
-import com.ldaniels528.trifecta.support.io.{InputSource, OutputSource}
-import com.ldaniels528.trifecta.support.messaging.MessageDecoder
-import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
-import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.VScriptCompiler
+import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
+import com.ldaniels528.trifecta.io.{AsyncIO, InputSource, OutputSource}
+import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
+import com.ldaniels528.trifecta.messages.query.{BigDataQuery, BigDataSelection}
+import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
+import com.ldaniels528.trifecta.modules._
+import com.ldaniels528.trifecta.util.OptionHelper._
+import com.ldaniels528.trifecta.util.StringHelper._
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 /**
@@ -28,14 +21,13 @@ import scala.util.Try
  */
 case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   private[trifecta] val logger = LoggerFactory.getLogger(getClass)
-  private implicit val scope = config.scope
   private implicit val cfg = config
 
   // create the result handler
   private val resultHandler = new TxResultHandler(config)
 
   // create the module manager
-  val moduleManager = new ModuleManager(scope)(this)
+  val moduleManager = new ModuleManager()(this)
 
   // load the built-in modules
   moduleManager ++= Seq(
@@ -57,7 +49,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
    */
   def getInputHandler(url: String): Option[InputSource] = {
     // get just the prefix
-    val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed input source URL: $url")
+    val (prefix, _) = parseSourceURL(url).orDie(s"Malformed input source URL: $url")
 
     // locate the module
     moduleManager.findModuleByPrefix(prefix) flatMap (_.getInputSource(url))
@@ -70,7 +62,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
    */
   def getOutputHandler(url: String): Option[OutputSource] = {
     // get just the prefix
-    val (prefix, _) = parseSourceURL(url) getOrElse die(s"Malformed output source URL: $url")
+    val (prefix, _) = parseSourceURL(url).orDie(s"Malformed output source URL: $url")
 
     // locate the module
     moduleManager.findModuleByPrefix(prefix) flatMap (_.getOutputSource(url))
@@ -83,14 +75,11 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   def interpret(input: String): Try[Any] = {
     input match {
       case s if s.startsWith("`") && s.endsWith("`") => executeCommand(s.drop(1).dropRight(1))
-      case s if s.startsWith("#") => interpretVScript(input.tail)
       case s => interpretCommandLine(s)
     }
   }
 
   def shutdown(): Unit = moduleManager.shutdown()
-
-  private def die[S](message: String): S = throw new IllegalArgumentException(message)
 
   /**
    * Executes a local system command
@@ -106,8 +95,9 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
    * Executes the given query
    * @param query the given [[BigDataQuery]]
    */
-  def executeQuery(query: BigDataQuery)(implicit ec: ExecutionContext): Future[QueryResult] = {
-    query match {
+  def executeQuery(query: BigDataQuery)(implicit ec: ExecutionContext): AsyncIO = {
+    val counter = IOCounter(startTimeMillis = System.currentTimeMillis())
+    val task = query match {
       case BigDataSelection(source, destination, fields, criteria, limit) =>
         // get the input source and its decoder
         val inputSource: Option[InputSource] = getInputHandler(source.deviceURL)
@@ -126,11 +116,12 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
         else {
           val querySource = inputSource.flatMap(_.getQuerySource).orDie(s"No query compatible source found for URL '${source.deviceURL}'")
           val decoder = inputDecoder.orDie(s"No decoder found for URL ${source.decoderURL}")
-          querySource.findAll(fields, decoder, conditions, maximum)
+          querySource.findAll(fields, decoder, conditions, maximum, counter)
         }
       case _ =>
         throw new IllegalStateException(s"Invalid query type - ${query.getClass.getName}")
     }
+    AsyncIO(task, counter)
   }
 
   /**
@@ -139,8 +130,6 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
    * @return a try-monad wrapped result
    */
   private def interpretCommandLine(input: String): Try[Any] = Try {
-    implicit val rtc = this
-
     // is the input a query?
     if (input.startsWith("select")) executeQuery(BigDataQueryParser(input))
     else {
@@ -172,26 +161,12 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   }
 
   /**
-   * Interprets VScript input
-   * @param line the given line of input
-   * @return a try-monad wrapped result
-   */
-  private def interpretVScript(line: String): Try[Any] = Try {
-    val opCode = VScriptCompiler.compile(line, config.debugOn)
-    if (config.debugOn) {
-      logger.info(s"opCode = $opCode (${opCode.getClass.getName}})")
-    }
-    opCode.eval
-  }
-
-  /**
    * Parses the the prefix and path from the I/O source URL
    * @param url the I/O source URL
    * @return the tuple represents the prefix and path
    */
   private def parseSourceURL(url: String): Option[(String, String)] = {
-    val index = url.indexOf(':')
-    if (index == -1) None else Option(url.splitAt(index))
+    url.indexOptionOf(":") map url.splitAt
   }
 
 }
