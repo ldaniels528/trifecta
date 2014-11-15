@@ -3,7 +3,6 @@ package com.ldaniels528.trifecta
 import java.io.PrintStream
 
 import com.ldaniels528.trifecta.TxConsole._
-import com.ldaniels528.trifecta.vscript.Scope
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
 
@@ -18,8 +17,6 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
-  private implicit val scope: Scope = config.scope
-
   // redirect standard output
   val out: PrintStream = rt.config.out
   val err: PrintStream = rt.config.err
@@ -32,6 +29,9 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
   // make sure we shutdown the ZooKeeper connection
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() {
+      // save the configuration
+      config.save(TxConfig.configFile)
+
       // shutdown the ZooKeeper instance
       rt.shutdown()
 
@@ -145,7 +145,7 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object TrifectaShell {
-  val VERSION = "0.1.7"
+  val VERSION = "0.1.8"
 
   /**
    * Application entry point
@@ -160,7 +160,7 @@ object TrifectaShell {
     }
 
     // load the configuration
-    val config = TxConfig.load()
+    val config = TxConfig.load(TxConfig.configFile)
 
     // create the runtime context
     val rt = new TxRuntimeContext(config)

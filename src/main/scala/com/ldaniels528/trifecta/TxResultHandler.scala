@@ -4,12 +4,13 @@ import java.io.PrintStream
 
 import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
 import com.ldaniels528.tabular.Tabular
-import com.ldaniels528.trifecta.support.avro.AvroTables
-import com.ldaniels528.trifecta.support.io.query.QueryResult
-import com.ldaniels528.trifecta.support.json.TxJsonUtil
-import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.MessageData
-import com.ldaniels528.trifecta.support.kafka.StreamedMessage
-import com.ldaniels528.trifecta.util.BinaryMessaging
+import com.ldaniels528.trifecta.io.AsyncIO
+import com.ldaniels528.trifecta.io.avro.AvroTables
+import com.ldaniels528.trifecta.messages.BinaryMessaging
+import com.ldaniels528.trifecta.messages.query.QueryResult
+import com.ldaniels528.trifecta.io.json.TxJsonUtil
+import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.MessageData
+import com.ldaniels528.trifecta.io.kafka.StreamedMessage
 import net.liftweb.json._
 import org.apache.avro.generic.GenericRecord
 

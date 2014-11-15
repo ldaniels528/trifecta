@@ -1,9 +1,9 @@
 package com.ldaniels528.trifecta.command.parser.bdql
 
 import com.ldaniels528.trifecta.command.parser.TokenStream
-import com.ldaniels528.trifecta.support.io.query.{BigDataSelection, IOSource}
-import com.ldaniels528.trifecta.support.messaging.logic.ConditionCompiler._
-import com.ldaniels528.trifecta.support.messaging.logic.Expressions._
+import com.ldaniels528.trifecta.messages.query.{BigDataSelection, IOSource}
+import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
+import com.ldaniels528.trifecta.messages.logic.Expressions._
 
 /**
  * Big Data Query Language Parser

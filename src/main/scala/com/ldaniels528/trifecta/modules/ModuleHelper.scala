@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.modules
 
-import com.ldaniels528.trifecta.support.io.OutputSource
+import com.ldaniels528.trifecta.io.OutputSource
 
 /**
  * Module Helper

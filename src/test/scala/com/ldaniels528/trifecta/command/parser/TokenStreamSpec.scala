@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.command.parser
 
 import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryTokenizer
-import com.ldaniels528.trifecta.support.messaging.logic.Condition
+import com.ldaniels528.trifecta.messages.logic.Condition
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
