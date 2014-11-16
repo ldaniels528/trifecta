@@ -35,7 +35,7 @@ class EmbeddedWebServer() extends Logger {
   })
 
   /**
-   * Starts the embedded web server
+   * Starts the embedded app server
    */
   def start() {
     if (webServer.isEmpty) {
@@ -45,7 +45,7 @@ class EmbeddedWebServer() extends Logger {
   }
 
   /**
-   * Stops the embedded web server
+   * Stops the embedded app server
    */
   def stop() {
     Try(webServer.foreach(_.stop()))
@@ -102,14 +102,13 @@ object EmbeddedWebServer {
         val endPoint = event.request.endPoint
         val response = event.response
         val path = translatePath(endPoint.path)
-        val resourcePath = s"/web$path"
 
-        resourcePath match {
+        path match {
           case s => loadContent(s) map { bytes =>
             getMimeType(s) foreach (response.contentType = _)
             response.write(bytes)
           } getOrElse {
-            logger.error(s"Resource $path ($resourcePath) not found")
+            logger.error(s"Resource '$path' not found")
             response.write(HttpResponseStatus.NOT_FOUND)
           }
         }
@@ -154,8 +153,8 @@ object EmbeddedWebServer {
      * @return the corresponding physical path
      */
     private def translatePath(path: String) = path match {
-      case "/" => "/index.htm"
-      case s => s
+      case "/" => "/app/index.htm"
+      case s => s"/app$s"
     }
 
   }
