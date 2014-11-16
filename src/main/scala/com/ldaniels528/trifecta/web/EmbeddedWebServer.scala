@@ -122,13 +122,16 @@ object EmbeddedWebServer {
      */
     private def getMimeType(path: String): Option[String] = {
       path.lastIndexOptionOf(".") map (index => path.substring(index + 1)) flatMap {
+        case "css" => Some("text/css")
         case "gif" => Some("image/gif")
         case "htm" | "html" => Some("text/html")
         case "jpg" | "jpeg" => Some("image/jpeg")
         case "js" => Some("text/javascript")
+        case "json" => Some("application/json")
         case "png" => Some("image/png")
+        case "xml" => Some("application/xml")
         case unknown =>
-          logger.warn(s"No MIME type for $unknown")
+          logger.warn(s"No MIME type found for '$unknown' ($path)")
           None
       }
     }
