@@ -1,9 +1,127 @@
 <html>
 <head>
-    <title>Trifecta v0.17.1</title>
+    <title>Trifecta v0.17.1: Dashboard</title>
+
+    <style type="text/css">
+        th {
+            text-align: left
+        }
+    </style>
 </head>
 
 <body>
     <h1>Trifecta v0.17.1</h1>
+
+    <div style="display: block; width: 100%">
+        <div style="display: inline; width: 31%; float: left">
+            <fieldset style="border-radius: 5px 5px 5px 5px">
+                <legend style="font-weight: bold">Kafka Topics</legend>
+                <table style="width: 100%">
+                    <tr>
+                        <td style="width: 16px; height: 16px"><img src="images/status/greenlight.png"></td>
+                        <td>com.shocktrade.quotes.csv</td>
+                    </tr>
+                    <tr>
+                        <td><img src="images/status/greenlight.png"></td>
+                        <td>shocktrade.quotes.csv</td>
+                    </tr>
+                    <tr style="background: #88ffff">
+                        <td><img src="images/status/greenlight.png"></td>
+                        <td>shocktrade.quotes.avro</td>
+                    </tr>
+                    <tr>
+                        <td><img src="images/status/greenlight.png"></td>
+                        <td>test.Shocktrade.quotes.avro</td>
+                    </tr>
+                    <tr>
+                        <td><img src="images/status/greenlight.png"></td>
+                        <td>hft.shocktrade.quotes.avro</td>
+                    </tr>
+                    <tr>
+                        <td><img src="images/status/greenlight.png"></td>
+                        <td>hft.Shocktrade.quotes.avro</td>
+                    </tr>
+                    <tr>
+                        <td><img src="images/status/greenlight.png"></td>
+                        <td>test1.Shocktrade.quotes.avro</td>
+                    </tr>
+                    <tr>
+                        <td><img src="images/status/greenlight.png"></td>
+                        <td>test2.Shocktrade.quotes.avro</td>
+                    </tr>
+                    <tr>
+                        <td><img src="images/status/greenlight.png"></td>
+                        <td>test3.Shocktrade.quotes.avro</td>
+                    </tr>
+                    <tr>
+                        <td><img src="images/status/greenlight.png"></td>
+                        <td>shocktrade.keystats.avro</td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td><a href="">(See more)</a></td>
+                    </tr>
+                </table>
+                </fieldset>
+
+            <fieldset style="border-radius: 5px 5px 5px 5px">
+                <legend style="font-weight: bold">shocktrade.quotes.avro</legend>
+                <table style="width: 100%; margin-bottom: 10px">
+                    <tr>
+                        <td style="width: 25%">Leader</td>
+                        <td>dev501:9092</td>
+                    </tr>
+                    <tr>
+                        <td>Replicas <img src="images/status/expand.png"></td>
+                        <td>1 &#8212; 100%</td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%">
+                    <tr>
+                        <th>Partition</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Messages</th>
+                    </tr>
+                    <tr>
+                        <td>0</td>
+                        <td>32050</td>
+                        <td>36543</td>
+                        <td>4,493</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>33099</td>
+                        <td>37720</td>
+                        <td>4,621</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>32291</td>
+                        <td>36804</td>
+                        <td>4,513</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>33241</td>
+                        <td>37846</td>
+                        <td>4,605</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>32094</td>
+                        <td>36616</td>
+                        <td>4,522</td>
+                    </tr>
+                </table>
+            </fieldset>
+        </div>
+
+        <div style="display: inline; width: 67%; height: 600px; float: right; border: 1px solid; padding: 5px; border-radius: 5px 5px 5px 5px">
+        </div>
+
+        <br style="clear: both" />
+    </div>
 </body>
 </html>
