@@ -19,20 +19,7 @@ import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import com.ldaniels528.trifecta.modules.ModuleHelper._
-<<<<<<< HEAD:src/main/scala/com/ldaniels528/trifecta/modules/kafka/KafkaModule.scala
-import com.ldaniels528.trifecta.modules._
-import com.ldaniels528.trifecta.support.avro.AvroConversion._
-import com.ldaniels528.trifecta.support.io.{KafkaTopicOutputSource, KafkaTopicInputSource, KeyAndMessage}
-import com.ldaniels528.trifecta.support.kafka.KafkaFacade._
-import com.ldaniels528.trifecta.support.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
-import com.ldaniels528.trifecta.support.kafka._
-import com.ldaniels528.trifecta.support.messaging.logic.Condition
-import com.ldaniels528.trifecta.support.messaging.logic.Expressions.{AND, Expression, OR}
-import com.ldaniels528.trifecta.support.messaging.{BinaryMessage, MessageDecoder}
-import com.ldaniels528.trifecta.support.zookeeper.ZKProxy
-=======
 import com.ldaniels528.trifecta.util.OptionHelper._
->>>>>>> develop:src/main/scala/com/ldaniels528/trifecta/modules/KafkaModule.scala
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._

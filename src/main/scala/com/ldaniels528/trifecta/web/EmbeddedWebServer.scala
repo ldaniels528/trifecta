@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.web
 
 import akka.actor.{Actor, ActorSystem, Props}
-import com.ldaniels528.trifecta.support.io.Resource
+import com.ldaniels528.trifecta.util.Resource
 import com.ldaniels528.trifecta.web.EmbeddedWebServer._
 import com.typesafe.config.ConfigFactory
 import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus}

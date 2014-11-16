@@ -8,26 +8,14 @@ import java.util.{Date, TimeZone}
 import com.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.ldaniels528.trifecta._
 import com.ldaniels528.trifecta.command._
-<<<<<<< HEAD:src/main/scala/com/ldaniels528/trifecta/modules/core/CoreModule.scala
-import com.ldaniels528.trifecta.decoders.AvroCodec
-import com.ldaniels528.trifecta.modules.Module
-import com.ldaniels528.trifecta.modules.ModuleManager.ModuleVariable
-import com.ldaniels528.trifecta.support.io.Resource.expandPath
-import com.ldaniels528.trifecta.support.io._
-import com.ldaniels528.trifecta.util.ParsingHelper._
-import com.ldaniels528.trifecta.util.TxUtils._
-import com.ldaniels528.trifecta.vscript.VScriptRuntime.ConstantValue
-import com.ldaniels528.trifecta.vscript.Variable
-import com.ldaniels528.trifecta.web.EmbeddedWebServer
-=======
 import com.ldaniels528.trifecta.io._
 import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroFileInputSource, AvroFileOutputSource}
 import com.ldaniels528.trifecta.io.json.{JSONFileInputSource, JSONFileOutputSource}
-import com.ldaniels528.trifecta.util.PathHelper._
 import com.ldaniels528.trifecta.util.ParsingHelper._
+import com.ldaniels528.trifecta.util.PathHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
->>>>>>> develop:src/main/scala/com/ldaniels528/trifecta/modules/CoreModule.scala
+import com.ldaniels528.trifecta.web.EmbeddedWebServer
 import org.apache.commons.io.IOUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -41,11 +29,8 @@ import scala.util.{Properties, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CoreModule(config: TxConfig) extends Module with AvroCodec {
-<<<<<<< HEAD:src/main/scala/com/ldaniels528/trifecta/modules/core/CoreModule.scala
-  private val logger = LoggerFactory.getLogger(getClass)
   private var httpServer: Option[EmbeddedWebServer] = None
-=======
->>>>>>> develop:src/main/scala/com/ldaniels528/trifecta/modules/CoreModule.scala
+
   private val out: PrintStream = config.out
 
   // define the process parsing regular expression
