@@ -15,7 +15,6 @@ import org.mashupbots.socko.routes.{GET, Routes}
 import org.mashupbots.socko.webserver.{WebServer, WebServerConfig}
 import org.slf4j.LoggerFactory
 
-import scala.io.Source
 import scala.util.Try
 
 /**
@@ -31,12 +30,13 @@ class EmbeddedWebServer() extends Logger {
   })
 
   val routes = Routes({
-
     case GET(request) =>
       actorSystem.actorOf(Props[WebContentHandler]) ! request
-
   })
 
+  /**
+   * Starts the embedded web server
+   */
   def start() {
     if (webServer.isEmpty) {
       webServer = Option(new WebServer(WebServerConfig(), routes, actorSystem))
@@ -44,6 +44,9 @@ class EmbeddedWebServer() extends Logger {
     }
   }
 
+  /**
+   * Stops the embedded web server
+   */
   def stop() {
     Try(webServer.foreach(_.stop()))
     webServer = None
@@ -80,6 +83,16 @@ object EmbeddedWebServer {
       }"""
 
   /**
+   * Application entry point
+   * @param args the given command line arguments
+   */
+  def main(args: Array[String]) {
+    new EmbeddedWebServer().start()
+
+    logger.info("Open your browser and navigate to http://localhost:8888")
+  }
+
+  /**
    * Web Content Handler
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
@@ -90,35 +103,42 @@ object EmbeddedWebServer {
         val response = event.response
         val path = translatePath(endPoint.path)
         val resourcePath = s"/web$path"
-        logger.info(s"path = $path, resourcePath = $resourcePath")
 
         resourcePath match {
           case s => loadContent(s) map { bytes =>
-            getMimeType(s) foreach { mimeType =>
-              response.contentType = mimeType
-              logger.info(s"$path: $mimeType")
-            }
+            getMimeType(s) foreach (response.contentType = _)
             response.write(bytes)
-          } getOrElse response.write(HttpResponseStatus.NOT_FOUND)
+          } getOrElse {
+            logger.error(s"Resource $path ($resourcePath) not found")
+            response.write(HttpResponseStatus.NOT_FOUND)
+          }
         }
         context.stop(self)
     }
 
-    private def translatePath(path: String) = path match {
-      case "/" => "/index.htm"
-      case s => s
-    }
-
+    /**
+     * Returns the MIME type for the given resource
+     * @param path the given resource path (e.g. "/images/greenLight.png")
+     * @return the option of a MIME type (e.g. "image/png")
+     */
     private def getMimeType(path: String): Option[String] = {
       path.lastIndexOptionOf(".") map (index => path.substring(index + 1)) flatMap {
         case "gif" => Some("image/gif")
         case "htm" | "html" => Some("text/html")
         case "jpg" | "jpeg" => Some("image/jpeg")
+        case "js" => Some("text/javascript")
         case "png" => Some("image/png")
-        case _ => None
+        case unknown =>
+          logger.warn(s"No MIME type for $unknown")
+          None
       }
     }
 
+    /**
+     * Retrieves the given resource from the class path
+     * @param path the given resource path (e.g. "/images/greenLight.png")
+     * @return the option of an array of bytes representing the content
+     */
     private def loadContent(path: String): Option[Array[Byte]] = {
       Resource(path) map { url =>
         new ByteArrayOutputStream(1024) use { out =>
@@ -128,8 +148,16 @@ object EmbeddedWebServer {
       }
     }
 
+    /**
+     * Translates the given logical path to a physical path
+     * @param path the given logical path
+     * @return the corresponding physical path
+     */
+    private def translatePath(path: String) = path match {
+      case "/" => "/index.htm"
+      case s => s
+    }
+
   }
 
 }
-
-
