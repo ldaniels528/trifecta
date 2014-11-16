@@ -104,13 +104,15 @@ object EmbeddedWebServer {
         val path = translatePath(endPoint.path)
 
         path match {
-          case s => loadContent(s) map { bytes =>
-            getMimeType(s) foreach (response.contentType = _)
-            response.write(bytes)
-          } getOrElse {
-            logger.error(s"Resource '$path' not found")
-            response.write(HttpResponseStatus.NOT_FOUND)
-          }
+          case s =>
+            loadContent(s) map { bytes =>
+              getMimeType(s) foreach (response.contentType = _)
+              logger.info(s"Retrieved resource '$s' (${bytes.length} bytes)")
+              response.write(bytes)
+            } getOrElse {
+              logger.error(s"Resource '$path' not found")
+              response.write(HttpResponseStatus.NOT_FOUND)
+            }
         }
         context.stop(self)
     }
@@ -130,8 +132,8 @@ object EmbeddedWebServer {
         case "json" => Some("application/json")
         case "png" => Some("image/png")
         case "xml" => Some("application/xml")
-        case unknown =>
-          logger.warn(s"No MIME type found for '$unknown' ($path)")
+        case _ =>
+          logger.warn(s"No MIME type found for '$path'")
           None
       }
     }

@@ -1,11 +1,14 @@
-<html>
+<!DOCTYPE html>
+<html ng-app="trifecta">
 <head>
     <title>Trifecta v0.17.1: Dashboard</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <link href="/stylesheets/index.css" type="text/css" rel="stylesheet" media=screen>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular.min.js"></script>
+    <script src="/js/app.js" type="text/javascript"></script>
 </head>
 
-<body>
+<body ng-controller="DashboardCtrl">
     <h2><span class="title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span> <span class="version">v0.17.1</span></h2>
 
     <div style="display: block; width: 100%">
@@ -13,45 +16,9 @@
             <fieldset style="border-radius: 5px 5px 5px 5px">
                 <legend style="font-weight: bold">Kafka Topics</legend>
                 <table style="width: 100%">
-                    <tr>
+                    <tr ng-repeat="t in topics" ng-class="t == topic ? 'highlighted' : ''">
                         <td style="width: 16px; height: 16px"><img src="/images/status/greenlight.png"></td>
-                        <td>com.shocktrade.quotes.csv</td>
-                    </tr>
-                    <tr>
-                        <td><img src="/images/status/greenlight.png"></td>
-                        <td>hft.shocktrade.quotes.avro</td>
-                    </tr>
-                    <tr>
-                        <td><img src="/images/status/greenlight.png"></td>
-                        <td>hft.Shocktrade.quotes.avro</td>
-                    </tr>
-                    <tr>
-                        <td><img src="/images/status/greenlight.png"></td>
-                        <td>shocktrade.quotes.csv</td>
-                    </tr>
-                    <tr style="background: #55aaff; color: #ffffff">
-                        <td><img src="/images/status/greenlight.png"></td>
-                        <td>shocktrade.quotes.avro</td>
-                    </tr>
-                    <tr>
-                        <td><img src="/images/status/greenlight.png"></td>
-                        <td>shocktrade.keystats.avro</td>
-                    </tr>
-                    <tr>
-                        <td><img src="/images/status/greenlight.png"></td>
-                        <td>test.Shocktrade.quotes.avro</td>
-                    </tr>
-                    <tr>
-                        <td><img src="/images/status/greenlight.png"></td>
-                        <td>test1.Shocktrade.quotes.avro</td>
-                    </tr>
-                    <tr>
-                        <td><img src="/images/status/greenlight.png"></td>
-                        <td>test2.Shocktrade.quotes.avro</td>
-                    </tr>
-                    <tr>
-                        <td><img src="/images/status/greenlight.png"></td>
-                        <td>test3.Shocktrade.quotes.avro</td>
+                        <td>{{t.topic}}</td>
                     </tr>
                 </table>
                 </fieldset>
@@ -65,35 +32,11 @@
                         <th>End</th>
                         <th>Messages</th>
                     </tr>
-                    <tr style="background: #55aaff; color: #ffffff">
-                        <td>0</td>
-                        <td>32050</td>
-                        <td>36543</td>
-                        <td>4,493</td>
-                    </tr>
-                    <tr>
-                        <td>1</td>
-                        <td>33099</td>
-                        <td>37720</td>
-                        <td>4,621</td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>32291</td>
-                        <td>36804</td>
-                        <td>4,513</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>33241</td>
-                        <td>37846</td>
-                        <td>4,605</td>
-                    </tr>
-                    <tr>
-                        <td>4</td>
-                        <td>32094</td>
-                        <td>36616</td>
-                        <td>4,522</td>
+                    <tr ng-repeat="p in topic.partitions" ng-class="p == partition ? 'highlighted' : ''">
+                        <td>{{p.partition}}</td>
+                        <td>{{p.startOffset}}</td>
+                        <td>{{p.endOffset}}</td>
+                        <td>{{p.messages | number}}</td>
                     </tr>
                 </table>
             </fieldset>
@@ -103,23 +46,13 @@
                 <table style="width: 100%">
                     <tr>
                         <th>Leader</th>
-                        <td>dev501:9092</td>
+                        <td>{{partition.leader}}</td>
                         <td>&nbsp;</td>
                     </tr>
-                    <tr>
-                        <th>Replica0</th>
-                        <td>dev501:9093</td>
-                        <td style="color: #008000; font-weight: bold">in-sync</td>
-                    </tr>
-                    <tr>
-                        <th>Replica1</th>
-                        <td>dev502:9092</td>
-                        <td style="color: #008000; font-weight: bold">in-sync</td>
-                    </tr>
-                    <tr>
-                        <th>Replica2</th>
-                        <td>dev502:9093</td>
-                        <td style="color: #008000; font-weight: bold">in-sync</td>
+                    <tr ng-repeat="r in partition.replicas">
+                        <th>Replica{{index}}</th>
+                        <td>{{r.broker}}</td>
+                        <td style="color: #008000; font-weight: bold">{{r.status}}</td>
                     </tr>
                 </table>
             </fieldset>
@@ -129,51 +62,24 @@
             <div style="display: block; margin-bottom: 5px">
                 <div style="display: inline; border: 1px solid; border-radius: 5px 5px 5px 5px; background: #eeeeee; padding: 3px; margin-right: 3px">
                    Partition
-                    <select>
-                        <option>0</option>
-                        <option>1</option>
-                        <option>2</option>
-                        <option>3</option>
-                        <option>4</option>
+                    <select ng-model="partition" ng-options="p.partition for p in topic.partitions">
                     </select>
                 </div>
                 <div style="display: inline; border: 1px solid; border-radius: 5px 5px 5px 5px; background: #eeeeee; padding: 3px; margin-right: 3px">
-                    Offset <input type="text" name="offset" size="16" value="36543">
+                    Offset <input ng-model="partition.offset" type="text" size="16">
                     <img style="vertical-align: middle" src="/images/buttons/arrow_left.png">
                     <img style="vertical-align: middle" src="/images/buttons/arrow_right.png">
                 </div>
                 <div style="display: inline; border: 1px solid; border-radius: 5px 5px 5px 5px; background: #eeeeee; padding: 3px">
                     Decoder
-                    <select>
-                        <option>AVRO &#8212; quotes.avsc</option>
-                        <option>Bytes</option>
-                        <option>Json</option>
-                        <option>Text</option>
+                    <select ng-model="decoder" ng-options="formatDecoder(d) for d in decoders">
                     </select>
                     <img style="vertical-align: middle" src="/images/buttons/add.png">
                 </div>
             </div>
 
-            <fieldset style="border-radius: 5px 5px 5px 5px; height: 540px; background: #ffffee"><pre>
-{
-"symbol":"KGMEF",
-"exchange":null,
-"lastTrade":0.0,
-"tradeDate":null,
-"tradeTime":null,
-"ask":null,
-"bid":null,
-"change":null,
-"changePct":null,
-"prevClose":null,
-"open":null,
-"close":0.0,
-"high":null,
-"low":null,
-"volume":null,
-"marketCap":null,
-"errorMessage":"Ticker symbol has changed to: <a href=/q?s=KGMEF>KGMEF</a>"
-}</pre>
+            <fieldset style="border-radius: 5px 5px 5px 5px; height: 540px; background: #ffffee">
+                <pre>{{ message() }}</pre>
             </fieldset>
         </div>
 
