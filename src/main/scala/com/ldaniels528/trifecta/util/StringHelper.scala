@@ -12,13 +12,18 @@ object StringHelper {
    */
   implicit class StringExtensions(val src: String) extends AnyVal {
 
+    def extractProperty(prefix: String): Option[String] = {
+      if (src.startsWith(prefix)) Option(src.substring(prefix.length)) else None
+    }
+
     def indexOptionOf(s: String): Option[Int] = {
       val index = src.indexOf(s)
       if(index == -1) None else Some(index)
     }
 
-    def extractProperty(prefix: String): Option[String] = {
-      if (src.startsWith(prefix)) Option(src.substring(prefix.length)) else None
+    def lastIndexOptionOf(s: String): Option[Int] = {
+      val index = src.lastIndexOf(s)
+      if(index == -1) None else Some(index)
     }
 
   }

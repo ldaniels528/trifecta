@@ -1,13 +1,19 @@
 package com.ldaniels528.trifecta.web
 
+import java.io.ByteArrayOutputStream
+
 import akka.actor.{Actor, ActorSystem, Props}
 import com.ldaniels528.trifecta.util.Resource
+import com.ldaniels528.trifecta.util.ResourceHelper._
+import com.ldaniels528.trifecta.util.StringHelper._
 import com.ldaniels528.trifecta.web.EmbeddedWebServer._
 import com.typesafe.config.ConfigFactory
+import org.apache.commons.io.IOUtils
 import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus}
 import org.mashupbots.socko.infrastructure.Logger
 import org.mashupbots.socko.routes.{GET, Routes}
 import org.mashupbots.socko.webserver.{WebServer, WebServerConfig}
+import org.slf4j.LoggerFactory
 
 import scala.io.Source
 import scala.util.Try
@@ -25,8 +31,10 @@ class EmbeddedWebServer() extends Logger {
   })
 
   val routes = Routes({
+
     case GET(request) =>
-      actorSystem.actorOf(Props[DummyHandler]) ! request
+      actorSystem.actorOf(Props[WebContentHandler]) ! request
+
   })
 
   def start() {
@@ -48,7 +56,8 @@ class EmbeddedWebServer() extends Logger {
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object EmbeddedWebServer {
-  val actorConfig = """
+  private val logger = LoggerFactory.getLogger(getClass)
+  private val actorConfig = """
       my-pinned-dispatcher {
         type=PinnedDispatcher
         executor=thread-pool-executor
@@ -71,21 +80,54 @@ object EmbeddedWebServer {
       }"""
 
   /**
-   * Hello processor writes a greeting and stops.
+   * Web Content Handler
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
-  class DummyHandler extends Actor {
+  class WebContentHandler extends Actor {
     def receive = {
       case event: HttpRequestEvent =>
+        val endPoint = event.request.endPoint
         val response = event.response
-        Resource("/web/index.htm") map (Source.fromURL(_).getLines().mkString) match {
-          case Some(content) =>
-            response.contentType = "text/html"
-            response.write(content)
-          case None =>
-            response.write(HttpResponseStatus.NOT_FOUND)
+        val path = translatePath(endPoint.path)
+        val resourcePath = s"/web$path"
+        logger.info(s"path = $path, resourcePath = $resourcePath")
+
+        resourcePath match {
+          case s => loadContent(s) map { bytes =>
+            getMimeType(s) foreach { mimeType =>
+              response.contentType = mimeType
+              logger.info(s"$path: $mimeType")
+            }
+            response.write(bytes)
+          } getOrElse response.write(HttpResponseStatus.NOT_FOUND)
         }
         context.stop(self)
     }
+
+    private def translatePath(path: String) = path match {
+      case "/" => "/index.htm"
+      case s => s
+    }
+
+    private def getMimeType(path: String): Option[String] = {
+      path.lastIndexOptionOf(".") map (index => path.substring(index + 1)) flatMap {
+        case "gif" => Some("image/gif")
+        case "htm" | "html" => Some("text/html")
+        case "jpg" | "jpeg" => Some("image/jpeg")
+        case "png" => Some("image/png")
+        case _ => None
+      }
+    }
+
+    private def loadContent(path: String): Option[Array[Byte]] = {
+      Resource(path) map { url =>
+        new ByteArrayOutputStream(1024) use { out =>
+          url.openStream() use (IOUtils.copy(_, out))
+          out.toByteArray
+        }
+      }
+    }
+
   }
 
 }
