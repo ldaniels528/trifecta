@@ -414,7 +414,7 @@ object KafkaMicroConsumer {
   /**
    * Returns the list of topics for the given brokers
    */
-  def getTopicList(brokers: Seq[Broker], correlationId: Int)(implicit zk: ZKProxy): Seq[TopicDetails] = {
+  def getTopicList(brokers: Seq[Broker], correlationId: Int = 0)(implicit zk: ZKProxy): Seq[TopicDetails] = {
     // get the list of topics
     val topics = zk.getChildren(path = "/brokers/topics")
 

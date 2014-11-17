@@ -174,8 +174,11 @@ object EmbeddedWebServer {
 
       path.indexOptionOf(RestRoot) map (index => path.substring(index + RestRoot.length + 1)) flatMap {
         case "getTopics" => Option(facade.getTopics)
+        case "getTopicSummaries" => Option(facade.getTopicSummaries)
         case s if s.startsWith("getTopicByName") =>
           s.indexOptionOf("/") map (index => s.substring(index + 1)) flatMap facade.getTopicByName
+        case s if s.startsWith("getTopicDetailsByName") =>
+          s.indexOptionOf("/") map (index => s.substring(index + 1)) map facade.getTopicDetailsByName
         case _ => None
       } map (js => compact(render(js))) map (_.getBytes)
     }
