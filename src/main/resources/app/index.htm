@@ -18,7 +18,7 @@
                 <table style="width: 100%">
                     <tr ng-repeat="t in topics" ng-class="t == topic ? 'highlighted' : ''">
                         <td style="width: 16px; height: 16px"><img src="/images/status/greenlight.png"></td>
-                        <td>{{t.topic}}</td>
+                        <td><a ng-click="updateTopic(t)">{{t.topic}}</a></td>
                     </tr>
                 </table>
                 </fieldset>
@@ -33,7 +33,7 @@
                         <th>Messages</th>
                     </tr>
                     <tr ng-repeat="p in topic.partitions" ng-class="p == partition ? 'highlighted' : ''">
-                        <td>{{p.partition}}</td>
+                        <td><a ng-click="updatePartition(p)">{{p.partition}}</a></td>
                         <td>{{p.startOffset}}</td>
                         <td>{{p.endOffset}}</td>
                         <td>{{p.messages | number}}</td>
@@ -67,8 +67,10 @@
                 </div>
                 <div style="display: inline; border: 1px solid; border-radius: 5px 5px 5px 5px; background: #eeeeee; padding: 3px; margin-right: 3px">
                     Offset <input ng-model="partition.offset" type="text" size="16">
-                    <img style="vertical-align: middle" src="/images/buttons/arrow_left.png">
-                    <img style="vertical-align: middle" src="/images/buttons/arrow_right.png">
+                    <img style="vertical-align: middle" src="/images/buttons/navigation/message-first.gif">
+                    <img style="vertical-align: middle" src="/images/buttons/navigation/message-prev.gif">
+                    <img style="vertical-align: middle" src="/images/buttons/navigation/message-next.gif">
+                    <img style="vertical-align: middle" src="/images/buttons/navigation/message-last.gif">
                 </div>
                 <div style="display: inline; border: 1px solid; border-radius: 5px 5px 5px 5px; background: #eeeeee; padding: 3px">
                     Decoder

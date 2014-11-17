@@ -34,7 +34,7 @@
                     "messages": 4493,
                     "leader": "dev501:9092",
                     "replicas": [{
-                        "broker": "dev501:9092", "status": "in-sync"
+                        "broker": "dev501:9093", "status": "in-sync"
                     }, {
                         "broker": "dev501:9093", "status": "in-sync"
                     }, {
@@ -46,7 +46,17 @@
                     "partition": 1,
                     "startOffset": 33099,
                     "endOffset": 37720,
-                    "messages": 4621
+                    "messages": 4621,
+                    "leader": "dev501:9093",
+                    "replicas": [{
+                        "broker": "dev501:9092", "status": "in-sync"
+                    }, {
+                        "broker": "dev501:9093", "status": "in-sync"
+                    }, {
+                        "broker": "dev502:9092", "status": "in-sync"
+                    }, {
+                        "broker": "dev502:9093", "status": "in-sync"
+                    }]
                 }, {
                     "partition": 2,
                     "startOffset": 32291,
@@ -70,7 +80,17 @@
                         "partition": 0,
                         "startOffset": 33099,
                         "endOffset": 37720,
-                        "messages": 4621
+                        "messages": 4621,
+                        "leader": "dev501:9092",
+                        "replicas": [{
+                            "broker": "dev501:9092", "status": "in-sync"
+                        }, {
+                            "broker": "dev501:9093", "status": "in-sync"
+                        }, {
+                            "broker": "dev502:9092", "status": "in-sync"
+                        }, {
+                            "broker": "dev502:9093", "status": "in-sync"
+                        }]
                     }]
             }, {
                 "topic": "shocktrade.quotes.csv",
@@ -168,8 +188,8 @@
         $scope.updatePartition = function (partition) {
             $scope.partition = partition;
 
-            if (!partition.offset) {
-                partition.offset = partition.startOffset;
+            if (! $scope.partition.offset) {
+                $scope.partition.offset = $scope.partition.startOffset;
             }
         };
 
