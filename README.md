@@ -93,10 +93,10 @@ On startup, Trifecta reads $HOME/.trifecta/config.properties (or creates the fil
 contains the configuration properties and connection strings for all supported systems.
 
     # common properties
-    trifecta.autoSwitching = true
-    trifecta.columns = 25
-    trifecta.debugOn = true
-    trifecta.encoding = UTF-8
+    trifecta.common.autoSwitching = true
+    trifecta.common.columns = 25
+    trifecta.common.debugOn = true
+    trifecta.common.encoding = UTF-8
     
     # Zookeeper properties
     trifecta.zookeeper.host = localhost:2181
