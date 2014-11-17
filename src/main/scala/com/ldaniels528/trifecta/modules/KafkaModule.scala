@@ -24,6 +24,7 @@ import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 import com.ldaniels528.trifecta.util.TimeHelper._
+import com.ldaniels528.trifecta.web.EmbeddedWebServer
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JValue
 import org.apache.avro.generic.GenericRecord
@@ -40,6 +41,7 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaModule(config: TxConfig) extends Module with AvroCodec {
+  private var httpServer: Option[EmbeddedWebServer] = None
   private var zkProxy_? : Option[ZKProxy] = None
   private val out: PrintStream = config.out
 
@@ -75,6 +77,9 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     // connection-related commands
     Command(this, "kconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to Zookeeper"),
     Command(this, "ksandbox", sandBox, UnixLikeParams(), help = "Launches a Kafka Sandbox (local server instance)"),
+
+    // embedded web server
+    Command(this, "http", httpManager, UnixLikeParams(Seq("action" -> true)), help = "Starts, stops or gets the status of the HTTP listener"),
 
     // basic message creation & retrieval commands
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-ts" -> "YYYY-MM-DDTHH:MM:SS")), help = "Retrieves the message at the specified offset for a given topic partition"),
@@ -731,6 +736,30 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
 
     // get the raw topic data
     facade.getTopics(prefix, detailed)
+  }
+
+  /**
+   * Starts, stops or gets the status of the HTTP listener
+   * @example http start
+   * @example http status
+   * @example http stop
+   */
+  def httpManager(params: UnixLikeArgs) {
+    params.args match {
+      case action :: Nil => action match {
+        case "start" =>
+          httpServer = Option(new EmbeddedWebServer(zk))
+          httpServer.foreach(_.start())
+        case "status" =>
+          val status = if (httpServer.isDefined) "Running" else "Stopped"
+          out.println(status)
+        case "stop" =>
+          httpServer.foreach(_.stop())
+          httpServer = None
+        case _ => dieSyntax(params)
+      }
+      case _ => dieSyntax(params)
+    }
   }
 
   /**

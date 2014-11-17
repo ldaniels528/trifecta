@@ -21,7 +21,7 @@ import scala.util.{Failure, Success}
  * Apache Kafka Facade
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaFacade(correlationId: Int) {
+class KafkaFacade(correlationId: Int = 0) {
   private var publisher_? : Option[KafkaPublisher] = None
 
   /**

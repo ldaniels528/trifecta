@@ -3,6 +3,8 @@ package com.ldaniels528.trifecta.web
 import java.io.ByteArrayOutputStream
 
 import akka.actor.{Actor, ActorSystem, Props}
+import com.ldaniels528.trifecta.TxConfig
+import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.util.Resource
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
@@ -21,17 +23,23 @@ import scala.util.Try
  * Embedded Web Server
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class EmbeddedWebServer() extends Logger {
+class EmbeddedWebServer(zk: ZKProxy) extends Logger {
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(actorConfig))
   private var webServer: Option[WebServer] = None
+  private val facade = new KafkaWebFacade(zk)
 
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() = EmbeddedWebServer.this.stop()
   })
 
+  // create the actors
+  val actors = (1 to 10) map (n => actorSystem.actorOf(Props(new WebContentHandler(facade))))
+  var router = 0
+
   val routes = Routes({
     case GET(request) =>
-      actorSystem.actorOf(Props[WebContentHandler]) ! request
+      actors(router % actors.length) ! request
+      router += 1
   })
 
   /**
@@ -59,7 +67,9 @@ class EmbeddedWebServer() extends Logger {
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object EmbeddedWebServer {
-  private val logger = LoggerFactory.getLogger(getClass)
+  private[this] val logger = LoggerFactory.getLogger(getClass)
+  private val DocumentRoot = "/app"
+  private val RestRoot = "/rest"
   private val actorConfig = """
       my-pinned-dispatcher {
         type=PinnedDispatcher
@@ -87,7 +97,9 @@ object EmbeddedWebServer {
    * @param args the given command line arguments
    */
   def main(args: Array[String]) {
-    new EmbeddedWebServer().start()
+    val config = TxConfig.load(TxConfig.configFile)
+    val zk = ZKProxy(config.zooKeeperConnect)
+    new EmbeddedWebServer(zk).start()
 
     logger.info("Open your browser and navigate to http://localhost:8888")
   }
@@ -96,7 +108,7 @@ object EmbeddedWebServer {
    * Web Content Handler
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
-  class WebContentHandler extends Actor {
+  class WebContentHandler(facade: KafkaWebFacade) extends Actor {
     def receive = {
       case event: HttpRequestEvent =>
         val endPoint = event.request.endPoint
@@ -105,7 +117,7 @@ object EmbeddedWebServer {
 
         path match {
           case s =>
-            loadContent(s) map { bytes =>
+            getContent(s) map { bytes =>
               getMimeType(s) foreach (response.contentType = _)
               logger.info(s"Retrieved resource '$s' (${bytes.length} bytes)")
               response.write(bytes)
@@ -114,7 +126,25 @@ object EmbeddedWebServer {
               response.write(HttpResponseStatus.NOT_FOUND)
             }
         }
-        context.stop(self)
+      //context.stop(self)
+    }
+
+    /**
+     * Retrieves the given resource from the class path
+     * @param path the given resource path (e.g. "/images/greenLight.png")
+     * @return the option of an array of bytes representing the content
+     */
+    private def getContent(path: String): Option[Array[Byte]] = {
+      path match {
+        case s if s.startsWith(RestRoot) => processRestRequest(path)
+        case s =>
+          Resource(s) map { url =>
+            new ByteArrayOutputStream(1024) use { out =>
+              url.openStream() use (IOUtils.copy(_, out))
+              out.toByteArray
+            }
+          }
+      }
     }
 
     /**
@@ -123,7 +153,8 @@ object EmbeddedWebServer {
      * @return the option of a MIME type (e.g. "image/png")
      */
     private def getMimeType(path: String): Option[String] = {
-      path.lastIndexOptionOf(".") map (index => path.substring(index + 1)) flatMap {
+      if (path.startsWith(RestRoot)) Some("application/json")
+      else path.lastIndexOptionOf(".") map (index => path.substring(index + 1)) flatMap {
         case "css" => Some("text/css")
         case "gif" => Some("image/gif")
         case "htm" | "html" => Some("text/html")
@@ -138,18 +169,15 @@ object EmbeddedWebServer {
       }
     }
 
-    /**
-     * Retrieves the given resource from the class path
-     * @param path the given resource path (e.g. "/images/greenLight.png")
-     * @return the option of an array of bytes representing the content
-     */
-    private def loadContent(path: String): Option[Array[Byte]] = {
-      Resource(path) map { url =>
-        new ByteArrayOutputStream(1024) use { out =>
-          url.openStream() use (IOUtils.copy(_, out))
-          out.toByteArray
-        }
-      }
+    private def processRestRequest(path: String): Option[Array[Byte]] = {
+      import net.liftweb.json._
+
+      path.indexOptionOf(RestRoot) map (index => path.substring(index + RestRoot.length + 1)) flatMap {
+        case "getTopics" => Option(facade.getTopics)
+        case s if s.startsWith("getTopicByName") =>
+          s.indexOptionOf("/") map (index => s.substring(index + 1)) flatMap facade.getTopicByName
+        case _ => None
+      } map (js => compact(render(js))) map (_.getBytes)
     }
 
     /**
@@ -158,10 +186,10 @@ object EmbeddedWebServer {
      * @return the corresponding physical path
      */
     private def translatePath(path: String) = path match {
-      case "/" => "/app/index.htm"
-      case s => s"/app$s"
+      case s if s.startsWith(RestRoot) => s
+      case "/" => s"$DocumentRoot/index.htm"
+      case s => s"$DocumentRoot$s"
     }
-
   }
 
 }

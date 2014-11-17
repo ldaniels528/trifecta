@@ -29,8 +29,6 @@ import scala.util.{Properties, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class CoreModule(config: TxConfig) extends Module with AvroCodec {
-  private var httpServer: Option[EmbeddedWebServer] = None
-
   private val out: PrintStream = config.out
 
   // define the process parsing regular expression
@@ -50,7 +48,6 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
     Command(this, "exit", exit, UnixLikeParams(), help = "Exits the shell"),
     Command(this, "help", help, UnixLikeParams(Seq("searchTerm" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
     Command(this, "history", listHistory, UnixLikeParams(Seq("count" -> false)), help = "Returns a list of previously issued commands"),
-    Command(this, "http", httpManager, UnixLikeParams(Seq("action" -> true)), help = "Starts, stops or gets the status of the HTTP listener"),
     Command(this, "jobs", manageJob, UnixLikeParams(Seq("jobNumber" -> false), Seq("-c" -> "clear jobs", "-d" -> "delete job", "-l" -> "list jobs", "-v" -> "result")), help = "Returns the list of currently running jobs"),
     Command(this, "ls", listFiles, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "module", useModule, UnixLikeParams(Seq("module" -> true)), help = "Switches the active module"),
@@ -275,30 +272,6 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
 
     // return either the byte array or the decoded value
     bytes map (decodeValue(_, valueType))
-  }
-
-  /**
-   * Starts, stops or gets the status of the HTTP listener
-   * @example http start
-   * @example http status
-   * @example http stop
-   */
-  def httpManager(params: UnixLikeArgs) {
-    params.args match {
-      case action :: Nil => action match {
-        case "start" =>
-          httpServer = Option(new EmbeddedWebServer())
-          httpServer.foreach(_.start())
-        case "status" =>
-          val status = if (httpServer.isDefined) "Running" else "Stopped"
-          out.println(status)
-        case "stop" =>
-          httpServer.foreach(_.stop())
-          httpServer = None
-        case _ => dieSyntax(params)
-      }
-      case _ => dieSyntax(params)
-    }
   }
 
   /**

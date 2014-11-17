@@ -1,6 +1,6 @@
 /**
  * Trifecta Application Controller
- * @author lawrence.daniels@gmail.com
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
     var app = angular.module('trifecta', []);
