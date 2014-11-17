@@ -24,7 +24,7 @@ import scala.util.{Failure, Success, Try}
  * Kafka Low-Level Message Consumer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[Broker], correlationId: Int) {
+class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[Broker], correlationId: Int = 0) {
   // get the leader, meta data and replica brokers
   private val (broker, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topicAndPartition, seedBrokers, correlationId)
     .getOrElse(throw new VxKafkaTopicException("The leader broker could not be determined", topicAndPartition))
