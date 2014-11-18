@@ -319,7 +319,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
    */
   def fetchSizeGetOrSet(params: UnixLikeArgs) = {
     params.args.headOption match {
-      case Some(fetchSize) => defaultFetchSize = parseInt("fetchSize", fetchSize)
+      case Some(fetchSize) => defaultFetchSize = parseInt("fetchSize", fetchSize); ()
       case None => defaultFetchSize
     }
   }
