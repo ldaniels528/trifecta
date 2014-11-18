@@ -1,6 +1,5 @@
 package com.ldaniels528.trifecta.io.json
 
-import com.ldaniels528.trifecta.io.json.JsonTranscoding
 import com.ldaniels528.trifecta.messages.MessageDecoder
 import net.liftweb.json._
 
