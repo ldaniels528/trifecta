@@ -14,7 +14,6 @@ import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
 import net.liftweb.json._
-import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.postfixOps
@@ -174,7 +173,6 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaMicroConsumer {
-  private val logger = LoggerFactory.getLogger(getClass)
   private implicit val formats = net.liftweb.json.DefaultFormats
   private val DEFAULT_FETCH_SIZE: Int = 65536
 
@@ -354,10 +352,12 @@ object KafkaMicroConsumer {
       // get the list of partitions
       topics flatMap { topic =>
         val topicPath = s"$offsetPath/$topic"
-        val partitions = zk.getChildren(topicPath)
-        partitions flatMap { partitionId =>
-          zk.readString(s"$topicPath/$partitionId") flatMap (offset =>
-            successOnly(Try(ConsumerDetails(consumerId, topic, partitionId.toInt, offset.toLong))))
+        zk.getChildren(topicPath) flatMap { partitionId =>
+          val partitionPath = s"$topicPath/$partitionId"
+          zk.readString(partitionPath) flatMap { offset =>
+            val lastModified = zk.getModificationTime(partitionPath)
+            successOnly(Try(ConsumerDetails(consumerId, topic, partitionId.toInt, offset.toLong, lastModified)))
+          }
         }
       }
     }
@@ -369,6 +369,7 @@ object KafkaMicroConsumer {
   def getSpoutConsumerList()(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
     zk.getFamily(path = "/").distinct filter (_.matches( """\S+[/]partition_\d+""")) flatMap { path =>
       zk.readString(path) flatMap { jsonString =>
+        val lastModified = zk.getModificationTime(path)
         successOnly(Try {
           val json = parse(jsonString)
           val id = (json \ "topology" \ "id").extract[String]
@@ -378,7 +379,7 @@ object KafkaMicroConsumer {
           val partition = (json \ "partition").extract[Int]
           val brokerHost = (json \ "broker" \ "host").extract[String]
           val brokerPort = (json \ "broker" \ "port").extract[Int]
-          ConsumerDetailsPM(id, name, topic, partition, offset, s"$brokerHost:$brokerPort")
+          ConsumerDetailsPM(id, name, topic, partition, offset, lastModified, s"$brokerHost:$brokerPort")
         })
       }
     }
@@ -543,12 +544,12 @@ object KafkaMicroConsumer {
   /**
    * Represents the consumer group details for a given topic partition
    */
-  case class ConsumerDetails(consumerId: String, topic: String, partition: Int, offset: Long)
+  case class ConsumerDetails(consumerId: String, topic: String, partition: Int, offset: Long, lastModified: Option[Long])
 
   /**
    * Represents the consumer group details for a given topic partition (Kafka Spout / Partition Manager)
    */
-  case class ConsumerDetailsPM(topologyId: String, topologyName: String, topic: String, partition: Int, offset: Long, broker: String)
+  case class ConsumerDetailsPM(topologyId: String, topologyName: String, topic: String, partition: Int, offset: Long, lastModified: Option[Long], broker: String)
 
   /**
    * Represents a message and offset

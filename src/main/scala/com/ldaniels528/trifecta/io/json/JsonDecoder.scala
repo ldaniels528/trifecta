@@ -9,7 +9,7 @@ import scala.util.Try
  * JSON Message Decoder
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class JsonDecoder() extends MessageDecoder[JValue] with JsonTranscoding {
+object JsonDecoder extends MessageDecoder[JValue] with JsonTranscoding {
 
   /**
    * Decodes the binary message into a typed object

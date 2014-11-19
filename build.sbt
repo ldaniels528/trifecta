@@ -48,7 +48,8 @@ libraryDependencies ++= Seq(
   "org.apache.curator" % "curator-framework" % "2.6.0",
   "org.apache.curator" % "curator-test" % "2.6.0",
   "org.apache.kafka" %% "kafka" % "0.8.1.1"
-    exclude("org.apache.zookeeper", "zookeeper"),
+    exclude("org.apache.zookeeper", "zookeeper")
+    exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.storm" % "storm-core" % "0.9.2-incubating"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),

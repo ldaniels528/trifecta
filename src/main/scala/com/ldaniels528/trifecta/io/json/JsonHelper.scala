@@ -5,12 +5,21 @@ import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json._
 import org.apache.avro.generic.GenericRecord
 
+import scala.util.{Failure, Success, Try}
+
 /**
- * Trifecta JSON Parsing Utility
+ * JSON Helper Utility
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object TxJsonUtil {
+object JsonHelper {
   implicit val formats = DefaultFormats
+
+  def makePretty(jsonString: String): String = {
+    Try(toJson(jsonString)) match {
+      case Success(js) => pretty(render(js))
+      case Failure(e) => jsonString
+    }
+  }
 
   /**
    * Converts the given record into a JSON value

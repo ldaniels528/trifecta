@@ -1,14 +1,13 @@
-package com.ldaniels528.trifecta.web
+package com.ldaniels528.trifecta.rest
 
 import java.io.ByteArrayOutputStream
 
 import akka.actor.{Actor, ActorSystem, Props}
-import com.ldaniels528.trifecta.TxConfig
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.rest.EmbeddedWebServer._
 import com.ldaniels528.trifecta.util.Resource
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
-import com.ldaniels528.trifecta.web.EmbeddedWebServer._
 import com.typesafe.config.ConfigFactory
 import org.apache.commons.io.IOUtils
 import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus}
@@ -23,17 +22,17 @@ import scala.util.Try
  * Embedded Web Server
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class EmbeddedWebServer(zk: ZKProxy) extends Logger {
+class EmbeddedWebServer(zk: ZKProxy, concurrency: Int = 5) extends Logger {
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(actorConfig))
   private var webServer: Option[WebServer] = None
-  private val facade = new KafkaWebFacade(zk)
+  private val facade = new KafkaRestFacade(zk)
 
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() = EmbeddedWebServer.this.stop()
   })
 
   // create the actors
-  val actors = (1 to 10) map (n => actorSystem.actorOf(Props(new WebContentHandler(facade))))
+  val actors = (1 to concurrency) map (_ => actorSystem.actorOf(Props(new WebContentHandler(facade))))
   var router = 0
 
   val routes = Routes({
@@ -93,22 +92,10 @@ object EmbeddedWebServer {
       }"""
 
   /**
-   * Application entry point
-   * @param args the given command line arguments
-   */
-  def main(args: Array[String]) {
-    val config = TxConfig.load(TxConfig.configFile)
-    val zk = ZKProxy(config.zooKeeperConnect)
-    new EmbeddedWebServer(zk).start()
-
-    logger.info("Open your browser and navigate to http://localhost:8888")
-  }
-
-  /**
    * Web Content Handler
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
-  class WebContentHandler(facade: KafkaWebFacade) extends Actor {
+  class WebContentHandler(facade: KafkaRestFacade) extends Actor {
     def receive = {
       case event: HttpRequestEvent =>
         val endPoint = event.request.endPoint
@@ -172,15 +159,42 @@ object EmbeddedWebServer {
     private def processRestRequest(path: String): Option[Array[Byte]] = {
       import net.liftweb.json._
 
-      path.indexOptionOf(RestRoot) map (index => path.substring(index + RestRoot.length + 1)) flatMap {
-        case "getTopics" => Option(facade.getTopics)
-        case "getTopicSummaries" => Option(facade.getTopicSummaries)
-        case s if s.startsWith("getTopicByName") =>
-          s.indexOptionOf("/") map (index => s.substring(index + 1)) flatMap facade.getTopicByName
-        case s if s.startsWith("getTopicDetailsByName") =>
-          s.indexOptionOf("/") map (index => s.substring(index + 1)) map facade.getTopicDetailsByName
-        case _ => None
-      } map (js => compact(render(js))) map (_.getBytes)
+      // get the action and path arguments
+      val params = path.indexOptionOf(RestRoot)
+        .map(index => path.substring(index + RestRoot.length + 1))
+        .map(_.split("[/]")) map (a => (a.head, a.tail.toList))
+
+      // execute the action and get the JSON value
+      val response: Option[JValue] = params flatMap { case (action, args) =>
+        action match {
+          case "findOne" => args match {
+            case topic :: decoderURL :: criteria :: Nil => Option(facade.findOne(topic, decoderURL, criteria))
+            case _ => None
+          }
+          case "getConsumers" if args.isEmpty => Option(facade.getConsumers)
+          case "getConsumerMapping" if args.isEmpty => Option(facade.getConsumerMapping)
+          case "getDecoders" if args.isEmpty => Option(facade.getDecoders)
+          case "getMessage" => args match {
+            case topic :: partition :: offset :: decoderURL :: Nil => Option(facade.getMessage(topic, partition.toInt, offset.toLong, Option(decoderURL)))
+            case topic :: partition :: offset :: Nil => Option(facade.getMessage(topic, partition.toInt, offset.toLong))
+            case _ => None
+          }
+          case "getTopicByName" => args match {
+            case name :: Nil => facade.getTopicByName(name)
+            case _ => None
+          }
+          case "getTopicDetailsByName" => args match {
+            case name :: Nil => Option(facade.getTopicDetailsByName(name))
+            case _ => None
+          }
+          case "getTopics" if args.isEmpty => Option(facade.getTopics)
+          case "getTopicSummaries" if args.isEmpty => Option(facade.getTopicSummaries)
+          case _ => None
+        }
+      }
+
+      // convert the JSON value to a binary array
+      response map (js => compact(render(js))) map (_.getBytes)
     }
 
     /**

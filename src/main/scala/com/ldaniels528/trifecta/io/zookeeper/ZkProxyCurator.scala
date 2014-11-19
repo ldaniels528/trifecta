@@ -72,6 +72,10 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
     Option(client.checkExists().forPath(path)) map (_.getCtime)
   }
 
+  override def getModificationTime(path: String): Option[Long] = {
+    Option(client.checkExists().forPath(path)) map (_.getMtime)
+  }
+
   override def getFamily(path: String): List[String] = {
 
     def zkKeyToPath(parent: String, child: String): String = (if (parent.endsWith("/")) parent else parent + "/") + child

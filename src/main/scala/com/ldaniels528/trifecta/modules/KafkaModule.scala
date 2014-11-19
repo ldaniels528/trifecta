@@ -10,7 +10,7 @@ import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroConversion._
 import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
-import com.ldaniels528.trifecta.io.kafka.KafkaFacade._
+import com.ldaniels528.trifecta.io.kafka.KafkaCliFacade._
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
 import com.ldaniels528.trifecta.io.kafka._
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
@@ -24,7 +24,7 @@ import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 import com.ldaniels528.trifecta.util.TimeHelper._
-import com.ldaniels528.trifecta.web.EmbeddedWebServer
+import com.ldaniels528.trifecta.rest.EmbeddedWebServer
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JValue
 import org.apache.avro.generic.GenericRecord
@@ -40,7 +40,7 @@ import scala.util.{Failure, Success, Try}
  * Apache Kafka Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaModule(config: TxConfig) extends Module with AvroCodec {
+class KafkaModule(config: TxConfig) extends Module {
   private var httpServer: Option[EmbeddedWebServer] = None
   private var zkProxy_? : Option[ZKProxy] = None
   private val out: PrintStream = config.out
@@ -60,7 +60,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
   private var watching: Boolean = false
 
   // create the facade
-  private val facade = new KafkaFacade(correlationId)
+  private val facade = new KafkaCliFacade(correlationId)
 
   /**
    * Returns the list of brokers from Zookeeper
@@ -288,7 +288,6 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     }
 
     // get the criteria
-    val Seq(field, operator, value, _*) = params.args
     val conditions = Seq(parseCondition(params, decoder))
 
     // perform the count
@@ -342,11 +341,8 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
       else navigableCursor map (c => (c.topic, if (avro_?.isDefined) avro_? else c.decoder)) getOrElse dieNoCursor
     }
 
-    // get the criteria
-    val condition = parseCondition(params, decoder_?)
-
     // perform the search
-    KafkaMicroConsumer.findOne(topic, brokers, correlationId, condition) map {
+    KafkaMicroConsumer.findOne(topic, brokers, correlationId, parseCondition(params, decoder_?)) map {
       _ map { case (partition, md) =>
         getMessage(topic, partition, md.offset, params)
       }
@@ -535,7 +531,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     }
 
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
-    val decoder: Option[MessageDecoder[_]] = Seq(params("-a") map (lookupAvroDecoder(_)(config)), navigableCursors.get(topic)
+    val decoder: Option[MessageDecoder[_]] = Seq(params("-a") map AvroCodec.resolve, navigableCursors.get(topic)
       .flatMap(_.decoder)).find(_.isDefined).flatten
 
     // if a decoder was found, use it to decode the message
@@ -748,7 +744,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     params.args match {
       case action :: Nil => action match {
         case "start" =>
-          httpServer = Option(new EmbeddedWebServer(zk))
+          httpServer = Option(new EmbeddedWebServer(zk, concurrency = 10))
           httpServer.foreach(_.start())
         case "status" =>
           val status = if (httpServer.isDefined) "Running" else "Stopped"
@@ -895,7 +891,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
         (min, max) <- facade.getTopicPartitionRange(topic)
         consumer = KafkaMacroConsumer(zk.connectionString, groupId, Nil: _*)
         iterator = consumer.iterate(topic, (max - min) + 1)
-        decoder = params("-a") map (lookupAvroDecoder(_)(config))
+        decoder = params("-a") map AvroCodec.resolve
       } yield {
         val cursor = KafkaWatchCursor(topic, groupId, partition = 0, offset = 0L, consumer, iterator, decoder)
         updateWatchCursor(cursor, cursor.partition, cursor.offset, autoClose = false)
@@ -916,7 +912,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     val topicAndGroup = getTopicAndGroup(params)
 
     // was a decoder defined?
-    val decoder_? = params("-a") map (lookupAvroDecoder(_)(config))
+    val decoder_? = params("-a") map AvroCodec.resolve
 
     Future {
       watchCursors.get(topicAndGroup) flatMap { cursor =>
@@ -951,7 +947,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
   }
 
   private def getAvroDecoder(params: UnixLikeArgs)(implicit config: TxConfig): Option[AvroDecoder] = {
-    params("-a") map lookupAvroDecoder
+    params("-a") map AvroCodec.resolve
   }
 
   private def getTopicAndGroup(params: UnixLikeArgs): TopicAndGroup = {

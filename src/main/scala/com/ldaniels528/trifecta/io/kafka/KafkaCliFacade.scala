@@ -4,7 +4,7 @@ import java.util.Date
 
 import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
-import com.ldaniels528.trifecta.io.kafka.KafkaFacade._
+import com.ldaniels528.trifecta.io.kafka.KafkaCliFacade._
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer._
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.io.{AsyncIO, KeyAndMessage, OutputSource}
@@ -18,10 +18,10 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
- * Apache Kafka Facade
+ * Kafka CLI Facade
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaFacade(correlationId: Int = 0) {
+class KafkaCliFacade(correlationId: Int = 0) {
   private var publisher_? : Option[KafkaPublisher] = None
 
   /**
@@ -90,7 +90,7 @@ class KafkaFacade(correlationId: Int = 0) {
       KafkaMicroConsumer.getConsumerList(topicPrefix) map { c =>
         val topicOffset = getLastOffset(c.topic, c.partition)
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-        ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta)
+        ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta, c.lastModified.map(new Date(_)))
       }
     }
 
@@ -99,7 +99,7 @@ class KafkaFacade(correlationId: Int = 0) {
       KafkaMicroConsumer.getSpoutConsumerList() map { c =>
         val topicOffset = getLastOffset(c.topic, c.partition)
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-        ConsumerDelta(c.topologyName, c.topic, c.partition, c.offset, topicOffset, delta)
+        ConsumerDelta(c.topologyName, c.topic, c.partition, c.offset, topicOffset, delta, c.lastModified.map(new Date(_)))
       }
     }
 
@@ -287,13 +287,13 @@ class KafkaFacade(correlationId: Int = 0) {
  * Kafka Facade Singleton
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object KafkaFacade {
+object KafkaCliFacade {
 
   case class AvroRecord(field: String, value: Any, `type`: String)
 
   case class AvroVerification(verified: Int, failed: Int)
 
-  case class ConsumerDelta(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], messagesLeft: Option[Long])
+  case class ConsumerDelta(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], messagesLeft: Option[Long], lastModified: Option[Date])
 
   case class Inbound(topic: String, partition: Int, startOffset: Long, endOffset: Long, change: Long, msgsPerSec: Double, lastCheckTime: Date)
 

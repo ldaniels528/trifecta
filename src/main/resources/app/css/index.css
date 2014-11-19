@@ -1,0 +1,120 @@
+a {
+    cursor: pointer;
+}
+
+body {
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+fieldset {
+    border-color: #cccccc;
+}
+
+legend {
+    color: #999999
+}
+
+table {
+    border-collapse: collapse; border-spacing: 0px
+}
+
+th {
+    text-align: left
+}
+
+.clickable { cursor: pointer; }
+
+.highlighted {
+    background: #55aaff;
+    color: #ffffff;
+}
+
+.messages { color: #00cc00 }
+
+.negative { color: #f00000 }
+.positive { color: #00cc00 }
+
+.middle { vertical-align: middle }
+
+.separator { margin-top: 20px }
+
+.title1 { color: #f00000 }
+
+.title2 { color: #0000ff }
+
+.title3 { color: #00a000 }
+
+.decoder_container {
+    clear: both;
+    width: auto;
+    height: 200px;
+    overflow: auto;
+}
+
+.block {
+    display: block;
+}
+
+.full_block {
+    display: block;
+    width: 100%;
+}
+
+.inline {
+    display: inline;
+}
+
+.input-mir {
+    width: 100px;
+    height: 24px;
+}
+
+.input_block {
+    display: inline;
+    height: 50px;
+    border: 1px solid #bbbbbb;
+    border-radius: 5px 5px 5px 5px;
+    background: #eeeeee;
+    padding: 3px;
+    margin-right: 3px
+}
+
+.leaders_and_replicas {
+    clear: both;
+    width: auto;
+    height: 150px;
+    overflow: auto;
+}
+
+.message_panel {
+    display: block;
+    height: 540px;
+    border: 1px solid #cccccc;
+    border-radius: 5px 5px 5px 5px;
+    background: #eeeeee;
+    padding: 10px
+}
+
+.messages_and_offsets {
+    clear: both;
+    width: auto;
+    height: 150px;
+    overflow: auto;
+}
+
+.streaming_topics_container {
+    clear: both;
+    width: auto;
+    height: 500px;
+    overflow: auto;
+}
+
+.topics_container {
+    clear: both;
+    width: auto;
+    height: 200px;
+    overflow: auto;
+}
+
+.version { font-size: 12pt }

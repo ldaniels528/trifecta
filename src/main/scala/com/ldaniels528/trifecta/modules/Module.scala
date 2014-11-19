@@ -7,7 +7,6 @@ import com.ldaniels528.trifecta.TxRuntimeContext
 import com.ldaniels528.trifecta.command.parser.CommandParser._
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
 import com.ldaniels528.trifecta.io._
-import com.ldaniels528.trifecta.io.avro.AvroCodec
 import com.ldaniels528.trifecta.modules.Module.formatTypes
 import com.ldaniels528.trifecta.util.ProcessHelper._
 import net.liftweb.json._
@@ -16,7 +15,7 @@ import net.liftweb.json._
  * Represents a dynamically loadable module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait Module extends AvroCodec {
+trait Module {
 
   /**
    * Returns the commands that are bound to the module

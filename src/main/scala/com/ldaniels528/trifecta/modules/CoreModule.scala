@@ -9,13 +9,12 @@ import com.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.ldaniels528.trifecta._
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.io._
-import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroFileInputSource, AvroFileOutputSource}
+import com.ldaniels528.trifecta.io.avro.{AvroFileInputSource, AvroFileOutputSource}
 import com.ldaniels528.trifecta.io.json.{JSONFileInputSource, JSONFileOutputSource}
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.PathHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
-import com.ldaniels528.trifecta.web.EmbeddedWebServer
 import org.apache.commons.io.IOUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,7 +27,7 @@ import scala.util.{Properties, Try}
  * Core Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class CoreModule(config: TxConfig) extends Module with AvroCodec {
+class CoreModule(config: TxConfig) extends Module {
   private val out: PrintStream = config.out
 
   // define the process parsing regular expression

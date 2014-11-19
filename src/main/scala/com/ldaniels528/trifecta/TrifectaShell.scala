@@ -3,8 +3,11 @@ package com.ldaniels528.trifecta
 import java.io.PrintStream
 
 import com.ldaniels528.trifecta.TxConsole._
+import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.rest.EmbeddedWebServer
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -16,10 +19,12 @@ import scala.util.{Failure, Success, Try}
  * Trifecta Console Shell Application
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
+class TrifectaShell(rt: TxRuntimeContext) {
+  private val config = rt.config
+
   // redirect standard output
-  val out: PrintStream = rt.config.out
-  val err: PrintStream = rt.config.err
+  val out: PrintStream = config.out
+  val err: PrintStream = config.err
 
   // load the history, then schedule session history file updates
   val history: History = SessionManagement.history
@@ -44,7 +49,7 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
    * Executes the given command line expression
    * @param line the given command line expression
    */
-  def execute(line: String): Unit = {
+  def execute(line: String) {
     rt.interpret(line) match {
       case Success(result) =>
         // if debug is enabled, display the object value and class name
@@ -145,7 +150,8 @@ class TrifectaShell(config: TxConfig, rt: TxRuntimeContext) {
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object TrifectaShell {
-  val VERSION = "0.1.8"
+  private val logger = LoggerFactory.getLogger(getClass)
+  val VERSION = "0.18.1"
 
   /**
    * Application entry point
@@ -162,23 +168,28 @@ object TrifectaShell {
     // load the configuration
     val config = TxConfig.load(TxConfig.configFile)
 
-    // create the runtime context
-    val rt = new TxRuntimeContext(config)
+    if (args.contains("--http-start")) {
+      val zk = ZKProxy(config.zooKeeperConnect)
+      new EmbeddedWebServer(zk).start()
 
-    // initialize the shell
-    val console = new TrifectaShell(config, rt)
-
-    // if arguments were not passed, stop.
-    args.toList match {
-      case Nil =>
-        console.shell()
-      case params =>
-        val line = params mkString " "
-        console.execute(line)
+      logger.info("Open your browser and navigate to http://localhost:8888")
     }
+    else {
+      // initialize the shell
+      val console = new TrifectaShell(new TxRuntimeContext(config))
 
-    // make sure all threads die
-    sys.exit(0)
+      // if arguments were not passed, stop.
+      args.toList match {
+        case Nil =>
+          console.shell()
+        case params =>
+          val line = params mkString " "
+          console.execute(line)
+      }
+
+      // make sure all threads die
+      sys.exit(0)
+    }
   }
 
 }
