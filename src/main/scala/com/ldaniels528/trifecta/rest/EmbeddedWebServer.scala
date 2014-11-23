@@ -2,7 +2,8 @@ package com.ldaniels528.trifecta.rest
 
 import java.io.ByteArrayOutputStream
 
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import com.ldaniels528.trifecta.TxConfig
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer._
 import com.ldaniels528.trifecta.util.Resource
@@ -12,7 +13,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.commons.io.IOUtils
 import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus}
 import org.mashupbots.socko.infrastructure.Logger
-import org.mashupbots.socko.routes.{GET, Routes}
+import org.mashupbots.socko.routes.{GET, POST, Routes}
 import org.mashupbots.socko.webserver.{WebServer, WebServerConfig}
 import org.slf4j.LoggerFactory
 
@@ -22,10 +23,11 @@ import scala.util.Try
  * Embedded Web Server
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class EmbeddedWebServer(zk: ZKProxy, concurrency: Int = 5) extends Logger {
+class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(actorConfig))
   private var webServer: Option[WebServer] = None
-  private val facade = new KafkaRestFacade(zk)
+  private val facade = new KafkaRestFacade(config, zk)
+  private val concurrency = config.getOrElse("trifecta.query.concurrency", "10").toInt
 
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() = EmbeddedWebServer.this.stop()
@@ -36,10 +38,11 @@ class EmbeddedWebServer(zk: ZKProxy, concurrency: Int = 5) extends Logger {
   var router = 0
 
   val routes = Routes({
-    case GET(request) =>
-      actors(router % actors.length) ! request
-      router += 1
+    case POST(request) => actor ! request
+    case GET(request) => actor ! request
   })
+
+  def actor: ActorRef = actors(router % actors.length) and (_ => router += 1)
 
   /**
    * Starts the embedded app server
@@ -98,20 +101,19 @@ object EmbeddedWebServer {
   class WebContentHandler(facade: KafkaRestFacade) extends Actor {
     def receive = {
       case event: HttpRequestEvent =>
-        val endPoint = event.request.endPoint
+        val startTime = System.nanoTime()
+        val request = event.request
         val response = event.response
-        val path = translatePath(endPoint.path)
+        val path = translatePath(request.endPoint.path)
 
-        path match {
-          case s =>
-            getContent(s) map { bytes =>
-              getMimeType(s) foreach (response.contentType = _)
-              logger.info(s"Retrieved resource '$s' (${bytes.length} bytes)")
-              response.write(bytes)
-            } getOrElse {
-              logger.error(s"Resource '$path' not found")
-              response.write(HttpResponseStatus.NOT_FOUND)
-            }
+        getContent(path, request.content.toFormDataMap) map { bytes =>
+          getMimeType(path) foreach (response.contentType = _)
+          val elapsedTime = (System.nanoTime() - startTime).toDouble / 1e+6
+          logger.info(f"Retrieved resource '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
+          response.write(bytes)
+        } getOrElse {
+          logger.error(s"Resource '$path' not found")
+          response.write(HttpResponseStatus.NOT_FOUND)
         }
       //context.stop(self)
     }
@@ -121,9 +123,9 @@ object EmbeddedWebServer {
      * @param path the given resource path (e.g. "/images/greenLight.png")
      * @return the option of an array of bytes representing the content
      */
-    private def getContent(path: String): Option[Array[Byte]] = {
+    private def getContent(path: String, dataMap: Map[String, List[String]]): Option[Array[Byte]] = {
       path match {
-        case s if s.startsWith(RestRoot) => processRestRequest(path)
+        case s if s.startsWith(RestRoot) => processRestRequest(path, dataMap)
         case s =>
           Resource(s) map { url =>
             new ByteArrayOutputStream(1024) use { out =>
@@ -156,23 +158,32 @@ object EmbeddedWebServer {
       }
     }
 
-    private def processRestRequest(path: String): Option[Array[Byte]] = {
-      import net.liftweb.json._
+    private def processRestRequest(path: String, dataMap: Map[String, List[String]]): Option[Array[Byte]] = {
+      import java.net.URLDecoder.decode
+
+import net.liftweb.json._
 
       // get the action and path arguments
       val params = path.indexOptionOf(RestRoot)
         .map(index => path.substring(index + RestRoot.length + 1))
         .map(_.split("[/]")) map (a => (a.head, a.tail.toList))
 
+      params foreach { case (action, args) => logger.info(s"processRestRequest Action: $action ~> values = $args")}
+      dataMap foreach { case (key, values) => logger.info(s"processRestRequest Content: '$key' ~> values = $values")}
+
       // execute the action and get the JSON value
       val response: Option[JValue] = params flatMap { case (action, args) =>
         action match {
+          case "executeQuery" => args match {
+            case queryString :: limit :: Nil => Option(facade.executeQuery(decode(queryString, "UTF8")))
+            case _ => None
+          }
           case "findOne" => args match {
-            case topic :: decoderURL :: criteria :: Nil => Option(facade.findOne(topic, decoderURL, criteria))
+            case topic :: decoderURL :: criteria :: Nil => Option(facade.findOne(topic, decoderURL, decode(criteria, "UTF8")))
             case _ => None
           }
           case "getConsumers" if args.isEmpty => Option(facade.getConsumers)
-          case "getConsumerMapping" if args.isEmpty => Option(facade.getConsumerMapping)
+          case "getConsumerSet" if args.isEmpty => Option(facade.getConsumerSet)
           case "getDecoders" if args.isEmpty => Option(facade.getDecoders)
           case "getMessage" => args match {
             case topic :: partition :: offset :: decoderURL :: Nil => Option(facade.getMessage(topic, partition.toInt, offset.toLong, Option(decoderURL)))
@@ -203,9 +214,8 @@ object EmbeddedWebServer {
      * @return the corresponding physical path
      */
     private def translatePath(path: String) = path match {
-      case s if s.startsWith(RestRoot) => s
-      case "/" => s"$DocumentRoot/index.htm"
-      case s => s"$DocumentRoot$s"
+      case "/" | "/index.html" => s"$DocumentRoot/index.htm"
+      case s => s
     }
   }
 

@@ -35,4 +35,17 @@ object ResourceHelper {
 
   }
 
+  /**
+   * A collection of useful chaining methods
+   * @param value the return value
+   */
+  implicit class FlowExtensions[T](val value: T) extends AnyVal {
+
+    def and[S](block: T => S): T = {
+      block(value)
+      value
+    }
+
+  }
+
 }

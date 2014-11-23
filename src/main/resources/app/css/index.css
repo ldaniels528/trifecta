@@ -7,8 +7,17 @@ body {
     margin-right: 50px;
 }
 
+.error {
+    font-weight: bold;
+    color: #ff0000;
+}
+
 fieldset {
     border-color: #cccccc;
+}
+
+img.top {
+    vertical-align: top;
 }
 
 legend {
@@ -37,7 +46,7 @@ th {
 
 .middle { vertical-align: middle }
 
-.separator { margin-top: 20px }
+.separator { margin-top: 10px }
 
 .title1 { color: #f00000 }
 

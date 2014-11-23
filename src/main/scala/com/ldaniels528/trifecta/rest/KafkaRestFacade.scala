@@ -1,6 +1,8 @@
 package com.ldaniels528.trifecta.rest
 
-import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryTokenizer
+import java.util.concurrent.Executors
+
+import com.ldaniels528.trifecta.command.parser.bdql.{BigDataQueryParser, BigDataQueryTokenizer}
 import com.ldaniels528.trifecta.io.avro.AvroCodec
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer}
@@ -11,21 +13,36 @@ import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
 import com.ldaniels528.trifecta.util.ResourceHelper._
+import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
 import net.liftweb.json.{Extraction, JValue}
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
-import scala.util.Success
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Kafka REST Facade
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaRestFacade(zk: ZKProxy, correlationId: Int = 0) {
-  implicit val formats = net.liftweb.json.DefaultFormats
-  implicit val zkProxy: ZKProxy = zk
+case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0) {
+  private implicit val formats = net.liftweb.json.DefaultFormats
+  private implicit val zkProxy: ZKProxy = zk
   private val logger = LoggerFactory.getLogger(getClass)
+
+  // define the custom thread pool
+  private implicit val ec = new ExecutionContext {
+    private val threadPool = Executors.newFixedThreadPool(50)
+
+    def execute(runnable: Runnable) = threadPool.submit(runnable)
+
+    def reportFailure(t: Throwable) = logger.error("Error from thread pool", t)
+  }
+
+  private val rt = TxRuntimeContext(config)
+
   private val decoders = TrieMap[String, Decoder](
     "(None)" -> Decoder(LoopBackCodec),
     "Json" -> Decoder(JsonDecoder),
@@ -34,15 +51,35 @@ class KafkaRestFacade(zk: ZKProxy, correlationId: Int = 0) {
 
   private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
+  def executeQuery(queryString: String): JValue = {
+    Try {
+      logger.info(s"queryString = '$queryString'")
+      val asyncIO = rt.executeQuery(BigDataQueryParser(queryString))
+      Await.result(asyncIO.task, 30.minutes)
+    } match {
+      case Success(result) =>
+        logger.info(s"result = $result")
+        Extraction.decompose(result)
+      case Failure(e) =>
+        logger.error("Query error", e)
+        Extraction.decompose(ErrorJs(e.getMessage))
+    }
+  }
+
+
   def findOne(topic: String, decoderURL: String, criteria: String): JValue = {
     logger.info(s"topic = '$topic', decoderURL = '$decoderURL', criteria = '$criteria")
     val decoder_? = decoders.get(decoderURL) map (_.decoder)
-    /*
     val outcome = KafkaMicroConsumer.findOne(topic, brokers, correlationId = 0, parseCondition(criteria, decoder_?)) map (
-      _ flatMap { case (partition, md) =>
-        decoder_?.map(_.decode(md.message))
-      })*/
-    Extraction.decompose(())
+      _ map { case (partition, md) => (partition, md.offset, decoder_?.map(_.decode(md.message)))
+      })
+    Await.result(outcome, 30.minutes) match {
+      case Some((partition, offset, Some(Success(message)))) =>
+        Extraction.decompose(MessageJs(`type` = "json", payload = message.toString, topic = Option(topic), partition = Some(partition), offset = Some(offset)))
+      case other =>
+        logger.warn(s"Failed to retrieve a message: result => $other")
+        Extraction.decompose(())
+    }
   }
 
   /**
@@ -86,7 +123,7 @@ class KafkaRestFacade(zk: ZKProxy, correlationId: Int = 0) {
    * Returns all consumers for all topics
    * @return a list of consumers
    */
-  def getConsumerMapping: JValue = {
+  def getConsumerSet: JValue = {
     val consumers = getConsumerGroupsNative ++ getConsumerGroupsPM
 
     Extraction.decompose(consumers.groupBy(_.topic) map { case (topic, consumersA) =>
@@ -263,7 +300,9 @@ object KafkaRestFacade {
 
   case class DecoderJs(name: String, `type`: String)
 
-  case class MessageJs(`type`: String, payload: Any)
+  case class ErrorJs(message: String, `type`: String = "error")
+
+  case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
 

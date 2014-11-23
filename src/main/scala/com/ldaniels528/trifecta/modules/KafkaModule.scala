@@ -744,7 +744,7 @@ class KafkaModule(config: TxConfig) extends Module {
     params.args match {
       case action :: Nil => action match {
         case "start" =>
-          httpServer = Option(new EmbeddedWebServer(zk, concurrency = 10))
+          httpServer = Option(new EmbeddedWebServer(config, zk))
           httpServer.foreach(_.start())
         case "status" =>
           val status = if (httpServer.isDefined) "Running" else "Stopped"

@@ -170,7 +170,7 @@ object TrifectaShell {
 
     if (args.contains("--http-start")) {
       val zk = ZKProxy(config.zooKeeperConnect)
-      new EmbeddedWebServer(zk).start()
+      new EmbeddedWebServer(config, zk).start()
 
       logger.info("Open your browser and navigate to http://localhost:8888")
     }
