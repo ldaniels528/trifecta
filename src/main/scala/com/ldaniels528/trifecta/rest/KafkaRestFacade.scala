@@ -10,6 +10,7 @@ import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
+import com.ldaniels528.trifecta.messages.query.{BigDataSelection, IOSource, QueryResult}
 import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
 import com.ldaniels528.trifecta.util.ResourceHelper._
@@ -49,21 +50,32 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     "PlainText" -> Decoder(PlainTextCodec),
     "quotes.avsc" -> Decoder(AvroCodec.addDecoder("quotes.avsc", quoteSchema)))
 
+  // TODO all decoders will be accessed via TxRuntimeContext
+  rt.registerDecoder("quotes.avsc", AvroCodec.addDecoder("quotes.avsc", quoteSchema))
+
   private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
   def executeQuery(queryString: String): JValue = {
+    logger.info(s"queryString = '$queryString'")
     Try {
-      logger.info(s"queryString = '$queryString'")
-      val asyncIO = rt.executeQuery(BigDataQueryParser(queryString))
+      val asyncIO = rt.executeQuery(compileQuery(queryString))
       Await.result(asyncIO.task, 30.minutes)
     } match {
-      case Success(result) =>
-        logger.info(s"result = $result")
-        Extraction.decompose(result)
+      case Success(result: QueryResult) => Extraction.decompose(result)
       case Failure(e) =>
         logger.error("Query error", e)
         Extraction.decompose(ErrorJs(e.getMessage))
     }
+  }
+
+  private def compileQuery(queryString: String): BigDataSelection = {
+    val query = BigDataQueryParser(queryString)
+    if (query.source.decoderURL == "default") {
+      val topic = query.source.deviceURL
+      val decoderURL = "quotes.avsc" // TODO change to lookup
+      query.copy(source = IOSource(topic, decoderURL))
+    }
+    else query
   }
 
 

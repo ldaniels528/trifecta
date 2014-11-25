@@ -175,7 +175,7 @@ import net.liftweb.json._
       val response: Option[JValue] = params flatMap { case (action, args) =>
         action match {
           case "executeQuery" => args match {
-            case queryString :: limit :: Nil => Option(facade.executeQuery(decode(queryString, "UTF8")))
+            case queryString :: Nil => Option(facade.executeQuery(decode(queryString, "UTF8")))
             case _ => None
           }
           case "findOne" => args match {

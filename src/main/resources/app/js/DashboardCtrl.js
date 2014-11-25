@@ -13,6 +13,7 @@
                 $scope.topics = [];
                 $scope.hideEmptyTopics = false;
                 $scope.realTimeViewMode = 'consumers';
+                $scope.loading = 0;
 
                 clearDecoder();
                 clearMessage();
@@ -159,19 +160,25 @@
                 };
 
                 $scope.loadMessage = function () {
-                    clearMessage();
                     if ($scope.topic.totalMessages > 0) {
                         var topic = $scope.topic.topic;
                         var partition = $scope.partition.partition;
                         var offset = $scope.partition.offset;
                         var decoder = $scope.decoder.name;
 
+                        clearMessage();
+
+                        $scope.loading++;
+
+                        $log.info("Loading message for topic=" + topic + ", partition=" + partition + ", offset=" + offset + ", decoder=" + decoder);
                         DashboardSvc.getMessage(topic, partition, offset, decoder).then(
                             function (message) {
                                 $scope.message = message;
+                                if($scope.loading) $scope.loading--;
                             },
                             function (err) {
                                 $log.error(err);
+                                if($scope.loading) $scope.loading--;
                             });
                     }
                 };
@@ -202,6 +209,19 @@
                     var offset = $scope.partition.offset;
                     if (offset && offset > $scope.partition.startOffset) {
                         $scope.partition.offset -= 1;
+                        $scope.loadMessage();
+                    }
+                };
+
+                $scope.switchToMessage = function (topicID, partitionID, offset) {
+                    $log.info("switchToMessage: topicID = " + topicID + ", partitionID = " + partitionID + ", offset = " + offset);
+                    var topic = findTopicByName(topicID);
+                    var partition = topic ? findPartitionByID(topic, partitionID) : null;
+                    if (partition) {
+                        $scope.topic = topic;
+                        $scope.partition = partition;
+                        $scope.partition.offset = offset;
+                        $scope.tab = $scope.tabs[1]; // Query
                         $scope.loadMessage();
                     }
                 };
@@ -323,6 +343,23 @@
                  * Initializes all reference data
                  */
                 $scope.initReferenceData = function () {
+                    // load the decoders
+                    DashboardSvc.getDecoders().then(
+                        function (decoders) {
+                            if (decoders && decoders.length > 0) {
+                                $scope.decoders = decoders;
+                                $scope.decoder = $scope.decoders[0];
+                            }
+                            else {
+                                console.log("No decoders found");
+                                $scope.decoders = [];
+                                clearDecoder();
+                            }
+                        },
+                        function (err) {
+                            $log.error(err);
+                        });
+
                     // load the topics
                     DashboardSvc.getTopics().then(
                         function (topics) {
@@ -350,23 +387,6 @@
                             else {
                                 console.log("No consumer mappings found");
                                 $scope.consumerMapping = [];
-                            }
-                        },
-                        function (err) {
-                            $log.error(err);
-                        });
-
-                    // load the decoders
-                    DashboardSvc.getDecoders().then(
-                        function (decoders) {
-                            if (decoders && decoders.length > 0) {
-                                $scope.decoders = decoders;
-                                $scope.decoder = $scope.decoders[0];
-                            }
-                            else {
-                                console.log("No decoders found");
-                                $scope.decoders = [];
-                                clearDecoder();
                             }
                         },
                         function (err) {

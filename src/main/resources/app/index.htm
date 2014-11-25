@@ -137,8 +137,8 @@
                     <img class="clickable middle" src="/app/images/buttons/navigation/message-next.gif" ng-click="nextMessage()" title="move to next message">
                     <img class="clickable middle" src="/app/images/buttons/navigation/message-last.gif" ng-click="lastMessage()" title="move to last message">
                 </div>
-                <div class="input_block"  ng-show="decoder.type == 'avro'">
-                    <img class="clickable middle" src="/app/images/buttons/search.png" ng-click="messageFinderPopup()" title="search for a message">
+                <div class="input_block" ng-show="decoder.type == 'avro'">
+                    <img class="clickable middle" ng-src="/app/images/{{loading ? 'status/loading.gif' : 'buttons/search.png'}}" ng-click="messageFinderPopup()" title="search for a message">
                 </div>
                 <div class="input_block" style="width: 250px">
                     Decoder
@@ -166,7 +166,7 @@
 
     <!-- Query -->
     <div ng-show="tab.name == 'Query'" style="display: block; width: 100%">
-        <div style="display: inline; width: 20.8%; height: 550px; float: left; border-right: 1px solid #cccccc">
+        <div style="display: inline; width: 20.8%; height: 587px; float: left; border-right: 1px solid #cccccc">
             <!-- Topics -->
             <fieldset>
                 <legend>Topics</legend>
@@ -202,21 +202,56 @@
             </fieldset>
         </div>
         <div ng-controller="QueriesCtrl" style="display: inline; width: 79%;  height: 625px; float: right">
-            <div style="width: 100%; height: 40%">
+            <div style="width: 100%; height: 40%; padding: 2px 2px 2px 2px;">
                 <textarea ng-model="queryString" class="q_editor" placeholder="Enter query here" ng-disabled="{{ running }}">
                 </textarea>
             </div>
             <div style="width: 100%; height: 59%">
                 <div class="q_action_bar">
-                    <img class="q_action_icon" ng-src="/app/images/{{ running ? 'status/loading24' : 'buttons/run' }}.gif" ng-click="executeQuery()" title="Execute query">
-                    <img class="q_action_icon" src="/app/images/buttons/favorites_add24.png" ng-click="addToFavorites()" title="Add query to Favorites">
-                    <img class="q_action_icon" src="/app/images/buttons/download.gif" ng-click="downloadResults()" title="Download results">
-                    <img class="q_action_icon" src="/app/images/buttons/exportToExcel.png" ng-click="exportResults()" title="Export results to Excel">
+                    <div style="display: inline; float: left">
+                        <img class="q_action_icon" ng-src="/app/images/{{ running ? 'status/loading24' : 'buttons/run' }}.gif" ng-click="executeQuery()" title="Execute query">
+                        <img class="q_action_icon" src="/app/images/buttons/favorites_add24.png" ng-click="addToFavorites()" title="Add query to Favorites">
+                        <img class="q_action_icon" src="/app/images/buttons/download.png" ng-click="downloadResults()" title="Download results">
+                     </div>
+                    <div style="display: inline; float: right">
+                        <span ng-show="results" style="margin: 15px; vertical-align: middle">
+                            {{ results.values.length | number }} result(s) in
+                            <span class="positive">{{ results.runTimeMillis | number:2 }} msecs</span>
+                        </span>
+                    </div>
+                    <br style="clear: both">
                 </div>
                 <div style="width: 100%; min-height: 298px; background: #eeeeee; border: 1px solid #cccccc">
                     <span class="error" ng-show="errorMessage">
                         <img class="middle" src="/app/images/status/redlight.png"> {{ errorMessage }}
                     </span>
+                    <div class="q_results_container">
+                        <table style="width: 100%" ng-show="results">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #aaaaaa">
+                                    <th ng-repeat="label in mappings.labels">
+                                        <a ng-click="toggleSortField(label)" title="sort by {{ label }}">
+                                            {{ label }}
+                                            <img ng-show="sortField == label" class="middle clickable"
+                                                 ng-src="/app/images/buttons/sort_{{ ascending ? 'up' : 'down' }}.gif">
+                                        </a>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="row in results.values" ng-class-even="'q_even'" ng-class-odd="'q_odd'">
+                                    <td ng-repeat="column in mappings.labels">
+                                        <span ng-show="$index == 0">
+                                            <a ng-click="switchToMessage(results.topic, partitionAt($parent.$index), offsetAt($parent.$index))">
+                                                <span style="color: #aa00aa">{{ row[column] }}</span>
+                                            </a>
+                                        </span>
+                                        <span ng-hide="$index == 0">{{ row[column] }}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

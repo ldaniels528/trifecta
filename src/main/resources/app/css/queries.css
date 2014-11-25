@@ -1,8 +1,19 @@
 .q_editor {
     background: #fffff0;
-    width: 100%;
-    height: 99%;
-    padding: 4px
+    border: 1px solid #cccccc;
+    width:100%;
+    height:100%;
+    box-sizing: border-box;         /* For IE and modern versions of Chrome */
+    -moz-box-sizing: border-box;    /* For Firefox                          */
+    -webkit-box-sizing: border-box; /* For Safari                           */
+}
+
+.q_even {
+    background-color: #ffffff;
+}
+
+.q_odd {
+    background-color: #eeffff;
 }
 
 .q_action_icon {
@@ -11,11 +22,10 @@
 }
 
 .q_action_bar {
-    width: 146px;
+    width: 100%;
     height: 32px;
-    float: right;
-    background: #ddeeff;
-    border: 1px solid #cccccc;
+    background: #eeeeee;
+    border: 1px solid #bbbbbb;
     border-radius: 4px;
     margin: 2px 2px 2px 2px;
 }
@@ -24,6 +34,13 @@
     clear: both;
     width: auto;
     height: 125px;
+    overflow: auto;
+}
+
+.q_results_container {
+    clear: both;
+    width: auto;
+    height: 300px;
     overflow: auto;
 }
 

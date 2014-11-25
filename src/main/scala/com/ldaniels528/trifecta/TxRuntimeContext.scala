@@ -12,6 +12,7 @@ import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 import org.slf4j.LoggerFactory
 
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
@@ -26,10 +27,11 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   // create the result handler
   private val resultHandler = new TxResultHandler(config)
 
-  // create the module manager
-  val moduleManager = new ModuleManager()(this)
+  // support registering decoders
+  private val decoders = TrieMap[String, MessageDecoder[_]]()
 
-  // load the built-in modules
+  // create the module manager and load the built-in modules
+  val moduleManager = new ModuleManager()(this)
   moduleManager ++= Seq(
     new CassandraModule(config),
     new CoreModule(config),
@@ -79,6 +81,20 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     }
   }
 
+  /**
+   * Attempts to retrieve a message decoder by name
+   * @param name the name of the desired [[MessageDecoder]]
+   * @return an option of a [[MessageDecoder]]
+   */
+  def lookupDecoderByName(name: String): Option[MessageDecoder[_]] = decoders.get(name)
+
+  /**
+   * Registers a message decoder, which can be later retrieved by name
+   * @param name the name of the [[MessageDecoder]]
+   * @param decoder the [[MessageDecoder]] instance
+   */
+  def registerDecoder(name: String, decoder: MessageDecoder[_]): Unit = decoders(name) = decoder
+
   def shutdown(): Unit = moduleManager.shutdown()
 
   /**
@@ -101,7 +117,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
       case BigDataSelection(source, destination, fields, criteria, limit) =>
         // get the input source and its decoder
         val inputSource: Option[InputSource] = getInputHandler(source.deviceURL)
-        val inputDecoder: Option[MessageDecoder[_]] = MessageCodecs.getDecoder(source.decoderURL)
+        val inputDecoder: Option[MessageDecoder[_]] = lookupDecoderByName(source.decoderURL) ?? MessageCodecs.getDecoder(source.decoderURL)
 
         // get the output source and its encoder
         val outputSource: Option[OutputSource] = destination.flatMap(src => getOutputHandler(src.deviceURL))
