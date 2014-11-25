@@ -214,7 +214,9 @@
                     <img class="q_action_icon" src="/app/images/buttons/exportToExcel.png" ng-click="exportResults()" title="Export results to Excel">
                 </div>
                 <div style="width: 100%; min-height: 298px; background: #eeeeee; border: 1px solid #cccccc">
-                    <span class="error" ng-show="errorMessage">{{ errorMessage }}</span>
+                    <span class="error" ng-show="errorMessage">
+                        <img class="middle" src="/app/images/status/redlight.png"> {{ errorMessage }}
+                    </span>
                 </div>
             </div>
         </div>
@@ -224,7 +226,7 @@
     <!-- Observe -->
     <div ng-show="tab.name == 'Observe'" style="display: block; width: 100%">
         <fieldset>
-            <legend>Real-time View</legend>
+            <legend>Real-time Topics and Consumers</legend>
 
             <!-- tabs -->
             <div style="display: inline; float: left; width: 14%; height: 500px; border-right: 1px solid #cccccc; margin-right: 5px">

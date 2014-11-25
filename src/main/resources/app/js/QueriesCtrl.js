@@ -10,7 +10,7 @@
             $scope.running = false;
             $scope.queryString =
                 'select symbol, lastTrade, open, prevClose, high, low, volume \n' +
-                'from "shocktrade.quotes.avro" with "avro:file:avro/quotes" \n' +
+                'from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc" \n' +
                 'where volume >= 1,000,000 and lastTrade <= 1';
 
             $scope.jobs = [];
@@ -20,6 +20,7 @@
              * Executes the BDQL query representing by the query string
              */
             $scope.executeQuery = function () {
+                $scope.errorMessage = null;
                 $scope.running = true;
 
                 // execute the query
