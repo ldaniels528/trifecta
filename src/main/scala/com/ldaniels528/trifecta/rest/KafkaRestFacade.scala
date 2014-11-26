@@ -3,15 +3,13 @@ package com.ldaniels528.trifecta.rest
 import java.util.concurrent.Executors
 
 import com.ldaniels528.trifecta.command.parser.bdql.{BigDataQueryParser, BigDataQueryTokenizer}
-import com.ldaniels528.trifecta.io.avro.AvroCodec
-import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
+import com.ldaniels528.trifecta.io.json.JsonHelper
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
-import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
+import com.ldaniels528.trifecta.messages.MessageDecoder
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
-import com.ldaniels528.trifecta.messages.query.{BigDataSelection, IOSource, QueryResult}
-import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
+import com.ldaniels528.trifecta.messages.query.{BigDataSelection, QueryResult}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
@@ -19,7 +17,6 @@ import kafka.common.TopicAndPartition
 import net.liftweb.json.{Extraction, JValue}
 import org.slf4j.LoggerFactory
 
-import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success, Try}
@@ -44,14 +41,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   private val rt = TxRuntimeContext(config)
 
-  private val decoders = TrieMap[String, Decoder](
-    "(None)" -> Decoder(LoopBackCodec),
-    "Json" -> Decoder(JsonDecoder),
-    "PlainText" -> Decoder(PlainTextCodec),
-    "quotes.avsc" -> Decoder(AvroCodec.addDecoder("quotes.avsc", quoteSchema)))
-
-  // TODO all decoders will be accessed via TxRuntimeContext
-  rt.registerDecoder("quotes.avsc", AvroCodec.addDecoder("quotes.avsc", quoteSchema))
+  // load & register all decoders for their respective topics
+  for {decoders <- config.getDecoders; decoder <- decoders} rt.registerDecoder(decoder.topic, decoder.decoder)
 
   private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
@@ -70,18 +61,17 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   private def compileQuery(queryString: String): BigDataSelection = {
     val query = BigDataQueryParser(queryString)
-    if (query.source.decoderURL == "default") {
-      val topic = query.source.deviceURL
-      val decoderURL = "quotes.avsc" // TODO change to lookup
-      query.copy(source = IOSource(topic, decoderURL))
+    if (query.source.decoderURL != "default") query
+    else {
+      val topic = query.source.deviceURL.split("[:]").last
+      query.copy(source = query.source.copy(decoderURL = topic))
     }
-    else query
   }
 
 
-  def findOne(topic: String, decoderURL: String, criteria: String): JValue = {
-    logger.info(s"topic = '$topic', decoderURL = '$decoderURL', criteria = '$criteria")
-    val decoder_? = decoders.get(decoderURL) map (_.decoder)
+  def findOne(topic: String, criteria: String): JValue = {
+    logger.info(s"topic = '$topic', criteria = '$criteria")
+    val decoder_? = rt.lookupDecoderByName(topic)
     val outcome = KafkaMicroConsumer.findOne(topic, brokers, correlationId = 0, parseCondition(criteria, decoder_?)) map (
       _ map { case (partition, md) => (partition, md.offset, decoder_?.map(_.decode(md.message)))
       })
@@ -171,12 +161,6 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   /**
-   * Returns the JSON representation of the collection of decoders
-   * @return a [[JValue]] representing the decoders
-   */
-  def getDecoders: JValue = Extraction.decompose(decoders.map { case (name, decoder) => DecoderJs(name, decoder.`type`)})
-
-  /**
    * Returns the first offset for a given topic
    */
   def getFirstOffset(topic: String, partition: Int)(implicit zk: ZKProxy): Option[Long] = {
@@ -192,7 +176,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   def getMessage(topic: String, partition: Int, offset: Long, decoderURL: Option[String] = None): JValue = {
     val message_? = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetch(offset, fetchSize = 65535).headOption)
-    val decoder_? = decoderURL.flatMap(decoders.get) map (_.decoder)
+    val decoder_? = rt.lookupDecoderByName(topic)
     val decodedMessage = for {decoder <- decoder_?; data <- message_?} yield decoder.decode(data.message)
 
     val message: MessageJs = decodedMessage match {
@@ -245,13 +229,6 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     })
   }
 
-  def registerDecoder(name: String, decoderURL: String): Option[MessageDecoder[_]] = {
-    MessageCodecs.getDecoder(decoderURL) map { decoder =>
-      decoders(name) = Decoder(decoder)
-      decoder
-    }
-  }
-
   private def toByteArray(bytes: Array[Byte], columns: Int = 20): Seq[Seq[String]] = {
     def toHex(b: Byte): String = f"$b%02x"
     def toAscii(b: Byte): String = if (b >= 32 && b <= 127) b.toChar.toString else "."
@@ -270,47 +247,12 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaRestFacade {
-  private val quoteSchema =
-    """
-      |{
-      |    "type": "record",
-      |    "name": "CSVQuoteRecord",
-      |    "namespace": "com.shocktrade.avro",
-      |    "fields":[
-      |        { "name": "symbol", "type":"string", "doc":"stock symbol" },
-      |        { "name": "exchange", "type":["null", "string"], "doc":"stock exchange", "default":null },
-      |        { "name": "lastTrade", "type":["null", "double"], "doc":"last sale price", "default":null },
-      |        { "name": "tradeDate", "type":["null", "long"], "doc":"last sale date", "default":null },
-      |        { "name": "tradeTime", "type":["null", "string"], "doc":"last sale time", "default":null },
-      |        { "name": "ask", "type":["null", "double"], "doc":"ask price", "default":null },
-      |        { "name": "bid", "type":["null", "double"], "doc":"bid price", "default":null },
-      |        { "name": "change", "type":["null", "double"], "doc":"price change", "default":null },
-      |        { "name": "changePct", "type":["null", "double"], "doc":"price change percent", "default":null },
-      |        { "name": "prevClose", "type":["null", "double"], "doc":"previous close price", "default":null },
-      |        { "name": "open", "type":["null", "double"], "doc":"open price", "default":null },
-      |        { "name": "close", "type":["null", "double"], "doc":"close price", "default":null },
-      |        { "name": "high", "type":["null", "double"], "doc":"day's high price", "default":null },
-      |        { "name": "low", "type":["null", "double"], "doc":"day's low price", "default":null },
-      |        { "name": "volume", "type":["null", "long"], "doc":"day's volume", "default":null },
-      |        { "name": "marketCap", "type":["null", "double"], "doc":"market capitalization", "default":null },
-      |        { "name": "errorMessage", "type":["null", "string"], "doc":"error message", "default":null }
-      |    ],
-      |    "doc": "A schema for CSV quotes"
-      |}""".stripMargin
-
-  case class Decoder(decoder: MessageDecoder[_]) {
-
-    def `type`: String = MessageCodecs.getTypeName(decoder)
-
-  }
 
   case class ConsumerJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long])
 
   case class ConsumerTopicJs(topic: String, consumers: Seq[ConsumerConsumerJs])
 
   case class ConsumerConsumerJs(consumerId: String, details: Seq[ConsumerJs])
-
-  case class DecoderJs(name: String, `type`: String)
 
   case class ErrorJs(message: String, `type`: String = "error")
 

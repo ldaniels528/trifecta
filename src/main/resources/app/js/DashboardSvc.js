@@ -14,8 +14,8 @@
                     });
             };
 
-            service.findOne = function (topic, decoderURL, criteria) {
-                return $http.get("/rest/findOne/" + topic + "/" + decoderURL + "/" + encodeURI(criteria))
+            service.findOne = function (topic, criteria) {
+                return $http.get("/rest/findOne/" + topic + "/" + encodeURI(criteria))
                     .then(function (response) {
                         return response.data;
                     });
@@ -35,15 +35,8 @@
                     });
             };
 
-            service.getDecoders = function () {
-                return $http.get("/rest/getDecoders")
-                    .then(function (response) {
-                        return response.data;
-                    });
-            };
-
-            service.getMessage = function (topic, partition, offset, decoder) {
-                return $http.get("/rest/getMessage/" + topic + "/" + partition + "/" + offset + "/" + decoder)
+            service.getMessage = function (topic, partition, offset) {
+                return $http.get("/rest/getMessage/" + topic + "/" + partition + "/" + offset)
                     .then(function (response) {
                         return response.data;
                     });

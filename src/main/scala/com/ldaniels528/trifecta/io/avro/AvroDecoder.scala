@@ -14,12 +14,11 @@ import org.apache.avro.generic.GenericRecord
 import scala.util.Try
 
 /**
- * Avro Message Codec
+ * Avro Message Decoder
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class AvroDecoder(label: String, schemaString: String) extends MessageDecoder[GenericRecord]
+case class AvroDecoder(label: String, schema: Schema) extends MessageDecoder[GenericRecord]
 with JsonTranscoding with MessageEvaluation {
-  private val schema: Schema = new Schema.Parser().parse(schemaString)
   private val converter: Injection[GenericRecord, Array[Byte]] = GenericAvroCodecs.toBinary(schema)
 
   /**
@@ -52,5 +51,15 @@ with JsonTranscoding with MessageEvaluation {
   override def toJSON(bytes: Array[Byte]): Try[JValue] = decode(bytes) map (_.toString) map parse
 
   override def toString = s"${super.toString}($label)"
+
+}
+
+/**
+ * Avro Message Decoder Singleton
+ * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+ */
+object AvroDecoder {
+
+  def apply(label: String, schemaString: String) = new AvroDecoder(label, new Schema.Parser().parse(schemaString))
 
 }

@@ -137,14 +137,8 @@
                     <img class="clickable middle" src="/app/images/buttons/navigation/message-next.gif" ng-click="nextMessage()" title="move to next message">
                     <img class="clickable middle" src="/app/images/buttons/navigation/message-last.gif" ng-click="lastMessage()" title="move to last message">
                 </div>
-                <div class="input_block" ng-show="decoder.type == 'avro'">
+                <div class="input_block">
                     <img class="clickable middle" ng-src="/app/images/{{loading ? 'status/loading.gif' : 'buttons/search.png'}}" ng-click="messageFinderPopup()" title="search for a message">
-                </div>
-                <div class="input_block" style="width: 250px">
-                    Decoder
-                    <select ng-model="decoder" ng-options="formatDecoder(d) for d in decoders" ng-change="loadMessage()">
-                    </select>
-                    <img class="clickable middle" src="/app/images/buttons/decoder_mgmt.png" ng-click="manageDecoders()" title="manage your decoders">
                 </div>
             </div>
 

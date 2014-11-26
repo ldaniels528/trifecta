@@ -4,18 +4,16 @@
  */
 (function () {
     angular.module('trifecta')
-        .controller('DashboardCtrl', ['$scope', '$interval', '$log', '$parse', '$timeout', 'DashboardSvc', 'DecoderMgmtSvc', 'MessageSearchSvc',
-            function ($scope, $interval, $log, $parse, $timeout, DashboardSvc, DecoderMgmtSvc, MessageSearchSvc) {
+        .controller('DashboardCtrl', ['$scope', '$interval', '$log', '$parse', '$timeout', 'DashboardSvc', 'MessageSearchSvc',
+            function ($scope, $interval, $log, $parse, $timeout, DashboardSvc, MessageSearchSvc) {
 
                 $scope.version = "0.18.1";
                 $scope.consumerMapping = [];
-                $scope.decoders = [];
                 $scope.topics = [];
                 $scope.hideEmptyTopics = false;
                 $scope.realTimeViewMode = 'consumers';
                 $scope.loading = 0;
 
-                clearDecoder();
                 clearMessage();
 
                 $scope.tabs = [
@@ -78,33 +76,18 @@
                     }
                 };
 
-                $scope.manageDecoders = function () {
-                    $scope.form = {
-                        "topic": $scope.topic,
-                        "decoderURL": ($scope.decoder.name ? $scope.decoder.name : null)
-                    };
-                    DecoderMgmtSvc.popup($scope,
-                        function (response) {
-                            $log.info("response = " + angular.toJson(response));
-                        },
-                        function (err) {
-                            $log.error(err);
-                        });
-                };
-
                 $scope.messageFinderPopup = function () {
                     MessageSearchSvc.finderDialog($scope).then(function (form) {
                         form.topic = form.topic.topic;
-                        form.decoderURL = $scope.decoder.name ? $scope.decoder.name : null;
                         $log.info("form = " + angular.toJson(form));
                         // TODO validate the form
 
-                        if (form.topic && form.decoderURL && form.criteria) {
+                        if (form.topic && form.criteria) {
                             // display the loading dialog
                             var loadingDialog = MessageSearchSvc.loadingDialog($scope);
 
                             // perform the search
-                            DashboardSvc.findOne(form.topic, form.decoderURL, form.criteria)
+                            DashboardSvc.findOne(form.topic, form.criteria)
                                 .then(function (message) {
                                     $log.info("message = " + angular.toJson(message));
                                     $scope.message = message;
@@ -142,17 +125,6 @@
                     return null;
                 }
 
-                $scope.formatDecoder = function (decoder) {
-                    if (decoder.name == "(None)") return decoder.name;
-                    else {
-                        var label = decoder.type;
-                        if ("" != decoder.name) {
-                            label += " - " + decoder.name;
-                        }
-                        return label;
-                    }
-                };
-
                 $scope.getTopics = function (hideEmptyTopics) {
                     return $scope.topics.filter(function (topic) {
                         return !hideEmptyTopics || topic.totalMessages > 0;
@@ -164,14 +136,13 @@
                         var topic = $scope.topic.topic;
                         var partition = $scope.partition.partition;
                         var offset = $scope.partition.offset;
-                        var decoder = $scope.decoder.name;
 
                         clearMessage();
 
                         $scope.loading++;
 
-                        $log.info("Loading message for topic=" + topic + ", partition=" + partition + ", offset=" + offset + ", decoder=" + decoder);
-                        DashboardSvc.getMessage(topic, partition, offset, decoder).then(
+                        $log.info("Loading message for topic=" + topic + ", partition=" + partition + ", offset=" + offset);
+                        DashboardSvc.getMessage(topic, partition, offset).then(
                             function (message) {
                                 $scope.message = message;
                                 if($scope.loading) $scope.loading--;
@@ -315,51 +286,10 @@
                     }
                 };
 
-                function clearDecoder() {
-                    $scope.decoder = {};
-                }
-
-                function clearMessage() {
-                    $scope.message = {};
-                }
-
-                /**
-                 * Attempts to find and return the first non-empty topic; however, if none are found, it returns the
-                 * first topic in the array
-                 * @param topicSummaries the given array of topic summaries
-                 * @returns the first non-empty topic
-                 */
-                function findNonEmptyTopic(topicSummaries) {
-                    for (var n = 0; n < topicSummaries.length; n++) {
-                        var ts = topicSummaries[n];
-                        if (ts.totalMessages > 0) {
-                            return ts;
-                        }
-                    }
-                    return topicSummaries.length > 0 ? topicSummaries[0] : null;
-                }
-
                 /**
                  * Initializes all reference data
                  */
                 $scope.initReferenceData = function () {
-                    // load the decoders
-                    DashboardSvc.getDecoders().then(
-                        function (decoders) {
-                            if (decoders && decoders.length > 0) {
-                                $scope.decoders = decoders;
-                                $scope.decoder = $scope.decoders[0];
-                            }
-                            else {
-                                console.log("No decoders found");
-                                $scope.decoders = [];
-                                clearDecoder();
-                            }
-                        },
-                        function (err) {
-                            $log.error(err);
-                        });
-
                     // load the topics
                     DashboardSvc.getTopics().then(
                         function (topics) {
@@ -398,6 +328,27 @@
                         $scope.updateConsumers();
                     }, 15000);
                 };
+
+                function clearMessage() {
+                    $scope.message = {};
+                }
+
+                /**
+                 * Attempts to find and return the first non-empty topic; however, if none are found, it returns the
+                 * first topic in the array
+                 * @param topicSummaries the given array of topic summaries
+                 * @returns the first non-empty topic
+                 */
+                function findNonEmptyTopic(topicSummaries) {
+                    for (var n = 0; n < topicSummaries.length; n++) {
+                        var ts = topicSummaries[n];
+                        if (ts.totalMessages > 0) {
+                            return ts;
+                        }
+                    }
+                    return topicSummaries.length > 0 ? topicSummaries[0] : null;
+                }
+
 
             }]);
 

@@ -10,6 +10,7 @@ import com.ldaniels528.trifecta.util.Resource
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 import com.typesafe.config.ConfigFactory
+import net.liftweb.json._
 import org.apache.commons.io.IOUtils
 import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus}
 import org.mashupbots.socko.infrastructure.Logger
@@ -161,8 +162,6 @@ object EmbeddedWebServer {
     private def processRestRequest(path: String, dataMap: Map[String, List[String]]): Option[Array[Byte]] = {
       import java.net.URLDecoder.decode
 
-import net.liftweb.json._
-
       // get the action and path arguments
       val params = path.indexOptionOf(RestRoot)
         .map(index => path.substring(index + RestRoot.length + 1))
@@ -179,14 +178,12 @@ import net.liftweb.json._
             case _ => None
           }
           case "findOne" => args match {
-            case topic :: decoderURL :: criteria :: Nil => Option(facade.findOne(topic, decoderURL, decode(criteria, "UTF8")))
+            case topic :: criteria :: Nil => Option(facade.findOne(topic, decode(criteria, "UTF8")))
             case _ => None
           }
           case "getConsumers" if args.isEmpty => Option(facade.getConsumers)
           case "getConsumerSet" if args.isEmpty => Option(facade.getConsumerSet)
-          case "getDecoders" if args.isEmpty => Option(facade.getDecoders)
           case "getMessage" => args match {
-            case topic :: partition :: offset :: decoderURL :: Nil => Option(facade.getMessage(topic, partition.toInt, offset.toLong, Option(decoderURL)))
             case topic :: partition :: offset :: Nil => Option(facade.getMessage(topic, partition.toInt, offset.toLong))
             case _ => None
           }

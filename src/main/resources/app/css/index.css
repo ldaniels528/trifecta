@@ -98,11 +98,15 @@ th {
 
 .message_panel {
     display: block;
-    height: 540px;
     border: 1px solid #cccccc;
     border-radius: 5px 5px 5px 5px;
     background: #eeeeee;
-    padding: 10px
+    padding: 10px;
+
+    clear: both;
+    width: auto;
+    height: 540px;
+    overflow: auto;
 }
 
 .messages_and_offsets {
