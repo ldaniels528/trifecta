@@ -42,6 +42,15 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   val routes = Routes({
     case POST(request) => actor ! request
     case GET(request) => actor ! request
+
+    case WebSocketHandshake(wsHandshake) => wsHandshake match {
+      case Path("/websocket/") => wsHandshake.authorize(
+        onComplete = Some(onWebSocketHandshakeComplete),
+        onClose = Some(onWebSocketClose))
+    }
+
+    case WebSocketFrame(wsFrame) =>
+      actorSystem.actorOf(Props(new WebSocketHandler(facade))) ! wsFrame
   })
 
   def actor: ActorRef = actors(router % actors.length) and (_ => router += 1)
@@ -62,6 +71,14 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   def stop() {
     Try(webServer.foreach(_.stop()))
     webServer = None
+  }
+
+  private def onWebSocketHandshakeComplete(webSocketId: String) {
+    logger.info(s"Web Socket $webSocketId connected")
+  }
+
+  private def onWebSocketClose(webSocketId: String) {
+    logger.info(s"Web Socket $webSocketId closed")
   }
 
 }
@@ -219,6 +236,17 @@ object EmbeddedWebServer {
     private def translatePath(path: String) = path match {
       case "/" | "/index.html" => s"$DocumentRoot/index.htm"
       case s => s
+    }
+  }
+
+  /**
+   * Web Socket Handling Actor
+   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+   */
+  class WebSocketHandler(facade: KafkaRestFacade) extends Actor {
+    def receive = {
+      case event: WebSocketFrameEvent =>
+
     }
   }
 
