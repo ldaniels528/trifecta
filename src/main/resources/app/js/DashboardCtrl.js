@@ -11,7 +11,6 @@
                 $scope.consumerMapping = [];
                 $scope.topics = [];
                 $scope.hideEmptyTopics = false;
-                $scope.realTimeViewMode = 'consumers';
                 $scope.loading = 0;
 
                 clearMessage();
@@ -19,7 +18,7 @@
                 $scope.tabs = [
                     {
                         "name": "Observe",
-                        "imageURL": "/app/images/tabs/main/realTime.png",
+                        "imageURL": "/app/images/tabs/main/observe.png",
                         "active": false
                     }, {
                         "name": "Inspect",
@@ -32,22 +31,8 @@
                     }
                 ];
 
-                $scope.realTimeTabs = [
-                    {
-                        "name": "Topics",
-                        "imageURL": "/app/images/tabs/realTime/topics.png",
-                        "active": false
-                    }, {
-                        "name": "Consumers",
-                        "imageURL": "/app/images/tabs/realTime/consumers.png",
-                        "active": false
-                    }
-                ];
-
-                // select the default tabs
+                // select the default tab and make it active
                 $scope.tab = $scope.tabs[1];
-                $scope.tab.active = true;
-                $scope.realTimeTab = $scope.realTimeTabs[0];
                 $scope.tab.active = true;
 
                 /**
@@ -62,14 +47,6 @@
                     // activate the new tab
                     $scope.tab = $scope.tabs[index];
                     $scope.tab.active = true;
-
-                    if (event) {
-                        event.preventDefault();
-                    }
-                };
-
-                $scope.changeRealTimeView = function (index, event) {
-                    $scope.realTimeTab = $scope.realTimeTabs[index];
 
                     if (event) {
                         event.preventDefault();
@@ -212,49 +189,6 @@
                     return result;
                 };
 
-                $scope.updateConsumers = function () {
-                    DashboardSvc.getConsumers().then(
-                        function (consumers) {
-                            if ((consumers || []).length > 0) {
-                                angular.forEach($scope.consumerMapping, function (root) {
-                                    root.loading = true;
-
-                                    angular.forEach(root.consumers, function (consumer) {
-                                        angular.forEach(consumer.details, function (c) {
-                                            var nc = findConsumer(consumers, c);
-                                            if (nc && (c.offset != nc.offset || c.topicOffset != nc.topicOffset ||
-                                                c.messagesLeft != nc.messagesLeft || c.lastModified != nc.lastModified)) {
-                                                c.offset = nc.offset;
-                                                c.topicOffset = nc.topicOffset;
-                                                c.messagesLeft = nc.messagesLeft;
-                                                c.lastModified = nc.lastModified;
-                                            }
-                                        });
-                                    });
-                                    $timeout(function () {
-                                        root.loading = false;
-                                    }, 500);
-                                });
-                            }
-                            else {
-                                console.log("No consumers found");
-                            }
-                        },
-                        function (err) {
-                            $log.error(err);
-                        });
-                };
-
-                function findConsumer(consumers, consumer) {
-                    for (var n = 0; n < consumers.length; n++) {
-                        var c = consumers[n];
-                        if (c.topic == consumer.topic && c.partition == consumer.partition && c.consumerId == consumer.consumerId) {
-                            return c;
-                        }
-                    }
-                    return null;
-                }
-
                 $scope.updatePartition = function (partition) {
                     $scope.partition = partition;
 
@@ -290,6 +224,7 @@
                  * Initializes all reference data
                  */
                 $scope.initReferenceData = function () {
+
                     // load the topics
                     DashboardSvc.getTopics().then(
                         function (topics) {
@@ -307,26 +242,6 @@
                         function (err) {
                             $log.error(err);
                         });
-
-                    // load the consumer mapping
-                    DashboardSvc.getConsumerMapping().then(
-                        function (consumerSet) {
-                            if (consumerSet) {
-                                $scope.consumerMapping = consumerSet;
-                            }
-                            else {
-                                console.log("No consumer mappings found");
-                                $scope.consumerMapping = [];
-                            }
-                        },
-                        function (err) {
-                            $log.error(err);
-                        });
-
-                    // check for consumer updates every 15 seconds
-                    $interval(function () {
-                        $scope.updateConsumers();
-                    }, 15000);
                 };
 
                 function clearMessage() {
@@ -348,7 +263,6 @@
                     }
                     return topicSummaries.length > 0 ? topicSummaries[0] : null;
                 }
-
 
             }]);
 

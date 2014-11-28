@@ -1008,7 +1008,7 @@ class KafkaModule(config: TxConfig) extends Module {
     zkProxy_? match {
       case Some(zk) => zk
       case None =>
-        val zk = ZKProxy(config.kafkaZkConnect)
+        val zk = ZKProxy(config.zooKeeperConnect)
         zkProxy_? = Option(zk)
         zk
     }

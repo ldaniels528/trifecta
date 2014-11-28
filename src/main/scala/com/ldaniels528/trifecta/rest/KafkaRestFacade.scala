@@ -3,14 +3,16 @@ package com.ldaniels528.trifecta.rest
 import java.util.concurrent.Executors
 
 import com.ldaniels528.trifecta.command.parser.bdql.{BigDataQueryParser, BigDataQueryTokenizer}
-import com.ldaniels528.trifecta.io.json.JsonHelper
+import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
 import com.ldaniels528.trifecta.messages.MessageDecoder
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.messages.query.{BigDataSelection, QueryResult}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
+import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
@@ -29,6 +31,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private implicit val formats = net.liftweb.json.DefaultFormats
   private implicit val zkProxy: ZKProxy = zk
   private val logger = LoggerFactory.getLogger(getClass)
+  private val decoders = Map(BINARY -> LoopBackCodec, PLAIN_TEXT -> PlainTextCodec, JSON -> JsonDecoder)
 
   // define the custom thread pool
   private implicit val ec = new ExecutionContext {
@@ -67,7 +70,6 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       query.copy(source = query.source.copy(decoderURL = topic))
     }
   }
-
 
   def findOne(topic: String, criteria: String): JValue = {
     logger.info(s"topic = '$topic', criteria = '$criteria")
@@ -229,6 +231,46 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     })
   }
 
+  def getZkData(path: String, format: String): JValue = {
+    import net.liftweb.json._
+
+    Extraction.decompose(Try {
+      val decoder = decoders.get(format).orDie(s"No decoder of type '$format' was found")
+      zk.read(path) map decoder.decode
+    } match {
+      case Success(data) => data match {
+        case Some(Success(js: JValue)) => FormattedData(`type` = JSON, compact(render(js)))
+        case Some(Success(bytes: Array[Byte])) => FormattedData(`type` = BINARY, toByteArray(bytes))
+        case Some(Success(v)) => FormattedData(`type` = format, v)
+        case _ => ()
+      }
+      case Failure(e) => ErrorJs(message = e.getMessage)
+    })
+  }
+
+  def getZkInfo(path: String): JValue = {
+    Extraction.decompose(Try {
+      val creationTime = zk.getCreationTime(path)
+      val lastModified = zk.getModificationTime(path)
+      val data = zk.read(path) map(bytes => FormattedData(`type` = BINARY, toByteArray(bytes)))
+      ZkItemInfo(path, creationTime, lastModified, data)
+    } match {
+      case Success(info) => info
+      case Failure(e) => ErrorJs(message = e.getMessage)
+    })
+  }
+
+  def getZkPath(parentPath: String): JValue = {
+    Extraction.decompose(Try {
+      zk.getChildren(parentPath) map { name =>
+        ZkItem(name, path = if (parentPath == "/") s"/$name" else s"$parentPath/$name")
+      }
+    } match {
+      case Success(items) => items
+      case Failure(e) => ErrorJs(message = e.getMessage)
+    })
+  }
+
   private def toByteArray(bytes: Array[Byte], columns: Int = 20): Seq[Seq[String]] = {
     def toHex(b: Byte): String = f"$b%02x"
     def toAscii(b: Byte): String = if (b >= 32 && b <= 127) b.toChar.toString else "."
@@ -247,6 +289,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaRestFacade {
+  val BINARY = "binary"
+  val PLAIN_TEXT = "plain-text"
+  val JSON = "json"
 
   case class ConsumerJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long])
 
@@ -256,6 +301,8 @@ object KafkaRestFacade {
 
   case class ErrorJs(message: String, `type`: String = "error")
 
+  case class FormattedData(`type`: String, value: AnyRef)
+
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
@@ -263,5 +310,9 @@ object KafkaRestFacade {
   case class TopicSummaryJs(topic: String, partitions: Seq[TopicPartitionJs], totalMessages: Long)
 
   case class TopicPartitionJs(partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long], leader: Option[Broker], replicas: Seq[Broker])
+
+  case class ZkItem(name: String, path: String)
+
+  case class ZkItemInfo(path: String, creationTime: Option[Long], lastModified: Option[Long], data: Option[FormattedData])
 
 }

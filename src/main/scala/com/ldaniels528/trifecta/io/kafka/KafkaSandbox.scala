@@ -4,6 +4,7 @@ import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import com.ldaniels528.trifecta.io.kafka.KafkaSandbox._
+import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import kafka.server.{KafkaConfig, KafkaServerStartable}
 import org.apache.curator.framework.CuratorFrameworkFactory
 import org.apache.curator.retry.RetryOneTime
@@ -20,7 +21,8 @@ class KafkaSandbox() {
   // start the local Zookeeper instance
   val testServer = new TestingServer(true)
   val cli = CuratorFrameworkFactory.newClient(testServer.getConnectString, new RetryOneTime(2000))
-  cli.blockUntilConnected(3, TimeUnit.SECONDS)
+  cli.blockUntilConnected(5, TimeUnit.SECONDS)
+  logger.info(s"Zookeeper state: ${cli.getState}")
 
   // define the Kafka properties
   val kafkaProperties = new Properties()
@@ -31,6 +33,9 @@ class KafkaSandbox() {
   logger.info("Starting local Kafka broker...")
   private val kafkaServer = new KafkaServerStartable(new KafkaConfig(kafkaProperties))
   kafkaServer.startup()
+
+  // create a Zookeeper proxy instance
+  val zkProxy = ZKProxy(getConnectString)
 
   def getConnectString: String = testServer.getConnectString
 

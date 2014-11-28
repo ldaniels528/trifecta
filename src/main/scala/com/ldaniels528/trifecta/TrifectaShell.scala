@@ -3,6 +3,7 @@ package com.ldaniels528.trifecta
 import java.io.PrintStream
 
 import com.ldaniels528.trifecta.TxConsole._
+import com.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer
 import org.apache.zookeeper.KeeperException.ConnectionLossException
@@ -168,6 +169,15 @@ object TrifectaShell {
     // load the configuration
     val config = TxConfig.load(TxConfig.configFile)
 
+    // startup the Kafka Sandbox?
+    if (args.contains("--kafka-sandbox")) {
+      logger.info("Starting Kafka Sandbox...")
+      val kafkaSandbox = KafkaSandbox()
+      config.zooKeeperConnect = kafkaSandbox.getConnectString
+      Thread.sleep(3000)
+    }
+
+    // startup in HTTP listener mode?
     if (args.contains("--http-start")) {
       val zk = ZKProxy(config.zooKeeperConnect)
       new EmbeddedWebServer(config, zk).start()
@@ -179,7 +189,7 @@ object TrifectaShell {
       val console = new TrifectaShell(new TxRuntimeContext(config))
 
       // if arguments were not passed, stop.
-      args.toList match {
+      args.filterNot(_.startsWith("--")).toList match {
         case Nil =>
           console.shell()
         case params =>

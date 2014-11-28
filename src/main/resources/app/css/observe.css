@@ -1,0 +1,6 @@
+.zk_item_container {
+    clear: both;
+    width: auto;
+    height: 500px;
+    overflow: auto;
+}

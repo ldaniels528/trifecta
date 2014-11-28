@@ -8,7 +8,6 @@ import com.ldaniels528.trifecta.TxConfig.{TxDecoder, decoderDirectory}
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.ldaniels528.trifecta.util.PropertiesHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
-import org.slf4j.LoggerFactory
 
 import scala.io.Source
 import scala.util.Properties._
@@ -19,8 +18,6 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxConfig(val configProps: Properties) {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
-
   // set the current working directory
   configProps.setProperty("trifecta.common.cwd", new File(".").getCanonicalPath)
 
@@ -37,7 +34,7 @@ class TxConfig(val configProps: Properties) {
   // Zookeeper connection string
   def zooKeeperConnect = configProps.getOrElse("trifecta.zookeeper.host", "127.0.0.1:2181")
 
-  def kafkaZkConnect = configProps.getOrElse("trifecta.kafka.zookeeper.host", zooKeeperConnect)
+  def zooKeeperConnect_=(connectionString: String) = configProps.setProperty("trifecta.zookeeper.host", connectionString)
 
   // various shared state variables
   def autoSwitching: Boolean = configProps.getOrElse("trifecta.common.autoSwitching", "true").toBoolean
@@ -175,7 +172,6 @@ object TxConfig {
   private def getDefaultProperties: java.util.Properties = {
     Map(
       "trifecta.zookeeper.host" -> "localhost:2181",
-      "trifecta.kafka.zookeeper.host" -> "localhost:2181",
       "trifecta.elasticsearch.hosts" -> "localhost",
       "trifecta.cassandra.hosts" -> "localhost ",
       "trifecta.storm.hosts" -> "localhost",

@@ -197,6 +197,9 @@ object EmbeddedWebServer {
           }
           case "getTopics" if args.isEmpty => Option(facade.getTopics)
           case "getTopicSummaries" if args.isEmpty => Option(facade.getTopicSummaries)
+          case "getZkData" => Option(facade.getZkData(toZkPath(args.init), args.last))
+          case "getZkInfo" => Option(facade.getZkInfo(toZkPath(args)))
+          case "getZkPath" => Option(facade.getZkPath(toZkPath(args)))
           case _ => None
         }
       }
@@ -204,6 +207,8 @@ object EmbeddedWebServer {
       // convert the JSON value to a binary array
       response map (js => compact(render(js))) map (_.getBytes)
     }
+
+    private def toZkPath(args: List[String]): String = "/" + args.mkString("/")
 
     /**
      * Translates the given logical path to a physical path
