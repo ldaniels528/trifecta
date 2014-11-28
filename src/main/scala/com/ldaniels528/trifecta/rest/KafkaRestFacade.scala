@@ -14,6 +14,7 @@ import com.ldaniels528.trifecta.messages.query.{BigDataSelection, QueryResult}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
 import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
+import com.ldaniels528.trifecta.util.StringHelper._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
 import net.liftweb.json.{Extraction, JValue}
@@ -31,7 +32,6 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private implicit val formats = net.liftweb.json.DefaultFormats
   private implicit val zkProxy: ZKProxy = zk
   private val logger = LoggerFactory.getLogger(getClass)
-  private val decoders = Map(BINARY -> LoopBackCodec, PLAIN_TEXT -> PlainTextCodec, JSON -> JsonDecoder)
 
   // define the custom thread pool
   private implicit val ec = new ExecutionContext {
@@ -239,8 +239,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       zk.read(path) map decoder.decode
     } match {
       case Success(data) => data match {
-        case Some(Success(js: JValue)) => FormattedData(`type` = JSON, compact(render(js)))
         case Some(Success(bytes: Array[Byte])) => FormattedData(`type` = BINARY, toByteArray(bytes))
+        case Some(Success(js: JValue)) => FormattedData(`type` = JSON, compact(render(js)))
+        case Some(Success(s: String)) => FormattedData(`type` = PLAIN_TEXT, s)
         case Some(Success(v)) => FormattedData(`type` = format, v)
         case _ => ()
       }
@@ -252,7 +253,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     Extraction.decompose(Try {
       val creationTime = zk.getCreationTime(path)
       val lastModified = zk.getModificationTime(path)
-      val data = zk.read(path) map(bytes => FormattedData(`type` = BINARY, toByteArray(bytes)))
+      val data = zk.read(path) map (bytes => FormattedData(`type` = BINARY, toByteArray(bytes)))
       ZkItemInfo(path, creationTime, lastModified, data)
     } match {
       case Success(info) => info
@@ -289,9 +290,33 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaRestFacade {
+  val AUTO = "auto"
   val BINARY = "binary"
-  val PLAIN_TEXT = "plain-text"
   val JSON = "json"
+  val PLAIN_TEXT = "plain-text"
+
+  private val decoders = Map[String, MessageDecoder[_ <: AnyRef]](
+    AUTO -> AutoDecoder, BINARY -> LoopBackCodec, PLAIN_TEXT -> PlainTextCodec, JSON -> JsonDecoder)
+
+  /**
+   * Automatic Type-Sensing Message Decoder
+   */
+  object AutoDecoder extends MessageDecoder[AnyRef] {
+
+    /**
+     * Decodes the binary message into a typed object
+     * @param message the given binary message
+     * @return a decoded message wrapped in a Try-monad
+     */
+    override def decode(message: Array[Byte]): Try[AnyRef] = {
+      if (message.isPrintable) {
+        val jsonDecoding = JsonDecoder.decode(message)
+        if (jsonDecoding.isSuccess) jsonDecoding else PlainTextCodec.decode(message)
+      }
+      else LoopBackCodec.decode(message)
+    }
+
+  }
 
   case class ConsumerJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long])
 
@@ -301,7 +326,7 @@ object KafkaRestFacade {
 
   case class ErrorJs(message: String, `type`: String = "error")
 
-  case class FormattedData(`type`: String, value: AnyRef)
+  case class FormattedData(`type`: String, value: Any)
 
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 

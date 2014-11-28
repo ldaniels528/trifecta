@@ -256,93 +256,91 @@
     </div>
 
     <!-- Observe -->
-    <div ng-controller="ObserveCtrl" ng-init="initReferenceData()" ng-show="tab.name == 'Observe'" class="full_block">
-        <fieldset>
-            <legend>Real-time Topics and Consumers</legend>
+    <div ng-controller="ObserveCtrl" ng-init="initReferenceData()" ng-show="tab.name == 'Observe'" class="full_block" style="padding-top: 10px">
+        <!-- tabs -->
+        <div style="display: inline; float: left; width: 14%; height: 500px; border-right: 1px solid #cccccc; padding-right: 5px">
+            <tabset vertical="true" type="pills">
+                <tab ng-repeat="tab in observeTabs" active="tab.active" select="changeObserveTab($index, $event)">
+                    <tab-heading><img class="links" ng-src="{{ tab.imageURL }}"> {{ tab.name }}</tab-heading>
+                </tab>
+            </tabset>
+        </div>
 
-            <!-- tabs -->
-            <div style="display: inline; float: left; width: 14%; height: 500px; border-right: 1px solid #cccccc; margin-right: 5px">
-                <tabset vertical="true" type="pills">
-                    <tab ng-repeat="tab in observeTabs" active="tab.active" select="changeObserveTab($index, $event)">
-                        <tab-heading><img class="links" ng-src="{{ tab.imageURL }}"> {{ tab.name }}</tab-heading>
-                    </tab>
-                </tabset>
-            </div>
+        <div style="display: inline; float: right; width: 85%">
+            <div class="streaming_topics_container" style="margin-right: 5px">
+                <div class="full_block">
 
-            <div style="display: inline; float: right; width: 85%">
-                <div class="streaming_topics_container">
-                    <div class="full_block">
-
-                        <!-- Consumers -->
-                        <div class="block" ng-repeat="levelA in consumerMapping" ng-show="observeTab.name == 'Consumers'">
-                            <div>
-                                <a ng-click="levelA.collapsed = !levelA.collapsed">
-                                    <img class="middle" ng-src="/app/images/buttons/{{!levelA.collapsed ? 'collapse.png' : 'expand.png'}}">
-                                    <span>{{levelA.topic}}</span>
-                                    <img ng-show="levelA.loading" src="/app/images/status/processing.gif">
-                                </a>
-                            </div>
-                            <div ng-show="!levelA.collapsed" ng-repeat="levelB in levelA.consumers" style="margin-left: 32px">
-                                <a ng-click="levelB.collapsed = !levelB.collapsed">
-                                    <img class="middle" ng-src="/app/images/buttons/{{!levelB.collapsed ? 'collapse.png' : 'expand.png'}}">
-                                    <span>{{levelB.consumerId}}</span>
-                                </a>
-
-                                <div ng-show="!levelB.collapsed" style="margin-left: 32px">
-                                    <table style="width: 60%">
-                                        <tr>
-                                            <th>Partition</th>
-                                            <th>Topic Offset</th>
-                                            <th>Consumer Offset</th>
-                                            <th>Remaining</th>
-                                            <th>Last Modified</th>
-                                        </tr>
-
-                                        <tr ng-repeat="levelC in levelB.details | orderBy:'partition'">
-                                            <td>{{ levelC.partition }}</td>
-                                            <td>{{ levelC.topicOffset }}</td>
-                                            <td>{{ levelC.offset }}</td>
-                                            <td>{{ levelC.messagesLeft | number }}</td>
-                                            <td>{{ levelC.lastModified | date:'yyyy-MM-dd HH:mm:ss Z' }}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Topics -->
-                        <div class="block" ng-repeat="t in getTopics(true)" ng-show="observeTab.name == 'Topics'">
-                            <a ng-click="t.expanded = !t.expanded">
-                                <img class="middle" ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}"> {{ t.topic }}
-                                 <span ng-show="t.totalMessages > 0">
-                                    (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
-                                 </span>
+                    <!-- Consumers -->
+                    <div class="block" ng-repeat="levelA in consumerMapping" ng-show="observeTab.name == 'Consumers'">
+                        <div>
+                            <a ng-click="levelA.collapsed = !levelA.collapsed">
+                                <img class="middle" ng-src="/app/images/buttons/{{!levelA.collapsed ? 'collapse.png' : 'expand.png'}}">
+                                <span>{{levelA.topic}}</span>
+                                <img ng-show="levelA.loading" src="/app/images/status/processing.gif">
                             </a>
-                            <div ng-show="t.expanded" style="margin-left: 32px">
+                        </div>
+                        <div ng-show="!levelA.collapsed" ng-repeat="levelB in levelA.consumers" style="margin-left: 32px">
+                            <a ng-click="levelB.collapsed = !levelB.collapsed">
+                                <img class="middle" ng-src="/app/images/buttons/{{!levelB.collapsed ? 'collapse.png' : 'expand.png'}}">
+                                <span>{{levelB.consumerId}}</span>
+                            </a>
+
+                            <div ng-show="!levelB.collapsed" style="margin-left: 32px">
                                 <table style="width: 60%">
                                     <tr>
                                         <th>Partition</th>
-                                        <th>First Offset</th>
-                                        <th>Last Offset</th>
-                                        <th>Messages</th>
+                                        <th>Topic Offset</th>
+                                        <th>Consumer Offset</th>
+                                        <th>Remaining</th>
+                                        <th>Last Modified</th>
                                     </tr>
 
-                                    <tr ng-repeat="p in t.partitions | orderBy:'partition'">
-                                        <td>{{ p.partition }}</td>
-                                        <td>{{ p.startOffset }}</td>
-                                        <td>{{ p.endOffset }}</td>
-                                        <td>{{ p.messages | number }}</td>
+                                    <tr ng-repeat="levelC in levelB.details | orderBy:'partition'">
+                                        <td>{{ levelC.partition }}</td>
+                                        <td>{{ levelC.topicOffset }}</td>
+                                        <td>{{ levelC.offset }}</td>
+                                        <td>{{ levelC.messagesLeft | number }}</td>
+                                        <td>{{ levelC.lastModified | date:'yyyy-MM-dd HH:mm:ss Z' }}</td>
                                     </tr>
                                 </table>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Zookeeper -->
-                        <div class="block" style="margin-left: 5px" ng-show="observeTab.name == 'Zookeeper'">
-                            <div style="display: inline; width: 44.9%; float: left; border-right: 1px solid #cccccc" class="zk_item_container">
-                                <div ng-repeat="item in zkItems" ng-include="'zk_item_tree.htm'"></div>
-                            </div>
-                            <div style="display: inline; width: 55%; float: right">
+                    <!-- Topics -->
+                    <div class="block" ng-repeat="t in getTopics(true)" ng-show="observeTab.name == 'Topics'">
+                        <a ng-click="t.expanded = !t.expanded">
+                            <img class="middle" ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}"> {{ t.topic }}
+                             <span ng-show="t.totalMessages > 0">
+                                (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
+                             </span>
+                        </a>
+                        <div ng-show="t.expanded" style="margin-left: 32px">
+                            <table style="width: 60%">
+                                <tr>
+                                    <th>Partition</th>
+                                    <th>First Offset</th>
+                                    <th>Last Offset</th>
+                                    <th>Messages</th>
+                                </tr>
+
+                                <tr ng-repeat="p in t.partitions | orderBy:'partition'">
+                                    <td>{{ p.partition }}</td>
+                                    <td>{{ p.startOffset }}</td>
+                                    <td>{{ p.endOffset }}</td>
+                                    <td>{{ p.messages | number }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Zookeeper -->
+                    <div class="block" style="margin-left: 5px" ng-show="observeTab.name == 'Zookeeper'">
+                        <div style="display: inline; width: 40.9%; float: left; border-right: 1px solid #cccccc" class="zk_item_container">
+                            <div ng-repeat="item in zkItems" ng-include="'zk_item_tree.htm'"></div>
+                        </div>
+                        <div style="display: inline; width: 59%; float: right">
+                            <div style="margin-left: 5px">
                                 <table ng-show="zkItem" style="border-collapse: separate; border-spacing: 4px;">
                                     <tr>
                                         <th>Path:</th>
@@ -375,14 +373,14 @@
                                     <div ng-if="zkItem.data.type == 'plain-text'">{{ zkItem.data.value }}</div>
                                 </div>
                             </div>
-                            <br style="clear: both">
                         </div>
+                        <br style="clear: both">
                     </div>
                 </div>
             </div>
+        </div>
 
-            <br style="clear: both">
-        </fieldset>
+        <br style="clear: both">
     </div>
 
     <!-- Zookeeper Item Tree -->

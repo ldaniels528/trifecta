@@ -6,19 +6,19 @@
     angular.module('trifecta').controller('ObserveCtrl', ['$scope', '$log', '$timeout', '$interval', 'DashboardSvc',
         function ($scope, $log, $timeout, $interval, DashboardSvc) {
 
-            $scope.formats = ["binary", "json", "plain-text"];
+            $scope.formats = ["auto", "binary", "json", "plain-text"];
             $scope.selected = { "format": $scope.formats[0] };
             $scope.zkItem = null;
             $scope.zkItems = [{ name: "/ (root)", path: "/", expanded: false }];
 
             $scope.observeTabs = [
                 {
-                    "name": "Topics",
-                    "imageURL": "/app/images/tabs/observe/topics.png",
-                    "active": false
-                }, {
                     "name": "Consumers",
                     "imageURL": "/app/images/tabs/observe/consumers.png",
+                    "active": false
+                }, {
+                    "name": "Topics",
+                    "imageURL": "/app/images/tabs/observe/topics.png",
                     "active": false
                 }, {
                     "name": "Zookeeper",
@@ -55,6 +55,9 @@
                 DashboardSvc.getZkData(path, format).then(
                     function (data) {
                         $scope.zkItem.data = data;
+                        if(format == 'auto') {
+                            $scope.selected.format = data.type;
+                        }
                     },
                     function(err) {
                         errorHandler(err);
@@ -66,7 +69,7 @@
                 DashboardSvc.getZkInfo(item.path).then(
                     function (itemInfo) {
                         item.loading = false;
-                        $scope.selected.format = $scope.formats[0];
+                        //$scope.selected.format = $scope.formats[0];
                         $scope.zkItem = itemInfo;
                     },
                     function(err) {
@@ -81,7 +84,9 @@
             $scope.initReferenceData = function () {
 
                 // load the children for the root key
-                $scope.expandItem($scope.zkItems[0]);
+                var firstItem = $scope.zkItems[0];
+                $scope.expandItem(firstItem);
+                $scope.getItemInfo(firstItem);
 
                 // load the consumer mapping
                 DashboardSvc.getConsumerMapping().then(

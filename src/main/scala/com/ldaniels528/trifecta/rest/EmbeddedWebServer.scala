@@ -12,9 +12,9 @@ import com.ldaniels528.trifecta.util.StringHelper._
 import com.typesafe.config.ConfigFactory
 import net.liftweb.json._
 import org.apache.commons.io.IOUtils
-import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus}
+import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus, WebSocketFrameEvent}
 import org.mashupbots.socko.infrastructure.Logger
-import org.mashupbots.socko.routes.{GET, POST, Routes}
+import org.mashupbots.socko.routes._
 import org.mashupbots.socko.webserver.{WebServer, WebServerConfig}
 import org.slf4j.LoggerFactory
 
@@ -25,6 +25,7 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(actorConfig))
   private var webServer: Option[WebServer] = None
   private val facade = new KafkaRestFacade(config, zk)
@@ -96,7 +97,7 @@ object EmbeddedWebServer {
       }"""
 
   /**
-   * Web Content Handler
+   * Web Content Handling Actor
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
   class WebContentHandler(facade: KafkaRestFacade) extends Actor {

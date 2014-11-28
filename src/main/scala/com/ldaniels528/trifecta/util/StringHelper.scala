@@ -6,6 +6,12 @@ package com.ldaniels528.trifecta.util
  */
 object StringHelper {
 
+  implicit class ByteArrayExtensions(val bytes: Array[Byte]) extends AnyVal {
+
+    def isPrintable: Boolean = bytes forall (b => b >= 32 && b <= 127)
+
+  }
+
   /**
    * Convenience method for extracted the suffix of a string based on a matched prefix
    * @param src the given source string
@@ -18,12 +24,12 @@ object StringHelper {
 
     def indexOptionOf(s: String): Option[Int] = {
       val index = src.indexOf(s)
-      if(index == -1) None else Some(index)
+      if (index == -1) None else Some(index)
     }
 
     def lastIndexOptionOf(s: String): Option[Int] = {
       val index = src.lastIndexOf(s)
-      if(index == -1) None else Some(index)
+      if (index == -1) None else Some(index)
     }
 
   }
