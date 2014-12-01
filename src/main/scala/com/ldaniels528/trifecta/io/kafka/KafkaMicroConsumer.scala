@@ -14,6 +14,7 @@ import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
 import net.liftweb.json._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.postfixOps
@@ -73,20 +74,12 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
   }
 
   /**
-   * Retrieves the message for the given corresponding offset
-   * @param offset the given offset
-   * @param fetchSize the fetch size
-   * @return the response messages
-   */
-  def fetch(offset: Long, fetchSize: Int): Iterable[MessageData] = fetch(Seq(offset), fetchSize)
-
-  /**
    * Retrieves messages for the given corresponding offsets
    * @param offsets the given offsets
    * @param fetchSize the fetch size
    * @return the response messages
    */
-  def fetch(offsets: Seq[Long], fetchSize: Int): Iterable[MessageData] = {
+  def fetch(offsets: Long*)(fetchSize: Int = 65536): Seq[MessageData] = {
     // build the request
     val request = offsets.foldLeft(new FetchRequestBuilder().clientId(clientID)) {
       (builder, offset) =>
@@ -99,11 +92,11 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
     if (response.hasError) throw new VxKafkaCodeException(response.errorCode(topicAndPartition.topic, topicAndPartition.partition))
     else {
       val lastOffset = response.highWatermark(topicAndPartition.topic, topicAndPartition.partition)
-      response.messageSet(topicAndPartition.topic, topicAndPartition.partition) map { msgAndOffset =>
+      (response.messageSet(topicAndPartition.topic, topicAndPartition.partition) map { msgAndOffset =>
         val key: Array[Byte] = Option(msgAndOffset.message) map (_.key) map toArray getOrElse Array.empty
         val message: Array[Byte] = Option(msgAndOffset.message) map (_.payload) map toArray getOrElse Array.empty
         MessageData(topicAndPartition.partition, msgAndOffset.offset, msgAndOffset.nextOffset, lastOffset, key, message)
-      }
+      }).toSeq
     }
   }
 
@@ -174,6 +167,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
  */
 object KafkaMicroConsumer {
   private implicit val formats = net.liftweb.json.DefaultFormats
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   private val DEFAULT_FETCH_SIZE: Int = 65536
 
   /**
@@ -195,7 +189,7 @@ object KafkaMicroConsumer {
           while (!eof) {
             for {
               ofs <- offset
-              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE)
+              msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE)
             } if (conditions.forall(_.satisfies(msg.message, msg.key))) counter += 1
             offset = offset map (_ + 1)
           }
@@ -223,7 +217,8 @@ object KafkaMicroConsumer {
               limit: Option[Int],
               counter: IOCounter)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[MessageData]] = {
     val count = new AtomicLong(0L)
-    val tasks = getTopicPartitions(topic) map { partition =>
+    val partitions = getTopicPartitions(topic)
+    val tasks = (1 to partitions.size) zip partitions map { case (threadId, partition) =>
       Future {
         var messages: List[MessageData] = Nil
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { subs =>
@@ -233,7 +228,7 @@ object KafkaMicroConsumer {
           while (!eof) {
             for {
               ofs <- offset
-              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE)
+              msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE).headOption
             } {
               counter.updateReadCount(1)
               if (conditions.forall(_.satisfies(msg.message, msg.key))) {
@@ -273,7 +268,7 @@ object KafkaMicroConsumer {
           while (!eof) {
             for {
               ofs <- offset
-              msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE)
+              msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE)
             } if (conditions.forall(_.satisfies(msg.message, msg.key))) {
               message.compareAndSet(None, Option((partition, msg)))
             }
@@ -310,7 +305,7 @@ object KafkaMicroConsumer {
         while (!eof) {
           for {
             ofs <- offset
-            msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE)
+            msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE)
           } {
             if (conditions.forall(_.satisfies(msg.message, msg.key))) message.compareAndSet(None, Option(msg))
           }
@@ -465,7 +460,7 @@ object KafkaMicroConsumer {
           val lastOffset: Option[Long] = subs.getLastOffset
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
           while (!eof) {
-            for (ofs <- offset; msg <- subs.fetch(ofs, DEFAULT_FETCH_SIZE).headOption) observer(msg)
+            for (ofs <- offset; msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE).headOption) observer(msg)
             offset = offset map (_ + 1)
           }
         }

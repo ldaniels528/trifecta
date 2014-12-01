@@ -177,7 +177,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   def getMessage(topic: String, partition: Int, offset: Long, decoderURL: Option[String] = None): JValue = {
-    val message_? = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetch(offset, fetchSize = 65535).headOption)
+    val message_? = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetch(offset)(fetchSize = 65536).headOption)
     val decoder_? = rt.lookupDecoderByName(topic)
     val decodedMessage = for {decoder <- decoder_?; data <- message_?} yield decoder.decode(data.message)
 
@@ -253,8 +253,10 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     Extraction.decompose(Try {
       val creationTime = zk.getCreationTime(path)
       val lastModified = zk.getModificationTime(path)
-      val data = zk.read(path) map (bytes => FormattedData(`type` = BINARY, toByteArray(bytes)))
-      ZkItemInfo(path, creationTime, lastModified, data)
+      val data_? = zk.read(path)
+      val size_? = data_? map(_.length)
+      val formattedData_? = data_? map (bytes => FormattedData(`type` = BINARY, toByteArray(bytes)))
+      ZkItemInfo(path, creationTime, lastModified, size_?, formattedData_?)
     } match {
       case Success(info) => info
       case Failure(e) => ErrorJs(message = e.getMessage)
@@ -338,6 +340,6 @@ object KafkaRestFacade {
 
   case class ZkItem(name: String, path: String)
 
-  case class ZkItemInfo(path: String, creationTime: Option[Long], lastModified: Option[Long], data: Option[FormattedData])
+  case class ZkItemInfo(path: String, creationTime: Option[Long], lastModified: Option[Long], size: Option[Int], data: Option[FormattedData])
 
 }

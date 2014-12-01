@@ -132,6 +132,7 @@
                 };
 
                 $scope.firstMessage = function () {
+                    ensureOffset($scope.partition);
                     if ($scope.partition.offset != $scope.partition.startOffset) {
                         $scope.partition.offset = $scope.partition.startOffset;
                         $scope.loadMessage();
@@ -139,6 +140,7 @@
                 };
 
                 $scope.lastMessage = function () {
+                    ensureOffset($scope.partition);
                     if ($scope.partition.offset != $scope.partition.endOffset) {
                         $scope.partition.offset = $scope.partition.endOffset;
                         $scope.loadMessage();
@@ -146,14 +148,16 @@
                 };
 
                 $scope.nextMessage = function () {
+                    ensureOffset($scope.partition);
                     var offset = $scope.partition.offset;
-                    if (offset && offset < 1 + $scope.partition.endOffset) {
+                    if (offset < 1 + $scope.partition.endOffset) {
                         $scope.partition.offset += 1;
                         $scope.loadMessage();
                     }
                 };
 
                 $scope.previousMessage = function () {
+                    ensureOffset($scope.partition);
                     var offset = $scope.partition.offset;
                     if (offset && offset > $scope.partition.startOffset) {
                         $scope.partition.offset -= 1;
@@ -169,8 +173,8 @@
                         $scope.topic = topic;
                         $scope.partition = partition;
                         $scope.partition.offset = offset;
-                        $scope.tab = $scope.tabs[1]; // Query
                         $scope.loadMessage();
+                        $scope.changeTab(1, null); // Query
                     }
                 };
 
@@ -193,9 +197,7 @@
                     $scope.partition = partition;
 
                     // if the current offset is not set, set it at the starting offset.
-                    if (!$scope.partition.offset) {
-                        $scope.partition.offset = $scope.partition.startOffset;
-                    }
+                    ensureOffset(partition);
 
                     // load the first message
                     if ($scope.topic.totalMessages > 0 && $scope.partition.offset) {
@@ -246,6 +248,12 @@
 
                 function clearMessage() {
                     $scope.message = {};
+                }
+
+                function ensureOffset(partition) {
+                    if(!partition.offset) {
+                        partition.offset = partition.startOffset;
+                    }
                 }
 
                 /**

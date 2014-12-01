@@ -73,7 +73,7 @@
             </fieldset>
 
             <div class="separator">
-                <fieldset style="height: 160px; border-radius: 5px 5px 5px 5px">
+                <fieldset style="border-radius: 5px 5px 5px 5px">
                     <legend>Messages and Offsets</legend>
                     <div class="messages_and_offsets">
                         <table style="width: 100%">
@@ -90,19 +90,17 @@
                                     </a>
                                 </td>
                                 <td>
-                                    <a ng-click="updatePartition(p)">
+                                    <a ng-click="switchToMessage(topic.topic, p.partition, p.startOffset)">
                                         <span ng-class="p == partition ? 'highlighted' : ''">{{p.startOffset}}</span>
                                     </a>
                                 </td>
                                 <td>
-                                    <a ng-click="updatePartition(p)">
+                                    <a ng-click="switchToMessage(topic.topic, p.partition, p.endOffset)">
                                         <span ng-class="p == partition ? 'highlighted' : ''">{{p.endOffset}}</span>
                                     </a>
                                 </td>
                                 <td>
-                                    <a ng-click="updatePartition(p)">
-                                        <span ng-class="p == partition ? 'highlighted' : ''">{{p.messages | number}}</span>
-                                    </a>
+                                    <span ng-class="p == partition ? 'highlighted' : ''">{{p.messages | number}}</span>
                                 </td>
                             </tr>
                         </table>
@@ -111,7 +109,7 @@
             </div>
 
             <div class="separator">
-                <fieldset style="height: 160px; border-radius: 5px 5px 5px 5px">
+                <fieldset style="border-radius: 5px 5px 5px 5px">
                     <legend>Leaders and Replicas</legend>
                     <div class="leaders_and_replicas">
                         <table style="width: 100%">
@@ -236,7 +234,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="row in results.values" ng-class-even="'q_even'" ng-class-odd="'q_odd'">
+                                <tr ng-repeat="row in results.values" ng-class="{{ $index % 2 == 0 ? 'q_even' : 'q_odd'}}">
                                     <td ng-repeat="column in mappings.labels">
                                         <span ng-show="$index == 0">
                                             <a ng-click="switchToMessage(results.topic, partitionAt($parent.$index), offsetAt($parent.$index))">
@@ -297,8 +295,16 @@
 
                                     <tr ng-repeat="levelC in levelB.details | orderBy:'partition'">
                                         <td>{{ levelC.partition }}</td>
-                                        <td>{{ levelC.topicOffset }}</td>
-                                        <td>{{ levelC.offset }}</td>
+                                        <td>
+                                            <a ng-click="switchToMessage(levelC.topic, levelC.partition, levelC.topicOffset)">
+                                                {{ levelC.topicOffset }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a ng-click="switchToMessage(levelC.topic, levelC.partition, levelC.offset)">
+                                                {{ levelC.offset }}
+                                            </a>
+                                        </td>
                                         <td>{{ levelC.messagesLeft | number }}</td>
                                         <td>{{ levelC.lastModified | date:'yyyy-MM-dd HH:mm:ss Z' }}</td>
                                     </tr>
@@ -326,8 +332,16 @@
 
                                 <tr ng-repeat="p in t.partitions | orderBy:'partition'">
                                     <td>{{ p.partition }}</td>
-                                    <td>{{ p.startOffset }}</td>
-                                    <td>{{ p.endOffset }}</td>
+                                    <td>
+                                        <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
+                                            {{ p.startOffset }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">
+                                            {{ p.endOffset }}
+                                        </a>
+                                    </td>
                                     <td>{{ p.messages | number }}</td>
                                 </tr>
                             </table>
@@ -353,6 +367,10 @@
                                     <tr>
                                         <th>Last Modified:</th>
                                         <td>{{ zkItem.lastModified | date:'MM-dd-yyyy hh:mm:ss' }}</td>
+                                    </tr>
+                                    <tr ng-show="zkItem.size">
+                                        <th>Size (in bytes):</th>
+                                        <td>{{ zkItem.size | number }}</td>
                                     </tr>
                                 </table>
 
@@ -386,8 +404,12 @@
     <!-- Zookeeper Item Tree -->
     <script type="text/ng-template" id="zk_item_tree.htm">
         <img ng-src="/app/images/{{ item.loading ? 'status/loading.gif' : (item.expanded ? 'buttons/collapse.png' : 'buttons/expand.png') }}"
-             ng-click="expandItem(item)">
-        <a ng-click="getItemInfo(item)">{{ item.name }}</a>
+             ng-click="expandItem(item)"
+             class="clickable">
+        <a ng-click="getItemInfo(item)">
+            <span ng-show="zkItem.path == item.path" style="background: #ffff00; font-weight: bold">{{ item.name }}</span>
+            <span ng-show="zkItem.path != item.path">{{ item.name }}</span>
+        </a>
 
         <div style="margin-left: 20px" ng-show="item.expanded">
             <div ng-repeat="item in item.children" ng-include="'zk_item_tree.htm'"></div>

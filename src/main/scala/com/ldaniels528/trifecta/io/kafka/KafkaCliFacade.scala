@@ -163,7 +163,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
    */
   def getMessageKey(topic: String, partition: Int, offset: Long, fetchSize: Int)(implicit zk: ZKProxy): Option[Array[Byte]] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
-      consumer.fetch(offset, fetchSize).headOption map (_.key)
+      consumer.fetch(offset)(fetchSize).headOption map (_.key)
     }
   }
 
@@ -172,7 +172,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
    */
   def getMessageSize(topic: String, partition: Int, offset: Long, fetchSize: Int)(implicit zk: ZKProxy): Option[Int] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use {
-      _.fetch(offset.toLong, fetchSize).headOption map (_.message.length)
+      _.fetch(offset.toLong)(fetchSize).headOption map (_.message.length)
     }
   }
 
@@ -182,7 +182,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
   def getMessageMinMaxSize(topic: String, partition: Int, startOffset: Long, endOffset: Long, fetchSize: Int)(implicit zk: ZKProxy): Seq[MessageMaxMin] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
       val offsets = startOffset.toLong to endOffset.toLong
-      val messages = consumer.fetch(offsets, fetchSize).map(_.message.length)
+      val messages = consumer.fetch(offsets: _*)(fetchSize).map(_.message.length)
       if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Nil
     }
   }

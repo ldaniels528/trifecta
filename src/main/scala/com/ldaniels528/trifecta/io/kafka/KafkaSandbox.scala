@@ -28,6 +28,7 @@ class KafkaSandbox() {
   val kafkaProperties = new Properties()
   kafkaProperties.setProperty("zookeeper.connect", testServer.getConnectString)
   kafkaProperties.setProperty("broker.id", "1")
+  kafkaProperties.setProperty("num.partitions", "10")
 
   // start local Kafka broker
   logger.info("Starting local Kafka broker...")

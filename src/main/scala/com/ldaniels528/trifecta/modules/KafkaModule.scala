@@ -522,7 +522,7 @@ class KafkaModule(config: TxConfig) extends Module {
     // retrieve the message
     val messageData = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
       val myOffset: Long = instant flatMap (t => consumer.getOffsetsBefore(t).headOption) getOrElse offset
-      consumer.fetch(myOffset, getFetchSize(params)).headOption
+      consumer.fetch(myOffset)(getFetchSize(params)).headOption
     }
 
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
