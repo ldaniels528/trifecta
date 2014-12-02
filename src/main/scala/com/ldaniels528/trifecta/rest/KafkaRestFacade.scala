@@ -74,7 +74,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def findOne(topic: String, criteria: String): JValue = {
     logger.info(s"topic = '$topic', criteria = '$criteria")
     val decoder_? = rt.lookupDecoderByName(topic)
-    val outcome = KafkaMicroConsumer.findOne(topic, brokers, correlationId = 0, parseCondition(criteria, decoder_?)) map (
+    val outcome = KafkaMicroConsumer.findOne(topic, brokers, correlationId = 0, forward = true, parseCondition(criteria, decoder_?)) map (
       _ map { case (partition, md) => (partition, md.offset, decoder_?.map(_.decode(md.message)))
       })
     Await.result(outcome, 30.minutes) match {
