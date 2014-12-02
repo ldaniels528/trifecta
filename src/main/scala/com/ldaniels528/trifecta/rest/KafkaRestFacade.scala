@@ -254,7 +254,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       val creationTime = zk.getCreationTime(path)
       val lastModified = zk.getModificationTime(path)
       val data_? = zk.read(path)
-      val size_? = data_? map(_.length)
+      val size_? = data_? map (_.length)
       val formattedData_? = data_? map (bytes => FormattedData(`type` = BINARY, toByteArray(bytes)))
       ZkItemInfo(path, creationTime, lastModified, size_?, formattedData_?)
     } match {
