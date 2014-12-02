@@ -256,35 +256,58 @@ object KafkaMicroConsumer {
    * @param conditions the given search criteria
    * @return the promise of the option of a message based on the given search criteria
    */
-  def findOne(topic: String, brokers: Seq[Broker], correlationId: Int, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[(Int, MessageData)]] = {
+  def findOne(topic: String, brokers: Seq[Broker], correlationId: Int, forward: Boolean, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[(Int, MessageData)]] = {
     val promise = Promise[Option[(Int, MessageData)]]()
     val message = new AtomicReference[Option[(Int, MessageData)]](None)
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { subs =>
-          var offset: Option[Long] = subs.getFirstOffset
-          val lastOffset: Option[Long] = subs.getLastOffset
-          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || message.get.isDefined
-          while (!eof) {
-            for {
-              ofs <- offset
-              msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE)
-            } if (conditions.forall(_.satisfies(msg.message, msg.key))) {
-              message.compareAndSet(None, Option((partition, msg)))
-            }
-
-            offset = offset map (_ + 1)
-          }
+          if (forward)
+            findOneForward(subs, partition, message, conditions: _*)
+          else
+            findOneBackward(subs, partition, message, conditions: _*)
         }
       }
     }
 
     // check for the failure to find a message
     Future.sequence(tasks).onComplete {
-      case Success(v) => promise.success(message.get)
+      case Success(_) => promise.success(message.get)
       case Failure(e) => promise.failure(e)
     }
     promise.future
+  }
+
+  private def findOneForward(subs: KafkaMicroConsumer, partition: Int, message: AtomicReference[Option[(Int, MessageData)]], conditions: Condition*) = {
+    var offset: Option[Long] = subs.getFirstOffset
+    val lastOffset: Option[Long] = subs.getLastOffset
+    def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || message.get.isDefined
+    while (!eof) {
+      for {
+        ofs <- offset
+        msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE)
+      } if (conditions.forall(_.satisfies(msg.message, msg.key))) {
+        message.compareAndSet(None, Option((partition, msg)))
+      }
+
+      offset = offset map (_ + 1)
+    }
+  }
+
+  private def findOneBackward(subs: KafkaMicroConsumer, partition: Int, message: AtomicReference[Option[(Int, MessageData)]], conditions: Condition*) = {
+    var offset: Option[Long] = subs.getLastOffset
+    val firstOffset: Option[Long] = subs.getFirstOffset
+    def eof: Boolean = offset.exists(o => firstOffset.exists(o < _)) || message.get.isDefined
+    while (!eof) {
+      for {
+        ofs <- offset
+        msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE)
+      } if (conditions.forall(_.satisfies(msg.message, msg.key))) {
+        message.compareAndSet(None, Option((partition, msg)))
+      }
+
+      offset = offset map (_ - 1)
+    }
   }
 
   /**
