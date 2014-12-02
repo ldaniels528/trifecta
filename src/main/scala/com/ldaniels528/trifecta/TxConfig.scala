@@ -31,11 +31,6 @@ class TxConfig(val configProps: Properties) {
   // define the job manager
   val jobManager = new JobManager()
 
-  // Zookeeper connection string
-  def zooKeeperConnect = configProps.getOrElse("trifecta.zookeeper.host", "127.0.0.1:2181")
-
-  def zooKeeperConnect_=(connectionString: String) = configProps.setProperty("trifecta.zookeeper.host", connectionString)
-
   // various shared state variables
   def autoSwitching: Boolean = configProps.getOrElse("trifecta.common.autoSwitching", "true").toBoolean
 
@@ -57,6 +52,15 @@ class TxConfig(val configProps: Properties) {
   def encoding: String = configProps.getOrElse("trifecta.common.encoding", "UTF-8")
 
   def encoding_=(charSet: String): Unit = configProps.setProperty("trifecta.common.encoding", charSet)
+
+  def webHost: String = configProps.getOrElse("trifecta.web.host", "0.0.0.0")
+
+  def webPort: Int = configProps.getOrElse("trifecta.web.host", "8888").toInt
+
+  // Zookeeper connection string
+  def zooKeeperConnect = configProps.getOrElse("trifecta.zookeeper.host", "127.0.0.1:2181")
+
+  def zooKeeperConnect_=(connectionString: String) = configProps.setProperty("trifecta.zookeeper.host", connectionString)
 
   /**
    * Returns all available decoders

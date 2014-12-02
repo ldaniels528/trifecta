@@ -182,7 +182,7 @@ object TrifectaShell {
       val zk = ZKProxy(config.zooKeeperConnect)
       new EmbeddedWebServer(config, zk).start()
 
-      logger.info("Open your browser and navigate to http://localhost:8888")
+      logger.info(s"Open your browser and navigate to http://${config.webHost}:${config.webPort}")
     }
     else {
       // initialize the shell

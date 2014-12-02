@@ -60,7 +60,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
    */
   def start() {
     if (webServer.isEmpty) {
-      webServer = Option(new WebServer(WebServerConfig(), routes, actorSystem))
+      webServer = Option(new WebServer(WebServerConfig(hostname = config.webHost, port = config.webPort), routes, actorSystem))
       webServer.foreach(_.start())
     }
   }
