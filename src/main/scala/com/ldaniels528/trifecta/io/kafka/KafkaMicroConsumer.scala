@@ -287,8 +287,8 @@ object KafkaMicroConsumer {
 
   private def findOneForward(subs: KafkaMicroConsumer, partition: Int, message: AtomicReference[Option[(Int, MessageData)]], conditions: Condition*) = {
     var offset: Option[Long] = subs.getFirstOffset
-    val firstOffset: Option[Long] = subs.getLastOffset
-    def eof: Boolean = offset.exists(o => firstOffset.exists(o > _)) || message.get.isDefined
+    val lastOffset: Option[Long] = subs.getLastOffset
+    def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || message.get.isDefined
     while (!eof) {
       for {
         ofs <- offset
