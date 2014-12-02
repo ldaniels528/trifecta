@@ -132,9 +132,10 @@
         <div style="display: inline; width: 59%; float: right; margin-top: 12px">
             <div style="display: block; margin-bottom: 3px">
                 <div class="input_block">
-                    Offset <input ng-model="partition.offset" type="text" class="input-mir">
+                    Offset <input ng-model="partition.offset" type="text" class="input-mir" ng-change="convertOffsetToInt(partition, partition.offset)">
                     <img class="clickable middle" src="/app/images/buttons/navigation/message-first.gif" ng-click="firstMessage()" title="move to first message">
                     <img class="clickable middle" src="/app/images/buttons/navigation/message-prev.gif" ng-click="previousMessage()" title="move to previous message">
+                    <img class="clickable middle" src="/app/images/buttons/navigation/message-middle.png" ng-click="medianMessage()" title="move to median message">
                     <img class="clickable middle" src="/app/images/buttons/navigation/message-next.gif" ng-click="nextMessage()" title="move to next message">
                     <img class="clickable middle" src="/app/images/buttons/navigation/message-last.gif" ng-click="lastMessage()" title="move to last message">
                 </div>

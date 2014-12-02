@@ -108,6 +108,10 @@
                     });
                 };
 
+                $scope.convertOffsetToInt = function(partition, offset) {
+                    partition.offset = parseInt(offset);
+                };
+
                 $scope.loadMessage = function () {
                     if ($scope.topic.totalMessages > 0) {
                         var topic = $scope.topic.topic;
@@ -143,6 +147,15 @@
                     ensureOffset($scope.partition);
                     if ($scope.partition.offset != $scope.partition.endOffset) {
                         $scope.partition.offset = $scope.partition.endOffset;
+                        $scope.loadMessage();
+                    }
+                };
+
+                $scope.medianMessage = function() {
+                    ensureOffset($scope.partition);
+                    var median = Math.round($scope.partition.endOffset/2);
+                    if ($scope.partition.offset != median) {
+                        $scope.partition.offset = median;
                         $scope.loadMessage();
                     }
                 };
