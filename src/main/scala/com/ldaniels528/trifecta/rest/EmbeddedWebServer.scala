@@ -17,9 +17,9 @@ import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus, WebSoc
 import org.mashupbots.socko.infrastructure.Logger
 import org.mashupbots.socko.routes._
 import org.mashupbots.socko.webserver.{WebServer, WebServerConfig}
-import com.ldaniels528.trifecta.util.TimeHelper._
 import org.slf4j.LoggerFactory
 
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration._
 import scala.util.Try
 
@@ -30,9 +30,9 @@ import scala.util.Try
 class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(actorConfig))
+  private val sessions = TrieMap[String, String]()
   private var webServer: Option[WebServer] = None
   private val facade = new KafkaRestFacade(config, zk)
-  private val concurrency = config.getOrElse("trifecta.query.concurrency", "10").toInt
 
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() = {
@@ -42,7 +42,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   })
 
   // create the actors
-  val actors = (1 to concurrency) map (_ => actorSystem.actorOf(Props(new WebContentHandler(facade))))
+  val actors = (1 to config.queryConcurrency) map (_ => actorSystem.actorOf(Props(new WebContentHandler(facade))))
   var router = 0
 
   val routes = Routes({
@@ -84,13 +84,21 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 
   private def onWebSocketHandshakeComplete(webSocketId: String) {
     logger.info(s"Web Socket $webSocketId connected")
+    sessions += webSocketId -> webSocketId // TODO do we need to a session instance for tracking?
   }
 
   private def onWebSocketClose(webSocketId: String) {
     logger.info(s"Web Socket $webSocketId closed")
+    sessions -= webSocketId
   }
 
-  private def manageEvents(): Unit = {
+  private def manageEvents() {
+    if (sessions.nonEmpty) {
+      handleTopicUpdateEvents()
+    }
+  }
+
+  private def handleTopicUpdateEvents() {
     val deltas = facade.getTopicDeltas
     if (deltas.nonEmpty) {
       val deltasJs = JsonHelper.makeCompact(deltas)
@@ -305,6 +313,16 @@ object EmbeddedWebServer {
     private def writeWebSocketResponse(event: WebSocketFrameEvent) {
       logger.info(s"TextWebSocketFrame: ${event.readText()}")
     }
+  }
+
+  /**
+   * TxConfig Extensions
+   * @param config the given [[TxConfig]]
+   */
+  implicit class TxConfigExtensions(val config: TxConfig) extends AnyVal {
+
+    def queryConcurrency: Int = config.getOrElse("trifecta.query.concurrency", "10").toInt
+
   }
 
 }
