@@ -70,7 +70,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 
       // setup event management
       implicit val ec = actorSystem.dispatcher
-      actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = 5.seconds)(manageEvents())
+      actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = 5.seconds)(handleWebSocketPushEvents())
     }
   }
 
@@ -92,17 +92,22 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
     sessions -= webSocketId
   }
 
-  private def manageEvents() {
+  /**
+   * Manages pushing events to connected web-socket clients
+   */
+  private def handleWebSocketPushEvents() {
     if (sessions.nonEmpty) {
-      handleTopicUpdateEvents()
+      pushTopicUpdateEvents()
     }
   }
 
-  private def handleTopicUpdateEvents() {
+  /**
+   * Pushes topic update events to connected web-socket clients
+   */
+  private def pushTopicUpdateEvents() {
     val deltas = facade.getTopicDeltas
     if (deltas.nonEmpty) {
       val deltasJs = JsonHelper.makeCompact(deltas)
-      logger.info(s"Sending: $deltasJs")
       webServer.foreach(_.webSocketConnections.writeText(deltasJs))
     }
   }
