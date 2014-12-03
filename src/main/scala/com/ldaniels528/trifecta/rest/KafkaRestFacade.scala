@@ -32,6 +32,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private implicit val formats = net.liftweb.json.DefaultFormats
   private implicit val zkProxy: ZKProxy = zk
   private val logger = LoggerFactory.getLogger(getClass)
+  private var topicCache: Map[(String, Int), TopicDelta] = Map.empty
+  private var consumerCache: Map[ConsumerDeltaKey, ConsumerJs] = Map.empty
 
   // define the custom thread pool
   private implicit val ec = new ExecutionContext {
@@ -135,6 +137,29 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def getBrokers: JValue = Extraction.decompose(brokers)
 
   /**
+   * Returns a collection of consumers that have changed since the last call
+   * @return a collection of [[ConsumerJs]] objects
+   */
+  def getConsumerDeltas: Seq[ConsumerJs] = {
+    // combine the futures for the two lists
+    val consumers = getConsumerGroupsNative ++ getConsumerGroupsPM
+
+    // extract and return only the consumers that have changed
+    val deltas = if (consumerCache.isEmpty) consumers
+    else {
+      consumers.flatMap(c =>
+        consumerCache.get(ConsumerDeltaKey(c.consumerId, c.topic, c.partition)) match {
+          case Some(prev) => if (prev != c) Option(c) else None
+          case None => Option(c)
+        })
+    }
+
+    consumerCache = consumerCache ++ Map(consumers.map(c => ConsumerDeltaKey(c.consumerId, c.topic, c.partition) -> c): _*)
+
+    deltas
+  }
+
+  /**
    * Returns all consumers for all topics
    * @return a list of consumers
    */
@@ -209,6 +234,35 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     case opt: Option[Any] => toMessage(opt.orNull)
     case bytes: Array[Byte] => MessageJs(`type` = "bytes", payload = toByteArray(bytes))
     case value => MessageJs(`type` = "json", payload = JsonHelper.makePretty(String.valueOf(value)))
+  }
+
+  /**
+   * Returns a collection of topics that have changed since the last call
+   * @return a collection of [[TopicDelta]] objects
+   */
+  def getTopicDeltas: Seq[TopicDelta] = {
+    // retrieve all topic/partitions for analysis
+    val topics = KafkaMicroConsumer.getTopicList(brokers, correlationId) flatMap { t =>
+      for {
+        firstOffset <- getFirstOffset(t.topic, t.partitionId)
+        lastOffset <- getLastOffset(t.topic, t.partitionId)
+      } yield TopicDelta(t.topic, t.partitionId, firstOffset, lastOffset, messages = Math.max(0, lastOffset - firstOffset))
+    }
+
+    // extract and return only the topics that have changed
+    val deltas = if (topicCache.isEmpty) topics
+    else {
+      topics.flatMap(t =>
+        topicCache.get((t.topic, t.partition)) match {
+          case Some(prev) => if (prev != t) Option(t) else None
+          case None => Option(t)
+        })
+    }
+
+    // rebuild the message cache with the latest data
+    topicCache = topicCache ++ Map(topics.map(t => (t.topic -> t.partition) -> t): _*)
+
+    deltas
   }
 
   def getTopics: JValue = Extraction.decompose(KafkaMicroConsumer.getTopicList(brokers, correlationId))
@@ -343,6 +397,8 @@ object KafkaRestFacade {
 
   case class ConsumerJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long])
 
+  case class ConsumerDeltaKey(consumerId: String, topic: String, partition: Int)
+
   case class ConsumerTopicJs(topic: String, consumers: Seq[ConsumerConsumerJs])
 
   case class ConsumerConsumerJs(consumerId: String, details: Seq[ConsumerJs])
@@ -356,6 +412,8 @@ object KafkaRestFacade {
   case class QueryJs(queryString: String)
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
+
+  case class TopicDelta(topic: String, partition: Int, startOffset: Long, endOffset: Long, messages: Long)
 
   case class TopicSummaryJs(topic: String, partitions: Seq[TopicPartitionJs], totalMessages: Long)
 

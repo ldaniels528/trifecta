@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import com.ldaniels528.trifecta.TxConfig
+import com.ldaniels528.trifecta.io.json.JsonHelper
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer._
 import com.ldaniels528.trifecta.util.Resource
@@ -16,8 +17,10 @@ import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus, WebSoc
 import org.mashupbots.socko.infrastructure.Logger
 import org.mashupbots.socko.routes._
 import org.mashupbots.socko.webserver.{WebServer, WebServerConfig}
+import com.ldaniels528.trifecta.util.TimeHelper._
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.duration._
 import scala.util.Try
 
 /**
@@ -32,7 +35,10 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private val concurrency = config.getOrElse("trifecta.query.concurrency", "10").toInt
 
   Runtime.getRuntime.addShutdownHook(new Thread {
-    override def run() = EmbeddedWebServer.this.stop()
+    override def run() = {
+      EmbeddedWebServer.this.stop()
+      config.save(TxConfig.configFile)
+    }
   })
 
   // create the actors
@@ -40,15 +46,14 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   var router = 0
 
   val routes = Routes({
-    case POST(request) => actor ! request
-    case GET(request) => actor ! request
-
+    case HttpRequest(request) => actor ! request
     case WebSocketHandshake(wsHandshake) => wsHandshake match {
-      case Path("/websocket/") => wsHandshake.authorize(
-        onComplete = Some(onWebSocketHandshakeComplete),
-        onClose = Some(onWebSocketClose))
+      case Path("/websocket/") =>
+        logger.info(s"Authorizing websocket handshake...")
+        wsHandshake.authorize(
+          onComplete = Some(onWebSocketHandshakeComplete),
+          onClose = Some(onWebSocketClose))
     }
-
     case WebSocketFrame(wsFrame) =>
       actorSystem.actorOf(Props(new WebSocketHandler(facade))) ! wsFrame
   })
@@ -62,6 +67,10 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
     if (webServer.isEmpty) {
       webServer = Option(new WebServer(WebServerConfig(hostname = config.webHost, port = config.webPort), routes, actorSystem))
       webServer.foreach(_.start())
+
+      // setup event management
+      implicit val ec = actorSystem.dispatcher
+      actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = 5.seconds)(manageEvents())
     }
   }
 
@@ -81,6 +90,15 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
     logger.info(s"Web Socket $webSocketId closed")
   }
 
+  private def manageEvents(): Unit = {
+    val deltas = facade.getTopicDeltas
+    if (deltas.nonEmpty) {
+      val deltasJs = JsonHelper.makeCompact(deltas)
+      logger.info(s"Sending: $deltasJs")
+      webServer.foreach(_.webSocketConnections.writeText(deltasJs))
+    }
+  }
+
 }
 
 /**
@@ -90,6 +108,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 object EmbeddedWebServer {
   private[this] val logger = LoggerFactory.getLogger(getClass)
   private val DocumentRoot = "/app"
+  private val StreamingRoot = "/stream"
   private val RestRoot = "/rest"
   private val actorConfig = """
       my-pinned-dispatcher {
@@ -125,10 +144,15 @@ object EmbeddedWebServer {
         val response = event.response
         val path = translatePath(request.endPoint.path)
 
-        getContent(path, request.content.toFormDataMap) map { bytes =>
-          getMimeType(path) foreach (response.contentType = _)
+        // send 100 continue if required
+        if (event.request.is100ContinueExpected) {
+          event.response.write100Continue()
+        }
+
+        getContent(path, request.content.toFormDataMap) map { case (mimeType, bytes) =>
           val elapsedTime = (System.nanoTime() - startTime).toDouble / 1e+6
           logger.info(f"Retrieved resource '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
+          response.contentType = mimeType
           response.write(bytes)
         } getOrElse {
           logger.error(s"Resource '$path' not found")
@@ -142,16 +166,28 @@ object EmbeddedWebServer {
      * @param path the given resource path (e.g. "/images/greenLight.png")
      * @return the option of an array of bytes representing the content
      */
-    private def getContent(path: String, dataMap: Map[String, List[String]]): Option[Array[Byte]] = {
+    private def getContent(path: String, dataMap: Map[String, List[String]]): Option[(String, Array[Byte])] = {
       path match {
-        case s if s.startsWith(RestRoot) => processRestRequest(path, dataMap)
+        // REST requests
+        case s if s.startsWith(RestRoot) =>
+          for {
+            bytes <- processRestRequest(path, dataMap)
+            mimeType <- getMimeType(s)
+          } yield mimeType -> bytes
+
+        // streaming data requests
+        case s if s.startsWith(StreamingRoot) => None
+
+        // resource requests
         case s =>
-          Resource(s) map { url =>
-            new ByteArrayOutputStream(1024) use { out =>
-              url.openStream() use (IOUtils.copy(_, out))
-              out.toByteArray
-            }
-          }
+          for {
+            bytes <- Resource(s) map (url =>
+              new ByteArrayOutputStream(1024) use { out =>
+                url.openStream() use (IOUtils.copy(_, out))
+                out.toByteArray
+              })
+            mimeType <- getMimeType(s)
+          } yield mimeType -> bytes
       }
     }
 
@@ -164,11 +200,13 @@ object EmbeddedWebServer {
       if (path.startsWith(RestRoot)) Some("application/json")
       else path.lastIndexOptionOf(".") map (index => path.substring(index + 1)) flatMap {
         case "css" => Some("text/css")
+        case "csv" => Some("text/csv")
         case "gif" => Some("image/gif")
         case "htm" | "html" => Some("text/html")
         case "jpg" | "jpeg" => Some("image/jpeg")
         case "js" => Some("text/javascript")
         case "json" => Some("application/json")
+        case "map" => Some("application/json")
         case "png" => Some("image/png")
         case "xml" => Some("application/xml")
         case _ =>
@@ -203,6 +241,7 @@ object EmbeddedWebServer {
             case topic :: criteria :: Nil => Option(facade.findOne(topic, decode(criteria, "UTF8")))
             case _ => None
           }
+          case "getConsumerDeltas" if args.isEmpty => Option(JsonHelper.toJson(facade.getConsumerDeltas))
           case "getConsumers" if args.isEmpty => Option(facade.getConsumers)
           case "getConsumerSet" if args.isEmpty => Option(facade.getConsumerSet)
           case "getLastQuery" if args.isEmpty => Option(facade.getLastQuery)
@@ -214,6 +253,7 @@ object EmbeddedWebServer {
             case name :: Nil => facade.getTopicByName(name)
             case _ => None
           }
+          case "getTopicDeltas" if args.isEmpty => Option(JsonHelper.toJson(facade.getTopicDeltas))
           case "getTopicDetailsByName" => args match {
             case name :: Nil => Option(facade.getTopicDetailsByName(name))
             case _ => None
@@ -239,7 +279,7 @@ object EmbeddedWebServer {
      * @return the corresponding physical path
      */
     private def translatePath(path: String) = path match {
-      case "/" | "/index.html" => s"$DocumentRoot/index.htm"
+      case "/" | "/index.htm" | "/index.html" => s"$DocumentRoot/index.htm"
       case s => s
     }
   }
@@ -251,7 +291,19 @@ object EmbeddedWebServer {
   class WebSocketHandler(facade: KafkaRestFacade) extends Actor {
     def receive = {
       case event: WebSocketFrameEvent =>
+        writeWebSocketResponse(event)
+        context.stop(self)
+      case message =>
+        logger.info(s"received unknown message of type: $message")
+        unhandled(message)
+        context.stop(self)
+    }
 
+    /**
+     * Echo the details of the web socket frame that we just received; but in upper case.
+     */
+    private def writeWebSocketResponse(event: WebSocketFrameEvent) {
+      logger.info(s"TextWebSocketFrame: ${event.readText()}")
     }
   }
 

@@ -62,29 +62,6 @@
                     partition.offset = parseInt(offset);
                 };
 
-                /**
-                 * Initializes all reference data
-                 */
-                $scope.initReferenceData = function () {
-                    // load the topics
-                    DashboardSvc.getTopics().then(
-                        function (topics) {
-                            if (topics) {
-                                $scope.topics = topics;
-                                $scope.updateTopic(findNonEmptyTopic($scope.topics));
-                            }
-                            else {
-                                console.log("No topic summaries found");
-                                $scope.topics = [];
-                                $scope.topic = {};
-                                $scope.partition = {};
-                            }
-                        },
-                        function (err) {
-                            $log.error(angular.toJson(err));
-                        });
-                };
-
                 $scope.messageFinderPopup = function () {
                     MessageSearchSvc.finderDialog($scope).then(function (form) {
                         form.topic = form.topic.topic;
@@ -258,10 +235,9 @@
                 }
 
                 /**
-                 * Attempts to find and return the first non-empty topic; however, if none are found, it returns the
-                 * first topic in the array
+                 * Filters out topics without messages; returning only the topics containing messages
                  * @param topics the given array of topic summaries
-                 * @returns the first non-empty topic
+                 * @returns the array of topics containing messages
                  */
                 $scope.filterEmptyTopics = function (topics) {
                     var filteredTopics = [];
@@ -305,6 +281,12 @@
                     }
                     return null;
                 }
+
+                $scope.$watch("Topics.topics", function(newVal, oldVal) {
+                    $log.info("DashboardCtrl: Loaded new topics (" + newVal.length + ")");
+                    $scope.topics = newVal;
+                    $scope.updateTopic(findNonEmptyTopic($scope.topics));
+                });
 
             }]);
 

@@ -11,7 +11,7 @@ name := "trifecta"
 
 organization := "com.ldaniels528"
 
-version := "0.1.7"
+version := "0.18.1"
 
 scalaVersion := "2.10.4"
 

@@ -23,7 +23,7 @@ import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.ParsingHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
-import com.ldaniels528.trifecta.util.TimeHelper._
+import com.ldaniels528.trifecta.util.TimeHelper.Implicits._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JValue
 import org.apache.avro.generic.GenericRecord

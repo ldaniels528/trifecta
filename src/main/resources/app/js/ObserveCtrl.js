@@ -6,6 +6,7 @@
     angular.module('trifecta').controller('ObserveCtrl', ['$scope', '$log', '$timeout', '$interval', 'DashboardSvc',
         function ($scope, $log, $timeout, $interval, DashboardSvc) {
 
+            $scope.consumerMapping = [];
             $scope.formats = ["auto", "binary", "json", "plain-text"];
             $scope.selected = { "format": $scope.formats[0] };
             $scope.zkItem = null;
@@ -82,29 +83,10 @@
              * Initializes all reference data
              */
             $scope.initReferenceData = function () {
-
                 // load the children for the root key
                 var firstItem = $scope.zkItems[0];
                 $scope.expandItem(firstItem);
                 $scope.getItemInfo(firstItem);
-
-                // load the consumer mapping
-                DashboardSvc.getConsumerMapping().then(
-                    function (consumerSet) {
-                        if (consumerSet) {
-                            $scope.consumerMapping = consumerSet;
-                        }
-                        else {
-                            console.log("No consumer mappings found");
-                            $scope.consumerMapping = [];
-                        }
-                    },
-                    errorHandler);
-
-                // check for consumer updates every 15 seconds
-                $interval(function () {
-                    $scope.updateConsumers();
-                }, 15000);
             };
 
             $scope.changeObserveTab = function (index, event) {
@@ -159,6 +141,12 @@
             function errorHandler(err) {
                 $log.error(err);
             }
+
+            $scope.$watch("Consumers.consumers", function(newVal, oldVal) {
+                $log.info("ObserveCtrl: Loaded new consumers (" + newVal.length + ")");
+                $scope.consumerMapping = newVal;
+            });
+
 
         }])
 })();

@@ -1,5 +1,5 @@
 /**
- * Trifecta Application
+ * Trifecta Angular.js Application
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
@@ -9,9 +9,12 @@
         $resourceProvider.defaults.stripTrailingSlashes = false;
     }]);
 
-    app.run(function($rootScope, DashboardSvc, MessageSearchSvc) {
+    app.run(function($rootScope, Consumers, DashboardSvc, MessageSearchSvc, Topics, WebSockets) {
+        $rootScope.Consumers = Consumers;
         $rootScope.DashboardSvc = DashboardSvc;
         $rootScope.MessageSearchSvc = MessageSearchSvc;
+        $rootScope.Topics = Topics;
+        $rootScope.WebSockets = WebSockets;
     });
 
 })();

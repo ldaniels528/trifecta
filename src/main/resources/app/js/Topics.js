@@ -1,30 +1,16 @@
 /**
- * Trifecta Topic Service
+ * Trifecta Topic Singleton
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
     var app = angular.module('trifecta');
-    app.factory('TopicSvc', function($http, $log, $modal, $q) {
+    app.factory('Topics', function($http, $log, $q) {
         var service = {
             "topics": []
         };
         
-        service.getTopics = function(hideEmptyTopics) {
-            if(service.topics.length == 0) {
-                // load the topics for the REST service
-                return service.loadTopics().then(
-                    function (topics) {
-                        if (topics) service.topics = topics;
-                        else console.log("No topic summaries found");
-                        return service.getFilteredTopics(hideEmptyTopics);
-                    },
-                    function (err) {
-                        $log.error(err);
-                        return service.getFilteredTopics(hideEmptyTopics);
-                    });
-            }
-
-            return service.getFilteredTopics(hideEmptyTopics);
+        service.getTopics = function() {
+            return service.topics;
         };
 
         service.getFilteredTopics = function(hideEmptyTopics) {
@@ -68,6 +54,12 @@
                     return response.data;
                 });
         };
+
+        // load the topics
+        service.loadTopics().then(function(topics) {
+            $log.info("Retrieved " + topics.length + " topic(s)...");
+            service.topics = topics;
+        });
         
         return service;
     });
