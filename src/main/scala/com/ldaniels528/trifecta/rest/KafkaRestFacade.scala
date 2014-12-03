@@ -49,13 +49,28 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
-  def executeQuery(queryString: String): JValue = {
+  def downloadResults(queryString: String): JValue = {
     logger.info(s"queryString = '$queryString'")
     Try {
       val asyncIO = rt.executeQuery(compileQuery(queryString))
       Await.result(asyncIO.task, 30.minutes)
     } match {
       case Success(result: QueryResult) => Extraction.decompose(result)
+      case Failure(e) =>
+        logger.error("Query error", e)
+        Extraction.decompose(ErrorJs(e.getMessage))
+    }
+  }
+
+  def executeQuery(queryString: String): JValue = {
+    logger.info(s"queryString = '$queryString'")
+    Try {
+      val asyncIO = rt.executeQuery(compileQuery(queryString))
+      Await.result(asyncIO.task, 30.minutes)
+    } match {
+      case Success(result: QueryResult) =>
+        config.set(LAST_QUERY, queryString)
+        Extraction.decompose(result)
       case Failure(e) =>
         logger.error("Query error", e)
         Extraction.decompose(ErrorJs(e.getMessage))
@@ -85,6 +100,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
         Extraction.decompose(())
     }
   }
+
+  def getLastQuery: JValue = Extraction.decompose(QueryJs(config.getOrElse(LAST_QUERY, "")))
 
   /**
    * Parses a condition statement
@@ -292,10 +309,14 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaRestFacade {
+  // Formatting Constants
   val AUTO = "auto"
   val BINARY = "binary"
   val JSON = "json"
   val PLAIN_TEXT = "plain-text"
+
+  // Configuration Key Constants
+  val LAST_QUERY = "trifecta.bdql.lastQuery"
 
   private val decoders = Map[String, MessageDecoder[_ <: AnyRef]](
     AUTO -> AutoDecoder, BINARY -> LoopBackCodec, PLAIN_TEXT -> PlainTextCodec, JSON -> JsonDecoder)
@@ -331,6 +352,8 @@ object KafkaRestFacade {
   case class FormattedData(`type`: String, value: Any)
 
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
+
+  case class QueryJs(queryString: String)
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
 

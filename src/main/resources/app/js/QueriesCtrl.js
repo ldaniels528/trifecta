@@ -8,18 +8,72 @@
 
             $scope.errorMessage = null;
             $scope.running = false;
-            $scope.queryString =
-                'select symbol, exchange, lastTrade, open, prevClose, high, low, volume \n' +
-                'from "topic:shocktrade.quotes.avro" with default \n' +
-                'where volume >= 1,000,000 \n' +
-                'and lastTrade <= 1';
+            $scope.queryString = "";
 
             $scope.jobs = [];
             $scope.favorites = [];
+            $scope.favoriteIndex = 0;
             $scope.results = null;
             $scope.mappings = null;
             $scope.sortField = null;
             $scope.ascending = false;
+
+            /**
+             * Downloads the query results
+             */
+            $scope.downloadResults = function() {
+
+            };
+
+            /**
+             * Adds a query to the Favorites list
+             */
+            $scope.favoriteAdd = function() {
+                $scope.favorites.push({
+                    "name": makeQueryName($scope.queryString),
+                    "queryString": $scope.queryString,
+                    "count": null,
+                    "loading": false
+                });
+            };
+
+            function makeQueryName(queryString) {
+                var result = (queryString.length < 15) ? queryString : queryString.substring(0, 15);
+                if(queryString.length > 40) {
+                    result += "..." + queryString.substring(queryString.length - 15, queryString.length);
+                }
+                return result;
+            }
+
+            /**
+             * Removes a favorite query from the list
+             * @param index the index of the query to remove
+             */
+            $scope.favoriteDelete = function(index) {
+                $scope.favorites.splice(index, 1);
+            };
+
+            /**
+             * Selects a favorite query from the list
+             * @param index the index of the query to select
+             */
+            $scope.favoriteSelect = function(index) {
+                $scope.favoriteIndex = index;
+                $scope.queryString = $scope.favorites[index].queryString;
+            };
+
+            /**
+             * Initializes the reference data
+             */
+            $scope.initReferenceData = function() {
+                DashboardSvc.getLastQuery().then(
+                    function(response) {
+                        $scope.queryString = response.queryString;
+                    },
+                    function(err) {
+                        $log.error(err);
+                    });
+            };
 
             /**
              * Executes the BDQL query representing by the query string
@@ -55,13 +109,6 @@
                 return labels ? labels.slice(0, labels.length - 2) : null
             };
 
-            $scope.toggleSortField = function (sortField) {
-                $scope.ascending = $scope.sortField == sortField ? !$scope.ascending : true;
-                $scope.sortField = sortField;
-
-                $scope.results.values = sortData($scope.results.values, sortField, $scope.ascending);
-            };
-
             $scope.offsetAt = function (index) {
                 var row = $scope.results.values[index];
                 return row["__offset"];
@@ -70,6 +117,13 @@
             $scope.partitionAt = function (index) {
                 var row = $scope.results.values[index];
                 return row["__partition"];
+            };
+
+            $scope.toggleSortField = function (sortField) {
+                $scope.ascending = $scope.sortField == sortField ? !$scope.ascending : true;
+                $scope.sortField = sortField;
+
+                $scope.results.values = sortData($scope.results.values, sortField, $scope.ascending);
             };
 
             function generateDataArray(allLabels, results) {

@@ -161,7 +161,7 @@
     </div>
 
     <!-- Query -->
-    <div ng-show="tab.name == 'Query'" class="full_block">
+    <div ng-controller="QueriesCtrl" ng-init="initReferenceData()" ng-show="tab.name == 'Query'" class="full_block">
         <div style="display: inline; width: 20.8%; height: 587px; float: left; border-right: 1px solid #cccccc">
             <!-- Topics -->
             <fieldset>
@@ -170,7 +170,7 @@
                     <img class="middle" src="/app/images/status/yellowlight.gif"> No topics found
                 </span>
                 <div class="q_nav_container">
-                    <div ng-repeat="t in topics">
+                    <div ng-repeat="t in filterEmptyTopics(topics)">
                         <img class="middle" ng-src="/app/images/status/{{ t.totalMessages ? 'greenlight.png' : 'offlight.png' }}"> {{ t.topic }}
                         <span ng-show="t.totalMessages">(<span class="messages">{{t.totalMessages | number}}</span>)</span>
                     </div>
@@ -180,10 +180,16 @@
             <!-- Favorites -->
             <fieldset class="separator">
                 <legend>Favorites</legend>
-                <span ng-show="!favorites" style="color: #ddaa00; font-weight: bold">
-                    <img src="/app/images/status/yellowlight.gif"> No favorites
-                </span>
                 <div class="q_nav_container">
+                    <span ng-show="favorites.length == 0" style="color: #ddaa00; font-weight: bold">
+                        <img src="/app/images/status/yellowlight.gif"> No favorites
+                    </span>
+                    <div ng-show="favorites.length > 0" ng-repeat="f in favorites">
+                        <div ng-class="$index == favoriteIndex ? 'highlighted' : ''">
+                            <img class="middle clickable" src="/app/images/buttons/delete.png" ng-click="favoriteDelete($index)">
+                            <span class="clickable" title="{{ f.queryString }}" ng-click="favoriteSelect($index)">{{ f.name }}</span>
+                        </div>
+                    </div>
                 </div>
             </fieldset>
 
@@ -197,7 +203,7 @@
                 </div>
             </fieldset>
         </div>
-        <div ng-controller="QueriesCtrl" style="display: inline; width: 79%;  height: 625px; float: right">
+        <div style="display: inline; width: 79%;  height: 625px; float: right">
             <div style="width: 100%; height: 40%; padding: 2px 2px 2px 2px;">
                 <textarea ng-model="queryString" class="q_editor" placeholder="Enter query here" ng-disabled="{{ running }}">
                 </textarea>
@@ -206,7 +212,7 @@
                 <div class="q_action_bar">
                     <div style="display: inline; float: left">
                         <img class="q_action_icon" ng-src="/app/images/{{ running ? 'status/loading24' : 'buttons/run' }}.gif" ng-click="executeQuery()" title="Execute query">
-                        <img class="q_action_icon" src="/app/images/buttons/favorites_add24.png" ng-click="addToFavorites()" title="Add query to Favorites">
+                        <img class="q_action_icon" src="/app/images/buttons/favorites_add24.png" ng-click="favoriteAdd()" title="Add query to Favorites">
                         <img class="q_action_icon" src="/app/images/buttons/download.png" ng-click="downloadResults()" title="Download results">
                      </div>
                     <div style="display: inline; float: right">

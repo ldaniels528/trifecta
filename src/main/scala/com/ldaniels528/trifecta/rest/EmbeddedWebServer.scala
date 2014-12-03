@@ -177,7 +177,7 @@ object EmbeddedWebServer {
       }
     }
 
-    private def processRestRequest(path: String, dataMap: Map[String, List[String]]): Option[Array[Byte]] = {
+    private def processRestRequest(path: String, dataMap: Map[String, List[String]]) = {
       import java.net.URLDecoder.decode
 
       // get the action and path arguments
@@ -191,6 +191,10 @@ object EmbeddedWebServer {
       // execute the action and get the JSON value
       val response: Option[JValue] = params flatMap { case (action, args) =>
         action match {
+          case "downloadResults" => args match {
+            case queryString :: Nil => Option(facade.downloadResults(decode(queryString, "UTF8")))
+            case _ => None
+          }
           case "executeQuery" => args match {
             case queryString :: Nil => Option(facade.executeQuery(decode(queryString, "UTF8")))
             case _ => None
@@ -201,6 +205,7 @@ object EmbeddedWebServer {
           }
           case "getConsumers" if args.isEmpty => Option(facade.getConsumers)
           case "getConsumerSet" if args.isEmpty => Option(facade.getConsumerSet)
+          case "getLastQuery" if args.isEmpty => Option(facade.getLastQuery)
           case "getMessage" => args match {
             case topic :: partition :: offset :: Nil => Option(facade.getMessage(topic, partition.toInt, offset.toLong))
             case _ => None

@@ -53,6 +53,38 @@
                     }
                 };
 
+                /**
+                 * Converts the given offset from a string value to an integer
+                 * @param partition the partition that the offset value will be updated within
+                 * @param offset the given offset string value
+                 */
+                $scope.convertOffsetToInt = function(partition, offset) {
+                    partition.offset = parseInt(offset);
+                };
+
+                /**
+                 * Initializes all reference data
+                 */
+                $scope.initReferenceData = function () {
+                    // load the topics
+                    DashboardSvc.getTopics().then(
+                        function (topics) {
+                            if (topics) {
+                                $scope.topics = topics;
+                                $scope.updateTopic(findNonEmptyTopic($scope.topics));
+                            }
+                            else {
+                                console.log("No topic summaries found");
+                                $scope.topics = [];
+                                $scope.topic = {};
+                                $scope.partition = {};
+                            }
+                        },
+                        function (err) {
+                            $log.error(angular.toJson(err));
+                        });
+                };
+
                 $scope.messageFinderPopup = function () {
                     MessageSearchSvc.finderDialog($scope).then(function (form) {
                         form.topic = form.topic.topic;
@@ -86,30 +118,10 @@
                     });
                 };
 
-                function findTopicByName(topicId) {
-                    var topics = $scope.topics;
-                    for (var n = 0; n < topics.length; n++) {
-                        if (topics[n].topic == topicId) return topics[n];
-                    }
-                    return null;
-                }
-
-                function findPartitionByID(topic, partitionId) {
-                    var partitions = topic.partitions;
-                    for (var n = 0; n < partitions.length; n++) {
-                        if (partitions[n].partition == partitionId) return partitions[n];
-                    }
-                    return null;
-                }
-
                 $scope.getTopics = function (hideEmptyTopics) {
                     return $scope.topics.filter(function (topic) {
                         return !hideEmptyTopics || topic.totalMessages > 0;
                     });
-                };
-
-                $scope.convertOffsetToInt = function(partition, offset) {
-                    partition.offset = parseInt(offset);
                 };
 
                 $scope.loadMessage = function () {
@@ -235,30 +247,6 @@
                     }
                 };
 
-                /**
-                 * Initializes all reference data
-                 */
-                $scope.initReferenceData = function () {
-
-                    // load the topics
-                    DashboardSvc.getTopics().then(
-                        function (topics) {
-                            if (topics) {
-                                $scope.topics = topics;
-                                $scope.updateTopic(findNonEmptyTopic($scope.topics));
-                            }
-                            else {
-                                console.log("No topic summaries found");
-                                $scope.topics = [];
-                                $scope.topic = {};
-                                $scope.partition = {};
-                            }
-                        },
-                        function (err) {
-                            $log.error(err);
-                        });
-                };
-
                 function clearMessage() {
                     $scope.message = {};
                 }
@@ -268,6 +256,23 @@
                         partition.offset = partition.startOffset;
                     }
                 }
+
+                /**
+                 * Attempts to find and return the first non-empty topic; however, if none are found, it returns the
+                 * first topic in the array
+                 * @param topics the given array of topic summaries
+                 * @returns the first non-empty topic
+                 */
+                $scope.filterEmptyTopics = function (topics) {
+                    var filteredTopics = [];
+                    for (var n = 0; n < topics.length; n++) {
+                        var ts = topics[n];
+                        if (ts.totalMessages > 0) {
+                            filteredTopics.push(ts);
+                        }
+                    }
+                    return filteredTopics;
+                };
 
                 /**
                  * Attempts to find and return the first non-empty topic; however, if none are found, it returns the
@@ -283,6 +288,22 @@
                         }
                     }
                     return topicSummaries.length > 0 ? topicSummaries[0] : null;
+                }
+
+                function findPartitionByID(topic, partitionId) {
+                    var partitions = topic.partitions;
+                    for (var n = 0; n < partitions.length; n++) {
+                        if (partitions[n].partition == partitionId) return partitions[n];
+                    }
+                    return null;
+                }
+
+                function findTopicByName(topicId) {
+                    var topics = $scope.topics;
+                    for (var n = 0; n < topics.length; n++) {
+                        if (topics[n].topic == topicId) return topics[n];
+                    }
+                    return null;
                 }
 
             }]);

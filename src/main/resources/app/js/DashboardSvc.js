@@ -42,6 +42,13 @@
                     });
             };
 
+            service.getLastQuery = function () {
+                return $http.get("/rest/getLastQuery")
+                    .then(function (response) {
+                        return response.data;
+                    });
+            };
+
             service.getTopics = function () {
                 return $http.get("/rest/getTopicSummaries")
                     .then(function (response) {

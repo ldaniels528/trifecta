@@ -3,7 +3,6 @@ package com.ldaniels528.trifecta
 import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser
 import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
-import com.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.ldaniels528.trifecta.io.{AsyncIO, InputSource, OutputSource}
 import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.messages.query.{BigDataQuery, BigDataSelection}
@@ -117,7 +116,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     val task = query match {
       case BigDataSelection(source, destination, fields, criteria, limit) =>
         // get the input source and its decoder
-        val inputSource: Option[InputSource] = getInputHandler(source.deviceURL)
+        val inputSource: Option[InputSource] = getInputHandler(getDeviceURLWithDefault("topic", source.deviceURL))
         val inputDecoder: Option[MessageDecoder[_]] = lookupDecoderByName(source.decoderURL) ?? MessageCodecs.getDecoder(source.decoderURL)
 
         // get the output source and its encoder
@@ -139,6 +138,10 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
         throw new IllegalStateException(s"Invalid query type - ${query.getClass.getName}")
     }
     AsyncIO(task, counter)
+  }
+
+  private def getDeviceURLWithDefault(prefix: String, deviceURL: String): String = {
+    if (deviceURL.contains(':')) deviceURL else s"$prefix:$deviceURL"
   }
 
   /**
