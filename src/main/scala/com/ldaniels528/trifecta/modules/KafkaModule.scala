@@ -103,7 +103,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     Command(this, "copy", copyMessages, UnixLikeParams(Nil, Seq("-a" -> "avroSchema", "-i" -> "inputSource", "-o" -> "outputSource", "-n" -> "numRecordsToCopy")), help = "Copies messages from an input source to an output source"),
     Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-t" -> "topic")), help = "Counts the messages matching a given condition"),
     Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
-    Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
+    Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-b" -> "backwards", "-f" -> "format", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
     Command(this, "kfindnext", findNextMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
 
@@ -324,12 +324,13 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
    * @example kfindone volume > 1000000
    * @example kfindone volume > 1000000 -a file:avro/quotes.avsc
    * @example kfindone volume > 1000000 -t shocktrade.quotes.avro -a file:avro/quotes.avsc
-   * @example kfindone lastTrade < 1 and volume > 1000000 -a file:avro/quotes.avsc
+   * @example kfindone lastTrade < 1 and volume > 1000000 -a file:avro/quotes.avsc -b true
    */
   def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
     val avro_? = getAvroDecoder(params)(config)
+    val forward = !params("-b").exists(parseBoolean("backward", _))
 
     // get the topic and partition from the cursor
     val (topic, decoder_?) = {
@@ -341,7 +342,7 @@ class KafkaModule(config: TxConfig) extends Module with AvroCodec {
     val condition = parseCondition(params, decoder_?)
 
     // perform the search
-    KafkaMicroConsumer.findOne(topic, brokers, correlationId, condition) map {
+    KafkaMicroConsumer.findOne(topic, brokers, correlationId, forward, condition) map {
       _ map { case (partition, md) =>
         getMessage(topic, partition, md.offset, params)
       }
