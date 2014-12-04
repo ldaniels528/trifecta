@@ -64,33 +64,43 @@
 
                 $scope.messageFinderPopup = function () {
                     MessageSearchSvc.finderDialog($scope).then(function (form) {
-                        form.topic = form.topic.topic;
                         $log.info("form = " + angular.toJson(form));
-                        // TODO validate the form
+                        if(!form || !form.topic) {
+                            $scope.addErrorMessage("No topic selected")
+                        }
+                        else if(!form.criteria) {
+                            $scope.addErrorMessage("No criteria specified")
+                        }
+                        else {
+                            form.topic = form.topic.topic;
+                            if (form.topic && form.criteria) {
+                                // display the loading dialog
+                                var loadingDialog = MessageSearchSvc.loadingDialog($scope);
 
-                        if (form.topic && form.criteria) {
-                            // display the loading dialog
-                            var loadingDialog = MessageSearchSvc.loadingDialog($scope);
-
-                            // perform the search
-                            DashboardSvc.findOne(form.topic, form.criteria)
-                                .then(function (message) {
-                                    $log.info("message = " + angular.toJson(message));
-                                    $scope.message = message;
-
-                                    loadingDialog.close({});
-
-                                    // find the topic and partition
-                                    var myTopic = findTopicByName(message.topic);
-                                    if (myTopic) {
-                                        var myPartition = findPartitionByID(myTopic, message.partition);
-                                        if (myPartition) {
-                                            $scope.topic = myTopic;
-                                            $scope.partition = myPartition;
-                                            $scope.partition.offset = message.offset
+                                // perform the search
+                                DashboardSvc.findOne(form.topic, form.criteria)
+                                    .then(function (message) {
+                                        loadingDialog.close({});
+                                        $log.info("message = " + angular.toJson(message));
+                                        if (message.type == "error") {
+                                            $scope.addErrorMessage(message.message);
                                         }
-                                    }
-                                });
+                                        else {
+                                            $scope.message = message;
+
+                                            // find the topic and partition
+                                            var myTopic = findTopicByName(message.topic);
+                                            if (myTopic) {
+                                                var myPartition = findPartitionByID(myTopic, message.partition);
+                                                if (myPartition) {
+                                                    $scope.topic = myTopic;
+                                                    $scope.partition = myPartition;
+                                                    $scope.partition.offset = message.offset
+                                                }
+                                            }
+                                        }
+                                    });
+                            }
                         }
                     });
                 };

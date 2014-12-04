@@ -89,18 +89,28 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   def findOne(topic: String, criteria: String): JValue = {
-    logger.info(s"topic = '$topic', criteria = '$criteria")
-    val decoder_? = rt.lookupDecoderByName(topic)
-    val outcome = KafkaMicroConsumer.findOne(topic, brokers, correlationId = 0, forward = true, parseCondition(criteria, decoder_?)) map (
-      _ map { case (partition, md) => (partition, md.offset, decoder_?.map(_.decode(md.message)))
-      })
-    Await.result(outcome, 30.minutes) match {
-      case Some((partition, offset, Some(Success(message)))) =>
-        Extraction.decompose(MessageJs(`type` = "json", payload = message.toString, topic = Option(topic), partition = Some(partition), offset = Some(offset)))
-      case other =>
-        logger.warn(s"Failed to retrieve a message: result => $other")
-        Extraction.decompose(())
+    Try {
+      logger.info(s"topic = '$topic', criteria = '$criteria")
+      val decoder_? = rt.lookupDecoderByName(topic)
+      val conditions = parseCondition(criteria, decoder_?)
+      (decoder_?, conditions)
+    } match {
+      case Success((decoder_?, conditions)) =>
+        val outcome = KafkaMicroConsumer.findOne(topic, brokers, correlationId = 0, forward = true, conditions) map (
+          _ map { case (partition, md) => (partition, md.offset, decoder_?.map(_.decode(md.message)))
+          })
+        Await.result(outcome, 30.minutes) match {
+          case Some((partition, offset, Some(Success(message)))) =>
+            Extraction.decompose(MessageJs(`type` = "json", payload = message.toString, topic = Option(topic), partition = Some(partition), offset = Some(offset)))
+          case other =>
+            logger.warn(s"Failed to retrieve a message: result => $other")
+            Extraction.decompose(ErrorJs("Failed to retrieve a message"))
+        }
+      case Failure(e) =>
+        Extraction.decompose(ErrorJs(e.getMessage))
     }
+
+
   }
 
   def getLastQuery: JValue = Extraction.decompose(QueryJs(config.getOrElse(LAST_QUERY, "")))
