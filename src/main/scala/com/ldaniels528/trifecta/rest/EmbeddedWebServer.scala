@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.rest
 
-import java.io.ByteArrayOutputStream
+import java.io.{File, ByteArrayOutputStream}
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import com.ldaniels528.trifecta.TxConfig
@@ -340,6 +340,16 @@ object EmbeddedWebServer {
    */
   implicit class TxConfigExtensions(val config: TxConfig) extends AnyVal {
 
+    /**
+     * Returns the location of the queries file
+     * @return the [[File]] representing the location of queries file
+     */
+    def queriesFile: File = new File(TxConfig.trifectaPrefs, "queries.txt")
+
+    /**
+     * Returns the query execution concurrency
+     * @return the query execution concurrency
+     */
     def queryConcurrency: Int = config.getOrElse("trifecta.query.concurrency", "10").toInt
 
   }
