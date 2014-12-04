@@ -9,12 +9,68 @@
         $resourceProvider.defaults.stripTrailingSlashes = false;
     }]);
 
-    app.run(function($rootScope, Consumers, DashboardSvc, MessageSearchSvc, Topics, WebSockets) {
+    app.run(function($rootScope, $log, $timeout, Consumers, DashboardSvc, MessageSearchSvc, Topics, WebSockets) {
         $rootScope.Consumers = Consumers;
         $rootScope.DashboardSvc = DashboardSvc;
         $rootScope.MessageSearchSvc = MessageSearchSvc;
         $rootScope.Topics = Topics;
         $rootScope.WebSockets = WebSockets;
+
+        $rootScope.gloabalMessages = [];
+
+        $rootScope.clearMessages = function () {
+            $rootScope.gloabalMessages = [];
+        };
+
+        $rootScope.addError = function (err) {
+            $rootScope.gloabalMessages.push({
+                "type": "error",
+                "text": (err.statusText != "") ? err.statusText : "General fault or communications error"
+            });
+            scheduleRemoval($rootScope.gloabalMessages);
+        };
+
+        $rootScope.addErrorMessage = function (messageText) {
+            $rootScope.gloabalMessages.push({
+                "type": "error",
+                "text": messageText
+            });
+            scheduleRemoval();
+        };
+
+        $rootScope.addInfoMessage = function (messageText) {
+            $rootScope.gloabalMessages.push({
+                "type": "info",
+                "text": messageText
+            });
+            scheduleRemoval();
+        };
+
+        $rootScope.addWarningMessage = function (messageText) {
+            $rootScope.gloabalMessages.push({
+                "type": "warning",
+                "text": messageText
+            });
+            scheduleRemoval();
+        };
+
+        $rootScope.removeMessage = function (index) {
+            $rootScope.gloabalMessages.splice(index, 1);
+        };
+
+        function scheduleRemoval() {
+            var messages = $rootScope.gloabalMessages;
+            var message = messages[messages.length - 1];
+
+            $timeout(function() {
+                var index = messages.indexOf(message);
+                $log.info("Removing message[" + index + "]...");
+                if(index != -1) {
+                    $rootScope.removeMessage(index);
+                }
+            }, 10000 + $rootScope.gloabalMessages.length * 500);
+        }
+
     });
 
 })();

@@ -19,16 +19,30 @@
                 $log.info("socket = " + angular.toJson(socket));
 
                 socket.onopen = function (event) {
-                    $log.info("onOpen: event = " + angular.toJson(event));
+                    // $log.info("onOpen: event = " + angular.toJson(event));
                 };
 
                 socket.onclose = function (event) {
-                    $log.info("onClose: event = " + angular.toJson(event));
+                    // $log.info("onClose: event = " + angular.toJson(event));
                 };
 
                 socket.onmessage = function (event) {
                     if(event.data) {
-                        $log.info("onMessage: event = " + angular.toJson(event.data));
+                        var data = angular.fromJson(event.data);
+
+                        // consumer update?
+                        if(data[0].consumerId) {
+                            Consumers.updateConsumers(data);
+                        }
+
+                        // topic update?
+                        else if(data[0].topic) {
+                            Topics.updateTopics(data);
+                        }
+
+                        else {
+                            $log.warn("message unhandled: " + angular.toJson(data));
+                        }
                     }
                 };
             } else {

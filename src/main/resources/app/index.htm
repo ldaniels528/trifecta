@@ -32,6 +32,17 @@
 <body ng-controller="DashboardCtrl">
     <h2><span class="title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span> <span class="version">v{{ version }}</span></h2>
 
+    <!-- global error messages -->
+    <div ng-repeat="message in gloabalMessages" style="width: 100%">
+        <div ng-class="'global_' + message.type" >
+            <img class="middle" ng-src="/app/images/status/{{ message.type == 'error' ? 'redlight.png' : message.type == 'info' ? 'bluelight.png' : 'yellowlight.gif' }}">
+            {{ message.text }}
+            <img class="clickable middle" style="float: right"
+                 src="/app/images/buttons/delete.png"
+                 ng-click="removeMessage($index)">
+        </div>
+    </div>
+
     <!-- application tabs -->
     <div style="border: 1px solid #cccccc">
         <tabset>
@@ -280,19 +291,19 @@
                     <!-- Consumers -->
                     <div class="block" ng-repeat="levelA in consumerMapping" ng-show="observeTab.name == 'Consumers'">
                         <div>
-                            <a ng-click="levelA.collapsed = !levelA.collapsed">
-                                <img class="middle" ng-src="/app/images/buttons/{{!levelA.collapsed ? 'collapse.png' : 'expand.png'}}">
+                            <a ng-click="levelA.expanded = !levelA.expanded">
+                                <img class="middle" ng-src="/app/images/buttons/{{levelA.expanded ? 'collapse.png' : 'expand.png'}}">
                                 <span>{{levelA.topic}}</span>
                                 <img ng-show="levelA.loading" src="/app/images/status/processing.gif">
                             </a>
                         </div>
-                        <div ng-show="!levelA.collapsed" ng-repeat="levelB in levelA.consumers" style="margin-left: 32px">
-                            <a ng-click="levelB.collapsed = !levelB.collapsed">
-                                <img class="middle" ng-src="/app/images/buttons/{{!levelB.collapsed ? 'collapse.png' : 'expand.png'}}">
+                        <div ng-show="levelA.expanded" ng-repeat="levelB in levelA.consumers" style="margin-left: 32px">
+                            <a ng-click="levelB.expanded = !levelB.expanded">
+                                <img class="middle" ng-src="/app/images/buttons/{{levelB.expanded ? 'collapse.png' : 'expand.png'}}">
                                 <span>{{levelB.consumerId}}</span>
                             </a>
 
-                            <div ng-show="!levelB.collapsed" style="margin-left: 32px">
+                            <div ng-show="levelB.expanded" style="margin-left: 32px">
                                 <table style="width: 60%">
                                     <tr>
                                         <th>Partition</th>
@@ -340,7 +351,7 @@
                                 </tr>
 
                                 <tr ng-repeat="p in t.partitions | orderBy:'partition'">
-                                    <td>{{ p.partition }}</td>
+                                    <td>{{ p.partition }}  <img src="/app/images/status/loading.gif" ng-show="p.loading"></td>
                                     <td>
                                         <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
                                             {{ p.startOffset }}

@@ -29,7 +29,7 @@
             ];
 
             // select the default tab and make it active
-            $scope.observeTab = $scope.observeTabs[0];
+            $scope.observeTab = $scope.observeTabs[1];
             $scope.observeTab.active = true;
 
             /**
@@ -139,14 +139,20 @@
             }
 
             function errorHandler(err) {
-                $log.error(err);
+                $scope.addError(err);
             }
 
-            $scope.$watch("Consumers.consumers", function(newVal, oldVal) {
-                $log.info("ObserveCtrl: Loaded new consumers (" + newVal.length + ")");
-                $scope.consumerMapping = newVal;
+            $scope.$watch("Consumers.consumers", function(newConsumers, oldConsumers) {
+                $log.info("ObserveCtrl: Loaded new consumers (" + newConsumers.length + ")");
+                $scope.consumerMapping = newConsumers;
             });
 
+            /*
+            $scope.$watch("Topics.topics", function(newTopics, oldTopics) {
+                if(newTopics.length) {
+                    $scope.expandItem(newTopics[0]);
+                }
+            });*/
 
         }])
 })();

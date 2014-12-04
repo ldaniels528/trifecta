@@ -4,9 +4,9 @@
  */
 (function () {
     var app = angular.module('trifecta');
-    app.factory('Topics', function($http, $log, $q) {
+    app.factory('Topics', function($http, $log, $q, $timeout) {
         var service = {
-            "topics": []
+            topics: []
         };
         
         service.getTopics = function() {
@@ -60,6 +60,41 @@
             $log.info("Retrieved " + topics.length + " topic(s)...");
             service.topics = topics;
         });
+
+        service.updateTopic = function(myTopic) {
+            for(var n = 0; n < service.topics.length; n++) {
+                var t = service.topics[n];
+                if(t.topic == myTopic.topic) {
+                    var p = service.findPartition(t, myTopic.partition);
+                    if(p) {
+                        p.loading = p.loading ? p.loading + 1 : 1;
+                        p.startOffset = myTopic.startOffset;
+                        p.endOffset = myTopic.endOffset;
+                        p.messages = myTopic.messages;
+
+                        $timeout(function() {
+                            p.loading -= 1;
+                        }, 1000);
+                    }
+                }
+            }
+
+        };
+
+        service.findPartition = function(topic, partitionId) {
+            var partitions = topic.partitions;
+            for(var n = 0; n < partitions.length; n++) {
+                var p = partitions[n];
+                if (p.partition == partitionId) return p;
+            }
+            return null;
+        };
+
+        service.updateTopics = function(topics) {
+            angular.forEach(topics, function (topic) {
+                service.updateTopic(topic);
+            });
+        };
         
         return service;
     });

@@ -97,7 +97,20 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
    */
   private def handleWebSocketPushEvents() {
     if (sessions.nonEmpty) {
+      pushConsumerUpdateEvents()
       pushTopicUpdateEvents()
+    }
+  }
+
+  /**
+   * Pushes topic update events to connected web-socket clients
+   */
+  private def pushConsumerUpdateEvents() {
+    val deltas = facade.getConsumerDeltas
+    if (deltas.nonEmpty) {
+      logger.info(s"pushConsumerUpdateEvents: Retrieved ${deltas.length} consumer(s)...")
+      val deltasJs = JsonHelper.makeCompact(deltas)
+      webServer.foreach(_.webSocketConnections.writeText(deltasJs))
     }
   }
 
@@ -107,6 +120,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private def pushTopicUpdateEvents() {
     val deltas = facade.getTopicDeltas
     if (deltas.nonEmpty) {
+      logger.info(s"pushTopicUpdateEvents: Retrieved ${deltas.length} topic(s)...")
       val deltasJs = JsonHelper.makeCompact(deltas)
       webServer.foreach(_.webSocketConnections.writeText(deltasJs))
     }

@@ -32,7 +32,7 @@
                 ];
 
                 // select the default tab and make it active
-                $scope.tab = $scope.tabs[1];
+                $scope.tab = $scope.tabs[0];
                 $scope.tab.active = true;
 
                 /**
@@ -118,7 +118,7 @@
                                 if($scope.loading) $scope.loading--;
                             },
                             function (err) {
-                                $log.error(err);
+                                $scope.addError(err);
                                 if($scope.loading) $scope.loading--;
                             });
                     }
@@ -282,9 +282,9 @@
                     return null;
                 }
 
-                $scope.$watch("Topics.topics", function(newVal, oldVal) {
-                    $log.info("DashboardCtrl: Loaded new topics (" + newVal.length + ")");
-                    $scope.topics = newVal;
+                $scope.$watch("Topics.topics", function(newTopics, oldTopics) {
+                    $log.info("DashboardCtrl: Loaded new topics (" + newTopics.length + ")");
+                    $scope.topics = newTopics;
                     $scope.updateTopic(findNonEmptyTopic($scope.topics));
                 });
 

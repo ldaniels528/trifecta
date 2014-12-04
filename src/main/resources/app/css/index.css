@@ -14,6 +14,27 @@ body {
     color: #ff0000;
 }
 
+.global_info {
+    width: 100%;
+    font-weight: bold;
+    background: #eeeeff;
+    color: #0000ff;
+}
+
+.global_error {
+    width: 100%;
+    font-weight: bold;
+    background: #ffeeee;
+    color: #ff0000;
+}
+
+.global_warning {
+    width: 100%;
+    font-weight: bold;
+    background: #ffeecc;
+    color: #ffaa40;
+}
+
 fieldset {
     border-color: #cccccc;
 }

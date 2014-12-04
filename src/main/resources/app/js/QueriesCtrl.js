@@ -6,7 +6,6 @@
     angular.module('trifecta').controller('QueriesCtrl', ['$scope', '$log', '$timeout', 'DashboardSvc',
         function ($scope, $log, $timeout, DashboardSvc) {
 
-            $scope.errorMessage = null;
             $scope.running = false;
             $scope.queryString = "";
 
@@ -37,14 +36,6 @@
                 });
             };
 
-            function makeQueryName(queryString) {
-                var result = (queryString.length < 15) ? queryString : queryString.substring(0, 15);
-                if(queryString.length > 40) {
-                    result += "..." + queryString.substring(queryString.length - 15, queryString.length);
-                }
-                return result;
-            }
-
             /**
              * Removes a favorite query from the list
              * @param index the index of the query to remove
@@ -71,7 +62,7 @@
                         $scope.queryString = response.queryString;
                     },
                     function(err) {
-                        $log.error(err);
+                        setError(err);
                     });
             };
 
@@ -79,7 +70,6 @@
              * Executes the BDQL query representing by the query string
              */
             $scope.executeQuery = function () {
-                $scope.errorMessage = null;
                 $scope.results = null;
                 $scope.mappings = null;
                 $scope.running = true;
@@ -88,9 +78,15 @@
                 DashboardSvc.executeQuery($scope.queryString).then(
                     function (results) {
                         $scope.running = false;
-                        $log.info("results = " + angular.toJson(results));
+                        //$log.info("results = " + angular.toJson(results));
                         if (results.type == 'error') {
-                            $scope.errorMessage = results.message;
+                            $scope.addErrorMessage(results.message);
+                        }
+                        else if (results.type == 'warning') {
+                            $scope.addWarningMessage(results.message);
+                        }
+                        else if (results.type == 'info') {
+                            $scope.addInfoMessage(results.message);
                         }
                         else {
                             $scope.results = results;
@@ -100,7 +96,7 @@
                     },
                     function (err) {
                         $scope.running = false;
-                        $log.error(err);
+                        setError(err);
                     }
                 );
             };
@@ -138,6 +134,18 @@
                 });
 
                 return {"labels": labels, "values": rows};
+            }
+
+            function makeQueryName(queryString) {
+                var result = (queryString.length < 15) ? queryString : queryString.substring(0, 15);
+                if(queryString.length > 40) {
+                    result += "..." + queryString.substring(queryString.length - 15, queryString.length);
+                }
+                return result;
+            }
+
+            function setError(err) {
+                $scope.addError(err);
             }
 
             function sortData(results, sortField, ascending) {

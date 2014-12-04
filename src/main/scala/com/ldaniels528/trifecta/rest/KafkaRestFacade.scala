@@ -142,7 +142,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    */
   def getConsumerDeltas: Seq[ConsumerJs] = {
     // combine the futures for the two lists
-    val consumers = getConsumerGroupsNative ++ getConsumerGroupsPM
+    val consumers = Try(getConsumerGroupsNative).getOrElse(Nil) ++ Try(getConsumerGroupsPM).getOrElse(Nil)
 
     // extract and return only the consumers that have changed
     val deltas = if (consumerCache.isEmpty) consumers
@@ -219,15 +219,20 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   def getMessage(topic: String, partition: Int, offset: Long, decoderURL: Option[String] = None): JValue = {
-    val message_? = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetch(offset)(fetchSize = 65536).headOption)
-    val decoder_? = rt.lookupDecoderByName(topic)
-    val decodedMessage = for {decoder <- decoder_?; data <- message_?} yield decoder.decode(data.message)
-
-    val message: MessageJs = decodedMessage match {
-      case Some(Success(typedMessage)) => toMessage(typedMessage)
-      case _ => toMessage(message_?.map(_.message).orNull)
+    Extraction.decompose {
+      Try {
+        val message_? = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetch(offset)(fetchSize = 65536).headOption)
+        val decoder_? = rt.lookupDecoderByName(topic)
+        val decodedMessage = for {decoder <- decoder_?; data <- message_?} yield decoder.decode(data.message)
+        decodedMessage match {
+          case Some(Success(typedMessage)) => toMessage(typedMessage)
+          case _ => toMessage(message_?.map(_.message).orNull)
+        }
+      } match {
+        case Success(message) => message
+        case Failure(e) => ErrorJs(e.getMessage)
+      }
     }
-    Extraction.decompose(message)
   }
 
   private def toMessage(message: Any): MessageJs = message match {
