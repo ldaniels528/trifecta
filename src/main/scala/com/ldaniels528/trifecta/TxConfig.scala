@@ -121,9 +121,12 @@ class TxConfig(val configProps: Properties) {
    * @param configFile the configuration file
    */
   def save(configFile: File): Unit = {
-    new FileOutputStream(configFile) use { fos =>
-      configProps.store(fos, "Trifecta configuration properties")
+    Try {
+      new FileOutputStream(configFile) use { fos =>
+        configProps.store(fos, "Trifecta configuration properties")
+      }
     }
+    ()
   }
 
 }

@@ -37,7 +37,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() = {
       EmbeddedWebServer.this.stop()
-      config.save(TxConfig.configFile)
+      //config.save(TxConfig.configFile)
     }
   })
 
