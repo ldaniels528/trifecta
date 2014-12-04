@@ -64,7 +64,7 @@
 
                 $scope.messageFinderPopup = function () {
                     MessageSearchSvc.finderDialog($scope).then(function (form) {
-                        $log.info("form = " + angular.toJson(form));
+                        // perform the validation of the form
                         if(!form || !form.topic) {
                             $scope.addErrorMessage("No topic selected")
                         }
@@ -247,7 +247,7 @@
                 /**
                  * Filters out topics without messages; returning only the topics containing messages
                  * @param topics the given array of topic summaries
-                 * @returns the array of topics containing messages
+                 * @returns Array of topics containing messages
                  */
                 $scope.filterEmptyTopics = function (topics) {
                     var filteredTopics = [];
@@ -269,9 +269,7 @@
                 function findNonEmptyTopic(topicSummaries) {
                     for (var n = 0; n < topicSummaries.length; n++) {
                         var ts = topicSummaries[n];
-                        if (ts.totalMessages > 0) {
-                            return ts;
-                        }
+                        if (ts.totalMessages > 0) return ts;
                     }
                     return topicSummaries.length > 0 ? topicSummaries[0] : null;
                 }
