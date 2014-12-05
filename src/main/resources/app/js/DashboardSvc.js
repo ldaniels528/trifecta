@@ -7,13 +7,6 @@
         .factory('DashboardSvc', function ($http) {
             var service = {};
 
-            service.executeQuery = function (queryString) {
-                return $http.get("/rest/executeQuery/" + encodeURI(queryString))
-                    .then(function (response) {
-                        return response.data;
-                    });
-            };
-
             service.findOne = function (topic, criteria) {
                 return $http.get("/rest/findOne/" + topic + "/" + encodeURI(criteria))
                     .then(function (response) {
@@ -37,13 +30,6 @@
 
             service.getMessage = function (topic, partition, offset) {
                 return $http.get("/rest/getMessage/" + topic + "/" + partition + "/" + offset)
-                    .then(function (response) {
-                        return response.data;
-                    });
-            };
-
-            service.getLastQuery = function () {
-                return $http.get("/rest/getLastQuery")
                     .then(function (response) {
                         return response.data;
                     });

@@ -3,15 +3,18 @@
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
-    angular.module('trifecta').controller('QueriesCtrl', ['$scope', '$log', '$timeout', 'DashboardSvc',
-        function ($scope, $log, $timeout, DashboardSvc) {
+    angular.module('trifecta').controller('QueryCtrl', ['$scope', '$log', '$timeout', 'QuerySvc',
+        function ($scope, $log, $timeout, QuerySvc) {
 
             $scope.running = false;
+            var queryStartTime = 0;
+            $scope.queryElaspedTime = 0;
             $scope.queryString = "";
 
-            $scope.jobs = [];
-            $scope.favorites = [];
-            $scope.favoriteIndex = 0;
+            // save queries
+            $scope.savedQueries = [];
+            $scope.savedQuery = null;
+
             $scope.results = null;
             $scope.mappings = null;
             $scope.sortField = null;
@@ -21,14 +24,14 @@
              * Downloads the query results
              */
             $scope.downloadResults = function() {
-
+                // TODO future feature
             };
 
             /**
-             * Adds a query to the Favorites list
+             * Adds a query to the Saved Queries list
              */
-            $scope.favoriteAdd = function() {
-                $scope.favorites.push({
+            $scope.queryAdd = function() {
+                $scope.savedQueries.push({
                     "name": makeQueryName($scope.queryString),
                     "queryString": $scope.queryString,
                     "count": null,
@@ -37,29 +40,32 @@
             };
 
             /**
-             * Removes a favorite query from the list
+             * Removes a query query from the list
              * @param index the index of the query to remove
              */
-            $scope.favoriteDelete = function(index) {
-                $scope.favorites.splice(index, 1);
+            $scope.queryDelete = function(index) {
+                $scope.savedQueries.splice(index, 1);
             };
 
             /**
-             * Selects a favorite query from the list
-             * @param index the index of the query to select
+             * Selects a query query from the list
+             * @param query the query to select
              */
-            $scope.favoriteSelect = function(index) {
-                $scope.favoriteIndex = index;
-                $scope.queryString = $scope.favorites[index].queryString;
+            $scope.selectQuery = function(query) {
+                $scope.savedQuery = query;
+                $scope.queryString = query.queryString;
             };
 
             /**
              * Initializes the reference data
              */
             $scope.initReferenceData = function() {
-                DashboardSvc.getLastQuery().then(
-                    function(response) {
-                        $scope.queryString = response.queryString;
+                QuerySvc.getQueries().then(
+                    function(queries) {
+                        $scope.savedQueries = queries;
+                        if(queries) {
+                            $scope.queryString = queries[0].queryString;
+                        }
                     },
                     function(err) {
                         setError(err);
@@ -74,8 +80,12 @@
                 $scope.mappings = null;
                 $scope.running = true;
 
+                // setup the query clock
+                queryStartTime = new Date().getTime();
+                updatesQueryClock();
+
                 // execute the query
-                DashboardSvc.executeQuery($scope.queryString).then(
+                QuerySvc.executeQuery($scope.queryString).then(
                     function (results) {
                         $scope.running = false;
                         //$log.info("results = " + angular.toJson(results));
@@ -100,6 +110,15 @@
                     }
                 );
             };
+
+            function updatesQueryClock() {
+                $scope.queryElaspedTime = (new Date().getTime() - queryStartTime) / 1000;
+                if($scope.running) {
+                    $timeout(function () {
+                        updatesQueryClock();
+                    }, 1000);
+                }
+            }
 
             $scope.filterLabels = function (labels) {
                 return labels ? labels.slice(0, labels.length - 2) : null

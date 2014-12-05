@@ -24,7 +24,8 @@
     <script src="/app/js/DecoderMgmtDialog.js" type="text/javascript"></script>
     <script src="/app/js/MessageSearchDialog.js" type="text/javascript"></script>
     <script src="/app/js/ObserveCtrl.js" type="text/javascript"></script>
-    <script src="/app/js/QueriesCtrl.js" type="text/javascript"></script>
+    <script src="/app/js/QueryCtrl.js" type="text/javascript"></script>
+    <script src="/app/js/QuerySvc.js" type="text/javascript"></script>
     <script src="/app/js/Topics.js" type="text/javascript"></script>
     <script src="/app/js/WebSockets.js" type="text/javascript"></script>
 </head>
@@ -174,7 +175,7 @@
     </div>
 
     <!-- Query -->
-    <div ng-controller="QueriesCtrl" ng-init="initReferenceData()" ng-show="tab.name == 'Query'" class="full_block">
+    <div ng-controller="QueryCtrl" ng-init="initReferenceData()" ng-show="tab.name == 'Query'" class="full_block">
         <div style="display: inline; width: 20.8%; height: 587px; float: left; border-right: 1px solid #cccccc">
             <!-- Topics -->
             <fieldset>
@@ -182,7 +183,7 @@
                 <span ng-show="!topics" style="color: #ddaa00; font-weight: bold">
                     <img class="middle" src="/app/images/status/yellowlight.gif"> No topics found
                 </span>
-                <div class="q_nav_container">
+                <div class="q_topics_container">
                     <div ng-repeat="t in filterEmptyTopics(topics)">
                         <img class="middle" ng-src="/app/images/status/{{ t.totalMessages ? 'greenlight.png' : 'offlight.png' }}"> {{ t.topic }}
                         <span ng-show="t.totalMessages">(<span class="messages">{{t.totalMessages | number}}</span>)</span>
@@ -190,29 +191,20 @@
                 </div>
             </fieldset>
 
-            <!-- Favorites -->
+            <!-- Saved Queries -->
             <fieldset class="separator">
-                <legend>Favorites</legend>
-                <div class="q_nav_container">
-                    <span ng-show="favorites.length == 0" style="color: #ddaa00; font-weight: bold">
-                        <img src="/app/images/status/yellowlight.gif"> No favorites
+                <legend>Saved Queries</legend>
+                <div class="q_saved_queries_container">
+                    <span ng-show="!savedQueries" style="color: #ddaa00; font-weight: bold">
+                        <img src="/app/images/status/yellowlight.gif"> No saved queries
                     </span>
-                    <div ng-show="favorites.length > 0" ng-repeat="f in favorites">
-                        <div ng-class="$index == favoriteIndex ? 'highlighted' : ''">
-                            <img class="middle clickable" src="/app/images/buttons/delete.png" ng-click="favoriteDelete($index)">
-                            <span class="clickable" title="{{ f.queryString }}" ng-click="favoriteSelect($index)">{{ f.name }}</span>
+                    <div ng-show="savedQueries.length > 0" ng-repeat="q in savedQueries">
+                        <div ng-class="q == savedQuery ? 'highlighted' : ''">
+                            <img ng-src="/app/images/status/{{ q.modified ? 'yellowlight.gif' : 'greenlight.png' }}">
+                            <span class="clickable" title="{{ q.queryString }}" ng-click="selectQuery(q)">{{ q.name }}</span>
+                            <img ng-show="q.modified" src="/app/images/tabs/query/sync_query.png">
                         </div>
                     </div>
-                </div>
-            </fieldset>
-
-            <!-- Running Queries -->
-            <fieldset class="separator">
-                <legend>Running Queries</legend>
-                <span ng-show="!jobs" style="color: #ddaa00; font-weight: bold">
-                    <img src="/app/images/status/yellowlight.gif"> No running queries
-                </span>
-                <div class="q_nav_container">
                 </div>
             </fieldset>
         </div>
@@ -224,23 +216,24 @@
             <div style="width: 100%; height: 59%">
                 <div class="q_action_bar">
                     <div style="display: inline; float: left">
-                        <img class="q_action_icon" ng-src="/app/images/tabs/query/{{ running ? 'running' : 'run' }}.gif" ng-click="executeQuery()" title="Execute query">
-                        <img class="q_action_icon" src="/app/images/tabs/query/favorites_add24.png" ng-click="favoriteAdd()" title="Add query to Favorites">
-                        <img class="q_action_icon" src="/app/images/tabs/query/save.png" ng-click="saveQuery()" title="Save query to server">
+                        <img class="q_action_icon" ng-src="/app/images/tabs/query/{{ running ? 'running.gif' : 'run.gif' }}" ng-click="executeQuery()" title="Execute query">
+                        <img class="q_action_icon" src="/app/images/tabs/query/add_fav_24.png" ng-click="favoriteAdd()" title="Add query to Favorites">
+                        <img class="q_action_icon" src="/app/images/tabs/query/save.png" ng-click="saveQuery()" title="Save query script to server">
                         <img class="q_action_icon" src="/app/images/tabs/query/download.png" ng-click="downloadResults()" title="Download results">
                      </div>
-                    <div style="display: inline; float: right">
+                    <div style="display: inline; float: right; vertical-align: middle">
+                        <span ng-show="running" style="margin: 15px; vertical-align: middle">
+                            <img class="middle" src="/app/images/tabs/query/clock-16.png">
+                            <span class="q_clock_text">{{ queryElaspedTime | number:0 }} sec(s)</span>
+                        </span>
                         <span ng-show="results" style="margin: 15px; vertical-align: middle">
                             {{ results.values.length | number }} result(s) in
-                            <span class="positive">{{ results.runTimeMillis | number:2 }} msecs</span>
+                            <span class="positive">{{ results.runTimeMillis | number:1 }} sec(s)</span>
                         </span>
                     </div>
                     <br style="clear: both">
                 </div>
                 <div style="width: 100%; min-height: 298px; background: #eeeeee; border: 1px solid #cccccc">
-                    <span class="error" ng-show="errorMessage">
-                        <img class="middle" src="/app/images/status/redlight.png"> {{ errorMessage }}
-                    </span>
                     <div class="q_results_container">
                         <table style="width: 100%" ng-show="results">
                             <thead>
@@ -255,7 +248,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="row in results.values" ng-class="{{ $index % 2 == 0 ? 'q_even' : 'q_odd'}}">
+                                <tr ng-repeat="row in results.values" ng-class="$index % 2 == 0 ? 'q_even' : 'q_odd'">
                                     <td ng-repeat="column in mappings.labels">
                                         <span ng-show="$index == 0">
                                             <a ng-click="switchToMessage(results.topic, partitionAt($parent.$index), offsetAt($parent.$index))">
@@ -437,19 +430,19 @@
         </div>
     </script>
 
-    <!-- Decoder Management Dialog -->
-    <script type="text/ng-template" id="decoder_mgmt.htm">
+    <!-- Saved Query Dialog -->
+    <script type="text/ng-template" id="saved_query.htm">
         <div class="modal-header">
-            <h4>Create Avro Decoder</h4>
+            <h4>Saved Query</h4>
         </div>
         <div class="modal-body">
             <div class="full_block" style="margin-bottom: 5px">
-                Decoder Name: <input type="text" ng-model="decoderName">
+                Query Name: <input type="text" ng-model="queryName">
             </div>
-            <textarea ng-model="schema" rows="10" cols="80" placeholder="Copy/paste the Avro Schema here"></textarea>
+            <textarea ng-model="comments" rows="10" cols="80" placeholder="Enter comments here"></textarea>
 
             <div class="full_block">
-                <button style="margin-top: 10px" ng-click="ok()">Accept</button>
+                <button style="margin-top: 10px" ng-click="ok()">Save</button>
                 <button style="float: right; margin-top: 10px" ng-click="cancel()">Cancel</button>
             </div>
         </div>

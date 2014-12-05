@@ -113,7 +113,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   }
 
-  def getLastQuery: JValue = Extraction.decompose(QueryJs(config.getOrElse(LAST_QUERY, "")))
+  def getLastQuery: JValue = Extraction.decompose(QueryJs(name = System.currentTimeMillis.toString, config.getOrElse(LAST_QUERY, "")))
 
   /**
    * Parses a condition statement
@@ -250,6 +250,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     case bytes: Array[Byte] => MessageJs(`type` = "bytes", payload = toByteArray(bytes))
     case value => MessageJs(`type` = "json", payload = JsonHelper.makePretty(String.valueOf(value)))
   }
+
+  def getQueries: JValue = Extraction.decompose(config.getQueries)
 
   /**
    * Returns a collection of topics that have changed since the last call
@@ -424,7 +426,7 @@ object KafkaRestFacade {
 
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 
-  case class QueryJs(queryString: String)
+  case class QueryJs(name: String, queryString: String)
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
 

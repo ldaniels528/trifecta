@@ -4,7 +4,7 @@ import java.io.File._
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
 
-import com.ldaniels528.trifecta.TxConfig.{TxDecoder, decoderDirectory}
+import com.ldaniels528.trifecta.TxConfig.{TxQuery, TxDecoder, decoderDirectory, queriesDirectory}
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.ldaniels528.trifecta.util.PropertiesHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
@@ -77,6 +77,14 @@ class TxConfig(val configProps: Properties) {
           }
         }
       }).flatten
+    }
+  }
+
+  def getQueries: Option[Array[TxQuery]] = {
+    Option(queriesDirectory.listFiles) map { queriesFiles =>
+      queriesFiles map { file =>
+        TxQuery(file.getName, Source.fromFile(file).getLines().mkString("\n"))
+      }
     }
   }
 
@@ -161,6 +169,12 @@ object TxConfig {
   def decoderDirectory: File = new File(trifectaPrefs, "decoders")
 
   /**
+   * Returns the location of the queries directory
+   * @return the [[File]] representing the location of the queries directory
+   */
+  def queriesDirectory: File = new File(trifectaPrefs, "queries")
+
+  /**
    * Returns the default configuration
    * @return the default configuration
    */
@@ -187,6 +201,8 @@ object TxConfig {
       "trifecta.common.debugOn" -> "false",
       "trifecta.common.encoding" -> "UTF-8").toProps
   }
+
+  case class TxQuery(name: String, queryString: String)
 
   case class TxDecoder(topic: String, decoder: AvroDecoder)
 
