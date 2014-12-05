@@ -224,9 +224,10 @@
             <div style="width: 100%; height: 59%">
                 <div class="q_action_bar">
                     <div style="display: inline; float: left">
-                        <img class="q_action_icon" ng-src="/app/images/{{ running ? 'status/loading24' : 'buttons/run' }}.gif" ng-click="executeQuery()" title="Execute query">
-                        <img class="q_action_icon" src="/app/images/buttons/favorites_add24.png" ng-click="favoriteAdd()" title="Add query to Favorites">
-                        <img class="q_action_icon" src="/app/images/buttons/download.png" ng-click="downloadResults()" title="Download results">
+                        <img class="q_action_icon" ng-src="/app/images/tabs/query/{{ running ? 'running' : 'run' }}.gif" ng-click="executeQuery()" title="Execute query">
+                        <img class="q_action_icon" src="/app/images/tabs/query/favorites_add24.png" ng-click="favoriteAdd()" title="Add query to Favorites">
+                        <img class="q_action_icon" src="/app/images/tabs/query/save.png" ng-click="saveQuery()" title="Save query to server">
+                        <img class="q_action_icon" src="/app/images/tabs/query/download.png" ng-click="downloadResults()" title="Download results">
                      </div>
                     <div style="display: inline; float: right">
                         <span ng-show="results" style="margin: 15px; vertical-align: middle">

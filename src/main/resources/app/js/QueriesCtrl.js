@@ -115,6 +115,10 @@
                 return row["__partition"];
             };
 
+            $scope.saveQuery = function() {
+                $log.info("Uploading query string...");
+            };
+
             $scope.toggleSortField = function (sortField) {
                 $scope.ascending = $scope.sortField == sortField ? !$scope.ascending : true;
                 $scope.sortField = sortField;

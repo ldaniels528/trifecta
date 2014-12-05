@@ -1,8 +1,8 @@
 package com.ldaniels528.trifecta.rest
 
-import java.io.{File, ByteArrayOutputStream}
+import java.io.{ByteArrayOutputStream, File}
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorSystem, Props}
 import com.ldaniels528.trifecta.TxConfig
 import com.ldaniels528.trifecta.io.json.JsonHelper
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
@@ -30,23 +30,26 @@ import scala.util.Try
 class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(actorConfig))
+  private val facade = new KafkaRestFacade(config, zk)
   private val sessions = TrieMap[String, String]()
   private var webServer: Option[WebServer] = None
-  private val facade = new KafkaRestFacade(config, zk)
 
-  Runtime.getRuntime.addShutdownHook(new Thread {
-    override def run() = {
-      EmbeddedWebServer.this.stop()
-      //config.save(TxConfig.configFile)
-    }
-  })
+  // create the web content actors
+  private var wcRouter = 0
+  private val wcActors = (1 to config.queryConcurrency) map (_ => actorSystem.actorOf(Props(new WebContentHandler(facade))))
 
-  // create the actors
-  val actors = (1 to config.queryConcurrency) map (_ => actorSystem.actorOf(Props(new WebContentHandler(facade))))
-  var router = 0
+  // create the web socket actors
+  private var wsRouter = 0
+  private val wsActors = (1 to config.queryConcurrency) map (_ => actorSystem.actorOf(Props(new WebSocketHandler(facade))))
 
+  // create the actor references
+  private def wcActor = wcActors(wcRouter % wcActors.length) and (_ => wcRouter += 1)
+
+  private def wsActor = wsActors(wsRouter % wsActors.length) and (_ => wsRouter += 1)
+
+  // define all of the routes
   val routes = Routes({
-    case HttpRequest(request) => actor ! request
+    case HttpRequest(request) => wcActor ! request
     case WebSocketHandshake(wsHandshake) => wsHandshake match {
       case Path("/websocket/") =>
         logger.info(s"Authorizing websocket handshake...")
@@ -54,11 +57,14 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
           onComplete = Some(onWebSocketHandshakeComplete),
           onClose = Some(onWebSocketClose))
     }
-    case WebSocketFrame(wsFrame) =>
-      actorSystem.actorOf(Props(new WebSocketHandler(facade))) ! wsFrame
+    case WebSocketFrame(wsFrame) => wsActor ! wsFrame
   })
 
-  def actor: ActorRef = actors(router % actors.length) and (_ => router += 1)
+  Runtime.getRuntime.addShutdownHook(new Thread {
+    override def run() = {
+      EmbeddedWebServer.this.stop()
+    }
+  })
 
   /**
    * Starts the embedded app server
