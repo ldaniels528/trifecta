@@ -184,7 +184,7 @@
                     <img class="middle" src="/app/images/status/yellowlight.gif"> No topics found
                 </span>
                 <div class="q_topics_container">
-                    <div ng-repeat="t in filterEmptyTopics(topics)">
+                    <div ng-repeat="t in filterEmptyTopics(topics)|orderBy:'topic'">
                         <img class="middle" ng-src="/app/images/status/{{ t.totalMessages ? 'greenlight.png' : 'offlight.png' }}"> {{ t.topic }}
                         <span ng-show="t.totalMessages">(<span class="messages">{{t.totalMessages | number}}</span>)</span>
                     </div>
