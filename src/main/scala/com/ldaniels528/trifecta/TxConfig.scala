@@ -8,16 +8,19 @@ import com.ldaniels528.trifecta.TxConfig.{TxDecoder, decoderDirectory}
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.ldaniels528.trifecta.util.PropertiesHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
+import org.slf4j.LoggerFactory
 
 import scala.io.Source
 import scala.util.Properties._
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
  * Trifecta Configuration
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxConfig(val configProps: Properties) {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
+
   // set the current working directory
   configProps.setProperty("trifecta.common.cwd", new File(".").getCanonicalPath)
 
@@ -70,10 +73,17 @@ class TxConfig(val configProps: Properties) {
     Option(decoderDirectory.listFiles) map { topicDirectories =>
       (topicDirectories flatMap { topicDirectory =>
         Option(topicDirectory.listFiles) map { decoderFiles =>
-          decoderFiles map { decoderFile =>
-            val topic = topicDirectory.getName
-            val schema = Source.fromFile(decoderFile).getLines().mkString
-            TxDecoder(topic, AvroDecoder(decoderFile.getName, schema))
+          decoderFiles flatMap { decoderFile =>
+            Try {
+              val topic = topicDirectory.getName
+              val schema = Source.fromFile(decoderFile).getLines().mkString
+              TxDecoder(topic, AvroDecoder(decoderFile.getName, schema))
+            } match {
+              case Success(decoder) => Option(decoder)
+              case Failure(e) =>
+                logger.error(s"Failed to register decoder (${decoderFile.getAbsolutePath})", e)
+                None
+            }
           }
         }
       }).flatten
