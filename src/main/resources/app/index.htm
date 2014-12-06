@@ -60,7 +60,7 @@
                 <legend>Topics</legend>
                 <div class="topics_container">
                     <table style="width: 100%">
-                        <tr ng-repeat="t in getTopics(hideEmptyTopics)" ng-class="t == topic ? 'highlighted' : ''">
+                        <tr ng-repeat="t in getTopics(hideEmptyTopics)|orderBy:'topic'" ng-class="t == topic ? 'highlighted' : ''">
                             <td style="width: 16px; height: 16px">
                                 <img class="middle" ng-src="/app/images/status/{{t.totalMessages ? 'greenlight.png' : 'offlight.png'}}">
                             </td>
@@ -339,7 +339,7 @@
                     </div>
 
                     <!-- Topics -->
-                    <div class="block" ng-repeat="t in getTopics(true)" ng-show="observeTab.name == 'Topics'">
+                    <div class="block" ng-repeat="t in getTopics(true)|orderBy:'topic'" ng-show="observeTab.name == 'Topics'">
                         <a ng-click="t.expanded = !t.expanded">
                             <img class="middle" ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}"> {{ t.topic }}
                              <span ng-show="t.totalMessages > 0">
