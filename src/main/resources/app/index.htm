@@ -294,7 +294,7 @@
                 <div class="full_block">
 
                     <!-- Consumers -->
-                    <div class="block" ng-repeat="levelA in consumerMapping" ng-show="observeTab.name == 'Consumers'">
+                    <div class="block" ng-repeat="levelA in consumerMapping|orderBy:'topic'" ng-show="observeTab.name == 'Consumers'">
                         <div>
                             <a ng-click="levelA.expanded = !levelA.expanded">
                                 <img class="middle" ng-src="/app/images/buttons/{{levelA.expanded ? 'collapse.png' : 'expand.png'}}">
