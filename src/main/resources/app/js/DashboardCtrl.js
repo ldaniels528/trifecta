@@ -11,7 +11,7 @@
                 $scope.consumerMapping = [];
                 $scope.topics = [];
                 $scope.topic = null;
-                $scope.hideEmptyTopics = false;
+                $scope.hideEmptyTopics = true;
                 $scope.loading = 0;
 
                 clearMessage();
