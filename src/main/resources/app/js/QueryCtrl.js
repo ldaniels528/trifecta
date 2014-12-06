@@ -9,11 +9,14 @@
             $scope.running = false;
             var queryStartTime = 0;
             $scope.queryElaspedTime = 0;
-            $scope.queryString = "";
 
             // save queries
-            $scope.savedQueries = [];
-            $scope.savedQuery = null;
+            $scope.savedQueries = [{
+                "name": "Untitled",
+                "queryString": "",
+                "modified": true
+            }];
+            $scope.savedQuery = $scope.savedQueries[0];
 
             $scope.results = null;
             $scope.mappings = null;
@@ -53,7 +56,6 @@
              */
             $scope.selectQuery = function(query) {
                 $scope.savedQuery = query;
-                $scope.queryString = query.queryString;
             };
 
             /**
@@ -62,10 +64,9 @@
             $scope.initReferenceData = function() {
                 QuerySvc.getQueries().then(
                     function(queries) {
-                        $scope.savedQueries = queries;
-                        if(queries) {
-                            $scope.queryString = queries[0].queryString;
-                        }
+                        angular.forEach(queries, function(query) {
+                            $scope.savedQueries.push(query);
+                        });
                     },
                     function(err) {
                         setError(err);
@@ -85,7 +86,7 @@
                 updatesQueryClock();
 
                 // execute the query
-                QuerySvc.executeQuery($scope.queryString).then(
+                QuerySvc.executeQuery($scope.savedQuery.queryString).then(
                     function (results) {
                         $scope.running = false;
                         //$log.info("results = " + angular.toJson(results));
@@ -101,7 +102,7 @@
                         else {
                             $scope.results = results;
                             $scope.mappings = generateDataArray(results.labels, results.values);
-                            $log.info("mappings = " + angular.toJson($scope.mappings));
+                            //$log.info("mappings = " + angular.toJson($scope.mappings));
                         }
                     },
                     function (err) {
@@ -124,6 +125,13 @@
                 return labels ? labels.slice(0, labels.length - 2) : null
             };
 
+            $scope.isSelected = function (topic, partition, results, index) {
+                if(!topic || !partition || !results) return false;
+                return topic.topic == results.topic &&
+                    partition.partition == $scope.partitionAt(index) &&
+                    partition.offset == $scope.offsetAt(index);
+            };
+
             $scope.offsetAt = function (index) {
                 var row = $scope.results.values[index];
                 return row["__offset"];
@@ -134,8 +142,27 @@
                 return row["__partition"];
             };
 
-            $scope.saveQuery = function() {
-                $log.info("Uploading query string...");
+            $scope.saveQuery = function (query) {
+                if (query) {
+                    query.syncing = true;
+                    $log.info("Uploading query '" + query.name + "'...");
+                    QuerySvc.saveQuery(query.name, query.queryString).then(
+                        function (response) {
+                            if(response && response.type == 'error') {
+                                $scope.addErrorMessage(response.message);
+                                query.syncing = false;
+                            }
+                            else {
+                                query.modified = false;
+                                query.syncing = false;
+                            }
+                        },
+                        function (err) {
+                            query.syncing = false;
+                            setError(err);
+                        }
+                    );
+                }
             };
 
             $scope.toggleSortField = function (sortField) {
@@ -159,10 +186,10 @@
                 return {"labels": labels, "values": rows};
             }
 
-            function makeQueryName(queryString) {
-                var result = (queryString.length < 15) ? queryString : queryString.substring(0, 15);
-                if(queryString.length > 40) {
-                    result += "..." + queryString.substring(queryString.length - 15, queryString.length);
+            function makeQueryName(qs) {
+                var result = (qs.length < 15) ? qs : qs.substring(0, 15);
+                if(qs.length > 40) {
+                    result += "..." + qs.substring(qs.length - 15, qs.length);
                 }
                 return result;
             }

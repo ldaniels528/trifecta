@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.rest
 
+import com.ldaniels528.trifecta.util.StringHelper._
 import java.io.File
 
 import akka.actor.{ActorSystem, Props}
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration._
+import scala.io.Source
 import scala.util.Try
 
 /**
@@ -130,11 +132,27 @@ object EmbeddedWebServer {
         }
       }"""
 
+  case class TxQuery(name: String, queryString: String)
+
   /**
    * Trifecta Web Configuration
    * @param config the given [[TxConfig]]
    */
   implicit class TxWebConfig(val config: TxConfig) extends AnyVal {
+
+    def getQueries: Option[Array[TxQuery]] = {
+      def removeExtension(name: String) = name.lastIndexOptionOf(".bdql") match {
+        case Some(index) => name.substring(0, index)
+        case None => name
+      }
+
+      Option(queriesDirectory.listFiles) map { queriesFiles =>
+        queriesFiles map { file =>
+          val name = removeExtension(file.getName)
+          TxQuery(name, Source.fromFile(file).getLines().mkString("\n"))
+        }
+      }
+    }
 
     /**
      * Returns the push interval (in seconds) for topic changes
@@ -149,10 +167,10 @@ object EmbeddedWebServer {
     def consumerPushInterval: Int = config.getOrElse("trifecta.rest.push.interval.consumer", "15").toInt
 
     /**
-     * Returns the location of the queries file
-     * @return the [[File]] representing the location of queries file
+     * Returns the location of the queries directory
+     * @return the [[File]] representing the location of the queries directory
      */
-    def queriesFile: File = new File(TxConfig.trifectaPrefs, "queries.txt")
+    def queriesDirectory: File = new File(TxConfig.trifectaPrefs, "queries")
 
     /**
      * Returns the query execution concurrency

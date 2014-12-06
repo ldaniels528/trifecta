@@ -126,7 +126,6 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
         case "getConsumerDeltas" if args.isEmpty => Option(JsonHelper.toJson(facade.getConsumerDeltas))
         case "getConsumers" if args.isEmpty => Option(facade.getConsumers)
         case "getConsumerSet" if args.isEmpty => Option(facade.getConsumerSet)
-        case "getLastQuery" if args.isEmpty => Option(facade.getLastQuery)
         case "getMessage" => args match {
           case topic :: partition :: offset :: Nil => Option(facade.getMessage(topic, partition.toInt, offset.toLong))
           case _ => None
@@ -146,6 +145,7 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
         case "getZkData" => Option(facade.getZkData(toZkPath(args.init), args.last))
         case "getZkInfo" => Option(facade.getZkInfo(toZkPath(args)))
         case "getZkPath" => Option(facade.getZkPath(toZkPath(args)))
+        case "saveQuery" if dataMap.nonEmpty => Option(facade.saveQuery(dataMap))
         case _ => None
       }
     }

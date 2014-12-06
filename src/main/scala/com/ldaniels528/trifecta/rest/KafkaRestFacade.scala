@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.rest
 
+import java.io.{File, FileOutputStream}
 import java.util.concurrent.Executors
 
 import com.ldaniels528.trifecta.command.parser.bdql.{BigDataQueryParser, BigDataQueryTokenizer}
@@ -11,6 +12,7 @@ import com.ldaniels528.trifecta.messages.MessageDecoder
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.messages.query.{BigDataSelection, QueryResult}
+import com.ldaniels528.trifecta.rest.EmbeddedWebServer._
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
 import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
@@ -109,11 +111,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       case Failure(e) =>
         Extraction.decompose(ErrorJs(e.getMessage))
     }
-
-
   }
-
-  def getLastQuery: JValue = Extraction.decompose(QueryJs(name = System.currentTimeMillis.toString, config.getOrElse(LAST_QUERY, "")))
 
   /**
    * Parses a condition statement
@@ -360,6 +358,26 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       case Success(items) => items
       case Failure(e) => ErrorJs(message = e.getMessage)
     })
+  }
+
+  def saveQuery(dataMap: Map[String, List[String]]): JValue = {
+    val outcome = for {
+      name <- dataMap.get("name") flatMap (_.headOption)
+      queryString <- dataMap.get("queryString") flatMap (_.headOption)
+    } yield {
+      val file = new File(config.queriesDirectory, s"$name.bdql")
+      // TODO add a check for new vs. replace?
+
+      Try(new FileOutputStream(file) use { fos =>
+        fos.write(queryString.getBytes(config.encoding))
+      })
+    }
+
+    outcome match {
+      case Some(Success(_)) => Extraction.decompose(ErrorJs(message = "Saved", `type` = "success"))
+      case Some(Failure(e)) => Extraction.decompose(ErrorJs(message = e.getMessage, `type` = "error"))
+      case _ =>  Extraction.decompose(ErrorJs(message = "Unknown error", `type` = "error"))
+    }
   }
 
   private def toByteArray(bytes: Array[Byte], columns: Int = 20): Seq[Seq[String]] = {

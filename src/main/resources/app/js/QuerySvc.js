@@ -23,9 +23,9 @@
 
             service.saveQuery = function (name, queryString) {
                 return $http({
-                    url: "/rest/saveQueries",
+                    url: "/rest/saveQuery",
                     method: "POST",
-                    data: angular.toJson({ "name":name, "queryString":queryString }),
+                    data: "name=" + encodeURI(name) + "&queryString=" + encodeURI(queryString),
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'}
                 }).then(function (response) {
                     return response.data;

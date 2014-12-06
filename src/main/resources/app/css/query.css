@@ -1,4 +1,5 @@
 .q_clock_text {
+    font-size: 10pt;
     font-weight: bold;
     color: #000000;
 }
@@ -19,6 +20,10 @@
 
 .q_odd {
     background-color: #eeffff;
+}
+
+.q_key_field {
+    color: #aa00aa;
 }
 
 .q_action_icon {

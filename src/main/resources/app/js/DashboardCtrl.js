@@ -10,6 +10,7 @@
                 $scope.version = "0.18.1";
                 $scope.consumerMapping = [];
                 $scope.topics = [];
+                $scope.topic = null;
                 $scope.hideEmptyTopics = false;
                 $scope.loading = 0;
 
@@ -118,10 +119,8 @@
                         var offset = $scope.partition.offset;
 
                         clearMessage();
-
                         $scope.loading++;
 
-                        $log.info("Loading message for topic=" + topic + ", partition=" + partition + ", offset=" + offset);
                         DashboardSvc.getMessage(topic, partition, offset).then(
                             function (message) {
                                 $scope.message = message;
@@ -152,7 +151,7 @@
 
                 $scope.medianMessage = function() {
                     ensureOffset($scope.partition);
-                    var median = Math.round($scope.partition.endOffset/2);
+                    var median = Math.round(($scope.partition.endOffset - $scope.partition.startOffset)/2);
                     if ($scope.partition.offset != median) {
                         $scope.partition.offset = median;
                         $scope.loadMessage();
