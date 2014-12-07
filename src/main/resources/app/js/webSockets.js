@@ -4,7 +4,7 @@
  */
 (function () {
     angular.module('trifecta')
-        .factory('WebSockets', function ($log, Consumers, Topics) {
+        .factory('WebSockets', function ($location, $log, Consumers, Topics) {
             var service = {};
 
             // establish the web socket connection
@@ -14,8 +14,9 @@
 
             var socket;
             if (window.WebSocket) {
-                $log.info("Connecting to websocket...");
-                socket = new WebSocket("ws://localhost:8888/websocket/");
+                var endpoint = "ws://" + $location.host() + ":" + $location.port() + "/websocket/";
+                $log.info("Connecting to websocket endpoint '" + endpoint + "'...");
+                socket = new WebSocket(endpoint);
                 $log.info("socket = " + angular.toJson(socket));
 
                 socket.onopen = function (event) {
