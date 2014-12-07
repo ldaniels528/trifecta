@@ -40,22 +40,25 @@ object AvroCodec {
   }
 
   def resolve(url: String): AvroDecoder = {
-    // is it a valid Avro input source?
-    val resource_? = url match {
-      case s if s.startsWith("classpath:") =>
-        for {
-          path <- s.extractProperty("classpath:")
-          resource <- Resource(path)
-        } yield loadDecoder(resource)
-      case s if s.startsWith("file:") =>
-        s.extractProperty("file:") map expandPath map (path => loadDecoder(new File(path)))
-      case s if s.startsWith("http:") =>
-        Option(loadDecoder(new URL(s)))
-      case s =>
-        throw new IllegalStateException(s"Unrecognized Avro URL - $s")
-    }
+    if(!url.contains(":")) decoders.getOrElse(url, throw new IllegalStateException(s"No decoder found for '$url'"))
+    else {
+      // is it a valid Avro input source?
+      val resource_? = url match {
+        case s if s.startsWith("classpath:") =>
+          for {
+            path <- s.extractProperty("classpath:")
+            resource <- Resource(path)
+          } yield loadDecoder(resource)
+        case s if s.startsWith("file:") =>
+          s.extractProperty("file:") map expandPath map (path => loadDecoder(new File(path)))
+        case s if s.startsWith("http:") =>
+          Option(loadDecoder(new URL(s)))
+        case s =>
+          throw new IllegalStateException(s"Unrecognized Avro URL - $s")
+      }
 
-    resource_?.getOrElse(throw new IllegalStateException(s"Malformed Avro URL - $url"))
+      resource_?.getOrElse(throw new IllegalStateException(s"Malformed Avro URL - $url"))
+    }
   }
 
   /**

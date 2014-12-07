@@ -30,6 +30,13 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   // support registering decoders
   private val decoders = TrieMap[String, MessageDecoder[_]]()
 
+  // load the default decoders
+  config.getDecoders foreach { txDecoders =>
+    txDecoders foreach { txDecoder =>
+      decoders += txDecoder.topic -> txDecoder.decoder
+    }
+  }
+
   // create the module manager and load the built-in modules
   val moduleManager = new ModuleManager()(this)
   moduleManager ++= Seq(
@@ -43,6 +50,15 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
 
   // set the "active" module
   moduleManager.findModuleByName("core") foreach moduleManager.setActiveModule
+
+  /**
+   * Attempts to resolve the given topic or decoder URL into an actual message decoder
+   * @param topicOrUrl the given topic or decoder URL
+   * @return an option of a [[MessageDecoder]]
+   */
+  def resolveDecoder(topicOrUrl: String): Option[MessageDecoder[_]] = {
+    decoders.get(topicOrUrl) ?? MessageCodecs.getDecoder(topicOrUrl)
+  }
 
   /**
    * Returns the input handler for the given output URL

@@ -527,8 +527,7 @@ class KafkaModule(config: TxConfig) extends Module {
     }
 
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
-    val decoder: Option[MessageDecoder[_]] = Seq(params("-a") map AvroCodec.resolve, navigableCursors.get(topic)
-      .flatMap(_.decoder)).find(_.isDefined).flatten
+    val decoder: Option[MessageDecoder[_]] = resolveDecoder(topic, params)
 
     // if a decoder was found, use it to decode the message
     val decodedMessage = decoder.flatMap(decodeMessage(messageData, _))
@@ -549,6 +548,22 @@ class KafkaModule(config: TxConfig) extends Module {
     if (jsonMessage.isDefined) Right(Right(jsonMessage))
     else if (decodedMessage.isDefined) Right(Left(decodedMessage))
     else Left(messageData)
+  }
+
+  /**
+   * Resolves the optional decoder URL (e.g. "-a" (Avro)) for the given topic. Note, if the url is "default"
+   * then the default decoder (configured in $HOME/.trifecta/decoders) will be used
+   * @param topic the given Kafka topic (e.g. "shocktrade.quotes.avro")
+   * @param params the given [[UnixLikeArgs]]
+   * @param rt the implicit [[TxRuntimeContext]]
+   * @return an option of the [[MessageDecoder]]
+   */
+  private def resolveDecoder(topic: String, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[MessageDecoder[_]] = {
+    params("-a") match {
+      case Some(url) if url == "default" => rt.resolveDecoder(topic)
+      case Some(url) => Option(AvroCodec.resolve(url)) // TODO no error should be thrown here!
+      case None => navigableCursors.get(topic) flatMap (_.decoder)
+    }
   }
 
   /**
