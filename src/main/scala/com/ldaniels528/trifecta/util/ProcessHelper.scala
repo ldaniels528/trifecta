@@ -2,7 +2,6 @@ package com.ldaniels528.trifecta.util
 
 import java.io.{ByteArrayOutputStream, PrintStream}
 
-import scala.concurrent.duration.FiniteDuration
 import scala.language._
 
 /**
