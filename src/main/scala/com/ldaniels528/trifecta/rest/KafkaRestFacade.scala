@@ -156,15 +156,32 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     val deltas = if (consumerCache.isEmpty) consumers
     else {
       consumers.flatMap(c =>
-        consumerCache.get(ConsumerDeltaKey(c.consumerId, c.topic, c.partition)) match {
-          case Some(prev) => if (prev != c) Option(c) else None
+        consumerCache.get(c.getKey) match {
+          case Some(prev) => if (prev != c) Option(c.copy(rate = computeTransferRate(prev, c))) else None
           case None => Option(c)
         })
     }
 
-    consumerCache = consumerCache ++ Map(consumers.map(c => ConsumerDeltaKey(c.consumerId, c.topic, c.partition) -> c): _*)
-
+    consumerCache = consumerCache ++ Map(consumers.map(c => c.getKey -> c): _*)
     deltas
+  }
+
+
+  private def computeTransferRate(a: ConsumerJs, b: ConsumerJs): Option[Double] = {
+    for {
+    // compute the delta of the messages
+      messages0 <- a.messagesLeft
+      messages1 <- b.messagesLeft
+      msgDelta = (messages1 - messages0).toDouble
+
+      // compute the time delta
+      time0 <- a.lastModified
+      time1 <- b.lastModified
+      timeDelta = (time1 - time0).toDouble / 1000d
+
+      // compute the rate
+      rate = if(timeDelta > 0 ) msgDelta / timeDelta else msgDelta
+    } yield rate
   }
 
   /**
@@ -196,7 +213,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     KafkaMicroConsumer.getConsumerList() map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-      ConsumerJs(c.consumerId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta)
+      ConsumerJs(c.consumerId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
     }
   }
 
@@ -208,7 +225,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     KafkaMicroConsumer.getSpoutConsumerList() map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-      ConsumerJs(c.topologyName, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta)
+      ConsumerJs(c.topologyName, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
     }
   }
 
@@ -276,7 +293,6 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
     // rebuild the message cache with the latest data
     topicCache = topicCache ++ Map(topics.map(t => (t.topic -> t.partition) -> t): _*)
-
     deltas
   }
 
@@ -376,7 +392,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     outcome match {
       case Some(Success(_)) => Extraction.decompose(ErrorJs(message = "Saved", `type` = "success"))
       case Some(Failure(e)) => Extraction.decompose(ErrorJs(message = e.getMessage, `type` = "error"))
-      case _ =>  Extraction.decompose(ErrorJs(message = "Unknown error", `type` = "error"))
+      case _ => Extraction.decompose(ErrorJs(message = "Unknown error", `type` = "error"))
     }
   }
 
@@ -430,7 +446,11 @@ object KafkaRestFacade {
 
   }
 
-  case class ConsumerJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long])
+  case class ConsumerJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long], rate: Option[Double]) {
+
+    def getKey = ConsumerDeltaKey(consumerId, topic, partition)
+
+  }
 
   case class ConsumerDeltaKey(consumerId: String, topic: String, partition: Int)
 
