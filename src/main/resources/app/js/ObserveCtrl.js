@@ -97,6 +97,18 @@
                 }
             };
 
+            $scope.isConsumerUpToDate = function(consumer) {
+                var details = consumer.details || [];
+                if(!details.length) return false;
+                else {
+                    var time = new Date().getTime() - 300000; // 5 minutes ago
+                    for(var n = 0; n < details.length; n++) {
+                        if(details[n].lastModified >= time) return true;
+                    }
+                    return false;
+                }
+            };
+
             $scope.updateConsumers = function () {
                 DashboardSvc.getConsumers().then(
                     function (consumers) {

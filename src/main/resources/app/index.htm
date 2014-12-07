@@ -297,15 +297,16 @@
                     <div class="block" ng-repeat="levelA in consumerMapping|orderBy:'topic'" ng-show="observeTab.name == 'Consumers'">
                         <div>
                             <a ng-click="levelA.expanded = !levelA.expanded">
-                                <img class="middle" ng-src="/app/images/buttons/{{levelA.expanded ? 'collapse.png' : 'expand.png'}}">
+                                <img class="middle" ng-src="/app/images/buttons/{{levelA.expanded ? 'collapse' : 'expand'}}.png">
                                 <span>{{levelA.topic}}</span>
                                 <img ng-show="levelA.loading" src="/app/images/status/processing.gif">
                             </a>
                         </div>
                         <div ng-show="levelA.expanded" ng-repeat="levelB in levelA.consumers" style="margin-left: 32px">
                             <a ng-click="levelB.expanded = !levelB.expanded">
-                                <img class="middle" ng-src="/app/images/buttons/{{levelB.expanded ? 'collapse.png' : 'expand.png'}}">
+                                <img class="middle" ng-src="/app/images/buttons/{{levelB.expanded ? 'collapse' : 'expand'}}.png">
                                 <span>{{levelB.consumerId}}</span>
+                                <img src="/app/images/status/processing.gif" ng-show="levelB.expanded && isConsumerUpToDate(levelB)">
                             </a>
 
                             <div ng-show="levelB.expanded" style="margin-left: 32px">
