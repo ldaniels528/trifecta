@@ -1,0 +1,50 @@
+.input-mir {
+    width: 100px;
+    height: 24px;
+}
+
+.input_block {
+    display: inline;
+    height: 50px;
+    border: 1px solid #bbbbbb;
+    border-radius: 5px 5px 5px 5px;
+    background: #eeeeee;
+    padding: 3px;
+    margin-right: 3px
+}
+
+.leaders_and_replicas {
+    clear: both;
+    width: auto;
+    height: 150px;
+    overflow: auto;
+}
+
+.messages_and_offsets {
+    clear: both;
+    width: auto;
+    height: 150px;
+    overflow: auto;
+}
+
+.message_panel {
+    display: block;
+    border: 1px solid #cccccc;
+    border-radius: 5px 5px 5px 5px;
+    background: #eeeeee;
+    padding: 10px;
+
+    clear: both;
+    width: auto;
+    height: 540px;
+    overflow: auto;
+}
+
+.separator { margin-top: 10px }
+
+.topics_container {
+    clear: both;
+    width: auto;
+    height: 200px;
+    overflow: auto;
+}

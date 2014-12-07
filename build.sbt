@@ -11,7 +11,7 @@ name := "trifecta"
 
 organization := "com.ldaniels528"
 
-version := "0.1.7"
+version := "0.18.1"
 
 scalaVersion := "2.10.4"
 
@@ -48,11 +48,13 @@ libraryDependencies ++= Seq(
   "org.apache.curator" % "curator-framework" % "2.6.0",
   "org.apache.curator" % "curator-test" % "2.6.0",
   "org.apache.kafka" %% "kafka" % "0.8.1.1"
-    exclude("org.apache.zookeeper", "zookeeper"),
+    exclude("org.apache.zookeeper", "zookeeper")
+    exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.storm" % "storm-core" % "0.9.2-incubating"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
+  "org.mashupbots.socko" %% "socko-webserver" % "0.4.2",
   "org.mongodb" %% "casbah-commons" % "2.6.4",
   "org.mongodb" %% "casbah-core" % "2.6.4",
   "org.fusesource.jansi" % "jansi" % "1.11",

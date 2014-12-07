@@ -12,6 +12,8 @@ case class UnixLikeArgs(commandName: Option[String], args: List[String], flags: 
 
   def apply(flag: String) = flags.get(flag).flatten
 
+  def apply(flag: String, defaultValue: String) = flags.get(flag).flatten getOrElse defaultValue
+
   def contains(flag: String) = flags.get(flag).isDefined
 
 }

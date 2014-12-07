@@ -36,6 +36,8 @@ trait ZKProxy {
 
   def getFamily(path: String): List[String]
 
+  def getModificationTime(path: String): Option[Long]
+
   def read(path: String): Option[Array[Byte]]
 
   def readString(path: String): Option[String]

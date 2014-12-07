@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.io.mongodb
 
-import com.ldaniels528.trifecta.io.json.TxJsonUtil._
+import com.ldaniels528.trifecta.io.json.JsonHelper._
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.MongoCollection
 import net.liftweb.json.JsonAST.JValue

@@ -9,10 +9,10 @@ import com.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.ldaniels528.trifecta._
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.io._
-import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroFileInputSource, AvroFileOutputSource}
+import com.ldaniels528.trifecta.io.avro.{AvroFileInputSource, AvroFileOutputSource}
 import com.ldaniels528.trifecta.io.json.{JSONFileInputSource, JSONFileOutputSource}
-import com.ldaniels528.trifecta.util.PathHelper._
 import com.ldaniels528.trifecta.util.ParsingHelper._
+import com.ldaniels528.trifecta.util.PathHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 import org.apache.commons.io.IOUtils
@@ -27,7 +27,7 @@ import scala.util.{Properties, Try}
  * Core Module
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class CoreModule(config: TxConfig) extends Module with AvroCodec {
+class CoreModule(config: TxConfig) extends Module {
   private val out: PrintStream = config.out
 
   // define the process parsing regular expression
@@ -189,6 +189,40 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
   }
 
   /**
+   * History execution command. This command can either executed a
+   * previously executed command by its unique identifier, or list (!?) all previously
+   * executed commands.
+   * @example !123
+   * @example !?10
+   * @example !?
+   */
+  def executeHistory(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
+    for {
+      command <- params.args match {
+        case Nil => SessionManagement.history.last
+        case "!" :: Nil => SessionManagement.history.last
+        case "?" :: Nil => Some("history")
+        case "?" :: count :: Nil => Some(s"history $count")
+        case index :: Nil if index.matches("\\d+") => SessionManagement.history(parseInt("history ID", index) - 1)
+        case _ => dieSyntax(params)
+      }
+    } {
+      out.println(s">> $command")
+      val result = rt.interpret(command)
+      rt.handleResult(result, command)
+    }
+  }
+
+  /**
+   * Exits the shell
+   * @example exit
+   */
+  def exit(params: UnixLikeArgs) {
+    config.alive = false
+    SessionManagement.history.store(TxConfig.historyFile)
+  }
+
+  /**
    * Provides the list of available commands
    * @example ?
    * @example ?k
@@ -222,7 +256,7 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
     import java.net._
 
     // retrieve (or guess) the value's format
-    val valueType = params("-f") getOrElse "bytes"
+    val valueType = params("-f", "bytes")
 
     // download the content from the remote peer
     val bytes = params.args.headOption map { urlString =>
@@ -237,40 +271,6 @@ class CoreModule(config: TxConfig) extends Module with AvroCodec {
 
     // return either the byte array or the decoded value
     bytes map (decodeValue(_, valueType))
-  }
-
-  /**
-   * History execution command. This command can either executed a
-   * previously executed command by its unique identifier, or list (!?) all previously
-   * executed commands.
-   * @example !123
-   * @example !?10
-   * @example !?
-   */
-  def executeHistory(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
-    for {
-      command <- params.args match {
-        case Nil => SessionManagement.history.last
-        case "!" :: Nil => SessionManagement.history.last
-        case "?" :: Nil => Some("history")
-        case "?" :: count :: Nil => Some(s"history $count")
-        case index :: Nil if index.matches("\\d+") => SessionManagement.history(parseInt("history ID", index) - 1)
-        case _ => dieSyntax(params)
-      }
-    } {
-      out.println(s">> $command")
-      val result = rt.interpret(command)
-      rt.handleResult(result, command)
-    }
-  }
-
-  /**
-   * Exits the shell
-   * @example exit
-   */
-  def exit(params: UnixLikeArgs) {
-    config.alive = false
-    SessionManagement.history.store(TxConfig.historyFile)
   }
 
   /**

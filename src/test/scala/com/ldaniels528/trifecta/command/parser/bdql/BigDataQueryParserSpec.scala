@@ -14,24 +14,48 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
   info("As a Big Data Query Parser")
   info("I want to be able to parse Big Data queries")
 
-  feature("Ability to parse Big Data query") {
-    scenario("A string containing a Big Data selection query") {
+  feature("Ability to parse Big Data queries with implicit decoders") {
+    scenario("A string containing a Big Data selection query using 'with default'") {
       Given("a Big Data selection query")
       val queryString =
         """
-          |select symbol, exchange, lastTrade, volume
-          |from "kafka:quotes" with "avro:file:avro/quotes.avsc" where exchange == "OTCBB"
-          | """.stripMargin
+          |select symbol, exchange, lastTrade, open, prevClose, high, low, volume
+          |from "kafka:shocktrade.quotes.avro" with default
+          |where volume >= 1,000,000 and lastTrade <= 1
+          |""".stripMargin
 
       When("The queries is parsed into a BD-QL object")
       val query = BigDataQueryParser(queryString)
 
       Then("The arguments should be successfully verified")
       query shouldBe BigDataSelection(
-        source = IOSource(deviceURL = "kafka:quotes", decoderURL = "avro:file:avro/quotes.avsc"),
+        source = IOSource(deviceURL = "kafka:shocktrade.quotes.avro", decoderURL = "default"),
         destination = None,
-        fields = List("symbol", "exchange", "lastTrade", "volume"),
-        criteria = Some(EQ("exchange", "OTCBB")),
+        fields = List("symbol", "exchange", "lastTrade", "open", "prevClose", "high", "low", "volume"),
+        criteria = Some(AND(GE("volume", "1000000"), LE("lastTrade", "1"))),
+        limit = None)
+    }
+  }
+
+  feature("Ability to parse Big Data query") {
+    scenario("A string containing a Big Data selection query") {
+      Given("a Big Data selection query")
+      val queryString =
+        """
+          |select symbol, exchange, lastTrade, open, prevClose, high, low, volume
+          |from "kafka:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+          |where volume >= 1,000,000 and lastTrade <= 1
+          |""".stripMargin
+
+      When("The queries is parsed into a BD-QL object")
+      val query = BigDataQueryParser(queryString)
+
+      Then("The arguments should be successfully verified")
+      query shouldBe BigDataSelection(
+        source = IOSource(deviceURL = "kafka:shocktrade.quotes.avro", decoderURL = "avro:file:avro/quotes.avsc"),
+        destination = None,
+        fields = List("symbol", "exchange", "lastTrade", "open", "prevClose", "high", "low", "volume"),
+        criteria = Some(AND(GE("volume", "1000000"), LE("lastTrade", "1"))),
         limit = None)
     }
   }
@@ -48,7 +72,7 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
           |and lastTrade <= 1.0
           |and volume >= 1,000,000
           |limit 10
-          | """.stripMargin
+          |""".stripMargin
 
       When("The queries is parsed into a BD-QL object")
       val query = BigDataQueryParser(queryString)

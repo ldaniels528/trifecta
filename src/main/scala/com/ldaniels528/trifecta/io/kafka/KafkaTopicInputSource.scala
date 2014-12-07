@@ -21,7 +21,7 @@ class KafkaTopicInputSource(brokers: Seq[Broker], topic: String, partition: Int 
   override def read: Option[KeyAndMessage] = {
     for {
       offset <- offset_?
-      md <- consumer.fetch(offset, fetchSize).headOption
+      md <- consumer.fetch(offset)(fetchSize).headOption
     } yield {
       offset_? = offset_? map (_ + 1)
       KeyAndMessage(md.key, md.message)
