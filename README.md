@@ -95,7 +95,7 @@ contains the configuration properties and connection strings for all supported s
     # common properties
     trifecta.common.autoSwitching = true
     trifecta.common.columns = 25
-    trifecta.common.debugOn = true
+    trifecta.common.debugOn = false
     trifecta.common.encoding = UTF-8
     
     # Zookeeper properties
