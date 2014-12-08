@@ -10,18 +10,34 @@
             var queryStartTime = 0;
             $scope.queryElaspedTime = 0;
 
-            // save queries
-            $scope.savedQueries = [{
-                "name": "Untitled",
-                "queryString": "",
-                "modified": true
-            }];
+            // saved queries
+            $scope.savedQueries = [];
+            $scope.savedQueries.push(newQueryScript());
             $scope.savedQuery = $scope.savedQueries[0];
 
             $scope.results = null;
             $scope.mappings = null;
             $scope.sortField = null;
             $scope.ascending = false;
+
+            /**
+             * Initializes the reference data
+             */
+            $scope.initReferenceData = function() {
+                QuerySvc.getQueries().then(
+                    function(queries) {
+                        $scope.savedQueries = queries || [];
+                        if(!$scope.savedQueries.length) {
+                            $scope.savedQueries.push(newQueryScript());
+                        }
+
+                        // select the first query
+                        $scope.savedQuery = $scope.savedQueries[0];
+                    },
+                    function(err) {
+                        setError(err);
+                    });
+            };
 
             /**
              * Downloads the query results
@@ -33,44 +49,26 @@
             /**
              * Adds a query to the Saved Queries list
              */
-            $scope.queryAdd = function() {
-                $scope.savedQueries.push({
-                    "name": makeQueryName($scope.queryString),
-                    "queryString": $scope.queryString,
-                    "count": null,
-                    "loading": false
-                });
+            $scope.addQuery = function() {
+                var queryScript = newQueryScript();
+                $scope.savedQueries.push(queryScript);
+                $scope.savedQuery = queryScript;
             };
 
             /**
              * Removes a query query from the list
              * @param index the index of the query to remove
              */
-            $scope.queryDelete = function(index) {
+            $scope.deleteQuery = function(index) {
                 $scope.savedQueries.splice(index, 1);
             };
 
             /**
              * Selects a query query from the list
-             * @param query the query to select
+             * @param queryScript the query script to select
              */
-            $scope.selectQuery = function(query) {
-                $scope.savedQuery = query;
-            };
-
-            /**
-             * Initializes the reference data
-             */
-            $scope.initReferenceData = function() {
-                QuerySvc.getQueries().then(
-                    function(queries) {
-                        angular.forEach(queries, function(query) {
-                            $scope.savedQueries.push(query);
-                        });
-                    },
-                    function(err) {
-                        setError(err);
-                    });
+            $scope.selectQuery = function(queryScript) {
+                $scope.savedQuery = queryScript;
             };
 
             /**
@@ -84,6 +82,14 @@
                 // setup the query clock
                 queryStartTime = new Date().getTime();
                 updatesQueryClock();
+
+                // ensure we have an array for storing the results
+                if(!$scope.savedQuery.results) {
+                    $scope.savedQuery.results = [];
+                }
+
+                // keep a reference to the original saved query
+                var mySavedQuery =  $scope.savedQuery;
 
                 // execute the query
                 QuerySvc.executeQuery($scope.savedQuery.queryString).then(
@@ -103,6 +109,12 @@
                             $scope.results = results;
                             $scope.mappings = generateDataArray(results.labels, results.values);
                             //$log.info("mappings = " + angular.toJson($scope.mappings));
+
+                            mySavedQuery.results.push({
+                                "name": new Date().toTimeString(),
+                                "results": results,
+                                "mappings": $scope.mappings
+                            });
                         }
                     },
                     function (err) {
@@ -111,15 +123,6 @@
                     }
                 );
             };
-
-            function updatesQueryClock() {
-                $scope.queryElaspedTime = (new Date().getTime() - queryStartTime) / 1000;
-                if($scope.running) {
-                    $timeout(function () {
-                        updatesQueryClock();
-                    }, 1000);
-                }
-            }
 
             $scope.filterLabels = function (labels) {
                 return labels ? labels.slice(0, labels.length - 2) : null
@@ -165,10 +168,14 @@
                 }
             };
 
+            $scope.showResults = function(savedResults) {
+                $scope.results = savedResults.results;
+                $scope.mappings = savedResults.mappings;
+            };
+
             $scope.toggleSortField = function (sortField) {
                 $scope.ascending = $scope.sortField == sortField ? !$scope.ascending : true;
                 $scope.sortField = sortField;
-
                 $scope.results.values = sortData($scope.results.values, sortField, $scope.ascending);
             };
 
@@ -186,24 +193,75 @@
                 return {"labels": labels, "values": rows};
             }
 
-            function makeQueryName(qs) {
-                var result = (qs.length < 15) ? qs : qs.substring(0, 15);
-                if(qs.length > 40) {
-                    result += "..." + qs.substring(qs.length - 15, qs.length);
-                }
-                return result;
+            function getUntitledName() {
+                var index = 0;
+                var name = null;
+
+                do {
+                    index++;
+                    name = "Untitled" + index;
+                } while(nameExists(name));
+                return name;
             }
 
+            /**
+             * Indicates whether the given saved query (name) exists
+             * @param name the saved query name
+             * @returns {boolean}
+             */
+            function nameExists(name) {
+                for(var n = 0; n < $scope.savedQueries.length; n++) {
+                    if(name == $scope.savedQueries[n].name) return true;
+                }
+                return false;
+            }
+
+            /**
+             * Constructs a new query script data object
+             * @returns {{name: string, queryString: string, exists: boolean, modified: boolean}}
+             */
+            function newQueryScript() {
+                return {
+                    "name": getUntitledName(),
+                    "queryString": "",
+                    "exists": false,
+                    "modified": true
+                };
+            }
+
+            /**
+             * Error response handler
+             * @param err the given error response
+             */
             function setError(err) {
                 $scope.addError(err);
             }
 
+            /**
+             * Sorts the given results by the specified sort field
+             * @param results the given array of results
+             * @param sortField the given sort field
+             * @param ascending the sort direction (ascending or descending)
+             * @returns {Array.<T>|*}
+             */
             function sortData(results, sortField, ascending) {
                 return results.sort(function (aa, bb) {
                     var a = aa[sortField];
                     var b = bb[sortField];
                     return ascending ? (a > b ? 1 : ((a < b) ? -1 : 0)) : (a > b ? -1 : ((a < b) ? 1 : 0));
                 });
+            }
+
+            /**
+             * Schedules the query clock to result until the query has completed.
+             */
+            function updatesQueryClock() {
+                $scope.queryElaspedTime = (new Date().getTime() - queryStartTime) / 1000;
+                if($scope.running) {
+                    $timeout(function () {
+                        updatesQueryClock();
+                    }, 1000);
+                }
             }
 
         }]);

@@ -1,6 +1,5 @@
 package com.ldaniels528.trifecta.rest
 
-import com.ldaniels528.trifecta.util.StringHelper._
 import java.io.File
 
 import akka.actor.{ActorSystem, Props}
@@ -9,6 +8,7 @@ import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer._
 import com.ldaniels528.trifecta.rest.PushEventActor._
 import com.ldaniels528.trifecta.util.ResourceHelper._
+import com.ldaniels528.trifecta.util.StringHelper._
 import com.typesafe.config.ConfigFactory
 import org.mashupbots.socko.infrastructure.Logger
 import org.mashupbots.socko.routes._
@@ -28,7 +28,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(actorConfig))
   private val facade = new KafkaRestFacade(config, zk)
-  private val sessions = TrieMap[String, String]()
+  private val sessions = TrieMap[String, WebSocketSession]()
 
   // define all of the routes
   val routes = Routes({
@@ -75,12 +75,22 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
    * Starts the embedded app server
    */
   def start() {
+    implicit val ec = actorSystem.dispatcher
     webServer.start()
 
-    // setup event management
-    implicit val ec = actorSystem.dispatcher
-    actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = config.consumerPushInterval.seconds, pushActor, PushConsumers)
-    actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = config.topicPushInterval.seconds, pushActor, PushTopics)
+    // setup consumer update push events
+    actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = config.consumerPushInterval.seconds) {
+      if (sessions.nonEmpty) {
+        pushActor ! PushConsumers
+      }
+    }
+
+    // setup topic update push events
+    actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = config.topicPushInterval.seconds) {
+      if (sessions.nonEmpty) {
+        pushActor ! PushTopics
+      }
+    }
   }
 
   /**
@@ -93,7 +103,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 
   private def onWebSocketHandshakeComplete(webSocketId: String) {
     logger.info(s"Web Socket $webSocketId connected")
-    sessions += webSocketId -> webSocketId // TODO do we need to a session instance for tracking?
+    sessions += webSocketId -> WebSocketSession(webSocketId)
   }
 
   private def onWebSocketClose(webSocketId: String) {
@@ -108,7 +118,6 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object EmbeddedWebServer {
-  private[this] val logger = LoggerFactory.getLogger(getClass)
 
   private val actorConfig = """
       my-pinned-dispatcher {
@@ -132,7 +141,9 @@ object EmbeddedWebServer {
         }
       }"""
 
-  case class TxQuery(name: String, queryString: String)
+  case class TxQuery(name: String, queryString: String, exists: Boolean, lastModified: Long)
+
+  case class WebSocketSession(webSocketId: String, var requests: Long = 0)
 
   /**
    * Trifecta Web Configuration
@@ -149,7 +160,7 @@ object EmbeddedWebServer {
       Option(queriesDirectory.listFiles) map { queriesFiles =>
         queriesFiles map { file =>
           val name = removeExtension(file.getName)
-          TxQuery(name, Source.fromFile(file).getLines().mkString("\n"))
+          TxQuery(name, Source.fromFile(file).getLines().mkString("\n"), file.exists(), file.lastModified())
         }
       }
     }

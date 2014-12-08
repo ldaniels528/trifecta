@@ -43,14 +43,21 @@
 .q_topics_container {
     clear: both;
     width: auto;
-    height: 200px;
+    height: 120px;
     overflow: auto;
 }
 
 .q_saved_queries_container {
     clear: both;
     width: auto;
-    height: 200px;
+    height: 150px;
+    overflow: auto;
+}
+
+.q_saved_results_container {
+    clear: both;
+    width: auto;
+    height: 135px;
     overflow: auto;
 }
 
