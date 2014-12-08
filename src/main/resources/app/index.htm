@@ -185,7 +185,7 @@
                 </span>
                 <div class="q_topics_container">
                     <div ng-repeat="t in filterEmptyTopics(topics)|orderBy:'topic'">
-                        <img class="middle" ng-src="/app/images/status/{{ t.totalMessages ? 'greenlight.png' : 'offlight.png' }}"> {{ t.topic }}
+                        <img class="middle" src="/app/images/tabs/query/topic-16.png"> {{ t.topic }}
                         <span ng-show="t.totalMessages">(<span class="messages">{{t.totalMessages | number}}</span>)</span>
                     </div>
                 </div>
@@ -193,76 +193,101 @@
 
             <!-- Saved Queries -->
             <fieldset class="separator">
-                <legend>Saved Queries</legend>
+                <legend>Queries</legend>
                 <div class="q_saved_queries_container">
                     <span ng-show="!savedQueries" style="color: #ddaa00; font-weight: bold">
                         <img src="/app/images/status/yellowlight.gif"> No saved queries
                     </span>
-                    <div ng-show="savedQueries.length > 0" ng-repeat="q in savedQueries">
+                    <div ng-repeat="q in savedQueries">
                         <div ng-class="q == savedQuery ? 'highlighted' : ''">
-                            <img ng-src="/app/images/status/{{ q.modified ? 'offlight' : 'greenlight' }}.png">
+                            <img class="middle clickable"
+                                 ng-show="!q.exists" src="/app/images/buttons/delete.png"
+                                 ng-click="deleteQuery($index)"
+                                 title="Delete this query script">
+                            <img ng-show="q.exists" ng-src="/app/images/tabs/query/{{ q.modified ? 'modified.png' : 'checkmark.png' }}">
                             <span class="clickable" title="{{ q.queryString }}" ng-click="selectQuery(q)">{{ q.name }}</span>
+
+                            <img ng-show="q.loading" class="middle clickable" src="/app/images/status/loading.gif">
 
                             <img class="middle clickable"
                                  style="float: right; margin-right: 8px"
                                  ng-show="q.syncing" src="/app/images/status/loading.gif"
                                  ng-click="saveQuery(q)"
-                                 title="Upload to server">
+                                 title="Uploading to server">
 
                             <img class="middle clickable"
                                  style="float: right; margin-right: 8px"
                                  ng-show="!q.syncing && q.modified" src="/app/images/tabs/query/sync_query.png"
                                  ng-click="saveQuery(q)"
-                                 title="Upload to server">
+                                 title="Click to upload to server">
                         </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Saved Results -->
+            <fieldset class="separator">
+                <legend>Query Results</legend>
+                <div class="q_saved_results_container">
+                    <span ng-show="!savedQuery.results.length" style="color: #ddaa00; font-weight: bold">
+                        <img src="/app/images/status/yellowlight.gif"> No results available
+                    </span>
+                    <div class="full_block" ng-repeat="r in savedQuery.results" ng-class="savedQuery.resultIndex == $index ? 'highlighted' : ''">
+                        <img class="middle clickable" src="/app/images/tabs/query/remove.gif">
+                        <a ng-click="selectQueryResults($index)">
+                            <span ng-class="savedQuery.resultIndex == $index ? 'highlighted' : ''">{{ r.name }}</span>
+                        </a>
                     </div>
                 </div>
             </fieldset>
         </div>
         <div style="display: inline; width: 74%;  height: 625px; float: right">
+            <!-- Query script input -->
             <div style="width: 100%; height: 40%; padding: 2px 2px 2px 2px;">
-                <textarea ng-model="savedQuery.queryString" class="q_editor" placeholder="Enter query here" ng-disabled="{{ running }}">
+                <textarea class="q_editor" placeholder="Enter query here"
+                          ng-model="savedQuery.queryString"
+                          ng-change="savedQuery.modified = true"
+                          ng-disabled="{{ state.running }}">
                 </textarea>
             </div>
             <div style="width: 100%; height: 59%">
                 <div class="q_action_bar">
                     <div style="display: inline; float: left">
-                        <img class="q_action_icon" ng-src="/app/images/tabs/query/{{ running ? 'running.gif' : 'run.gif' }}" ng-click="executeQuery()" title="Execute query">
-                        <img class="q_action_icon" src="/app/images/tabs/query/add_fav_24.png" ng-click="favoriteAdd()" title="Add query to Favorites">
-                        <img class="q_action_icon" src="/app/images/tabs/query/save.png" ng-click="saveQuery()" title="Save query script to server">
+                        <img class="q_action_icon" ng-src="/app/images/tabs/query/{{ state.running ? 'running.gif' : 'run.gif' }}" ng-click="executeQuery()" title="Execute the query script">
+                        <img class="q_action_icon" src="/app/images/tabs/query/new.png" ng-click="addQuery()" title="Add a new query script">
                         <img class="q_action_icon" src="/app/images/tabs/query/download.png" ng-click="downloadResults()" title="Download results">
                      </div>
                     <div style="display: inline; float: right; vertical-align: middle">
-                        <span ng-show="running" style="margin: 15px; vertical-align: middle">
+                        <span ng-show="state.running" style="margin: 15px; vertical-align: middle">
                             <img class="middle" src="/app/images/tabs/query/clock-16.png">
                             <span class="q_clock_text">{{ queryElaspedTime | number:0 }} sec(s)</span>
                         </span>
                         <span class="q_clock_text" ng-show="results" style="margin: 15px; vertical-align: middle">
-                            {{ results.values.length | number }} result(s) in
-                            <span class="positive">{{ results.runTimeMillis | number:1 }} sec(s)</span>
+                            {{ state.results.values.length | number }} result(s) in
+                            <span class="positive">{{ state.results.runTimeMillis | number:1 }} sec(s)</span>
                         </span>
                     </div>
                     <br style="clear: both">
                 </div>
                 <div style="width: 100%; min-height: 298px; background: #eeeeee; border: 1px solid #cccccc">
                     <div class="q_results_container">
-                        <table style="width: 100%" ng-show="results">
+                        <table style="width: 100%" ng-show="state.results">
                             <thead>
                                 <tr style="border-bottom: 1px solid #aaaaaa">
-                                    <th ng-repeat="label in mappings.labels">
+                                    <th ng-repeat="label in state.mappings.labels">
                                         <a ng-click="toggleSortField(label)" title="sort by {{ label }}">
                                             {{ label }}
-                                            <img ng-show="sortField == label" class="middle clickable"
-                                                 ng-src="/app/images/buttons/sort_{{ ascending ? 'up' : 'down' }}.gif">
+                                            <img ng-show="state.sortField == label" class="middle clickable"
+                                                 ng-src="/app/images/buttons/sort_{{ state.ascending ? 'up' : 'down' }}.gif">
                                         </a>
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="row in results.values" ng-class="isSelected(topic, partition, results, $index) ? 'highlighted' : $index % 2 == 0 ? '' : 'q_odd'">
-                                    <td ng-repeat="column in mappings.labels">
+                                <tr ng-repeat="row in state.results.values" ng-class="isSelected(topic, partition, state.results, $index) ? 'highlighted' : $index % 2 == 0 ? '' : 'q_odd'">
+                                    <td ng-repeat="column in state.mappings.labels">
                                         <span ng-show="$index == 0">
-                                            <a ng-click="switchToMessage(results.topic, partitionAt($parent.$index), offsetAt($parent.$index))">
+                                            <a ng-click="switchToMessage(state.results.topic, partitionAt($parent.$index), offsetAt($parent.$index))">
                                                 <span class="q_key_field">{{ row[column] }}</span>
                                             </a>
                                         </span>

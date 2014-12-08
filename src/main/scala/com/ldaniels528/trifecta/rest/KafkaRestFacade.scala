@@ -180,7 +180,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       timeDelta = (time1 - time0).toDouble / 1000d
 
       // compute the rate
-      rate = if(timeDelta > 0 ) msgDelta / timeDelta else msgDelta
+      rate = if (timeDelta > 0) msgDelta / timeDelta else msgDelta
     } yield rate
   }
 
@@ -463,8 +463,6 @@ object KafkaRestFacade {
   case class FormattedData(`type`: String, value: Any)
 
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
-
-  case class QueryJs(name: String, queryString: String)
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
 
