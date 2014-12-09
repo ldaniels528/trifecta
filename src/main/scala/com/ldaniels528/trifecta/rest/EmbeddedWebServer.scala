@@ -48,11 +48,11 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 
   // create the web content actors
   private var wcRouter = 0
-  private val wcActors = (1 to config.queryConcurrency) map (_ => actorSystem.actorOf(Props(new WebContentActor(facade))))
+  private val wcActors = (1 to config.webActorConcurrency) map (_ => actorSystem.actorOf(Props(new WebContentActor(facade))))
 
   // create the web socket actors
   private var wsRouter = 0
-  private val wsActors = (1 to config.queryConcurrency) map (_ => actorSystem.actorOf(Props(new WebSocketActor(facade))))
+  private val wsActors = (1 to config.webActorConcurrency) map (_ => actorSystem.actorOf(Props(new WebSocketActor(facade))))
 
   // create the push event actors
   private var pushRouter = 0
@@ -169,13 +169,13 @@ object EmbeddedWebServer {
      * Returns the push interval (in seconds) for topic changes
      * @return the interval
      */
-    def topicPushInterval: Int = config.getOrElse("trifecta.rest.push.interval.topic", "15").toInt
+    def topicPushInterval: Int = config.getOrElse("trifecta.web.push.interval.topic", "15").toInt
 
     /**
      * Returns the push interval (in seconds) for consumer offset changes
      * @return the interval
      */
-    def consumerPushInterval: Int = config.getOrElse("trifecta.rest.push.interval.consumer", "15").toInt
+    def consumerPushInterval: Int = config.getOrElse("trifecta.web.push.interval.consumer", "15").toInt
 
     /**
      * Returns the location of the queries directory
@@ -184,10 +184,10 @@ object EmbeddedWebServer {
     def queriesDirectory: File = new File(TxConfig.trifectaPrefs, "queries")
 
     /**
-     * Returns the query execution concurrency
-     * @return the query execution concurrency
+     * Returns the web actor execution concurrency
+     * @return the web actor execution concurrency
      */
-    def queryConcurrency: Int = config.getOrElse("trifecta.query.concurrency", "10").toInt
+    def webActorConcurrency: Int = config.getOrElse("trifecta.web.actor.concurrency", "10").toInt
 
     /**
      * Returns the embedded web server host/IP
