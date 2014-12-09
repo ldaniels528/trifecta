@@ -199,7 +199,7 @@ object EmbeddedWebServer {
      * Returns the embedded web server port
      * @return the embedded web server port
      */
-    def webPort: Int = config.getOrElse("trifecta.web.host", "8888").toInt
+    def webPort: Int = config.getOrElse("trifecta.web.port", "8888").toInt
 
   }
 
