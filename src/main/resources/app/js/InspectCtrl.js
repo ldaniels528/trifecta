@@ -29,7 +29,7 @@
                     try {
                         var obj = $parse(objStr)({});
                     } catch (e) {
-                        // eat $parse error
+                        $log.error(e);
                         return _lastGoodResult;
                     }
 

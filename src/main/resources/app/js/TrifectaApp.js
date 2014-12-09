@@ -9,10 +9,8 @@
         $resourceProvider.defaults.stripTrailingSlashes = false;
     }]);
 
-    app.run(function($rootScope, $log, $timeout, Consumers, DashboardSvc, MessageSearchSvc, Topics, WebSockets) {
+    app.run(function($rootScope, $log, $timeout, Consumers, Topics, WebSockets) {
         $rootScope.Consumers = Consumers;
-        $rootScope.DashboardSvc = DashboardSvc;
-        $rootScope.MessageSearchSvc = MessageSearchSvc;
         $rootScope.Topics = Topics;
         $rootScope.WebSockets = WebSockets;
 
