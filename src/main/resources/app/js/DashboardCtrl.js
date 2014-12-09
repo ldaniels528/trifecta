@@ -27,7 +27,7 @@
                         "active": false
                     }, {
                         "name": "Query",
-                        "imageURL": "/app/images/tabs/main/queries.png",
+                        "imageURL": "/app/images/tabs/main/query.png",
                         "active": false
                     }
                 ];
@@ -150,10 +150,11 @@
                 };
 
                 $scope.medianMessage = function() {
-                    ensureOffset($scope.partition);
-                    var median = Math.round(($scope.partition.endOffset - $scope.partition.startOffset)/2);
-                    if ($scope.partition.offset != median) {
-                        $scope.partition.offset = median;
+                    var partition = $scope.partition;
+                    ensureOffset(partition);
+                    var median = Math.round(partition.startOffset + (partition.endOffset - partition.startOffset)/2);
+                    if (partition.offset != median) {
+                        partition.offset = median;
                         $scope.loadMessage();
                     }
                 };
