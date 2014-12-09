@@ -129,7 +129,7 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 <a href="#trifecta-ui">
 ### Trifecta UI
 
-Trifecta offers web-based interface (and supporting REST service layer), which offers many of the powerful features
+Trifecta offers a web-based interface (and supporting REST service layer), which offers many of the powerful features
 found in the CLI client application. To start the embedded web server, issue the following from the command line:
 
     $ java -jar trifecta.jar --http-start
