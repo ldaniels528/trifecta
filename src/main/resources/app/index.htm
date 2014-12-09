@@ -60,23 +60,18 @@
             <fieldset style="border-radius: 5px 5px 5px 5px">
                 <legend>Topics</legend>
                 <div class="topics_container">
-                    <table style="width: 100%">
-                        <tr ng-repeat="t in getTopics(hideEmptyTopics)|orderBy:'topic'" ng-class="t == topic ? 'highlighted' : ''">
-                            <td style="width: 16px; height: 16px">
-                                <img class="middle" ng-src="/app/images/status/{{t.totalMessages ? 'greenlight.png' : 'offlight.png'}}">
-                            </td>
-                            <td>
-                                <a ng-click="updateTopic(t)">
-                                    <span ng-class="t == topic ? 'highlighted' : ''">
-                                        {{t.topic}}
-                                        <span ng-show="t.totalMessages">
-                                            (<span ng-show="t.totalMessages > 0" ng-class="t == topic ? 'highlighted' : 'messages'">{{t.totalMessages | number}}</span>)
-                                        </span>
-                                    </span>
-                                </a>
-                            </td>
-                        </tr>
-                    </table>
+                    <div ng-repeat="t in getTopics(hideEmptyTopics)|orderBy:'topic'" ng-class="t == topic ? 'highlighted' : ''">
+                        <img class="middle" ng-src="/app/images/status/{{t.totalMessages ? 'greenlight.png' : 'offlight.png'}}">
+                        <img class="middle" src="/app/images/common/topic-16.png">
+                        <a ng-click="updateTopic(t)">
+                            <span ng-class="t == topic ? 'highlighted' : ''">
+                                {{t.topic}}
+                                <span ng-show="t.totalMessages">
+                                    (<span ng-show="t.totalMessages > 0" ng-class="t == topic ? 'highlighted' : 'messages'">{{t.totalMessages | number}}</span>)
+                                </span>
+                            </span>
+                        </a>
+                    </div>
                 </div>
 
                 <div style="text-align: right; font-size: 10pt">
