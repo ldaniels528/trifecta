@@ -6,6 +6,7 @@ import com.ldaniels528.trifecta.TxConsole._
 import com.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer
+import com.ldaniels528.trifecta.rest.EmbeddedWebServer.TxWebConfig
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
 import org.slf4j.LoggerFactory
@@ -168,7 +169,7 @@ object TrifectaShell {
 
     // load the configuration
     val config = TxConfig.load(TxConfig.configFile)
-    if(!TxConfig.configFile.exists()) {
+    if (!TxConfig.configFile.exists()) {
       config.save(TxConfig.configFile)
     }
 

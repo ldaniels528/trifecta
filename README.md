@@ -129,8 +129,9 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 <a href="#trifecta-ui">
 ### Trifecta UI
 
-Trifecta offers a web-based interface (and supporting REST service layer), which offers many of the powerful features
-found in the CLI client application. To start the embedded web server, issue the following from the command line:
+Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
+which offers many of the powerful features found in the CLI client application. To start the embedded web server,
+issue the following from the command line:
 
     $ java -jar trifecta.jar --http-start
 
@@ -138,7 +139,12 @@ You'll see a few seconds of log messages, then a prompt indicating the web inter
 
     Open your browser and navigate to http://localhost:8888
 
-Additionally, Trifecta UI adds a few new properties to the application configuration ($HOME/.trifecta/config.properties):
+Additionally, Trifecta UI adds a few new properties to the application configuration (located in
+$HOME/.trifecta/config.properties):
+
+    # the embedded web server host/IP and port for client connections
+    trifecta.web.host = localhost
+    trifecta.web.host = 8888
 
     # the interval (in seconds) that changes to consumer offsets will be pushed to web-socket clients
     trifecta.rest.push.interval.consumer = 15

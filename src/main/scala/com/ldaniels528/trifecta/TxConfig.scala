@@ -56,10 +56,6 @@ class TxConfig(val configProps: Properties) {
 
   def encoding_=(charSet: String): Unit = configProps.setProperty("trifecta.common.encoding", charSet)
 
-  def webHost: String = configProps.getOrElse("trifecta.web.host", "localhost")
-
-  def webPort: Int = configProps.getOrElse("trifecta.web.host", "8888").toInt
-
   // Zookeeper connection string
   def zooKeeperConnect = configProps.getOrElse("trifecta.zookeeper.host", "localhost:2181")
 
