@@ -339,7 +339,7 @@
                             </a>
 
                             <div ng-show="levelB.expanded" style="margin-left: 32px">
-                                <table style="width: 60%">
+                                <table>
                                     <tr>
                                         <th>Partition</th>
                                         <th>Topic Offset</th>
@@ -377,8 +377,8 @@
                                 (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
                              </span>
                         </a>
-                        <div ng-show="t.expanded" style="margin-left: 32px">
-                            <table style="width: 60%">
+                        <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
+                            <table>
                                 <tr>
                                     <th>Partition</th>
                                     <th>First Offset</th>
@@ -410,7 +410,7 @@
                             <div ng-repeat="item in zkItems" ng-include="'zk_item_tree.htm'"></div>
                         </div>
                         <div style="display: inline; width: 59%; float: right">
-                            <div style="margin-left: 5px">
+                            <div style="width: 100%; margin-left: 5px">
                                 <table ng-show="zkItem" style="border-collapse: separate; border-spacing: 4px;">
                                     <tr>
                                         <th>Path:</th>

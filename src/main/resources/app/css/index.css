@@ -76,8 +76,12 @@ legend {
 
 table {
     border-collapse: collapse;
-    border-spacing: 0px;
+    border-spacing: 4px 30px;
 }
+
+th { padding: 4px 4px 4px 4px; }
+
+td { padding: 4px 4px 4px 4px; }
 
 th { text-align: left }
 
