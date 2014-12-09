@@ -144,7 +144,7 @@ $HOME/.trifecta/config.properties). **NOTE**: The property values shown below ar
 
     # the embedded web server host/IP and port for client connections
     trifecta.web.host = localhost
-    trifecta.web.host = 8888
+    trifecta.web.port = 8888
 
     # the interval (in seconds) that changes to consumer offsets will be pushed to web-socket clients
     trifecta.web.push.interval.consumer = 15
