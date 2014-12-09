@@ -139,8 +139,8 @@ You'll see a few seconds of log messages, then a prompt indicating the web inter
 
     Open your browser and navigate to http://localhost:8888
 
-Additionally, Trifecta UI adds a few new properties to the application configuration (located in
-$HOME/.trifecta/config.properties):
+Additionally, Trifecta UI introduces a few new properties to the application configuration file (located in
+$HOME/.trifecta/config.properties). **NOTE**: The property values shown below are the default values.
 
     # the embedded web server host/IP and port for client connections
     trifecta.web.host = localhost
