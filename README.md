@@ -16,6 +16,7 @@ Table of Contents
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#configuring-the-app">Configuring the application</a>
 	* <a href="#running-the-app">Running the application</a>
+* <a href="#trifecta-ui">Trifecta UI</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#kafka-module">Kafka Module</a>
         * <a href="#kafka-brokers">Kafka Brokers</a>
@@ -124,6 +125,18 @@ To start the _Trifecta_ REPL:
 Optionally, you can execute _Trifecta_ instructions (commands) right from the command line:
 	
 	$ java -jar trifecta.jar kls -l
+
+<a href="#trifecta-ui">
+### Trifecta UI
+
+Trifecta offers web-based interface (and supporting REST service layer), which offers many of the powerful features
+found in the CLI client application. To start the embedded web server, issue the following from the command line:
+
+    $ java -jar trifecta.jar --http-start
+
+You'll see a few seconds of log messages, then a prompt indicating the web interface is ready for use.
+
+    Open your browser and navigate to http://localhost:8888
 
 <a name="usage"></a>
 ### Usage Examples	
