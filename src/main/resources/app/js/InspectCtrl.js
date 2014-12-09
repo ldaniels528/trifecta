@@ -4,9 +4,10 @@
  */
 (function () {
     angular.module('trifecta')
-        .controller('InspectCtrl', ['$scope', '$log', '$timeout', 'DashboardSvc', 'MessageSearchSvc',
-            function ($scope, $log, $timeout, DashboardSvc, MessageSearchSvc) {
+        .controller('InspectCtrl', ['$scope', '$log', '$parse',
+            function ($scope, $log,  $parse) {
 
+                var _lastGoodResult = "";
                 $scope.hideEmptyTopics = true;
 
                 /**
@@ -16,6 +17,26 @@
                  */
                 $scope.convertOffsetToInt = function(partition, offset) {
                     partition.offset = parseInt(offset);
+                };
+
+                /**
+                 * Formats a JSON object as a color-coded JSON expression
+                 * @param objStr the JSON object
+                 * @param tabWidth the number of tabs to use in formatting
+                 * @returns {*}
+                 */
+                $scope.toPrettyJSON = function (objStr, tabWidth) {
+                    try {
+                        var obj = $parse(objStr)({});
+                    } catch (e) {
+                        // eat $parse error
+                        return _lastGoodResult;
+                    }
+
+                    var result = JSON.stringify(obj, null, Number(tabWidth));
+                    _lastGoodResult = result;
+
+                    return result;
                 };
 
             }]);

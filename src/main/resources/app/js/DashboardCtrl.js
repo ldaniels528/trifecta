@@ -4,8 +4,8 @@
  */
 (function () {
     angular.module('trifecta')
-        .controller('DashboardCtrl', ['$scope', '$interval', '$log', '$parse', '$timeout', 'DashboardSvc', 'MessageSearchSvc',
-            function ($scope, $interval, $log, $parse, $timeout, DashboardSvc, MessageSearchSvc) {
+        .controller('DashboardCtrl', ['$scope', '$interval', '$log', '$timeout', 'DashboardSvc', 'MessageSearchSvc',
+            function ($scope, $interval, $log, $timeout, DashboardSvc, MessageSearchSvc) {
 
                 $scope.version = "0.18.1";
                 $scope.topics = [];
@@ -177,21 +177,6 @@
                         $scope.loadMessage();
                         $scope.changeTab(1, null); // Query
                     }
-                };
-
-                var _lastGoodResult = "";
-                $scope.toPrettyJSON = function (objStr, tabWidth) {
-                    try {
-                        var obj = $parse(objStr)({});
-                    } catch (e) {
-                        // eat $parse error
-                        return _lastGoodResult;
-                    }
-
-                    var result = JSON.stringify(obj, null, Number(tabWidth));
-                    _lastGoodResult = result;
-
-                    return result;
                 };
 
                 $scope.updatePartition = function (partition) {
