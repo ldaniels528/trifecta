@@ -8,10 +8,14 @@
             var service = {};
 
             service.executeQuery = function (queryString) {
-                return $http.get("/rest/executeQuery/" + encodeURI(queryString))
-                    .then(function (response) {
-                        return response.data;
-                    });
+                return $http({
+                    url:"/rest/executeQuery",
+                    method: "POST",
+                    data: "queryString=" + encodeURI(queryString),
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+                }).then(function (response) {
+                    return response.data;
+                });
             };
 
             service.getQueries = function () {
@@ -30,6 +34,17 @@
                 }).then(function (response) {
                     return response.data;
                 })
+            };
+
+            service.transformResultsToCSV = function (queryResults) {
+                return $http({
+                    url:"/rest/transformResultsToCSV",
+                    method: "POST",
+                    data: "queryResults=" + encodeURI(angular.toJson(queryResults)),
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+                }).then(function (response) {
+                    return response.data;
+                });
             };
 
             return service;

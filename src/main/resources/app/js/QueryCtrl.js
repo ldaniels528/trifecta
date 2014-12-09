@@ -50,10 +50,17 @@
             };
 
             /**
-             * Downloads the query results
+             * Downloads the query results as CSV
              */
-            $scope.downloadResults = function() {
-                // TODO future feature
+            $scope.downloadResults = function(results) {
+                QuerySvc.transformResultsToCSV(results).then(
+                    function(response) {
+                        $log.info("response = " + angular.toJson(response));
+                    },
+                    function(err) {
+                        setError(err)
+                    }
+                );
             };
 
             /**

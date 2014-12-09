@@ -201,7 +201,7 @@
                     <div ng-repeat="q in savedQueries">
                         <div ng-class="q == savedQuery ? 'highlighted' : ''">
                             <img class="middle clickable"
-                                 ng-show="!q.exists" src="/app/images/buttons/delete.png"
+                                 ng-show="!q.exists" src="/app/images/tabs/query/remove.gif"
                                  ng-click="deleteQuery($index)"
                                  title="Delete this query script">
                             <img ng-show="q.exists" ng-src="/app/images/tabs/query/{{ q.modified ? 'modified.png' : 'checkmark.png' }}">
@@ -255,7 +255,7 @@
                     <div style="display: inline; float: left">
                         <img class="q_action_icon" ng-src="/app/images/tabs/query/{{ state.running ? 'running.gif' : 'run.gif' }}" ng-click="executeQuery()" title="Execute the query script">
                         <img class="q_action_icon" src="/app/images/tabs/query/new.png" ng-click="addQuery()" title="Add a new query script">
-                        <img class="q_action_icon" src="/app/images/tabs/query/download.png" ng-click="downloadResults()" title="Download results">
+                        <img class="q_action_icon" src="/app/images/tabs/query/download.png" ng-click="downloadResults(state.results)" title="Download results">
                      </div>
                     <div style="display: inline; float: right; vertical-align: middle">
                         <span ng-show="state.running" style="margin: 15px; vertical-align: middle">
