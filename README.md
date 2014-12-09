@@ -147,13 +147,13 @@ $HOME/.trifecta/config.properties):
     trifecta.web.host = 8888
 
     # the interval (in seconds) that changes to consumer offsets will be pushed to web-socket clients
-    trifecta.rest.push.interval.consumer = 15
+    trifecta.web.push.interval.consumer = 15
 
     # the interval (in seconds) that changes to topics (new messages) will be pushed to web-socket clients
-    trifecta.rest.push.interval.topic = 15
+    trifecta.web.push.interval.topic = 15
 
     # the number of actors to create for servicing requests
-    trifecta.query.concurrency = 10
+    trifecta.web.actor.concurrency = 10
 
 <a name="usage"></a>
 ### Usage Examples	
