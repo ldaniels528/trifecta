@@ -146,6 +146,22 @@
                 );
             };
 
+            /**
+             * Filters out topics without messages; returning only the topics containing messages
+             * @param topics the given array of topic summaries
+             * @returns Array of topics containing messages
+             */
+            $scope.filterEmptyTopics = function (topics) {
+                var filteredTopics = [];
+                for (var n = 0; n < topics.length; n++) {
+                    var ts = topics[n];
+                    if (ts.totalMessages > 0) {
+                        filteredTopics.push(ts);
+                    }
+                }
+                return filteredTopics;
+            };
+
             $scope.filterLabels = function (labels) {
                 return labels ? labels.slice(0, labels.length - 2) : null
             };

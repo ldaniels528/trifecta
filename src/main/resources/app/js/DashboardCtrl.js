@@ -8,10 +8,8 @@
             function ($scope, $interval, $log, $parse, $timeout, DashboardSvc, MessageSearchSvc) {
 
                 $scope.version = "0.18.1";
-                $scope.consumerMapping = [];
                 $scope.topics = [];
                 $scope.topic = null;
-                $scope.hideEmptyTopics = true;
                 $scope.loading = 0;
 
                 clearMessage();
@@ -52,15 +50,6 @@
                     if (event) {
                         event.preventDefault();
                     }
-                };
-
-                /**
-                 * Converts the given offset from a string value to an integer
-                 * @param partition the partition that the offset value will be updated within
-                 * @param offset the given offset string value
-                 */
-                $scope.convertOffsetToInt = function(partition, offset) {
-                    partition.offset = parseInt(offset);
                 };
 
                 $scope.messageFinderPopup = function () {
@@ -243,22 +232,6 @@
                         partition.offset = partition.startOffset;
                     }
                 }
-
-                /**
-                 * Filters out topics without messages; returning only the topics containing messages
-                 * @param topics the given array of topic summaries
-                 * @returns Array of topics containing messages
-                 */
-                $scope.filterEmptyTopics = function (topics) {
-                    var filteredTopics = [];
-                    for (var n = 0; n < topics.length; n++) {
-                        var ts = topics[n];
-                        if (ts.totalMessages > 0) {
-                            filteredTopics.push(ts);
-                        }
-                    }
-                    return filteredTopics;
-                };
 
                 /**
                  * Attempts to find and return the first non-empty topic; however, if none are found, it returns the
