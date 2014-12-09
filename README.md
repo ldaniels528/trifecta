@@ -138,6 +138,17 @@ You'll see a few seconds of log messages, then a prompt indicating the web inter
 
     Open your browser and navigate to http://localhost:8888
 
+Additionally, Trifecta UI adds a few new properties to the application configuration ($HOME/.trifecta/config.properties):
+
+    # the interval (in seconds) that changes to consumer offsets will be pushed to web-socket clients
+    trifecta.rest.push.interval.consumer = 15
+
+    # the interval (in seconds) that changes to topics (new messages) will be pushed to web-socket clients
+    trifecta.rest.push.interval.topic = 15
+
+    # the number of actors to create for servicing requests
+    trifecta.query.concurrency = 10
+
 <a name="usage"></a>
 ### Usage Examples	
 
