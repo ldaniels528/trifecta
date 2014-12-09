@@ -139,7 +139,12 @@ You'll see a few seconds of log messages, then a prompt indicating the web inter
 
     Open your browser and navigate to http://localhost:8888
 
-Additionally, Trifecta UI adds a few new properties to the application configuration ($HOME/.trifecta/config.properties):
+Additionally, Trifecta UI adds a few new properties to the application configuration (located in
+$HOME/.trifecta/config.properties):
+
+    # the embedded web server host/IP and port that clients will connect to
+    trifecta.web.host = localhost
+    trifecta.web.host = 8888
 
     # the interval (in seconds) that changes to consumer offsets will be pushed to web-socket clients
     trifecta.rest.push.interval.consumer = 15

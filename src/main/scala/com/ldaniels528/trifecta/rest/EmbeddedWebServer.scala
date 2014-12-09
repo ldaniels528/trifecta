@@ -35,7 +35,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
     case HttpRequest(request) => wcActor ! request
     case WebSocketHandshake(wsHandshake) => wsHandshake match {
       case Path("/websocket/") =>
-        logger.info(s"Authorizing websocket handshake...")
+        logger.info(s"Authorizing web socket handshake...")
         wsHandshake.authorize(
           onComplete = Option(onWebSocketHandshakeComplete),
           onClose = Option(onWebSocketClose))
@@ -188,6 +188,18 @@ object EmbeddedWebServer {
      * @return the query execution concurrency
      */
     def queryConcurrency: Int = config.getOrElse("trifecta.query.concurrency", "10").toInt
+
+    /**
+     * Returns the embedded web server host/IP
+     * @return the embedded web server host/IP
+     */
+    def webHost: String = config.getOrElse("trifecta.web.host", "localhost")
+
+    /**
+     * Returns the embedded web server port
+     * @return the embedded web server port
+     */
+    def webPort: Int = config.getOrElse("trifecta.web.host", "8888").toInt
 
   }
 
