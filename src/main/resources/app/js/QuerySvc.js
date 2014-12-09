@@ -42,9 +42,11 @@
                     method: "POST",
                     data: "queryResults=" + encodeURI(angular.toJson(queryResults)),
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    responseType: 'text/csv'
+                    responseType: 'arraybuffer'
                 }).success(function (data, status, headers, config) {
-                    window.open(data);
+                    var blob = new Blob([data], {type: "text/csv"});
+                    var objectUrl = URL.createObjectURL(blob);
+                    window.open(objectUrl);
                 }).error(function (data, status, headers, config) {
                     alert("CSV Download failed")
                 });
