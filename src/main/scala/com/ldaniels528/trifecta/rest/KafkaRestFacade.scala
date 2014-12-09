@@ -382,17 +382,22 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }
   }
 
-  def transformResultsToCSV(queryResults_? : Option[String]): JValue = {
+  /**
+   * Transforms the given JSON query results into comma separated values
+   * @param queryResults_? the given query results
+   * @return a collection of comma separated values
+   */
+  def transformResultsToCSV(queryResults_? : Option[String]): Try[Option[List[String]]] = {
+    def toCSV(values: List[String]): String = values.map(s => s""""$s"""").mkString(",")
     Try {
-      queryResults_? map { queryResults =>
-        logger.info(s"queryResults = $queryResults")
-        ()
-      }
-    } match {
-      case Success(Some(result)) => Extraction.decompose(result)
-      case Failure(e) =>
-        logger.error("Query error", e)
-        Extraction.decompose(ErrorJs(e.getMessage))
+      for {
+        js <- queryResults_? map JsonHelper.toJson
+        topic <- (js \ "topic").extractOpt[String]
+        labels <- (js \ "labels").extractOpt[List[String]]
+        values <- (js \ "values").extractOpt[List[Map[String, String]]]
+        rows = values map (m => labels map (m.getOrElse(_, "")))
+        csv = rows map toCSV
+      } yield toCSV(labels) :: csv
     }
   }
 

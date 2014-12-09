@@ -41,9 +41,12 @@
                     url:"/rest/transformResultsToCSV",
                     method: "POST",
                     data: "queryResults=" + encodeURI(angular.toJson(queryResults)),
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-                }).then(function (response) {
-                    return response.data;
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    responseType: 'text/csv'
+                }).success(function (data, status, headers, config) {
+                    window.open(data);
+                }).error(function (data, status, headers, config) {
+                    alert("CSV Download failed")
                 });
             };
 

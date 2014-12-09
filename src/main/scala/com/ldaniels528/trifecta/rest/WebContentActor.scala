@@ -13,6 +13,8 @@ import org.apache.commons.io.IOUtils
 import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus}
 import org.slf4j.LoggerFactory
 
+import scala.util.{Failure, Success, Try}
+
 /**
  * Web Content Actor
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
@@ -136,7 +138,8 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
           val name = dataMap.getParam("name")
           val queryString = dataMap.getParam("queryString")
           facade.saveQuery(name, queryString).passJson
-        case "transformResultsToCSV" => facade.transformResultsToCSV(dataMap.getParam("queryResults")).passJson
+        case "transformResultsToCSV" if dataMap.nonEmpty =>
+          facade.transformResultsToCSV(dataMap.getParam("queryResults")).passCsv
         case _ => None
       }
     }
@@ -195,6 +198,19 @@ object WebContentActor {
   implicit class JsonExtensionsB(val json: JValue) extends AnyVal {
 
     def passJson: Option[(String, Array[Byte])] = Option(json) map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
+
+  }
+
+  implicit class TryExtensions(val outcome: Try[Option[List[String]]]) extends AnyVal {
+
+    def passCsv: Option[(String, Array[Byte])] = {
+      outcome match {
+        case Success(Some(list)) => Some((MimeCsv, list.mkString("\n").getBytes(encoding)))
+        case Success(None) => Some((MimeCsv, Array.empty[Byte]))
+        case Failure(e) =>
+          throw new IllegalStateException("Error processing request", e)
+      }
+    }
 
   }
 
