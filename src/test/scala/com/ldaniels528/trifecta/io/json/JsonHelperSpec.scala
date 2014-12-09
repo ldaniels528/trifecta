@@ -1,15 +1,15 @@
 package com.ldaniels528.trifecta.io.json
 
-import com.ldaniels528.trifecta.io.json.TxJsonUtil._
+import com.ldaniels528.trifecta.io.json.JsonHelper._
 import com.mongodb.casbah.Imports.{DBObject => Q}
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 /**
- * Trifecta JSON Parsing Utility Specification
+ * JSON Helper Utility Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class TxJsonUtilSpec() extends FeatureSpec with GivenWhenThen {
+class JsonHelperSpec() extends FeatureSpec with GivenWhenThen {
 
   feature("The ability to parse a JSON string into an object") {
     scenario("Parse a JSON string into a JValue") {

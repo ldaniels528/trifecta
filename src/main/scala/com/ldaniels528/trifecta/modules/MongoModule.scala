@@ -1,7 +1,8 @@
 package com.ldaniels528.trifecta.modules
 
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
-import com.ldaniels528.trifecta.io.json.TxJsonUtil._
+import com.ldaniels528.trifecta.io.avro.AvroCodec
+import com.ldaniels528.trifecta.io.json.JsonHelper._
 import com.ldaniels528.trifecta.io.mongodb.{MongoOutputSource, TxMongoCluster, TxMongoDB}
 import com.ldaniels528.trifecta.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.messages.{BinaryMessaging, MessageDecoder}
@@ -109,7 +110,7 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
     }
 
     // determine which decoder to use; either the user specified decoder, cursor's decoder or none
-    val decoder: Option[MessageDecoder[_]] = params("-a") map (lookupAvroDecoder(_)(config))
+    val decoder: Option[MessageDecoder[_]] = params("-a") map AvroCodec.resolve
 
     // write the document to an output source?
     for {

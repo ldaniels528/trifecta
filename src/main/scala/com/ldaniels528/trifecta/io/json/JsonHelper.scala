@@ -5,12 +5,21 @@ import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json._
 import org.apache.avro.generic.GenericRecord
 
+import scala.util.{Failure, Success, Try}
+
 /**
- * Trifecta JSON Parsing Utility
+ * JSON Helper Utility
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object TxJsonUtil {
+object JsonHelper {
   implicit val formats = DefaultFormats
+
+  def makePretty(jsonString: String): String = {
+    Try(toJson(jsonString)) match {
+      case Success(js) => pretty(render(js))
+      case Failure(e) => jsonString
+    }
+  }
 
   /**
    * Converts the given record into a JSON value
@@ -32,6 +41,10 @@ object TxJsonUtil {
    * @return the resultant [[JValue]]
    */
   def toJson(result: Q): JValue = toJson(result.toString)
+
+  def toJson[T](results: Seq[T]): JValue = Extraction.decompose(results)
+
+  def makeCompact[T](results: Seq[T]): String = compact(render(Extraction.decompose(results)))
 
   /**
    * Converts the given JSON value into a MongoDB document

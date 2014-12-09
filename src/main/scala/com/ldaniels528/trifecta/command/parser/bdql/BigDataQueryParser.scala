@@ -22,7 +22,7 @@ object BigDataQueryParser {
 
     /*
      * select symbol, exchange, lastTrade, volume
-     * from "topic:quotes" with "avro:file:avro/quotes.avsc"
+     * from "shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
      * into "es:/quotes/quote/AAPL" with "json"
      * where exchange == 'OTCBB'
      * and lastTrade <= 1.0

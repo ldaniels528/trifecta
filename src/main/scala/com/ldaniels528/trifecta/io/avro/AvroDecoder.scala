@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.io.avro
 
-import com.ldaniels528.trifecta.io.avro.AvroDecoder._
+import com.ldaniels528.trifecta.io.avro.AvroCodec._
 import com.ldaniels528.trifecta.io.json.JsonTranscoding
 import com.ldaniels528.trifecta.messages.MessageDecoder
 import com.ldaniels528.trifecta.messages.logic.Expressions._
@@ -10,17 +10,15 @@ import com.twitter.bijection.avro.GenericAvroCodecs
 import net.liftweb.json._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.util.Utf8
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /**
  * Avro Message Decoder
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class AvroDecoder(label: String, schemaString: String) extends MessageDecoder[GenericRecord]
+case class AvroDecoder(label: String, schema: Schema) extends MessageDecoder[GenericRecord]
 with JsonTranscoding with MessageEvaluation {
-  private val schema: Schema = new Schema.Parser().parse(schemaString)
   private val converter: Injection[GenericRecord, Array[Byte]] = GenericAvroCodecs.toBinary(schema)
 
   /**
@@ -57,142 +55,11 @@ with JsonTranscoding with MessageEvaluation {
 }
 
 /**
- * Avro Decoder Singleton
+ * Avro Message Decoder Singleton
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object AvroDecoder {
 
-  /**
-   * Avro Field-Value Equality Condition
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
-   */
-  case class AvroEQ(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
-      decoder.decode(message) match {
-        case Success(record) =>
-          record.get(field) match {
-            case v if v == null => value == null
-            case v: Utf8 => v.toString == value
-            case v: java.lang.Number => v.doubleValue() == value.toDouble
-            case s: String => s == value
-            case x =>
-              throw new IllegalStateException(s"Value '$x' (${Option(x).map(_.getClass.getName).orNull}) for field '$field' was not recognized")
-          }
-        case Failure(e) => false
-      }
-    }
-
-    override def toString = s"$field == '$value'"
-  }
-
-  /**
-   * Avro Field-Value Greater-Than Condition
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
-   */
-  case class AvroGT(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
-      decoder.decode(message) match {
-        case Success(record) =>
-          record.get(field) match {
-            case null => false
-            case v: Utf8 => v.toString == value
-            case v: java.lang.Number => v.doubleValue() > value.toDouble
-            case s: String => s > value
-            case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
-          }
-        case Failure(e) => false
-      }
-    }
-
-    override def toString = s"$field > $value'"
-  }
-
-  /**
-   * Avro Field-Value Greater-Than-Or-Equal Condition
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
-   */
-  case class AvroGE(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
-      decoder.decode(message) match {
-        case Success(record) =>
-          record.get(field) match {
-            case null => false
-            case v: Utf8 => v.toString == value
-            case v: java.lang.Number => v.doubleValue() >= value.toDouble
-            case s: String => s >= value
-            case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
-          }
-        case Failure(e) => false
-      }
-    }
-
-    override def toString = s"$field >= '$value'"
-  }
-
-  /**
-   * Avro Field-Value Less-Than Condition
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
-   */
-  case class AvroLT(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
-      decoder.decode(message) match {
-        case Success(record) =>
-          record.get(field) match {
-            case null => false
-            case v: Utf8 => v.toString == value
-            case v: java.lang.Number => v.doubleValue() < value.toDouble
-            case s: String => s < value
-            case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
-          }
-        case Failure(e) => false
-      }
-    }
-
-    override def toString = s"$field < '$value'"
-  }
-
-  /**
-   * Avro Field-Value Less-Than-Or-Equal Condition
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
-   */
-  case class AvroLE(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
-      decoder.decode(message) match {
-        case Success(record) =>
-          record.get(field) match {
-            case null => false
-            case v: Utf8 => v.toString == value
-            case v: java.lang.Number => v.doubleValue() <= value.toDouble
-            case s: String => s <= value
-            case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
-          }
-        case Failure(e) => false
-      }
-    }
-
-    override def toString = s"$field <= '$value'"
-  }
-
-  /**
-   * Avro Field-Value Inequality Condition
-   * @author Lawrence Daniels <lawrence.daniels@gmail.com>
-   */
-  case class AvroNE(decoder: AvroDecoder, field: String, value: String) extends Condition {
-    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
-      decoder.decode(message) match {
-        case Success(record) =>
-          record.get(field) match {
-            case v if v == null => value != null
-            case v: Utf8 => v.toString == value
-            case v: java.lang.Number => v.doubleValue() != value.toDouble
-            case s: String => s != value
-            case x => throw new IllegalStateException(s"Value '$x' for field '$field' was not recognized")
-          }
-        case Failure(e) => false
-      }
-    }
-
-    override def toString = s"$field != '$value'"
-  }
+  def apply(label: String, schemaString: String) = new AvroDecoder(label, new Schema.Parser().parse(schemaString))
 
 }

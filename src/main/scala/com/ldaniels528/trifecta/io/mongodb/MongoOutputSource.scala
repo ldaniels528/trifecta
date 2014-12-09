@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.io.mongodb
 
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
-import com.ldaniels528.trifecta.io.json.TxJsonUtil
+import com.ldaniels528.trifecta.io.json.JsonHelper
 import com.ldaniels528.trifecta.io.{KeyAndMessage, OutputSource}
 import com.ldaniels528.trifecta.messages.MessageDecoder
 
@@ -24,7 +24,7 @@ class MongoOutputSource(mc: TxMongoCollection) extends OutputSource {
       case Some(av: AvroDecoder) =>
         av.decode(data.message) match {
           case Success(record) =>
-            mc.insert(TxJsonUtil.toJson(record.toString))
+            mc.insert(JsonHelper.toJson(record.toString))
             ()
           case Failure(e) =>
             throw new IllegalStateException(e.getMessage, e)

@@ -1,6 +1,7 @@
 package com.ldaniels528.trifecta.command.parser.bdql
 
 import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryTokenizer._
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 
@@ -9,6 +10,7 @@ import scala.collection.mutable.ListBuffer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class BigDataQueryTokenizer(queryString: String) {
+  private val logger = LoggerFactory.getLogger(getClass)
   private val parsers: Seq[ListBuffer[Token] => Boolean] = Seq(
     parseDoubleQuotedSequence, parseSingleQuotedSequence, parseNumeric, parseAlphaNumeric, parseSymbols)
   private val ca = queryString.toCharArray
@@ -22,8 +24,10 @@ class BigDataQueryTokenizer(queryString: String) {
 
     while (hasNext) {
       // did we find a match?
-      if (!parsers.exists(_(tokens)))
-        throw new IllegalArgumentException( s"""Illegal argument near "${nextSpan(Math.max(pos - 10, 0)).word.take(20)}" at $pos""")
+      if (!parsers.exists(_(tokens))) {
+        logger.info(f"hasNext = $hasNext, char($pos) = ${if (ca.length < pos) ca(pos).toByte else 0.toByte}%02x")
+        throw new IllegalArgumentException( s"""Illegal argument at "${nextSpan(Math.max(pos - 5, 0)).word.take(8)}" near "${nextSpan(Math.max(pos - 20, 0)).word.take(25)}" (position $pos)""")
+      }
 
       // skip over any trailing whitespace
       skipWhiteSpace()
@@ -40,12 +44,13 @@ class BigDataQueryTokenizer(queryString: String) {
 
   private def nextSpan(start: Int): Token = Token(String.copyValueOf(ca, start, pos - start), start)
 
-  private def isWhiteSpace: Boolean = WhiteSpace.contains(ca(pos))
+  private def isWhiteSpace: Boolean = hasNext && WhiteSpace.contains(ca(pos))
 
   private def skipWhiteSpace(): Unit = while (hasNext && isWhiteSpace) pos += 1
 
   private def parseSequence(buf: ListBuffer[Token], startCh: Char, endCh: Char): Boolean = {
-    if (currentChar != startCh) false
+    if (!hasNext) true
+    else if (currentChar != startCh) false
     else {
       val start = pos
       pos += 1
@@ -61,7 +66,8 @@ class BigDataQueryTokenizer(queryString: String) {
   }
 
   private def parseAlphaNumeric(tokens: ListBuffer[Token]): Boolean = {
-    if (!currentChar.isLetter) false
+    if (!hasNext) true
+    else if (!currentChar.isLetter) false
     else {
       val start = pos
       pos += 1
@@ -74,7 +80,8 @@ class BigDataQueryTokenizer(queryString: String) {
   private def parseDoubleQuotedSequence(tokens: ListBuffer[Token]): Boolean = parseSequence(tokens, '"', '"')
 
   private def parseNumeric(tokens: ListBuffer[Token]): Boolean = {
-    if (!currentChar.isDigit) false
+    if (!hasNext) true
+    else if (!currentChar.isDigit) false
     else {
       val start = pos
       pos += 1
@@ -87,7 +94,8 @@ class BigDataQueryTokenizer(queryString: String) {
   private def parseSingleQuotedSequence(tokens: ListBuffer[Token]): Boolean = parseSequence(tokens, '\'', '\'')
 
   private def parseSymbols(tokens: ListBuffer[Token]): Boolean = {
-    if (!Symbols.contains(currentChar)) false
+    if(!hasNext) true
+    else if (!Symbols.contains(currentChar)) false
     else {
       val firstCh = currentChar
       val secondCh = nextChar
@@ -112,7 +120,7 @@ class BigDataQueryTokenizer(queryString: String) {
 object BigDataQueryTokenizer {
   private val Symbols = "!,=<>"
   private val Operators = Seq(">=", "<=", "!=", "==")
-  private val WhiteSpace = " \t\r\n"
+  private val WhiteSpace = " \t\r\n".toCharArray
 
   def parse(queryString: String): List[String] = {
     new BigDataQueryTokenizer(queryString).parse() map (_.word)
@@ -123,4 +131,5 @@ object BigDataQueryTokenizer {
   }
 
   case class Token(word: String, pos: Int)
+
 }

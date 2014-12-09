@@ -12,6 +12,7 @@ import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 import org.slf4j.LoggerFactory
 
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
@@ -26,10 +27,18 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   // create the result handler
   private val resultHandler = new TxResultHandler(config)
 
-  // create the module manager
-  val moduleManager = new ModuleManager()(this)
+  // support registering decoders
+  private val decoders = TrieMap[String, MessageDecoder[_]]()
 
-  // load the built-in modules
+  // load the default decoders
+  config.getDecoders foreach { txDecoders =>
+    txDecoders foreach { txDecoder =>
+      decoders += txDecoder.topic -> txDecoder.decoder
+    }
+  }
+
+  // create the module manager and load the built-in modules
+  val moduleManager = new ModuleManager()(this)
   moduleManager ++= Seq(
     new CassandraModule(config),
     new CoreModule(config),
@@ -41,6 +50,15 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
 
   // set the "active" module
   moduleManager.findModuleByName("core") foreach moduleManager.setActiveModule
+
+  /**
+   * Attempts to resolve the given topic or decoder URL into an actual message decoder
+   * @param topicOrUrl the given topic or decoder URL
+   * @return an option of a [[MessageDecoder]]
+   */
+  def resolveDecoder(topicOrUrl: String): Option[MessageDecoder[_]] = {
+    decoders.get(topicOrUrl) ?? MessageCodecs.getDecoder(topicOrUrl)
+  }
 
   /**
    * Returns the input handler for the given output URL
@@ -79,6 +97,20 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     }
   }
 
+  /**
+   * Attempts to retrieve a message decoder by name
+   * @param name the name of the desired [[MessageDecoder]]
+   * @return an option of a [[MessageDecoder]]
+   */
+  def lookupDecoderByName(name: String): Option[MessageDecoder[_]] = decoders.get(name)
+
+  /**
+   * Registers a message decoder, which can be later retrieved by name
+   * @param name the name of the [[MessageDecoder]]
+   * @param decoder the [[MessageDecoder]] instance
+   */
+  def registerDecoder(name: String, decoder: MessageDecoder[_]): Unit = decoders(name) = decoder
+
   def shutdown(): Unit = moduleManager.shutdown()
 
   /**
@@ -100,8 +132,8 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     val task = query match {
       case BigDataSelection(source, destination, fields, criteria, limit) =>
         // get the input source and its decoder
-        val inputSource: Option[InputSource] = getInputHandler(source.deviceURL)
-        val inputDecoder: Option[MessageDecoder[_]] = MessageCodecs.getDecoder(source.decoderURL)
+        val inputSource: Option[InputSource] = getInputHandler(getDeviceURLWithDefault("topic", source.deviceURL))
+        val inputDecoder: Option[MessageDecoder[_]] = lookupDecoderByName(source.decoderURL) ?? MessageCodecs.getDecoder(source.decoderURL)
 
         // get the output source and its encoder
         val outputSource: Option[OutputSource] = destination.flatMap(src => getOutputHandler(src.deviceURL))
@@ -122,6 +154,10 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
         throw new IllegalStateException(s"Invalid query type - ${query.getClass.getName}")
     }
     AsyncIO(task, counter)
+  }
+
+  private def getDeviceURLWithDefault(prefix: String, deviceURL: String): String = {
+    if (deviceURL.contains(':')) deviceURL else s"$prefix:$deviceURL"
   }
 
   /**

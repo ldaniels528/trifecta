@@ -19,7 +19,7 @@ object ConditionCompiler {
         decoder match {
           case Some(compiler: MessageEvaluation) => compiler.compile(op)
           case Some(aDecoder) => throw new IllegalStateException(s"The selected decoder is not a message compiler")
-          case None => throw new IllegalStateException("No message decoder selected")
+          case None => throw new IllegalStateException(s"No message decoder found to support `$op`")
         }
     }
   }

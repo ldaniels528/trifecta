@@ -55,7 +55,7 @@ class DocumentOutputSource(client: TxElasticSearchClient, index: String, objType
     if (!id.startsWith("$")) id
     else {
       val key = id.substring(1) // TODO handle recursively? - $$id
-      Option(record.get(key)) map (String.valueOf(_)) map(_.replace(' ', '_')) getOrElse key
+      Option(record.get(key)) map (String.valueOf(_)) map (_.replace(' ', '_')) getOrElse key
     }
   }
 

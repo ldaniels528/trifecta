@@ -8,7 +8,7 @@ import scala.util.Try
  * GZIP Message Codec
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class GzipCodec() extends GzipCompression with MessageDecoder[Array[Byte]] with MessageEncoder[Array[Byte]] {
+object GzipCodec extends GzipCompression with MessageDecoder[Array[Byte]] with MessageEncoder[Array[Byte]] {
 
   /**
    * Decompresses the compressed binary message

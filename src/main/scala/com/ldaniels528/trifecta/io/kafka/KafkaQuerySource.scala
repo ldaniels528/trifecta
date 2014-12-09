@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.io.kafka
 
+import KafkaQuerySource._
 import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
@@ -7,6 +8,7 @@ import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.query.{QueryResult, QuerySource}
 import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.util.Utf8
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
@@ -23,17 +25,17 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
                        conditions: Seq[Condition],
                        limit: Option[Int],
                        counter: IOCounter)(implicit ec: ExecutionContext) = {
-    val myFields = List("partition", "offset") ::: fields.toList
+    val myFields = fields.toList ::: List(Partition, Offset)
     val startTime = System.nanoTime()
     KafkaMicroConsumer.findAll(topic, brokers, correlationId, conditions, limit, counter) map {
       _ map { md =>
         counter.updateWriteCount(1)
         val record = decodeMessage(md, decoder)
-        Map(fields map (field => (field, record.get(field))): _*) ++ Map("partition" -> md.partition, "offset" -> md.offset)
+        Map(fields map (field => (field, unwrapValue(record.get(field)))): _*) ++ Map(Partition -> md.partition, Offset -> md.offset)
       }
     } map { values =>
       val elapsedTimeMillis = (System.nanoTime() - startTime).toDouble / 1e9
-      QueryResult(myFields, values, elapsedTimeMillis)
+      QueryResult(topic, myFields, values, elapsedTimeMillis)
     }
   }
 
@@ -57,5 +59,18 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
         throw new IllegalStateException(e.getMessage, e)
     }
   }
+
+  private def unwrapValue(value: AnyRef): AnyRef = {
+    value match {
+      case u: Utf8 => u.toString
+      case x => x
+    }
+  }
+
+}
+
+object KafkaQuerySource {
+  val Partition = "__partition"
+  val Offset = "__offset"
 
 }

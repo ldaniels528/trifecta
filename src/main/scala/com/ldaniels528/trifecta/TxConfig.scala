@@ -4,17 +4,23 @@ import java.io.File._
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
 
+import com.ldaniels528.trifecta.TxConfig.{TxDecoder, decoderDirectory}
+import com.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.ldaniels528.trifecta.util.PropertiesHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
+import org.slf4j.LoggerFactory
 
+import scala.io.Source
 import scala.util.Properties._
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
  * Trifecta Configuration
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxConfig(val configProps: Properties) {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
+
   // set the current working directory
   configProps.setProperty("trifecta.common.cwd", new File(".").getCanonicalPath)
 
@@ -27,11 +33,6 @@ class TxConfig(val configProps: Properties) {
 
   // define the job manager
   val jobManager = new JobManager()
-
-  // Zookeeper connection string
-  def zooKeeperConnect = configProps.getOrElse("trifecta.zookeeper.host", "127.0.0.1:2181")
-
-  def kafkaZkConnect = configProps.getOrElse("trifecta.kafka.zookeeper.host", zooKeeperConnect)
 
   // various shared state variables
   def autoSwitching: Boolean = configProps.getOrElse("trifecta.common.autoSwitching", "true").toBoolean
@@ -54,6 +55,40 @@ class TxConfig(val configProps: Properties) {
   def encoding: String = configProps.getOrElse("trifecta.common.encoding", "UTF-8")
 
   def encoding_=(charSet: String): Unit = configProps.setProperty("trifecta.common.encoding", charSet)
+
+  def webHost: String = configProps.getOrElse("trifecta.web.host", "localhost")
+
+  def webPort: Int = configProps.getOrElse("trifecta.web.host", "8888").toInt
+
+  // Zookeeper connection string
+  def zooKeeperConnect = configProps.getOrElse("trifecta.zookeeper.host", "localhost:2181")
+
+  def zooKeeperConnect_=(connectionString: String) = configProps.setProperty("trifecta.zookeeper.host", connectionString)
+
+  /**
+   * Returns all available decoders
+   * @return the collection of [[TxDecoder]]s
+   */
+  def getDecoders: Option[Array[TxDecoder]] = {
+    Option(decoderDirectory.listFiles) map { topicDirectories =>
+      (topicDirectories flatMap { topicDirectory =>
+        Option(topicDirectory.listFiles) map { decoderFiles =>
+          decoderFiles flatMap { decoderFile =>
+            Try {
+              val topic = topicDirectory.getName
+              val schema = Source.fromFile(decoderFile).getLines().mkString
+              TxDecoder(topic, AvroDecoder(decoderFile.getName, schema))
+            } match {
+              case Success(decoder) => Option(decoder)
+              case Failure(e) =>
+                logger.error(s"Failed to register decoder (${decoderFile.getAbsolutePath})", e)
+                None
+            }
+          }
+        }
+      }).flatten
+    }
+  }
 
   /**
    * Returns an option of the value corresponding to the given key
@@ -112,11 +147,28 @@ class TxConfig(val configProps: Properties) {
  */
 object TxConfig {
 
-  // define the history properties
-  var historyFile: File = new File(s"$userHome$separator.trifecta${separator}history.txt")
+  /**
+   * Defines the directory for all Trifecta preferences
+   */
+  var trifectaPrefs: File = new File(s"$userHome$separator.trifecta")
 
-  // define the configuration file & properties
-  var configFile: File = new File(s"$userHome$separator.trifecta${separator}config.properties")
+  /**
+   * Returns the location of the history properties
+   * @return the [[File]] representing the location of history properties
+   */
+  def historyFile: File = new File(trifectaPrefs, "history.txt")
+
+  /**
+   * Returns the location of the configuration properties
+   * @return the [[File]] representing the location of configuration properties
+   */
+  def configFile: File = new File(trifectaPrefs, "config.properties")
+
+  /**
+   * Returns the location of the decoders directory
+   * @return the [[File]] representing the location of the decoders directory
+   */
+  def decoderDirectory: File = new File(trifectaPrefs, "decoders")
 
   /**
    * Returns the default configuration
@@ -137,7 +189,6 @@ object TxConfig {
   private def getDefaultProperties: java.util.Properties = {
     Map(
       "trifecta.zookeeper.host" -> "localhost:2181",
-      "trifecta.kafka.zookeeper.host" -> "localhost:2181",
       "trifecta.elasticsearch.hosts" -> "localhost",
       "trifecta.cassandra.hosts" -> "localhost ",
       "trifecta.storm.hosts" -> "localhost",
@@ -146,6 +197,8 @@ object TxConfig {
       "trifecta.common.debugOn" -> "false",
       "trifecta.common.encoding" -> "UTF-8").toProps
   }
+
+  case class TxDecoder(topic: String, decoder: AvroDecoder)
 
 }
 

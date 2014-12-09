@@ -8,7 +8,7 @@ import com.ldaniels528.trifecta.io.AsyncIO
 import com.ldaniels528.trifecta.io.avro.AvroTables
 import com.ldaniels528.trifecta.messages.BinaryMessaging
 import com.ldaniels528.trifecta.messages.query.QueryResult
-import com.ldaniels528.trifecta.io.json.TxJsonUtil
+import com.ldaniels528.trifecta.io.json.JsonHelper
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.MessageData
 import com.ldaniels528.trifecta.io.kafka.StreamedMessage
 import net.liftweb.json._
@@ -56,7 +56,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
 
       // handle Avro records
       case g: GenericRecord =>
-        Try(TxJsonUtil.toJson(g)) match {
+        Try(JsonHelper.toJson(g)) match {
           case Success(js) => out.println(pretty(render(js)))
           case Failure(e) => out.println(g)
         }
@@ -70,7 +70,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
         case None => out.println("No data returned")
       }
 
-      case QueryResult(fields, values, runTimeMillis) =>
+      case QueryResult(topic, fields, values, runTimeMillis) =>
         if (values.isEmpty) out.println("No data returned")
         else {
           out.println(f"[Query completed in $runTimeMillis%.1f msec]")
