@@ -142,7 +142,7 @@ You'll see a few seconds of log messages, then a prompt indicating the web inter
 Additionally, Trifecta UI adds a few new properties to the application configuration (located in
 $HOME/.trifecta/config.properties):
 
-    # the embedded web server host/IP and port that clients will connect to
+    # the embedded web server host/IP and port for client connections
     trifecta.web.host = localhost
     trifecta.web.host = 8888
 
