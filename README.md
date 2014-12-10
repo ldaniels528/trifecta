@@ -130,14 +130,19 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 ### Trifecta UI
 
 Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
-which offers many of the powerful features found in the CLI client application. To start the embedded web server,
-issue the following from the command line:
+which offers many of the powerful features found in the CLI client application.
+
+#### Starting the embedded web server
+
+To start the embedded web server, issue the following from the command line:
 
     $ java -jar trifecta.jar --http-start
 
 You'll see a few seconds of log messages, then a prompt indicating the web interface is ready for use.
 
     Open your browser and navigate to http://localhost:8888
+
+#### Configuring Trifecta UI
 
 Additionally, Trifecta UI introduces a few new properties to the application configuration file (located in
 $HOME/.trifecta/config.properties). **NOTE**: The property values shown below are the default values.
@@ -154,6 +159,18 @@ $HOME/.trifecta/config.properties). **NOTE**: The property values shown below ar
 
     # the number of actors to create for servicing requests
     trifecta.web.actor.concurrency = 10
+
+#### Configuring the Avro Decoders
+
+Trifecta UI supports decoding Avro-encoded messages and displaying them in JSON format. To associate an Avro schema to a
+Kafka topic, place the schema file in a subdirectory with the same name as the topic. For example, if I wanted to
+associate an Avro file named `quotes.avsc` to the Kafka topic `shocktrade.quotes.avro`, I'd setup the following
+file structure:
+
+    $HOME/.trifecta/decoders/shocktrade.quotes.avro/quotes.avsc
+
+The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
+restart Trifecta UI, and your messages will be displayed in JSON format.
 
 <a name="usage"></a>
 ### Usage Examples	
