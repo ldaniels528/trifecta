@@ -57,8 +57,10 @@ Kafka topics and many other Big Data Systems (including Cassandra, ElasticSearch
 <a href="#trifecta-ui">Trifecta UI</a>
 
 <ul>
-<li><a href="#start-web-server">Starting the embedded web server</a></li>
-<li><a href="#configure-ui">Configuring Trifecta UI</a></li>
+<li><a href="#trifecta-ui-start">Starting the embedded web server</a></li>
+<li><a href="#trifecta-ui-configure">Configuring Trifecta UI</a></li>
+<li><a href="#trifecta-ui-decoders">Default Decoders</a></li>
+<li><a href="#trifecta-ui-query">Queries</a></li>
 </ul>
 </li>
 <li>
@@ -248,7 +250,9 @@ trifecta.storm.hosts = localhost
 <p>Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
 which offers many of the powerful features found in the CLI client application.</p>
 
-<p><a name="start-web-server"></a></p>
+<p><img src="http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png" alt=""></p>
+
+<p><a name="trifecta-ui-start"></a></p>
 
 <h4>
 <a id="starting-the-embedded-web-server" class="anchor" href="#starting-the-embedded-web-server" aria-hidden="true"><span class="octicon octicon-link"></span></a>Starting the embedded web server</h4>
@@ -263,7 +267,7 @@ which offers many of the powerful features found in the CLI client application.<
 <pre><code>Open your browser and navigate to http://localhost:8888
 </code></pre>
 
-<p><a name="configure-ui"></a></p>
+<p><a name="trifecta-ui-configure"></a></p>
 
 <h4>
 <a id="configuring-trifecta-ui" class="anchor" href="#configuring-trifecta-ui" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuring Trifecta UI</h4>
@@ -285,6 +289,8 @@ trifecta.web.push.interval.topic = 15
 trifecta.web.actor.concurrency = 10
 </code></pre>
 
+<p><a name="trifecta-ui-decoders"></a></p>
+
 <h4>
 <a id="configuring-default-avro-decoders" class="anchor" href="#configuring-default-avro-decoders" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuring default Avro Decoders</h4>
 
@@ -301,6 +307,16 @@ restart Trifecta UI, and your messages will be displayed in JSON format.</p>
 
 <p>Additionally, once a "default" decoder is configured for a Kafka topic, the CLI application can use them as well.
 For more details about using default decoders with the CLI application <a href="#kafka-default-avro-decoder">click here</a>.</p>
+
+<p><a name="trifecta-ui-query"></a></p>
+
+<h4>
+<a id="queries" class="anchor" href="#queries" aria-hidden="true"><span class="octicon octicon-link"></span></a>Queries</h4>
+
+<p>Trifecta UI also provides a way to execute queries against topics using BDQL (Big Data Query Language). For more
+detailed information about BDQL queries, <a href="#kafka-search-by-query">click here</a>.</p>
+
+<p><img src="http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png" alt=""></p>
 
 <p><a name="usage"></a></p>
 
