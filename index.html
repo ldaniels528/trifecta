@@ -1,76 +1,1620 @@
 <!DOCTYPE html>
 <html>
+
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <title>Trifecta by ldaniels528</title>
+    <meta name="description" content="Trifecta : Trifecta is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, publish  and verify messages (or data) in Kafka, Storm and Zookeeper">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Trifecta</title>
   </head>
 
   <body>
-    <div id="container">
-      <div class="inner">
 
-        <header>
-          <h1>Trifecta</h1>
-          <h2>Trifecta is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, publish  and verify messages (or data) in Kafka, Storm and Zookeeper</h2>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/ldaniels528/trifecta">View on GitHub</a>
+
+          <h1 id="project_title">Trifecta</h1>
+          <h2 id="project_tagline">Trifecta is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, publish  and verify messages (or data) in Kafka, Storm and Zookeeper</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/ldaniels528/trifecta/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/ldaniels528/trifecta/tarball/master">Download this project as a tar.gz file</a>
+            </section>
         </header>
+    </div>
 
-        <section id="downloads" class="clearfix">
-          <a href="https://github.com/ldaniels528/trifecta/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-          <a href="https://github.com/ldaniels528/trifecta/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
-          <a href="https://github.com/ldaniels528/trifecta" id="view-on-github" class="button"><span>View on GitHub</span></a>
-        </section>
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="trifecta-" class="anchor" href="#trifecta-" aria-hidden="true"><span class="octicon octicon-link"></span></a>Trifecta </h1>
 
-        <hr>
+<p>Trifecta is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, verify and even query
+Kafka messages. In addition, Trifecta offers data import/export functions for transferring data between
+Kafka topics and many other Big Data Systems (including Cassandra, ElasticSearch, MongoDB and others).</p>
 
-        <section id="main_content">
-          <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+<p>Table of Contents</p>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<ul>
+<li><a href="#motivations">Motivations</a></li>
+<li><a href="#features">Features</a></li>
+<li>
+<a href="#development">Development</a>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<ul>
+<li><a href="#build-requirements">Build Requirements</a></li>
+<li><a href="#configuring-your-ide">Configuring the project for your IDE</a></li>
+<li><a href="#building-the-code">Building the code</a></li>
+<li>
+<a href="#testing-the-code">Running the tests</a> </li>
+<li><a href="#configuring-the-app">Configuring the application</a></li>
+<li><a href="#running-the-app">Running the application</a></li>
+</ul>
+</li>
+<li>
+<a href="#trifecta-ui">Trifecta UI</a>
+
+<ul>
+<li><a href="#start-web-server">Starting the embedded web server</a></li>
+<li><a href="#configure-ui">Configuring Trifecta UI</a></li>
+</ul>
+</li>
+<li>
+<a href="#usage">Usage Examples</a>
+
+<ul>
+<li>
+<a href="#kafka-module">Kafka Module</a>
+
+<ul>
+<li><a href="#kafka-brokers">Kafka Brokers</a></li>
+<li><a href="#kafka-topics">Kafka Topics</a></li>
+<li><a href="#kafka-message-cursor">Navigable Cursor</a></li>
+<li><a href="#kafka-consumer-group">Consumer Groups</a></li>
+<li><a href="kafka-inbound-traffic">Inbound Traffic</a></li>
+<li><a href="#kafka-avro-module">Avro Integration</a></li>
+<li><a href="kafka-default-avro-decoder">Default Avro Decoders</a></li>
+<li><a href="#kafka-search-by-key">Searching By Key</a></li>
+<li><a href="#kafka-advanced-search">Advanced Search</a></li>
+<li><a href="#kafka-search-by-query">Searching By Query</a></li>
+</ul>
+</li>
+<li>
+<a href="#zookeeper-module">Zookeeper Module</a>
+
+<ul>
+<li><a href="#zookeeper-list">Navigating directories and keys</a></li>
+<li><a href="#zookeeper-get-put">Getting and setting key-value pairs</a></li>
+</ul>
+</li>
+<li><a href="#cassandra">Cassandra Module</a></li>
+<li>
+<a href="#elastic-search">Elastic Search Module</a><br>
+
+<ul>
+<li><a href="#es-avro-to-json">Avro-to-Document support</a></li>
+</ul>
+</li>
+<li>
+<a href="#mongodb-module">MongoDB Module</a><br>
+</li>
+<li>
+<a href="#storm-module">Storm Module</a><br>
+</li>
+</ul>
+</li>
+</ul>
+
+<p><a name="motivations"></a></p>
+
+<h2>
+<a id="motivations" class="anchor" href="#motivations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Motivations</h2>
+
+<p>The motivations behind creating <em>Trifecta</em> are simple; testing, verifying and managing Kafka topics and Zookeeper 
+key-value pairs is an arduous task. The goal of this project is to ease the pain of developing applications that
+make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like (or SQL-like) commands.</p>
+
+<p><a name="features"></a></p>
+
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>Avro integration
+
+<ul>
+<li>
+<a href="#kafka-avro-module">Kafka — Avro</a> support</li>
+<li>
+<a href="#es-avro-to-json">Elastic Search — Avro</a> support
+
+<ul>
+<li>Copy Avro-encoded messages from Kafka to Elastic Search as JSON</li>
+</ul>
+</li>
+<li>Zookeeper — Avro support (coming soon)</li>
+</ul>
+</li>
+<li>
+<a href="#elastic-search">Elastic Search</a> integration (experimental)</li>
+<li>
+<a href="#kafka-module">Kafka</a> integration</li>
+<li>
+<a href="#storm-module">Storm</a> integration</li>
+<li>
+<a href="#zookeeper-module">Zookeeper</a> integration</li>
+</ul>
+
+<p><a name="development"></a></p>
+
+<h2>
+<a id="development" class="anchor" href="#development" aria-hidden="true"><span class="octicon octicon-link"></span></a>Development</h2>
+
+<p><a name="build-requirements"></a></p>
+
+<h3>
+<a id="build-requirements" class="anchor" href="#build-requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build Requirements</h3>
+
+<ul>
+<li><a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html">Java SDK 1.7</a></li>
+<li><a href="http://www.scala-sbt.org/download.html">SBT 0.13+</a></li>
+</ul>
+
+<p><a name="configuring-your-ide"></a></p>
+
+<h3>
+<a id="configuring-the-project-for-your-ide" class="anchor" href="#configuring-the-project-for-your-ide" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuring the project for your IDE</h3>
+
+<h4>
+<a id="generating-an-eclipse-project" class="anchor" href="#generating-an-eclipse-project" aria-hidden="true"><span class="octicon octicon-link"></span></a>Generating an Eclipse project</h4>
+
+<pre><code>$ sbt eclipse
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<h4>
+<a id="generating-an-intellij-idea-project" class="anchor" href="#generating-an-intellij-idea-project" aria-hidden="true"><span class="octicon octicon-link"></span></a>Generating an Intellij Idea project</h4>
+
+<pre><code>$ sbt gen-idea
+</code></pre>
+
+<p><a name="building-the-code"></a></p>
 
 <h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<a id="building-the-code" class="anchor" href="#building-the-code" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building the code</h3>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<pre><code>$ sbt clean assembly
+</code></pre>
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p><a name="testing-the-code"></a>    </p>
 
 <h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<a id="running-the-tests" class="anchor" href="#running-the-tests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running the tests</h3>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<pre><code>$ sbt clean test    
+</code></pre>
+
+<p><a name="configuring-the-app"></a></p>
 
 <h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<a id="configuring-the-application" class="anchor" href="#configuring-the-application" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuring the application</h3>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-        </section>
+<p>On startup, Trifecta reads $HOME/.trifecta/config.properties (or creates the file if it doesn't exist). This file 
+contains the configuration properties and connection strings for all supported systems.</p>
 
-        <footer>
-          Trifecta is maintained by <a href="https://github.com/ldaniels528">ldaniels528</a><br>
-          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
-        </footer>
+<pre><code># common properties
+trifecta.common.autoSwitching = true
+trifecta.common.columns = 25
+trifecta.common.debugOn = false
+trifecta.common.encoding = UTF-8
 
-        
-      </div>
+# Kafka/Zookeeper properties
+trifecta.zookeeper.host = localhost:2181
+
+# Cassandra properties
+trifecta.cassandra.hosts = localhost
+
+# ElasticSearch properties
+trifecta.elasticsearch.hosts = localhost:9200
+
+# MongoDB properties
+trifecta.mongodb.hosts = localhost
+
+# Storm properties
+trifecta.storm.hosts = localhost
+</code></pre>
+
+<p><a name="Running-the-app"></a> </p>
+
+<h3>
+<a id="run-the-application" class="anchor" href="#run-the-application" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run the application</h3>
+
+<p>To start the <em>Trifecta</em> REPL:</p>
+
+<pre><code>$ java -jar trifecta.jar
+</code></pre>
+
+<p>Optionally, you can execute <em>Trifecta</em> instructions (commands) right from the command line:</p>
+
+<pre><code>$ java -jar trifecta.jar kls -l
+</code></pre>
+
+<p><a href="#trifecta-ui"></a></p>
+
+<h3>
+<a id="trifecta-ui" class="anchor" href="#trifecta-ui" aria-hidden="true"><span class="octicon octicon-link"></span></a>Trifecta UI</h3>
+
+<p>Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
+which offers many of the powerful features found in the CLI client application.</p>
+
+<p><a name="start-web-server"></a></p>
+
+<h4>
+<a id="starting-the-embedded-web-server" class="anchor" href="#starting-the-embedded-web-server" aria-hidden="true"><span class="octicon octicon-link"></span></a>Starting the embedded web server</h4>
+
+<p>To start the embedded web server, issue the following from the command line:</p>
+
+<pre><code>$ java -jar trifecta.jar --http-start
+</code></pre>
+
+<p>You'll see a few seconds of log messages, then a prompt indicating the web interface is ready for use.</p>
+
+<pre><code>Open your browser and navigate to http://localhost:8888
+</code></pre>
+
+<p><a name="configure-ui"></a></p>
+
+<h4>
+<a id="configuring-trifecta-ui" class="anchor" href="#configuring-trifecta-ui" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuring Trifecta UI</h4>
+
+<p>Additionally, Trifecta UI introduces a few new properties to the application configuration file (located in
+$HOME/.trifecta/config.properties). <strong>NOTE</strong>: The property values shown below are the default values.</p>
+
+<pre><code># the embedded web server host/IP and port for client connections
+trifecta.web.host = localhost
+trifecta.web.port = 8888
+
+# the interval (in seconds) that changes to consumer offsets will be pushed to web-socket clients
+trifecta.web.push.interval.consumer = 15
+
+# the interval (in seconds) that changes to topics (new messages) will be pushed to web-socket clients
+trifecta.web.push.interval.topic = 15
+
+# the number of actors to create for servicing requests
+trifecta.web.actor.concurrency = 10
+</code></pre>
+
+<h4>
+<a id="configuring-default-avro-decoders" class="anchor" href="#configuring-default-avro-decoders" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuring default Avro Decoders</h4>
+
+<p>Trifecta UI supports decoding Avro-encoded messages and displaying them in JSON format. To associate an Avro schema to a
+Kafka topic, place the schema file in a subdirectory with the same name as the topic. For example, if I wanted to
+associate an Avro file named <code>quotes.avsc</code> to the Kafka topic <code>shocktrade.quotes.avro</code>, I'd setup the following
+file structure:</p>
+
+<pre><code>$HOME/.trifecta/decoders/shocktrade.quotes.avro/quotes.avsc
+</code></pre>
+
+<p>The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
+restart Trifecta UI, and your messages will be displayed in JSON format.</p>
+
+<p>Additionally, once a "default" decoder is configured for a Kafka topic, the CLI application can use them as well.
+For more details about using default decoders with the CLI application <a href="#kafka-default-avro-decoder">click here</a>.</p>
+
+<p><a name="usage"></a></p>
+
+<h3>
+<a id="usage-examples" class="anchor" href="#usage-examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage Examples</h3>
+
+<p><em>Trifecta</em> exposes its commands through modules. At any time to see which modules are available one could issue the <code>modules</code> command.</p>
+
+<pre><code>core:/home/ldaniels&gt; modules
++ ------------------------------------------------------------------------------------- +
+| name           className                                             loaded  active   |
++ ------------------------------------------------------------------------------------- +
+| cassandra      com.ldaniels528.trifecta.modules.CassandraModule      true    false    |
+| core           com.ldaniels528.trifecta.modules.CoreModule           true    true     |
+| elasticSearch  com.ldaniels528.trifecta.modules.ElasticSearchModule  true    false    |
+| kafka          com.ldaniels528.trifecta.modules.KafkaModule          true    false    |
+| mongodb        com.ldaniels528.trifecta.modules.MongoModule          true    false    |
+| storm          com.ldaniels528.trifecta.modules.StormModule          true    false    |
+| zookeeper      com.ldaniels528.trifecta.modules.ZookeeperModule      true    false    |
++ ------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p>To execute local system commands, enclose the command you'd like to execute using the back-ticks (`) symbol:</p>
+
+<pre><code>core:/home/ldaniels&gt; `netstat -ptln`
+</code></pre>
+
+<p>To see all available commands, use the <code>help</code> command (<code>?</code> is a shortcut):</p>
+
+<pre><code>core:/home/ldaniels&gt; ?
++ ---------------------------------------------------------------------------------------------------------------------- +
+| command     module     description                                                                                     |
++ ---------------------------------------------------------------------------------------------------------------------- +
+| !           core       Executes a previously issued command                                                            |
+| $           core       Executes a local system command                                                                 |
+| ?           core       Provides the list of available commands                                                         |
+| autoswitch  core       Automatically switches to the module of the most recently executed command                      |
+.                                                                                                                        .
+.                                                                                                                        .
+.                                                                                                                        .                                          
+| ztree       zookeeper  Retrieves Zookeeper directory structure                                                         |
++ ---------------------------------------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p>To see the syntax/usage of a command, use the <code>syntax</code> command:</p>
+
+<pre><code>core:/home/ldaniels&gt; syntax kget
+Description: Retrieves the message at the specified offset for a given topic partition
+Usage: kget [-o outputSource] [-d YYYY-MM-DDTHH:MM:SS] [-a avroSchema] [topic] [partition] [offset]
+</code></pre>
+
+<p><a name="kafka-module"></a></p>
+
+<h4>
+<a id="kakfa-module" class="anchor" href="#kakfa-module" aria-hidden="true"><span class="octicon octicon-link"></span></a>Kakfa Module</h4>
+
+<p>To view all of the Kafka commands, use the <code>-m</code> switch and the module name</p>
+
+<pre><code>kafka:/&gt; ? -m kafka
++ ------------------------------------------------------------------------------------------------------------------- +
+| command     module  description                                                                                     |
++ ------------------------------------------------------------------------------------------------------------------- +
+| kbrokers    kafka   Returns a list of the brokers from ZooKeeper                                                    |
+| kcommit     kafka   Commits the offset for a given topic and group                                                  |
+| kconsumers  kafka   Returns a list of the consumers from ZooKeeper                                                  |
+| kcount      kafka   Counts the messages matching a given condition                                                  |
+| kcursor     kafka   Displays the message cursor(s)                                                                  |
+| kfetch      kafka   Retrieves the offset for a given topic and group                                                |
+| kfetchsize  kafka   Retrieves or sets the default fetch size for all Kafka queries                                  |
+| kfind       kafka   Finds messages matching a given condition and exports them to a topic                           |
+| kfindone    kafka   Returns the first occurrence of a message matching a given condition                            |
+| kfirst      kafka   Returns the first message for a given topic                                                     |
+| kget        kafka   Retrieves the message at the specified offset for a given topic partition                       |
+| kgetkey     kafka   Retrieves the key of the message at the specified offset for a given topic partition            |
+| kgetminmax  kafka   Retrieves the smallest and largest message sizes for a range of offsets for a given partition   |
+| kgetsize    kafka   Retrieves the size of the message at the specified offset for a given topic partition           |
+| kinbound    kafka   Retrieves a list of topics with new messages (since last query)                                 |
+| klast       kafka   Returns the last message for a given topic                                                      |
+| kls         kafka   Lists all existing topics                                                                       |
+| knext       kafka   Attempts to retrieve the next message                                                           |
+| kprev       kafka   Attempts to retrieve the message at the previous offset                                         |
+| kreset      kafka   Sets a consumer group ID to zero for all partitions                                             |
+| kstats      kafka   Returns the partition details for a given topic                                                 |
+| kswitch     kafka   Switches the currently active topic cursor                                                      |
++ ------------------------------------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p><a name="kafka-brokers"></a></p>
+
+<h5>
+<a id="kafka-brokers" class="anchor" href="#kafka-brokers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Kafka Brokers</h5>
+
+<p>To list the replica brokers that Zookeeper is aware of:</p>
+
+<pre><code>kafka:/&gt; kbrokers
++ ---------------------------------------------------------- +
+| jmx_port  timestamp                host    version  port   |
++ ---------------------------------------------------------- +
+| 9999      2014-08-23 19:33:01 PDT  dev501  1        9093   |
+| 9999      2014-08-23 18:41:07 PDT  dev501  1        9092   |
+| 9999      2014-08-23 18:41:07 PDT  dev501  1        9091   |
+| 9999      2014-08-23 20:05:17 PDT  dev502  1        9093   |
+| 9999      2014-08-23 20:05:17 PDT  dev502  1        9092   |
+| 9999      2014-08-23 20:05:17 PDT  dev502  1        9091   |
++ ---------------------------------------------------------- +
+</code></pre>
+
+<p><a name="kafka-topics"></a></p>
+
+<h5>
+<a id="kafka-topics" class="anchor" href="#kafka-topics" aria-hidden="true"><span class="octicon octicon-link"></span></a>Kafka Topics</h5>
+
+<p>To list all of the Kafka topics that Zookeeper is aware of:</p>
+
+<pre><code>kafka:/&gt; kls
++ ------------------------------------------------------ +
+| topic                         partitions  replicated   |
++ ------------------------------------------------------ +
+| Shocktrade.quotes.csv         5           100%         |
+| shocktrade.quotes.avro        5           100%         |
+| test.Shocktrade.quotes.avro   5           100%         |
+| hft.Shocktrade.quotes.avro    5           100%         |
+| test2.Shocktrade.quotes.avro  5           100%         |
+| test1.Shocktrade.quotes.avro  5           100%         |
+| test3.Shocktrade.quotes.avro  5           100%         |
++ ------------------------------------------------------ +
+</code></pre>
+
+<p>To see a subset of the topics (matches any topic that starts with the given search term):</p>
+
+<pre><code>kafka:/&gt; kls shocktrade.quotes.avro
++ ------------------------------------------------ +
+| topic                   partitions  replicated   |
++ ------------------------------------------------ +
+| shocktrade.quotes.avro  5           100%         |
++ ------------------------------------------------ +
+</code></pre>
+
+<p>To see a detailed list including all partitions, use the <code>-l</code> flag:</p>
+
+<pre><code>kafka:/&gt; kls -l shocktrade.quotes.avro
++ ------------------------------------------------------------------ +
+| topic                   partition  leader       replicas  inSync   |
++ ------------------------------------------------------------------ +
+| shocktrade.quotes.avro  0          dev501:9092  1         1        |
+| shocktrade.quotes.avro  1          dev501:9093  1         1        |
+| shocktrade.quotes.avro  2          dev502:9091  1         1        |
+| shocktrade.quotes.avro  3          dev502:9092  1         1        |
+| shocktrade.quotes.avro  4          dev502:9093  1         1        |
++ ------------------------------------------------------------------ +
+</code></pre>
+
+<p>To see the statistics for a specific topic, use the <code>kstats</code> command:</p>
+
+<pre><code>kafka:/&gt; kstats Shocktrade.quotes.csv
++ --------------------------------------------------------------------------------- +
+| topic                      partition  startOffset  endOffset  messagesAvailable   |
++ --------------------------------------------------------------------------------- +
+| Shocktrade.quotes.csv      0          5945         10796      4851                |
+| Shocktrade.quotes.csv      1          5160         10547      5387                |
+| Shocktrade.quotes.csv      2          3974         8788       4814                |
+| Shocktrade.quotes.csv      3          3453         7334       3881                |
+| Shocktrade.quotes.csv      4          4364         8276       3912                |
++ --------------------------------------------------------------------------------- +
+</code></pre>
+
+<p><a name="kafka-message-cursor"></a></p>
+
+<h5>
+<a id="kafka-navigable-cursor" class="anchor" href="#kafka-navigable-cursor" aria-hidden="true"><span class="octicon octicon-link"></span></a>Kafka Navigable Cursor</h5>
+
+<p>The Kafka module offers the concept of a navigable cursor. Any command that references a specific message offset
+creates a pointer to that offset, called a navigable cursor. Once the cursor has been established, with a single command,
+you can navigate to the first, last, previous, or next message using the <code>kfirst</code>, <code>klast</code>, <code>kprev</code> and <code>knext</code> commands
+respectively. Consider the following examples:</p>
+
+<p>To retrieve the first message of a topic partition:</p>
+
+<pre><code>kafka:/&gt; kfirst Shocktrade.quotes.csv 0
+[5945:000] 22.47.44.46.22.2c.31.30.2e.38.31.2c.22.39.2f.31.32.2f.32.30.31.34.22.2c.22 | "GDF",10.81,"9/12/2014"," |
+[5945:025] 34.3a.30.30.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.31.30.2c.22.2d.30 | 4:00pm",N/A,N/A,-0.10,"-0 |
+[5945:050] 2e.31.30.20.2d.20.2d.30.2e.39.32.25.22.2c.31.30.2e.39.31.2c.31.30.2e.39.31 | .10 - -0.92%",10.91,10.91 |
+[5945:075] 2c.31.30.2e.38.31.2c.31.30.2e.39.31.2c.31.30.2e.38.30.2c.33.36.35.35.38.2c | ,10.81,10.91,10.80,36558, |
+[5945:100] 4e.2f.41.2c.22.4e.2f.41.22                                                 | N/A,"N/A"                 |
+</code></pre>
+
+<p>The previous command resulted in the creation of a navigable cursor (notice below how our prompt has changed).</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:5945&gt; _
+</code></pre>
+
+<p>Let's view the cursor:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:5945&gt; kcursor
++ ------------------------------------------------------------------- +
+| topic                      partition  offset  nextOffset  decoder   |
++ ------------------------------------------------------------------- +
+| Shocktrade.quotes.csv      0          5945    5946                  |
++ ------------------------------------------------------------------- +
+</code></pre>
+
+<p>Let's view the next message for this topic partition:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:5945&gt; knext
+[5946:000] 22.47.44.50.22.2c.31.38.2e.35.31.2c.22.39.2f.31.32.2f.32.30.31.34.22.2c.22 | "GDP",18.51,"9/12/2014"," |
+[5946:025] 34.3a.30.31.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.38.39.2c.22.2d.30 | 4:01pm",N/A,N/A,-0.89,"-0 |
+[5946:050] 2e.38.39.20.2d.20.2d.34.2e.35.39.25.22.2c.31.39.2e.34.30.2c.31.39.2e.32.37 | .89 - -4.59%",19.40,19.27 |
+[5946:075] 2c.31.38.2e.35.31.2c.31.39.2e.33.32.2c.31.38.2e.33.30.2c.31.35.31.36.32.32 | ,18.51,19.32,18.30,151622 |
+[5946:100] 30.2c.38.32.32.2e.33.4d.2c.22.4e.2f.41.22                                  | 0,822.3M,"N/A"            |                                                    | M,"N/A"                   |
+</code></pre>
+
+<p>Let's view the last message for this topic partition:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:5945&gt; klast
+[10796:000] 22.4e.4f.53.50.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "NOSPF",0.00,"N/A","N/A", |
+[10796:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
+[10796:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
+[10796:075] 2f.41.2c.22.54.69.63.6b.65.72.20.73.79.6d.62.6f.6c.20.68.61.73.20.63.68.61 | /A,"Ticker symbol has cha |
+[10796:100] 6e.67.65.64.20.74.6f.3a.20.3c.61.20.68.72.65.66.3d.22.2f.71.3f.73.3d.4e.4f | nged to: &lt;a href="/q?s=NO |
+[10796:125] 53.50.46.22.3e.4e.4f.53.50.46.3c.2f.61.3e.22                               | SPF"&gt;NOSPF&lt;/a&gt;"           |                                          | ,N/A,"N/A"                |
+</code></pre>
+
+<p>Notice above we didn't have to specify the topic or partition because it's defined in our cursor.
+Let's view the cursor again:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10796&gt; kcursor
++ ------------------------------------------------------------------- +
+| topic                      partition  offset  nextOffset  decoder   |
++ ------------------------------------------------------------------- +
+| Shocktrade.quotes.csv      0          10796   10797                 |
++ ------------------------------------------------------------------- +
+</code></pre>
+
+<p>Now, let's view the previous record:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10796&gt; kprev
+[10795:000] 22.4d.4c.50.4b.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "MLPKF",0.00,"N/A","N/A", |
+[10795:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
+[10795:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
+[10795:075] 2f.41.2c.22.54.69.63.6b.65.72.20.73.79.6d.62.6f.6c.20.68.61.73.20.63.68.61 | /A,"Ticker symbol has cha |
+[10795:100] 6e.67.65.64.20.74.6f.3a.20.3c.61.20.68.72.65.66.3d.22.2f.71.3f.73.3d.4d.4c | nged to: &lt;a href="/q?s=ML |
+[10795:125] 50.4b.46.22.3e.4d.4c.50.4b.46.3c.2f.61.3e.22                               | PKF"&gt;MLPKF&lt;/a&gt;"           |                                               | N/A,"N/A"                 |
+</code></pre>
+
+<p>To retrieve the start and end offsets and number of messages available for a topic across any number of partitions:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10795&gt; kstats
++ --------------------------------------------------------------------------------- +
+| topic                      partition  startOffset  endOffset  messagesAvailable   |
++ --------------------------------------------------------------------------------- +
+| Shocktrade.quotes.csv      0          5945         10796      4851                |
+| Shocktrade.quotes.csv      1          5160         10547      5387                |
+| Shocktrade.quotes.csv      2          3974         8788       4814                |
+| Shocktrade.quotes.csv      3          3453         7334       3881                |
+| Shocktrade.quotes.csv      4          4364         8276       3912                |
++ --------------------------------------------------------------------------------- +
+</code></pre>
+
+<p><strong>NOTE</strong>: Above <code>kstats</code> is equivalent to both <code>kstats Shocktrade.quotes.csv</code> and
+<code>kstats Shocktrade.quotes.csv 0 4</code>. However, because of the cursor we previously established, those arguments
+could be omitted.</p>
+
+<p><a name="kafka-consumer-group"></a></p>
+
+<h5>
+<a id="kafka-consumer-groups" class="anchor" href="#kafka-consumer-groups" aria-hidden="true"><span class="octicon octicon-link"></span></a>Kafka Consumer Groups</h5>
+
+<p>To see the current offsets for all consumer group IDs:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10795&gt; kconsumers
++ ------------------------------------------------------------------------------------- +
+| consumerId  topic                      partition  offset  topicOffset  messagesLeft   |
++ ------------------------------------------------------------------------------------- +
+| dev         Shocktrade.quotes.csv      0          5555    10796        5241           |
+| dev         Shocktrade.quotes.csv      1          0       10547        10547          |
+| dev         Shocktrade.quotes.csv      2          0       8788         8788           |
+| dev         Shocktrade.quotes.csv      3          0       7334         7334           |
+| dev         Shocktrade.quotes.csv      4          0       8276         8276           |
++ ------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p>Let's change the committed offset for the current topic/partition (the one to which our cursor is pointing) to 6000</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10795&gt; kcommit dev 6000
+</code></pre>
+
+<p>Let's re-examine the consumer group IDs:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10795&gt; kconsumers
++ ------------------------------------------------------------------------------------- +
+| consumerId  topic                      partition  offset  topicOffset  messagesLeft   |
++ ------------------------------------------------------------------------------------- +
+| dev         Shocktrade.quotes.csv      0          6000    10796        4796           |
+| dev         Shocktrade.quotes.csv      1          0       10547        10547          |
+| dev         Shocktrade.quotes.csv      2          0       8788         8788           |
+| dev         Shocktrade.quotes.csv      3          0       7334         7334           |
+| dev         Shocktrade.quotes.csv      4          0       8276         8276           |
++ ------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p>Notice that the committed offset, for consumer group <em>dev</em>, has been changed to 6000 for partition 0.</p>
+
+<p>Finally, let's use the <code>kfetch</code> to retrieve just the offset for the consumer group ID:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10795&gt; kfetch dev
+6000
+</code></pre>
+
+<p>The Kafka Module also provides the capability for <em>watching</em> messages (in near real-time) as they become available. When
+you watch a topic, a <em>watch cursor</em> is created, which allows you to move forward through the topic as new messages appear.
+This differs from <em>navigable cursors</em>, which allow you to move back and forth through a topic at will. You can take
+advantage of this feature by using two built-in commands: <code>kwatch</code> and <code>kwatchnext</code>.</p>
+
+<p>First, <code>kwatch</code> is used to create a connection to a consumer group:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10795&gt; kwatch shocktrade.quotes.avro dev -a file:avro/quotes.avsc
+</code></pre>
+
+<p>Some output will likely follow as the connection (and <em>watch cursor</em>) are established. Next, if a message is already
+available, it will be returned immediately:</p>
+
+<pre><code>{
+  "symbol":"MNLDF",
+  "exchange":"OTHER OTC",
+  "lastTrade":1.18,
+  "tradeDate":null,
+  "tradeTime":"1:50pm",
+  "ask":null,
+  "bid":null,
+  "change":0.0,
+  "changePct":0.0,
+  "prevClose":1.18,
+  "open":null,
+  "close":1.18,
+  "high":null,
+  "low":null,
+  "volume":0,
+  "marketCap":null,
+  "errorMessage":null
+}
+
+kafka:[w]shocktrade.quotes.avro/4:23070&gt; _
+</code></pre>
+
+<p>To retrieve any subsequent messages, you use the <code>kwatchnext</code> command:</p>
+
+<pre><code>kafka:[w]shocktrade.quotes.avro/4:23070&gt; kwatchnext
+
+{
+  "symbol":"PXYN",
+  "exchange":"OTHER OTC",
+  "lastTrade":0.075,
+  "tradeDate":null,
+  "tradeTime":"3:57pm",
+  "ask":null,
+  "bid":null,
+  "change":0.01,
+  "changePct":15.38,
+  "prevClose":0.065,
+  "open":0.064,
+  "close":0.075,
+  "high":0.078,
+  "low":0.064,
+  "volume":1325779,
+  "marketCap":2.45E7,
+  "errorMessage":null
+}
+
+kafka:[w]shocktrade.quotes.avro/4:23071&gt; _
+</code></pre>
+
+<p>Did you notice the "[w]" you see in the prompt? This indicates a <em>watch cursor</em> is active. However, because each call to
+<code>kwatchnext</code> will also update the <em>navigable cursor</em>, you are free to also use the bi-directional navigation commands
+<code>knext</code> and <code>kprev</code> (as well as <code>kfirst</code> and <code>klast</code>). Be aware though, that changes to the <em>navigable cursor</em> do not
+affect the <em>watch cursor</em>. Thus after a subsequent use of <code>kwatchnext</code>, the <em>navigable cursor</em> will be overwritten.</p>
+
+<p><a name="kafka-inbound-traffic"></a></p>
+
+<h5>
+<a id="kafka-inbound-traffic" class="anchor" href="#kafka-inbound-traffic" aria-hidden="true"><span class="octicon octicon-link"></span></a>Kafka Inbound Traffic</h5>
+
+<p>To retrieve the list of topics with new messages (since your last query):</p>
+
+<pre><code>kafka:/&gt; kinbound
++ ----------------------------------------------------------------------------------------------------------- +
+| topic                        partition  startOffset  endOffset  change  msgsPerSec  lastCheckTime           |
++ ----------------------------------------------------------------------------------------------------------- +
+| Shocktrade.quotes.avro       3          0            657        65      16.3        09/13/14 06:37:03 PDT   |
+| Shocktrade.quotes.avro       0          0            650        64      16.0        09/13/14 06:37:03 PDT   |
+| Shocktrade.quotes.avro       1          0            618        56      14.0        09/13/14 06:37:03 PDT   |
+| Shocktrade.quotes.avro       2          0            618        49      12.3        09/13/14 06:37:03 PDT   |
+| Shocktrade.quotes.avro       4          0            584        40      10.0        09/13/14 06:37:03 PDT   |
++ ----------------------------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p>Next, we wait a few moments and run the command again:</p>
+
+<pre><code>kafka:/&gt; kinbound
++ ----------------------------------------------------------------------------------------------------------- +
+| topic                        partition  startOffset  endOffset  change  msgsPerSec  lastCheckTime           |
++ ----------------------------------------------------------------------------------------------------------- +
+| Shocktrade.quotes.avro       1          0            913        295     15.6        09/13/14 06:37:21 PDT   |
+| Shocktrade.quotes.avro       3          0            952        295     15.6        09/13/14 06:37:21 PDT   |
+| Shocktrade.quotes.avro       2          0            881        263     13.9        09/13/14 06:37:21 PDT   |
+| Shocktrade.quotes.avro       4          0            846        262     13.8        09/13/14 06:37:21 PDT   |
+| Shocktrade.quotes.avro       0          0            893        243     12.8        09/13/14 06:37:21 PDT   |
++ ----------------------------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p><a name="kafka-avro-module"></a></p>
+
+<h5>
+<a id="kafka--avro-integration" class="anchor" href="#kafka--avro-integration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Kafka &amp; Avro Integration</h5>
+
+<p><em>Trifecta</em> supports Avro integration for Kafka. The next few examples make use of the following Avro schema:</p>
+
+<pre><code>{
+    "type": "record",
+    "name": "StockQuote",
+    "namespace": "Shocktrade.avro",
+    "fields":[
+        { "name": "symbol", "type":"string", "doc":"stock symbol" },
+        { "name": "lastTrade", "type":["null", "double"], "doc":"last sale price", "default":null },
+        { "name": "tradeDate", "type":["null", "long"], "doc":"last sale date", "default":null },
+        { "name": "tradeTime", "type":["null", "string"], "doc":"last sale time", "default":null },
+        { "name": "ask", "type":["null", "double"], "doc":"ask price", "default":null },
+        { "name": "bid", "type":["null", "double"], "doc":"bid price", "default":null },
+        { "name": "change", "type":["null", "double"], "doc":"price change", "default":null },
+        { "name": "changePct", "type":["null", "double"], "doc":"price change percent", "default":null },
+        { "name": "prevClose", "type":["null", "double"], "doc":"previous close price", "default":null },
+        { "name": "open", "type":["null", "double"], "doc":"open price", "default":null },
+        { "name": "close", "type":["null", "double"], "doc":"close price", "default":null },
+        { "name": "high", "type":["null", "double"], "doc":"day's high price", "default":null },
+        { "name": "low", "type":["null", "double"], "doc":"day's low price", "default":null },
+        { "name": "volume", "type":["null", "long"], "doc":"day's volume", "default":null },
+        { "name": "marketCap", "type":["null", "double"], "doc":"market capitalization", "default":null },
+        { "name": "errorMessage", "type":["null", "string"], "doc":"error message", "default":null }
+    ],
+    "doc": "A schema for stock quotes"
+}
+</code></pre>
+
+<p>Let's retrieve the first message from topic <em>Shocktrade.quotes.avro</em> (partition 0) using an Avro schema as
+our optional message decoder:</p>
+
+<pre><code>kafka:/&gt; kfirst Shocktrade.quotes.avro 0 -a file:avro/quotes.avsc
+
+{
+  "symbol":"GES",
+  "exchange":"NYSE",
+  "lastTrade":21.75,
+  "tradeDate":null,
+  "tradeTime":"4:03pm",
+  "ask":null,
+  "bid":null,
+  "change":-0.41,
+  "changePct":-1.85,
+  "prevClose":22.16,
+  "open":21.95,
+  "close":21.75,
+  "high":22.16,
+  "low":21.69,
+  "volume":650298,
+  "marketCap":1.853E9,
+  "errorMessage":null
+}
+</code></pre>
+
+<p>Let's view the cursor:</p>
+
+<pre><code>kafka:shocktrade.quotes.avro/2:9728&gt; kcursor
++ ---------------------------------------------------------------------------------- +
+| topic                         partition  offset  nextOffset  decoder               |
++ ---------------------------------------------------------------------------------- +
+| Shocktrade.quotes.avro        0          0       1           AvroDecoder(schema)   |
++ ---------------------------------------------------------------------------------- +
+</code></pre>
+
+<p>The <code>kfirst</code>, <code>klast</code>, <code>kprev</code> and <code>knext</code> commands also work with the Avro integration:</p>
+
+<pre><code>kafka:shocktrade.quotes.avro/2:9728&gt; knext
+
+{
+  "symbol":"GEO",
+  "exchange":"NYSE",
+  "lastTrade":41.4,
+  "tradeDate":null,
+  "tradeTime":"4:03pm",
+  "ask":null,
+  "bid":null,
+  "change":0.76,
+  "changePct":1.87,
+  "prevClose":40.64,
+  "open":40.55,
+  "close":41.4,
+  "high":41.49,
+  "low":40.01,
+  "volume":896757,
+  "marketCap":2.973E9,
+  "errorMessage":null
+}
+</code></pre>
+
+<p>Since Avro is based on JSON, we can also express the same data in Avro compatible JSON format:</p>
+
+<pre><code>kafka:shocktrade.quotes.avro/2:9728&gt; kget -f avro_json
+
+{
+  "symbol":"GEO",
+  "exchange":{
+    "string":"NYSE"
+  },
+  "lastTrade":{
+    "double":41.4
+  },
+  "tradeDate":null,
+  "tradeTime":{
+    "string":"4:03pm"
+  },
+  "ask":null,
+  "bid":null,
+  "change":{
+    "double":0.76
+  },
+  "changePct":{
+    "double":1.87
+  },
+  "prevClose":{
+    "double":40.64
+  },
+  "open":{
+    "double":40.55
+  },
+  "close":{
+    "double":41.4
+  },
+  "high":{
+    "double":41.49
+  },
+  "low":{
+    "double":40.01
+  },
+  "volume":{
+    "long":896757
+  },
+  "marketCap":{
+    "double":2.973E9
+  },
+  "errorMessage":null
+}
+</code></pre>
+
+<p><a name="kafka-default-avro-decoder"></a></p>
+
+<h5>
+<a id="default-avro-decoders" class="anchor" href="#default-avro-decoders" aria-hidden="true"><span class="octicon octicon-link"></span></a>Default Avro Decoders</h5>
+
+<p>You can also associate a Kafka topic to a "default" Avro schema. To associate an Avro schema to the topic, place the
+schema file in a subdirectory with the same name as the topic. For example, if I wanted to associate an Avro file named
+<code>quotes.avsc</code> to the Kafka topic <code>shocktrade.quotes.avro</code>, I'd setup the following file structure:</p>
+
+<pre><code>$HOME/.trifecta/decoders/Shocktrade.quotes.avro/quotes.avsc
+</code></pre>
+
+<p>The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
+restart Trifecta, and default decoder will be ready for use.</p>
+
+<p>In our last example, we did the following:</p>
+
+<pre><code>kafka:/&gt; kfirst Shocktrade.quotes.avro 0 -a file:avro/quotes.avsc
+</code></pre>
+
+<p>With a default decoder, we can do this instead:</p>
+
+<pre><code>kafka:/&gt; kfirst Shocktrade.quotes.avro 0 -a default
+</code></pre>
+
+<p><a name="kafka-search-by-key"></a></p>
+
+<h5>
+<a id="kafka-search-by-key" class="anchor" href="#kafka-search-by-key" aria-hidden="true"><span class="octicon octicon-link"></span></a>Kafka Search by Key</h5>
+
+<p>You can view the key for any message by using the <code>kgetkey</code> command. Let's start by retrieving the last available message
+for a topic/partition.</p>
+
+<pre><code>kafka:/&gt; klast Shocktrade.quotes.csv 0
+[10796:000] 22.4e.4f.53.50.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "NOSPF",0.00,"N/A","N/A", |
+[10796:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
+[10796:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
+[10796:075] 2f.41.2c.22.54.69.63.6b.65.72.20.73.79.6d.62.6f.6c.20.68.61.73.20.63.68.61 | /A,"Ticker symbol has cha |
+[10796:100] 6e.67.65.64.20.74.6f.3a.20.3c.61.20.68.72.65.66.3d.22.2f.71.3f.73.3d.4e.4f | nged to: &lt;a href="/q?s=NO |
+[10796:125] 53.50.46.22.3e.4e.4f.53.50.46.3c.2f.61.3e.22                               | SPF"&gt;NOSPF&lt;/a&gt;"           |
+</code></pre>
+
+<p>Now let's view the key for message using the <code>kgetkey</code> command:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10796&gt; kgetkey
+[000] 31.34.31.30.35.36.33.37.31.34.34.36.35                                     | 1410563714465             |
+</code></pre>
+
+<p>To ensure you'll notice the change in the cursor's position, let's reposition the cursor to the beginning of the
+topic/partition:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10796&gt; kfirst
+[5945:000] 22.47.44.46.22.2c.31.30.2e.38.31.2c.22.39.2f.31.32.2f.32.30.31.34.22.2c.22 | "GDF",10.81,"9/12/2014"," |
+[5945:025] 34.3a.30.30.70.6d.22.2c.4e.2f.41.2c.4e.2f.41.2c.2d.30.2e.31.30.2c.22.2d.30 | 4:00pm",N/A,N/A,-0.10,"-0 |
+[5945:050] 2e.31.30.20.2d.20.2d.30.2e.39.32.25.22.2c.31.30.2e.39.31.2c.31.30.2e.39.31 | .10 - -0.92%",10.91,10.91 |
+[5945:075] 2c.31.30.2e.38.31.2c.31.30.2e.39.31.2c.31.30.2e.38.30.2c.33.36.35.35.38.2c | ,10.81,10.91,10.80,36558, |
+[5945:100] 4e.2f.41.2c.22.4e.2f.41.22                                                 | N/A,"N/A"                 |
+
+kafka:Shocktrade.quotes.csv/0:5945&gt; _
+</code></pre>
+
+<p>Next, using the <code>kfindone</code>command let's search for the last message by key (using hexadecimal dot-notation):</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:5945&gt; kfindone key is 31.34.31.30.35.36.33.37.31.34.34.36.35
+Task is now running in the background (use 'jobs' to view)
+</code></pre>
+
+<p>You may have received the message <em>Task is now running in the background (use 'jobs' to view)</em>. This happens whenever a
+query is executed that requires more than 5 seconds to complete. You may use the <code>jobs</code> command to check the status of a
+background task; however, either way, after a few moments the results should appear on the console:</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:5945&gt; Job #1006 completed
+[10796:000] 22.4e.4f.53.50.46.22.2c.30.2e.30.30.2c.22.4e.2f.41.22.2c.22.4e.2f.41.22.2c | "NOSPF",0.00,"N/A","N/A", |
+[10796:025] 4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.22.4e.2f.41.20.2d.20.4e.2f.41.22.2c.4e | N/A,N/A,N/A,"N/A - N/A",N |
+[10796:050] 2f.41.2c.4e.2f.41.2c.30.2e.30.30.2c.4e.2f.41.2c.4e.2f.41.2c.4e.2f.41.2c.4e | /A,N/A,0.00,N/A,N/A,N/A,N |
+[10796:075] 2f.41.2c.22.54.69.63.6b.65.72.20.73.79.6d.62.6f.6c.20.68.61.73.20.63.68.61 | /A,"Ticker symbol has cha |
+[10796:100] 6e.67.65.64.20.74.6f.3a.20.3c.61.20.68.72.65.66.3d.22.2f.71.3f.73.3d.4e.4f | nged to: &lt;a href="/q?s=NO |
+[10796:125] 53.50.46.22.3e.4e.4f.53.50.46.3c.2f.61.3e.22                               | SPF"&gt;NOSPF&lt;/a&gt;"           |
+</code></pre>
+
+<p>The result is the last message of the topic. Notice that our cursor has changed reflecting the move
+from offset 5945 to 10796.</p>
+
+<pre><code>kafka:Shocktrade.quotes.csv/0:10796&gt; _
+</code></pre>
+
+<p><a name="kafka-advanced-search"></a></p>
+
+<h5>
+<a id="kafka-advanced-search" class="anchor" href="#kafka-advanced-search" aria-hidden="true"><span class="octicon octicon-link"></span></a>Kafka Advanced Search</h5>
+
+<p>Building on the <a href="#kafka-avro-module">Avro Integration</a>, <em>Trifecta</em> offers the ability to execute queries against
+structured data.</p>
+
+<p>Suppose you want to know how many messages contain a volume greater than 1,000,000, you could issue the <code>kcount</code> command:</p>
+
+<pre><code>kafka:Shocktrade.quotes.avro/0:1&gt; kcount volume &gt; 1000000
+1350
+</code></pre>
+
+<p>The response was 1350, meaning there are 1350 messages containing a volume greater than 1,000,000.</p>
+
+<p>Suppose you want to find a message for Apple (ticker: "AAPL"), you could issue the <code>kfindone</code> command:</p>
+
+<pre><code>kafka:Shocktrade.quotes.avro/0:1&gt; kfindone symbol == "AAPL"
+
+{
+  "symbol":"AAPL",
+  "exchange":"NASDAQNM",
+  "lastTrade":109.01,
+  "tradeDate":null,
+  "tradeTime":"4:00pm",
+  "ask":109.03,
+  "bid":109.01,
+  "change":0.31,
+  "changePct":0.29,
+  "prevClose":108.7,
+  "open":108.72,
+  "close":109.01,
+  "high":109.32,
+  "low":108.55,
+  "volume":33691536,
+  "marketCap":6.393E11,
+  "errorMessage":null
+}
+</code></pre>
+
+<p>You can also specify complex queries by combining multiple expressions with the <code>and</code> keyword:</p>
+
+<pre><code>kafka:Shocktrade.quotes.avro/1234:4&gt; kfindone lastTrade &lt; 1 and volume &gt; 1000000 -a file:avro/quotes.avsc
+
+{
+  "symbol":"MDTV",
+  "exchange":"OTHER OTC",
+  "lastTrade":0.022,
+  "tradeDate":null,
+  "tradeTime":"3:27pm",
+  "ask":null,
+  "bid":null,
+  "change":0.0099,
+  "changePct":81.82,
+  "prevClose":0.0121,
+  "open":0.015,
+  "close":0.022,
+  "high":0.027,
+  "low":0.015,
+  "volume":1060005,
+  "marketCap":125000.0,
+  "errorMessage":null
+}
+</code></pre>
+
+<p>Now suppose you want to copy the messages having high volume (1,000,000 or more) to another topic:</p>
+
+<pre><code>kafka:Shocktrade.quotes.avro/3300:3&gt; kfind volume &gt;= 1000000 -o topic:hft.Shocktrade.quotes.avro
+</code></pre>
+
+<p>Finally, let's look at the results:</p>
+
+<pre><code>kafka:Shocktrade.quotes.avro/3:0&gt; kstats hft.Shocktrade.quotes.avro
++ ---------------------------------------------------------------------------------- +
+| topic                       partition  startOffset  endOffset  messagesAvailable   |
++ ---------------------------------------------------------------------------------- +
+| hft.Shocktrade.quotes.avro  0          0            283        283                 |
+| hft.Shocktrade.quotes.avro  1          0            287        287                 |
+| hft.Shocktrade.quotes.avro  2          0            258        258                 |
+| hft.Shocktrade.quotes.avro  3          0            245        245                 |
+| hft.Shocktrade.quotes.avro  4          0            272        272                 |
++ ---------------------------------------------------------------------------------- +
+</code></pre>
+
+<p>Let's see how these statistics compares to the original:</p>
+
+<pre><code>kafka:Shocktrade.quotes.avro/3:0&gt; kstats Shocktrade.quotes.avro
++ ----------------------------------------------------------------------------------- +
+| topic                        partition  startOffset  endOffset  messagesAvailable   |
++ ----------------------------------------------------------------------------------- +
+| Shocktrade.quotes.avro       0          0            4539       4539                |
+| Shocktrade.quotes.avro       1          0            4713       4713                |
+| Shocktrade.quotes.avro       2          0            4500       4500                |
+| Shocktrade.quotes.avro       3          0            4670       4670                |
+| Shocktrade.quotes.avro       4          0            4431       4431                |
++ ----------------------------------------------------------------------------------- +
+</code></pre>
+
+<p><a name="kafka-search-by-query"></a></p>
+
+<h4>
+<a id="searching-by-query" class="anchor" href="#searching-by-query" aria-hidden="true"><span class="octicon octicon-link"></span></a>Searching By Query</h4>
+
+<p>Trifecta provides the ability to perform SQL-like queries against Avro-encoded Kafka topics (Read more about Trifecta's
+Kafka-Avro integration <a href="#kafka-avro-module">here</a>). The syntax is very similar to SQL except for a few minor
+differences. Here's the basic syntax:</p>
+
+<pre><code>select &lt;fieldsToDisplay&gt;
+from &lt;topic&gt; with &lt;decoder&gt;
+where &lt;searchCriteria&gt;
+limit &lt;maximumNumberOfResultsToReturn&gt;
+</code></pre>
+
+<p>Consider the following example:</p>
+
+<pre><code>kafka:shocktrade.quotes.avro/0:32050&gt; select symbol, exchange, open, close, high, low
+                                      from "topic:shocktrade.quotes.avro"
+                                      with "avro:file:avro/quotes.avsc"
+                                      where symbol == "AAPL"
+</code></pre>
+
+<p><strong>NOTE</strong>: Because we didn't specify a limit for the number of results that could be returned, the default value (25) is
+used.</p>
+
+<p>As with most potentially long-running statements in Trifecta, if the query takes longer than a few seconds to complete,
+it will be executed in the background.</p>
+
+<pre><code>kafka:shocktrade.quotes.avro/0:32050&gt; Job #607 completed (use 'jobs -v 607' to view results)
++ --------------------------------------------------------------------- +
+| partition  offset  symbol  exchange  open    close   high    low      |
++ --------------------------------------------------------------------- +
+| 0          32946   AAPL    NASDAQNM  108.72  109.01  109.32  108.55   |
++ --------------------------------------------------------------------- +
+</code></pre>
+
+<p><strong>NOTE</strong>: Although the <code>partition</code> and <code>offset</code> fields weren't specified in the query, they are always included in
+the query results.</p>
+
+<p>Let's look at another example:</p>
+
+<pre><code>kafka:shocktrade.quotes.avro/0:32050&gt; select symbol, exchange, lastTrade, open, close, high, low
+                                      from "topic:shocktrade.quotes.avro"
+                                      with "avro:file:avro/quotes.avsc"
+                                      where lastTrade &lt;= 1 and volume &gt;= 1,000,000
+                                      limit 25
+
+Task is now running in the background (use 'jobs' to view)
+kafka:shocktrade.quotes.avro/0:32050&gt; Job #873 completed (use 'jobs -v 873' to view results)
++ --------------------------------------------------------------------------------- +
+| partition  offset  symbol  exchange   lastTrade  open    close   high    low      |
++ --------------------------------------------------------------------------------- +
+| 3          34047   NIHDQ   OTHER OTC  0.0509     0.0452  0.0509  0.0549  0.0452   |
+| 3          33853   IMRS    NASDAQNM   0.2768     0.25    0.2768  0.28    0.2138   |
+| 3          33818   VTMB    OTHER OTC  0.0014     0.0013  0.0014  0.0014  0.0012   |
+| 3          33780   MLHC    OTHER OTC  4.0E-4     5.0E-4  4.0E-4  5.0E-4  3.0E-4   |
+| 3          33709   ECDC    OTHER OTC  1.0E-4     1.0E-4  1.0E-4  1.0E-4  1.0E-4   |
+| 3          33640   PWDY    OTC BB     0.0037     0.0032  0.0037  0.0043  0.003    |
+| 3          33534   BPZ     NYSE       0.9599     1.02    0.9599  1.0201  0.92     |
+| 3          33520   TAGG    OTHER OTC  2.0E-4     1.0E-4  2.0E-4  2.0E-4  1.0E-4   |
+| 3          33515   MDMN    OTHER OTC  0.055      0.051   0.055   0.059   0.051    |
+| 3          33469   MCET    OTHER OTC  5.0E-4     5.0E-4  5.0E-4  5.0E-4  5.0E-4   |
+| 3          33460   GGSM    OTHER OTC  3.0E-4     3.0E-4  3.0E-4  4.0E-4  3.0E-4   |
+| 3          33404   TDCP    OTHER OTC  0.0041     0.0041  0.0041  0.0041  0.0038   |
+| 3          33337   GSS     AMEX       0.305      0.27    0.305   0.31    0.266    |
+| 3          33254   MDTV    OTHER OTC  0.022      0.015   0.022   0.027   0.015    |
+| 2          33246   AMRN    NGM        0.9        0.9128  0.9     0.93    0.88     |
+| 2          33110   TRTC    OTHER OTC  0.38       0.3827  0.38    0.405   0.373    |
+| 2          33068   AEMD    OTHER OTC  0.2419     0.26    0.2419  0.2625  0.23     |
+| 2          33060   ZBB     AMEX       0.6101     0.65    0.6101  0.65    0.55     |
+| 2          33058   TUNG    OTHER OTC  0.0019     0.0021  0.0019  0.0021  0.0016   |
+| 2          33011   DKAM    OTHER OTC  1.0E-4     2.0E-4  1.0E-4  2.0E-4  1.0E-4   |
+| 2          32984   ADMD    OTHER OTC  0.001      0.001   0.001   0.0011  9.0E-4   |
+| 2          32905   GLDG    OTHER OTC  2.0E-4     2.0E-4  2.0E-4  2.0E-4  2.0E-4   |
+| 2          32808   RBY     AMEX       0.9349     0.821   0.9349  0.94    0.821    |
+| 2          32751   PZG     AMEX       0.708      0.6     0.708   0.73    0.5834   |
+| 2          32731   PAL     AMEX       0.15       0.15    0.15    0.1555  0.145    |
++ --------------------------------------------------------------------------------- +
+</code></pre>
+
+<p><a name="zookeeper-module"></a></p>
+
+<h4>
+<a id="zookeeper-module" class="anchor" href="#zookeeper-module" aria-hidden="true"><span class="octicon octicon-link"></span></a>Zookeeper Module</h4>
+
+<p><a name="zookeeper-list"></a></p>
+
+<h5>
+<a id="zookeeper-navigating-directories-and-keys" class="anchor" href="#zookeeper-navigating-directories-and-keys" aria-hidden="true"><span class="octicon octicon-link"></span></a>Zookeeper: Navigating directories and keys</h5>
+
+<p>To view the Zookeeper keys at the current hierarchy level:</p>
+
+<pre><code>zookeeper@dev501:2181:/&gt; zls
+consumers
+storm
+controller_epoch
+admin
+controller
+brokers
+</code></pre>
+
+<p>To change the current Zookeeper hierarchy level:</p>
+
+<pre><code>zookeeper:localhost:2181:/&gt; zcd brokers
+/brokers
+</code></pre>
+
+<p>Now view the keys at this level:</p>
+
+<pre><code>zookeeper:localhost:2181:/brokers&gt; zls
+topics
+ids
+</code></pre>
+
+<p>Let's look at the entire Zookeeper hierarchy recursively from our current path:</p>
+
+<pre><code>zookeeper:localhost:2181/brokers&gt; ztree
+/brokers
+/brokers/topics
+/brokers/topics/shocktrade.quotes.avro
+/brokers/topics/shocktrade.quotes.avro/partitions
+/brokers/topics/shocktrade.quotes.avro/partitions/0
+/brokers/topics/shocktrade.quotes.avro/partitions/0/state
+/brokers/topics/shocktrade.quotes.avro/partitions/1
+/brokers/topics/shocktrade.quotes.avro/partitions/1/state
+/brokers/topics/shocktrade.quotes.avro/partitions/2
+/brokers/topics/shocktrade.quotes.avro/partitions/2/state
+/brokers/topics/shocktrade.quotes.avro/partitions/3
+/brokers/topics/shocktrade.quotes.avro/partitions/3/state
+/brokers/topics/shocktrade.quotes.avro/partitions/4
+/brokers/topics/shocktrade.quotes.avro/partitions/4/state
+/brokers/ids
+/brokers/ids/3
+/brokers/ids/2
+/brokers/ids/1
+/brokers/ids/6
+/brokers/ids/5
+/brokers/ids/4
+</code></pre>
+
+<p><a name="zookeeper-get-put"></a></p>
+
+<h5>
+<a id="zookeeper-getting-and-setting-key-value-pairs" class="anchor" href="#zookeeper-getting-and-setting-key-value-pairs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Zookeeper: Getting and setting key-value pairs</h5>
+
+<p>Let's view the contents of one of the keys:</p>
+
+<pre><code>zookeeper:localhost:2181/brokers&gt; zget topics/Shocktrade.quotes.csv/partitions/4/state
+[00] 7b.22.63.6f.6e.74.72.6f.6c.6c.65.72.5f.65.70.6f.63.68.22.3a.31.2c.22.6c.65 | {"controller_epoch":1,"le
+[25] 61.64.65.72.22.3a.35.2c.22.76.65.72.73.69.6f.6e.22.3a.31.2c.22.6c.65.61.64 | ader":5,"version":1,"lead
+[50] 65.72.5f.65.70.6f.63.68.22.3a.30.2c.22.69.73.72.22.3a.5b.35.5d.7d          | er_epoch":0,"isr":[5]}
+</code></pre>
+
+<p>Since we now know the contents of the key is text-based (JSON in this case), let's look at the JSON value using
+the format flag (<code>-f json</code>) to transform the JSON in a nice human-readable format.</p>
+
+<pre><code>zookeeper:localhost:2181/brokers&gt; zget topics/Shocktrade.quotes.csv/partitions/4/state -f json
+{
+  "controller_epoch": 3,
+  "leader": 6,
+  "version": 1,
+  "leader_epoch": 2,
+  "isr": [6]
+}
+</code></pre>
+
+<p>Next, let's set a key-value pair in Zookeeper:</p>
+
+<pre><code>zookeeper:localhost:2181/&gt; zput /test/message "Hello World"
+</code></pre>
+
+<p>To retrieve the value we've just set, we can use the <code>zget</code> command again:</p>
+
+<pre><code>zookeeper:localhost:2181/&gt; zget /test/message
+[00] 48.65.6c.6c.6f.20.57.6f.72.6c.64                                           | Hello World
+</code></pre>
+
+<p>The <code>zput</code> command also allows us to set other types of values besides strings. The following example demonstrates
+setting a binary array literal using hexadecimal dot-notation.</p>
+
+<pre><code>zookeeper:localhost:2181/&gt; zput /test/data de.ad.be.ef.ca.fe.ba.be
+</code></pre>
+
+<p>The default value types for integer and decimal values are <code>long</code> and <code>double</code> respectively. However, you can also
+explicitly set the value type using the type flag (<code>-t</code>).</p>
+
+<pre><code>zookeeper:localhost:2181/&gt; zput /test/data2 123.45 -t float
+</code></pre>
+
+<p>The valid value types are:</p>
+
+<ul>
+<li>bytes</li>
+<li>char</li>
+<li>double</li>
+<li>float</li>
+<li>integer</li>
+<li>json</li>
+<li>long</li>
+<li>short</li>
+<li>string</li>
+</ul>
+
+<p>To verify that all of the key-value pairs were inserted we use the <code>zls</code> command again:</p>
+
+<pre><code>zookeeper:localhost:2181/&gt; zls /test
+data
+message
+data2
+</code></pre>
+
+<p>To view all of the Zookeeper commands, use the <code>-m</code> switch and the module name (<code>zookeeper</code> in this case):</p>
+
+<pre><code>zookeeper:localhost:2181/&gt; ? -m zookeeper
++ ----------------------------------------------------------------------------------------- +
+| command     module     description                                                        |
++ ----------------------------------------------------------------------------------------- +
+| zcd         zookeeper  Changes the current path/directory in ZooKeeper                    |
+| zexists     zookeeper  Verifies the existence of a ZooKeeper key                          |
+| zget        zookeeper  Retrieves the contents of a specific Zookeeper key                 |
+| zls         zookeeper  Retrieves the child nodes for a key from ZooKeeper                 |
+| zmk         zookeeper  Creates a new ZooKeeper sub-directory (key)                        |
+| zput        zookeeper  Sets a key-value pair in ZooKeeper                                 |
+| zreconnect  zookeeper  Re-establishes the connection to Zookeeper                         |
+| zrm         zookeeper  Removes a key-value from ZooKeeper (DESTRUCTIVE)                   |
+| zruok       zookeeper  Checks the status of a Zookeeper instance (requires netcat)        |
+| zstats      zookeeper  Returns the statistics of a Zookeeper instance (requires netcat)   |
+| ztree       zookeeper  Retrieves Zookeeper directory structure                            |
++ ----------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p><a name="cassandra"></a></p>
+
+<h4>
+<a id="cassandra-module" class="anchor" href="#cassandra-module" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cassandra Module</h4>
+
+<p><em>Trifecta</em> has basic built-in support for querying and inspecting the state of Apache Cassandra clusters. To establish a 
+connection to a Cassandra cluster, use the <code>cqconnect</code> command:</p>
+
+<pre><code>core:/home/ldaniels&gt; cqconnect dev528
+</code></pre>
+
+<p>From this point, you need to select a keyspace to execute queries against. To do this, use the <code>keyspace</code> command:</p>
+
+<pre><code>cql:cluster1:/&gt; keyspace shocktrade
+</code></pre>
+
+<p>Now that a keyspace has been selected, you can execute queries against the column families (tables) found within 
+the keyspace.</p>
+
+<pre><code>cql:cluster1:shocktrade&gt; cql "select name, symbol, exchange, lastTrade, volume from stocks where symbol = 'AAPL' limit 5"
++ --------------------------------------------------- +
+| name        lasttrade  exchange  symbol  volume     |
++ --------------------------------------------------- +
+| Apple Inc.  557.36     NASDAQ    AAPL    14067517   |
++ --------------------------------------------------- +
+</code></pre>
+
+<p>You can view basic cluster information by issuing the <code>clusterinfo</code> command: </p>
+
+<pre><code>cql:cluster1:shocktrade&gt; clusterinfo
++ -------------------------------------------------------------------- +
+| name                   value                                         |
++ -------------------------------------------------------------------- +
+| Cluster Name           cluster1                                      |
+| Partitioner            org.apache.cassandra.dht.Murmur3Partitioner   |
+| Consistency Level      ONE                                           |
+| Fetch Size             5000                                          |
+| JMX Reporting Enabled  true                                          |
++ -------------------------------------------------------------------- +    
+</code></pre>
+
+<p>You can describe keyspaces and tables with the <code>describe</code> command:</p>
+
+<pre><code>cql:cluster1:shocktrade&gt; describe keyspace shocktrade 
+
+CREATE KEYSPACE shocktrade WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 
+'replication_factor': '3' } AND DURABLE_WRITES = true;
+</code></pre>
+
+<p>You can retrieve the list of all the commands that Cassandra Module offers with the help (?) command.</p>
+
+<pre><code>? -m cassandra
+</code></pre>
+
+<p><a name="elastic-search"></a></p>
+
+<h4>
+<a id="elastic-search-module" class="anchor" href="#elastic-search-module" aria-hidden="true"><span class="octicon octicon-link"></span></a>Elastic Search Module</h4>
+
+<p>To establish a connection to a local/remote Elastic Search peer, use the <code>econnect</code> command:</p>
+
+<pre><code> core:/home/ldaniels&gt; econnect dev501:9200    
+ + ----------------------------------- +
+ | name                   value        |
+ + ----------------------------------- +
+ | Cluster Name           ShockTrade   |
+ | Status                 green        |
+ | Timed Out              false        |
+ | Number of Nodes        5            |
+ | Number of Data Nodes   5            |
+ | Active Shards          10           |
+ | Active Primary Shards  5            |
+ | Initializing Shards    0            |
+ | Relocating Shards      0            |
+ | Unassigned Shards      0            |
+ + ----------------------------------- +
+</code></pre>
+
+<p>Once connected, the server statistics above will be returned.</p>
+
+<p>To create a document, use the <code>eput</code> command:</p>
+
+<pre><code>elasticSearch:localhost:9200/&gt; eput /quotes/quote/AMD { "symbol":"AMD", "lastSale":3.33 }
+
++ --------------------------------------- +
+| created  _index  _type  _id  _version   |
++ --------------------------------------- +
+| true     quotes  quote  AMD  3          |
++ --------------------------------------- +
+</code></pre>
+
+<p>To retrieve the document we've just created, use the <code>eget</code> command:</p>
+
+<pre><code>elasticSearch:localhost:9200/quotes/quote/AMD&gt; eget /quotes/quote/AMD  
+{
+  "symbol":"AMD",
+  "lastSale":3.55
+}    
+</code></pre>
+
+<p><a name="es-avro-to-json"></a></p>
+
+<h5>
+<a id="elastic-search-avro-to-json" class="anchor" href="#elastic-search-avro-to-json" aria-hidden="true"><span class="octicon octicon-link"></span></a>Elastic Search: Avro to JSON</h5>
+
+<p>Now let's do something slightly more advanced. Let's use <em>Trifecta's</em> powerful search and copy features to copy
+a message from a Kafka Topic to create (or update) an Elastic Search document. <strong>NOTE</strong>: Some setup steps have been 
+omitted for brevity. See <a href="#kafka-advanced-search">Kafka Advanced Search</a> for full details.</p>
+
+<pre><code>elasticSearch:localhost:9200/quotes/quote/AMD&gt; kfindone symbol == "AAPL" -o es:/quotes/quote/AAPL
+
+{
+  "symbol":"AAPL",
+  "exchange":"NASDAQNM",
+  "lastTrade":109.01,
+  "tradeDate":null,
+  "tradeTime":"4:00pm",
+  "ask":109.03,
+  "bid":109.01,
+  "change":0.31,
+  "changePct":0.29,
+  "prevClose":108.7,
+  "open":108.72,
+  "close":109.01,
+  "high":109.32,
+  "low":108.55,
+  "volume":33691536,
+  "marketCap":6.393E11,
+  "errorMessage":null
+}
+</code></pre>
+
+<p>Finally, let's view the document we've created:</p>
+
+<pre><code> kafka:shocktrade.quotes.avro/4:5429&gt; eget /quotes/quote/AAPL
+
+{
+  "symbol":"AAPL",
+  "exchange":"NASDAQNM",
+  "lastTrade":109.01,
+  "tradeDate":null,
+  "tradeTime":"4:00pm",
+  "ask":109.03,
+  "bid":109.01,
+  "change":0.31,
+  "changePct":0.29,
+  "prevClose":108.7,
+  "open":108.72,
+  "close":109.01,
+  "high":109.32,
+  "low":108.55,
+  "volume":33691536,
+  "marketCap":6.393E11,
+  "errorMessage":null
+}
+</code></pre>
+
+<p>Please note we could also use any of the Kafka message retrieve commands (<code>kget</code>, <code>kfirst</code>, <code>knext</code>, <code>kprev</code> and <code>klast</code>) 
+to copy a Kafka message as an Elastic Search document. See the following example:</p>
+
+<pre><code>kafka:shocktrade.quotes.avro/4:5429&gt; kget -o es:/quotes/quote/AAPL
+</code></pre>
+
+<p>Sometimes we need to copy a set of messages, and copying them one-by-one can be tedious and time-consuming; however, there
+is a command for just this sort of use-case. The <code>copy</code> command can be used to copy messages from any Avro- or JSON-capable
+input source (e.g. Kafka or Elastic Search) to any Avro- or JSON-capable output source. Consider the following example.
+Here we're copying messages from a Kafka topic to an Elastic Search index using the symbol field of the message as the
+ID for the Elastic Search document.</p>
+
+<pre><code>es:localhost:9200/&gt; copy -i topic:shocktrade.quotes.avro -o es:/quotes/quote/$symbol -a file:avro/quotes.avsc
+</code></pre>
+
+<p>Once the operation has completed, the copy statistics are displayed:</p>
+
+<pre><code>es:localhost:9200/&gt; Job #1845 completed (use 'jobs -v 1845' to view results)
++ -------------------------------------------------- +
+| runTimeSecs  records  failures  recordsPerSecond   |
++ -------------------------------------------------- +
+| 27.0         3367     0         143.3              |
++ -------------------------------------------------- +
+</code></pre>
+
+<p><a name="mongodb-module"></a>            </p>
+
+<h4>
+<a id="mongodb-module" class="anchor" href="#mongodb-module" aria-hidden="true"><span class="octicon octicon-link"></span></a>MongoDB Module</h4>
+
+<p>Let's start by connecting to a MongoDB instance:</p>
+
+<pre><code>mongo:mongodb$&gt; mconnect dev601
+</code></pre>
+
+<p>Next, let's choose a database to work in:</p>
+
+<pre><code>mongo:mongodb$&gt; use shocktrade
+</code></pre>
+
+<p>Finally, let's retrieve a document. In this example, we'll retrieve a stock quote for Apple Inc. (ticker: AAPL)    </p>
+
+<pre><code>mongo:mongodb$&gt; mget Stocks { "symbol" : "AAPL" }
+{
+  "_id":{
+    "$oid":"51002b2d84aebf0342cfb659"
+  },
+  "EBITDA":5.913E10,
+  "active":true,
+  "ask":98.77,
+  "askSize":null,
+  "assetClass":"Equity",
+  "assetType":"Common Stock",
+  "avgVolume":null,
+  "avgVolume10Day":59306900,
+  "avgVolume3Month":54995300,
+  "baseSymbol":null,
+  "beta":1.03,
+  "bid":98.76,
+  "bidSize":null,
+  "bookValuePerShare":20.19,
+  "businessSummary":"\n    Apple Inc. designs, manufactures, and markets personal computers and related personal computing and mobile communication devices along with a variety of related software, services, peripherals, and networking solutions. The Company sells its products worldwide through its online stores, its retail stores, its direct sales force, third-party wholesalers, and resellers.\n  ",
+  "change":-0.42,
+  "change52Week":44.37,
+  "change52WeekHigh":null,
+  "change52WeekLow":null,
+  "change52WeekSNP500":16.41,
+  "changePct":-0.42,
+  "cikNumber":320193,
+  "close":98.76
+}
+</code></pre>
+
+<p>To view all of the MongoDB commands, use the <code>-m</code> switch and the module name (<code>mongodb</code> in this case):     </p>
+
+<pre><code>mongo:mongodb$&gt; ? -m mongodb
++ ------------------------------------------------------------------ +
+| command   module   description                                     |
++ ------------------------------------------------------------------ +
+| mconnect  mongodb  Establishes a connection to a MongoDB cluster   |
+| mfindone  mongodb  Retrieves a document from MongoDB               |
+| mget      mongodb  Retrieves a document from MongoDB               |
+| mput      mongodb  Inserts a document into MongoDB                 |
+| use       mongodb  Sets the current MongoDB database               |
++ ------------------------------------------------------------------ +            
+</code></pre>
+
+<p><a name="storm-module"></a></p>
+
+<h4>
+<a id="storm-module" class="anchor" href="#storm-module" aria-hidden="true"><span class="octicon octicon-link"></span></a>Storm Module</h4>
+
+<p>Let's view the currently running topologies:</p>
+
+<pre><code>storm:localhost&gt; sls
++ ---------------------------------------------------------------------------------------------------------------------------------------------- +
+| name                                     topologyId                                            status  workers  executors  tasks  uptimeSecs   |
++ ---------------------------------------------------------------------------------------------------------------------------------------------- +
+| AvroSummaryMetricCounterTopology         AvroSummaryMetricCounterTopology-42-1410749701        ACTIVE  4        48         48     93153        |
+| Hydra-Listener-Traffic-Rates             Hydra-Listener-Traffic-Rates-3-1409671097             ACTIVE  4        30         30     1171757      |
+| TopTalkersTopologyV5                     TopTalkersTopologyV5-44-1410803756                    ACTIVE  4        53         53     39098        |
+| NetworkMonitoringTrafficRateAggregation  NetworkMonitoringTrafficRateAggregation-2-1409671007  ACTIVE  4        22         22     1171847      |
++ ---------------------------------------------------------------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p>Next, let's look at the details of one of the topologies by ID:</p>
+
+<pre><code>storm:localhost&gt; sget TopTalkersTopologyV5-44-1410803756
++ --------------------------------------------------- +
+| topologyId                          bolts  spouts   |
++ --------------------------------------------------- +
+| TopTalkersTopologyV5-44-1410803756  7      1        |
++ --------------------------------------------------- +
+</code></pre>
+
+<p>Let's look at the Topology's bolts:</p>
+
+<pre><code>storm:localhost&gt; sbolts TopTalkersTopologyV5-44-1410803756
++ ------------------------------------------------------------------------------------------------------------------------------------------- +
+| topologyId                          name                  parallelism  input                 groupingFields  groupingType   tickTupleFreq   |
++ ------------------------------------------------------------------------------------------------------------------------------------------- +
+| TopTalkersTopologyV5-44-1410803756  decoderBolt           10           kafkaSpout                            Local/Shuffle                  |
+| TopTalkersTopologyV5-44-1410803756  kafkaSinkVipOnlyBolt  1            summaryByVipOnlyBolt                  Local/Shuffle                  |
+| TopTalkersTopologyV5-44-1410803756  kafkaSinkVipSiteBolt  1            summaryByVipSiteBolt                  Local/Shuffle                  |
+| TopTalkersTopologyV5-44-1410803756  summaryByVipOnlyBolt  20           decoderBolt           vip             Fields         60              |
+| TopTalkersTopologyV5-44-1410803756  summaryByVipSiteBolt  20           decoderBolt           vip, site       Fields         60              |
++ ------------------------------------------------------------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p>Let's look at the Topology's spouts:</p>
+
+<pre><code>storm:localhost&gt; spouts TopTalkersTopologyV5-44-1410803756
++ ------------------------------------------------------------- +
+| topologyId                          name        parallelism   |
++ ------------------------------------------------------------- +
+| TopTalkersTopologyV5-44-1410803756  kafkaSpout  1             |
++ ------------------------------------------------------------- +
+</code></pre>
+
+<p>Finally, let's take a look at the connection properties for this session:</p>
+
+<pre><code>storm:localhost&gt; sconf
++ ---------------------------------------------------------------------------------------------------------- +
+| key                                            value                                                       |
++ ---------------------------------------------------------------------------------------------------------- +
+| nimbus.childopts                               -Xmx1024m                                                   |
+| nimbus.host                                    localhost                                                   |
+| nimbus.inbox.jar.expiration.secs               3600                                                        |
+.                                                                                                            .
+.                                                                                                            .
+.                                                                                                            .
+| worker.heartbeat.frequency.secs                1                                                           |
+| zmq.hwm                                        0                                                           |
+| zmq.linger.millis                              5000                                                        |
+| zmq.threads                                    1                                                           |
++ ---------------------------------------------------------------------------------------------------------- +
+</code></pre>
+
+<p>To view all of the Storm commands, use the <code>-m</code> switch and the module name (<code>storm</code> in this case):</p>
+
+<pre><code>storm:localhost&gt; ? -m storm
+ + -------------------------------------------------------------------------------------- +
+ | command   module  description                                                          |
+ + -------------------------------------------------------------------------------------- +
+ | sbolts    storm   Retrieves the list of bolts for s given topology by ID               |
+ | sconf     storm   Lists, retrieves or sets the configuration keys                      |
+ | sconnect  storm   Establishes (or re-establishes) a connect to the Storm Nimbus Host   |
+ | sget      storm   Retrieves the information for a topology                             |
+ | skill     storm   Kills a running topology                                             |
+ | sls       storm   Lists available topologies                                           |
+ | spouts    storm   Retrieves the list of spouts for a given topology by ID              |
+ + -------------------------------------------------------------------------------------- +
+</code></pre>
+      </section>
     </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Trifecta maintained by <a href="https://github.com/ldaniels528">ldaniels528</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
   </body>
 </html>
