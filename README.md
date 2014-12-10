@@ -135,7 +135,7 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
 which offers many of the powerful features found in the CLI client application.
 
-<img src="http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query-tab.png" style="width: 33%; height: 33%">
+![alt text](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query-tab.png "Trifect UI: Query tab")
 
 <a name="start-web-server"></a>
 #### Starting the embedded web server
