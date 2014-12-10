@@ -76,7 +76,7 @@ legend {
 
 table {
     border-collapse: collapse;
-    border-spacing: 4px 30px;
+    border-spacing: 0px;
 }
 
 th { padding: 4px 4px 4px 4px; }
