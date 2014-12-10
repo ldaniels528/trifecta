@@ -41,7 +41,10 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private implicit val ec = new ExecutionContext {
     private val threadPool = Executors.newFixedThreadPool(50)
 
-    def execute(runnable: Runnable) = threadPool.submit(runnable)
+    def execute(runnable: Runnable) = {
+      threadPool.submit(runnable)
+      ()
+    }
 
     def reportFailure(t: Throwable) = logger.error("Error from thread pool", t)
   }
@@ -61,7 +64,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       }
     } match {
       case Success(Some(result: QueryResult)) => Extraction.decompose(result)
-      case Success(None) => Extraction.decompose(ErrorJs("Query string expected"))
+      case Success(_) => Extraction.decompose(ErrorJs("Query string expected"))
       case Failure(e) =>
         logger.error("Query error", e)
         Extraction.decompose(ErrorJs(e.getMessage))

@@ -91,6 +91,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
         pushActor ! PushTopics
       }
     }
+    ()
   }
 
   /**
@@ -104,11 +105,13 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private def onWebSocketHandshakeComplete(webSocketId: String) {
     logger.info(s"Web Socket $webSocketId connected")
     sessions += webSocketId -> WebSocketSession(webSocketId)
+    ()
   }
 
   private def onWebSocketClose(webSocketId: String) {
     logger.info(s"Web Socket $webSocketId closed")
     sessions -= webSocketId
+    ()
   }
 
 }
