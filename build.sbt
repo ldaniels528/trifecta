@@ -41,12 +41,12 @@ libraryDependencies ++= Seq(
   "com.101tec" % "zkclient" % "0.4",
   "com.twitter" %% "bijection-core" % "0.7.0",
   "com.twitter" %% "bijection-avro" % "0.7.0",
-  "com.typesafe.akka" %% "akka-actor" % "2.3.6",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.7",
   "jline" % "jline" % "2.12",
-  "net.liftweb" %% "lift-json" % "2.6-RC1",
+  "net.liftweb" %% "lift-json" % "3.0-M1",
   "org.apache.avro" % "avro" % "1.7.7",
-  "org.apache.curator" % "curator-framework" % "2.6.0",
-  "org.apache.curator" % "curator-test" % "2.6.0",
+  "org.apache.curator" % "curator-framework" % "2.7.0",
+  "org.apache.curator" % "curator-test" % "2.7.0",
   "org.apache.kafka" %% "kafka" % "0.8.1.1"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
@@ -55,8 +55,10 @@ libraryDependencies ++= Seq(
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
   "org.mashupbots.socko" %% "socko-webserver" % "0.4.2",
-  "org.mongodb" %% "casbah-commons" % "2.6.4",
-  "org.mongodb" %% "casbah-core" % "2.6.4",
+  "org.mongodb" %% "casbah-core" % "2.7.4"
+    exclude("org.slf4j", "slf4j-jcl"),
+  "org.mongodb" %% "casbah-commons" % "2.7.4"
+    exclude("org.slf4j", "slf4j-jcl"),
   "org.fusesource.jansi" % "jansi" % "1.11",
   "org.slf4j" % "slf4j-api" % "1.7.7",
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
@@ -64,7 +66,6 @@ libraryDependencies ++= Seq(
 
 // Testing Dependencies
 libraryDependencies ++= Seq(
-  "com.github.tlrx" % "elasticsearch-test" % "1.2.1" % "test",
   "junit" % "junit" % "4.11" % "test",
   "org.mockito" % "mockito-all" % "1.9.5" % "test",
   "org.scalatest" %% "scalatest" % "2.2.2" % "test"
