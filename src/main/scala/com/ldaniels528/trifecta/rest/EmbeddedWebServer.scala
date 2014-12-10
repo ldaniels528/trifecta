@@ -26,7 +26,7 @@ import scala.util.Try
  */
 class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private lazy val logger = LoggerFactory.getLogger(getClass)
-  private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(actorConfig))
+  private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(getActorConfig))
   private val facade = new KafkaRestFacade(config, zk)
   private val sessions = TrieMap[String, WebSocketSession]()
 
@@ -122,7 +122,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
  */
 object EmbeddedWebServer {
 
-  private val actorConfig = """
+  private def getActorConfig = """
       my-pinned-dispatcher {
         type=PinnedDispatcher
         executor=thread-pool-executor
@@ -134,11 +134,11 @@ object EmbeddedWebServer {
           deployment {
             /static-file-router {
               router = round-robin
-              nr-of-instances = 5
+              nr-of-instances = 10
             }
             /file-upload-router {
               router = round-robin
-              nr-of-instances = 5
+              nr-of-instances = 1
             }
           }
         }
