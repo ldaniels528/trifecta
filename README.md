@@ -17,6 +17,8 @@ Table of Contents
 	* <a href="#configuring-the-app">Configuring the application</a>
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#trifecta-ui">Trifecta UI</a>
+    * <a href="#start-web-server">Starting the embedded web server</a>
+    * <a href="#configure-ui">Configuring Trifecta UI</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#kafka-module">Kafka Module</a>
         * <a href="#kafka-brokers">Kafka Brokers</a>
@@ -133,6 +135,7 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
 which offers many of the powerful features found in the CLI client application.
 
+<a name="start-web-server"></a>
 #### Starting the embedded web server
 
 To start the embedded web server, issue the following from the command line:
@@ -143,6 +146,7 @@ You'll see a few seconds of log messages, then a prompt indicating the web inter
 
     Open your browser and navigate to http://localhost:8888
 
+<a name="configure-ui"></a>
 #### Configuring Trifecta UI
 
 Additionally, Trifecta UI introduces a few new properties to the application configuration file (located in
