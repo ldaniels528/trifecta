@@ -25,6 +25,7 @@ Table of Contents
         * <a href="#kafka-consumer-group">Consumer Groups</a>
         * <a href="kafka-inbound-traffic">Inbound Traffic</a>
         * <a href="#kafka-avro-module">Avro Integration</a>
+        * <a href="kafka-default-avro-decoder">Default Avro Decoders</a>
         * <a href="#kafka-search-by-key">Searching By Key</a>
         * <a href="#kafka-advanced-search">Advanced Search</a>
         * <a href="#kafka-search-by-query">Searching By Query</a>
@@ -160,7 +161,7 @@ $HOME/.trifecta/config.properties). **NOTE**: The property values shown below ar
     # the number of actors to create for servicing requests
     trifecta.web.actor.concurrency = 10
 
-#### Configuring the Avro Decoders
+#### Configuring default Avro Decoders
 
 Trifecta UI supports decoding Avro-encoded messages and displaying them in JSON format. To associate an Avro schema to a
 Kafka topic, place the schema file in a subdirectory with the same name as the topic. For example, if I wanted to
@@ -171,6 +172,9 @@ file structure:
 
 The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
 restart Trifecta UI, and your messages will be displayed in JSON format.
+
+Additionally, once a "default" decoder is configured for a Kafka topic, the CLI application can use them as well.
+For more details about using default decoders with the CLI application <a href="#kafka-default-avro-decoder">click here</a>.
 
 <a name="usage"></a>
 ### Usage Examples	
@@ -674,6 +678,26 @@ Since Avro is based on JSON, we can also express the same data in Avro compatibl
       },
       "errorMessage":null
     }
+
+<a name="kafka-default-avro-decoder"></a>
+##### Default Avro Decoders
+
+You can also associate a Kafka topic to a "default" Avro schema. To associate an Avro schema to the topic, place the
+schema file in a subdirectory with the same name as the topic. For example, if I wanted to associate an Avro file named
+`quotes.avsc` to the Kafka topic `shocktrade.quotes.avro`, I'd setup the following file structure:
+
+    $HOME/.trifecta/decoders/Shocktrade.quotes.avro/quotes.avsc
+
+The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
+restart Trifecta, and default decoder will be ready for use.
+
+In our last example, we did the following:
+
+    kafka:/> kfirst Shocktrade.quotes.avro 0 -a file:avro/quotes.avsc
+
+With a default decoder, we can do this instead:
+
+    kafka:/> kfirst Shocktrade.quotes.avro 0 -a default
 
 <a name="kafka-search-by-key"></a>
 ##### Kafka Search by Key
