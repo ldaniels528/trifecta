@@ -17,8 +17,10 @@ Table of Contents
 	* <a href="#configuring-the-app">Configuring the application</a>
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#trifecta-ui">Trifecta UI</a>
-    * <a href="#start-web-server">Starting the embedded web server</a>
-    * <a href="#configure-ui">Configuring Trifecta UI</a>
+    * <a href="#trifecta-ui-start">Starting the embedded web server</a>
+    * <a href="#trifecta-ui-configure">Configuring Trifecta UI</a>
+    * <a href="#trifecta-ui-decoders">Default Decoders</a>
+    * <a href="#trifecta-ui-query">Queries</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#kafka-module">Kafka Module</a>
         * <a href="#kafka-brokers">Kafka Brokers</a>
@@ -135,7 +137,9 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
 which offers many of the powerful features found in the CLI client application.
 
-<a name="start-web-server"></a>
+![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png)
+
+<a name="trifecta-ui-start"></a>
 #### Starting the embedded web server
 
 To start the embedded web server, issue the following from the command line:
@@ -146,7 +150,7 @@ You'll see a few seconds of log messages, then a prompt indicating the web inter
 
     Open your browser and navigate to http://localhost:8888
 
-<a name="configure-ui"></a>
+<a name="trifecta-ui-configure"></a>
 #### Configuring Trifecta UI
 
 Additionally, Trifecta UI introduces a few new properties to the application configuration file (located in
@@ -165,6 +169,7 @@ $HOME/.trifecta/config.properties). **NOTE**: The property values shown below ar
     # the number of actors to create for servicing requests
     trifecta.web.actor.concurrency = 10
 
+<a name="trifecta-ui-decoders"></a>
 #### Configuring default Avro Decoders
 
 Trifecta UI supports decoding Avro-encoded messages and displaying them in JSON format. To associate an Avro schema to a
@@ -179,6 +184,14 @@ restart Trifecta UI, and your messages will be displayed in JSON format.
 
 Additionally, once a "default" decoder is configured for a Kafka topic, the CLI application can use them as well.
 For more details about using default decoders with the CLI application <a href="#kafka-default-avro-decoder">click here</a>.
+
+<a name="trifecta-ui-query"></a>
+#### Queries
+
+Trifecta UI also provides a way to execute queries against topics using BDQL (Big Data Query Language). For more
+detailed information about BDQL queries, <a href="#kafka-search-by-query">click here</a>.
+
+![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png)
 
 <a name="usage"></a>
 ### Usage Examples	
