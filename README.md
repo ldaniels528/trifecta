@@ -17,6 +17,8 @@ Table of Contents
 	* <a href="#configuring-the-app">Configuring the application</a>
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#trifecta-ui">Trifecta UI</a>
+    * <a href="#start-web-server">Starting the embedded web server</a>
+    * <a href="#configure-ui">Configuring Trifecta UI</a>
 * <a href="#usage">Usage Examples</a>
     * <a href="#kafka-module">Kafka Module</a>
         * <a href="#kafka-brokers">Kafka Brokers</a>
@@ -25,6 +27,7 @@ Table of Contents
         * <a href="#kafka-consumer-group">Consumer Groups</a>
         * <a href="kafka-inbound-traffic">Inbound Traffic</a>
         * <a href="#kafka-avro-module">Avro Integration</a>
+        * <a href="kafka-default-avro-decoder">Default Avro Decoders</a>
         * <a href="#kafka-search-by-key">Searching By Key</a>
         * <a href="#kafka-advanced-search">Advanced Search</a>
         * <a href="#kafka-search-by-query">Searching By Query</a>
@@ -130,14 +133,21 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 ### Trifecta UI
 
 Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
-which offers many of the powerful features found in the CLI client application. To start the embedded web server,
-issue the following from the command line:
+which offers many of the powerful features found in the CLI client application.
+
+<a name="start-web-server"></a>
+#### Starting the embedded web server
+
+To start the embedded web server, issue the following from the command line:
 
     $ java -jar trifecta.jar --http-start
 
 You'll see a few seconds of log messages, then a prompt indicating the web interface is ready for use.
 
     Open your browser and navigate to http://localhost:8888
+
+<a name="configure-ui"></a>
+#### Configuring Trifecta UI
 
 Additionally, Trifecta UI introduces a few new properties to the application configuration file (located in
 $HOME/.trifecta/config.properties). **NOTE**: The property values shown below are the default values.
@@ -154,6 +164,21 @@ $HOME/.trifecta/config.properties). **NOTE**: The property values shown below ar
 
     # the number of actors to create for servicing requests
     trifecta.web.actor.concurrency = 10
+
+#### Configuring default Avro Decoders
+
+Trifecta UI supports decoding Avro-encoded messages and displaying them in JSON format. To associate an Avro schema to a
+Kafka topic, place the schema file in a subdirectory with the same name as the topic. For example, if I wanted to
+associate an Avro file named `quotes.avsc` to the Kafka topic `shocktrade.quotes.avro`, I'd setup the following
+file structure:
+
+    $HOME/.trifecta/decoders/shocktrade.quotes.avro/quotes.avsc
+
+The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
+restart Trifecta UI, and your messages will be displayed in JSON format.
+
+Additionally, once a "default" decoder is configured for a Kafka topic, the CLI application can use them as well.
+For more details about using default decoders with the CLI application <a href="#kafka-default-avro-decoder">click here</a>.
 
 <a name="usage"></a>
 ### Usage Examples	
@@ -657,6 +682,26 @@ Since Avro is based on JSON, we can also express the same data in Avro compatibl
       },
       "errorMessage":null
     }
+
+<a name="kafka-default-avro-decoder"></a>
+##### Default Avro Decoders
+
+You can also associate a Kafka topic to a "default" Avro schema. To associate an Avro schema to the topic, place the
+schema file in a subdirectory with the same name as the topic. For example, if I wanted to associate an Avro file named
+`quotes.avsc` to the Kafka topic `shocktrade.quotes.avro`, I'd setup the following file structure:
+
+    $HOME/.trifecta/decoders/Shocktrade.quotes.avro/quotes.avsc
+
+The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
+restart Trifecta, and default decoder will be ready for use.
+
+In our last example, we did the following:
+
+    kafka:/> kfirst Shocktrade.quotes.avro 0 -a file:avro/quotes.avsc
+
+With a default decoder, we can do this instead:
+
+    kafka:/> kfirst Shocktrade.quotes.avro 0 -a default
 
 <a name="kafka-search-by-key"></a>
 ##### Kafka Search by Key
