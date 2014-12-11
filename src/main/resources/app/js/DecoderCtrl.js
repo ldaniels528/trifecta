@@ -27,6 +27,31 @@
                         });
                 };
 
+                $scope.cancelEdit = function(schema) {
+                    if($scope.editMode) {
+                        $scope.editMode = false;
+                        $scope.schema.schemaString = $scope.schema.originalSchemaString;
+                        $scope.schema.modified = false;
+                    }
+                };
+
+                $scope.reloadDecoder = function(decoder) {
+                    $log.error("reloadDecoder is not yet implemented");
+                };
+
+                $scope.saveSchema = function(schema) {
+                    DecoderSvc.saveSchema(schema).then(
+                        function(response) {
+                            $scope.editMode = false;
+                        },
+                        function(err) {
+                            $log.error(err);
+                        }
+                    );
+
+                    schema.modified = false;
+                };
+
                 $scope.selectDecoder = function(decoder) {
                     $scope.decoder = decoder;
                     var schemas = $scope.decoder.schemas;
@@ -41,6 +66,9 @@
 
                 $scope.toggleEditMode = function() {
                     $scope.editMode = ! $scope.editMode;
+                    if($scope.editMode) {
+                        $scope.schema.originalSchemaString = $scope.schema.schemaString;
+                    }
                 };
 
                 /**

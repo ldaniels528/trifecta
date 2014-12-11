@@ -14,6 +14,17 @@
                     });
             };
 
+            service.saveSchema = function (schema) {
+                return $http({
+                    url:"/rest/saveSchema",
+                    method: "POST",
+                    data: "schemaString=" + encodeURI(schema.schemaString),
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+                }).then(function (response) {
+                    return response.data;
+                });
+            };
+
             return service;
         });
 })();

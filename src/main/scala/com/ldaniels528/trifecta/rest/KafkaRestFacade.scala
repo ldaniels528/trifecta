@@ -226,8 +226,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def getDecoders: Option[JValue] = {
     config.getDecoders map { decoders =>
       Extraction.decompose(decoders map { d =>
-        // TODO add the file name
-        val schemas = Seq(SchemaJs(name = "quotes.avsc", JsonHelper.makePretty(d.decoder.schema.toString)))
+        val schemas = Seq(SchemaJs(name = d.decoder.label, JsonHelper.makePretty(d.decoder.schema.toString)))
         DecoderJs(d.topic, schemas)
       })
     }
