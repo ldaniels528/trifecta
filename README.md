@@ -198,7 +198,7 @@ detailed information about BDQL queries, <a href="#kafka-search-by-query">click 
 <a name="trifecta-cli"></a>
 ### Trifecta CLI
 
-Trifecta CLI (Command Line Interface) is a REPL tool for tool that simplifies inspecting Kafka messages, Zookeeper data,
+Trifecta CLI (Command Line Interface) is a REPL tool that simplifies inspecting Kafka messages, Zookeeper data,
 and optionally Elastic Search documents, MongoDB documents and Storm topologies via simple UNIX-like commands
 (or <a href="#kafka-search-by-query">SQL-like queries</a>).
 
