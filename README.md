@@ -21,7 +21,8 @@ Table of Contents
     * <a href="#trifecta-ui-configure">Configuring Trifecta UI</a>
     * <a href="#trifecta-ui-decoders">Default Decoders</a>
     * <a href="#trifecta-ui-query">Queries</a>
-* <a href="#usage">Usage Examples</a>
+* <a href="#trifecta-cli">Trifecta CLI</a>
+    * <a href="#core-module">Core Module</a>
     * <a href="#kafka-module">Kafka Module</a>
         * <a href="#kafka-brokers">Kafka Brokers</a>
         * <a href="#kafka-topics">Kafka Topics</a>
@@ -193,8 +194,16 @@ detailed information about BDQL queries, <a href="#kafka-search-by-query">click 
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png)
 
-<a name="usage"></a>
-### Usage Examples	
+
+<a name="trifecta-cli"></a>
+### Trifecta CLI
+
+Trifecta CLI (Command Line Interface) is a REPL tool that simplifies inspecting Kafka messages, Zookeeper data,
+and optionally Elastic Search documents, MongoDB documents and Storm topologies via simple UNIX-like commands
+(or <a href="#kafka-search-by-query">SQL-like queries</a>).
+
+<a name="core-module"></a>
+#### Core Module
 
 _Trifecta_ exposes its commands through modules. At any time to see which modules are available one could issue the `modules` command.
 
