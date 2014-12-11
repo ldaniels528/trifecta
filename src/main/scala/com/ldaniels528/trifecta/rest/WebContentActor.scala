@@ -5,12 +5,13 @@ import java.io.ByteArrayOutputStream
 import akka.actor.Actor
 import com.ldaniels528.trifecta.io.json.JsonHelper
 import com.ldaniels528.trifecta.rest.WebContentActor._
+import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.Resource
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 import net.liftweb.json._
 import org.apache.commons.io.IOUtils
-import org.mashupbots.socko.events.{HttpRequestEvent, HttpResponseStatus}
+import org.mashupbots.socko.events.{CurrentHttpRequestMessage, HttpRequestEvent, HttpResponseStatus}
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
@@ -34,14 +35,14 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
         event.response.write100Continue()
       }
 
-      getContent(path, request.content.toFormDataMap) map { case (mimeType, bytes) =>
+      getContent(path, request) map { case (mimeType, bytes) =>
         val elapsedTime = (System.nanoTime() - startTime).toDouble / 1e+6
         logger.info(f"Retrieved resource '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
         response.contentType = mimeType
         response.write(bytes)
       } getOrElse {
         logger.error(s"Resource '$path' not found")
-        response.write(HttpResponseStatus.NOT_FOUND)
+        response.write(HttpResponseStatus.NOT_FOUND, s"Resource '$path' not found")
       }
   }
 
@@ -50,11 +51,11 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
    * @param path the given resource path (e.g. "/images/greenLight.png")
    * @return the option of an array of bytes representing the content
    */
-  private def getContent(path: String, dataMap: Map[String, List[String]]): Option[(String, Array[Byte])] = {
+  private def getContent(path: String, request: CurrentHttpRequestMessage): Option[(String, Array[Byte])] = {
     path match {
       // REST requests
       case s if s.startsWith(RestRoot) =>
-        processRestRequest(path, dataMap)
+        processRestRequest(path, request)
 
       // resource requests
       case s =>
@@ -64,7 +65,7 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
               url.openStream() use (IOUtils.copy(_, out))
               out.toByteArray
             })
-          mimeType <- getMimeType(s)
+          mimeType <- guessMimeType(s)
         } yield mimeType -> bytes
     }
   }
@@ -74,7 +75,7 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
    * @param path the given resource path (e.g. "/images/greenLight.png")
    * @return the option of a MIME type (e.g. "image/png")
    */
-  private def getMimeType(path: String): Option[String] = {
+  private def guessMimeType(path: String): Option[String] = {
     if (path.startsWith(RestRoot)) Some("application/json")
     else path.lastIndexOptionOf(".") map (index => path.substring(index + 1)) flatMap {
       case "css" => Some("text/css")
@@ -93,21 +94,35 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
     }
   }
 
-  private def processRestRequest(path: String, dataMap: Map[String, List[String]]): Option[(String, Array[Byte])] = {
+  private def processRestRequest(path: String, request: CurrentHttpRequestMessage): Option[(String, Array[Byte])] = {
     import java.net.URLDecoder.decode
 
-    // get the action and path arguments
-    val params = path.indexOptionOf(RestRoot)
-      .map(index => path.substring(index + RestRoot.length + 1))
-      .map(_.split("[/]")) map (a => (a.head, a.tail.toList))
+    /**
+     * Returns the form parameters as a data mapping
+     * @return a data mapping
+     */
+    def form = {
+      val map = request.content.toFormDataMap
+      map foreach { case (key, values) => logger.info(s"processRestRequest Content: '$key' ~> values = $values")}
+      map
+    }
 
-    params foreach { case (action, args) => logger.info(s"processRestRequest Action: $action ~> values = $args")}
-    dataMap foreach { case (key, values) => logger.info(s"processRestRequest Content: '$key' ~> values = $values")}
+    /**
+     * Returns the parameters from the REST url
+     * @return the parameters
+     */
+    def params = {
+      val p = path.indexOptionOf(RestRoot)
+        .map(index => path.substring(index + RestRoot.length + 1))
+        .map(_.split("[/]")) map (a => (a.head, a.tail.toList))
+      p foreach { case (action, args) => logger.info(s"processRestRequest Action: $action ~> values = $args")}
+      p
+    }
 
     // execute the action and get the JSON value
     params flatMap { case (action, args) =>
       action match {
-        case "executeQuery" => facade.executeQuery(dataMap.getParam("queryString")).passJson
+        case "executeQuery" => facade.executeQuery(request.asJsonString).passJson
         case "findOne" => args match {
           case topic :: criteria :: Nil => facade.findOne(topic, decode(criteria, encoding)).passJson
           case _ => None
@@ -115,6 +130,7 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
         case "getConsumerDeltas" if args.isEmpty => JsonHelper.toJson(facade.getConsumerDeltas).passJson
         case "getConsumers" if args.isEmpty => facade.getConsumers.passJson
         case "getConsumerSet" if args.isEmpty => facade.getConsumerSet.passJson
+        case "getDecoders" if args.isEmpty => facade.getDecoders.passJson
         case "getMessage" => args match {
           case topic :: partition :: offset :: Nil => facade.getMessage(topic, partition.toInt, offset.toLong).passJson
           case _ => None
@@ -134,12 +150,9 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
         case "getZkData" => facade.getZkData(toZkPath(args.init), args.last).passJson
         case "getZkInfo" => facade.getZkInfo(toZkPath(args)).passJson
         case "getZkPath" => facade.getZkPath(toZkPath(args)).passJson
-        case "saveQuery" if dataMap.nonEmpty =>
-          val name = dataMap.getParam("name")
-          val queryString = dataMap.getParam("queryString")
-          facade.saveQuery(name, queryString).passJson
-        case "transformResultsToCSV" if dataMap.nonEmpty =>
-          facade.transformResultsToCSV(dataMap.getParam("queryResults")).passCsv
+        case "saveQuery" => facade.saveQuery(request.asJsonString).passJson
+        case "saveSchema" => facade.saveSchema(request.asJsonString).passJson
+        case "transformResultsToCSV" => facade.transformResultsToCSV(request.asJsonString).passCsv
         case _ => None
       }
     }
@@ -179,6 +192,8 @@ object WebContentActor {
 
     def getParam(name: String): Option[String] = dataMap.get(name) flatMap (_.headOption)
 
+    def getParamOrDie(name: String): String = dataMap.get(name) flatMap (_.headOption) orDie s"Parameter '$name' is required"
+
   }
 
   /**
@@ -198,6 +213,20 @@ object WebContentActor {
   implicit class JsonExtensionsB(val json: JValue) extends AnyVal {
 
     def passJson: Option[(String, Array[Byte])] = Option(json) map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
+
+  }
+
+  /**
+   * HTTP Request Extensions
+   * @param request the given [[CurrentHttpRequestMessage]]
+   */
+  implicit class RequestExtension(val request: CurrentHttpRequestMessage) extends AnyVal {
+
+    /**
+     * Returns the content as a JSON string
+     * @return a JSON string
+     */
+    def asJsonString = new String(request.content.toBytes)
 
   }
 

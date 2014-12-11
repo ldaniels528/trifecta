@@ -82,7 +82,7 @@
             /**
              * Initializes all reference data
              */
-            $scope.initReferenceData = function () {
+            $scope.init = function () {
                 // load the children for the root key
                 var firstItem = $scope.zkItems[0];
                 $scope.expandItem(firstItem);

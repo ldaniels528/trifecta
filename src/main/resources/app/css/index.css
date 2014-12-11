@@ -45,11 +45,19 @@ fieldset {
 }
 
 .highlighted {
-    background: #55aaff;
+    background: #337ab7;
     color: #ffffff;
 }
 
-img.tabs {
+img.tab_active {
+    border: 2px solid #000000;
+    border-radius: 4px 4px 4px 4px;
+    padding: 2px 2px 2px 2px;
+    vertical-align: middle;
+}
+
+img.tab_inactive {
+    padding: 4px 4px 4px 4px;
     vertical-align: middle;
 }
 
@@ -87,7 +95,7 @@ th { text-align: left }
 
 .title1 { color: #f00000 }
 
-.title2 { color: #0000ff }
+.title2 { color: #337ab7 }
 
 .title3 { color: #00a000 }
 
