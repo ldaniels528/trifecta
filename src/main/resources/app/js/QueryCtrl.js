@@ -30,7 +30,7 @@
             /**
              * Initializes the reference data
              */
-            $scope.initReferenceData = function() {
+            $scope.init = function() {
                 QuerySvc.getQueries().then(
                     function(queries) {
                         $scope.savedQueries = queries || [];
@@ -110,7 +110,7 @@
                 mySavedQuery.loading = true;
 
                 // execute the query
-                QuerySvc.executeQuery(mySavedQuery.queryString).then(
+                QuerySvc.executeQuery(mySavedQuery.name, mySavedQuery.queryString).then(
                     function (results) {
                         $scope.state.running = false;
                         mySavedQuery.loading = false;

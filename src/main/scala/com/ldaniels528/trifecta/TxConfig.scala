@@ -37,29 +37,47 @@ class TxConfig(val configProps: Properties) {
   // various shared state variables
   def autoSwitching: Boolean = configProps.getOrElse("trifecta.common.autoSwitching", "true").toBoolean
 
-  def autoSwitching_=(enabled: Boolean) = configProps.setProperty("trifecta.common.autoSwitching", enabled.toString)
+  def autoSwitching_=(enabled: Boolean): Unit = {
+    configProps.setProperty("trifecta.common.autoSwitching", enabled.toString)
+    ()
+  }
 
   // the number of columns to display when displaying bytes
   def columns: Int = configProps.getOrElse("trifecta.common.columns", "25").toInt
 
-  def columns_=(width: Int): Unit = configProps.setProperty("trifecta.common.columns", width.toString)
+  def columns_=(width: Int): Unit = {
+    configProps.setProperty("trifecta.common.columns", width.toString)
+    ()
+  }
 
   def cwd: String = configProps.getProperty("trifecta.common.cwd")
 
-  def cwd_=(path: String) = configProps.setProperty("trifecta.common.cwd", path)
+  def cwd_=(path: String): Unit = {
+    configProps.setProperty("trifecta.common.cwd", path)
+    ()
+  }
 
   def debugOn: Boolean = configProps.getOrElse("trifecta.common.debugOn", "false").toBoolean
 
-  def debugOn_=(enabled: Boolean): Unit = configProps.setProperty("trifecta.common.debugOn", enabled.toString)
+  def debugOn_=(enabled: Boolean): Unit = {
+    configProps.setProperty("trifecta.common.debugOn", enabled.toString)
+    ()
+  }
 
   def encoding: String = configProps.getOrElse("trifecta.common.encoding", "UTF-8")
 
-  def encoding_=(charSet: String): Unit = configProps.setProperty("trifecta.common.encoding", charSet)
+  def encoding_=(charSet: String): Unit = {
+    configProps.setProperty("trifecta.common.encoding", charSet)
+    ()
+  }
 
   // Zookeeper connection string
   def zooKeeperConnect = configProps.getOrElse("trifecta.zookeeper.host", "localhost:2181")
 
-  def zooKeeperConnect_=(connectionString: String) = configProps.setProperty("trifecta.zookeeper.host", connectionString)
+  def zooKeeperConnect_=(connectionString: String): Unit = {
+    configProps.setProperty("trifecta.zookeeper.host", connectionString)
+    ()
+  }
 
   /**
    * Returns all available decoders

@@ -7,12 +7,12 @@
         .factory('QuerySvc', function ($http) {
             var service = {};
 
-            service.executeQuery = function (queryString) {
+            service.executeQuery = function (name, queryString) {
                 return $http({
                     url:"/rest/executeQuery",
                     method: "POST",
-                    data: "queryString=" + encodeURI(queryString),
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+                    data: { "name": name, "queryString": queryString },
+                    headers: {'Content-Type': 'application/json'}
                 }).then(function (response) {
                     return response.data;
                 });
@@ -29,8 +29,8 @@
                 return $http({
                     url: "/rest/saveQuery",
                     method: "POST",
-                    data: "name=" + encodeURI(name) + "&queryString=" + encodeURI(queryString),
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+                    data: { "name": name, "queryString" : queryString },
+                    headers: {'Content-Type': 'application/json'}
                 }).then(function (response) {
                     return response.data;
                 })
@@ -40,8 +40,8 @@
                 return $http({
                     url:"/rest/transformResultsToCSV",
                     method: "POST",
-                    data: "queryResults=" + encodeURI(angular.toJson(queryResults)),
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    data: queryResults,
+                    headers: {'Content-Type': 'application/json'},
                     responseType: 'arraybuffer'
                 }).success(function (data, status, headers, config) {
                     var blob = new Blob([data], {type: "text/csv"});

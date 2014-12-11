@@ -27,6 +27,10 @@
                         "name": "Query",
                         "imageURL": "/app/images/tabs/main/query.png",
                         "active": false
+                    }, {
+                        "name": "Decoders",
+                        "imageURL": "/app/images/tabs/main/decoders.png",
+                        "active": false
                     }
                 ];
 
@@ -71,7 +75,6 @@
                                 DashboardSvc.findOne(form.topic, form.criteria)
                                     .then(function (message) {
                                         loadingDialog.close({});
-                                        $log.info("message = " + angular.toJson(message));
                                         if (message.type == "error") {
                                             $scope.addErrorMessage(message.message);
                                         }

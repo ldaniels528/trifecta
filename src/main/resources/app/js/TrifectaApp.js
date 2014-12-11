@@ -23,7 +23,9 @@
         $rootScope.addError = function (err) {
             $rootScope.gloabalMessages.push({
                 "type": "error",
-                "text": (err.statusText != "") ? err.statusText : "General fault or communications error"
+                "text": (err.statusText != "")
+                    ? "HTTP/" + err.status + " - " + err.statusText
+                    : "General fault or communications error"
             });
             scheduleRemoval($rootScope.gloabalMessages);
         };
