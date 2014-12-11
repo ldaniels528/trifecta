@@ -220,6 +220,20 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   /**
+   * Returns all available decoders
+   * @return the collection of decoders
+   */
+  def getDecoders: Option[JValue] = {
+    config.getDecoders map { decoders =>
+      Extraction.decompose(decoders map { d =>
+        // TODO add the file name
+        val schemas = Seq(SchemaJs(name = "quotes.avsc", JsonHelper.makePretty(d.decoder.schema.toString)))
+        DecoderJs(d.topic, schemas)
+      })
+    }
+  }
+
+  /**
    * Returns the first offset for a given topic
    */
   def getFirstOffset(topic: String, partition: Int)(implicit zk: ZKProxy): Option[Long] = {
@@ -463,6 +477,10 @@ object KafkaRestFacade {
   case class ConsumerTopicJs(topic: String, consumers: Seq[ConsumerConsumerJs])
 
   case class ConsumerConsumerJs(consumerId: String, details: Seq[ConsumerJs])
+
+  case class DecoderJs(topic: String, schemas: Seq[SchemaJs])
+
+  case class SchemaJs(name: String, schemaString: String)
 
   case class ErrorJs(message: String, `type`: String = "error")
 

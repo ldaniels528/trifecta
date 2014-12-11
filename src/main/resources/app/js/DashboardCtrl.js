@@ -27,6 +27,10 @@
                         "name": "Query",
                         "imageURL": "/app/images/tabs/main/query.png",
                         "active": false
+                    }, {
+                        "name": "Decoders",
+                        "imageURL": "/app/images/tabs/main/decoders.png",
+                        "active": false
                     }
                 ];
 

@@ -30,7 +30,7 @@
             /**
              * Initializes the reference data
              */
-            $scope.initReferenceData = function() {
+            $scope.init = function() {
                 QuerySvc.getQueries().then(
                     function(queries) {
                         $scope.savedQueries = queries || [];

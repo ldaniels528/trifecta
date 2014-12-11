@@ -115,6 +115,7 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
         case "getConsumerDeltas" if args.isEmpty => JsonHelper.toJson(facade.getConsumerDeltas).passJson
         case "getConsumers" if args.isEmpty => facade.getConsumers.passJson
         case "getConsumerSet" if args.isEmpty => facade.getConsumerSet.passJson
+        case "getDecoders" if args.isEmpty => facade.getDecoders.passJson
         case "getMessage" => args match {
           case topic :: partition :: offset :: Nil => facade.getMessage(topic, partition.toInt, offset.toLong).passJson
           case _ => None
