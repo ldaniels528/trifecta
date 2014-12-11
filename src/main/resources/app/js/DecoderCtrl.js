@@ -23,7 +23,7 @@
                             }
                         },
                         function(err) {
-                            $log.error(err);
+                            $scope.addError(err);
                         });
                 };
 
@@ -40,16 +40,20 @@
                 };
 
                 $scope.saveSchema = function(schema) {
+                    schema.processing = true;
                     DecoderSvc.saveSchema(schema).then(
                         function(response) {
+                            $timeout(function() {
+                                schema.processing = false;
+                            }, 1000);
                             $scope.editMode = false;
+                            schema.modified = false;
                         },
                         function(err) {
-                            $log.error(err);
+                            schema.processing = false;
+                            $scope.addError(err);
                         }
                     );
-
-                    schema.modified = false;
                 };
 
                 $scope.selectDecoder = function(decoder) {

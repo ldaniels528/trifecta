@@ -82,6 +82,7 @@
                         </a>
                         <img ng-show="s.modified" src="/app/images/tabs/decoders/modified-16.gif"
                              style="float: right; margin-right: 5px">
+                        <img ng-show="s.processing" src="/app/images/status/processing.gif">
                     </div>
                 </div>
             </fieldset>
@@ -98,7 +99,7 @@
             <div class="message_panel">
                 <textarea ng-model="schema.schemaString" ng-show="editMode" class="d_editor"
                           ng-change="schema.modified = true">{{ schema.schemaString }}</textarea>
-                <div ng-hide="editMode" hljs source="toPrettyJSON(schema.schemaString, 4)"></div>
+                <div ng-hide="editMode" hljs source="toPrettyJSON(schema.schemaString, 8)"></div>
             </div>
         </div>
         <br style="clear: both">
@@ -302,7 +303,9 @@
                           ng-disabled="{{ state.running }}">
                 </textarea>
             </div>
+
             <div style="width: 100%; height: 59%">
+                <!-- Query Action Bar -->
                 <div class="q_action_bar">
                     <div style="display: inline; float: left">
                         <img class="q_action_icon" ng-src="/app/images/tabs/query/{{ state.running ? 'running.gif' : 'run.gif' }}" ng-click="executeQuery()" title="Execute the query script">
@@ -321,6 +324,8 @@
                     </div>
                     <br style="clear: both">
                 </div>
+
+                <!-- Query Results -->
                 <div style="width: 100%; min-height: 298px; background: #eeeeee; border: 1px solid #cccccc">
                     <div class="q_results_container">
                         <table style="width: 100%" ng-show="state.results">

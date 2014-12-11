@@ -18,8 +18,12 @@
                 return $http({
                     url:"/rest/saveSchema",
                     method: "POST",
-                    data: "schemaString=" + encodeURI(schema.schemaString),
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+                    data: {
+                        "topic":schema.topic,
+                        "name":schema.name,
+                        "schemaString": schema.schemaString
+                    },
+                    headers: {'Content-Type': 'application/json'}
                 }).then(function (response) {
                     return response.data;
                 });

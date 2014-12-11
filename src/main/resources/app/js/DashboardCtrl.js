@@ -75,7 +75,6 @@
                                 DashboardSvc.findOne(form.topic, form.criteria)
                                     .then(function (message) {
                                         loadingDialog.close({});
-                                        $log.info("message = " + angular.toJson(message));
                                         if (message.type == "error") {
                                             $scope.addErrorMessage(message.message);
                                         }
