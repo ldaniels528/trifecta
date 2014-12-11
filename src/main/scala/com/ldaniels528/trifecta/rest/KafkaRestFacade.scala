@@ -224,11 +224,14 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return the collection of decoders
    */
   def getDecoders: Option[JValue] = {
-    config.getDecoders map { decoders =>
-      Extraction.decompose(decoders map { d =>
-        val schemas = Seq(SchemaJs(name = d.decoder.label, JsonHelper.makePretty(d.decoder.schema.toString)))
-        DecoderJs(d.topic, schemas)
-      })
+    config.getDecoders map { allDecoders =>
+      val results = (allDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
+        val schemas = myDecoders map (d => SchemaJs(d.decoder.label, JsonHelper.makePretty(d.decoder.schema.toString)))
+        DecoderJs(topic, schemas)
+      }).toSeq sortBy(_.topic)
+
+      // transform the results to JSON
+      Extraction.decompose(results)
     }
   }
 
