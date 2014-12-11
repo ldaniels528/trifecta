@@ -19,6 +19,12 @@ div.d_editor_bar {
     margin-bottom: 4px;
 }
 
+.new_schema_section {
+    display: block;
+    width: 100%;
+    padding-bottom: 3px;
+}
+
 .mode_label {
     float: right;
     margin-right: 15px
