@@ -1,14 +1,12 @@
 package com.ldaniels528.trifecta.rest
 
-import java.io.File
-
 import akka.actor.{ActorSystem, Props}
 import com.ldaniels528.trifecta.TxConfig
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer._
 import com.ldaniels528.trifecta.rest.PushEventActor._
+import com.ldaniels528.trifecta.rest.TxWebConfig._
 import com.ldaniels528.trifecta.util.ResourceHelper._
-import com.ldaniels528.trifecta.util.StringHelper._
 import com.typesafe.config.ConfigFactory
 import org.mashupbots.socko.infrastructure.Logger
 import org.mashupbots.socko.routes._
@@ -17,7 +15,6 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration._
-import scala.io.Source
 import scala.util.Try
 
 /**
@@ -29,6 +26,9 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(getActorConfig))
   private val facade = new KafkaRestFacade(config, zk)
   private val sessions = TrieMap[String, WebSocketSession]()
+
+  // initialize the web configuration
+  TxWebConfig.init(config)
 
   // define all of the routes
   val routes = Routes({
@@ -148,62 +148,5 @@ object EmbeddedWebServer {
 
   case class WebSocketSession(webSocketId: String, var requests: Long = 0)
 
-  /**
-   * Trifecta Web Configuration
-   * @param config the given [[TxConfig]]
-   */
-  implicit class TxWebConfig(val config: TxConfig) extends AnyVal {
-
-    def getQueries: Option[Array[TxQuery]] = {
-      def removeExtension(name: String) = name.lastIndexOptionOf(".bdql") match {
-        case Some(index) => name.substring(0, index)
-        case None => name
-      }
-
-      Option(queriesDirectory.listFiles) map { queriesFiles =>
-        queriesFiles map { file =>
-          val name = removeExtension(file.getName)
-          TxQuery(name, Source.fromFile(file).getLines().mkString("\n"), file.exists(), file.lastModified())
-        }
-      }
-    }
-
-    /**
-     * Returns the push interval (in seconds) for topic changes
-     * @return the interval
-     */
-    def topicPushInterval: Int = config.getOrElse("trifecta.web.push.interval.topic", "15").toInt
-
-    /**
-     * Returns the push interval (in seconds) for consumer offset changes
-     * @return the interval
-     */
-    def consumerPushInterval: Int = config.getOrElse("trifecta.web.push.interval.consumer", "15").toInt
-
-    /**
-     * Returns the location of the queries directory
-     * @return the [[File]] representing the location of the queries directory
-     */
-    def queriesDirectory: File = new File(TxConfig.trifectaPrefs, "queries")
-
-    /**
-     * Returns the web actor execution concurrency
-     * @return the web actor execution concurrency
-     */
-    def webActorConcurrency: Int = config.getOrElse("trifecta.web.actor.concurrency", "10").toInt
-
-    /**
-     * Returns the embedded web server host/IP
-     * @return the embedded web server host/IP
-     */
-    def webHost: String = config.getOrElse("trifecta.web.host", "localhost")
-
-    /**
-     * Returns the embedded web server port
-     * @return the embedded web server port
-     */
-    def webPort: Int = config.getOrElse("trifecta.web.port", "8888").toInt
-
-  }
 
 }

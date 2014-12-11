@@ -12,8 +12,8 @@ import com.ldaniels528.trifecta.messages.MessageDecoder
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.messages.query.{BigDataSelection, QueryResult}
-import com.ldaniels528.trifecta.rest.EmbeddedWebServer._
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
+import com.ldaniels528.trifecta.rest.TxWebConfig._
 import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
@@ -384,7 +384,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       myName <- name
       myQueryString <- queryString
     } yield {
-      val file = new File(config.queriesDirectory, s"$myName.bdql")
+      val file = new File(TxWebConfig.queriesDirectory, s"$myName.bdql")
       // TODO add a check for new vs. replace?
 
       Try(new FileOutputStream(file) use { fos =>

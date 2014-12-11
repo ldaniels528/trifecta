@@ -6,7 +6,7 @@ import com.ldaniels528.trifecta.TxConsole._
 import com.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer
-import com.ldaniels528.trifecta.rest.EmbeddedWebServer.TxWebConfig
+import com.ldaniels528.trifecta.rest.TxWebConfig._
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
 import org.slf4j.LoggerFactory
