@@ -56,7 +56,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   for (decoders <- config.getDecoders; decoder <- decoders) {
     decoder.decoder match {
       case Left(d) => rt.registerDecoder(decoder.topic, d)
-      case _ =>
+      case Right(d) =>
+        logger.error(s"Failed to compile Avro schema for topic '${decoder.topic}'. Error: ${d.error.getMessage}")
     }
   }
 
@@ -256,7 +257,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     val schemas = decoders map { d =>
       d.decoder match {
         case Left(decoder) => SchemaJs(topic, d.name, JsonHelper.makePretty(decoder.schema.toString), error = None)
-        case Right(schemaString) => SchemaJs(topic, d.name, schemaString, error = Some(true))
+        case Right(decoder) => SchemaJs(topic, d.name, decoder.schemaString, error = Some(decoder.error.getMessage))
       }
     }
     DecoderJs(topic, schemas)
@@ -524,7 +525,7 @@ object KafkaRestFacade {
 
   case class DecoderJs(topic: String, schemas: Seq[SchemaJs])
 
-  case class SchemaJs(topic: String, name: String, schemaString: String, error: Option[Boolean] = None)
+  case class SchemaJs(topic: String, name: String, schemaString: String, error: Option[String] = None)
 
   case class ErrorJs(message: String, `type`: String = "error")
 

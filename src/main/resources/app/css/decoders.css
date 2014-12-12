@@ -22,7 +22,6 @@ div.d_editor_bar {
 .new_schema_section {
     display: block;
     width: 100%;
-    padding-bottom: 3px;
 }
 
 .mode_label {
@@ -34,4 +33,12 @@ img.d_editor_bar {
     margin-left: 15px;
     vertical-align: middle;
     cursor: pointer;
+}
+
+.schema_error {
+    display: block;
+    width: 100%;
+    border: 1px solid #ff0000;
+    border-radius: 4px 4px 4px 4px;
+    padding: 4px 4px 4px 4px;
 }

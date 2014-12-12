@@ -4,7 +4,7 @@ import java.io.File._
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
 
-import com.ldaniels528.trifecta.TxConfig.{TxDecoder, decoderDirectory}
+import com.ldaniels528.trifecta.TxConfig._
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.ldaniels528.trifecta.util.PropertiesHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
@@ -94,9 +94,7 @@ class TxConfig(val configProps: Properties) {
               TxDecoder(topic, decoderFile.getName, Left(AvroDecoder(decoderFile.getName, schema)))
             } match {
               case Success(decoder) => decoder
-              case Failure(e) =>
-                logger.error(s"Failed to register decoder (${decoderFile.getAbsolutePath}): ${e.getMessage}")
-                TxDecoder(topic, decoderFile.getName, Right(e.getMessage))
+              case Failure(e) => TxDecoder(topic, decoderFile.getName, Right(TxFailedSchema(schema, e)))
             }
           }
         }
@@ -212,7 +210,9 @@ object TxConfig {
       "trifecta.common.encoding" -> "UTF-8").toProps
   }
 
-  case class TxDecoder(topic: String, name: String, decoder: Either[AvroDecoder, String])
+  case class TxDecoder(topic: String, name: String, decoder: Either[AvroDecoder, TxFailedSchema])
+
+  case class TxFailedSchema(schemaString: String, error: Throwable)
 
 }
 

@@ -7,6 +7,8 @@ body {
     margin-right: 25px;
 }
 
+.bold { font-weight: bold }
+
 .clickable { cursor: pointer; }
 
 .error {
@@ -100,3 +102,5 @@ th { text-align: left }
 .title3 { color: #00a000 }
 
 .version { font-size: 12pt }
+
+.warning { color: #ffaa40 }
