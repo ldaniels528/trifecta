@@ -62,6 +62,9 @@
             <fieldset>
                 <legend>Configured Topics</legend>
                 <div class="topics_container">
+                    <span ng-show="!decoders.length" class="warning bold">
+                        <img class="middle" src="/app/images/status/yellowlight.gif"> No topics with decoders found
+                    </span>
                     <div ng-repeat="d in decoders" ng-class="d == decoder ? 'highlighted' : ''" style="padding: 0px 0px 0px 4px">
                         <img class="middle" src="/app/images/common/topic-16.png">
                         <a ng-click="selectDecoder(d)">
@@ -74,6 +77,9 @@
             <fieldset>
                 <legend>Associated Decoders</legend>
                 <div class="topics_container">
+                    <span ng-show="!decoder.schemas" class="warning bold">
+                        <img class="middle" src="/app/images/status/yellowlight.gif"> No decoders found
+                    </span>
                     <div ng-repeat="s in decoder.schemas" ng-class="s == schema ? 'highlighted' : ''">
                         <img ng-src="/app/images/tabs/decoders/{{ s.error ? 'failed-16.png' : 'js-16.png' }}" title="Avro Schema">
                         <a ng-click="selectSchema(s)">
@@ -123,8 +129,7 @@
                         <img class="middle" ng-src="/app/images/status/{{t.totalMessages ? 'greenlight.png' : 'offlight.png'}}">
                         <img class="middle" src="/app/images/common/topic-16.png">
                         <a ng-click="updateTopic(t)">
-                            <span ng-class="t == topic ? 'highlighted' : ''">
-                                {{t.topic}}
+                            <span ng-class="t == topic ? 'highlighted' : ''"> {{t.topic}}
                                 <span ng-show="t.totalMessages">
                                     (<span ng-show="t.totalMessages > 0" ng-class="t == topic ? 'highlighted' : 'messages'">{{t.totalMessages | number}}</span>)
                                 </span>
@@ -235,7 +240,7 @@
             <!-- Topics -->
             <fieldset>
                 <legend>Topics</legend>
-                <span ng-show="!topics" style="color: #ddaa00; font-weight: bold">
+                <span ng-show="!topics" class="warning bold">
                     <img class="middle" src="/app/images/status/yellowlight.gif"> No topics found
                 </span>
                 <div class="q_topics_container">
@@ -250,7 +255,7 @@
             <fieldset class="separator">
                 <legend>Queries</legend>
                 <div class="q_saved_queries_container">
-                    <span ng-show="!savedQueries" style="color: #ddaa00; font-weight: bold">
+                    <span ng-show="!savedQueries" class="warning bold">
                         <img src="/app/images/status/yellowlight.gif"> No saved queries
                     </span>
                     <div ng-repeat="q in savedQueries">
@@ -284,7 +289,7 @@
             <fieldset class="separator">
                 <legend>Query Results</legend>
                 <div class="q_saved_results_container">
-                    <span ng-show="!savedQuery.results.length" style="color: #ddaa00; font-weight: bold">
+                    <span ng-show="!savedQuery.results.length" class="warning bold">
                         <img src="/app/images/status/yellowlight.gif"> No results available
                     </span>
                     <div class="full_block" ng-repeat="r in savedQuery.results" ng-class="savedQuery.resultIndex == $index ? 'highlighted' : ''">
