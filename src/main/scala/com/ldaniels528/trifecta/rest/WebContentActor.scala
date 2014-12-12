@@ -125,28 +125,32 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
         case "executeQuery" => facade.executeQuery(request.asJsonString).passJson
         case "findOne" => args match {
           case topic :: criteria :: Nil => facade.findOne(topic, decode(criteria, encoding)).passJson
-          case _ => None
+          case _ => missingArgs("topic", "criteria")
         }
-        case "getConsumerDeltas" if args.isEmpty => JsonHelper.toJson(facade.getConsumerDeltas).passJson
-        case "getConsumers" if args.isEmpty => facade.getConsumers.passJson
-        case "getConsumerSet" if args.isEmpty => facade.getConsumerSet.passJson
-        case "getDecoders" if args.isEmpty => facade.getDecoders.passJson
+        case "getConsumerDeltas" => JsonHelper.toJson(facade.getConsumerDeltas).passJson
+        case "getConsumers" => facade.getConsumers.passJson
+        case "getConsumerSet" => facade.getConsumerSet.passJson
+        case "getDecoders" => facade.getDecoders.passJson
+        case "getDecoderByTopic" => args match {
+          case topic :: Nil => facade.getDecoderByTopic(topic).passJson
+          case _ => missingArgs("topic")
+        }
         case "getMessage" => args match {
           case topic :: partition :: offset :: Nil => facade.getMessage(topic, partition.toInt, offset.toLong).passJson
-          case _ => None
+          case _ => missingArgs("topic", "partition", "offset")
         }
-        case "getQueries" if args.isEmpty => facade.getQueries.passJson
+        case "getQueries" => facade.getQueries.passJson
         case "getTopicByName" => args match {
           case name :: Nil => facade.getTopicByName(name).passJson
-          case _ => None
+          case _ => missingArgs("name")
         }
-        case "getTopicDeltas" if args.isEmpty => JsonHelper.toJson(facade.getTopicDeltas).passJson
+        case "getTopicDeltas" => JsonHelper.toJson(facade.getTopicDeltas).passJson
         case "getTopicDetailsByName" => args match {
           case name :: Nil => facade.getTopicDetailsByName(name).passJson
-          case _ => None
+          case _ => missingArgs("name")
         }
-        case "getTopics" if args.isEmpty => facade.getTopics.passJson
-        case "getTopicSummaries" if args.isEmpty => facade.getTopicSummaries.passJson
+        case "getTopics" => facade.getTopics.passJson
+        case "getTopicSummaries" => facade.getTopicSummaries.passJson
         case "getZkData" => facade.getZkData(toZkPath(args.init), args.last).passJson
         case "getZkInfo" => facade.getZkInfo(toZkPath(args)).passJson
         case "getZkPath" => facade.getZkPath(toZkPath(args)).passJson
@@ -156,6 +160,10 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
         case _ => None
       }
     }
+  }
+
+  private def missingArgs[S](argNames: String*): S = {
+    throw new IllegalStateException(s"Expected arguments (${argNames mkString ", "}) are missing")
   }
 
   private def toZkPath(args: List[String]): String = "/" + args.mkString("/")

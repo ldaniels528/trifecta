@@ -33,7 +33,10 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   // load the default decoders
   config.getDecoders foreach { txDecoders =>
     txDecoders foreach { txDecoder =>
-      decoders += txDecoder.topic -> txDecoder.decoder
+      txDecoder.decoder match {
+        case Left(decoder) => decoders += txDecoder.topic -> decoder
+        case _ =>
+      }
     }
   }
 

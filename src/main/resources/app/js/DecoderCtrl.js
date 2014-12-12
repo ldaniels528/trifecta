@@ -37,6 +37,25 @@
 
                 $scope.reloadDecoder = function(decoder) {
                     $log.error("reloadDecoder is not yet implemented");
+                    $scope.addErrorMessage("The requested feature is not yet implemented");
+                };
+
+                $scope.saveNewSchema = function(schema) {
+                    schema.processing = true;
+                    DecoderSvc.saveSchema(schema).then(
+                        function(response) {
+                            $timeout(function() {
+                                schema.processing = false;
+                            }, 1000);
+                            schema.transitional = false;
+                            $scope.editMode = false;
+                            schema.modified = false;
+                        },
+                        function(err) {
+                            schema.processing = false;
+                            $scope.addError(err);
+                        }
+                    );
                 };
 
                 $scope.saveSchema = function(schema) {
@@ -54,6 +73,21 @@
                             $scope.addError(err);
                         }
                     );
+                };
+
+                $scope.setupNewSchema = function(decoder) {
+                    var schema = {
+                        "topic": decoder.topic,
+                        "name": "untitled.avsc",
+                        "originalSchemaString": "",
+                        "schemaString": "",
+                        "modified": true,
+                        "transitional": true
+                    };
+                    decoder.schemas.push(schema);
+                    $scope.selectDecoder(decoder);
+                    $scope.selectSchema(schema);
+                    $scope.editMode = true;
                 };
 
                 $scope.selectDecoder = function(decoder) {
