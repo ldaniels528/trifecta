@@ -87,16 +87,16 @@ class TxConfig(val configProps: Properties) {
     Option(decoderDirectory.listFiles) map { topicDirectories =>
       (topicDirectories flatMap { topicDirectory =>
         Option(topicDirectory.listFiles) map { decoderFiles =>
-          decoderFiles flatMap { decoderFile =>
+          decoderFiles map { decoderFile =>
+            val topic = topicDirectory.getName
+            val schema = Source.fromFile(decoderFile).getLines().mkString
             Try {
-              val topic = topicDirectory.getName
-              val schema = Source.fromFile(decoderFile).getLines().mkString
-              TxDecoder(topic, AvroDecoder(decoderFile.getName, schema))
+              TxDecoder(topic, decoderFile.getName, Left(AvroDecoder(decoderFile.getName, schema)))
             } match {
-              case Success(decoder) => Option(decoder)
+              case Success(decoder) => decoder
               case Failure(e) =>
-                logger.error(s"Failed to register decoder (${decoderFile.getAbsolutePath})", e)
-                None
+                logger.error(s"Failed to register decoder (${decoderFile.getAbsolutePath}): ${e.getMessage}")
+                TxDecoder(topic, decoderFile.getName, Right(e.getMessage))
             }
           }
         }
@@ -212,7 +212,7 @@ object TxConfig {
       "trifecta.common.encoding" -> "UTF-8").toProps
   }
 
-  case class TxDecoder(topic: String, decoder: AvroDecoder)
+  case class TxDecoder(topic: String, name: String, decoder: Either[AvroDecoder, String])
 
 }
 

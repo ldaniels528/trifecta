@@ -3,6 +3,7 @@ package com.ldaniels528.trifecta.rest
 import java.io.{File, FileOutputStream}
 import java.util.concurrent.Executors
 
+import com.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.ldaniels528.trifecta.command.parser.bdql.{BigDataQueryParser, BigDataQueryTokenizer}
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer}
@@ -52,7 +53,12 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private val rt = TxRuntimeContext(config)
 
   // load & register all decoders for their respective topics
-  for {decoders <- config.getDecoders; decoder <- decoders} rt.registerDecoder(decoder.topic, decoder.decoder)
+  for (decoders <- config.getDecoders; decoder <- decoders) {
+    decoder.decoder match {
+      case Left(d) => rt.registerDecoder(decoder.topic, d)
+      case _ =>
+    }
+  }
 
   private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
@@ -219,19 +225,41 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   /**
+   * Returns a decoder by topic
+   * @return the collection of decoders
+   */
+  def getDecoderByTopic(topic: String): Option[JValue] = {
+    val results = config.getDecoders map { decoders =>
+      toDecoderJs(topic, decoders filter (_.topic == topic))
+    }
+
+    // transform the results to JSON
+    results map Extraction.decompose
+  }
+
+  /**
    * Returns all available decoders
    * @return the collection of decoders
    */
   def getDecoders: Option[JValue] = {
     config.getDecoders map { allDecoders =>
       val results = (allDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
-        val schemas = myDecoders map (d => SchemaJs(topic, d.decoder.label, JsonHelper.makePretty(d.decoder.schema.toString)))
-        DecoderJs(topic, schemas)
+        toDecoderJs(topic, myDecoders)
       }).toSeq sortBy (_.topic)
 
       // transform the results to JSON
       Extraction.decompose(results)
     }
+  }
+
+  private def toDecoderJs(topic: String, decoders: Seq[TxDecoder]): DecoderJs = {
+    val schemas = decoders map { d =>
+      d.decoder match {
+        case Left(decoder) => SchemaJs(topic, d.name, JsonHelper.makePretty(decoder.schema.toString), error = None)
+        case Right(schemaString) => SchemaJs(topic, d.name, schemaString, error = Some(true))
+      }
+    }
+    DecoderJs(topic, schemas)
   }
 
   /**
@@ -404,6 +432,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       val schema = JsonHelper.transform[SchemaJs](jsonString)
 
       val decoderFile = new File(new File(TxConfig.decoderDirectory, schema.topic), schema.name)
+      logger.info(s"decoderFile = ${decoderFile.getAbsolutePath}")
       // TODO add a check for new vs. replace?
 
       new FileOutputStream(decoderFile) use { fos =>
@@ -495,7 +524,7 @@ object KafkaRestFacade {
 
   case class DecoderJs(topic: String, schemas: Seq[SchemaJs])
 
-  case class SchemaJs(topic: String, name: String, schemaString: String)
+  case class SchemaJs(topic: String, name: String, schemaString: String, error: Option[Boolean] = None)
 
   case class ErrorJs(message: String, `type`: String = "error")
 

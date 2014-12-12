@@ -76,7 +76,7 @@
                 <legend>Associated Decoders</legend>
                 <div class="topics_container">
                     <div ng-repeat="s in decoder.schemas" ng-class="s == schema ? 'highlighted' : ''">
-                        <img src="/app/images/tabs/decoders/js-16.png" title="Avro Schema">
+                        <img ng-src="/app/images/tabs/decoders/{{ s.error ? 'failed-16.png' : 'js-16.png' }}" title="Avro Schema">
                         <a ng-click="selectSchema(s)">
                             <span ng-class="s == schema ? 'highlighted' : ''">{{ s.name }}</span>
                         </a>
@@ -92,7 +92,7 @@
                 <img ng-hide="editMode" class="d_editor_bar" ng-click="toggleEditMode()" src="/app/images/tabs/decoders/edit-20.png" title="Switch to edit mode">
                 <img ng-hide="editMode" class="d_editor_bar" ng-click="reloadDecoder(decoder)" src="/app/images/tabs/decoders/reload-20.png" title="Reload this decoder">
                 <img ng-show="editMode" class="d_editor_bar" ng-click="cancelEdit(schema)" src="/app/images/tabs/decoders/cancel-20.png" title="Cancel editing">
-                <img ng-show="editMode" class="d_editor_bar" ng-click="saveSchema(schema)" src="/app/images/tabs/decoders/save-20.png" title="Save changes">
+                <img ng-show="editMode" class="d_editor_bar" ng-click="saveSchema(schema, null)" src="/app/images/tabs/decoders/save-20.png" title="Save changes">
                 <img ng-hide="editMode" class="d_editor_bar" ng-click="setupNewSchema(decoder)" src="/app/images/tabs/decoders/add-20.png" title="Add new decoder">
                 <span ng-show="editMode" class="negative mode_label">Edit Mode</span>
                 <span ng-hide="editMode" class="positive mode_label">View Mode</span>
@@ -103,9 +103,9 @@
                     <button ng-click="saveNewSchema(schema)">Save</button>
             </div>
             <div class="message_panel">
-                <textarea ng-model="schema.schemaString" ng-show="editMode" class="d_editor"
+                <textarea ng-model="schema.schemaString" ng-show="editMode || schema.error" class="d_editor"
                           ng-change="schema.modified = true">{{ schema.schemaString }}</textarea>
-                <div ng-if="!editMode" hljs source="toPrettyJSON(schema.schemaString, 8)"></div>
+                <div ng-if="!editMode && !schema.error" hljs source="toPrettyJSON(schema.schemaString, 8)"></div>
             </div>
         </div>
         <br style="clear: both">
