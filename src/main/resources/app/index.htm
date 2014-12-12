@@ -105,7 +105,6 @@
             <div ng-show="schema.error" class="schema_error">
                 <span class="error">Compile Error:</span> {{ schema.error }}
             </div>
-            <div ng-hide="schema.error" style="padding-bottom: 3px"></div>
             <div class="message_panel">
                 <textarea ng-model="schema.schemaString" ng-show="editMode" class="d_editor"
                           ng-change="schema.modified = true">{{ schema.schemaString }}</textarea>
