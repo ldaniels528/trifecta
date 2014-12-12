@@ -94,6 +94,11 @@
                 };
 
                 $scope.selectDecoder = function(decoder) {
+                    // turn on edit mode, if it's on...
+                    if($scope.editMode) {
+                        $scope.toggleEditMode();
+                    }
+
                     $scope.decoder = decoder;
                     var schemas = $scope.decoder.schemas;
                     if(schemas.length) {
