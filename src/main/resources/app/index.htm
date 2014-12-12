@@ -94,18 +94,21 @@
                 <img ng-show="editMode" class="d_editor_bar" ng-click="cancelEdit(schema)" src="/app/images/tabs/decoders/cancel-20.png" title="Cancel editing">
                 <img ng-show="editMode" class="d_editor_bar" ng-click="saveSchema(schema, null)" src="/app/images/tabs/decoders/save-20.png" title="Save changes">
                 <img ng-hide="editMode" class="d_editor_bar" ng-click="setupNewSchema(decoder)" src="/app/images/tabs/decoders/add-20.png" title="Add new decoder">
-                <span ng-show="editMode" class="negative mode_label">Edit Mode</span>
-                <span ng-hide="editMode" class="positive mode_label">View Mode</span>
+                <span ng-show="editMode" class="warning mode_label bold">Edit Mode</span>
+                <span ng-hide="editMode" class="positive mode_label bold">View Mode</span>
             </div>
             <div class="new_schema_section" ng-show="schema.transitional">
                 Schema Name:
                     <input ng-model="schema.name" type="text">
                     <button ng-click="saveNewSchema(schema)">Save</button>
             </div>
+            <div ng-show="schema.error" class="schema_error">
+                <span class="error">Compile Error:</span> {{ schema.error }}
+            </div>
             <div class="message_panel">
-                <textarea ng-model="schema.schemaString" ng-show="editMode || schema.error" class="d_editor"
+                <textarea ng-model="schema.schemaString" ng-show="editMode" class="d_editor"
                           ng-change="schema.modified = true">{{ schema.schemaString }}</textarea>
-                <div ng-if="!editMode && !schema.error" hljs source="toPrettyJSON(schema.schemaString, 8)"></div>
+                <div ng-if="!editMode" hljs source="toPrettyJSON(schema.schemaString, 8)"></div>
             </div>
         </div>
         <br style="clear: both">

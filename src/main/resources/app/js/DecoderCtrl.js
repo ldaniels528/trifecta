@@ -67,6 +67,9 @@
                             }, 1000);
                             $scope.editMode = false;
                             schema.modified = false;
+                            if(response.error) {
+                                $scope.addErrorMessage(response.message);
+                            }
                         },
                         function(err) {
                             schema.processing = false;
@@ -99,7 +102,17 @@
                 };
 
                 $scope.selectSchema = function(schema) {
+                    // turn on edit mode, if it's on...
+                    if($scope.editMode) {
+                        $scope.toggleEditMode();
+                    }
+
                     $scope.schema = schema;
+
+                    // if there's an error... enable edit mode
+                    if(schema.error) {
+                        $scope.toggleEditMode();
+                    }
                 };
 
                 $scope.toggleEditMode = function() {
