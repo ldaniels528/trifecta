@@ -2,6 +2,8 @@ a {
     cursor: pointer;
 }
 
+.block { display: block }
+
 body {
     margin-left: 25px;
     margin-right: 25px;
@@ -15,6 +17,17 @@ body {
     font-weight: bold;
     color: #ff0000;
 }
+
+fieldset {
+    border-color: #cccccc;
+}
+
+.full_block {
+    display: block;
+    width: 100%;
+}
+
+.full_width { width: 100% }
 
 .global_info {
     width: 100%;
@@ -37,35 +50,12 @@ body {
     color: #ffaa40;
 }
 
-fieldset {
-    border-color: #cccccc;
-}
-
-.full_block {
-    display: block;
-    width: 100%;
-}
-
 .highlighted {
     background: #337ab7;
     color: #ffffff;
 }
 
-img.tab_active {
-    border: 2px solid #000000;
-    border-radius: 4px 4px 4px 4px;
-    padding: 2px 2px 2px 2px;
-    vertical-align: middle;
-}
-
-img.tab_inactive {
-    padding: 4px 4px 4px 4px;
-    vertical-align: middle;
-}
-
-img.top {
-    vertical-align: top;
-}
+.img { vertical-align: middle }
 
 .inline {
     display: inline;
@@ -82,7 +72,17 @@ legend {
 
 .middle { vertical-align: middle }
 
-.block { display: block; }
+.tab_active {
+    border: 2px solid #000000;
+    border-radius: 4px 4px 4px 4px;
+    padding: 2px 2px 2px 2px;
+    vertical-align: middle;
+}
+
+.tab_inactive {
+    padding: 4px 4px 4px 4px;
+    vertical-align: middle;
+}
 
 table {
     border-collapse: collapse;
@@ -100,6 +100,8 @@ th { text-align: left }
 .title2 { color: #337ab7 }
 
 .title3 { color: #00a000 }
+
+.top { vertical-align: top }
 
 .version { font-size: 12pt }
 
