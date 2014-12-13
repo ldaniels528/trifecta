@@ -303,6 +303,13 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def getQueries: JValue = Extraction.decompose(config.getQueries)
 
   /**
+   * Retrieves the list of Kafka replicas for a given topic
+   */
+  def getReplicas(topic: String): JValue = {
+    Extraction.decompose(KafkaMicroConsumer.getReplicas(topic, brokers, correlationId) sortBy (_.partition))
+  }
+
+  /**
    * Returns a collection of topics that have changed since the last call
    * @return a collection of [[TopicDelta]] objects
    */

@@ -30,8 +30,8 @@
                 $scope.cancelEdit = function(schema) {
                     if($scope.editMode) {
                         $scope.editMode = false;
-                        $scope.schema.schemaString = $scope.schema.originalSchemaString;
-                        $scope.schema.modified = false;
+                        schema.schemaString = schema.originalSchemaString;
+                        schema.modified = false;
                     }
                 };
 
@@ -47,9 +47,15 @@
                             $timeout(function() {
                                 schema.processing = false;
                             }, 1000);
-                            schema.transitional = false;
-                            $scope.editMode = false;
-                            schema.modified = false;
+
+                            if(response.error) {
+                                $scope.addErrorMessage(response.message);
+                            }
+                            else {
+                                schema.transitional = false;
+                                $scope.editMode = false;
+                                schema.modified = false;
+                            }
                         },
                         function(err) {
                             schema.processing = false;

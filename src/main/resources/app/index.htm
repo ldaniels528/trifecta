@@ -25,6 +25,7 @@
     <script src="/app/js/DecoderCtrl.js" type="text/javascript"></script>
     <script src="/app/js/DecoderSvc.js" type="text/javascript"></script>
     <script src="/app/js/InspectCtrl.js" type="text/javascript"></script>
+    <script src="/app/js/InspectSvc.js" type="text/javascript"></script>
     <script src="/app/js/MessageSearchDialog.js" type="text/javascript"></script>
     <script src="/app/js/ObserveCtrl.js" type="text/javascript"></script>
     <script src="/app/js/QueryCtrl.js" type="text/javascript"></script>
@@ -190,12 +191,14 @@
                             <tr>
                                 <th>Leader</th>
                                 <td>{{partition.leader.host}}:{{partition.leader.port}}</td>
-                                <td>&nbsp;</td>
                             </tr>
-                            <tr ng-repeat="r in partition.replicas">
-                                <th>Replica({{r.brokerId}})</th>
+                            <tr>
+                                <th>Partition</th>
+                                <th>Replica</th>
+                            </tr>
+                            <tr ng-repeat="r in replicas">
+                                <td>{{ r.partition }}</td>
                                 <td>{{r.host}}:{{r.port}}</td>
-                                <td style="color: #008000; font-weight: bold">{{r.status}}</td>
                             </tr>
                         </table>
                     </div>
