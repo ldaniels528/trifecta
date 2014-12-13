@@ -16,14 +16,14 @@
 .leaders_and_replicas {
     clear: both;
     width: auto;
-    height: 150px;
+    height: 100px;
     overflow: auto;
 }
 
 .messages_and_offsets {
     clear: both;
     width: auto;
-    height: 150px;
+    height: 125px;
     overflow: auto;
 }
 
@@ -45,6 +45,6 @@
 .topics_container {
     clear: both;
     width: auto;
-    height: 200px;
+    height: 150px;
     overflow: auto;
 }

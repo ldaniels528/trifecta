@@ -22,10 +22,10 @@
     <script src="/app/js/Consumers.js" type="text/javascript"></script>
     <script src="/app/js/DashboardSvc.js" type="text/javascript"></script>
     <script src="/app/js/DashboardCtrl.js" type="text/javascript"></script>
-    <script src="/app/js/DecoderMgmtDialog.js" type="text/javascript"></script>
     <script src="/app/js/DecoderCtrl.js" type="text/javascript"></script>
     <script src="/app/js/DecoderSvc.js" type="text/javascript"></script>
     <script src="/app/js/InspectCtrl.js" type="text/javascript"></script>
+    <script src="/app/js/InspectSvc.js" type="text/javascript"></script>
     <script src="/app/js/MessageSearchDialog.js" type="text/javascript"></script>
     <script src="/app/js/ObserveCtrl.js" type="text/javascript"></script>
     <script src="/app/js/QueryCtrl.js" type="text/javascript"></script>
@@ -38,7 +38,7 @@
     <h2><span class="title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span> <span class="version">v{{ version }}</span></h2>
 
     <!-- global error messages -->
-    <div ng-repeat="message in gloabalMessages" style="width: 100%">
+    <div ng-repeat="message in gloabalMessages" class="full_width">
         <div ng-class="'global_' + message.type" >
             <img class="middle" ng-src="/app/images/status/{{ message.type == 'error' ? 'redlight.png' : message.type == 'info' ? 'bluelight.png' : 'yellowlight.gif' }}">
             {{ message.text }}
@@ -63,6 +63,9 @@
             <fieldset>
                 <legend>Configured Topics</legend>
                 <div class="topics_container">
+                    <span ng-show="!decoders.length" class="warning bold">
+                        <img class="middle" src="/app/images/status/yellowlight.gif"> No topics with decoders found
+                    </span>
                     <div ng-repeat="d in decoders" ng-class="d == decoder ? 'highlighted' : ''" style="padding: 0px 0px 0px 4px">
                         <img class="middle" src="/app/images/common/topic-16.png">
                         <a ng-click="selectDecoder(d)">
@@ -75,6 +78,9 @@
             <fieldset>
                 <legend>Associated Decoders</legend>
                 <div class="topics_container">
+                    <span ng-show="!decoder.schemas" class="warning bold">
+                        <img class="middle" src="/app/images/status/yellowlight.gif"> No decoders found
+                    </span>
                     <div ng-repeat="s in decoder.schemas" ng-class="s == schema ? 'highlighted' : ''">
                         <img ng-src="/app/images/tabs/decoders/{{ s.error ? 'failed-16.png' : 'js-16.png' }}" title="Avro Schema">
                         <a ng-click="selectSchema(s)">
@@ -124,8 +130,7 @@
                         <img class="middle" ng-src="/app/images/status/{{t.totalMessages ? 'greenlight.png' : 'offlight.png'}}">
                         <img class="middle" src="/app/images/common/topic-16.png">
                         <a ng-click="updateTopic(t)">
-                            <span ng-class="t == topic ? 'highlighted' : ''">
-                                {{t.topic}}
+                            <span ng-class="t == topic ? 'highlighted' : ''"> {{t.topic}}
                                 <span ng-show="t.totalMessages">
                                     (<span ng-show="t.totalMessages > 0" ng-class="t == topic ? 'highlighted' : 'messages'">{{t.totalMessages | number}}</span>)
                                 </span>
@@ -146,7 +151,7 @@
                 <fieldset style="border-radius: 5px 5px 5px 5px">
                     <legend>Messages and Offsets</legend>
                     <div class="messages_and_offsets">
-                        <table style="width: 100%">
+                        <table class="full_width">
                             <tr>
                                 <th>Partition</th>
                                 <th>First Offset</th>
@@ -182,16 +187,18 @@
                 <fieldset style="border-radius: 5px 5px 5px 5px">
                     <legend>Leaders and Replicas</legend>
                     <div class="leaders_and_replicas">
-                        <table style="width: 100%">
+                        <table class="full_width">
                             <tr>
                                 <th>Leader</th>
                                 <td>{{partition.leader.host}}:{{partition.leader.port}}</td>
-                                <td>&nbsp;</td>
                             </tr>
-                            <tr ng-repeat="r in partition.replicas">
-                                <th>Replica({{r.brokerId}})</th>
+                            <tr>
+                                <th>Partition</th>
+                                <th>Replica</th>
+                            </tr>
+                            <tr ng-repeat="r in replicas">
+                                <td>{{ r.partition }}</td>
                                 <td>{{r.host}}:{{r.port}}</td>
-                                <td style="color: #008000; font-weight: bold">{{r.status}}</td>
                             </tr>
                         </table>
                     </div>
@@ -203,14 +210,14 @@
             <div style="display: block; margin-bottom: 3px">
                 <div class="input_block">
                     Offset <input ng-model="partition.offset" type="text" class="input-mir" ng-change="convertOffsetToInt(partition, partition.offset)">
-                    <img class="clickable middle" src="/app/images/buttons/navigation/message-first.gif" ng-click="firstMessage()" title="move to first message">
-                    <img class="clickable middle" src="/app/images/buttons/navigation/message-prev.gif" ng-click="previousMessage()" title="move to previous message">
-                    <img class="clickable middle" src="/app/images/buttons/navigation/message-middle.png" ng-click="medianMessage()" title="move to median message">
-                    <img class="clickable middle" src="/app/images/buttons/navigation/message-next.gif" ng-click="nextMessage()" title="move to next message">
-                    <img class="clickable middle" src="/app/images/buttons/navigation/message-last.gif" ng-click="lastMessage()" title="move to last message">
+                    <img class="clickable" src="/app/images/buttons/navigation/message-first.gif" ng-click="firstMessage()" title="move to first message">
+                    <img class="clickable" src="/app/images/buttons/navigation/message-prev.gif" ng-click="previousMessage()" title="move to previous message">
+                    <img class="clickable" src="/app/images/buttons/navigation/message-middle.png" ng-click="medianMessage()" title="move to median message">
+                    <img class="clickable" src="/app/images/buttons/navigation/message-next.gif" ng-click="nextMessage()" title="move to next message">
+                    <img class="clickable" src="/app/images/buttons/navigation/message-last.gif" ng-click="lastMessage()" title="move to last message">
                 </div>
                 <div class="input_block">
-                    <img class="clickable middle" ng-src="/app/images/{{loading ? 'status/loading.gif' : 'buttons/search.png'}}" ng-click="messageFinderPopup()" title="search for a message">
+                    <img class="clickable" ng-src="/app/images/{{loading ? 'status/loading.gif' : 'buttons/search.png'}}" ng-click="messageFinderPopup()" title="search for a message">
                 </div>
             </div>
 
@@ -236,7 +243,7 @@
             <!-- Topics -->
             <fieldset>
                 <legend>Topics</legend>
-                <span ng-show="!topics" style="color: #ddaa00; font-weight: bold">
+                <span ng-show="!topics" class="warning bold">
                     <img class="middle" src="/app/images/status/yellowlight.gif"> No topics found
                 </span>
                 <div class="q_topics_container">
@@ -251,12 +258,12 @@
             <fieldset class="separator">
                 <legend>Queries</legend>
                 <div class="q_saved_queries_container">
-                    <span ng-show="!savedQueries" style="color: #ddaa00; font-weight: bold">
+                    <span ng-show="!savedQueries" class="warning bold">
                         <img src="/app/images/status/yellowlight.gif"> No saved queries
                     </span>
                     <div ng-repeat="q in savedQueries">
                         <div ng-class="q == savedQuery ? 'highlighted' : ''">
-                            <img class="middle clickable"
+                            <img class="clickable"
                                  ng-show="!q.exists" src="/app/images/tabs/query/remove.gif"
                                  ng-click="deleteQuery($index)"
                                  title="Delete this query script">
@@ -265,13 +272,13 @@
 
                             <img ng-show="q.loading" class="middle clickable" src="/app/images/status/loading.gif">
 
-                            <img class="middle clickable"
+                            <img class="clickable"
                                  style="float: right; margin-right: 8px"
                                  ng-show="q.syncing" src="/app/images/status/loading.gif"
                                  ng-click="saveQuery(q)"
                                  title="Uploading to server">
 
-                            <img class="middle clickable"
+                            <img class="clickable"
                                  style="float: right; margin-right: 8px"
                                  ng-show="!q.syncing && q.modified" src="/app/images/tabs/query/sync_query.png"
                                  ng-click="saveQuery(q)"
@@ -285,16 +292,16 @@
             <fieldset class="separator">
                 <legend>Query Results</legend>
                 <div class="q_saved_results_container">
-                    <span ng-show="!savedQuery.results.length" style="color: #ddaa00; font-weight: bold">
+                    <span ng-show="!savedQuery.results.length" class="warning bold">
                         <img src="/app/images/status/yellowlight.gif"> No results available
                     </span>
                     <div class="full_block" ng-repeat="r in savedQuery.results" ng-class="savedQuery.resultIndex == $index ? 'highlighted' : ''">
-                        <img class="middle clickable" src="/app/images/tabs/query/remove.gif">
+                        <img class="clickable" src="/app/images/tabs/query/remove.gif">
                         <a ng-click="selectQueryResults($index)">
                             <span ng-class="savedQuery.resultIndex == $index ? 'highlighted' : ''">{{ r.name }}</span>
                         </a>
 
-                        <img class="middle clickable"
+                        <img class="clickable"
                              style="float: right; margin-right: 8px"
                              src="/app/images/tabs/query/download-16.png"
                              ng-click="downloadResults(r.results)"
@@ -337,7 +344,7 @@
                 <!-- Query Results -->
                 <div style="width: 100%; min-height: 298px; background: #eeeeee; border: 1px solid #cccccc">
                     <div class="q_results_container">
-                        <table style="width: 100%" ng-show="state.results">
+                        <table class="full_width" ng-show="state.results">
                             <thead>
                                 <tr style="border-bottom: 1px solid #aaaaaa">
                                     <th ng-repeat="label in state.mappings.labels">
@@ -500,7 +507,7 @@
                                             ng-change="formatData(zkItem.path, selected.format)">
                                     </select>
 
-                                    <table style="width: 100%" ng-if="zkItem.data.type == 'binary'">
+                                    <table class="full_width" ng-if="zkItem.data.type == 'binary'">
                                         <tr ng-repeat="tuple in zkItem.data.value track by $index">
                                             <td style="background: #cceeff; border: 1px solid #cccccc">{{ tuple[0] }}</td>
                                             <td style="background: #ffff88; border: 1px solid #cccccc">{{ tuple[1] }}</td>

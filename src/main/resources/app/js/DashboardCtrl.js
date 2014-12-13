@@ -4,10 +4,11 @@
  */
 (function () {
     angular.module('trifecta')
-        .controller('DashboardCtrl', ['$scope', '$interval', '$log', '$timeout', 'DashboardSvc', 'MessageSearchSvc',
-            function ($scope, $interval, $log, $timeout, DashboardSvc, MessageSearchSvc) {
+        .controller('DashboardCtrl', ['$scope', '$interval', '$log', '$timeout', 'DashboardSvc', 'InspectSvc', 'MessageSearchSvc',
+            function ($scope, $interval, $log, $timeout, DashboardSvc, InspectSvc, MessageSearchSvc) {
 
                 $scope.version = "0.18.1";
+                $scope.replicas = [];
                 $scope.topics = [];
                 $scope.topic = null;
                 $scope.loading = 0;
@@ -96,6 +97,16 @@
                             }
                         }
                     });
+                };
+
+                $scope.getReplicas = function (topic) {
+                    InspectSvc.getReplicas(topic).then(
+                        function (replicas) {
+                            $scope.replicas = replicas;
+                        },
+                        function (err) {
+                            $scope.addError(err);
+                        });
                 };
 
                 $scope.getTopics = function (hideEmptyTopics) {
@@ -200,6 +211,12 @@
                 $scope.updateTopic = function (topic) {
                     $scope.topic = topic;
 
+                    // asynchronously load the replicas for the topic
+                    var myTopicName = topic ? topic.topic : null;
+                    if(myTopicName) {
+                        $scope.getReplicas(myTopicName);
+                    }
+
                     var partitions = topic != null ? topic.partitions : null;
                     if (partitions) {
                         $scope.updatePartition(partitions[0]);
@@ -251,10 +268,17 @@
                     return null;
                 }
 
+                /**
+                 * Watch for topic changes, and when one occurs:
+                 * 1. select the first non-empty topic
+                 * 2. load the replicas for the topic
+                 */
                 $scope.$watch("Topics.topics", function(newTopics, oldTopics) {
                     $log.info("DashboardCtrl: Loaded new topics (" + newTopics.length + ")");
                     $scope.topics = newTopics;
-                    $scope.updateTopic(findNonEmptyTopic($scope.topics));
+
+                    var myTopic = findNonEmptyTopic($scope.topics);
+                    $scope.updateTopic(myTopic);
                 });
 
             }]);

@@ -4,8 +4,8 @@
  */
 (function () {
     angular.module('trifecta')
-        .controller('InspectCtrl', ['$scope', '$log', '$parse',
-            function ($scope, $log,  $parse) {
+        .controller('InspectCtrl', ['$scope', '$log', '$parse', 'InspectSvc',
+            function ($scope, $log,  $parse, InspectSvc) {
 
                 var _lastGoodResult = "";
                 $scope.hideEmptyTopics = true;
@@ -18,6 +18,7 @@
                 $scope.convertOffsetToInt = function(partition, offset) {
                     partition.offset = parseInt(offset);
                 };
+
 
                 /**
                  * Formats a JSON object as a color-coded JSON expression

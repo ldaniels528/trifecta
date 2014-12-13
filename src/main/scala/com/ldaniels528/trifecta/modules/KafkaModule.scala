@@ -11,7 +11,7 @@ import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroConversion._
 import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.io.kafka.KafkaCliFacade._
-import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, contentFilter}
+import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{MessageData, contentFilter}
 import com.ldaniels528.trifecta.io.kafka._
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.io.{AsyncIO, InputSource, KeyAndMessage, OutputSource}
@@ -109,6 +109,7 @@ class KafkaModule(config: TxConfig) extends Module {
 
     // topic/message information and statistics commands
     Command(this, "kbrokers", getBrokers, UnixLikeParams(), help = "Returns a list of the brokers from ZooKeeper"),
+    Command(this, "kreplicas", getReplicas, UnixLikeParams(Seq("topic" -> true)), help = "Returns a list of the replicas for a topic"),
     Command(this, "kfetchsize", fetchSizeGetOrSet, UnixLikeParams(Seq("fetchSize" -> false)), help = "Retrieves or sets the default fetch size for all Kafka queries"),
     Command(this, "kinbound", inboundMessages, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-w" -> "wait-time")), help = "Retrieves a list of topics with new messages (since last query)"),
     Command(this, "kls", getTopics, UnixLikeParams(Seq("topicPrefix" -> false), Seq("-l" -> "listMode")), help = "Lists all existing topics"),
@@ -404,8 +405,16 @@ class KafkaModule(config: TxConfig) extends Module {
   /**
    * Retrieves the list of Kafka brokers
    */
-  def getBrokers(args: UnixLikeArgs): Seq[BrokerDetails] = {
-    KafkaMicroConsumer.getBrokerList
+  def getBrokers(params: UnixLikeArgs) = KafkaMicroConsumer.getBrokerList
+
+  /**
+   * Retrieves the list of Kafka replicas for a given topic
+   */
+  def getReplicas(params: UnixLikeArgs) = {
+    params.args match {
+      case topic :: Nil => KafkaMicroConsumer.getReplicas(topic, brokers, correlationId) sortBy(_.partition)
+      case _ => dieSyntax(params)
+    }
   }
 
   /**
