@@ -91,10 +91,10 @@ class TxConfig(val configProps: Properties) {
             val topic = topicDirectory.getName
             val schema = Source.fromFile(decoderFile).getLines().mkString
             Try {
-              TxDecoder(topic, decoderFile.getName, Left(AvroDecoder(decoderFile.getName, schema)))
+              TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Left(AvroDecoder(decoderFile.getName, schema)))
             } match {
               case Success(decoder) => decoder
-              case Failure(e) => TxDecoder(topic, decoderFile.getName, Right(TxFailedSchema(schema, e)))
+              case Failure(e) => TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Right(TxFailedSchema(schema, e)))
             }
           }
         }
@@ -210,7 +210,7 @@ object TxConfig {
       "trifecta.common.encoding" -> "UTF-8").toProps
   }
 
-  case class TxDecoder(topic: String, name: String, decoder: Either[AvroDecoder, TxFailedSchema])
+  case class TxDecoder(topic: String, name: String, lastModified: Long, decoder: Either[AvroDecoder, TxFailedSchema])
 
   case class TxFailedSchema(schemaString: String, error: Throwable)
 

@@ -6,7 +6,7 @@ import java.util.concurrent.Executors
 import com.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.ldaniels528.trifecta.command.parser.bdql.{BigDataQueryParser, BigDataQueryTokenizer}
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
-import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.LeaderAndReplicas
+import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{LeaderAndReplicas, MessageData}
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
@@ -295,23 +295,50 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @param topic the given topic
    * @param partition the given partition
    * @param offset the given offset
-   * @param decoderURL the option of a decoder URL TODO do we need this any longer?
    * @return the JSON representation of the message
    */
-  def getMessage(topic: String, partition: Int, offset: Long, decoderURL: Option[String] = None): JValue = {
+  def getMessage(topic: String, partition: Int, offset: Long): JValue = {
     Extraction.decompose {
       Try {
-        val message_? = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetch(offset)(fetchSize = 65536).headOption)
-        val decoder_? = rt.lookupDecoderByName(topic)
-        val decodedMessage = for {decoder <- decoder_?; data <- message_?} yield decoder.decode(data.message)
-        decodedMessage match {
-          case Some(Success(typedMessage)) => toMessage(typedMessage)
-          case _ => toMessage(message_?.map(_.message).orNull)
-        }
+        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetch(offset)(fetchSize = 65536).headOption)
       } match {
-        case Success(message) => message
+        case Success(message) => decodeMessage(topic, message)
         case Failure(e) => ErrorJs(e.getMessage)
       }
+    }
+  }
+
+  /**
+   * Sequentially tests each decoder for the given topic until one is found that will decode the given message
+   * @param topic the given Kafka topic
+   * @param message_? an option of a [[MessageData]]
+   * @return an option of a decoded message
+   */
+  private def decodeMessage(topic: String, message_? : Option[MessageData]) = {
+    for {
+      input <- message_?
+      decoders <- config.getDecoders.map(_.filter(_.topic == topic).sortBy(-_.lastModified))
+    } yield {
+      decoders.foldLeft[Option[MessageJs]](None) { (result, d) =>
+        result ?? attemptDecode(input, d)
+      } getOrElse message_?.map(toMessage)
+    }
+  }
+
+  /**
+   * Attempts to decode the given message with the given decoder
+   * @param input the given input [[MessageData]]
+   * @param txDecoder the given [[TxDecoder]]
+   * @return an option of a decoded message
+   */
+  private def attemptDecode(input: MessageData, txDecoder: TxDecoder) = {
+    txDecoder.decoder match {
+      case Left(av) =>
+        av.decode(input.message) match {
+          case Success(record) => Option(toMessage(record))
+          case Failure(e) => None
+        }
+      case _ => None
     }
   }
 

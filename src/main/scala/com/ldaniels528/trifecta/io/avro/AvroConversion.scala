@@ -8,6 +8,7 @@ import com.ldaniels528.trifecta.util.ResourceHelper._
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{DecoderFactory, EncoderFactory}
+import org.slf4j.LoggerFactory
 
 import scala.language.existentials
 import scala.util.Try
@@ -17,6 +18,7 @@ import scala.util.Try
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object AvroConversion {
+  private val logger = LoggerFactory.getLogger(getClass)
 
   /**
    * Copies data from a Scala case class to a Java Bean (Avro Builder)
@@ -96,7 +98,6 @@ object AvroConversion {
 
   private def setValue[A, B](value: Any, valueClass: Class[A], dstInst: Any, dstClass: Class[B], setterName: String) {
     val results = value match {
-      case d: Date => Option((d.getTime.asInstanceOf[Object], classOf[java.lang.Long]))
       case o: Option[_] =>
         o.map { myValue =>
           val myObjectValue = myValue.asInstanceOf[Object]
@@ -110,9 +111,27 @@ object AvroConversion {
     }
 
     results foreach { case (myValue, myValueClass) =>
-      findMethod(dstClass, setterName, myValueClass).foreach { m =>
-        m.invoke(dstInst, myValue)
+      findMethod(dstClass, setterName, myValueClass) match {
+        case Some(m) =>
+          m.invoke(dstInst, transformValue(myValue, m.getParameterTypes.head))
+        case None =>
+          logger.warn(s"value '$value' (${value.getClass.getName}) to [$setterName] - NOT FOUND ['$myValue' (${myValue.getClass.getName})]")
       }
+    }
+  }
+
+  /**
+   * Transforms the given value to the destination type
+   * @param value the given value
+   * @param dstType the destination type
+   * @return the transformed value (or the same value if no transformation was necessary)
+   */
+  private def transformValue(value: Any, dstType: Class[_]): AnyRef = {
+    value match {
+      case d: Date if dstType == classOf[java.lang.Long] || dstType == classOf[Long] => d.getTime : java.lang.Long
+      case l: Long if dstType == classOf[Date] => new Date(l)
+      case l: java.lang.Long if dstType == classOf[Date] => new Date(l)
+      case v => v.asInstanceOf[Object]
     }
   }
 
@@ -123,21 +142,27 @@ object AvroConversion {
         m.getParameterTypes.headOption.exists(isCompatible(_, setterParamClass)))
   }
 
+  /**
+   * Determines compatibility between type A and type B
+   * @param typeA the given type A
+   * @param typeB the given type B
+   * @param first indicates whether this was the first call to the function
+   * @return true, if type A and type B are compatible
+   */
   private def isCompatible(typeA: Class[_], typeB: Class[_], first: Boolean = true): Boolean = {
-    if (typeA == typeB) true
-    else
-      typeA match {
-        case c if c == classOf[Date] => typeB == classOf[java.lang.Long]
-        case c if c == classOf[Byte] => typeB == classOf[java.lang.Byte]
-        case c if c == classOf[Char] => typeB == classOf[java.lang.Character]
-        case c if c == classOf[Double] => typeB == classOf[java.lang.Double]
-        case c if c == classOf[Float] => typeB == classOf[java.lang.Float]
-        case c if c == classOf[Int] => typeB == classOf[Integer]
-        case c if c == classOf[Long] => typeB == classOf[java.lang.Long]
-        case c if c == classOf[Short] => typeB == classOf[java.lang.Short]
-        case c if first => isCompatible(typeB, typeA, !first)
-        case _ => false
-      }
+    (typeA == typeB) || (typeA match {
+      case c if c == classOf[Long] => typeB == classOf[Date]
+      case c if c == classOf[java.lang.Long] => typeB == classOf[Date]
+      case c if c == classOf[Byte] => typeB == classOf[java.lang.Byte]
+      case c if c == classOf[Char] => typeB == classOf[java.lang.Character]
+      case c if c == classOf[Double] => typeB == classOf[java.lang.Double]
+      case c if c == classOf[Float] => typeB == classOf[java.lang.Float]
+      case c if c == classOf[Int] => typeB == classOf[Integer]
+      case c if c == classOf[Long] => typeB == classOf[java.lang.Long]
+      case c if c == classOf[Short] => typeB == classOf[java.lang.Short]
+      case c if first => isCompatible(typeB, typeA, !first)
+      case _ => false
+    })
   }
 
   /**
