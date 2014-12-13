@@ -6,6 +6,7 @@ import java.util.concurrent.Executors
 import com.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.ldaniels528.trifecta.command.parser.bdql.{BigDataQueryParser, BigDataQueryTokenizer}
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
+import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.LeaderAndReplicas
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
@@ -277,6 +278,26 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getLastOffset)
   }
 
+  /**
+   * Retrieves the list of partition leaders and replicas for a given topic
+   */
+  def getLeaderAndReplicas(topic: String): JValue = {
+    Extraction.decompose {
+      KafkaMicroConsumer.getLeaderAndReplicas(topic, brokers, correlationId) flatMap {
+        case LeaderAndReplicas(partition, leader, replicas) =>
+          replicas map (LeaderAndReplicasJs(partition, leader, _))
+      } sortBy (_.partition)
+    }
+  }
+
+  /**
+   * Retrieves the message for given topic, partition and offset
+   * @param topic the given topic
+   * @param partition the given partition
+   * @param offset the given offset
+   * @param decoderURL the option of a decoder URL TODO do we need this any longer?
+   * @return the JSON representation of the message
+   */
   def getMessage(topic: String, partition: Int, offset: Long, decoderURL: Option[String] = None): JValue = {
     Extraction.decompose {
       Try {
@@ -537,6 +558,8 @@ object KafkaRestFacade {
   case class ErrorJs(message: String, `type`: String = "error")
 
   case class FormattedData(`type`: String, value: Any)
+
+  case class LeaderAndReplicasJs(partition: Int, leader: Broker, replica: Broker)
 
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 

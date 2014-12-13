@@ -135,6 +135,10 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
           case topic :: Nil => facade.getDecoderByTopic(topic).passJson
           case _ => missingArgs("topic")
         }
+        case "getLeaderAndReplicas" => args match {
+          case topic :: Nil => facade.getLeaderAndReplicas(topic).passJson
+          case _ => missingArgs("topic")
+        }
         case "getMessage" => args match {
           case topic :: partition :: offset :: Nil => facade.getMessage(topic, partition.toInt, offset.toLong).passJson
           case _ => missingArgs("topic", "partition", "offset")

@@ -385,10 +385,16 @@ object KafkaMicroConsumer {
       (leader, pmd, replicas) <- getLeaderPartitionMetaDataAndReplicas(TopicAndPartition(topic, partition), brokers, correlationId)
     } yield partition -> replicas
 
-    results flatMap { case (partition, replicas) => replicas map { r =>
-        ReplicaBroker(partition, r.host, r.port, r.brokerId)
-      }
+    results flatMap { case (partition, replicas) => replicas map (r =>
+      ReplicaBroker(partition, r.host, r.port, r.brokerId))
     }
+  }
+
+  def getLeaderAndReplicas(topic: String, brokers: Seq[Broker], correlationId: Int)(implicit zk: ZKProxy): Seq[LeaderAndReplicas] = {
+    for {
+      partition <- getTopicPartitions(topic)
+      (leader, pmd, replicas) <- getLeaderPartitionMetaDataAndReplicas(TopicAndPartition(topic, partition), brokers, correlationId)
+    } yield LeaderAndReplicas(partition, leader, replicas)
   }
 
   /**
@@ -577,6 +583,8 @@ object KafkaMicroConsumer {
     extends BinaryMessage
 
   case class ReplicaBroker(partition: Int, host: String, port: Int, id: Int)
+
+  case class LeaderAndReplicas(partition: Int, leader: Broker, replicas: Seq[Broker])
 
   /**
    * Represents the details for a Kafka topic
