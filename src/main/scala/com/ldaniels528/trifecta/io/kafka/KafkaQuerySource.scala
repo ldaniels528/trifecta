@@ -1,8 +1,7 @@
 package com.ldaniels528.trifecta.io.kafka
 
-import KafkaQuerySource._
 import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
-import com.ldaniels528.trifecta.io.avro.AvroDecoder
+import com.ldaniels528.trifecta.io.kafka.KafkaQuerySource._
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.query.{QueryResult, QuerySource}
@@ -47,8 +46,8 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
    */
   private def decodeMessage(msg: BinaryMessage, decoder: MessageDecoder[_]): GenericRecord = {
     // only Avro decoders are supported
-    val avDecoder: AvroDecoder = decoder match {
-      case av: AvroDecoder => av
+    val avDecoder: MessageDecoder[GenericRecord] = decoder match {
+      case av: MessageDecoder[GenericRecord] => av
       case _ => throw new IllegalStateException("Only Avro decoding is supported")
     }
 

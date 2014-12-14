@@ -31,12 +31,10 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   private val decoders = TrieMap[String, MessageDecoder[_]]()
 
   // load the default decoders
-  config.getDecoders foreach { txDecoders =>
-    txDecoders foreach { txDecoder =>
-      txDecoder.decoder match {
-        case Left(decoder) => decoders += txDecoder.topic -> decoder
-        case _ =>
-      }
+  config.getDecoders foreach { txDecoder =>
+    txDecoder.decoder match {
+      case Left(decoder) => decoders += txDecoder.topic -> decoder
+      case _ =>
     }
   }
 

@@ -10,10 +10,10 @@ import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{LeaderAndReplicas, 
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
-import com.ldaniels528.trifecta.messages.MessageDecoder
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.messages.query.{BigDataSelection, QueryResult}
+import com.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageDecoder}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
 import com.ldaniels528.trifecta.rest.TxWebConfig._
 import com.ldaniels528.trifecta.util.OptionHelper._
@@ -53,12 +53,25 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   private val rt = TxRuntimeContext(config)
 
-  // load & register all decoders for their respective topics
-  for (decoders <- config.getDecoders; decoder <- decoders) {
-    decoder.decoder match {
-      case Left(d) => rt.registerDecoder(decoder.topic, d)
-      case Right(d) =>
-        logger.error(s"Failed to compile Avro schema for topic '${decoder.topic}'. Error: ${d.error.getMessage}")
+  // load & register all decoders to their respective topics
+  registerDecoders()
+
+  /**
+   * Registers all default decoders (found in $HOME/.trifecta/decoders) to their respective topics
+   */
+  def registerDecoders() {
+    // register the decoders
+    config.getDecoders.filter(_.decoder.isLeft).groupBy(_.topic) foreach { case (topic, decoders) =>
+      rt.registerDecoder(topic, new CompositeTxDecoder(decoders))
+    }
+
+    // report all failed decoders
+    config.getDecoders.filter(_.decoder.isRight) foreach { decoder =>
+      decoder.decoder match {
+        case Right(d) =>
+          logger.error(s"Failed to compile Avro schema for topic '${decoder.topic}'. Error: ${d.error.getMessage}")
+        case _ =>
+      }
     }
   }
 
@@ -230,28 +243,21 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns a decoder by topic
    * @return the collection of decoders
    */
-  def getDecoderByTopic(topic: String): Option[JValue] = {
-    val results = config.getDecoders map { decoders =>
-      toDecoderJs(topic, decoders filter (_.topic == topic))
-    }
-
-    // transform the results to JSON
-    results map Extraction.decompose
+  def getDecoderByTopic(topic: String): JValue = {
+    Extraction.decompose(toDecoderJs(topic, config.getDecoders filter (_.topic == topic)))
   }
 
   /**
    * Returns all available decoders
    * @return the collection of decoders
    */
-  def getDecoders: Option[JValue] = {
-    config.getDecoders map { allDecoders =>
-      val results = (allDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
-        toDecoderJs(topic, myDecoders)
-      }).toSeq sortBy (_.topic)
+  def getDecoders: JValue = {
+    val results = (config.getDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
+      toDecoderJs(topic, myDecoders)
+    }).toSeq sortBy (_.topic)
 
-      // transform the results to JSON
-      Extraction.decompose(results)
-    }
+    // transform the results to JSON
+    Extraction.decompose(results)
   }
 
   private def toDecoderJs(topic: String, decoders: Seq[TxDecoder]): DecoderJs = {
@@ -315,10 +321,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return an option of a decoded message
    */
   private def decodeMessage(topic: String, message_? : Option[MessageData]) = {
-    for {
-      input <- message_?
-      decoders <- config.getDecoders.map(_.filter(_.topic == topic).sortBy(-_.lastModified))
-    } yield {
+    val decoders = config.getDecoders.filter(_.topic == topic).sortBy(-_.lastModified)
+    message_? map { input =>
       decoders.foldLeft[Option[MessageJs]](None) { (result, d) =>
         result ?? attemptDecode(input, d)
       } getOrElse message_?.map(toMessage)
@@ -426,7 +430,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     import net.liftweb.json._
 
     Extraction.decompose(Try {
-      val decoder = decoders.get(format).orDie(s"No decoder of type '$format' was found")
+      val decoder = codecs.get(format).orDie(s"No decoder of type '$format' was found")
       zk.read(path) map decoder.decode
     } match {
       case Success(data) => data match {
@@ -543,7 +547,7 @@ object KafkaRestFacade {
   val JSON = "json"
   val PLAIN_TEXT = "plain-text"
 
-  private val decoders = Map[String, MessageDecoder[_ <: AnyRef]](
+  private val codecs = Map[String, MessageDecoder[_ <: AnyRef]](
     AUTO -> AutoDecoder, BINARY -> LoopBackCodec, PLAIN_TEXT -> PlainTextCodec, JSON -> JsonDecoder)
 
   /**
