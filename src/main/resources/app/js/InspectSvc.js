@@ -8,7 +8,7 @@
             var service = {};
 
             service.getReplicas = function (topic) {
-                return $http.get("/rest/getReplicas/" + topic)
+                return $http.get("/rest/getLeaderAndReplicas/" + topic)
                     .then(function (response) {
                         return response.data;
                     });

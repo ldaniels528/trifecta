@@ -96,7 +96,6 @@
         <div style="display: inline; float: right; width: 69%; height: 100%; padding: 5px 0px 5px 5px">
             <div class="d_editor_bar">
                 <img ng-hide="editMode" class="d_editor_bar" ng-click="toggleEditMode()" src="/app/images/tabs/decoders/edit-20.png" title="Switch to edit mode">
-                <img ng-hide="editMode" class="d_editor_bar" ng-click="reloadDecoder(decoder)" src="/app/images/tabs/decoders/reload-20.png" title="Reload this decoder">
                 <img ng-show="editMode" class="d_editor_bar" ng-click="cancelEdit(schema)" src="/app/images/tabs/decoders/cancel-20.png" title="Cancel editing">
                 <img ng-show="editMode" class="d_editor_bar" ng-click="saveSchema(schema, null)" src="/app/images/tabs/decoders/save-20.png" title="Save changes">
                 <img ng-hide="editMode" class="d_editor_bar" ng-click="setupNewSchema(decoder)" src="/app/images/tabs/decoders/add-20.png" title="Add new decoder">
@@ -189,16 +188,14 @@
                     <div class="leaders_and_replicas">
                         <table class="full_width">
                             <tr>
-                                <th>Leader</th>
-                                <td>{{partition.leader.host}}:{{partition.leader.port}}</td>
-                            </tr>
-                            <tr>
                                 <th>Partition</th>
+                                <th>Leader</th>
                                 <th>Replica</th>
                             </tr>
                             <tr ng-repeat="r in replicas">
                                 <td>{{ r.partition }}</td>
-                                <td>{{r.host}}:{{r.port}}</td>
+                                <td>{{ r.leader.host }}:{{ r.leader.port }}</td>
+                                <td>{{ r.replica.host }}:{{ r.replica.port }}</td>
                             </tr>
                         </table>
                     </div>

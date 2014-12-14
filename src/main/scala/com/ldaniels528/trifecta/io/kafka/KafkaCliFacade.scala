@@ -21,7 +21,7 @@ import scala.util.{Failure, Success}
  * Kafka CLI Facade
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaCliFacade(correlationId: Int = 0) {
+class KafkaCliFacade() {
   private var publisher_? : Option[KafkaPublisher] = None
 
   /**
@@ -37,7 +37,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
    * Commits the offset for a given topic and group ID
    */
   def commitOffset(topic: String, partition: Int, groupId: String, offset: Long, metadata: Option[String] = None)(implicit zk: ZKProxy) {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (
       _.commitOffsets(groupId, offset, metadata getOrElse "N/A"))
   }
 
@@ -45,14 +45,14 @@ class KafkaCliFacade(correlationId: Int = 0) {
    * Counts the messages matching a given condition [references cursor]
    */
   def countMessages(topic: String, conditions: Seq[Condition], decoder: Option[MessageDecoder[_]])(implicit zk: ZKProxy, ec: ExecutionContext): Future[Long] = {
-    KafkaMicroConsumer.count(topic, brokers, correlationId, conditions: _*)
+    KafkaMicroConsumer.count(topic, brokers, conditions: _*)
   }
 
   /**
    * Returns the offsets for a given topic and group ID
    */
   def fetchOffsets(topic: String, partition: Int, groupId: String)(implicit zk: ZKProxy): Option[Long] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.fetchOffsets(groupId))
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetchOffsets(groupId))
   }
 
   /**
@@ -64,7 +64,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
     val counter = IOCounter(System.currentTimeMillis())
 
     // find and export the messages matching our criteria
-    val task = KafkaMicroConsumer.observe(topic, brokers, correlationId) { md =>
+    val task = KafkaMicroConsumer.observe(topic, brokers) { md =>
       counter.updateReadCount(1)
       if (conditions.forall(_.satisfies(md.message, md.key))) {
         outputHandler.write(KeyAndMessage(md.key, md.message), decoder)
@@ -84,7 +84,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
   /**
    * Retrieves the list of Kafka consumers
    */
-  def getConsumers(consumerPrefix: Option[String], topicPrefix: Option[String])(implicit zk: ZKProxy, ec: ExecutionContext): Future[List[ConsumerDelta]] = {
+  def getConsumers(consumerPrefix: Option[String], topicPrefix: Option[String], includePartitionManager: Boolean)(implicit zk: ZKProxy, ec: ExecutionContext): Future[List[ConsumerDelta]] = {
     // get the Kafka consumer groups
     val consumersCG = Future {
       KafkaMicroConsumer.getConsumerList(topicPrefix) map { c =>
@@ -95,7 +95,8 @@ class KafkaCliFacade(correlationId: Int = 0) {
     }
 
     // get the Kafka Spout consumers (Partition Manager)
-    val consumersPM = Future {
+    val consumersPM = if (!includePartitionManager) Future.successful(Nil)
+    else Future {
       KafkaMicroConsumer.getSpoutConsumerList() map { c =>
         val topicOffset = getLastOffset(c.topic, c.partition)
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
@@ -119,14 +120,14 @@ class KafkaCliFacade(correlationId: Int = 0) {
    * Returns the first offset for a given topic
    */
   def getFirstOffset(topic: String, partition: Int)(implicit zk: ZKProxy): Option[Long] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getFirstOffset)
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.getFirstOffset)
   }
 
   /**
    * Returns the last offset for a given topic
    */
   def getLastOffset(topic: String, partition: Int)(implicit zk: ZKProxy): Option[Long] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getLastOffset)
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.getLastOffset)
   }
 
   /**
@@ -162,7 +163,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
    * Returns the message key for a given topic partition and offset
    */
   def getMessageKey(topic: String, partition: Int, offset: Long, fetchSize: Int)(implicit zk: ZKProxy): Option[Array[Byte]] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
       consumer.fetch(offset)(fetchSize).headOption map (_.key)
     }
   }
@@ -171,7 +172,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
    * Returns the size of the message for a given topic partition and offset
    */
   def getMessageSize(topic: String, partition: Int, offset: Long, fetchSize: Int)(implicit zk: ZKProxy): Option[Int] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use {
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use {
       _.fetch(offset.toLong)(fetchSize).headOption map (_.message.length)
     }
   }
@@ -180,7 +181,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
    * Returns the minimum and maximum message size for a given topic partition and offset range
    */
   def getMessageMinMaxSize(topic: String, partition: Int, startOffset: Long, endOffset: Long, fetchSize: Int)(implicit zk: ZKProxy): Seq[MessageMaxMin] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use { consumer =>
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
       val offsets = startOffset.toLong to endOffset.toLong
       val messages = consumer.fetch(offsets: _*)(fetchSize).map(_.message.length)
       if (messages.nonEmpty) Seq(MessageMaxMin(messages.min, messages.max)) else Nil
@@ -207,7 +208,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
    */
   def getTopics(prefix: Option[String], detailed: Boolean)(implicit zk: ZKProxy): Either[Seq[TopicItem], Seq[TopicItemCompact]] = {
     // get the raw topic data
-    val topicData = KafkaMicroConsumer.getTopicList(brokers, correlationId)
+    val topicData = KafkaMicroConsumer.getTopicList(brokers)
 
     // is the detailed list flag set?
     if (detailed) {
@@ -273,7 +274,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
 
     // reset the consumer group ID for each partition
     (start to end) foreach { partition =>
-      new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId = 0) use { consumer =>
+      new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
         consumer.getFirstOffset foreach { offset =>
           consumer.commitOffsets(groupId, offset, "resetting consumer ID")
         }

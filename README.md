@@ -108,6 +108,9 @@ contains the configuration properties and connection strings for all supported s
     
     # Kafka/Zookeeper properties
     trifecta.zookeeper.host = localhost:2181
+
+    # indicates whether Storm Partition Manager-style consumers should be read from Zookeeper
+    trifecta.storm.kafka.consumers.partitionManager = false
     
     # Cassandra properties
     trifecta.cassandra.hosts = localhost

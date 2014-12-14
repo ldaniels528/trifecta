@@ -6,6 +6,7 @@ import java.util.concurrent.Executors
 import com.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.ldaniels528.trifecta.command.parser.bdql.{BigDataQueryParser, BigDataQueryTokenizer}
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
+import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{LeaderAndReplicas, MessageData}
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
@@ -94,7 +95,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       (decoder_?, conditions)
     } match {
       case Success((decoder_?, conditions)) =>
-        val outcome = KafkaMicroConsumer.findOne(topic, brokers, correlationId = 0, forward = true, conditions) map (
+        val outcome = KafkaMicroConsumer.findOne(topic, brokers, forward = true, conditions) map (
           _ map { case (partition, md) => (partition, md.offset, decoder_?.map(_.decode(md.message)))
           })
         Await.result(outcome, 30.minutes) match {
@@ -191,7 +192,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return a list of consumers
    */
   def getConsumerSet: JValue = {
-    val consumers = getConsumerGroupsNative ++ getConsumerGroupsPM
+    val consumers = getConsumerGroupsNative ++ (if (config.consumersPartitionManager) getConsumerGroupsPM else Nil)
 
     Extraction.decompose(consumers.groupBy(_.topic) map { case (topic, consumersA) =>
       val results = (consumersA.groupBy(_.consumerId) map { case (consumerId, consumersB) =>
@@ -267,30 +268,77 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns the first offset for a given topic
    */
   def getFirstOffset(topic: String, partition: Int)(implicit zk: ZKProxy): Option[Long] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getFirstOffset)
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.getFirstOffset)
   }
 
   /**
    * Returns the last offset for a given topic
    */
   def getLastOffset(topic: String, partition: Int)(implicit zk: ZKProxy): Option[Long] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId) use (_.getLastOffset)
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.getLastOffset)
   }
 
-  def getMessage(topic: String, partition: Int, offset: Long, decoderURL: Option[String] = None): JValue = {
+  /**
+   * Retrieves the list of partition leaders and replicas for a given topic
+   */
+  def getLeaderAndReplicas(topic: String): JValue = {
+    Extraction.decompose {
+      KafkaMicroConsumer.getLeaderAndReplicas(topic, brokers) flatMap {
+        case LeaderAndReplicas(partition, leader, replicas) =>
+          replicas map (LeaderAndReplicasJs(partition, leader, _))
+      } sortBy (_.partition)
+    }
+  }
+
+  /**
+   * Retrieves the message for given topic, partition and offset
+   * @param topic the given topic
+   * @param partition the given partition
+   * @param offset the given offset
+   * @return the JSON representation of the message
+   */
+  def getMessage(topic: String, partition: Int, offset: Long): JValue = {
     Extraction.decompose {
       Try {
-        val message_? = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetch(offset)(fetchSize = 65536).headOption)
-        val decoder_? = rt.lookupDecoderByName(topic)
-        val decodedMessage = for {decoder <- decoder_?; data <- message_?} yield decoder.decode(data.message)
-        decodedMessage match {
-          case Some(Success(typedMessage)) => toMessage(typedMessage)
-          case _ => toMessage(message_?.map(_.message).orNull)
-        }
+        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetch(offset)(fetchSize = 65536).headOption)
       } match {
-        case Success(message) => message
+        case Success(message) => decodeMessage(topic, message)
         case Failure(e) => ErrorJs(e.getMessage)
       }
+    }
+  }
+
+  /**
+   * Sequentially tests each decoder for the given topic until one is found that will decode the given message
+   * @param topic the given Kafka topic
+   * @param message_? an option of a [[MessageData]]
+   * @return an option of a decoded message
+   */
+  private def decodeMessage(topic: String, message_? : Option[MessageData]) = {
+    for {
+      input <- message_?
+      decoders <- config.getDecoders.map(_.filter(_.topic == topic).sortBy(-_.lastModified))
+    } yield {
+      decoders.foldLeft[Option[MessageJs]](None) { (result, d) =>
+        result ?? attemptDecode(input, d)
+      } getOrElse message_?.map(toMessage)
+    }
+  }
+
+  /**
+   * Attempts to decode the given message with the given decoder
+   * @param input the given input [[MessageData]]
+   * @param txDecoder the given [[TxDecoder]]
+   * @return an option of a decoded message
+   */
+  private def attemptDecode(input: MessageData, txDecoder: TxDecoder) = {
+    txDecoder.decoder match {
+      case Left(av) =>
+        av.decode(input.message) match {
+          case Success(record) => Option(toMessage(record))
+          case Failure(e) => None
+        }
+      case _ => None
     }
   }
 
@@ -306,7 +354,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Retrieves the list of Kafka replicas for a given topic
    */
   def getReplicas(topic: String): JValue = {
-    Extraction.decompose(KafkaMicroConsumer.getReplicas(topic, brokers, correlationId) sortBy (_.partition))
+    Extraction.decompose(KafkaMicroConsumer.getReplicas(topic, brokers) sortBy (_.partition))
   }
 
   /**
@@ -315,7 +363,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    */
   def getTopicDeltas: Seq[TopicDelta] = {
     // retrieve all topic/partitions for analysis
-    val topics = KafkaMicroConsumer.getTopicList(brokers, correlationId) flatMap { t =>
+    val topics = KafkaMicroConsumer.getTopicList(brokers) flatMap { t =>
       for {
         firstOffset <- getFirstOffset(t.topic, t.partitionId)
         lastOffset <- getLastOffset(t.topic, t.partitionId)
@@ -337,10 +385,10 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     deltas
   }
 
-  def getTopics: JValue = Extraction.decompose(KafkaMicroConsumer.getTopicList(brokers, correlationId))
+  def getTopics: JValue = Extraction.decompose(KafkaMicroConsumer.getTopicList(brokers))
 
   def getTopicSummaries: JValue = {
-    Extraction.decompose(KafkaMicroConsumer.getTopicList(brokers, correlationId).groupBy(_.topic) map { case (topic, details) =>
+    Extraction.decompose(KafkaMicroConsumer.getTopicList(brokers).groupBy(_.topic) map { case (topic, details) =>
       // produce the partitions
       val partitions = details map { detail =>
         new KafkaMicroConsumer(TopicAndPartition(topic, detail.partitionId), brokers) use { consumer =>
@@ -360,7 +408,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   def getTopicByName(topic: String): Option[JValue] = {
-    KafkaMicroConsumer.getTopicList(brokers, correlationId).find(_.topic == topic).map(Extraction.decompose)
+    KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic).map(Extraction.decompose)
   }
 
   def getTopicDetailsByName(topic: String): JValue = {
@@ -537,6 +585,8 @@ object KafkaRestFacade {
   case class ErrorJs(message: String, `type`: String = "error")
 
   case class FormattedData(`type`: String, value: Any)
+
+  case class LeaderAndReplicasJs(partition: Int, leader: Broker, replica: Broker)
 
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 
