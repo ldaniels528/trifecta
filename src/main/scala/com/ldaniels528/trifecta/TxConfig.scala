@@ -65,6 +65,7 @@ class TxConfig(val configProps: Properties) {
 
   def consumersPartitionManager_=(enabled: Boolean): Unit = {
     configProps.setProperty("trifecta.storm.kafka.consumers.partitionManager", enabled.toString)
+    ()
   }
 
   def encoding: String = configProps.getOrElse("trifecta.common.encoding", "UTF-8")
@@ -86,9 +87,9 @@ class TxConfig(val configProps: Properties) {
    * Returns all available decoders
    * @return the collection of [[TxDecoder]]s
    */
-  def getDecoders: Option[Array[TxDecoder]] = {
+  def getDecoders: Seq[TxDecoder] = {
     Option(decoderDirectory.listFiles) map { topicDirectories =>
-      (topicDirectories flatMap { topicDirectory =>
+      (topicDirectories.toSeq flatMap { topicDirectory =>
         Option(topicDirectory.listFiles) map { decoderFiles =>
           decoderFiles map { decoderFile =>
             val topic = topicDirectory.getName
@@ -102,7 +103,7 @@ class TxConfig(val configProps: Properties) {
           }
         }
       }).flatten
-    }
+    } getOrElse Nil
   }
 
   /**

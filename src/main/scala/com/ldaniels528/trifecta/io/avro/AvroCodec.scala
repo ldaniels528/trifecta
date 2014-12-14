@@ -3,11 +3,13 @@ package com.ldaniels528.trifecta.io.avro
 import java.io.{ByteArrayInputStream, File, FileInputStream, InputStream}
 import java.net.URL
 
+import com.ldaniels528.trifecta.messages.MessageDecoder
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.util.PathHelper._
 import com.ldaniels528.trifecta.util.Resource
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
+import org.apache.avro.generic.GenericRecord
 import org.apache.avro.util.Utf8
 
 import scala.collection.concurrent.TrieMap
@@ -40,7 +42,7 @@ object AvroCodec {
   }
 
   def resolve(url: String): AvroDecoder = {
-    if(!url.contains(":")) decoders.getOrElse(url, throw new IllegalStateException(s"No decoder found for '$url'"))
+    if (!url.contains(":")) decoders.getOrElse(url, throw new IllegalStateException(s"No decoder found for '$url'"))
     else {
       // is it a valid Avro input source?
       val resource_? = url match {
@@ -65,7 +67,7 @@ object AvroCodec {
    * Avro Field-Value Equality Condition
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
-  case class AvroEQ(decoder: AvroDecoder, field: String, value: String) extends Condition {
+  case class AvroEQ(decoder: MessageDecoder[GenericRecord], field: String, value: String) extends Condition {
     override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
@@ -88,7 +90,7 @@ object AvroCodec {
    * Avro Field-Value Greater-Than Condition
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
-  case class AvroGT(decoder: AvroDecoder, field: String, value: String) extends Condition {
+  case class AvroGT(decoder: MessageDecoder[GenericRecord], field: String, value: String) extends Condition {
     override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
@@ -110,7 +112,7 @@ object AvroCodec {
    * Avro Field-Value Greater-Than-Or-Equal Condition
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
-  case class AvroGE(decoder: AvroDecoder, field: String, value: String) extends Condition {
+  case class AvroGE(decoder: MessageDecoder[GenericRecord], field: String, value: String) extends Condition {
     override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
@@ -132,7 +134,7 @@ object AvroCodec {
    * Avro Field-Value Less-Than Condition
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
-  case class AvroLT(decoder: AvroDecoder, field: String, value: String) extends Condition {
+  case class AvroLT(decoder: MessageDecoder[GenericRecord], field: String, value: String) extends Condition {
     override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
@@ -154,7 +156,7 @@ object AvroCodec {
    * Avro Field-Value Less-Than-Or-Equal Condition
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
-  case class AvroLE(decoder: AvroDecoder, field: String, value: String) extends Condition {
+  case class AvroLE(decoder: MessageDecoder[GenericRecord], field: String, value: String) extends Condition {
     override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
@@ -176,7 +178,7 @@ object AvroCodec {
    * Avro Field-Value Inequality Condition
    * @author Lawrence Daniels <lawrence.daniels@gmail.com>
    */
-  case class AvroNE(decoder: AvroDecoder, field: String, value: String) extends Condition {
+  case class AvroNE(decoder: MessageDecoder[GenericRecord], field: String, value: String) extends Condition {
     override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decode(message) match {
         case Success(record) =>
