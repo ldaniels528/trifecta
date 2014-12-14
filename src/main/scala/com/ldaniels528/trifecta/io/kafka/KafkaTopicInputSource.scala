@@ -11,7 +11,7 @@ import kafka.common.TopicAndPartition
  */
 class KafkaTopicInputSource(brokers: Seq[Broker], topic: String, partition: Int = 0, fetchSize: Int = 2048, correlationId: Int = 0)(implicit zk: ZKProxy)
   extends InputSource {
-  private val consumer = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, correlationId)
+  private val consumer = new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers)
   private var offset_? : Option[Long] = consumer.getFirstOffset
 
   /**

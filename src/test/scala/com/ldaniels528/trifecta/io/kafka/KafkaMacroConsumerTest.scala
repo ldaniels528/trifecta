@@ -71,7 +71,7 @@ class KafkaMacroConsumerTest {
 
     // reset each partitions
     (0 to (partitions - 1)) foreach { partition =>
-      new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers, 1) use (_.commitOffsets(groupId, 0L, "Development offset"))
+      new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.commitOffsets(groupId, 0L, "Development offset"))
     }
   }
 
