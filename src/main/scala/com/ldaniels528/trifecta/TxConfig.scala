@@ -19,7 +19,7 @@ import scala.util.{Failure, Success, Try}
  */
 class TxConfig(val configProps: Properties) {
   // set the current working directory
-  configProps.setProperty("trifecta.common.cwd", new File(".").getCanonicalPath)
+  configProps.setProperty("trifecta.core.cwd", new File(".").getCanonicalPath)
 
   // the default state of the application is "alive"
   var alive = true
