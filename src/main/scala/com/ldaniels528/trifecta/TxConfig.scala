@@ -8,7 +8,6 @@ import com.ldaniels528.trifecta.TxConfig._
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.ldaniels528.trifecta.util.PropertiesHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
-import org.slf4j.LoggerFactory
 
 import scala.io.Source
 import scala.util.Properties._
@@ -19,8 +18,6 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxConfig(val configProps: Properties) {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
-
   // set the current working directory
   configProps.setProperty("trifecta.common.cwd", new File(".").getCanonicalPath)
 
@@ -50,10 +47,10 @@ class TxConfig(val configProps: Properties) {
     ()
   }
 
-  def cwd: String = configProps.getProperty("trifecta.common.cwd")
+  def cwd: String = configProps.getProperty("trifecta.core.cwd")
 
   def cwd_=(path: String): Unit = {
-    configProps.setProperty("trifecta.common.cwd", path)
+    configProps.setProperty("trifecta.core.cwd", path)
     ()
   }
 
@@ -62,6 +59,12 @@ class TxConfig(val configProps: Properties) {
   def debugOn_=(enabled: Boolean): Unit = {
     configProps.setProperty("trifecta.common.debugOn", enabled.toString)
     ()
+  }
+
+  def consumersPartitionManager: Boolean = configProps.getOrElse("trifecta.storm.kafka.consumers.partitionManager", "false").toBoolean
+
+  def consumersPartitionManager_=(enabled: Boolean): Unit = {
+    configProps.setProperty("trifecta.storm.kafka.consumers.partitionManager", enabled.toString)
   }
 
   def encoding: String = configProps.getOrElse("trifecta.common.encoding", "UTF-8")

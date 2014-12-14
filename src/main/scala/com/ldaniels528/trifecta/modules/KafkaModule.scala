@@ -853,7 +853,7 @@ class KafkaModule(config: TxConfig) extends Module {
     val topicPrefix = params("-t")
 
     // get the Kafka consumer groups
-    facade.getConsumers(consumerPrefix, topicPrefix)
+    facade.getConsumers(consumerPrefix, topicPrefix, config.consumersPartitionManager)
   }
 
   /**

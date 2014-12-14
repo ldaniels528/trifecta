@@ -84,7 +84,7 @@ class KafkaCliFacade(correlationId: Int = 0) {
   /**
    * Retrieves the list of Kafka consumers
    */
-  def getConsumers(consumerPrefix: Option[String], topicPrefix: Option[String])(implicit zk: ZKProxy, ec: ExecutionContext): Future[List[ConsumerDelta]] = {
+  def getConsumers(consumerPrefix: Option[String], topicPrefix: Option[String], includePartitionManager: Boolean)(implicit zk: ZKProxy, ec: ExecutionContext): Future[List[ConsumerDelta]] = {
     // get the Kafka consumer groups
     val consumersCG = Future {
       KafkaMicroConsumer.getConsumerList(topicPrefix) map { c =>
@@ -95,7 +95,8 @@ class KafkaCliFacade(correlationId: Int = 0) {
     }
 
     // get the Kafka Spout consumers (Partition Manager)
-    val consumersPM = Future {
+    val consumersPM = if (!includePartitionManager) Future.successful(Nil)
+    else Future {
       KafkaMicroConsumer.getSpoutConsumerList() map { c =>
         val topicOffset = getLastOffset(c.topic, c.partition)
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))

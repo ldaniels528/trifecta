@@ -192,7 +192,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return a list of consumers
    */
   def getConsumerSet: JValue = {
-    val consumers = getConsumerGroupsNative ++ getConsumerGroupsPM
+    val consumers = getConsumerGroupsNative ++ (if (config.consumersPartitionManager) getConsumerGroupsPM else Nil)
 
     Extraction.decompose(consumers.groupBy(_.topic) map { case (topic, consumersA) =>
       val results = (consumersA.groupBy(_.consumerId) map { case (consumerId, consumersB) =>
