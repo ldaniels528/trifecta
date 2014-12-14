@@ -412,7 +412,7 @@ class KafkaModule(config: TxConfig) extends Module {
    */
   def getReplicas(params: UnixLikeArgs) = {
     params.args match {
-      case topic :: Nil => KafkaMicroConsumer.getReplicas(topic, brokers, correlationId) sortBy(_.partition)
+      case topic :: Nil => KafkaMicroConsumer.getReplicas(topic, brokers, correlationId) sortBy (_.partition)
       case _ => dieSyntax(params)
     }
   }
