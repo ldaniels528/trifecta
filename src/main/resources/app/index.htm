@@ -208,7 +208,10 @@
         <div style="display: inline; width: 59%; float: right; margin-top: 12px">
             <div style="display: block; margin-bottom: 3px">
                 <div class="input_block">
-                    Offset <input ng-model="partition.offset" type="text" class="input-mir" ng-change="convertOffsetToInt(partition, partition.offset)">
+                    <img ng-src="/app/images/{{ loading ? 'status/loading.gif' : 'tabs/inspect/root.png' }}">
+                </div>
+                <div class="input_block">
+                    <span class="header_label">Offset</span> <input ng-model="partition.offset" type="text" class="input-mir" ng-change="convertOffsetToInt(partition, partition.offset)">
                     <img class="clickable" src="/app/images/tabs/inspect/message-first.gif" ng-click="firstMessage()" title="move to first message">
                     <img class="clickable" src="/app/images/tabs/inspect/message-prev.gif" ng-click="previousMessage()" title="move to previous message">
                     <img class="clickable" src="/app/images/tabs/inspect/message-middle.png" ng-click="medianMessage()" title="move to median message">
@@ -216,27 +219,24 @@
                     <img class="clickable" src="/app/images/tabs/inspect/message-last.gif" ng-click="lastMessage()" title="move to last message">
                 </div>
                 <div class="input_block">
-                    <img class="clickable" ng-src="/app/images/{{loading ? 'status/loading.gif' : 'tabs/inspect/search.png'}}" ng-click="messageFinderPopup()" title="search for a message">
-                </div>
-                <div class="input_block">
+                    <img class="clickable" src="/app/images/tabs/inspect/search.png" ng-click="messageFinderPopup()" title="search for a message">
                     <img class="clickable" src="/app/images/tabs/inspect/export.png" ng-click="exportMessage(message)" title="export the document">
                 </div>
                 <div class="input_block">
-                    Display Mode:
-                    <input ng-model="displayMode.state" type="radio" value="key" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> Key
-                    <input ng-model="displayMode.state" type="radio" value="message" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> Message
+                    <span class="header_label">Display</span>
+                    <input ng-model="displayMode.state" type="radio" value="key" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Key</span>
+                    <input ng-model="displayMode.state" type="radio" value="message" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Message</span>
                 </div>
             </div>
 
             <fieldset style="border-radius: 5px 5px 5px 5px">
                 <div class="message_panel">
                     <div ng-show="message.type == 'json'" hljs source="toPrettyJSON(message.payload, 4)"></div>
-                    <table ng-show="message.type == 'bytes'">
-                        <tr ng-repeat="tuple in message.payload track by $index">
-                            <td>{{ tuple[0] }}</td>
-                            <td>{{ tuple[1] }}</td>
-                        </tr>
-                    </table>
+                    <div class="full_block" ng-show="message.type == 'bytes'" ng-repeat="tuple in message.payload track by $index">
+                        <div class="binary_message_left">{{ tuple[0] }}</div>
+                        <div class="binary_message_right">{{ tuple[1] }}</div>
+                        <br style="clear: both">
+                    </div>
                 </div>
             </fieldset>
         </div>
