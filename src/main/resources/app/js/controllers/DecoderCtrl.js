@@ -7,7 +7,6 @@
         .controller('DecoderCtrl', ['$scope', '$log', '$parse', '$timeout', 'DecoderSvc',
             function ($scope, $log, $parse, $timeout, DecoderSvc) {
 
-                var _lastGoodResult = "";
                 $scope.decoders = [];
                 $scope.decoder = null;
                 $scope.schema = null;
@@ -132,27 +131,6 @@
                         $scope.schema.originalSchemaString = $scope.schema.schemaString;
                     }
                 };
-
-                /**
-                 * Formats a JSON object as a color-coded JSON expression
-                 * @param objStr the JSON object
-                 * @param tabWidth the number of tabs to use in formatting
-                 * @returns {*}
-                 */
-                $scope.toPrettyJSON = function (objStr, tabWidth) {
-                    try {
-                        var obj = $parse(objStr)({});
-                    } catch (e) {
-                        $log.error(e);
-                        return _lastGoodResult;
-                    }
-
-                    var result = JSON.stringify(obj, null, Number(tabWidth));
-                    _lastGoodResult = result;
-
-                    return result;
-                };
-
 
             }]);
 

@@ -3,8 +3,8 @@
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
-    angular.module('trifecta').controller('ObserveCtrl', ['$scope', '$log', '$timeout', '$interval', 'DashboardSvc',
-        function ($scope, $log, $timeout, $interval, DashboardSvc) {
+    angular.module('trifecta').controller('ObserveCtrl', ['$scope', '$log', '$timeout', '$interval', 'ConsumerSvc', 'ZookeeperSvc',
+        function ($scope, $log, $timeout, $interval, ConsumerSvc, ZookeeperSvc) {
 
             $scope.consumerMapping = [];
             $scope.formats = ["auto", "binary", "json", "plain-text"];
@@ -40,7 +40,7 @@
                 item.expanded = !item.expanded;
                 if(item.expanded) {
                     item.loading = true;
-                    DashboardSvc.getZkPath(item.path).then(
+                    ZookeeperSvc.getZkPath(item.path).then(
                         function (zkItems) {
                             item.loading = false;
                             item.children = zkItems;
@@ -53,7 +53,7 @@
             };
 
             $scope.formatData = function(path, format) {
-                DashboardSvc.getZkData(path, format).then(
+                ZookeeperSvc.getZkData(path, format).then(
                     function (data) {
                         $scope.zkItem.data = data;
                         if(format == 'auto') {
@@ -67,7 +67,7 @@
 
             $scope.getItemInfo = function(item) {
                 item.loading = true;
-                DashboardSvc.getZkInfo(item.path).then(
+                ZookeeperSvc.getZkInfo(item.path).then(
                     function (itemInfo) {
                         item.loading = false;
                         //$scope.selected.format = $scope.formats[0];
@@ -91,7 +91,6 @@
 
             $scope.changeObserveTab = function (index, event) {
                 $scope.observeTab = $scope.observeTabs[index];
-
                 if (event) {
                     event.preventDefault();
                 }
@@ -110,7 +109,7 @@
             };
 
             $scope.updateConsumers = function () {
-                DashboardSvc.getConsumers().then(
+                ConsumerSvc.getConsumers().then(
                     function (consumers) {
                         if ((consumers || []).length > 0) {
                             angular.forEach($scope.consumerMapping, function (root) {

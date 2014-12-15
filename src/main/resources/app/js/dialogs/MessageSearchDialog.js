@@ -48,8 +48,8 @@
     /**
      * Message Search Dialog Controller
      */
-    app.controller('MessageSearchCtrl', ['$scope', '$modalInstance', 'DashboardSvc',
-        function ($scope, $modalInstance, DashboardSvc) {
+    app.controller('MessageSearchCtrl', ['$scope', '$modalInstance', 'TopicSvc',
+        function ($scope, $modalInstance, TopicSvc) {
             $scope.topics = [];
 
             $scope.getTopics = function (hideEmptyTopics) {
@@ -67,7 +67,7 @@
             };
 
             // load the topics
-            DashboardSvc.getTopics().then(
+            TopicSvc.getTopics().then(
                 function (topics) {
                     if (topics) {
                         $scope.topics = topics;

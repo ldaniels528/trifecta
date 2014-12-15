@@ -1,13 +1,37 @@
-a {
-    cursor: pointer;
-}
+/*************************************************
+ *      Element Styles
+ *************************************************/
 
-.block { display: block }
+a { cursor: pointer }
 
 body {
     margin-left: 25px;
     margin-right: 25px;
 }
+
+fieldset { border-color: #cccccc }
+
+img { vertical-align: middle }
+
+legend { color: #999999 }
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0px;
+}
+
+th { padding: 4px 4px 4px 4px }
+
+td { padding: 4px 4px 4px 4px }
+
+th { text-align: left }
+
+
+/*************************************************
+ *      Custom Styles
+ *************************************************/
+
+.block { display: block }
 
 .bold { font-weight: bold }
 
@@ -16,10 +40,6 @@ body {
 .error {
     font-weight: bold;
     color: #ff0000;
-}
-
-fieldset {
-    border-color: #cccccc;
 }
 
 .full_block {
@@ -50,19 +70,23 @@ fieldset {
     color: #ffaa40;
 }
 
+.header_item {
+    font-size: 9pt;
+}
+
+.header_label {
+    color: #337ab7;
+    font-size: 9pt;
+    font-weight: bold;
+}
+
 .highlighted {
     background: #337ab7;
     color: #ffffff;
 }
 
-.img { vertical-align: middle }
-
 .inline {
     display: inline;
-}
-
-legend {
-    color: #999999
 }
 
 .messages { color: #00cc00 }
@@ -83,17 +107,6 @@ legend {
     padding: 4px 4px 4px 4px;
     vertical-align: middle;
 }
-
-table {
-    border-collapse: collapse;
-    border-spacing: 0px;
-}
-
-th { padding: 4px 4px 4px 4px; }
-
-td { padding: 4px 4px 4px 4px; }
-
-th { text-align: left }
 
 .title1 { color: #f00000 }
 
