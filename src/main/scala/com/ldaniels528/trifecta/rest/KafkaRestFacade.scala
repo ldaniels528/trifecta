@@ -306,9 +306,23 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def getMessage(topic: String, partition: Int, offset: Long): JValue = {
     Extraction.decompose {
       Try {
-        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetch(offset)(fetchSize = 65536).headOption)
+        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
+          val newOffset = for {
+            firstOffset <- cons.getFirstOffset
+            lastOffset <- cons.getLastOffset
+            adjOffset = offset match {
+              case o if o < firstOffset => firstOffset
+              case o if o > lastOffset => lastOffset
+              case o => o
+            }
+          } yield adjOffset
+
+          newOffset.map { o =>
+            decodeMessage(topic, cons.fetch(o)(fetchSize = 65536).headOption)
+          } getOrElse ErrorJs("Offset is undefined")
+        }
       } match {
-        case Success(message) => decodeMessage(topic, message)
+        case Success(message) => message
         case Failure(e) => ErrorJs(e.getMessage)
       }
     }
