@@ -28,6 +28,17 @@
                     });
             };
 
+            service.publishMessage = function(topic, key, message, format) {
+                return $http({
+                    url:"/rest/publishMessage/" + encodeURI(topic),
+                    method: "POST",
+                    data: { "key": key, "message" :message, "format": format },
+                    headers: {'Content-Type': 'application/json'}
+                }).then(function (response) {
+                    return response.data;
+                });
+            };
+
             return service;
         })
 })();

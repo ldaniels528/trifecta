@@ -1,5 +1,5 @@
 /**
- * Trifecta Angular.js Application
+ * Trifecta Application
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
@@ -15,7 +15,6 @@
         $rootScope.WebSockets = WebSockets;
 
         $rootScope.gloabalMessages = [];
-
         $rootScope.tabs = [
             {
                 "name": "Inspect",

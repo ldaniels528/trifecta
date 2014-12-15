@@ -166,6 +166,10 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
         case "getZkData" => facade.getZkData(toZkPath(args.init), args.last).passJson
         case "getZkInfo" => facade.getZkInfo(toZkPath(args)).passJson
         case "getZkPath" => facade.getZkPath(toZkPath(args)).passJson
+        case "publishMessage" => args match {
+          case topic :: Nil => facade.publishMessage(topic, request.asJsonString).passJson
+          case _ => missingArgs("topic")
+        }
         case "saveQuery" => facade.saveQuery(request.asJsonString).passJson
         case "saveSchema" => facade.saveSchema(request.asJsonString).passJson
         case "transformResultsToCSV" => facade.transformResultsToCSV(request.asJsonString).passCsv

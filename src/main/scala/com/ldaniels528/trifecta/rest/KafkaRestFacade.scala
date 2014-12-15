@@ -7,7 +7,7 @@ import com.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.ldaniels528.trifecta.command.parser.bdql.{BigDataQueryParser, BigDataQueryTokenizer}
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{LeaderAndReplicas, MessageData}
-import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer}
+import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
 import com.ldaniels528.trifecta.messages.logic.Condition
@@ -38,6 +38,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private val logger = LoggerFactory.getLogger(getClass)
   private var topicCache: Map[(String, Int), TopicDelta] = Map.empty
   private var consumerCache: Map[ConsumerDeltaKey, ConsumerJs] = Map.empty
+  private var publisher_? : Option[KafkaPublisher] = None
 
   // define the custom thread pool
   private implicit val ec = new ExecutionContext {
@@ -350,7 +351,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
           } yield adjOffset
 
           newOffset.map { o =>
-            cons.fetch(o)(fetchSize = 65536).headOption map(md => toMessage(md.key))
+            cons.fetch(o)(fetchSize = 65536).headOption map (md => toMessage(md.key))
           } getOrElse ErrorJs("Offset is undefined")
         }
       } match {
@@ -515,6 +516,27 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     })
   }
 
+  def publishMessage(topic: String, jsonString: String): JValue = {
+    // if the publisher has not been created ...
+    if (publisher_?.isEmpty) publisher_? = Option {
+      val publisher = KafkaPublisher(brokers)
+      publisher.open()
+      publisher
+    }
+
+    // deserialize the JSON
+    val blob = JsonHelper.transform[MessageBlobJs](jsonString)
+
+    // publish the message
+    publisher_? foreach (_.publish(topic, toBinary(blob.key), toBinary(blob.message, blob.format)))
+
+    Extraction.decompose(true)
+  }
+
+  private def toBinary(value: String, format: String = "binary"): Array[Byte] = {
+    value.getBytes(config.encoding)
+  }
+
   def saveQuery(jsonString: String): JValue = {
     Try {
       // transform the JSON string into a query
@@ -637,6 +659,8 @@ object KafkaRestFacade {
   case class FormattedData(`type`: String, value: Any)
 
   case class LeaderAndReplicasJs(partition: Int, leader: Broker, replica: Broker)
+
+  case class MessageBlobJs(key: String, message: String, format: String)
 
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 

@@ -17,6 +17,7 @@
     <link href="/app/css/index.css" type="text/css" rel="stylesheet" media=screen>
     <link href="/app/css/inspect.css" type="text/css" rel="stylesheet" media=screen>
     <link href="/app/css/observe.css" type="text/css" rel="stylesheet" media=screen>
+    <link href="/app/css/publish.css" type="text/css" rel="stylesheet" media=screen>
     <link href="/app/css/query.css" type="text/css" rel="stylesheet" media=screen>
 
     <script src="/app/js/TrifectaApp.js" type="text/javascript"></script>
@@ -71,13 +72,13 @@
         <div class="modal-body">
             <div class="full_block" style="margin: 10px">
                 <div class="full_block">
-                    <span style="font-weight: bold">Topic: </span>
+                    <span class="header_label">Topic</span>
                     <select ng-model="form.topic" ng-options="t.topic for t in getTopics(false)">
                     </select> <span ng-show="form.topic != null"> &#8212; <span ng-class="form.topic.totalMessages == 0 ? 'negative' : 'positive'">{{ form.topic.totalMessages | number }} message(s)</span></span>
                 </div>
 
                 <div class="full_block" style="margin-top: 10px">
-                    <span style="font-weight: bold">Criteria</span> <span>(e.g. symbol == "AAPL")</span>
+                    <span class="header_item">Criteria</span> <span>(e.g. symbol == "AAPL")</span>
                     <div>
                         <textarea ng-model="form.criteria" rows="4" cols="80" title="Enter query criteria here"></textarea>
                     </div>
