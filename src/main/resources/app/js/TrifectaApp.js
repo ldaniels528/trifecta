@@ -16,6 +16,57 @@
 
         $rootScope.gloabalMessages = [];
 
+        $rootScope.tabs = [
+            {
+                "name": "Inspect",
+                "contentURL" : "/app/views/inspect.htm",
+                "imageURL": "/app/images/tabs/main/inspect-24.png",
+                "active": false
+            }, {
+                "name": "Observe",
+                "contentURL" : "/app/views/observe.htm",
+                "imageURL": "/app/images/tabs/main/observe-24.png",
+                "active": false
+            }, {
+                "name": "Publish",
+                "contentURL" : "/app/views/publish.htm",
+                "imageURL": "/app/images/tabs/main/publish-24.png",
+                "active": false
+            },{
+                "name": "Query",
+                "contentURL" : "/app/views/query.htm",
+                "imageURL": "/app/images/tabs/main/query-24.png",
+                "active": false
+            }, {
+                "name": "Decoders",
+                "contentURL" : "/app/views/decoders.htm",
+                "imageURL": "/app/images/tabs/main/decoders-24.png",
+                "active": false
+            }
+        ];
+
+        // select the default tab and make it active
+        $rootScope.tab = $rootScope.tabs[0];
+        $rootScope.tab.active = true;
+
+        /**
+         * Changes the active tab
+         * @param index the given tab index
+         * @param event the given click event
+         */
+        $rootScope.changeTab = function (index, event) {
+            // deactivate the current tab
+            $rootScope.tab.active = false;
+
+            // activate the new tab
+            $rootScope.tab = $rootScope.tabs[index];
+            $rootScope.tab.active = true;
+
+            if (event) {
+                event.preventDefault();
+            }
+        };
+
         $rootScope.clearMessages = function () {
             $rootScope.gloabalMessages = [];
         };

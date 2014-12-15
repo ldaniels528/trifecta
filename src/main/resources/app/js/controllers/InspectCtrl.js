@@ -1,5 +1,5 @@
 /**
- * Trifecta Inspect Controller
+ * Inspect Controller
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
@@ -18,48 +18,6 @@
 
                 $scope.displayMode = {
                     "state" : "message"
-                };
-
-                $scope.tabs = [
-                    {
-                        "name": "Observe",
-                        "imageURL": "/app/images/tabs/main/observe.png",
-                        "active": false
-                    }, {
-                        "name": "Inspect",
-                        "imageURL": "/app/images/tabs/main/inspect.png",
-                        "active": false
-                    }, {
-                        "name": "Query",
-                        "imageURL": "/app/images/tabs/main/query.png",
-                        "active": false
-                    }, {
-                        "name": "Decoders",
-                        "imageURL": "/app/images/tabs/main/decoders.png",
-                        "active": false
-                    }
-                ];
-
-                // select the default tab and make it active
-                $scope.tab = $scope.tabs[0];
-                $scope.tab.active = true;
-
-                /**
-                 * Changes the active tab
-                 * @param index the given tab index
-                 * @param event the given click event
-                 */
-                $scope.changeTab = function (index, event) {
-                    // deactivate the current tab
-                    $scope.tab.active = false;
-
-                    // activate the new tab
-                    $scope.tab = $scope.tabs[index];
-                    $scope.tab.active = true;
-
-                    if (event) {
-                        event.preventDefault();
-                    }
                 };
 
                 $scope.clearMessage = function() {

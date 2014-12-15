@@ -1,5 +1,5 @@
 /**
- * Trifecta Inspect Service
+ * Topic Service
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {

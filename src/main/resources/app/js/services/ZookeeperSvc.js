@@ -1,5 +1,5 @@
 /**
- * Trifecta Zookeeper Service
+ * Zookeeper Service
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {

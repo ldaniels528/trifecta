@@ -1,5 +1,5 @@
 /**
- * Trifecta Consumer Service
+ * Consumer Service
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {

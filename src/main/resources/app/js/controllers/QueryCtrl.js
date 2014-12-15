@@ -1,5 +1,5 @@
 /**
- * Queries Controller
+ * Query Controller
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
