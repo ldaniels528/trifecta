@@ -192,8 +192,8 @@ For more details about using default decoders with the CLI application <a href="
 <a name="trifecta-ui-query"></a>
 #### Queries
 
-Trifecta UI also provides a way to execute queries against topics using BDQL (Big Data Query Language). For more
-detailed information about BDQL queries, <a href="#kafka-search-by-query">click here</a>.
+Trifecta UI also provides a way to execute queries against topics using KQL (Kafka Query Language). For more
+detailed information about KQL queries, <a href="#kafka-search-by-query">click here</a>.
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png)
 

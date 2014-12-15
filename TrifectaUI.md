@@ -57,13 +57,10 @@ file structure:
 The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
 restart Trifecta UI, and your messages will be displayed in JSON format.
 
-Additionally, once a "default" decoder is configured for a Kafka topic, the CLI application can use them as well.
-For more details about using default decoders with the CLI application <a href="#kafka-default-avro-decoder">click here</a>.
-
 <a name="trifecta-ui-query"></a>
 #### Queries
 
-Trifecta UI also provides a way to execute queries against topics using BDQL (Big Data Query Language). For more
-detailed information about BDQL queries, <a href="#kafka-search-by-query">click here</a>.
+Trifecta UI also provides a way to execute queries against topics using KQL (Kafka Query Language). For more
+detailed information about KQL queries, <a href="#kafka-search-by-query">click here</a>.
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png)
