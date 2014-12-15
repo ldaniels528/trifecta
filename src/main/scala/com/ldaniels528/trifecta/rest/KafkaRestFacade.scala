@@ -297,13 +297,13 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   /**
-   * Retrieves the message for given topic, partition and offset
+   * Retrieves the message data for given topic, partition and offset
    * @param topic the given topic
    * @param partition the given partition
    * @param offset the given offset
    * @return the JSON representation of the message
    */
-  def getMessage(topic: String, partition: Int, offset: Long): JValue = {
+  def getMessageData(topic: String, partition: Int, offset: Long): JValue = {
     Extraction.decompose {
       Try {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
@@ -318,7 +318,39 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
           } yield adjOffset
 
           newOffset.map { o =>
-            decodeMessage(topic, cons.fetch(o)(fetchSize = 65536).headOption)
+            decodeMessageData(topic, cons.fetch(o)(fetchSize = 65536).headOption)
+          } getOrElse ErrorJs("Offset is undefined")
+        }
+      } match {
+        case Success(message) => message
+        case Failure(e) => ErrorJs(e.getMessage)
+      }
+    }
+  }
+
+  /**
+   * Retrieves the message key for given topic, partition and offset
+   * @param topic the given topic
+   * @param partition the given partition
+   * @param offset the given offset
+   * @return the JSON representation of the message key
+   */
+  def getMessageKey(topic: String, partition: Int, offset: Long): JValue = {
+    Extraction.decompose {
+      Try {
+        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
+          val newOffset = for {
+            firstOffset <- cons.getFirstOffset
+            lastOffset <- cons.getLastOffset
+            adjOffset = offset match {
+              case o if o < firstOffset => firstOffset
+              case o if o > lastOffset => lastOffset
+              case o => o
+            }
+          } yield adjOffset
+
+          newOffset.map { o =>
+            cons.fetch(o)(fetchSize = 65536).headOption map(md => toMessage(md.key))
           } getOrElse ErrorJs("Offset is undefined")
         }
       } match {
@@ -334,25 +366,25 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @param message_? an option of a [[MessageData]]
    * @return an option of a decoded message
    */
-  private def decodeMessage(topic: String, message_? : Option[MessageData]) = {
+  private def decodeMessageData(topic: String, message_? : Option[MessageData]) = {
     val decoders = config.getDecoders.filter(_.topic == topic).sortBy(-_.lastModified)
-    message_? map { input =>
+    message_? map { md =>
       decoders.foldLeft[Option[MessageJs]](None) { (result, d) =>
-        result ?? attemptDecode(input, d)
+        result ?? attemptDecode(md.message, d)
       } getOrElse message_?.map(toMessage)
     }
   }
 
   /**
    * Attempts to decode the given message with the given decoder
-   * @param input the given input [[MessageData]]
+   * @param bytes the given array of bytes
    * @param txDecoder the given [[TxDecoder]]
    * @return an option of a decoded message
    */
-  private def attemptDecode(input: MessageData, txDecoder: TxDecoder) = {
+  private def attemptDecode(bytes: Array[Byte], txDecoder: TxDecoder) = {
     txDecoder.decoder match {
       case Left(av) =>
-        av.decode(input.message) match {
+        av.decode(bytes) match {
           case Success(record) => Option(toMessage(record))
           case Failure(e) => None
         }

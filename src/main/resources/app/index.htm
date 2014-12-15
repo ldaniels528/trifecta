@@ -4,7 +4,7 @@
     <title>Trifecta: Dashboard</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <link href="/app/lib/css/bootstrap.min.css" type="text/css" rel="stylesheet" media=screen>
-    <link href="/app/lib/js/tomorrow.min.css" type="text/css" rel="stylesheet" media=screen>
+    <link href="/app/lib/css/tomorrow.min.css" type="text/css" rel="stylesheet" media=screen>
     <script src="/app/lib/js/jquery-2.1.1.min.js" type="text/javascript"></script>
     <script src="/app/lib/js/angular.min.js" type="text/javascript"></script>
     <script src="/app/lib/js/angular-resource.min.js" type="text/javascript"></script>
@@ -18,23 +18,25 @@
     <link href="/app/css/inspect.css" type="text/css" rel="stylesheet" media=screen>
     <link href="/app/css/observe.css" type="text/css" rel="stylesheet" media=screen>
     <link href="/app/css/query.css" type="text/css" rel="stylesheet" media=screen>
+
     <script src="/app/js/TrifectaApp.js" type="text/javascript"></script>
     <script src="/app/js/Consumers.js" type="text/javascript"></script>
-    <script src="/app/js/DashboardSvc.js" type="text/javascript"></script>
-    <script src="/app/js/DashboardCtrl.js" type="text/javascript"></script>
-    <script src="/app/js/DecoderCtrl.js" type="text/javascript"></script>
-    <script src="/app/js/DecoderSvc.js" type="text/javascript"></script>
-    <script src="/app/js/InspectCtrl.js" type="text/javascript"></script>
-    <script src="/app/js/InspectSvc.js" type="text/javascript"></script>
-    <script src="/app/js/MessageSearchDialog.js" type="text/javascript"></script>
-    <script src="/app/js/ObserveCtrl.js" type="text/javascript"></script>
-    <script src="/app/js/QueryCtrl.js" type="text/javascript"></script>
-    <script src="/app/js/QuerySvc.js" type="text/javascript"></script>
     <script src="/app/js/Topics.js" type="text/javascript"></script>
-    <script src="/app/js/WebSocketsSvc.js" type="text/javascript"></script>
+    <script src="/app/js/services/ConsumerSvc.js" type="text/javascript"></script>
+    <script src="/app/js/services/DecoderSvc.js" type="text/javascript"></script>
+    <script src="/app/js/services/MessageSvc.js" type="text/javascript"></script>
+    <script src="/app/js/services/QuerySvc.js" type="text/javascript"></script>
+    <script src="/app/js/services/TopicSvc.js" type="text/javascript"></script>
+    <script src="/app/js/services/WebSocketsSvc.js" type="text/javascript"></script>
+    <script src="/app/js/services/ZookeeperSvc.js" type="text/javascript"></script>
+    <script src="/app/js/controllers/DecoderCtrl.js" type="text/javascript"></script>
+    <script src="/app/js/controllers/InspectCtrl.js" type="text/javascript"></script>
+    <script src="/app/js/controllers/ObserveCtrl.js" type="text/javascript"></script>
+    <script src="/app/js/controllers/QueryCtrl.js" type="text/javascript"></script>
+    <script src="/app/js/dialogs/MessageSearchDialog.js" type="text/javascript"></script>
 </head>
 
-<body ng-controller="DashboardCtrl">
+<body ng-controller="InspectCtrl">
     <h2><span class="title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span> <span class="version">v{{ version }}</span></h2>
 
     <!-- global error messages -->
@@ -120,7 +122,7 @@
     </div>
 
     <!-- Inspect -->
-    <div ng-controller="InspectCtrl" ng-show="tab.name == 'Inspect'" class="full_block">
+    <div ng-show="tab.name == 'Inspect'" class="full_block">
         <div style="display: inline; width: 40%; float: left">
             <fieldset style="border-radius: 5px 5px 5px 5px">
                 <legend>Topics</legend>
@@ -207,14 +209,22 @@
             <div style="display: block; margin-bottom: 3px">
                 <div class="input_block">
                     Offset <input ng-model="partition.offset" type="text" class="input-mir" ng-change="convertOffsetToInt(partition, partition.offset)">
-                    <img class="clickable" src="/app/images/buttons/navigation/message-first.gif" ng-click="firstMessage()" title="move to first message">
-                    <img class="clickable" src="/app/images/buttons/navigation/message-prev.gif" ng-click="previousMessage()" title="move to previous message">
-                    <img class="clickable" src="/app/images/buttons/navigation/message-middle.png" ng-click="medianMessage()" title="move to median message">
-                    <img class="clickable" src="/app/images/buttons/navigation/message-next.gif" ng-click="nextMessage()" title="move to next message">
-                    <img class="clickable" src="/app/images/buttons/navigation/message-last.gif" ng-click="lastMessage()" title="move to last message">
+                    <img class="clickable" src="/app/images/tabs/inspect/message-first.gif" ng-click="firstMessage()" title="move to first message">
+                    <img class="clickable" src="/app/images/tabs/inspect/message-prev.gif" ng-click="previousMessage()" title="move to previous message">
+                    <img class="clickable" src="/app/images/tabs/inspect/message-middle.png" ng-click="medianMessage()" title="move to median message">
+                    <img class="clickable" src="/app/images/tabs/inspect/message-next.gif" ng-click="nextMessage()" title="move to next message">
+                    <img class="clickable" src="/app/images/tabs/inspect/message-last.gif" ng-click="lastMessage()" title="move to last message">
                 </div>
                 <div class="input_block">
-                    <img class="clickable" ng-src="/app/images/{{loading ? 'status/loading.gif' : 'buttons/search.png'}}" ng-click="messageFinderPopup()" title="search for a message">
+                    <img class="clickable" ng-src="/app/images/{{loading ? 'status/loading.gif' : 'tabs/inspect/search.png'}}" ng-click="messageFinderPopup()" title="search for a message">
+                </div>
+                <div class="input_block">
+                    <img class="clickable" src="/app/images/tabs/inspect/export.png" ng-click="exportMessage(message)" title="export the document">
+                </div>
+                <div class="input_block">
+                    Display Mode:
+                    <input ng-model="displayMode.state" type="radio" value="key" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> Key
+                    <input ng-model="displayMode.state" type="radio" value="message" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> Message
                 </div>
             </div>
 
@@ -558,24 +568,6 @@
         <div class="modal-body">
             <div class="full_block">
                 <progressbar class="progress-striped active" max="100" value="100" type="success"><i>Searching...</i></progressbar>
-            </div>
-        </div>
-    </script>
-
-    <!-- Saved Query Dialog -->
-    <script type="text/ng-template" id="saved_query.htm">
-        <div class="modal-header">
-            <h4>Saved Query</h4>
-        </div>
-        <div class="modal-body">
-            <div class="full_block" style="margin-bottom: 5px">
-                Query Name: <input type="text" ng-model="queryName">
-            </div>
-            <textarea ng-model="comments" rows="10" cols="80" placeholder="Enter comments here"></textarea>
-
-            <div class="full_block">
-                <button style="margin-top: 10px" ng-click="ok()">Save</button>
-                <button style="float: right; margin-top: 10px" ng-click="cancel()">Cancel</button>
             </div>
         </div>
     </script>

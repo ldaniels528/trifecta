@@ -1,19 +1,24 @@
 /**
- * Trifecta Dashboard Controller
+ * Trifecta Inspect Controller
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
     angular.module('trifecta')
-        .controller('DashboardCtrl', ['$scope', '$interval', '$log', '$timeout', 'DashboardSvc', 'InspectSvc', 'MessageSearchSvc',
-            function ($scope, $interval, $log, $timeout, DashboardSvc, InspectSvc, MessageSearchSvc) {
+        .controller('InspectCtrl', ['$scope', '$interval', '$log', '$parse', '$timeout', 'MessageSvc', 'MessageSearchSvc', 'TopicSvc',
+            function ($scope, $interval, $log, $parse, $timeout, MessageSvc, MessageSearchSvc, TopicSvc) {
 
-                $scope.version = "0.18.1";
+                var _lastGoodResult = "";
+
+                $scope.version = "0.18.2";
+                $scope.hideEmptyTopics = true;
                 $scope.replicas = [];
                 $scope.topics = [];
                 $scope.topic = null;
                 $scope.loading = 0;
 
-                clearMessage();
+                $scope.displayMode = {
+                    "state" : "message"
+                };
 
                 $scope.tabs = [
                     {
@@ -57,6 +62,59 @@
                     }
                 };
 
+                $scope.clearMessage = function() {
+                    $scope.message = {};
+                };
+
+                /**
+                 * Converts the given offset from a string value to an integer
+                 * @param partition the partition that the offset value will be updated within
+                 * @param offset the given offset string value
+                 */
+                $scope.convertOffsetToInt = function(partition, offset) {
+                    partition.offset = parseInt(offset);
+                };
+
+                /**
+                 * Exports the given message to an external system
+                 * @param topic the given topic
+                 * @param partition the given partition
+                 * @param offset the given offset
+                 */
+                $scope.exportMessage = function(topic, partition, offset) {
+                    alert("Not yet implemented");
+                };
+
+                $scope.getMessageData = function (topic, partition, offset) {
+                    $scope.clearMessage();
+                    $scope.loading++;
+
+                    MessageSvc.getMessage(topic, partition, offset).then(
+                        function (message) {
+                            $scope.message = message;
+                            if($scope.loading) $scope.loading--;
+                        },
+                        function (err) {
+                            $scope.addError(err);
+                            if($scope.loading) $scope.loading--;
+                        });
+                };
+
+                $scope.getMessageKey = function (topic, partition, offset) {
+                    $scope.clearMessage();
+                    $scope.loading++;
+
+                    MessageSvc.getMessageKey(topic, partition, offset).then(
+                        function (message) {
+                            $scope.message = message;
+                            if($scope.loading) $scope.loading--;
+                        },
+                        function (err) {
+                            $scope.addError(err);
+                            if($scope.loading) $scope.loading--;
+                        });
+                };
+
                 $scope.messageFinderPopup = function () {
                     MessageSearchSvc.finderDialog($scope).then(function (form) {
                         // perform the validation of the form
@@ -73,7 +131,7 @@
                                 var loadingDialog = MessageSearchSvc.loadingDialog($scope);
 
                                 // perform the search
-                                DashboardSvc.findOne(form.topic, form.criteria)
+                                MessageSvc.findOne(form.topic, form.criteria)
                                     .then(function (message) {
                                         loadingDialog.close({});
                                         if (message.type == "error") {
@@ -100,7 +158,7 @@
                 };
 
                 $scope.getReplicas = function (topic) {
-                    InspectSvc.getReplicas(topic).then(
+                    TopicSvc.getReplicas(topic).then(
                         function (replicas) {
                             $scope.replicas = replicas;
                         },
@@ -116,23 +174,19 @@
                 };
 
                 $scope.loadMessage = function () {
-                    if ($scope.topic.totalMessages > 0) {
-                        var topic = $scope.topic.topic;
-                        var partition = $scope.partition.partition;
-                        var offset = $scope.partition.offset;
+                    var topic = $scope.topic.topic;
+                    var partition = $scope.partition.partition;
+                    var offset = $scope.partition.offset;
 
-                        clearMessage();
-                        $scope.loading++;
-
-                        DashboardSvc.getMessage(topic, partition, offset).then(
-                            function (message) {
-                                $scope.message = message;
-                                if($scope.loading) $scope.loading--;
-                            },
-                            function (err) {
-                                $scope.addError(err);
-                                if($scope.loading) $scope.loading--;
-                            });
+                    switch($scope.displayMode.state) {
+                        case "key":
+                            $scope.getMessageKey(topic, partition, offset);
+                            break;
+                        case "message":
+                            $scope.getMessageData(topic, partition, offset);
+                            break;
+                        default:
+                            $log.error("Unrecognized display mode (mode = " + mode + ")");
                     }
                 };
 
@@ -180,6 +234,20 @@
                     }
                 };
 
+                $scope.resetMessageState = function(mode, topic, partition, offset) {
+                    $log.info("mode = " + mode + ", topic = " + topic + ", partition = " + partition + ", offset = " + offset);
+                    switch(mode) {
+                        case "key":
+                            $scope.getMessageKey(topic, partition, offset);
+                            break;
+                        case "message":
+                            $scope.getMessageData(topic, partition, offset);
+                            break;
+                        default:
+                            $log.error("Unrecognized display mode (mode = " + mode + ")");
+                    }
+                };
+
                 $scope.switchToMessage = function (topicID, partitionID, offset) {
                     $log.info("switchToMessage: topicID = " + topicID + ", partitionID = " + partitionID + ", offset = " + offset);
                     var topic = findTopicByName(topicID);
@@ -193,6 +261,27 @@
                     }
                 };
 
+                /**
+                 * Formats a JSON object as a color-coded JSON expression
+                 * @param objStr the JSON object
+                 * @param tabWidth the number of tabs to use in formatting
+                 * @returns {*}
+                 */
+                $scope.toPrettyJSON = function (objStr, tabWidth) {
+                    var obj = null;
+                    try {
+                        obj = $parse(objStr)({});
+                    } catch (e) {
+                        $log.error(e);
+                        return _lastGoodResult;
+                    }
+
+                    var result = JSON.stringify(obj, null, Number(tabWidth));
+                    _lastGoodResult = result;
+
+                    return result;
+                };
+
                 $scope.updatePartition = function (partition) {
                     $scope.partition = partition;
 
@@ -204,7 +293,7 @@
                         $scope.loadMessage();
                     }
                     else {
-                        clearMessage();
+                        $scope.clearMessage();
                     }
                 };
 
@@ -224,13 +313,9 @@
                     else {
                         console.log("No partitions found");
                         $scope.partition = {};
-                        clearMessage();
+                        $scope.clearMessage();
                     }
                 };
-
-                function clearMessage() {
-                    $scope.message = {};
-                }
 
                 function ensureOffset(partition) {
                     if(!partition.offset) {
@@ -267,6 +352,9 @@
                     }
                     return null;
                 }
+
+                // initially, clear the message
+                $scope.clearMessage();
 
                 /**
                  * Watch for topic changes, and when one occurs:
