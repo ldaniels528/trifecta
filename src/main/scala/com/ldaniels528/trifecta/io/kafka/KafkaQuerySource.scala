@@ -1,6 +1,7 @@
 package com.ldaniels528.trifecta.io.kafka
 
 import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
+import com.ldaniels528.trifecta.io.avro.AvroMessageDecoding
 import com.ldaniels528.trifecta.io.kafka.KafkaQuerySource._
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.logic.Condition
@@ -8,6 +9,7 @@ import com.ldaniels528.trifecta.messages.query.{KQLResult, KQLSource}
 import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.util.Utf8
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
@@ -18,6 +20,7 @@ import scala.util.{Failure, Success}
  */
 case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: Int = 0)(implicit zk: ZKProxy)
   extends KQLSource {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
 
   override def findAll(fields: Seq[String],
                        decoder: MessageDecoder[_],
@@ -46,9 +49,11 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
    */
   private def decodeMessage(msg: BinaryMessage, decoder: MessageDecoder[_]): GenericRecord = {
     // only Avro decoders are supported
-    val avDecoder: MessageDecoder[GenericRecord] = decoder match {
-      case av: MessageDecoder[GenericRecord] => av
-      case _ => throw new IllegalStateException("Only Avro decoding is supported")
+    val avDecoder: AvroMessageDecoding = decoder match {
+      case av: AvroMessageDecoding => av
+      case dec =>
+        logger.error(s"Wanted ${classOf[AvroMessageDecoding].getName} but found ${dec.getClass.getName}")
+        throw new IllegalStateException("Only Avro decoding is supported")
     }
 
     // decode the message

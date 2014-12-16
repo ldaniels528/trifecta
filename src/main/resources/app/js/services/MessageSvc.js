@@ -1,5 +1,5 @@
 /**
- * Trifecta Message Service
+ * Message Service
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
@@ -26,6 +26,22 @@
                     .then(function (response) {
                         return response.data;
                     });
+            };
+
+            service.publishMessage = function(topic, key, message, keyFormat, messageFormat) {
+                return $http({
+                    url:"/rest/publishMessage/" + encodeURI(topic),
+                    method: "POST",
+                    data: {
+                        "key": key,
+                        "message" :message,
+                        "keyFormat": keyFormat,
+                        "messageFormat": messageFormat
+                    },
+                    headers: {'Content-Type': 'application/json'}
+                }).then(function (response) {
+                    return response.data;
+                });
             };
 
             return service;

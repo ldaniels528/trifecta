@@ -1,15 +1,12 @@
 .binary_message_left {
     display: inline;
     float: left;
-    width: 49.5%;
-    border-right: 1px solid #888888;
     color: #000000;
 }
 
 .binary_message_right {
     display: inline;
     float: right;
-    width: 49.5%;
     color: #0000ff;
 }
 

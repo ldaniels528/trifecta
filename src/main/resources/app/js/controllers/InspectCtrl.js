@@ -1,5 +1,5 @@
 /**
- * Trifecta Inspect Controller
+ * Inspect Controller
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
@@ -7,9 +7,6 @@
         .controller('InspectCtrl', ['$scope', '$interval', '$log', '$parse', '$timeout', 'MessageSvc', 'MessageSearchSvc', 'TopicSvc',
             function ($scope, $interval, $log, $parse, $timeout, MessageSvc, MessageSearchSvc, TopicSvc) {
 
-                var _lastGoodResult = "";
-
-                $scope.version = "0.18.3";
                 $scope.hideEmptyTopics = true;
                 $scope.replicas = [];
                 $scope.topics = [];
@@ -18,48 +15,6 @@
 
                 $scope.displayMode = {
                     "state" : "message"
-                };
-
-                $scope.tabs = [
-                    {
-                        "name": "Observe",
-                        "imageURL": "/app/images/tabs/main/observe.png",
-                        "active": false
-                    }, {
-                        "name": "Inspect",
-                        "imageURL": "/app/images/tabs/main/inspect.png",
-                        "active": false
-                    }, {
-                        "name": "Query",
-                        "imageURL": "/app/images/tabs/main/query.png",
-                        "active": false
-                    }, {
-                        "name": "Decoders",
-                        "imageURL": "/app/images/tabs/main/decoders.png",
-                        "active": false
-                    }
-                ];
-
-                // select the default tab and make it active
-                $scope.tab = $scope.tabs[0];
-                $scope.tab.active = true;
-
-                /**
-                 * Changes the active tab
-                 * @param index the given tab index
-                 * @param event the given click event
-                 */
-                $scope.changeTab = function (index, event) {
-                    // deactivate the current tab
-                    $scope.tab.active = false;
-
-                    // activate the new tab
-                    $scope.tab = $scope.tabs[index];
-                    $scope.tab.active = true;
-
-                    if (event) {
-                        event.preventDefault();
-                    }
                 };
 
                 $scope.clearMessage = function() {
@@ -89,14 +44,22 @@
                     $scope.clearMessage();
                     $scope.loading++;
 
+                    // ensure the loading animation stops
+                    var promise = $timeout(function() {
+                        $log.warn("Timeout reached for loading animation: loading = " + $scope.loading);
+                        if($scope.loading) $scope.loading--;
+                    }, 5000);
+
                     MessageSvc.getMessage(topic, partition, offset).then(
                         function (message) {
                             $scope.message = message;
                             if($scope.loading) $scope.loading--;
+                            $timeout.cancel(promise);
                         },
                         function (err) {
                             $scope.addError(err);
                             if($scope.loading) $scope.loading--;
+                            $timeout.cancel(promise);
                         });
                 };
 
@@ -104,14 +67,22 @@
                     $scope.clearMessage();
                     $scope.loading++;
 
+                    // ensure the loading animation stops
+                    var promise = $timeout(function() {
+                        $log.warn("Timeout reached for loading animation: loading = " + $scope.loading);
+                        if($scope.loading) $scope.loading--;
+                    }, 5000);
+
                     MessageSvc.getMessageKey(topic, partition, offset).then(
                         function (message) {
                             $scope.message = message;
                             if($scope.loading) $scope.loading--;
+                            $timeout.cancel(promise);
                         },
                         function (err) {
                             $scope.addError(err);
                             if($scope.loading) $scope.loading--;
+                            $timeout.cancel(promise);
                         });
                 };
 
@@ -186,7 +157,7 @@
                             $scope.getMessageData(topic, partition, offset);
                             break;
                         default:
-                            $log.error("Unrecognized display mode (mode = " + mode + ")");
+                            $log.error("Unrecognized display mode (mode = " + $scope.displayMode.state + ")");
                     }
                 };
 
@@ -257,7 +228,7 @@
                         $scope.partition = partition;
                         $scope.partition.offset = offset;
                         $scope.loadMessage();
-                        $scope.changeTab(1, null); // Query
+                        $scope.changeTab(0, null); // Inspect
                     }
                 };
 
@@ -272,14 +243,11 @@
                     try {
                         obj = $parse(objStr)({});
                     } catch (e) {
+                        //$scope.addErrorMessage("Error parsing JSON document");
                         $log.error(e);
-                        return _lastGoodResult;
+                        return "";
                     }
-
-                    var result = JSON.stringify(obj, null, Number(tabWidth));
-                    _lastGoodResult = result;
-
-                    return result;
+                    return JSON.stringify(obj, null, Number(tabWidth));
                 };
 
                 $scope.updatePartition = function (partition) {

@@ -1,17 +1,20 @@
 package com.ldaniels528.trifecta.rest
 
 import java.io.{File, FileOutputStream}
+import java.util.UUID
 import java.util.concurrent.Executors
 
 import com.ldaniels528.trifecta.TxConfig.TxDecoder
+import com.ldaniels528.trifecta.command.parser.CommandParser
+import com.ldaniels528.trifecta.io.ByteBufferUtils
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{LeaderAndReplicas, MessageData}
-import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer}
+import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
-import com.ldaniels528.trifecta.messages.query.parser.{KafkaQueryTokenizer, KafkaQueryParser}
+import com.ldaniels528.trifecta.messages.query.parser.{KafkaQueryParser, KafkaQueryTokenizer}
 import com.ldaniels528.trifecta.messages.query.{KQLResult, KQLSelection}
 import com.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageDecoder}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
@@ -38,6 +41,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private val logger = LoggerFactory.getLogger(getClass)
   private var topicCache: Map[(String, Int), TopicDelta] = Map.empty
   private var consumerCache: Map[ConsumerDeltaKey, ConsumerJs] = Map.empty
+  private var publisher_? : Option[KafkaPublisher] = None
 
   // define the custom thread pool
   private implicit val ec = new ExecutionContext {
@@ -139,8 +143,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     while (it.hasNext) {
       val args = it.take(criteria.size + 3).toList
       criteria = args match {
-        case List("and", field, operator, value) => criteria.map(AND(_, compile(field, operator, deQuote(value))))
-        case List("or", field, operator, value) => criteria.map(OR(_, compile(field, operator, deQuote(value))))
+        case List(keyword, field, operator, value) if keyword.equalsIgnoreCase("and") => criteria.map(AND(_, compile(field, operator, deQuote(value))))
+        case List(keyword, field, operator, value) if keyword.equalsIgnoreCase("or") => criteria.map(OR(_, compile(field, operator, deQuote(value))))
         case List(field, operator, value) => Option(compile(field, operator, deQuote(value)))
         case unknown => throw new IllegalArgumentException(s"Illegal operand $unknown")
       }
@@ -367,7 +371,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return an option of a decoded message
    */
   private def decodeMessageData(topic: String, message_? : Option[MessageData]) = {
-    val decoders = config.getDecoders.filter(_.topic == topic).sortBy(-_.lastModified)
+    def decoders = config.getDecoders.filter(_.topic == topic).sortBy(-_.lastModified)
     message_? map { md =>
       decoders.foldLeft[Option[MessageJs]](None) { (result, d) =>
         result ?? attemptDecode(md.message, d)
@@ -395,6 +399,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private def toMessage(message: Any): MessageJs = message match {
     case opt: Option[Any] => toMessage(opt.orNull)
     case bytes: Array[Byte] => MessageJs(`type` = "bytes", payload = toByteArray(bytes))
+    case md: MessageData if JsonHelper.isJson(new String(md.message)) => MessageJs(`type` = "json", payload = new String(md.message))
+    case md: MessageData => MessageJs(`type` = "bytes", payload = toByteArray(md.message))
     case value => MessageJs(`type` = "json", payload = JsonHelper.makePretty(String.valueOf(value)))
   }
 
@@ -513,6 +519,57 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       case Success(items) => items
       case Failure(e) => ErrorJs(message = e.getMessage)
     })
+  }
+
+  def publishMessage(topic: String, jsonString: String): JValue = {
+    Extraction.decompose {
+      Try {
+        // if the publisher has not been created ...
+        if (publisher_?.isEmpty) publisher_? = Option {
+          val publisher = KafkaPublisher(brokers)
+          publisher.open()
+          publisher
+        }
+
+        // deserialize the JSON
+        val blob = JsonHelper.transform[MessageBlobJs](jsonString)
+        logger.info(s"blob = $blob")
+
+        // publish the message
+        publisher_? foreach (_.publish(
+          topic,
+          key = blob.key map (key => toBinary(key, blob.keyFormat)) getOrElse toDefaultBinary(blob.keyFormat),
+          message = toBinary(blob.message, blob.messageFormat)))
+
+      } match {
+        case Success(_) => true
+        case Failure(e) => ErrorJs(message = e.getMessage)
+      }
+    }
+  }
+
+  private def toBinary(value: String, format: String): Array[Byte] = {
+    logger.info(s"value = $value")
+    format match {
+      case "ASCII" => value.getBytes(config.encoding)
+      case "JSON" =>
+        logger.info(s"json = ${JsonHelper.makeCompact(value)}")
+        JsonHelper.makeCompact(value).getBytes(config.encoding)
+      case "Hex-Notation" => CommandParser.parseDottedHex(value)
+      case "EPOC" => ByteBufferUtils.longToBytes(value.toLong)
+      case "UUID" => ByteBufferUtils.uuidToBytes(UUID.fromString(value))
+      case _ =>
+        throw new IllegalArgumentException(s"Invalid format type '$format'")
+    }
+  }
+
+  private def toDefaultBinary(format: String): Array[Byte] = {
+    format match {
+      case "EPOC" => ByteBufferUtils.longToBytes(System.currentTimeMillis())
+      case "UUID" => ByteBufferUtils.uuidToBytes(UUID.randomUUID())
+      case _ =>
+        throw new IllegalArgumentException(s"Format type '$format' cannot be automatically generated")
+    }
   }
 
   def saveQuery(jsonString: String): JValue = {
@@ -637,6 +694,8 @@ object KafkaRestFacade {
   case class FormattedData(`type`: String, value: Any)
 
   case class LeaderAndReplicasJs(partition: Int, leader: Broker, replica: Broker)
+
+  case class MessageBlobJs(key: Option[String], message: String, keyFormat: String, messageFormat: String)
 
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 

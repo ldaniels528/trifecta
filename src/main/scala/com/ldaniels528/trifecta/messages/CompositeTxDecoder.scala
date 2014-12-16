@@ -2,6 +2,7 @@ package com.ldaniels528.trifecta.messages
 
 import com.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.ldaniels528.trifecta.io.avro.AvroCodec._
+import com.ldaniels528.trifecta.io.avro.AvroMessageDecoding
 import com.ldaniels528.trifecta.io.json.JsonTranscoding
 import com.ldaniels528.trifecta.messages.logic.Expressions._
 import com.ldaniels528.trifecta.messages.logic.{Condition, MessageEvaluation}
@@ -15,7 +16,7 @@ import scala.util.{Failure, Success, Try}
  * Composite Trifecta Decoder
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class CompositeTxDecoder(decoders: Seq[TxDecoder]) extends MessageDecoder[GenericRecord] with JsonTranscoding with MessageEvaluation {
+class CompositeTxDecoder(decoders: Seq[TxDecoder]) extends AvroMessageDecoding with JsonTranscoding with MessageEvaluation {
 
   /**
    * Compiles the given operation into a condition

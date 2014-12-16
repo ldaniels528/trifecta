@@ -1,0 +1,121 @@
+<div class="full_block">
+    <div style="display: inline; width: 40%; float: left">
+        <fieldset style="border-radius: 5px 5px 5px 5px">
+            <legend>Topics</legend>
+            <div class="topics_container">
+                <div ng-repeat="t in getTopics(hideEmptyTopics)|orderBy:'topic'" ng-class="t == topic ? 'highlighted' : ''">
+                    <img class="middle" ng-src="/app/images/status/{{t.totalMessages ? 'greenlight.png' : 'offlight.png'}}">
+                    <img class="middle" src="/app/images/common/topic-16.png">
+                    <a ng-click="updateTopic(t)">
+                            <span ng-class="t == topic ? 'highlighted' : ''"> {{t.topic}}
+                                <span ng-show="t.totalMessages">
+                                    (<span ng-show="t.totalMessages > 0" ng-class="t == topic ? 'highlighted' : 'messages'">{{t.totalMessages | number}}</span>)
+                                </span>
+                            </span>
+                    </a>
+                </div>
+            </div>
+
+            <div style="text-align: right; font-size: 10pt">
+                <a ng-click="hideEmptyTopics = !hideEmptyTopics">
+                    <span ng-show="hideEmptyTopics">[Show empty topics]</span>
+                    <span ng-show="!hideEmptyTopics">[Hide empty topics]</span>
+                </a>
+            </div>
+        </fieldset>
+
+        <div class="separator">
+            <fieldset style="border-radius: 5px 5px 5px 5px">
+                <legend>Messages and Offsets</legend>
+                <div class="messages_and_offsets">
+                    <table class="full_width">
+                        <tr>
+                            <th>Partition</th>
+                            <th>First Offset</th>
+                            <th>Last Offset</th>
+                            <th>Messages</th>
+                        </tr>
+                        <tr ng-repeat="p in topic.partitions" ng-class="p == partition ? 'highlighted' : ''">
+                            <td>
+                                <a ng-click="updatePartition(p)">
+                                    <span ng-class="p == partition ? 'highlighted' : ''" style="padding-left: 5px">{{p.partition}}</span>
+                                </a>
+                            </td>
+                            <td>
+                                <a ng-click="switchToMessage(topic.topic, p.partition, p.startOffset)">
+                                    <span ng-class="p == partition ? 'highlighted' : ''">{{p.startOffset}}</span>
+                                </a>
+                            </td>
+                            <td>
+                                <a ng-click="switchToMessage(topic.topic, p.partition, p.endOffset)">
+                                    <span ng-class="p == partition ? 'highlighted' : ''">{{p.endOffset}}</span>
+                                </a>
+                            </td>
+                            <td>
+                                <span ng-class="p == partition ? 'highlighted' : ''">{{p.messages | number}}</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </fieldset>
+        </div>
+
+        <div class="separator">
+            <fieldset style="border-radius: 5px 5px 5px 5px">
+                <legend>Leaders and Replicas</legend>
+                <div class="leaders_and_replicas">
+                    <table class="full_width">
+                        <tr>
+                            <th>Partition</th>
+                            <th>Leader</th>
+                            <th>Replica</th>
+                        </tr>
+                        <tr ng-repeat="r in replicas">
+                            <td>{{ r.partition }}</td>
+                            <td>{{ r.leader.host }}:{{ r.leader.port }}</td>
+                            <td>{{ r.replica.host }}:{{ r.replica.port }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+    <div style="display: inline; width: 59%; float: right; margin-top: 12px">
+        <div style="display: block; margin-bottom: 3px">
+            <div class="input_block">
+                <img ng-src="/app/images/{{ loading ? 'status/loading.gif' : 'tabs/inspect/root.png' }}">
+            </div>
+            <div class="input_block">
+                <span class="header_label">Offset</span> <input ng-model="partition.offset" type="text" class="input-mir" ng-change="convertOffsetToInt(partition, partition.offset)">
+                <img class="clickable" src="/app/images/tabs/inspect/message-first.gif" ng-click="firstMessage()" title="move to first message">
+                <img class="clickable" src="/app/images/tabs/inspect/message-prev.gif" ng-click="previousMessage()" title="move to previous message">
+                <img class="clickable" src="/app/images/tabs/inspect/message-middle.png" ng-click="medianMessage()" title="move to median message">
+                <img class="clickable" src="/app/images/tabs/inspect/message-next.gif" ng-click="nextMessage()" title="move to next message">
+                <img class="clickable" src="/app/images/tabs/inspect/message-last.gif" ng-click="lastMessage()" title="move to last message">
+            </div>
+            <div class="input_block">
+                <img class="clickable" src="/app/images/tabs/inspect/search.png" ng-click="messageFinderPopup()" title="search for a message">
+                <img class="clickable" src="/app/images/tabs/inspect/export.png" ng-click="exportMessage(message)" title="export the document">
+            </div>
+            <div class="input_block">
+                <span class="header_label">Display</span>
+                <input ng-model="displayMode.state" type="radio" value="key" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Key</span>
+                <input ng-model="displayMode.state" type="radio" value="message" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Message</span>
+            </div>
+        </div>
+
+        <fieldset style="border-radius: 5px 5px 5px 5px">
+            <div class="message_panel">
+                <div ng-show="message.type == 'json'" hljs source="toPrettyJSON(message.payload, 4)"></div>
+                <div class="full_block" ng-show="message.type == 'bytes'" ng-repeat="tuple in message.payload track by $index">
+                    <div class="binary_message_left">{{ tuple[0] }}</div>
+                    <div class="binary_message_right">{{ tuple[1] }}</div>
+                    <br style="clear: both">
+                </div>
+            </div>
+        </fieldset>
+    </div>
+
+    <br style="clear: both" />
+</div>

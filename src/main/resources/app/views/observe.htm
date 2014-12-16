@@ -1,0 +1,150 @@
+<div ng-controller="ObserveCtrl" ng-init="init()" class="full_block" style="padding-top: 10px">
+    <!-- tabs -->
+    <div style="display: inline; float: left; width: 14%; height: 500px; border-right: 1px solid #cccccc; padding-right: 5px">
+        <tabset vertical="true" type="pills">
+            <tab ng-repeat="tab in observeTabs" active="tab.active" select="changeObserveTab($index, $event)">
+                <tab-heading><img class="links" ng-src="{{ tab.imageURL }}"> {{ tab.name }}</tab-heading>
+            </tab>
+        </tabset>
+    </div>
+
+    <div style="display: inline; float: right; width: 85%">
+        <div class="streaming_topics_container" style="margin-right: 5px">
+            <div class="full_block">
+
+                <!-- Consumers -->
+                <div class="block" ng-repeat="levelA in consumerMapping|orderBy:'topic'" ng-show="observeTab.name == 'Consumers'">
+                    <div>
+                        <a ng-click="levelA.expanded = !levelA.expanded">
+                            <img class="middle" ng-src="/app/images/buttons/{{levelA.expanded ? 'collapse' : 'expand'}}.png">
+                            <img class="middle" src="/app/images/common/topic-16.png">
+                            <span>{{levelA.topic}}</span>
+                            <img ng-show="levelA.loading" src="/app/images/status/processing.gif">
+                        </a>
+                    </div>
+                    <div ng-show="levelA.expanded" ng-repeat="levelB in levelA.consumers" style="margin-left: 32px">
+                        <a ng-click="levelB.expanded = !levelB.expanded">
+                            <img class="middle" ng-src="/app/images/buttons/{{levelB.expanded ? 'collapse' : 'expand'}}.png">
+                            <img class="middle" src="/app/images/common/consumers-16.png">
+                            <span>{{levelB.consumerId}}</span>
+                            <img src="/app/images/status/processing.gif" ng-show="levelB.expanded && isConsumerUpToDate(levelB)">
+                        </a>
+
+                        <div ng-show="levelB.expanded" style="margin-left: 32px">
+                            <table>
+                                <tr>
+                                    <th>Partition</th>
+                                    <th>Topic Offset</th>
+                                    <th>Consumer Offset</th>
+                                    <th>Remaining</th>
+                                    <th>Last Updated</th>
+                                </tr>
+
+                                <tr ng-repeat="levelC in levelB.details | orderBy:'partition'">
+                                    <td>{{ levelC.partition }}</td>
+                                    <td>
+                                        <a ng-click="switchToMessage(levelC.topic, levelC.partition, levelC.topicOffset)">
+                                            {{ levelC.topicOffset }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a ng-click="switchToMessage(levelC.topic, levelC.partition, levelC.offset)">
+                                            {{ levelC.offset }}
+                                        </a>
+                                    </td>
+                                    <td>{{ levelC.messagesLeft | number }}</td>
+                                    <td>{{ levelC.lastModified | date:'yyyy-MM-dd HH:mm:ss Z' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Topics -->
+                <div class="block" ng-repeat="t in getTopics(true)|orderBy:'topic'" ng-show="observeTab.name == 'Topics'">
+                    <a ng-click="t.expanded = !t.expanded">
+                        <img class="middle" ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
+                        <img class="middle" src="/app/images/common/topic-16.png"> {{ t.topic }}
+                             <span ng-show="t.totalMessages > 0">
+                                (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
+                             </span>
+                    </a>
+                    <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
+                        <table>
+                            <tr>
+                                <th>Partition</th>
+                                <th>First Offset</th>
+                                <th>Last Offset</th>
+                                <th>Messages</th>
+                            </tr>
+
+                            <tr ng-repeat="p in t.partitions | orderBy:'partition'">
+                                <td>{{ p.partition }}  <img src="/app/images/status/loading.gif" ng-show="p.loading"></td>
+                                <td>
+                                    <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
+                                        {{ p.startOffset }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">
+                                        {{ p.endOffset }}
+                                    </a>
+                                </td>
+                                <td>{{ p.messages | number }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Zookeeper -->
+                <div class="block" style="margin-left: 5px" ng-show="observeTab.name == 'Zookeeper'">
+                    <div style="display: inline; width: 40.9%; float: left; border-right: 1px solid #cccccc" class="zk_item_container">
+                        <div ng-repeat="item in zkItems" ng-include="'zk_item_tree.htm'"></div>
+                    </div>
+                    <div style="display: inline; width: 59%; float: right">
+                        <div style="width: 100%; margin-left: 5px">
+                            <table ng-show="zkItem" style="border-collapse: separate; border-spacing: 4px;">
+                                <tr>
+                                    <th>Path:</th>
+                                    <td>{{ zkItem.path }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Created:</th>
+                                    <td>{{ zkItem.creationTime | date:'MM-dd-yyyy hh:mm:ss' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Last Modified:</th>
+                                    <td>{{ zkItem.lastModified | date:'MM-dd-yyyy hh:mm:ss' }}</td>
+                                </tr>
+                                <tr ng-show="zkItem.size">
+                                    <th>Size (in bytes):</th>
+                                    <td>{{ zkItem.size | number }}</td>
+                                </tr>
+                            </table>
+
+                            <div ng-show="zkItem.data" style="margin-top: 20px">
+                                <span style="font-weight: bold">Data Format:</span>
+                                <select ng-model="selected.format" ng-options="format for format in formats"
+                                        ng-change="formatData(zkItem.path, selected.format)">
+                                </select>
+
+                                <table class="full_width" ng-if="zkItem.data.type == 'binary'">
+                                    <tr ng-repeat="tuple in zkItem.data.value track by $index">
+                                        <td style="background: #cceeff; border: 1px solid #cccccc">{{ tuple[0] }}</td>
+                                        <td style="background: #ffff88; border: 1px solid #cccccc">{{ tuple[1] }}</td>
+                                    </tr>
+                                </table>
+
+                                <div ng-if="zkItem.data.type == 'json'" hljs source="toPrettyJSON(zkItem.data.value, 4)"></div>
+                                <div ng-if="zkItem.data.type == 'plain-text'">{{ zkItem.data.value }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <br style="clear: both">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br style="clear: both">
+</div>
