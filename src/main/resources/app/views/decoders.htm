@@ -1,4 +1,4 @@
-<div ng-controller="DecoderCtrl" ng-init="init()" class="full_block" style="height: 587px">
+<div ng-controller="DecoderCtrl" ng-init="reloadDecoders()" class="full_block" style="height: 587px">
     <div style="display: inline; float: left; width: 30.9%; height: 100%">
         <fieldset>
             <legend>Configured Topics</legend>
@@ -35,25 +35,29 @@
     </div>
     <div style="display: inline; float: right; width: 69%; height: 100%; padding: 5px 0px 5px 5px">
         <div class="d_editor_bar">
-            <img ng-hide="editMode" class="d_editor_bar" ng-click="toggleEditMode()" src="/app/images/tabs/decoders/edit-20.png" title="Switch to edit mode">
-            <img ng-show="editMode" class="d_editor_bar" ng-click="cancelEdit(schema)" src="/app/images/tabs/decoders/cancel-20.png" title="Cancel editing">
-            <img ng-show="editMode" class="d_editor_bar" ng-click="saveSchema(schema, null)" src="/app/images/tabs/decoders/save-20.png" title="Save changes">
-            <img ng-hide="editMode" class="d_editor_bar" ng-click="setupNewSchema(decoder)" src="/app/images/tabs/decoders/add-20.png" title="Add new decoder">
-            <span ng-show="editMode" class="warning mode_label bold">Edit Mode</span>
-            <span ng-hide="editMode" class="positive mode_label bold">View Mode</span>
+            <span ng-hide="schema.newSchema">
+                <img ng-hide="schema.editMode" class="d_editor_bar" ng-click="toggleEditMode(schema)" src="/app/images/tabs/decoders/edit-20.png" title="Switch to edit mode">
+                <img ng-show="schema.editMode" class="d_editor_bar" ng-click="cancelEdit(schema)" src="/app/images/tabs/decoders/cancel-20.png" title="Cancel editing">
+                <img ng-show="schema.editMode" class="d_editor_bar" ng-click="saveSchema(schema, null)" src="/app/images/tabs/decoders/save-20.png" title="Save changes">
+                <img ng-hide="schema.editMode" class="d_editor_bar" ng-click="setupNewSchema(decoder)" src="/app/images/tabs/decoders/add-20.png" title="Add new decoder">
+            </span>
+            <span ng-show="schema.editMode" class="warning mode_label bold">Edit Mode</span>
+            <span ng-hide="schema.editMode" class="positive mode_label bold">View Mode</span>
         </div>
-        <div class="new_schema_section" ng-show="schema.transitional">
-            Schema Name:
-            <input ng-model="schema.name" type="text">
-            <button ng-click="saveNewSchema(schema)">Save</button>
+        <div class="new_schema_section" ng-show="schema.newSchema">
+            <b>Avro Schema Name</b>
+            <input class="pub_schema_name_field" ng-model="schema.name" type="text">
+            <button class="pub_save_button" ng-click="saveNewSchema(decoder, schema)">Save & Upload</button>
+            <button class="pub_cancel_button" ng-click="cancelNewSchema(decoder, schema)">Cancel</button>
         </div>
         <div ng-show="schema.error" class="schema_error">
             <span class="error">Compile Error:</span> {{ schema.error }}
         </div>
         <div class="message_panel">
-                <textarea ng-model="schema.schemaString" ng-show="editMode" class="d_editor"
-                          ng-change="schema.modified = true">{{ schema.schemaString }}</textarea>
-            <div ng-if="!editMode" hljs source="toPrettyJSON(schema.schemaString, 8)"></div>
+                <textarea ng-model="schema.schemaString" ng-show="schema.editMode" class="d_editor"
+                          ng-change="schema.modified = true"
+                          placeholder="Copy and paste Avro schema here">{{ schema.schemaString }}</textarea>
+            <div ng-if="!schema.editMode" hljs source="toPrettyJSON(schema.schemaString, 8)"></div>
         </div>
     </div>
     <br style="clear: both">
