@@ -29,11 +29,21 @@
                  * @param schema the given schema
                  */
                 $scope.cancelNewSchema = function(decoder, schema) {
-                    schema.newSchema = false;
-                    schema.editMode = false;
-                    var index = decoder.schemas.indexOf(schema);
-                    if(index != -1) {
-                        decoder.splice(index, 1);
+                    if(schema.newSchema) {
+                        // remove the schema from the decoder
+                        var index = decoder.schemas.indexOf(schema);
+                        if (index != -1) {
+                            decoder.schemas.splice(index, 1);
+                        }
+
+                        // select a different schema
+                        var mySchema = decoder.schemas.length ? decoder.schemas[0] : null;
+                        if(mySchema) {
+                            $scope.selectSchema(mySchema);
+                        }
+                        else {
+                            $scope.schema = null;
+                        }
                     }
                 };
 
