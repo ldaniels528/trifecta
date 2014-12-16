@@ -19,9 +19,10 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
       Given("a KQL selection query")
       val queryString =
         """
-          |select symbol, exchange, lastTrade, open, prevClose, high, low, volume
-          |from "topic:shocktrade.quotes.avro" with default
-          |where volume >= 1,000,000 and lastTrade <= 1
+          |Select symbol, exchange, lastTrade, open, prevClose, high, low, volume
+          |From "topic:shocktrade.quotes.avro" With default
+          |Where volume >= 1,000,000 And lastTrade <= 1
+          |Limit 50
           |""".stripMargin
 
       When("The queries is parsed into a KQL object")
@@ -33,7 +34,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
         destination = None,
         fields = List("symbol", "exchange", "lastTrade", "open", "prevClose", "high", "low", "volume"),
         criteria = Some(AND(GE("volume", "1000000"), LE("lastTrade", "1"))),
-        limit = None)
+        limit = Some(50))
     }
   }
 
@@ -43,7 +44,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
       val queryString =
         """
           |select symbol, exchange, lastTrade, open, prevClose, high, low, volume
-          |from "kafka:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+          |from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
           |where volume >= 1,000,000 and lastTrade <= 1
           |""".stripMargin
 
@@ -66,7 +67,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
       val queryString =
         """
           |select symbol, exchange, lastTrade, volume
-          |from "kafka:quotes" with "avro:file:avro/quotes.avsc"
+          |from "topic:quotes" with "avro:file:avro/quotes.avsc"
           |into "es:/quotes/quote/AAPL" with json
           |where exchange == "OTCBB"
           |and lastTrade <= 1.0
@@ -79,7 +80,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
 
       Then("The arguments should be successfully verified")
       query shouldBe KQLSelection(
-        source = IOSource(deviceURL = "kafka:quotes", decoderURL = "avro:file:avro/quotes.avsc"),
+        source = IOSource(deviceURL = "topic:quotes", decoderURL = "avro:file:avro/quotes.avsc"),
         destination = Some(IOSource(deviceURL = "es:/quotes/quote/AAPL", decoderURL = "json")),
         fields = List("symbol", "exchange", "lastTrade", "volume"),
         criteria = Some(AND(AND(EQ("exchange", "OTCBB"), LE("lastTrade", "1.0")), GE("volume", "1000000"))),
