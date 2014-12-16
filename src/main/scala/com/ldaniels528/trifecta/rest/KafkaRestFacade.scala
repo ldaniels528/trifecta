@@ -264,7 +264,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     Extraction.decompose(results)
   }
 
-  private def toDecoderJs(topic: String, decoders: Seq[TxDecoder]): DecoderJs = {
+  private def toDecoderJs(topic: String, decoders: Seq[TxDecoder]) = {
     val schemas = decoders map { d =>
       d.decoder match {
         case Left(decoder) => SchemaJs(topic, d.name, JsonHelper.makePretty(decoder.schema.toString), error = None)
