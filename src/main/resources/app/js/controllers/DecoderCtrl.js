@@ -50,11 +50,10 @@
                 $scope.downloadSchema = function(decoder, schema) {
                     var topic = decoder.topic;
                     var schemaName = schema.name;
-                    $log.info("topic = " + topic + ", schemaName = " + schemaName);
 
                     DecoderSvc.downloadDecoderSchema(topic, schemaName).then(
                         function(response) {
-                            $log.info("response = " + angular.toJson(response));
+                            //$log.info("response = " + angular.toJson(response));
                         },
                         function(err) {
                             $scope.addError(err);
