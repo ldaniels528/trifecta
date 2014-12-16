@@ -44,19 +44,11 @@
             <span ng-show="schema.editMode" class="warning mode_label bold">Edit Mode</span>
             <span ng-hide="schema.editMode" class="positive mode_label bold">View Mode</span>
         </div>
-<<<<<<< HEAD
         <div class="new_schema_section" ng-show="schema.newSchema">
             <b>Avro Schema Name</b>
             <input class="pub_schema_name_field" ng-model="schema.name" type="text">
             <button class="pub_save_button" ng-click="saveNewSchema(decoder, schema)">Save & Upload</button>
             <button class="pub_cancel_button" ng-click="cancelNewSchema(decoder, schema)">Cancel</button>
-=======
-        <div class="new_schema_section" ng-show="schema.transitional">
-            <b>Avro Schema Name</b>
-            <input class="pub_schema_name_field" ng-model="schema.name" type="text">
-            <button class="pub_save_button" ng-click="saveNewSchema(decoder, schema)">Save & Upload</button>
-            <button class="pub_cancel_button" ng-click="cancelNewSchema(schema)">Cancel</button>
->>>>>>> a98e28adb03f56719b52fc5109bf761e0850d6e3
         </div>
         <div ng-show="schema.error" class="schema_error">
             <span class="error">Compile Error:</span> {{ schema.error }}
