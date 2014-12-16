@@ -86,7 +86,7 @@
                 <div style="display: inline; float: left">
                     <img class="q_action_icon" ng-src="/app/images/tabs/query/{{ state.running ? 'running.gif' : 'run.gif' }}" ng-click="executeQuery()" title="Execute the query script">
                     <img class="q_action_icon" src="/app/images/tabs/query/new.png" ng-click="addQuery()" title="Add a new query script">
-                    <img class="q_action_icon" src="/app/images/tabs/query/download-24.png" ng-click="downloadResults(state.results)" title="Download results">
+                    <img ng-show="state.results" class="q_action_icon" src="/app/images/tabs/query/download-24.png" ng-click="downloadResults(state.results)" title="Download results">
                 </div>
                 <div style="display: inline; float: right; vertical-align: middle">
                         <span ng-show="state.running" style="margin: 15px; vertical-align: middle">
