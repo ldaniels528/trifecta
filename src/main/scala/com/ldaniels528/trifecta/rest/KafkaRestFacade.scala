@@ -621,8 +621,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
         labels <- (js \ "labels").extractOpt[List[String]]
         values <- (js \ "values").extractOpt[List[Map[String, String]]]
         rows = values map (m => labels map (m.getOrElse(_, "")))
-        csv = rows map toCSV
-      } yield toCSV(labels) :: csv
+      } yield toCSV(labels) :: (rows map toCSV)
     }
   }
 
