@@ -61,14 +61,22 @@
                     $scope.clearMessage();
                     $scope.loading++;
 
+                    // ensure the loading animation stops
+                    var promise = $timeout(function() {
+                        $log.warn("Timeout reached for loading animation: loading = " + $scope.loading);
+                        if($scope.loading) $scope.loading--;
+                    }, 5000);
+
                     MessageSvc.getMessageKey(topic, partition, offset).then(
                         function (message) {
                             $scope.message = message;
                             if($scope.loading) $scope.loading--;
+                            promise.cancel();
                         },
                         function (err) {
                             $scope.addError(err);
                             if($scope.loading) $scope.loading--;
+                            promise.cancel();
                         });
                 };
 
@@ -143,7 +151,7 @@
                             $scope.getMessageData(topic, partition, offset);
                             break;
                         default:
-                            $log.error("Unrecognized display mode (mode = " + mode + ")");
+                            $log.error("Unrecognized display mode (mode = " + $scope.displayMode.state + ")");
                     }
                 };
 
