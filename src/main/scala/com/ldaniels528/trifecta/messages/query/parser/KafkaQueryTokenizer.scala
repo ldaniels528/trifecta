@@ -1,15 +1,15 @@
-package com.ldaniels528.trifecta.command.parser.bdql
+package com.ldaniels528.trifecta.messages.query.parser
 
-import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryTokenizer._
+import com.ldaniels528.trifecta.messages.query.parser.KafkaQueryTokenizer._
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 
 /**
- * Big Data Query Language Tokenizer
+ * Kafka Query Language Tokenizer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class BigDataQueryTokenizer(queryString: String) {
+class KafkaQueryTokenizer(queryString: String) {
   private val logger = LoggerFactory.getLogger(getClass)
   private val parsers: Seq[ListBuffer[Token] => Boolean] = Seq(
     parseDoubleQuotedSequence, parseSingleQuotedSequence, parseNumeric, parseAlphaNumeric, parseSymbols)
@@ -114,20 +114,20 @@ class BigDataQueryTokenizer(queryString: String) {
 }
 
 /**
- * Big Data Query Language Tokenizer
+ * Kafka Query Language Tokenizer
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object BigDataQueryTokenizer {
+object KafkaQueryTokenizer {
   private val Symbols = "!,=<>"
   private val Operators = Seq(">=", "<=", "!=", "==")
   private val WhiteSpace = " \t\r\n".toCharArray
 
   def parse(queryString: String): List[String] = {
-    new BigDataQueryTokenizer(queryString).parse() map (_.word)
+    new KafkaQueryTokenizer(queryString).parse() map (_.word)
   }
 
   def parseWithPositions(queryString: String): List[Token] = {
-    new BigDataQueryTokenizer(queryString).parse()
+    new KafkaQueryTokenizer(queryString).parse()
   }
 
   case class Token(word: String, pos: Int)

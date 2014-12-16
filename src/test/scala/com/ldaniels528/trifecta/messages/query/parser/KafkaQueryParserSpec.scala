@@ -1,35 +1,35 @@
-package com.ldaniels528.trifecta.command.parser.bdql
+package com.ldaniels528.trifecta.messages.query.parser
 
-import com.ldaniels528.trifecta.messages.query.{IOSource, BigDataSelection}
+import com.ldaniels528.trifecta.messages.query.{IOSource, KQLSelection}
 import com.ldaniels528.trifecta.messages.logic.Expressions._
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 /**
- * Big Data Query Language (BD-QL) Parser Specification
+ * Kafka Query Language (KQL) Parser Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
+class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
 
-  info("As a Big Data Query Parser")
-  info("I want to be able to parse Big Data queries")
+  info("As a Kafka Query Parser")
+  info("I want to be able to parse Kafka queries")
 
-  feature("Ability to parse Big Data queries with implicit decoders") {
-    scenario("A string containing a Big Data selection query using 'with default'") {
-      Given("a Big Data selection query")
+  feature("Ability to parse KQL queries with implicit decoders") {
+    scenario("A string containing a KQL selection query using 'with default'") {
+      Given("a KQL selection query")
       val queryString =
         """
           |select symbol, exchange, lastTrade, open, prevClose, high, low, volume
-          |from "kafka:shocktrade.quotes.avro" with default
+          |from "topic:shocktrade.quotes.avro" with default
           |where volume >= 1,000,000 and lastTrade <= 1
           |""".stripMargin
 
-      When("The queries is parsed into a BD-QL object")
-      val query = BigDataQueryParser(queryString)
+      When("The queries is parsed into a KQL object")
+      val query = KafkaQueryParser(queryString)
 
       Then("The arguments should be successfully verified")
-      query shouldBe BigDataSelection(
-        source = IOSource(deviceURL = "kafka:shocktrade.quotes.avro", decoderURL = "default"),
+      query shouldBe KQLSelection(
+        source = IOSource(deviceURL = "topic:shocktrade.quotes.avro", decoderURL = "default"),
         destination = None,
         fields = List("symbol", "exchange", "lastTrade", "open", "prevClose", "high", "low", "volume"),
         criteria = Some(AND(GE("volume", "1000000"), LE("lastTrade", "1"))),
@@ -37,9 +37,9 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
     }
   }
 
-  feature("Ability to parse Big Data query") {
-    scenario("A string containing a Big Data selection query") {
-      Given("a Big Data selection query")
+  feature("Ability to parse KQL query") {
+    scenario("A string containing a KQL selection query") {
+      Given("a KQL selection query")
       val queryString =
         """
           |select symbol, exchange, lastTrade, open, prevClose, high, low, volume
@@ -47,12 +47,12 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
           |where volume >= 1,000,000 and lastTrade <= 1
           |""".stripMargin
 
-      When("The queries is parsed into a BD-QL object")
-      val query = BigDataQueryParser(queryString)
+      When("The queries is parsed into a KQL object")
+      val query = KafkaQueryParser(queryString)
 
       Then("The arguments should be successfully verified")
-      query shouldBe BigDataSelection(
-        source = IOSource(deviceURL = "kafka:shocktrade.quotes.avro", decoderURL = "avro:file:avro/quotes.avsc"),
+      query shouldBe KQLSelection(
+        source = IOSource(deviceURL = "topic:shocktrade.quotes.avro", decoderURL = "avro:file:avro/quotes.avsc"),
         destination = None,
         fields = List("symbol", "exchange", "lastTrade", "open", "prevClose", "high", "low", "volume"),
         criteria = Some(AND(GE("volume", "1000000"), LE("lastTrade", "1"))),
@@ -60,9 +60,9 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
     }
   }
 
-  feature("Ability to parse Big Data queries with an embedded insert") {
-    scenario("A string containing a Big Data selection query") {
-      Given("a Big Data selection query")
+  feature("Ability to parse KQL queries with an embedded insert") {
+    scenario("A string containing a KQL selection query") {
+      Given("a KQL selection query")
       val queryString =
         """
           |select symbol, exchange, lastTrade, volume
@@ -74,11 +74,11 @@ class BigDataQueryParserSpec() extends FeatureSpec with GivenWhenThen {
           |limit 10
           |""".stripMargin
 
-      When("The queries is parsed into a BD-QL object")
-      val query = BigDataQueryParser(queryString)
+      When("The queries is parsed into a KQL object")
+      val query = KafkaQueryParser(queryString)
 
       Then("The arguments should be successfully verified")
-      query shouldBe BigDataSelection(
+      query shouldBe KQLSelection(
         source = IOSource(deviceURL = "kafka:quotes", decoderURL = "avro:file:avro/quotes.avsc"),
         destination = Some(IOSource(deviceURL = "es:/quotes/quote/AAPL", decoderURL = "json")),
         fields = List("symbol", "exchange", "lastTrade", "volume"),

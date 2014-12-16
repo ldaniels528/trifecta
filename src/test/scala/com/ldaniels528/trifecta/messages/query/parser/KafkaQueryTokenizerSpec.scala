@@ -1,20 +1,20 @@
-package com.ldaniels528.trifecta.command.parser.bdql
+package com.ldaniels528.trifecta.messages.query.parser
 
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 /**
- * Big Data Query Language (BD-QL) Tokenizer Specification
+ * Kafka Query Language (KQL) Tokenizer Specification
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class BigDataQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
+class KafkaQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
 
-  info("As a Big Data Query Tokenizer")
-  info("I want to be able to parse Big Data queries into query objects")
+  info("As a Kafka Query Tokenizer")
+  info("I want to be able to parse Kafka queries into query objects")
 
-  feature("Ability to parse Big Data queries into BD-QL objects") {
-    scenario("A string containing a Big Data selection query") {
-      Given("a Big Data query string")
+  feature("Ability to parse Kafka queries into KQL objects") {
+    scenario("A string containing a Kafka selection query") {
+      Given("a Kafka query string")
       val queryString =
         """
           |select symbol, exchange, lastTrade, volume
@@ -27,7 +27,7 @@ class BigDataQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
           | """.stripMargin
 
       When("The query is parsed into tokens")
-      val tokens = BigDataQueryTokenizer.parse(queryString)
+      val tokens = KafkaQueryTokenizer.parse(queryString)
 
       Then("The arguments should be successfully verified")
       info(s"results: ${tokens map (s => s""""$s"""") mkString " "}")

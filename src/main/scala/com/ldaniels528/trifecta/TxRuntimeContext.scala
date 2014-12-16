@@ -1,11 +1,11 @@
 package com.ldaniels528.trifecta
 
 import com.ldaniels528.trifecta.command.parser.CommandParser
-import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser
+import com.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser
 import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.{AsyncIO, InputSource, OutputSource}
 import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
-import com.ldaniels528.trifecta.messages.query.{BigDataQuery, BigDataSelection}
+import com.ldaniels528.trifecta.messages.query.{KQLQuery, KQLSelection}
 import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.util.OptionHelper._
@@ -126,12 +126,12 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
 
   /**
    * Executes the given query
-   * @param query the given [[BigDataQuery]]
+   * @param query the given [[KQLQuery]]
    */
-  def executeQuery(query: BigDataQuery)(implicit ec: ExecutionContext): AsyncIO = {
+  def executeQuery(query: KQLQuery)(implicit ec: ExecutionContext): AsyncIO = {
     val counter = IOCounter(startTimeMillis = System.currentTimeMillis())
     val task = query match {
-      case BigDataSelection(source, destination, fields, criteria, limit) =>
+      case KQLSelection(source, destination, fields, criteria, limit) =>
         // get the input source and its decoder
         val inputSource: Option[InputSource] = getInputHandler(getDeviceURLWithDefault("topic", source.deviceURL))
         val inputDecoder: Option[MessageDecoder[_]] = lookupDecoderByName(source.decoderURL) ?? MessageCodecs.getDecoder(source.decoderURL)
@@ -168,7 +168,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
    */
   private def interpretCommandLine(input: String): Try[Any] = Try {
     // is the input a query?
-    if (input.startsWith("select")) executeQuery(BigDataQueryParser(input))
+    if (input.startsWith("select")) executeQuery(KafkaQueryParser(input))
     else {
       // parse the input into tokens
       val tokens = CommandParser.parseTokens(input)

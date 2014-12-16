@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.command.parser
 
-import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryTokenizer
 import com.ldaniels528.trifecta.messages.logic.Condition
+import com.ldaniels528.trifecta.messages.query.parser.KafkaQueryTokenizer
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
@@ -17,9 +17,9 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
   info("I want to be able to extract/process tokens as a stream")
 
   feature("Ability to parse JSON streams") {
-    scenario("A sequence of tokens from a BDQL query") {
+    scenario("A sequence of tokens from a KQL query") {
       Given("a sequence of tokens from a parsed selection query")
-      val tokens = BigDataQueryTokenizer.parse(
+      val tokens = KafkaQueryTokenizer.parse(
         """
           |select symbol, exchange, lastTrade, volume
           |from kafka_queries

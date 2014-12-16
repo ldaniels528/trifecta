@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.io
 
-import com.ldaniels528.trifecta.messages.query.QuerySource
+import com.ldaniels528.trifecta.messages.query.KQLSource
 
 /**
  * This trait should be implemented by classes that are interested in serving as an
@@ -16,10 +16,10 @@ trait InputSource {
   def read: Option[KeyAndMessage]
 
   /**
-   * Returns a source for querying via Big Data Query Language (BDQL)
+   * Returns a source for querying via Kafka Query Language (KQL)
    * @return the option of a query source
    */
-  def getQuerySource: Option[QuerySource] = None
+  def getQuerySource: Option[KQLSource] = None
 
   /**
    * Closes the underlying stream
