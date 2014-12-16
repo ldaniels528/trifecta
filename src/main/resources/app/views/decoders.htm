@@ -38,8 +38,9 @@
             <span ng-hide="schema.newSchema">
                 <img ng-hide="schema.editMode" class="d_editor_bar" ng-click="toggleEditMode(schema)" src="/app/images/tabs/decoders/edit-20.png" title="Switch to edit mode">
                 <img ng-show="schema.editMode" class="d_editor_bar" ng-click="cancelEdit(schema)" src="/app/images/tabs/decoders/cancel-20.png" title="Cancel editing">
-                <img ng-show="schema.editMode" class="d_editor_bar" ng-click="saveSchema(schema)" src="/app/images/tabs/decoders/save-20.png" title="Save changes">
-                <img ng-hide="schema.editMode" class="d_editor_bar" ng-click="setupNewSchema(decoder)" src="/app/images/tabs/decoders/add-20.png" title="Add new decoder">
+                <img ng-show="schema.editMode" class="d_editor_bar" ng-click="saveSchema(schema)" src="/app/images/tabs/decoders/save-20.png" title="Save schema changes">
+                <img ng-hide="schema.editMode" class="d_editor_bar" ng-click="setupNewSchema(decoder)" src="/app/images/tabs/decoders/add-20.png" title="Add a new schema">
+                <img ng-hide="schema.editMode" class="d_editor_bar" ng-click="downloadSchema(decoder, schema)" src="/app/images/tabs/decoders/download-20.png" title="Download the schema">
             </span>
             <span ng-show="schema.editMode" class="warning mode_label bold">Edit Mode</span>
             <span ng-hide="schema.editMode" class="positive mode_label bold">View Mode</span>

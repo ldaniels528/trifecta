@@ -252,6 +252,18 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   /**
+   * Returns a decoder by topic and schema name
+   * @return the option of a decoder
+   */
+  def getDecoderSchemaByName(topic: String, schemaName: String): Option[JValue] = {
+    val decoders = config.getDecoders.filter(_.topic == topic)
+    decoders.filter(_.name == schemaName).map(_.decoder match {
+      case Left(v) => v.schema.toString(true)
+      case Right(v) => v.schemaString
+    }).headOption map Extraction.decompose
+  }
+
+  /**
    * Returns all available decoders
    * @return the collection of decoders
    */
