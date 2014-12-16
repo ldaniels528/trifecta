@@ -10,6 +10,7 @@
     }]);
 
     app.run(function($rootScope, $log, $timeout, Consumers, Topics, WebSockets) {
+        $rootScope.version = "0.18.3";
         $rootScope.Consumers = Consumers;
         $rootScope.Topics = Topics;
         $rootScope.WebSockets = WebSockets;

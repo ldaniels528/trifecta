@@ -7,7 +7,7 @@
         .controller('PublishCtrl', ['$scope', '$log','$timeout', 'MessageSvc',
             function ($scope, $log, $timeout, MessageSvc) {
 
-                $scope.keyFormats = ["GUID", "EPOC-millis", "Custom"];
+                $scope.keyFormats = ["ASCII", "Hex-notation", "EPOC", "UUID"];
                 $scope.messageFormats = ["Avro", "Binary", "JSON"];
                 $scope.messageBlob = {
                     "key": null,
@@ -31,6 +31,10 @@
                             $scope.addError(err);
                         }
                     );
+                };
+
+                $scope.generateUUID = function() {
+
                 };
 
                 function resetMessageBlob() {

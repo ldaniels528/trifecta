@@ -28,11 +28,16 @@
                     });
             };
 
-            service.publishMessage = function(topic, key, message, format) {
+            service.publishMessage = function(topic, key, message, keyFormat, messageFormat) {
                 return $http({
                     url:"/rest/publishMessage/" + encodeURI(topic),
                     method: "POST",
-                    data: { "key": key, "message" :message, "format": format },
+                    data: {
+                        "key": key,
+                        "message" :message,
+                        "keyFormat": keyFormat,
+                        "messageFormat": messageFormat
+                    },
                     headers: {'Content-Type': 'application/json'}
                 }).then(function (response) {
                     return response.data;

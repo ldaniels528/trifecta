@@ -1,6 +1,6 @@
 <div ng-controller="PublishCtrl" class="full_block">
     <div class="pub_bold_label" style="margin-top: 5px">
-        <span class="bold">Topic</span>
+        <span class="bold">Destination Topic</span>
         <select ng-model="topic" ng-options="t.topic for t in getTopics(false)"></select>
     </div>
 
@@ -25,16 +25,23 @@
     </div>
 
     <div style="display: inline; float: right; width: 30%">
-        <div style="margin-left: 10px; padding-left: 10px; border-left: 1px solid #cccccc">
-            <p>The <b>message key</b> can entered using hexadecimal dot-notation (e.g. <i>00.ca.fe.ba.be.00</i>), which
-                represents a binary string.</p>
+        <div style="height: 100%; margin-left: 10px; padding-left: 10px; border-left: 1px solid #cccccc">
+            <p>The <b>message key</b> could be a variety of different values. Trifecta provides following
+            types to cover most commonly-used options:</p>
+
+            <ul>
+                <li>ASCII text</li>
+                <li>EPOC (milliseconds)</li>
+                <li>Custom Binary sequences represented via hexadecimal dot-notation
+                    (e.g.  <span class="pub_hex_note"><i>00.ca.fe.ba.be.00</i></span>)</li>
+                <li>Universally unique identifiers (UUID)
+                    (e.g. <span class="pub_hex_note"><i>de305d54-75b4-431b-adb2-eb6b9e546013</i></span></li>
+            </ul>
 
             <p>Optionally, you may leave the message key field blank and the key will be automatically generated.</p>
 
             <p>The <b>message body</b> can be represented in various formats; including: Avro, JSON, or Binary
                 (<b>NOTE</b>: ASCII text sequences are treated as binary).</p>
-
-            <p><img src="/app/images/tabs/publish/under_construction.gif"></p>
         </div>
     </div>
     <br style="clear:both">

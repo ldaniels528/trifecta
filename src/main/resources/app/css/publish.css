@@ -1,3 +1,7 @@
+.pub_bold_label {
+    color: #337ab7;
+}
+
 .pub_editor {
     background: #fffff0;
     border: 1px solid #cccccc;
@@ -6,6 +10,10 @@
     box-sizing: border-box;         /* For IE and modern versions of Chrome */
     -moz-box-sizing: border-box;    /* For Firefox                          */
     -webkit-box-sizing: border-box; /* For Safari                           */
+}
+
+.pub_hex_note {
+    color: #0000ff;
 }
 
 .pub_label {
@@ -18,10 +26,6 @@
     background: #337ab7;
     color: #ffffff;
     font-size: 9pt;
-}
-
-.pub_bold_label {
-    color: #337ab7;
 }
 
 .pub_message_key_panel {
