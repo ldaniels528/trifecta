@@ -140,8 +140,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     while (it.hasNext) {
       val args = it.take(criteria.size + 3).toList
       criteria = args match {
-        case List("and", field, operator, value) => criteria.map(AND(_, compile(field, operator, deQuote(value))))
-        case List("or", field, operator, value) => criteria.map(OR(_, compile(field, operator, deQuote(value))))
+        case List(keyword, field, operator, value) if keyword.equalsIgnoreCase("and") => criteria.map(AND(_, compile(field, operator, deQuote(value))))
+        case List(keyword, field, operator, value) if keyword.equalsIgnoreCase("or") => criteria.map(OR(_, compile(field, operator, deQuote(value))))
         case List(field, operator, value) => Option(compile(field, operator, deQuote(value)))
         case unknown => throw new IllegalArgumentException(s"Illegal operand $unknown")
       }
