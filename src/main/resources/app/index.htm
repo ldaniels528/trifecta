@@ -62,7 +62,11 @@
     </div>
 
     <!-- Dynamically display the active tab -->
-    <div ng-include="tab.contentURL"></div>
+    <div ng-show="tab.name == 'Decoders'" ng-include="'/app/views/decoders.htm'"></div>
+    <div ng-show="tab.name == 'Inspect'" ng-include="'/app/views/inspect.htm'"></div>
+    <div ng-show="tab.name == 'Observe'" ng-include="'/app/views/observe.htm'"></div>
+    <div ng-show="tab.name == 'Publish'" ng-include="'/app/views/publish.htm'"></div>
+    <div ng-show="tab.name == 'Query'" ng-include="'/app/views/query.htm'"></div>
 
     <!-- Message Search: Find Dialog -->
     <script type="text/ng-template" id="message_search_finder.htm">
