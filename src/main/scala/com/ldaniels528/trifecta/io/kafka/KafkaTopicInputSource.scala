@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.io.kafka
 
-import com.ldaniels528.trifecta.messages.query.QuerySource
+import com.ldaniels528.trifecta.messages.query.KQLSource
 import com.ldaniels528.trifecta.io.{InputSource, KeyAndMessage}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import kafka.common.TopicAndPartition
@@ -29,10 +29,10 @@ class KafkaTopicInputSource(brokers: Seq[Broker], topic: String, partition: Int 
   }
 
   /**
-   * Returns a source for querying via Big Data Query Language (BDQL)
+   * Returns a source for querying via Kafka Query Language (KQL)
    * @return the option of a query source
    */
-  override def getQuerySource: Option[QuerySource] = Option(KafkaQuerySource(topic, brokers, correlationId))
+  override def getQuerySource: Option[KQLSource] = Option(KafkaQuerySource(topic, brokers, correlationId))
 
   /**
    * Closes the underlying stream

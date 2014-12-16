@@ -7,15 +7,15 @@ import com.ldaniels528.trifecta.messages.logic.Condition
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
- * Query Source
+ * KQL Source
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-trait QuerySource {
+trait KQLSource {
 
   def findAll(fields: Seq[String],
               decoder: MessageDecoder[_],
               conditions: Seq[Condition],
               limit: Option[Int],
-              counter: IOCounter)(implicit ec: ExecutionContext): Future[QueryResult]
+              counter: IOCounter)(implicit ec: ExecutionContext): Future[KQLResult]
 
 }

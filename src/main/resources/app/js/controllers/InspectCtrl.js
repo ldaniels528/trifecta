@@ -9,7 +9,7 @@
 
                 var _lastGoodResult = "";
 
-                $scope.version = "0.18.2";
+                $scope.version = "0.18.3";
                 $scope.hideEmptyTopics = true;
                 $scope.replicas = [];
                 $scope.topics = [];

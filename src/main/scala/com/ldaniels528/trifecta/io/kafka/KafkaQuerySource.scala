@@ -4,7 +4,7 @@ import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.kafka.KafkaQuerySource._
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.logic.Condition
-import com.ldaniels528.trifecta.messages.query.{QueryResult, QuerySource}
+import com.ldaniels528.trifecta.messages.query.{KQLResult, KQLSource}
 import com.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.util.Utf8
@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: Int = 0)(implicit zk: ZKProxy)
-  extends QuerySource {
+  extends KQLSource {
 
   override def findAll(fields: Seq[String],
                        decoder: MessageDecoder[_],
@@ -34,7 +34,7 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
       }
     } map { values =>
       val elapsedTimeMillis = (System.nanoTime() - startTime).toDouble / 1e9
-      QueryResult(topic, myFields, values, elapsedTimeMillis)
+      KQLResult(topic, myFields, values, elapsedTimeMillis)
     }
   }
 

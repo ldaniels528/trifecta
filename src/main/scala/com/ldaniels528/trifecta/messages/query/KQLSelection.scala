@@ -3,15 +3,15 @@ package com.ldaniels528.trifecta.messages.query
 import com.ldaniels528.trifecta.messages.logic.Expressions.Expression
 
 /**
- * Big Data Selection Query
+ * KQL Selection Query
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class BigDataSelection(source: IOSource,
-                            destination: Option[IOSource] = None,
-                            fields: Seq[String],
-                            criteria: Option[Expression],
-                            limit: Option[Int])
-  extends BigDataQuery {
+case class KQLSelection(source: IOSource,
+                        destination: Option[IOSource] = None,
+                        fields: Seq[String],
+                        criteria: Option[Expression],
+                        limit: Option[Int])
+  extends KQLQuery {
 
   /**
    * Returns the string representation of the query

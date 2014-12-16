@@ -26,7 +26,7 @@ case class TokenStream(tokens: Seq[String]) {
    * @param expectedToken the given string token
    */
   def expect(expectedToken: String): TokenStream = {
-    if (!hasNext) throw new IllegalArgumentException("Unexpected end of statement")
+    if (!hasNext) throw new IllegalArgumentException(s"Unexpected end of statement: expected '$expectedToken'")
     else {
       val actualToken = next()
       if (!actualToken.equalsIgnoreCase(expectedToken)) {
@@ -41,7 +41,7 @@ case class TokenStream(tokens: Seq[String]) {
    * @param expectedToken the given string token
    */
   def expectOrElse(expectedToken: String, otherwise: => Unit): TokenStream = {
-    if (!hasNext) throw new IllegalArgumentException("Unexpected end of statement")
+    if (!hasNext) throw new IllegalArgumentException(s"Unexpected end of statement: expected '$expectedToken'")
     else {
       val actualToken = next()
       if (actualToken.equalsIgnoreCase(expectedToken)) otherwise
@@ -70,7 +70,7 @@ case class TokenStream(tokens: Seq[String]) {
    */
   def getUntil(token: String, delimiter: Option[String] = None): Seq[String] = {
     // get the qualified sequence of tokens
-    val index = tokens.indexOf(token)
+    val index = tokens.map(_.toLowerCase).indexOf(token.toLowerCase)
     val limit = if (index != -1) index else tokens.size
     val subList = tokens.slice(pos, limit)
 

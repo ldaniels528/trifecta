@@ -89,7 +89,7 @@
             };
 
             /**
-             * Executes the BDQL query representing by the query string
+             * Executes the KQL query representing by the query string
              */
             $scope.executeQuery = function () {
                 $scope.state.results = null;
