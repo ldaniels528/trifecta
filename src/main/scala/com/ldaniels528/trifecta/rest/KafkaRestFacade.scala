@@ -399,6 +399,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private def toMessage(message: Any): MessageJs = message match {
     case opt: Option[Any] => toMessage(opt.orNull)
     case bytes: Array[Byte] => MessageJs(`type` = "bytes", payload = toByteArray(bytes))
+    case md: MessageData if JsonHelper.isJson(new String(md.message)) => MessageJs(`type` = "json", payload = new String(md.message))
     case md: MessageData => MessageJs(`type` = "bytes", payload = toByteArray(md.message))
     case value => MessageJs(`type` = "json", payload = JsonHelper.makePretty(String.valueOf(value)))
   }

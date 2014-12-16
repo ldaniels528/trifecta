@@ -14,6 +14,8 @@ import scala.util.{Failure, Success, Try}
 object JsonHelper {
   implicit val formats = DefaultFormats
 
+  def isJson(jsString: String): Boolean = Try(parse(jsString)).isSuccess
+
   /**
    * Re-formats the given JSON string as a "pretty" version of the JSON string
    * @param jsonString the given JSON string
