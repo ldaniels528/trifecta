@@ -14,7 +14,25 @@
                     });
             };
 
-            service.saveSchema = function (schema) {
+            service.getDecoderSchema = function(topic, schemaName) {
+                return $http.get("/rest/getDecoderSchemaByName/" + topic + "/" + schemaName)
+                    .then(function (response) {
+                        return response.data;
+                    });
+            };
+
+            service.downloadDecoderSchema = function(topic, schemaName) {
+                return $http.get("/rest/getDecoderSchemaByName/" + topic + "/" + schemaName)
+                    .success(function (data, status, headers, config) {
+                        var blob = new Blob([data], {type: "application/json"});
+                        var objectUrl = URL.createObjectURL(blob);
+                        window.open(objectUrl);
+                    }).error(function (data, status, headers, config) {
+                        alert("Schema download failed")
+                    });
+            };
+
+            service.saveDecoderSchema = function (schema) {
                 return $http({
                     url:"/rest/saveSchema",
                     method: "POST",
@@ -29,6 +47,6 @@
                 });
             };
 
-            return service;
+              return service;
         });
 })();

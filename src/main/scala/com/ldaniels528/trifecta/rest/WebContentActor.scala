@@ -137,6 +137,10 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
             case topic :: Nil => facade.getDecoderByTopic(topic).passJson
             case _ => missingArgs("topic")
           }
+          case "getDecoderSchemaByName" => args match {
+            case topic :: schemaName :: Nil => facade.getDecoderSchemaByName(topic, schemaName).passJson
+            case _ => missingArgs("topic", "schemaName")
+          }
           case "getLeaderAndReplicas" => args match {
             case topic :: Nil => facade.getLeaderAndReplicas(topic).passJson
             case _ => missingArgs("topic")
@@ -243,6 +247,8 @@ object WebContentActor {
    * @param json a JSON Value
    */
   implicit class JsonExtensionsB(val json: JValue) extends AnyVal {
+
+    def passMime(mimeType: String): Option[(String, Array[Byte])] = Option(json) map (js => (mimeType, compact(render(js)).getBytes(encoding)))
 
     def passJson: Option[(String, Array[Byte])] = Option(json) map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
 

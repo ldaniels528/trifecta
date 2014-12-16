@@ -17,6 +17,10 @@
             // create the query state object
             $scope.state = createNewQueryState();
 
+            /**
+             * Creates a new query state object
+             * @returns {{running: boolean, results: null, mappings: null, ascending: boolean, sortField: null}}
+             */
             function createNewQueryState() {
                 return {
                     "running": false,

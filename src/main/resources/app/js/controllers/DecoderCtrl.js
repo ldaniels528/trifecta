@@ -4,8 +4,8 @@
  */
 (function () {
     angular.module('trifecta')
-        .controller('DecoderCtrl', ['$scope', '$log', '$parse', '$timeout', 'DecoderSvc',
-            function ($scope, $log, $parse, $timeout, DecoderSvc) {
+        .controller('DecoderCtrl', ['$scope', '$log', '$timeout', 'DecoderSvc',
+            function ($scope, $log, $timeout, DecoderSvc) {
 
                 $scope.decoders = [];
                 $scope.decoder = null;
@@ -47,6 +47,19 @@
                     }
                 };
 
+                $scope.downloadSchema = function(decoder, schema) {
+                    var topic = decoder.topic;
+                    var schemaName = schema.name;
+
+                    DecoderSvc.downloadDecoderSchema(topic, schemaName).then(
+                        function(response) {
+                            //$log.info("response = " + angular.toJson(response));
+                        },
+                        function(err) {
+                            $scope.addError(err);
+                        });
+                };
+
                 /**
                  * Reloads the given decoder
                  * @param decoder the given decoder
@@ -79,7 +92,7 @@
                  */
                 $scope.saveNewSchema = function(decoder, schema) {
                     schema.processing = true;
-                    DecoderSvc.saveSchema(schema).then(
+                    DecoderSvc.saveDecoderSchema(schema).then(
                         function(response) {
                             $timeout(function() {
                                 schema.processing = false;
@@ -107,7 +120,7 @@
                  */
                 $scope.saveSchema = function(schema) {
                     schema.processing = true;
-                    DecoderSvc.saveSchema(schema).then(
+                    DecoderSvc.saveDecoderSchema(schema).then(
                         function(response) {
                             $timeout(function() {
                                 schema.processing = false;
