@@ -53,7 +53,7 @@ object Cascade extends ScalaBeanUtil {
         // lookup the constructor and methods
         val cons = beanClass.getConstructors()(0)
         val methods = extractMethods(beanClass)
-        cache += (beanClass ->(cons, methods))
+        cache += (beanClass ->(cons -> methods))
         (cons, methods)
     }
   }
