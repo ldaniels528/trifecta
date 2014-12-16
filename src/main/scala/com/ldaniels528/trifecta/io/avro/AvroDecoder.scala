@@ -2,7 +2,6 @@ package com.ldaniels528.trifecta.io.avro
 
 import com.ldaniels528.trifecta.io.avro.AvroCodec._
 import com.ldaniels528.trifecta.io.json.JsonTranscoding
-import com.ldaniels528.trifecta.messages.MessageDecoder
 import com.ldaniels528.trifecta.messages.logic.Expressions._
 import com.ldaniels528.trifecta.messages.logic.{Condition, MessageEvaluation}
 import com.twitter.bijection.Injection
@@ -17,7 +16,7 @@ import scala.util.Try
  * Avro Message Decoder
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class AvroDecoder(label: String, schema: Schema) extends MessageDecoder[GenericRecord]
+case class AvroDecoder(label: String, schema: Schema) extends AvroMessageDecoding
 with JsonTranscoding with MessageEvaluation {
   private val converter: Injection[GenericRecord, Array[Byte]] = GenericAvroCodecs.toBinary(schema)
 
