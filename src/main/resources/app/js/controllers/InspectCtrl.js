@@ -7,8 +7,6 @@
         .controller('InspectCtrl', ['$scope', '$interval', '$log', '$parse', '$timeout', 'MessageSvc', 'MessageSearchSvc', 'TopicSvc',
             function ($scope, $interval, $log, $parse, $timeout, MessageSvc, MessageSearchSvc, TopicSvc) {
 
-                var _lastGoodResult = "";
-
                 $scope.hideEmptyTopics = true;
                 $scope.replicas = [];
                 $scope.topics = [];
@@ -237,14 +235,11 @@
                     try {
                         obj = $parse(objStr)({});
                     } catch (e) {
+                        //$scope.addErrorMessage("Error parsing JSON document");
                         $log.error(e);
-                        return _lastGoodResult;
+                        return "";
                     }
-
-                    var result = JSON.stringify(obj, null, Number(tabWidth));
-                    _lastGoodResult = result;
-
-                    return result;
+                    return JSON.stringify(obj, null, Number(tabWidth));
                 };
 
                 $scope.updatePartition = function (partition) {

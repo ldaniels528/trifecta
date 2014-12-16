@@ -1,7 +1,7 @@
 <div ng-controller="PublishCtrl" class="full_block">
     <div class="pub_bold_label" style="margin-top: 5px">
         <span class="bold">Destination Topic</span>
-        <select ng-model="topic" ng-options="t.topic for t in getTopics(false)"></select>
+        <select ng-model="messageBlob.topic" ng-options="t.topic for t in getTopics(false)"></select>
     </div>
 
     <div class="pub_bold_label"><span class="bold">Message Key</span> &#8212; format:
@@ -16,7 +16,7 @@
         <div class="pub_bold_label">
             <span class="bold">Message Body</span> &#8212; format:
             <select ng-model="messageBlob.messageFormat" ng-options="f for f in messageFormats"></select>
-            <button class="publish_button" ng-click="publishMessage(topic.topic, messageBlob)">Publish</button>
+            <button class="publish_button" ng-click="publishMessage(messageBlob)">Publish</button>
         </div>
         <div class="pub_message_data_panel">
             <textarea ng-model="messageBlob.message" class="pub_editor"

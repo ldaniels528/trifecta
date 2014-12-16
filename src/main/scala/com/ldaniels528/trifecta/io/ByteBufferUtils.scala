@@ -1,6 +1,7 @@
 package com.ldaniels528.trifecta.io
 
 import java.nio.ByteBuffer
+import java.util.UUID
 
 /**
  * Byte Buffer Utilities
@@ -25,6 +26,13 @@ object ByteBufferUtils {
 
   def longToBytes(value: Long): Array[Byte] = {
     ByteBuffer.allocate(8).putLong(value).array()
+  }
+
+  def uuidToBytes(uuid: UUID) = {
+    ByteBuffer.allocate(16)
+      .putLong(uuid.getMostSignificantBits)
+      .putLong(uuid.getLeastSignificantBits)
+      .array()
   }
 
 }

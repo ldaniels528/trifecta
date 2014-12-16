@@ -7,9 +7,10 @@
         .controller('PublishCtrl', ['$scope', '$log','$timeout', 'MessageSvc',
             function ($scope, $log, $timeout, MessageSvc) {
 
-                $scope.keyFormats = ["ASCII", "Hex-notation", "EPOC", "UUID"];
-                $scope.messageFormats = ["Avro", "Binary", "JSON"];
+                $scope.keyFormats = ["ASCII", "Hex-Notation", "EPOC", "UUID"];
+                $scope.messageFormats = ["ASCII", "Avro", "JSON", "Hex-Notation"];
                 $scope.messageBlob = {
+                    "topic": null,
                     "key": null,
                     "message": null,
                     "keyFormat": null,
@@ -18,14 +19,18 @@
 
                 /**
                  * Publishes the message to the topic
-                 * @param topic the destination topic
-                 * @param msgBlob the message object
+                 * @param blob the message object
                  */
-                $scope.publishMessage = function(topic, msgBlob) {
-                    MessageSvc.publishMessage(topic, msgBlob.key, msgBlob.message, msgBlob.format).then(
+                $scope.publishMessage = function(blob) {
+                    if(!validatePublishMessage(blob)) {
+                        return;
+                    }
+
+                    MessageSvc.publishMessage(blob.topic.topic, blob.key, blob.message, blob.keyFormat, blob.messageFormat).then(
                         function(response) {
-                            resetMessageBlob();
+                            //$scope.messageBlob.message = null;
                             $log.info("response = " + angular.toJson(response));
+                            $scope.addInfoMessage("Message published")
                         },
                         function(err) {
                             $scope.addError(err);
@@ -33,15 +38,32 @@
                     );
                 };
 
-                $scope.generateUUID = function() {
+                /**
+                 * Validates the given message blob
+                 * @param blob the given message blob
+                 * @returns {boolean}
+                 */
+                function validatePublishMessage(blob) {
+                    if(!blob.topic || isBlank(blob.topic.topic)) {
+                        $scope.addErrorMessage("No topic specified")
+                    }
+                    else if(isBlank(blob.keyFormat)) {
+                        $scope.addErrorMessage("No message key format specified");
+                        return false;
+                    }
+                    else if(isBlank(blob.message)) {
+                        $scope.addErrorMessage("No message body specified");
+                        return false;
+                    }
+                    else if(isBlank(blob.messageFormat)) {
+                        $scope.addErrorMessage("No message body format specified");
+                        return false;
+                    }
+                    else return true;
+                }
 
-                };
-
-                function resetMessageBlob() {
-                    $scope.messageBlob = {
-                        "message": null,
-                        "modified": true
-                    };
+                function isBlank(s) {
+                    return !s || s.trim().length == 0;
                 }
 
             }]);
