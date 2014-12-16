@@ -214,7 +214,7 @@
                         $scope.partition = partition;
                         $scope.partition.offset = offset;
                         $scope.loadMessage();
-                        $scope.changeTab(1, null); // Query
+                        $scope.changeTab(0, null); // Inspect
                     }
                 };
 
