@@ -44,14 +44,22 @@
                     $scope.clearMessage();
                     $scope.loading++;
 
+                    // ensure the loading animation stops
+                    var promise = $timeout(function() {
+                        $log.warn("Timeout reached for loading animation: loading = " + $scope.loading);
+                        if($scope.loading) $scope.loading--;
+                    }, 5000);
+
                     MessageSvc.getMessage(topic, partition, offset).then(
                         function (message) {
                             $scope.message = message;
                             if($scope.loading) $scope.loading--;
+                            $timeout.cancel(promise);
                         },
                         function (err) {
                             $scope.addError(err);
                             if($scope.loading) $scope.loading--;
+                            $timeout.cancel(promise);
                         });
                 };
 
@@ -69,12 +77,12 @@
                         function (message) {
                             $scope.message = message;
                             if($scope.loading) $scope.loading--;
-                            promise.cancel();
+                            $timeout.cancel(promise);
                         },
                         function (err) {
                             $scope.addError(err);
                             if($scope.loading) $scope.loading--;
-                            promise.cancel();
+                            $timeout.cancel(promise);
                         });
                 };
 
