@@ -25,6 +25,7 @@
 
                 /**
                  * Cancels the new schema workflow
+<<<<<<< HEAD
                  * @param decoder the given decoder
                  * @param schema the given schema
                  */
@@ -35,6 +36,14 @@
                     if(index != -1) {
                         decoder.splice(index, 1);
                     }
+=======
+                 * @param schema the given schema
+                 */
+                $scope.cancelNewSchema = function(schema) {
+                    schema.newSchema = false;
+                    schema.editMode = false;
+                    $scope.reloadDecoders();
+>>>>>>> a98e28adb03f56719b52fc5109bf761e0850d6e3
                 };
 
                 /**
@@ -80,8 +89,17 @@
                             }
                             else {
                                 schema.newSchema = false;
+<<<<<<< HEAD
+=======
+                                schema.transitional = false;
+>>>>>>> a98e28adb03f56719b52fc5109bf761e0850d6e3
                                 schema.editMode = false;
                                 schema.modified = false;
+
+                                // attach the schema and select it
+                                decoder.schemas.push(schema);
+                                $scope.selectDecoder(decoder);
+                                $scope.selectSchema(schema);
                             }
                         },
                         function(err) {
@@ -116,6 +134,30 @@
                 };
 
                 /**
+<<<<<<< HEAD
+=======
+                 * Setups the new schema creation workflow
+                 * @param decoder the decoder to associate the schema to
+                 */
+                $scope.setupNewSchema = function(decoder) {
+                    var schema = {
+                        "topic": decoder.topic,
+                        "name": "untitled.avsc",
+                        "originalSchemaString": "",
+                        "schemaString": "",
+                        "modified": true,
+                        "transitional": true
+                    };
+
+                    decoder.schemas.push(schema);
+                    $scope.selectDecoder(decoder);
+                    $scope.selectSchema(schema);
+                    schema.editMode = true;
+                    schema.newSchema = true;
+                };
+
+                /**
+>>>>>>> a98e28adb03f56719b52fc5109bf761e0850d6e3
                  * Selects the given decoder
                  * @param decoder the given decoder
                  */
@@ -141,6 +183,7 @@
                 };
 
                 /**
+<<<<<<< HEAD
                  * Setups the new schema creation workflow
                  * @param decoder the decoder to associate the schema to
                  */
@@ -161,6 +204,8 @@
                 };
 
                 /**
+=======
+>>>>>>> a98e28adb03f56719b52fc5109bf761e0850d6e3
                  * Toggles edit mode on/off
                  */
                 $scope.toggleEditMode = function(schema) {
