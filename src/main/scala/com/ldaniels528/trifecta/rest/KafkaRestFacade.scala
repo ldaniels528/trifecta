@@ -4,7 +4,6 @@ import java.io.{File, FileOutputStream}
 import java.util.concurrent.Executors
 
 import com.ldaniels528.trifecta.TxConfig.TxDecoder
-import com.ldaniels528.trifecta.command.parser.bdql.{BigDataQueryParser, BigDataQueryTokenizer}
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{LeaderAndReplicas, MessageData}
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
@@ -12,7 +11,8 @@ import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
-import com.ldaniels528.trifecta.messages.query.{BigDataSelection, QueryResult}
+import com.ldaniels528.trifecta.messages.query.parser.{KafkaQueryTokenizer, KafkaQueryParser}
+import com.ldaniels528.trifecta.messages.query.{KQLResult, KQLSelection}
 import com.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageDecoder}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
 import com.ldaniels528.trifecta.rest.TxWebConfig._
@@ -84,7 +84,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       val asyncIO = rt.executeQuery(compileQuery(query.queryString))
       Await.result(asyncIO.task, 30.minutes)
     } match {
-      case Success(result: QueryResult) => Extraction.decompose(result)
+      case Success(result: KQLResult) => Extraction.decompose(result)
       case Success(_) => Extraction.decompose(ErrorJs("Query string expected"))
       case Failure(e) =>
         logger.error("Query error", e)
@@ -92,8 +92,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }
   }
 
-  private def compileQuery(queryString: String): BigDataSelection = {
-    val query = BigDataQueryParser(queryString)
+  private def compileQuery(queryString: String): KQLSelection = {
+    val query = KafkaQueryParser(queryString)
     if (query.source.decoderURL != "default") query
     else {
       val topic = query.source.deviceURL.split("[:]").last
@@ -132,10 +132,10 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return a collection of [[Condition]] objects
    */
   private def parseCondition(expression: String, decoder: Option[MessageDecoder[_]]): Condition = {
-    import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser.deQuote
     import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
+    import com.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser.deQuote
 
-    val it = BigDataQueryTokenizer.parse(expression).iterator
+    val it = KafkaQueryTokenizer.parse(expression).iterator
     var criteria: Option[Expression] = None
     while (it.hasNext) {
       val args = it.take(criteria.size + 3).toList

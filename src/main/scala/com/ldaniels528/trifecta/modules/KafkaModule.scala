@@ -1008,7 +1008,7 @@ class KafkaModule(config: TxConfig) extends Module {
    * @return a collection of [[Condition]] objects
    */
   private def parseCondition(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]]): Condition = {
-    import com.ldaniels528.trifecta.command.parser.bdql.BigDataQueryParser.deQuote
+    import com.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser.deQuote
     import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 
     val it = params.args.iterator

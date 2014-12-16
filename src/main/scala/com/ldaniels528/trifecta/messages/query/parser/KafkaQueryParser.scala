@@ -1,24 +1,24 @@
-package com.ldaniels528.trifecta.command.parser.bdql
+package com.ldaniels528.trifecta.messages.query.parser
 
 import com.ldaniels528.trifecta.command.parser.TokenStream
-import com.ldaniels528.trifecta.messages.query.{BigDataSelection, IOSource}
+import com.ldaniels528.trifecta.messages.query.{KQLSelection, IOSource}
 import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.messages.logic.Expressions._
 
 /**
- * Big Data Query Language Parser
+ * Kafka Query Language Parser
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-object BigDataQueryParser {
+object KafkaQueryParser {
 
   /**
-   * Parses a BDQL query into a selection objects
+   * Parses a KQL query into a selection objects
    * @param queryString the given query string
-   * @return the [[BigDataSelection]]
+   * @return the [[KQLSelection]]
    */
-  def apply(queryString: String): BigDataSelection = {
+  def apply(queryString: String): KQLSelection = {
     // parse the query string
-    val ts = TokenStream(BigDataQueryTokenizer.parse(queryString))
+    val ts = TokenStream(KafkaQueryTokenizer.parse(queryString))
 
     /*
      * select symbol, exchange, lastTrade, volume
@@ -29,7 +29,7 @@ object BigDataQueryParser {
      * and volume >= 1,000,000
      * limit 10
      */
-    BigDataSelection(
+    KQLSelection(
       fields = parseSelectionFields(ts),
       source = parseFromExpression(ts),
       destination = parseIntoExpression(ts),
@@ -94,8 +94,8 @@ object BigDataQueryParser {
       while (it.hasNext) {
         val args = it.take(criteria.size + 3).toList
         criteria = args match {
-          case List("and", field, operator, value) => criteria.map(AND(_, compile(field, operator, deQuote(value))))
-          case List("or", field, operator, value) => criteria.map(OR(_, compile(field, operator, deQuote(value))))
+          case List(keyword, field, operator, value) if keyword.equalsIgnoreCase("and") => criteria.map(AND(_, compile(field, operator, deQuote(value))))
+          case List(keyword, field, operator, value) if keyword.equalsIgnoreCase("or") => criteria.map(OR(_, compile(field, operator, deQuote(value))))
           case List(field, operator, value) => Option(compile(field, operator, deQuote(value)))
           case _ =>
             throw new IllegalArgumentException(s"Invalid expression near ${it.rewind(4).take(4).mkString(" ")}")

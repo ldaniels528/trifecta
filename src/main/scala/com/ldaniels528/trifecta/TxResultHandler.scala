@@ -7,7 +7,7 @@ import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.trifecta.io.AsyncIO
 import com.ldaniels528.trifecta.io.avro.AvroTables
 import com.ldaniels528.trifecta.messages.BinaryMessaging
-import com.ldaniels528.trifecta.messages.query.QueryResult
+import com.ldaniels528.trifecta.messages.query.KQLResult
 import com.ldaniels528.trifecta.io.json.JsonHelper
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.MessageData
 import com.ldaniels528.trifecta.io.kafka.StreamedMessage
@@ -70,7 +70,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
         case None => out.println("No data returned")
       }
 
-      case QueryResult(topic, fields, values, runTimeMillis) =>
+      case KQLResult(topic, fields, values, runTimeMillis) =>
         if (values.isEmpty) out.println("No data returned")
         else {
           out.println(f"[Query completed in $runTimeMillis%.1f msec]")
