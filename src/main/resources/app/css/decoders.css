@@ -18,18 +18,18 @@ div.d_editor_bar {
     vertical-align: middle;
 }
 
-.pub_cancel_button {
+.d_cancel_button {
     border-radius: 4px 4px 4px 4px;
     background: #ff9933;
     color: #ffffff;
     font-size: 9pt;
 }
 
-.pub_schema_name_field {
+.d_schema_name_field {
     width: 200px
 }
 
-.pub_save_button {
+.d_save_button {
     border-radius: 4px 4px 4px 4px;
     background: #337ab7;
     color: #ffffff;
