@@ -96,6 +96,7 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
 
   private def processRestRequest(path: String, request: CurrentHttpRequestMessage): Option[(String, Array[Byte])] = {
     import java.net.URLDecoder.decode
+    implicit val formats = net.liftweb.json.DefaultFormats
 
     /**
      * Returns the form parameters as a data mapping
@@ -120,61 +121,68 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
     }
 
     // execute the action and get the JSON value
-    params flatMap { case (action, args) =>
-      action match {
-        case "executeQuery" => facade.executeQuery(request.asJsonString).passJson
-        case "findOne" => args match {
-          case topic :: criteria :: Nil => facade.findOne(topic, decode(criteria, encoding)).passJson
-          case _ => missingArgs("topic", "criteria")
+    Try {
+      params flatMap { case (action, args) =>
+        action match {
+          case "executeQuery" => facade.executeQuery(request.asJsonString).passJson
+          case "findOne" => args match {
+            case topic :: criteria :: Nil => facade.findOne(topic, decode(criteria, encoding)).passJson
+            case _ => missingArgs("topic", "criteria")
+          }
+          case "getConsumerDeltas" => JsonHelper.toJson(facade.getConsumerDeltas).passJson
+          case "getConsumers" => facade.getConsumers.passJson
+          case "getConsumerSet" => facade.getConsumerSet.passJson
+          case "getDecoders" => facade.getDecoders.passJson
+          case "getDecoderByTopic" => args match {
+            case topic :: Nil => facade.getDecoderByTopic(topic).passJson
+            case _ => missingArgs("topic")
+          }
+          case "getLeaderAndReplicas" => args match {
+            case topic :: Nil => facade.getLeaderAndReplicas(topic).passJson
+            case _ => missingArgs("topic")
+          }
+          case "getMessage" => args match {
+            case topic :: partition :: offset :: Nil => facade.getMessageData(topic, partition.toInt, offset.toLong).passJson
+            case _ => missingArgs("topic", "partition", "offset")
+          }
+          case "getMessageKey" => args match {
+            case topic :: partition :: offset :: Nil => facade.getMessageKey(topic, partition.toInt, offset.toLong).passJson
+            case _ => missingArgs("topic", "partition", "offset")
+          }
+          case "getQueries" => facade.getQueries.passJson
+          case "getReplicas" => args match {
+            case topic :: Nil => facade.getReplicas(topic).passJson
+            case _ => missingArgs("topic")
+          }
+          case "getTopicByName" => args match {
+            case name :: Nil => facade.getTopicByName(name).passJson
+            case _ => missingArgs("name")
+          }
+          case "getTopicDeltas" => JsonHelper.toJson(facade.getTopicDeltas).passJson
+          case "getTopicDetailsByName" => args match {
+            case name :: Nil => facade.getTopicDetailsByName(name).passJson
+            case _ => missingArgs("name")
+          }
+          case "getTopics" => facade.getTopics.passJson
+          case "getTopicSummaries" => facade.getTopicSummaries.passJson
+          case "getZkData" => facade.getZkData(toZkPath(args.init), args.last).passJson
+          case "getZkInfo" => facade.getZkInfo(toZkPath(args)).passJson
+          case "getZkPath" => facade.getZkPath(toZkPath(args)).passJson
+          case "publishMessage" => args match {
+            case topic :: Nil => facade.publishMessage(topic, request.asJsonString).passJson
+            case _ => missingArgs("topic")
+          }
+          case "saveQuery" => facade.saveQuery(request.asJsonString).passJson
+          case "saveSchema" => facade.saveSchema(request.asJsonString).passJson
+          case "transformResultsToCSV" => facade.transformResultsToCSV(request.asJsonString).passCsv
+          case _ => None
         }
-        case "getConsumerDeltas" => JsonHelper.toJson(facade.getConsumerDeltas).passJson
-        case "getConsumers" => facade.getConsumers.passJson
-        case "getConsumerSet" => facade.getConsumerSet.passJson
-        case "getDecoders" => facade.getDecoders.passJson
-        case "getDecoderByTopic" => args match {
-          case topic :: Nil => facade.getDecoderByTopic(topic).passJson
-          case _ => missingArgs("topic")
-        }
-        case "getLeaderAndReplicas" => args match {
-          case topic :: Nil => facade.getLeaderAndReplicas(topic).passJson
-          case _ => missingArgs("topic")
-        }
-        case "getMessage" => args match {
-          case topic :: partition :: offset :: Nil => facade.getMessageData(topic, partition.toInt, offset.toLong).passJson
-          case _ => missingArgs("topic", "partition", "offset")
-        }
-        case "getMessageKey" => args match {
-          case topic :: partition :: offset :: Nil => facade.getMessageKey(topic, partition.toInt, offset.toLong).passJson
-          case _ => missingArgs("topic", "partition", "offset")
-        }
-        case "getQueries" => facade.getQueries.passJson
-        case "getReplicas" => args match {
-          case topic :: Nil => facade.getReplicas(topic).passJson
-          case _ => missingArgs("topic")
-        }
-        case "getTopicByName" => args match {
-          case name :: Nil => facade.getTopicByName(name).passJson
-          case _ => missingArgs("name")
-        }
-        case "getTopicDeltas" => JsonHelper.toJson(facade.getTopicDeltas).passJson
-        case "getTopicDetailsByName" => args match {
-          case name :: Nil => facade.getTopicDetailsByName(name).passJson
-          case _ => missingArgs("name")
-        }
-        case "getTopics" => facade.getTopics.passJson
-        case "getTopicSummaries" => facade.getTopicSummaries.passJson
-        case "getZkData" => facade.getZkData(toZkPath(args.init), args.last).passJson
-        case "getZkInfo" => facade.getZkInfo(toZkPath(args)).passJson
-        case "getZkPath" => facade.getZkPath(toZkPath(args)).passJson
-        case "publishMessage" => args match {
-          case topic :: Nil => facade.publishMessage(topic, request.asJsonString).passJson
-          case _ => missingArgs("topic")
-        }
-        case "saveQuery" => facade.saveQuery(request.asJsonString).passJson
-        case "saveSchema" => facade.saveSchema(request.asJsonString).passJson
-        case "transformResultsToCSV" => facade.transformResultsToCSV(request.asJsonString).passCsv
-        case _ => None
       }
+    } match {
+      case Success(v) => v
+      case Failure(e) =>
+        logger.error(s"Error processing $path", e)
+        Extraction.decompose(KafkaRestFacade.ErrorJs(message = e.getMessage)).passJson
     }
   }
 
