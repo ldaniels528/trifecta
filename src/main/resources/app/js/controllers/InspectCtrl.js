@@ -12,6 +12,7 @@
                 $scope.topics = [];
                 $scope.topic = null;
                 $scope.loading = 0;
+                $scope.message = {};
 
                 $scope.displayMode = {
                     "state" : "message"
@@ -40,6 +41,12 @@
                     alert("Not yet implemented");
                 };
 
+                /**
+                 * Retrieves message data for the given offset within the topic partition.
+                 * @param topic the given topic
+                 * @param partition the given partition
+                 * @param offset the given offset
+                 */
                 $scope.getMessageData = function (topic, partition, offset) {
                     $scope.clearMessage();
                     $scope.loading++;
@@ -63,6 +70,12 @@
                         });
                 };
 
+                /**
+                 * Retrieves message key for the given offset within the topic partition.
+                 * @param topic the given topic
+                 * @param partition the given partition
+                 * @param offset the given offset
+                 */
                 $scope.getMessageKey = function (topic, partition, offset) {
                     $scope.clearMessage();
                     $scope.loading++;
@@ -274,9 +287,22 @@
                         $scope.getReplicas(myTopicName);
                     }
 
-                    var partitions = topic != null ? topic.partitions : null;
+                    var partitions = topic ? topic.partitions : null;
                     if (partitions) {
-                        $scope.updatePartition(partitions[0]);
+                        var partition = partitions[0];
+                        $scope.updatePartition(partition);
+
+                        // is a default offset set?
+                        if(partition && !partition.offset) {
+                            partition.offset = partition.startOffset;
+                        }
+
+                        $log.info("topic = " + ( $scope.topic ? $scope.topic.topic : null ) +
+                        ", partition = " + ($scope.partition ? $scope.partition.partition : null ) +
+                        ", offset = " + ($scope.partition ? $scope.partition.offset : null ));
+
+                        // load the message
+                        $scope.loadMessage();
                     }
                     else {
                         console.log("No partitions found");
@@ -322,7 +348,7 @@
                 }
 
                 // initially, clear the message
-                $scope.clearMessage();
+               // $scope.clearMessage();
 
                 /**
                  * Watch for topic changes, and when one occurs:
