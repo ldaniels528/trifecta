@@ -55,9 +55,9 @@
             <span class="error">Compile Error:</span> {{ schema.error }}
         </div>
         <div class="message_panel">
-                <textarea ng-model="schema.schemaString" ng-show="schema.editMode" class="d_editor"
-                          ng-change="schema.modified = true"
-                          placeholder="Copy and paste Avro schema here">{{ schema.schemaString }}</textarea>
+            <textarea ng-model="schema.schemaString" ng-show="schema.editMode" class="d_editor"
+                      ng-change="schema.modified = true"
+                      placeholder="Copy and paste Avro schema here">{{ schema.schemaString }}</textarea>
             <div ng-if="!schema.editMode" hljs source="toPrettyJSON(schema.schemaString, 8)"></div>
         </div>
     </div>
