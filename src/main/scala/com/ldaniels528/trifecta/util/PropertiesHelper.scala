@@ -32,7 +32,7 @@ object PropertiesHelper {
     }
 
     def getOrElse(key: String, default: => String): String = {
-      Option(props.getProperty(key)).getOrElse(default)
+      Option(props.getProperty(key)).map(_.trim).getOrElse(default)
     }
 
   }
