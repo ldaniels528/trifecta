@@ -24,7 +24,7 @@ import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
-import net.liftweb.json.{Extraction, JValue}
+import net.liftweb.json.JValue
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
@@ -87,11 +87,11 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       val asyncIO = rt.executeQuery(compileQuery(query.queryString))
       Await.result(asyncIO.task, 30.minutes)
     } match {
-      case Success(result: KQLResult) => Extraction.decompose(result)
-      case Success(_) => Extraction.decompose(ErrorJs("Query string expected"))
+      case Success(result: KQLResult) => JsonHelper.decompose(result)
+      case Success(_) => JsonHelper.decompose(ErrorJs("Query string expected"))
       case Failure(e) =>
         logger.error("Query error", e)
-        Extraction.decompose(ErrorJs(e.getMessage))
+        JsonHelper.decompose(ErrorJs(e.getMessage))
     }
   }
 
@@ -117,13 +117,13 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
           })
         Await.result(outcome, 30.minutes) match {
           case Some((partition, offset, Some(Success(message)))) =>
-            Extraction.decompose(MessageJs(`type` = "json", payload = message.toString, topic = Option(topic), partition = Some(partition), offset = Some(offset)))
+            JsonHelper.decompose(MessageJs(`type` = "json", payload = message.toString, topic = Option(topic), partition = Some(partition), offset = Some(offset)))
           case other =>
             logger.warn(s"Failed to retrieve a message: result => $other")
-            Extraction.decompose(ErrorJs("Failed to retrieve a message"))
+            JsonHelper.decompose(ErrorJs("Failed to retrieve a message"))
         }
       case Failure(e) =>
-        Extraction.decompose(ErrorJs(e.getMessage))
+        JsonHelper.decompose(ErrorJs(e.getMessage))
     }
   }
 
@@ -156,7 +156,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns the list of brokers
    * @return the JSON list of brokers
    */
-  def getBrokers: JValue = Extraction.decompose(brokers)
+  def getBrokers: JValue = JsonHelper.decompose(brokers)
 
   /**
    * Returns a collection of consumers that have changed since the last call
@@ -202,7 +202,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns all consumers for all topics
    * @return a list of consumers
    */
-  def getConsumers: JValue = Extraction.decompose(getConsumerGroupsNative ++ getConsumerGroupsPM)
+  def getConsumers: JValue = JsonHelper.decompose(getConsumerGroupsNative ++ getConsumerGroupsPM)
 
   /**
    * Returns all consumers for all topics
@@ -211,7 +211,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def getConsumerSet: JValue = {
     val consumers = getConsumerGroupsNative ++ (if (config.consumersPartitionManager) getConsumerGroupsPM else Nil)
 
-    Extraction.decompose(consumers.groupBy(_.topic) map { case (topic, consumersA) =>
+    JsonHelper.decompose(consumers.groupBy(_.topic) map { case (topic, consumersA) =>
       val results = (consumersA.groupBy(_.consumerId) map { case (consumerId, consumersB) =>
         ConsumerConsumerJs(consumerId, consumersB)
       }).toSeq
@@ -248,7 +248,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return the collection of decoders
    */
   def getDecoderByTopic(topic: String): JValue = {
-    Extraction.decompose(toDecoderJs(topic, config.getDecoders filter (_.topic == topic)))
+    JsonHelper.decompose(toDecoderJs(topic, config.getDecoders filter (_.topic == topic)))
   }
 
   /**
@@ -260,7 +260,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     decoders.filter(_.name == schemaName).map(_.decoder match {
       case Left(v) => v.schema.toString(true)
       case Right(v) => v.schemaString
-    }).headOption map Extraction.decompose
+    }).headOption map JsonHelper.decompose
   }
 
   /**
@@ -273,7 +273,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }).toSeq sortBy (_.topic)
 
     // transform the results to JSON
-    Extraction.decompose(results)
+    JsonHelper.decompose(results)
   }
 
   private def toDecoderJs(topic: String, decoders: Seq[TxDecoder]) = {
@@ -304,7 +304,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Retrieves the list of partition leaders and replicas for a given topic
    */
   def getLeaderAndReplicas(topic: String): JValue = {
-    Extraction.decompose {
+    JsonHelper.decompose {
       KafkaMicroConsumer.getLeaderAndReplicas(topic, brokers) flatMap {
         case LeaderAndReplicas(partition, leader, replicas) =>
           replicas map (LeaderAndReplicasJs(partition, leader, _))
@@ -320,7 +320,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return the JSON representation of the message
    */
   def getMessageData(topic: String, partition: Int, offset: Long): JValue = {
-    Extraction.decompose {
+    JsonHelper.decompose {
       Try {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
           val newOffset = for {
@@ -352,7 +352,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return the JSON representation of the message key
    */
   def getMessageKey(topic: String, partition: Int, offset: Long): JValue = {
-    Extraction.decompose {
+    JsonHelper.decompose {
       Try {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
           val newOffset = for {
@@ -416,13 +416,13 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     case value => MessageJs(`type` = "json", payload = JsonHelper.makePretty(String.valueOf(value)))
   }
 
-  def getQueries: JValue = Extraction.decompose(config.getQueries)
+  def getQueries: JValue = JsonHelper.decompose(config.getQueries)
 
   /**
    * Retrieves the list of Kafka replicas for a given topic
    */
   def getReplicas(topic: String): JValue = {
-    Extraction.decompose(KafkaMicroConsumer.getReplicas(topic, brokers) sortBy (_.partition))
+    JsonHelper.decompose(KafkaMicroConsumer.getReplicas(topic, brokers) sortBy (_.partition))
   }
 
   /**
@@ -453,10 +453,10 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     deltas
   }
 
-  def getTopics: JValue = Extraction.decompose(KafkaMicroConsumer.getTopicList(brokers))
+  def getTopics: JValue = JsonHelper.decompose(KafkaMicroConsumer.getTopicList(brokers))
 
   def getTopicSummaries: JValue = {
-    Extraction.decompose(KafkaMicroConsumer.getTopicList(brokers).groupBy(_.topic) map { case (topic, details) =>
+    JsonHelper.decompose(KafkaMicroConsumer.getTopicList(brokers).groupBy(_.topic) map { case (topic, details) =>
       // produce the partitions
       val partitions = details map { detail =>
         new KafkaMicroConsumer(TopicAndPartition(topic, detail.partitionId), brokers) use { consumer =>
@@ -476,11 +476,11 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   def getTopicByName(topic: String): Option[JValue] = {
-    KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic).map(Extraction.decompose)
+    KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic).map(JsonHelper.decompose)
   }
 
   def getTopicDetailsByName(topic: String): JValue = {
-    Extraction.decompose(KafkaMicroConsumer.getTopicPartitions(topic) map { partition =>
+    JsonHelper.decompose(KafkaMicroConsumer.getTopicPartitions(topic) map { partition =>
       new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
         val startOffset = consumer.getFirstOffset
         val endOffset = consumer.getLastOffset
@@ -493,7 +493,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def getZkData(path: String, format: String): JValue = {
     import net.liftweb.json._
 
-    Extraction.decompose(Try {
+    JsonHelper.decompose(Try {
       val decoder = codecs.get(format).orDie(s"No decoder of type '$format' was found")
       zk.read(path) map decoder.decode
     } match {
@@ -509,7 +509,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   def getZkInfo(path: String): JValue = {
-    Extraction.decompose(Try {
+    JsonHelper.decompose(Try {
       val creationTime = zk.getCreationTime(path)
       val lastModified = zk.getModificationTime(path)
       val data_? = zk.read(path)
@@ -523,7 +523,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   def getZkPath(parentPath: String): JValue = {
-    Extraction.decompose(Try {
+    JsonHelper.decompose(Try {
       zk.getChildren(parentPath) map { name =>
         ZkItem(name, path = if (parentPath == "/") s"/$name" else s"$parentPath/$name")
       }
@@ -534,7 +534,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   def publishMessage(topic: String, jsonString: String): JValue = {
-    Extraction.decompose {
+    JsonHelper.decompose {
       Try {
         // if the publisher has not been created ...
         if (publisher_?.isEmpty) publisher_? = Option {
@@ -545,7 +545,6 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
         // deserialize the JSON
         val blob = JsonHelper.transform[MessageBlobJs](jsonString)
-        logger.info(s"blob = $blob")
 
         // publish the message
         publisher_? foreach (_.publish(
@@ -560,13 +559,16 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }
   }
 
+  /**
+   * Converts the given value to the specified format
+   * @param value the given value
+   * @param format the specified format
+   * @return the binary result
+   */
   private def toBinary(value: String, format: String): Array[Byte] = {
-    logger.info(s"value = $value")
     format match {
       case "ASCII" => value.getBytes(config.encoding)
-      case "JSON" =>
-        logger.info(s"json = ${JsonHelper.makeCompact(value)}")
-        JsonHelper.makeCompact(value).getBytes(config.encoding)
+      case "JSON" => JsonHelper.makeCompact(value).getBytes(config.encoding)
       case "Hex-Notation" => CommandParser.parseDottedHex(value)
       case "EPOC" => ByteBufferUtils.longToBytes(value.toLong)
       case "UUID" => ByteBufferUtils.uuidToBytes(UUID.fromString(value))
@@ -575,6 +577,11 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }
   }
 
+  /**
+   * Generates a default value for specified format
+   * @param format the specified format
+   * @return the binary result
+   */
   private def toDefaultBinary(format: String): Array[Byte] = {
     format match {
       case "EPOC" => ByteBufferUtils.longToBytes(System.currentTimeMillis())
@@ -588,16 +595,15 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     Try {
       // transform the JSON string into a query
       val query = JsonHelper.transform[QueryJs](jsonString)
-
-      val file = new File(TxWebConfig.queriesDirectory, s"${query.name}.bdql")
+      val file = new File(TxWebConfig.queriesDirectory, s"${query.name}.kql")
       // TODO add a check for new vs. replace?
 
       new FileOutputStream(file) use { fos =>
         fos.write(query.queryString.getBytes(config.encoding))
       }
     } match {
-      case Success(_) => Extraction.decompose(ErrorJs(message = "Saved", `type` = "success"))
-      case Failure(e) => Extraction.decompose(ErrorJs(message = e.getMessage, `type` = "error"))
+      case Success(_) => JsonHelper.decompose(ErrorJs(message = "Saved", `type` = "success"))
+      case Failure(e) => JsonHelper.decompose(ErrorJs(message = e.getMessage, `type` = "error"))
     }
   }
 
@@ -605,17 +611,15 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     Try {
       // transform the JSON string into a schema
       val schema = JsonHelper.transform[SchemaJs](jsonString)
-
       val decoderFile = new File(new File(TxConfig.decoderDirectory, schema.topic), schema.name)
-      logger.info(s"decoderFile = ${decoderFile.getAbsolutePath}")
       // TODO add a check for new vs. replace?
 
       new FileOutputStream(decoderFile) use { fos =>
         fos.write(schema.schemaString.getBytes(config.encoding))
       }
     } match {
-      case Success(_) => Extraction.decompose(ErrorJs(message = "Saved", `type` = "success"))
-      case Failure(e) => Extraction.decompose(ErrorJs(message = e.getMessage, `type` = "error"))
+      case Success(_) => JsonHelper.decompose(ErrorJs(message = "Saved", `type` = "success"))
+      case Failure(e) => JsonHelper.decompose(ErrorJs(message = e.getMessage, `type` = "error"))
     }
   }
 

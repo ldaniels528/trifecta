@@ -96,7 +96,6 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
 
   private def processRestRequest(path: String, request: CurrentHttpRequestMessage): Option[(String, Array[Byte])] = {
     import java.net.URLDecoder.decode
-    implicit val formats = net.liftweb.json.DefaultFormats
 
     /**
      * Returns the form parameters as a data mapping
@@ -186,7 +185,7 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
       case Success(v) => v
       case Failure(e) =>
         logger.error(s"Error processing $path", e)
-        Extraction.decompose(KafkaRestFacade.ErrorJs(message = e.getMessage)).passJson
+        JsonHelper.decompose(KafkaRestFacade.ErrorJs(message = e.getMessage)).passJson
     }
   }
 
@@ -265,6 +264,16 @@ object WebContentActor {
      * @return a JSON string
      */
     def asJsonString = new String(request.content.toBytes)
+
+  }
+
+  implicit class TryJsonExtension[T](val outcome: Try[T]) extends AnyVal {
+
+    def toJson: JValue = JsonHelper.decompose(
+      outcome match {
+        case Success(v) => v
+        case Failure(e) => KafkaRestFacade.ErrorJs(message = e.getMessage)
+      })
 
   }
 
