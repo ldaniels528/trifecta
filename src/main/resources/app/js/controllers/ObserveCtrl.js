@@ -29,7 +29,7 @@
             ];
 
             // select the default tab and make it active
-            $scope.observeTab = $scope.observeTabs[1];
+            $scope.observeTab = $scope.observeTabs[0];
             $scope.observeTab.active = true;
 
             /**
