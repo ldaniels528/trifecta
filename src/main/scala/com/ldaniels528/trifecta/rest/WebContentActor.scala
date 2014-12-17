@@ -123,61 +123,62 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
     Try {
       params flatMap { case (action, args) =>
         action match {
-          case "executeQuery" => facade.executeQuery(request.asJsonString).passJson
+          case "executeQuery" => facade.executeQuery(request.asJsonString).toJson.mimeJson
           case "findOne" => args match {
-            case topic :: criteria :: Nil => facade.findOne(topic, decode(criteria, encoding)).passJson
+            case topic :: criteria :: Nil => facade.findOne(topic, decode(criteria, encoding)).toJson.mimeJson
             case _ => missingArgs("topic", "criteria")
           }
-          case "getConsumerDeltas" => JsonHelper.toJson(facade.getConsumerDeltas).passJson
-          case "getConsumers" => facade.getConsumers.passJson
-          case "getConsumerSet" => facade.getConsumerSet.passJson
-          case "getDecoders" => facade.getDecoders.passJson
+          case "getBrokers" => facade.getBrokers.toJson.mimeJson
+          case "getConsumerDeltas" => JsonHelper.toJson(facade.getConsumerDeltas).mimeJson
+          case "getConsumers" => facade.getConsumers.toJson.mimeJson
+          case "getConsumerSet" => facade.getConsumerSet.toJson.mimeJson
+          case "getDecoders" => facade.getDecoders.toJson.mimeJson
           case "getDecoderByTopic" => args match {
-            case topic :: Nil => facade.getDecoderByTopic(topic).passJson
+            case topic :: Nil => facade.getDecoderByTopic(topic).toJson.mimeJson
             case _ => missingArgs("topic")
           }
           case "getDecoderSchemaByName" => args match {
-            case topic :: schemaName :: Nil => facade.getDecoderSchemaByName(topic, schemaName).passJson
+            case topic :: schemaName :: Nil => facade.getDecoderSchemaByName(topic, schemaName).toJson.mimeJson
             case _ => missingArgs("topic", "schemaName")
           }
           case "getLeaderAndReplicas" => args match {
-            case topic :: Nil => facade.getLeaderAndReplicas(topic).passJson
+            case topic :: Nil => facade.getLeaderAndReplicas(topic).toJson.mimeJson
             case _ => missingArgs("topic")
           }
           case "getMessage" => args match {
-            case topic :: partition :: offset :: Nil => facade.getMessageData(topic, partition.toInt, offset.toLong).passJson
+            case topic :: partition :: offset :: Nil => facade.getMessageData(topic, partition.toInt, offset.toLong).toJson.mimeJson
             case _ => missingArgs("topic", "partition", "offset")
           }
           case "getMessageKey" => args match {
-            case topic :: partition :: offset :: Nil => facade.getMessageKey(topic, partition.toInt, offset.toLong).passJson
+            case topic :: partition :: offset :: Nil => facade.getMessageKey(topic, partition.toInt, offset.toLong).toJson.mimeJson
             case _ => missingArgs("topic", "partition", "offset")
           }
-          case "getQueries" => facade.getQueries.passJson
+          case "getQueries" => facade.getQueries.toJson.mimeJson
           case "getReplicas" => args match {
-            case topic :: Nil => facade.getReplicas(topic).passJson
+            case topic :: Nil => facade.getReplicas(topic).toJson.mimeJson
             case _ => missingArgs("topic")
           }
           case "getTopicByName" => args match {
-            case name :: Nil => facade.getTopicByName(name).passJson
+            case name :: Nil => facade.getTopicByName(name).toJson.mimeJson
             case _ => missingArgs("name")
           }
-          case "getTopicDeltas" => JsonHelper.toJson(facade.getTopicDeltas).passJson
+          case "getTopicDeltas" => JsonHelper.toJson(facade.getTopicDeltas).mimeJson
           case "getTopicDetailsByName" => args match {
-            case name :: Nil => facade.getTopicDetailsByName(name).passJson
+            case name :: Nil => facade.getTopicDetailsByName(name).toJson.mimeJson
             case _ => missingArgs("name")
           }
-          case "getTopics" => facade.getTopics.passJson
-          case "getTopicSummaries" => facade.getTopicSummaries.passJson
-          case "getZkData" => facade.getZkData(toZkPath(args.init), args.last).passJson
-          case "getZkInfo" => facade.getZkInfo(toZkPath(args)).passJson
-          case "getZkPath" => facade.getZkPath(toZkPath(args)).passJson
+          case "getTopics" => facade.getTopics.toJson.mimeJson
+          case "getTopicSummaries" => facade.getTopicSummaries.toJson.mimeJson
+          case "getZkData" => facade.getZkData(toZkPath(args.init), args.last).toJson.mimeJson
+          case "getZkInfo" => facade.getZkInfo(toZkPath(args)).toJson.mimeJson
+          case "getZkPath" => facade.getZkPath(toZkPath(args)).toJson.mimeJson
           case "publishMessage" => args match {
-            case topic :: Nil => facade.publishMessage(topic, request.asJsonString).passJson
+            case topic :: Nil => facade.publishMessage(topic, request.asJsonString).toJson.mimeJson
             case _ => missingArgs("topic")
           }
-          case "saveQuery" => facade.saveQuery(request.asJsonString).passJson
-          case "saveSchema" => facade.saveSchema(request.asJsonString).passJson
-          case "transformResultsToCSV" => facade.transformResultsToCSV(request.asJsonString).passCsv
+          case "saveQuery" => facade.saveQuery(request.asJsonString).toJson.mimeJson
+          case "saveSchema" => facade.saveSchema(request.asJsonString).toJson.mimeJson
+          case "transformResultsToCSV" => facade.transformResultsToCSV(request.asJsonString).mimeCSV
           case _ => None
         }
       }
@@ -185,7 +186,7 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
       case Success(v) => v
       case Failure(e) =>
         logger.error(s"Error processing $path", e)
-        JsonHelper.decompose(KafkaRestFacade.ErrorJs(message = e.getMessage)).passJson
+        JsonHelper.decompose(KafkaRestFacade.ErrorJs(message = e.getMessage)).mimeJson
     }
   }
 
@@ -233,23 +234,23 @@ object WebContentActor {
 
   /**
    * Convenience method for returning an option of a JSON mime type and associated binary content
-   * @param json the option of a JSON Value
+   * @param json a JSON Value
    */
-  implicit class JsonExtensionsA(val json: Option[JValue]) extends AnyVal {
+  implicit class JsonExtensionsA(val json: JValue) extends AnyVal {
 
-    def passJson: Option[(String, Array[Byte])] = json map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
+    def mime(mimeType: String): Option[(String, Array[Byte])] = Option(json) map (js => (mimeType, compact(render(js)).getBytes(encoding)))
+
+    def mimeJson: Option[(String, Array[Byte])] = Option(json) map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
 
   }
 
   /**
    * Convenience method for returning an option of a JSON mime type and associated binary content
-   * @param json a JSON Value
+   * @param json the option of a JSON Value
    */
-  implicit class JsonExtensionsB(val json: JValue) extends AnyVal {
+  implicit class JsonExtensionsB(val json: Option[JValue]) extends AnyVal {
 
-    def passMime(mimeType: String): Option[(String, Array[Byte])] = Option(json) map (js => (mimeType, compact(render(js)).getBytes(encoding)))
-
-    def passJson: Option[(String, Array[Byte])] = Option(json) map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
+    def mimeJson: Option[(String, Array[Byte])] = json map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
 
   }
 
@@ -279,7 +280,7 @@ object WebContentActor {
 
   implicit class TryExtensions(val outcome: Try[Option[List[String]]]) extends AnyVal {
 
-    def passCsv: Option[(String, Array[Byte])] = {
+    def mimeCSV: Option[(String, Array[Byte])] = {
       outcome match {
         case Success(Some(list)) => Some((MimeCsv, list.mkString("\n").getBytes(encoding)))
         case Success(None) => Some((MimeCsv, Array.empty[Byte]))
