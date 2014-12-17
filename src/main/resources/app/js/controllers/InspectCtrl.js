@@ -294,7 +294,7 @@
 
                         // is a default offset set?
                         if(partition && !partition.offset) {
-                            partition.offset = partition.startOffset;
+                            partition.offset = partition.endOffset;
                         }
 
                         $log.info("topic = " + ( $scope.topic ? $scope.topic.topic : null ) +
@@ -313,7 +313,7 @@
 
                 function ensureOffset(partition) {
                     if(!partition.offset) {
-                        partition.offset = partition.startOffset;
+                        partition.offset = partition.endOffset;
                     }
                 }
 
