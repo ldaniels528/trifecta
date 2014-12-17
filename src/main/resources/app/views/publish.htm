@@ -1,22 +1,31 @@
-<div ng-controller="PublishCtrl" class="full_block">
-    <div class="pub_bold_label" style="margin-top: 5px">
-        <span class="bold">Destination Topic</span>
-        <select ng-model="messageBlob.topic" ng-options="t.topic for t in getTopics(false)"></select>
-    </div>
-
-    <div class="pub_bold_label"><span class="bold">Message Key</span> &#8212; format:
-        <select ng-model="messageBlob.keyFormat" ng-options="f for f in keyFormats"></select>
-    </div>
+<div ng-controller="PublishCtrl" class="full_block" style="margin-top: 5px">
     <div style="display: inline; float: left; width: 69.9%">
-        <div class="pub_message_key_panel">
-            <textarea ng-model="messageBlob.key" class="pub_editor"
-                      placeholder="Enter message key here (or leave blank for auto-generation)">{{ messageBlob.key }}</textarea>
+        <div class="pub_bold_label" style="padding: 4px 4px 4px 0px ">
+            <div style="display: inline; float: left">
+                <span class="pub_bold_label bold">Message Key</span> &#8212; format:
+                <select ng-model="messageBlob.keyFormat" ng-options="f for f in keyFormats"></select>
+            </div>
+            <div style="display: inline; float: right">
+                <input ng-model="messageBlob.keyAuto" type="checkbox">
+                <span class="pub_bold_label bold">Auto-generate Key</span>
+            </div>
+            <br style="clear: both">
         </div>
-
+        <div class="pub_message_key_panel" ng-hide="messageBlob.keyAuto">
+            <textarea ng-model="messageBlob.key" class="pub_editor"
+                      placeholder="Enter message key here (or choose auto-generation)">{{ messageBlob.key }}</textarea>
+        </div>
         <div class="pub_bold_label">
-            <span class="bold">Message Body</span> &#8212; format:
-            <select ng-model="messageBlob.messageFormat" ng-options="f for f in messageFormats"></select>
-            <button class="publish_button" ng-click="publishMessage(messageBlob)">Publish</button>
+            <div style="display: inline; float: left">
+                <span class="bold">Message Body</span> &#8212; format:
+                <select ng-model="messageBlob.messageFormat" ng-options="f for f in messageFormats"></select>
+            </div>
+            <div style="display: inline; float: right; text-align: center">
+                <span class="pub_bold_label bold">Destination Topic</span>
+                <select ng-model="messageBlob.topic" ng-options="t.topic for t in getTopics(false)"></select>
+                <button class="publish_button" ng-click="publishMessage(messageBlob)">Publish</button>
+            </div>
+            <br style="clear: both">
         </div>
         <div class="pub_message_data_panel">
             <textarea ng-model="messageBlob.message" class="pub_editor"
@@ -26,7 +35,7 @@
 
     <div style="display: inline; float: right; width: 30%">
         <div style="height: 100%; margin-left: 10px; padding-left: 10px; border-left: 1px solid #cccccc">
-            <p>The <b>message key</b> could be a variety of different values. Trifecta provides the following
+            <p>The <b><i>message key</i></b> could be a variety of different values. Trifecta provides the following
             types to cover the most commonly-used options:</p>
 
             <ul>
@@ -38,9 +47,10 @@
                     (e.g. <span class="pub_hex_note"><i>de305d54-75b4-431b-adb2-eb6b9e546013</i></span></li>
             </ul>
 
-            <p>Optionally, you may leave the message key field blank and the key will be automatically generated.</p>
+            <p>Optionally, you may leave the message key field blank and the key will be automatically generated
+                (for <i>EPOC</i> and <i>UUID</i> types only).</p>
 
-            <p>The <b>message body</b> can be represented in various formats; including: Avro, JSON, or Binary
+            <p>The <b><i>message body</i></b> can be represented in various formats; including: Avro, JSON, or Binary
                 (<b>NOTE</b>: ASCII text sequences are treated as binary).</p>
         </div>
     </div>

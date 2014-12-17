@@ -270,12 +270,7 @@
                     ensureOffset(partition);
 
                     // load the first message
-                    if ($scope.topic.totalMessages > 0 && $scope.partition.offset) {
-                        $scope.loadMessage();
-                    }
-                    else {
-                        $scope.clearMessage();
-                    }
+                    $scope.loadMessage();
                 };
 
                 $scope.updateTopic = function (topic) {
@@ -292,17 +287,12 @@
                         var partition = partitions[0];
                         $scope.updatePartition(partition);
 
-                        // is a default offset set?
-                        if(partition && !partition.offset) {
-                            partition.offset = partition.startOffset;
-                        }
-
                         $log.info("topic = " + ( $scope.topic ? $scope.topic.topic : null ) +
                         ", partition = " + ($scope.partition ? $scope.partition.partition : null ) +
                         ", offset = " + ($scope.partition ? $scope.partition.offset : null ));
 
                         // load the message
-                        $scope.loadMessage();
+                        //$scope.loadMessage();
                     }
                     else {
                         console.log("No partitions found");
@@ -312,8 +302,8 @@
                 };
 
                 function ensureOffset(partition) {
-                    if(!partition.offset) {
-                        partition.offset = partition.startOffset;
+                    if(partition && !partition.offset) {
+                        partition.offset = partition.endOffset;
                     }
                 }
 

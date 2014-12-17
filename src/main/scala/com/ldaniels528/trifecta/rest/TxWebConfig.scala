@@ -37,7 +37,7 @@ object TxWebConfig {
    */
   implicit class TxConfigExtensions(val config: TxConfig) extends AnyVal {
 
-    def getQueries: Option[Array[TxQuery]] = {
+    def getQueries: Option[Seq[TxQuery]] = {
       def removeExtension(name: String) = name.lastIndexOptionOf(".bdql") match {
         case Some(index) => name.substring(0, index)
         case None => name

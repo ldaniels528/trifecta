@@ -14,13 +14,14 @@ import org.apache.commons.io.IOUtils
 import org.mashupbots.socko.events.{CurrentHttpRequestMessage, HttpRequestEvent, HttpResponseStatus}
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /**
  * Web Content Actor
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class WebContentActor(facade: KafkaRestFacade) extends Actor {
+class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) extends Actor {
   private lazy val logger = LoggerFactory.getLogger(getClass)
 
   def receive = {
@@ -35,14 +36,32 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
         event.response.write100Continue()
       }
 
-      getContent(path, request) map { case (mimeType, bytes) =>
-        val elapsedTime = (System.nanoTime() - startTime).toDouble / 1e+6
-        logger.info(f"Retrieved resource '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
-        response.contentType = mimeType
-        response.write(bytes)
-      } getOrElse {
-        logger.error(s"Resource '$path' not found")
-        response.write(HttpResponseStatus.NOT_FOUND, s"Resource '$path' not found")
+      def verb(path: String) = if(path.startsWith(RestRoot)) "Executed" else "Retrieved"
+
+      getContent(path, request) match {
+        // is it the option of a result?
+        case Left(result_?) =>
+          result_? map { case (mimeType, bytes) =>
+            val elapsedTime = (System.nanoTime() - startTime).toDouble / 1e+6
+            logger.info(f"SYNC: ${verb(path)} '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
+            response.contentType = mimeType
+            response.write(bytes)
+          } getOrElse {
+            logger.error(s"Resource '$path' not found")
+            response.write(HttpResponseStatus.NOT_FOUND, s"Resource '$path' not found")
+          }
+
+        // Or is it a promise of a result?
+        case Right(outcome) => outcome.onComplete {
+          case Success((mimeType, bytes)) =>
+            val elapsedTime = (System.nanoTime() - startTime).toDouble / 1e+6
+            logger.info(f"ASYNC: Retrieved '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
+            response.contentType = mimeType
+            response.write(bytes)
+          case Failure(e) =>
+            logger.error(s"Resource '$path' failed during processing", e)
+            response.write(HttpResponseStatus.INTERNAL_SERVER_ERROR, s"Resource '$path' failed during processing")
+        }
       }
   }
 
@@ -51,7 +70,7 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
    * @param path the given resource path (e.g. "/images/greenLight.png")
    * @return the option of an array of bytes representing the content
    */
-  private def getContent(path: String, request: CurrentHttpRequestMessage): Option[(String, Array[Byte])] = {
+  private def getContent(path: String, request: CurrentHttpRequestMessage): Either[Option[(String, Array[Byte])], Future[(String, Array[Byte])]] = {
     path match {
       // REST requests
       case s if s.startsWith(RestRoot) =>
@@ -59,14 +78,16 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
 
       // resource requests
       case s =>
-        for {
-          bytes <- Resource(s) map (url =>
-            new ByteArrayOutputStream(1024) use { out =>
-              url.openStream() use (IOUtils.copy(_, out))
-              out.toByteArray
-            })
-          mimeType <- guessMimeType(s)
-        } yield mimeType -> bytes
+        Left {
+          for {
+            bytes <- Resource(s) map (url =>
+              new ByteArrayOutputStream(1024) use { out =>
+                url.openStream() use (IOUtils.copy(_, out))
+                out.toByteArray
+              })
+            mimeType <- guessMimeType(s)
+          } yield mimeType -> bytes
+        }
     }
   }
 
@@ -94,104 +115,100 @@ class WebContentActor(facade: KafkaRestFacade) extends Actor {
     }
   }
 
-  private def processRestRequest(path: String, request: CurrentHttpRequestMessage): Option[(String, Array[Byte])] = {
+  private def processRestRequest(path: String, request: CurrentHttpRequestMessage): Either[Option[(String, Array[Byte])], Future[(String, Array[Byte])]] = {
     import java.net.URLDecoder.decode
-    implicit val formats = net.liftweb.json.DefaultFormats
 
     /**
      * Returns the form parameters as a data mapping
-     * @return a data mapping
+     * @return a [[Map]] of a key to a [[List]] of string values
      */
-    def form = {
-      val map = request.content.toFormDataMap
-      map foreach { case (key, values) => logger.info(s"processRestRequest Content: '$key' ~> values = $values")}
-      map
-    }
+    def form = request.content.toFormDataMap
 
     /**
      * Returns the parameters from the REST url
      * @return the parameters
      */
-    def params = {
-      val p = path.indexOptionOf(RestRoot)
+    def params: Option[(String, List[String])] = {
+      path.indexOptionOf(RestRoot)
         .map(index => path.substring(index + RestRoot.length + 1))
         .map(_.split("[/]")) map (a => (a.head, a.tail.toList))
-      p foreach { case (action, args) => logger.info(s"processRestRequest Action: $action ~> values = $args")}
-      p
     }
 
     // execute the action and get the JSON value
     Try {
-      params flatMap { case (action, args) =>
-        action match {
-          case "executeQuery" => facade.executeQuery(request.asJsonString).passJson
-          case "findOne" => args match {
-            case topic :: criteria :: Nil => facade.findOne(topic, decode(criteria, encoding)).passJson
-            case _ => missingArgs("topic", "criteria")
+      params match {
+        case None => throw new RuntimeException(s"Invalid request [$path]")
+        case Some((action, args)) =>
+          action match {
+            case "executeQuery" => Right(facade.executeQuery(request.asJsonString).toJson.mimeJson)
+            case "findOne" => args match {
+              case topic :: criteria :: Nil => Right(facade.findOne(topic, decode(criteria, encoding)).toJson.mimeJson)
+              case _ => missingArgs("topic", "criteria")
+            }
+            case "getBrokers" => Left(facade.getBrokers.toJson.mimeJson)
+            case "getConsumerDeltas" => Left(facade.getConsumerDeltas.toJson.mimeJson)
+            case "getConsumers" => Left(facade.getConsumers.toJson.mimeJson)
+            case "getConsumerSet" => Left(facade.getConsumerSet.toJson.mimeJson)
+            case "getDecoders" => Left(facade.getDecoders.toJson.mimeJson)
+            case "getDecoderByTopic" => args match {
+              case topic :: Nil => Left(facade.getDecoderByTopic(topic).toJson.mimeJson)
+              case _ => missingArgs("topic")
+            }
+            case "getDecoderSchemaByName" => args match {
+              case topic :: schemaName :: Nil => Left(facade.getDecoderSchemaByName(topic, schemaName).toJson.mimeJson)
+              case _ => missingArgs("topic", "schemaName")
+            }
+            case "getLeaderAndReplicas" => args match {
+              case topic :: Nil => Left(facade.getLeaderAndReplicas(topic).toJson.mimeJson)
+              case _ => missingArgs("topic")
+            }
+            case "getMessage" => args match {
+              case topic :: partition :: offset :: Nil => Left(facade.getMessageData(topic, partition.toInt, offset.toLong).toJson.mimeJson)
+              case _ => missingArgs("topic", "partition", "offset")
+            }
+            case "getMessageKey" => args match {
+              case topic :: partition :: offset :: Nil => Left(facade.getMessageKey(topic, partition.toInt, offset.toLong).toJson.mimeJson)
+              case _ => missingArgs("topic", "partition", "offset")
+            }
+            case "getQueries" => Left(facade.getQueries.toJson.mimeJson)
+            case "getReplicas" => args match {
+              case topic :: Nil => Left(facade.getReplicas(topic).toJson.mimeJson)
+              case _ => missingArgs("topic")
+            }
+            case "getTopicByName" => args match {
+              case name :: Nil => Left(facade.getTopicByName(name).toJson.mimeJson)
+              case _ => missingArgs("name")
+            }
+            case "getTopicDeltas" => Left(JsonHelper.toJson(facade.getTopicDeltas).mimeJson)
+            case "getTopicDetailsByName" => args match {
+              case name :: Nil => Left(facade.getTopicDetailsByName(name).toJson.mimeJson)
+              case _ => missingArgs("name")
+            }
+            case "getTopics" => Left(facade.getTopics.toJson.mimeJson)
+            case "getTopicSummaries" => Left(facade.getTopicSummaries.toJson.mimeJson)
+            case "getZkData" => Left(facade.getZkData(toZkPath(args.init), args.last).toJson.mimeJson)
+            case "getZkInfo" => Left(facade.getZkInfo(toZkPath(args)).toJson.mimeJson)
+            case "getZkPath" => Left(facade.getZkPath(toZkPath(args)).toJson.mimeJson)
+            case "publishMessage" => args match {
+              case topic :: Nil => Left(facade.publishMessage(topic, request.asJsonString).toJson.mimeJson)
+              case _ => missingArgs("topic")
+            }
+            case "saveQuery" => Left(facade.saveQuery(request.asJsonString).toJson.mimeJson)
+            case "saveSchema" => Left(facade.saveSchema(request.asJsonString).toJson.mimeJson)
+            case "transformResultsToCSV" => Left(facade.transformResultsToCSV(request.asJsonString).mimeCSV)
+            case _ => Left(None)
           }
-          case "getConsumerDeltas" => JsonHelper.toJson(facade.getConsumerDeltas).passJson
-          case "getConsumers" => facade.getConsumers.passJson
-          case "getConsumerSet" => facade.getConsumerSet.passJson
-          case "getDecoders" => facade.getDecoders.passJson
-          case "getDecoderByTopic" => args match {
-            case topic :: Nil => facade.getDecoderByTopic(topic).passJson
-            case _ => missingArgs("topic")
-          }
-          case "getDecoderSchemaByName" => args match {
-            case topic :: schemaName :: Nil => facade.getDecoderSchemaByName(topic, schemaName).passJson
-            case _ => missingArgs("topic", "schemaName")
-          }
-          case "getLeaderAndReplicas" => args match {
-            case topic :: Nil => facade.getLeaderAndReplicas(topic).passJson
-            case _ => missingArgs("topic")
-          }
-          case "getMessage" => args match {
-            case topic :: partition :: offset :: Nil => facade.getMessageData(topic, partition.toInt, offset.toLong).passJson
-            case _ => missingArgs("topic", "partition", "offset")
-          }
-          case "getMessageKey" => args match {
-            case topic :: partition :: offset :: Nil => facade.getMessageKey(topic, partition.toInt, offset.toLong).passJson
-            case _ => missingArgs("topic", "partition", "offset")
-          }
-          case "getQueries" => facade.getQueries.passJson
-          case "getReplicas" => args match {
-            case topic :: Nil => facade.getReplicas(topic).passJson
-            case _ => missingArgs("topic")
-          }
-          case "getTopicByName" => args match {
-            case name :: Nil => facade.getTopicByName(name).passJson
-            case _ => missingArgs("name")
-          }
-          case "getTopicDeltas" => JsonHelper.toJson(facade.getTopicDeltas).passJson
-          case "getTopicDetailsByName" => args match {
-            case name :: Nil => facade.getTopicDetailsByName(name).passJson
-            case _ => missingArgs("name")
-          }
-          case "getTopics" => facade.getTopics.passJson
-          case "getTopicSummaries" => facade.getTopicSummaries.passJson
-          case "getZkData" => facade.getZkData(toZkPath(args.init), args.last).passJson
-          case "getZkInfo" => facade.getZkInfo(toZkPath(args)).passJson
-          case "getZkPath" => facade.getZkPath(toZkPath(args)).passJson
-          case "publishMessage" => args match {
-            case topic :: Nil => facade.publishMessage(topic, request.asJsonString).passJson
-            case _ => missingArgs("topic")
-          }
-          case "saveQuery" => facade.saveQuery(request.asJsonString).passJson
-          case "saveSchema" => facade.saveSchema(request.asJsonString).passJson
-          case "transformResultsToCSV" => facade.transformResultsToCSV(request.asJsonString).passCsv
-          case _ => None
-        }
       }
     } match {
-      case Success(v) => v
+      case Success(content) => content
       case Failure(e) =>
         logger.error(s"Error processing $path", e)
-        Extraction.decompose(KafkaRestFacade.ErrorJs(message = e.getMessage)).passJson
+        Left(JsonHelper.decompose(KafkaRestFacade.ErrorJs(message = e.getMessage)).mimeJson)
     }
   }
 
   private def missingArgs[S](argNames: String*): S = {
-    throw new IllegalStateException(s"Expected arguments (${argNames mkString ", "}) are missing")
+    throw new RuntimeException(s"Expected arguments (${argNames mkString ", "}) are missing")
   }
 
   private def toZkPath(args: List[String]): String = "/" + args.mkString("/")
@@ -234,23 +251,23 @@ object WebContentActor {
 
   /**
    * Convenience method for returning an option of a JSON mime type and associated binary content
-   * @param json the option of a JSON Value
+   * @param json a JSON Value
    */
-  implicit class JsonExtensionsA(val json: Option[JValue]) extends AnyVal {
+  implicit class JsonExtensionsA(val json: JValue) extends AnyVal {
 
-    def passJson: Option[(String, Array[Byte])] = json map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
+    def mime(mimeType: String): Option[(String, Array[Byte])] = Option(json) map (js => (mimeType, compact(render(js)).getBytes(encoding)))
+
+    def mimeJson: Option[(String, Array[Byte])] = Option(json) map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
 
   }
 
   /**
    * Convenience method for returning an option of a JSON mime type and associated binary content
-   * @param json a JSON Value
+   * @param json the option of a JSON Value
    */
-  implicit class JsonExtensionsB(val json: JValue) extends AnyVal {
+  implicit class JsonExtensionsB(val json: Option[JValue]) extends AnyVal {
 
-    def passMime(mimeType: String): Option[(String, Array[Byte])] = Option(json) map (js => (mimeType, compact(render(js)).getBytes(encoding)))
-
-    def passJson: Option[(String, Array[Byte])] = Option(json) map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
+    def mimeJson: Option[(String, Array[Byte])] = json map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
 
   }
 
@@ -268,9 +285,50 @@ object WebContentActor {
 
   }
 
+  /**
+   * Convenience method for returning the corresponding JSON value
+   * @param outcome the promise of a value
+   */
+  implicit class FutureJsonExtensionA[T](val outcome: Future[T]) extends AnyVal {
+
+    def toJson(implicit ec: ExecutionContext): Future[JValue] = outcome.map(JsonHelper.decompose(_))
+
+  }
+
+  /**
+   * Convenience method for returning an option of a JSON mime type and associated binary content
+   * @param outcome the promise of a value
+   */
+  implicit class FutureJsonExtensionB[T](val outcome: Future[JValue]) extends AnyVal {
+
+    def mimeJson(implicit ec: ExecutionContext): Future[(String, Array[Byte])] = outcome map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
+
+  }
+
+  /**
+   * Convenience method for returning the corresponding JSON value
+   * @param values the collection of values
+   */
+  implicit class SeqJsonExtension[T](val values: Seq[T]) extends AnyVal {
+
+    def toJson: JValue = JsonHelper.decompose(values)
+
+  }
+
+
+  implicit class TryJsonExtension[T](val outcome: Try[T]) extends AnyVal {
+
+    def toJson: JValue = JsonHelper.decompose(
+      outcome match {
+        case Success(v) => v
+        case Failure(e) => KafkaRestFacade.ErrorJs(message = e.getMessage)
+      })
+
+  }
+
   implicit class TryExtensions(val outcome: Try[Option[List[String]]]) extends AnyVal {
 
-    def passCsv: Option[(String, Array[Byte])] = {
+    def mimeCSV: Option[(String, Array[Byte])] = {
       outcome match {
         case Success(Some(list)) => Some((MimeCsv, list.mkString("\n").getBytes(encoding)))
         case Success(None) => Some((MimeCsv, Array.empty[Byte]))
