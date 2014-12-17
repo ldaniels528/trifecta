@@ -26,8 +26,7 @@ import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -56,6 +55,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   private val rt = TxRuntimeContext(config)
 
+  private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
+
   // load & register all decoders to their respective topics
   registerDecoders()
 
@@ -78,17 +79,15 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }
   }
 
-  private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
-
   /**
    * Executes the query represented by the JSON string
    * @param jsonString the JSON given string
-   * @return
+   * @return the query results
    */
-  def executeQuery(jsonString: String) = Try {
+  def executeQuery(jsonString: String) = {
     val query = JsonHelper.transform[QueryJs](jsonString)
     val asyncIO = rt.executeQuery(compileQuery(query.queryString))
-    Await.result(asyncIO.task, 30.minutes)
+    asyncIO.task
   }
 
   private def compileQuery(queryString: String): KQLSelection = {
@@ -101,25 +100,17 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   def findOne(topic: String, criteria: String) = {
-    Try {
-      logger.info(s"topic = '$topic', criteria = '$criteria")
-      val decoder_? = rt.lookupDecoderByName(topic)
-      val conditions = parseCondition(criteria, decoder_?)
-      (decoder_?, conditions)
-    } map { case (decoder_?, conditions) =>
-      // execute the query
-      val outcome = KafkaMicroConsumer.findOne(topic, brokers, forward = true, conditions) map (
-        _ map { case (partition, md) => (partition, md.offset, decoder_?.map(_.decode(md.message)))
-        })
+    val decoder_? = rt.lookupDecoderByName(topic)
+    val conditions = parseCondition(criteria, decoder_?)
 
-      // wait for up to 30 minutes for the query to complete
-      Await.result(outcome, 30.minutes) match {
-        case Some((partition, offset, Some(Success(message)))) =>
-          MessageJs(`type` = "json", payload = message.toString, topic = Option(topic), partition = Some(partition), offset = Some(offset))
-        case other =>
-          logger.error(s"Failed to retrieve a message: result => $other")
-          throw new RuntimeException("Failed to retrieve a message")
-      }
+    // execute the query
+    KafkaMicroConsumer.findOne(topic, brokers, forward = true, conditions) map (
+      _ map { case (partition, md) => (partition, md.offset, decoder_?.map(_.decode(md.message)))
+      }) map {
+      case Some((partition, offset, Some(Success(message)))) =>
+        MessageJs(`type` = "json", payload = message.toString, topic = Option(topic), partition = Some(partition), offset = Some(offset))
+      case None =>
+        throw new RuntimeException("Failed to retrieve a message")
     }
   }
 

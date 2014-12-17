@@ -27,6 +27,8 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private val facade = new KafkaRestFacade(config, zk)
   private val sessions = TrieMap[String, WebSocketSession]()
 
+  implicit val ec = actorSystem.dispatcher
+
   // initialize the web configuration
   TxWebConfig.init(config)
 
