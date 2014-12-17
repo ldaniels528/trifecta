@@ -36,12 +36,14 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
         event.response.write100Continue()
       }
 
+      def verb(path: String) = if(path.startsWith(RestRoot)) "Executed" else "Retrieved"
+
       getContent(path, request) match {
         // is it the option of a result?
         case Left(result_?) =>
           result_? map { case (mimeType, bytes) =>
             val elapsedTime = (System.nanoTime() - startTime).toDouble / 1e+6
-            logger.info(f"SYNC: Retrieved '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
+            logger.info(f"SYNC: ${verb(path)} '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
             response.contentType = mimeType
             response.write(bytes)
           } getOrElse {
@@ -120,22 +122,16 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
      * Returns the form parameters as a data mapping
      * @return a [[Map]] of a key to a [[List]] of string values
      */
-    def form = {
-      val map = request.content.toFormDataMap
-      map foreach { case (key, values) => logger.info(s"processRestRequest Content: '$key' ~> values = $values")}
-      map
-    }
+    def form = request.content.toFormDataMap
 
     /**
      * Returns the parameters from the REST url
      * @return the parameters
      */
     def params: Option[(String, List[String])] = {
-      val p = path.indexOptionOf(RestRoot)
+      path.indexOptionOf(RestRoot)
         .map(index => path.substring(index + RestRoot.length + 1))
         .map(_.split("[/]")) map (a => (a.head, a.tail.toList))
-      p foreach { case (action, args) => logger.info(s"processRestRequest Action: $action ~> values = $args")}
-      p
     }
 
     // execute the action and get the JSON value
@@ -150,7 +146,7 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
               case _ => missingArgs("topic", "criteria")
             }
             case "getBrokers" => Left(facade.getBrokers.toJson.mimeJson)
-            case "getConsumerDeltas" => Left(JsonHelper.toJson(facade.getConsumerDeltas).mimeJson)
+            case "getConsumerDeltas" => Left(facade.getConsumerDeltas.toJson.mimeJson)
             case "getConsumers" => Left(facade.getConsumers.toJson.mimeJson)
             case "getConsumerSet" => Left(facade.getConsumerSet.toJson.mimeJson)
             case "getDecoders" => Left(facade.getDecoders.toJson.mimeJson)
@@ -204,7 +200,7 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
           }
       }
     } match {
-      case Success(either) => either
+      case Success(content) => content
       case Failure(e) =>
         logger.error(s"Error processing $path", e)
         Left(JsonHelper.decompose(KafkaRestFacade.ErrorJs(message = e.getMessage)).mimeJson)
@@ -212,7 +208,7 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
   }
 
   private def missingArgs[S](argNames: String*): S = {
-    throw new IllegalStateException(s"Expected arguments (${argNames mkString ", "}) are missing")
+    throw new RuntimeException(s"Expected arguments (${argNames mkString ", "}) are missing")
   }
 
   private def toZkPath(args: List[String]): String = "/" + args.mkString("/")
@@ -289,17 +285,36 @@ object WebContentActor {
 
   }
 
+  /**
+   * Convenience method for returning the corresponding JSON value
+   * @param outcome the promise of a value
+   */
   implicit class FutureJsonExtensionA[T](val outcome: Future[T]) extends AnyVal {
 
     def toJson(implicit ec: ExecutionContext): Future[JValue] = outcome.map(JsonHelper.decompose(_))
 
   }
 
+  /**
+   * Convenience method for returning an option of a JSON mime type and associated binary content
+   * @param outcome the promise of a value
+   */
   implicit class FutureJsonExtensionB[T](val outcome: Future[JValue]) extends AnyVal {
 
     def mimeJson(implicit ec: ExecutionContext): Future[(String, Array[Byte])] = outcome map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
 
   }
+
+  /**
+   * Convenience method for returning the corresponding JSON value
+   * @param values the collection of values
+   */
+  implicit class SeqJsonExtension[T](val values: Seq[T]) extends AnyVal {
+
+    def toJson: JValue = JsonHelper.decompose(values)
+
+  }
+
 
   implicit class TryJsonExtension[T](val outcome: Try[T]) extends AnyVal {
 

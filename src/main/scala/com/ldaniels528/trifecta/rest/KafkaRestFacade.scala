@@ -92,6 +92,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   private def compileQuery(queryString: String): KQLSelection = {
     val query = KafkaQueryParser(queryString)
+
+    // if the decoderURL == "default" we should create the query referencing the topic
     if (query.source.decoderURL != "default") query
     else {
       val topic = query.source.deviceURL.split("[:]").last
@@ -189,7 +191,23 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns all consumers for all topics
    * @return a list of consumers
    */
-  def getConsumers = Try((getConsumerGroupsNative ++ getConsumerGroupsPM).sortBy(_.topic))
+  def getConsumers = Try {
+    val consumersA = Try(getConsumerGroupsNative) match {
+      case Success(v) => v
+      case Failure(e) =>
+        logger.error("Failed to retrieve the Kafka-native consumers", e)
+        Nil
+    }
+
+    val consumersB = Try(getConsumerGroupsPM) match {
+      case Success(v) => v
+      case Failure(e) =>
+        logger.error("Failed to retrieve the Kafka-Storm partition manager consumers", e)
+        Nil
+    }
+
+    (consumersA ++ consumersB) sortBy (_.topic)
+  }
 
   /**
    * Returns all consumers for all topics
@@ -252,7 +270,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns all available decoders
    * @return the collection of decoders
    */
-  def getDecoders = Try {
+  def getDecoders = {
     (config.getDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
       toDecoderJs(topic, myDecoders)
     }).toSeq sortBy (_.topic)
@@ -285,7 +303,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   /**
    * Retrieves the list of partition leaders and replicas for a given topic
    */
-  def getLeaderAndReplicas(topic: String) = Try {
+  def getLeaderAndReplicas(topic: String) = {
     KafkaMicroConsumer.getLeaderAndReplicas(topic, brokers) flatMap {
       case LeaderAndReplicas(partition, leader, replicas) =>
         replicas map (LeaderAndReplicasJs(partition, leader, _))
@@ -313,7 +331,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
       newOffset.map { o =>
         decodeMessageData(topic, cons.fetch(o)(fetchSize = 65536).headOption)
-      } getOrElse ErrorJs("Offset is undefined")
+      } getOrElse ErrorJs(message = "Offset is undefined")
     }
   }
 
@@ -395,7 +413,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns a collection of topics that have changed since the last call
    * @return a collection of [[TopicDelta]] objects
    */
-  def getTopicDeltas: Seq[TopicDelta] = {
+  def getTopicDeltas = {
     // retrieve all topic/partitions for analysis
     val topics = KafkaMicroConsumer.getTopicList(brokers) flatMap { t =>
       for {
@@ -421,8 +439,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   def getTopics = Try(KafkaMicroConsumer.getTopicList(brokers))
 
-  def getTopicSummaries = Try {
-    KafkaMicroConsumer.getTopicList(brokers).groupBy(_.topic) map { case (topic, details) =>
+  def getTopicSummaries = {
+    (KafkaMicroConsumer.getTopicList(brokers).groupBy(_.topic) map { case (topic, details) =>
       // produce the partitions
       val partitions = details map { detail =>
         new KafkaMicroConsumer(TopicAndPartition(topic, detail.partitionId), brokers) use { consumer =>
@@ -438,14 +456,14 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
       // get the total message count
       TopicSummaryJs(topic, partitions, totalMessages = partitions.flatMap(_.messages).sum)
-    }
+    }).toSeq
   }
 
   def getTopicByName(topic: String) = Try {
     KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic)
   }
 
-  def getTopicDetailsByName(topic: String) = Try {
+  def getTopicDetailsByName(topic: String) = {
     KafkaMicroConsumer.getTopicPartitions(topic) map { partition =>
       new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
         val startOffset = consumer.getFirstOffset
@@ -480,7 +498,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     ZkItemInfo(path, creationTime, lastModified, size_?, formattedData_?)
   }
 
-  def getZkPath(parentPath: String) = Try {
+  def getZkPath(parentPath: String) = {
     zk.getChildren(parentPath) map { name =>
       ZkItem(name, path = if (parentPath == "/") s"/$name" else s"$parentPath/$name")
     }
