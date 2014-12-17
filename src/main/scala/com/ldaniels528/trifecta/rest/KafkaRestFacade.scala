@@ -400,7 +400,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     case value => MessageJs(`type` = "json", payload = JsonHelper.makePretty(String.valueOf(value)))
   }
 
-  def getQueries = Try(config.getQueries)
+  def getQueries = config.getQueries getOrElse Nil
 
   /**
    * Retrieves the list of Kafka replicas for a given topic
