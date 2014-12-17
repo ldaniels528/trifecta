@@ -12,8 +12,9 @@
                 $scope.messageBlob = {
                     "topic": null,
                     "key": null,
+                    "keyFormat": "UUID",
+                    "keyAuto": true,
                     "message": null,
-                    "keyFormat": null,
                     "messageFormat": null
                 };
 

@@ -14,8 +14,13 @@
                 <div ng-show="observeTab.name == 'Consumers'">
                     <!-- No Consumers -->
                     <div ng-hide="consumerMapping.length">
-                        <p>No consumers were found, but if you believe there should be data here, don't panic.</p>
-                        <p>There are two types of consumers:</p>
+                        <div>
+                            <img src="/app/images/status/yellowlight.gif">
+                            <span class="warning">No consumers were found.</span>
+                        </div>
+                        <p style="margin-top: 5px">But if you believe some consumer data should have been found here,
+                            don't panic.</p>
+                        <p>Trifecta supports <u>two types</u> of consumers:</p>
                         <ul>
                             <li>Kafka-native Consumer Groups</li>
                             <li>Kafka-Storm Partition Manager Consumers</li>
@@ -85,39 +90,47 @@
                     </div>
                 </div>
 
-                <!-- Topics -->
-                <div class="block" ng-repeat="t in getTopics(true)|orderBy:'topic'" ng-show="observeTab.name == 'Topics'">
-                    <a ng-click="t.expanded = !t.expanded">
-                        <img class="middle" ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
-                        <img class="middle" src="/app/images/common/topic-16.png"> {{ t.topic }}
-                             <span ng-show="t.totalMessages > 0">
-                                (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
-                             </span>
-                    </a>
-                    <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
-                        <table>
-                            <tr>
-                                <th>Partition</th>
-                                <th>First Offset</th>
-                                <th>Last Offset</th>
-                                <th>Messages</th>
-                            </tr>
+                <div ng-show="observeTab.name == 'Topics'">
+                    <!-- No Topics -->
+                    <div ng-hide="getTopics(true).length">
+                        <img src="/app/images/status/yellowlight.gif">
+                        <span class="warning">No topic with messages found.</span>
+                    </div>
 
-                            <tr ng-repeat="p in t.partitions | orderBy:'partition'">
-                                <td>{{ p.partition }}  <img src="/app/images/status/loading.gif" ng-show="p.loading"></td>
-                                <td>
-                                    <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
-                                        {{ p.startOffset }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">
-                                        {{ p.endOffset }}
-                                    </a>
-                                </td>
-                                <td>{{ p.messages | number }}</td>
-                            </tr>
-                        </table>
+                    <!-- Topics -->
+                    <div class="block" ng-repeat="t in getTopics(true)|orderBy:'topic'">
+                        <a ng-click="t.expanded = !t.expanded">
+                            <img class="middle" ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
+                            <img class="middle" src="/app/images/common/topic-16.png"> {{ t.topic }}
+                                 <span ng-show="t.totalMessages > 0">
+                                    (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
+                                 </span>
+                        </a>
+                        <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
+                            <table>
+                                <tr>
+                                    <th>Partition</th>
+                                    <th>First Offset</th>
+                                    <th>Last Offset</th>
+                                    <th>Messages</th>
+                                </tr>
+
+                                <tr ng-repeat="p in t.partitions | orderBy:'partition'">
+                                    <td>{{ p.partition }}  <img src="/app/images/status/loading.gif" ng-show="p.loading"></td>
+                                    <td>
+                                        <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
+                                            {{ p.startOffset }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">
+                                            {{ p.endOffset }}
+                                        </a>
+                                    </td>
+                                    <td>{{ p.messages | number }}</td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
