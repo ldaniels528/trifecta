@@ -53,7 +53,7 @@
     </div>
 
     <!-- application tabs -->
-    <div style="border: 1px solid #cccccc">
+    <div class="title_border">
         <tabset>
             <tab ng-repeat="tab in tabs" active="tab.active" select="changeTab($index, $event)">
                 <tab-heading><img ng-class="tab.active ? 'tab_active' : 'tab_inactive'" ng-src="{{ tab.imageURL }}"> {{ tab.name }}</tab-heading>
