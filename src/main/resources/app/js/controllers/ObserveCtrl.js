@@ -12,6 +12,8 @@
             $scope.zkItem = null;
             $scope.zkItems = [{ name: "/ (root)", path: "/", expanded: false }];
 
+            $scope.showConcurrencyConfig = false;
+
             $scope.observeTabs = [
                 {
                     "name": "Consumers",
@@ -31,6 +33,20 @@
             // select the default tab and make it active
             $scope.observeTab = $scope.observeTabs[0];
             $scope.observeTab.active = true;
+
+            /**
+             * Expands the first Zookeeper item
+             */
+            $scope.expandFirstItem = function () {
+                // load the children for the root key
+                if($scope.zkItems.length) {
+                    var firstItem = $scope.zkItems[0];
+                    if (firstItem) {
+                        $scope.expandItem(firstItem);
+                        $scope.getItemInfo(firstItem);
+                    }
+                }
+            };
 
             /**
              * Expands or collapses the given Zookeeper item
@@ -77,20 +93,6 @@
                         item.loading = false;
                         errorHandler(err);
                     });
-            };
-
-            /**
-             * Initializes all reference data
-             */
-            $scope.init = function () {
-                // load the children for the root key
-                if($scope.zkItems.length) {
-                    var firstItem = $scope.zkItems[0];
-                    if (firstItem) {
-                        $scope.expandItem(firstItem);
-                        $scope.getItemInfo(firstItem);
-                    }
-                }
             };
 
             $scope.changeObserveTab = function (index, event) {
