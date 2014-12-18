@@ -45,16 +45,16 @@
                     <div class="block" ng-repeat="levelA in consumerMapping|orderBy:'topic'">
                         <div>
                             <a ng-click="levelA.expanded = !levelA.expanded">
-                                <img class="middle" ng-src="/app/images/buttons/{{levelA.expanded ? 'collapse' : 'expand'}}.png">
-                                <img class="middle" src="/app/images/common/topic-16.png">
+                                <img ng-src="/app/images/buttons/{{levelA.expanded ? 'collapse' : 'expand'}}.png">
+                                <img src="/app/images/common/topic-16.png">
                                 <span>{{levelA.topic}}</span>
                                 <img ng-show="levelA.loading" src="/app/images/status/processing.gif">
                             </a>
                         </div>
                         <div ng-show="levelA.expanded" ng-repeat="levelB in levelA.consumers" style="margin-left: 32px">
                             <a ng-click="levelB.expanded = !levelB.expanded">
-                                <img class="middle" ng-src="/app/images/buttons/{{levelB.expanded ? 'collapse' : 'expand'}}.png">
-                                <img class="middle" src="/app/images/common/consumers-16.png">
+                                <img ng-src="/app/images/buttons/{{levelB.expanded ? 'collapse' : 'expand'}}.png">
+                                <img src="/app/images/common/consumers-16.png">
                                 <span>{{levelB.consumerId}}</span>
                                 <img src="/app/images/status/processing.gif" ng-show="levelB.expanded && isConsumerUpToDate(levelB)">
                             </a>
@@ -100,8 +100,8 @@
                     <!-- Topics -->
                     <div class="block" ng-repeat="t in getTopics(true)|orderBy:'topic'">
                         <a ng-click="t.expanded = !t.expanded">
-                            <img class="middle" ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
-                            <img class="middle" src="/app/images/common/topic-16.png"> {{ t.topic }}
+                            <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
+                            <img src="/app/images/common/topic-16.png"> {{ t.topic }}
                                  <span ng-show="t.totalMessages > 0">
                                     (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
                                  </span>

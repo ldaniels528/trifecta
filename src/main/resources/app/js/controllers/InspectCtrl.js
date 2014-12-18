@@ -15,7 +15,8 @@
                 $scope.message = {};
 
                 $scope.displayMode = {
-                    "state" : "message"
+                    "state" : "message",
+                    "avro" : "json"
                 };
 
                 $scope.clearMessage = function() {
@@ -157,6 +158,13 @@
                     });
                 };
 
+                $scope.getTopicNames = function (hideEmptyTopics) {
+                    var topics = $scope.getTopics(hideEmptyTopics);
+                    return topics.map(function(t) {
+                        return t.topic;
+                    });
+                };
+
                 $scope.loadMessage = function () {
                     var topic = $scope.topic.topic;
                     var partition = $scope.partition.partition;
@@ -203,10 +211,10 @@
                 $scope.nextMessage = function () {
                     ensureOffset($scope.partition);
                     var offset = $scope.partition.offset;
-                    if (offset < 1 + $scope.partition.endOffset) {
+                    if (offset < $scope.partition.endOffset) {
                         $scope.partition.offset += 1;
-                        $scope.loadMessage();
                     }
+                    $scope.loadMessage();
                 };
 
                 $scope.previousMessage = function () {
@@ -214,8 +222,8 @@
                     var offset = $scope.partition.offset;
                     if (offset && offset > $scope.partition.startOffset) {
                         $scope.partition.offset -= 1;
-                        $scope.loadMessage();
                     }
+                    $scope.loadMessage();
                 };
 
                 $scope.resetMessageState = function(mode, topic, partition, offset) {
@@ -243,6 +251,10 @@
                         $scope.loadMessage();
                         $scope.changeTab(0, null); // Inspect
                     }
+                };
+
+                $scope.toggleAvroOutput = function() {
+                    $scope.displayMode.avro = $scope.displayMode.avro == 'json' ? 'avro' : 'json';
                 };
 
                 /**
@@ -302,7 +314,7 @@
                 };
 
                 function ensureOffset(partition) {
-                    if(partition && !partition.offset) {
+                    if(partition && partition.offset == null) {
                         partition.offset = partition.endOffset;
                     }
                 }

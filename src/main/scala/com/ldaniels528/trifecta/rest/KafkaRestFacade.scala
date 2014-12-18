@@ -7,8 +7,9 @@ import java.util.concurrent.Executors
 import com.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.io.ByteBufferUtils
+import com.ldaniels528.trifecta.io.avro.AvroConversion
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
-import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{LeaderAndReplicas, MessageData}
+import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{DEFAULT_FETCH_SIZE, LeaderAndReplicas, MessageData}
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
@@ -19,6 +20,7 @@ import com.ldaniels528.trifecta.messages.query.parser.{KafkaQueryParser, KafkaQu
 import com.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageDecoder}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
 import com.ldaniels528.trifecta.rest.TxWebConfig._
+import com.ldaniels528.trifecta.util.EitherHelper._
 import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
@@ -39,7 +41,6 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private val logger = LoggerFactory.getLogger(getClass)
   private var topicCache: Map[(String, Int), TopicDelta] = Map.empty
   private var consumerCache: Map[ConsumerDeltaKey, ConsumerJs] = Map.empty
-  private var publisher_? : Option[KafkaPublisher] = None
 
   // define the custom thread pool
   private implicit val ec = new ExecutionContext {
@@ -56,6 +57,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private val rt = TxRuntimeContext(config)
 
   private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
+
+  private val publisher = createPublisher(brokers)
 
   // load & register all decoders to their respective topics
   registerDecoders()
@@ -111,6 +114,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       }) map {
       case Some((partition, offset, Some(Success(message)))) =>
         MessageJs(`type` = "json", payload = message.toString, topic = Option(topic), partition = Some(partition), offset = Some(offset))
+      case Some(_) =>
+        throw new RuntimeException("Failed to retrieve a message")
       case None =>
         throw new RuntimeException("Failed to retrieve a message")
     }
@@ -206,7 +211,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
         Nil
     }
 
-    (consumersA ++ consumersB)
+    consumersA ++ consumersB
   }
 
   /**
@@ -318,18 +323,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    */
   def getMessageData(topic: String, partition: Int, offset: Long) = Try {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
-      val newOffset = for {
-        firstOffset <- cons.getFirstOffset
-        lastOffset <- cons.getLastOffset
-        adjOffset = offset match {
-          case o if o < firstOffset => firstOffset
-          case o if o > lastOffset => lastOffset
-          case o => o
-        }
-      } yield adjOffset
-
-      newOffset.map { o =>
-        decodeMessageData(topic, cons.fetch(o)(fetchSize = 65536).headOption)
+      getDefinedOffset(cons, offset) map { o =>
+        decodeMessageData(topic, cons.fetch(o)(fetchSize = DEFAULT_FETCH_SIZE).headOption)
       } getOrElse ErrorJs(message = "Offset is undefined")
     }
   }
@@ -343,20 +338,22 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    */
   def getMessageKey(topic: String, partition: Int, offset: Long) = Try {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
-      val newOffset = for {
-        firstOffset <- cons.getFirstOffset
-        lastOffset <- cons.getLastOffset
-        adjOffset = offset match {
-          case o if o < firstOffset => firstOffset
-          case o if o > lastOffset => lastOffset
-          case o => o
-        }
-      } yield adjOffset
-
-      newOffset.map { o =>
-        cons.fetch(o)(fetchSize = 65536).headOption map (md => toMessage(md.key))
-      } getOrElse ErrorJs("Offset is undefined")
+      getDefinedOffset(cons, offset) map { o =>
+        cons.fetch(o)(fetchSize = DEFAULT_FETCH_SIZE).headOption map (md => toMessage(md.key))
+      } getOrElse ErrorJs(message = "Offset is undefined")
     }
+  }
+
+  private def getDefinedOffset(cons: KafkaMicroConsumer, offset: Long) = {
+    for {
+      firstOffset <- cons.getFirstOffset
+      lastOffset <- cons.getLastOffset
+      adjOffset = offset match {
+        case o if o < firstOffset => firstOffset
+        case o if o > lastOffset => lastOffset
+        case o => o
+      }
+    } yield adjOffset
   }
 
   /**
@@ -404,9 +401,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   /**
    * Retrieves the list of Kafka replicas for a given topic
    */
-  def getReplicas(topic: String) = Try {
-    KafkaMicroConsumer.getReplicas(topic, brokers) sortBy (_.partition)
-  }
+  def getReplicas(topic: String) = KafkaMicroConsumer.getReplicas(topic, brokers) sortBy (_.partition)
 
   /**
    * Returns a collection of topics that have changed since the last call
@@ -504,21 +499,23 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   def publishMessage(topic: String, jsonString: String) = Try {
-    // if the publisher has not been created ...
-    if (publisher_?.isEmpty) publisher_? = Option {
-      val publisher = KafkaPublisher(brokers)
-      publisher.open()
-      publisher
-    }
-
     // deserialize the JSON
     val blob = JsonHelper.transform[MessageBlobJs](jsonString)
 
     // publish the message
-    publisher_? foreach (_.publish(
+    publisher.publish(
       topic,
-      key = blob.key map (key => toBinary(key, blob.keyFormat)) getOrElse toDefaultBinary(blob.keyFormat),
-      message = toBinary(blob.message, blob.messageFormat)))
+      key = blob.key map (key => toBinary(topic, key, blob.keyFormat)) getOrElse toDefaultBinary(blob.keyFormat),
+      message = toBinary(topic, blob.message, blob.messageFormat))
+  }
+
+  /**
+   * Ensures that a Kafka publisher has been created
+   */
+  private def createPublisher(brokers: Seq[Broker]) = {
+    val publisher = KafkaPublisher(brokers)
+    publisher.open()
+    publisher
   }
 
   /**
@@ -527,15 +524,39 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @param format the specified format
    * @return the binary result
    */
-  private def toBinary(value: String, format: String): Array[Byte] = {
+  private def toBinary(topic: String, value: String, format: String): Array[Byte] = {
     format match {
       case "ASCII" => value.getBytes(config.encoding)
+      case "Avro" => toAvroBinary(topic, value).orDie(s"No suitable decoder found for topic $topic")
       case "JSON" => JsonHelper.makeCompact(value).getBytes(config.encoding)
       case "Hex-Notation" => CommandParser.parseDottedHex(value)
       case "EPOC" => ByteBufferUtils.longToBytes(value.toLong)
       case "UUID" => ByteBufferUtils.uuidToBytes(UUID.fromString(value))
       case _ =>
         throw new IllegalArgumentException(s"Invalid format type '$format'")
+    }
+  }
+
+  /**
+   * Transcodes the given JSON document into an Avro-compatible byte array
+   * @param topic the given topic (e.g. "shocktrade.keystats.avro")
+   * @param jsonDoc the given JSON document
+   * @return an option of an Avro-compatible byte array
+   */
+  private def toAvroBinary(topic: String, jsonDoc: String): Option[Array[Byte]] = {
+    config.getDecodersByTopic(topic).foldLeft[Option[Array[Byte]]](None) { (result, txDecoder) =>
+      result ?? txDecoder.decoder.toLeftOption.flatMap { decoder =>
+        logger.info(s"Testing ${decoder.label}")
+
+        Try(AvroConversion.transcodeJsonToAvroBytes(jsonDoc, decoder.schema, config.encoding)) match {
+          case Success(bytes) =>
+            logger.info(s"${decoder.label} produced ${bytes.length} bytes")
+            Option(bytes)
+          case Failure(e) =>
+            logger.warn(s"${decoder.label} failed with '${e.getMessage}'")
+            None
+        }
+      }
     }
   }
 

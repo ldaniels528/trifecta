@@ -167,8 +167,9 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
  */
 object KafkaMicroConsumer {
   private implicit val formats = net.liftweb.json.DefaultFormats
-  private val DEFAULT_FETCH_SIZE: Int = 65536
   private val correlationIdGen = new AtomicInteger(-1)
+
+  val DEFAULT_FETCH_SIZE: Int = 65536
 
   /**
    * Returns the next correlation ID
@@ -498,6 +499,42 @@ object KafkaMicroConsumer {
             for (ofs <- offset; msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE).headOption) observer(msg)
             offset = offset map (_ + 1)
           }
+        }
+      }
+    })
+  }
+
+  /**
+   * Returns the promise of the option of a message based on the given search criteria
+   * @param topic the given topic name
+   * @param brokers the given replica brokers
+   * @param groupId the given consumer group ID
+   * @param commitFrequencyMills the commit frequency in milliseconds
+   * @param observer the given callback function
+   * @return the promise of the option of a message based on the given search criteria
+   */
+  def observe(topic: String, brokers: Seq[Broker], groupId: String, commitFrequencyMills: Long)(observer: MessageData => Unit)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[Unit]] = {
+    Future.sequence(KafkaMicroConsumer.getTopicPartitions(topic) map { partition =>
+      Future {
+        var lastUpdate = System.currentTimeMillis()
+        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
+          var offset: Option[Long] = subs.getFirstOffset
+          val lastOffset: Option[Long] = subs.getLastOffset
+          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
+          while (!eof) {
+            // allow the observer to process the messages
+            for (ofs <- offset; msg <- subs.fetch(ofs)(fetchSize = 65535).headOption) observer(msg)
+
+            // commit the offset once per second
+            if (System.currentTimeMillis() - lastUpdate >= commitFrequencyMills) {
+              offset.foreach(subs.commitOffsets(groupId, _, ""))
+              lastUpdate = System.currentTimeMillis()
+            }
+            offset = offset map (_ + 1)
+          }
+
+          // commit the final offset for each partition
+          lastOffset.foreach(subs.commitOffsets(groupId, _, ""))
         }
       }
     })

@@ -1,6 +1,6 @@
 package com.ldaniels528.trifecta.io.avro
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.lang.reflect.Method
 import java.util.Date
 
@@ -49,13 +49,13 @@ object AvroConversion {
    * @return a byte array representing an Avro-encoded message
    */
   def transcodeJsonToAvroBytes(json: String, schema: Schema, encoding: String = "UTF8"): Array[Byte] = {
-    new DataInputStream(new ByteArrayInputStream(json.getBytes(encoding))) use { in =>
+    new ByteArrayInputStream(json.getBytes(encoding)) use { in =>
       new ByteArrayOutputStream(json.length) use { out =>
         // setup the reader, writer, encoder and decoder
         val reader = new GenericDatumReader[Object](schema)
         val writer = new GenericDatumWriter[Object](schema)
 
-        // transcode the JSON into Avro
+        // transform the JSON into Avro
         val decoder = DecoderFactory.get().jsonDecoder(schema, in)
         val encoder = EncoderFactory.get().binaryEncoder(out, null)
         val datum = reader.read(null, decoder)
@@ -86,7 +86,7 @@ object AvroConversion {
       val decoder = DecoderFactory.get().binaryDecoder(bytes, null)
       val encoder = EncoderFactory.get().jsonEncoder(schema, out)
 
-      // transcode the bytes into Avro-specific JSON
+      // transform the bytes into Avro-specific JSON
       val reader = new GenericDatumReader[Object](schema)
       val writer = new GenericDatumWriter[Object](schema)
       val datum = reader.read(null, decoder)
@@ -128,7 +128,7 @@ object AvroConversion {
    */
   private def transformValue(value: Any, dstType: Class[_]): AnyRef = {
     value match {
-      case d: Date if dstType == classOf[java.lang.Long] || dstType == classOf[Long] => d.getTime : java.lang.Long
+      case d: Date if dstType == classOf[java.lang.Long] || dstType == classOf[Long] => d.getTime: java.lang.Long
       case l: Long if dstType == classOf[Date] => new Date(l)
       case l: java.lang.Long if dstType == classOf[Date] => new Date(l)
       case v => v.asInstanceOf[Object]

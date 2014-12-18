@@ -21,7 +21,7 @@
                 <select ng-model="messageBlob.messageFormat" ng-options="f for f in messageFormats"></select>
             </div>
             <div style="display: inline; text-align: center">
-                <span class="pub_bold_label bold">Destination Topic</span>
+                <span class="pub_bold_label bold">Output Topic</span>
                 <select ng-model="messageBlob.topic" ng-options="t.topic for t in getTopics(false)"></select>
                 <button class="publish_button" ng-click="publishMessage(messageBlob)">Publish</button>
             </div>
