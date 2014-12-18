@@ -4,7 +4,7 @@
  */
 (function () {
     angular.module('trifecta')
-        .factory('WebSockets', function ($location, $log, Consumers, Topics) {
+        .factory('WebSockets', function ($location, $log, ConsumerSvc, TopicSvc) {
             var service = {};
 
             // establish the web socket connection
@@ -33,12 +33,12 @@
 
                         // consumer update?
                         if(data[0].consumerId) {
-                            Consumers.updateConsumers(data);
+                            ConsumerSvc.updateConsumers(data);
                         }
 
                         // topic update?
                         else if(data[0].topic) {
-                            Topics.updateTopics(data);
+                            TopicSvc.updateTopics(data);
                         }
 
                         else {

@@ -345,8 +345,8 @@
                  * 1. select the first non-empty topic
                  * 2. load the replicas for the topic
                  */
-                $scope.$watch("Topics.topics", function(newTopics, oldTopics) {
-                    $log.info("DashboardCtrl: Loaded new topics (" + newTopics.length + ")");
+                $scope.$watch("TopicSvc.topics", function(newTopics, oldTopics) {
+                    $log.info("Loaded new topics (" + newTopics.length + ")");
                     $scope.topics = newTopics;
 
                     var myTopic = findNonEmptyTopic($scope.topics);

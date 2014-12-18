@@ -84,9 +84,13 @@
              */
             $scope.init = function () {
                 // load the children for the root key
-                var firstItem = $scope.zkItems[0];
-                $scope.expandItem(firstItem);
-                $scope.getItemInfo(firstItem);
+                if($scope.zkItems.length) {
+                    var firstItem = $scope.zkItems[0];
+                    if (firstItem) {
+                        $scope.expandItem(firstItem);
+                        $scope.getItemInfo(firstItem);
+                    }
+                }
             };
 
             $scope.changeObserveTab = function (index, event) {
@@ -153,13 +157,15 @@
                 $scope.addError(err);
             }
 
-            $scope.$watch("Consumers.consumers", function(newConsumers, oldConsumers) {
-                $log.info("ObserveCtrl: Loaded new consumers (" + newConsumers.length + ")");
-                $scope.consumerMapping = newConsumers;
+            $scope.$watch("ConsumerSvc.consumers", function(newConsumers, oldConsumers) {
+                if(newConsumers && newConsumers.length) {
+                    $log.info("Loaded new consumers (" + newConsumers.length + ")");
+                    $scope.consumerMapping = newConsumers;
+                }
             });
 
             /*
-            $scope.$watch("Topics.topics", function(newTopics, oldTopics) {
+            $scope.$watch("TopicSvc.topics", function(newTopics, oldTopics) {
                 if(newTopics.length) {
                     $scope.expandItem(newTopics[0]);
                 }
