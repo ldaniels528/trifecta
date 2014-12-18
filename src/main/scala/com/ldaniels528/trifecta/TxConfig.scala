@@ -84,6 +84,12 @@ class TxConfig(val configProps: Properties) {
   }
 
   /**
+   * Attempts to retrieve decoders by topic
+   * @return the collection of [[TxDecoder]] instances
+   */
+  def getDecodersByTopic(topic: String): Seq[TxDecoder] = getDecoders.filter(_.topic == topic) sortBy(-_.lastModified)
+
+  /**
    * Returns all available decoders
    * @return the collection of [[TxDecoder]]s
    */

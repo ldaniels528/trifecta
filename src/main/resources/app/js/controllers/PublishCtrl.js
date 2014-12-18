@@ -31,7 +31,12 @@
                         function(response) {
                             //$scope.messageBlob.message = null;
                             $log.info("response = " + angular.toJson(response));
-                            $scope.addInfoMessage("Message published")
+                            if(response.type == "error") {
+                                $scope.addErrorMessage(response.message);
+                            }
+                            else {
+                                $scope.addInfoMessage("Message published");
+                            }
                         },
                         function(err) {
                             $scope.addError(err);

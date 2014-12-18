@@ -1,37 +1,38 @@
 <div ng-controller="DecoderCtrl" ng-init="reloadDecoders()" class="full_block" style="height: 587px">
     <div style="display: inline; float: left; width: 30.9%; height: 100%">
-        <fieldset>
+        <fieldset style="border-bottom: 1px solid #cccccc">
             <legend>Configured Topics</legend>
-            <div class="topics_container">
-                    <span ng-show="!decoders.length" class="warning bold">
-                        <img class="middle" src="/app/images/status/yellowlight.gif"> No topics with decoders found
-                    </span>
-                <div ng-repeat="d in decoders" ng-class="d == decoder ? 'highlighted' : ''" style="padding: 0 0 0 4px">
-                    <img class="middle" src="/app/images/common/topic-16.png">
-                    <a ng-click="selectDecoder(d)">
-                        <span ng-class="d == decoder ? 'highlighted' : ''">{{ d.topic }}</span>
-                    </a>
+            <div class="d_topics_container">
+                <span ng-show="!decoders.length" class="warning bold">
+                    <img src="/app/images/status/yellowlight.gif"> No topics with decoders found
+                </span>
+                <div ng-repeat="d in decoders">
+                    <img class="clickable"
+                         ng-click="d.expanded = !d.expanded"
+                         ng-src="/app/images/buttons/{{ d.expanded ? 'collapse.png' : 'expand.png' }}">
+                    <img ng-src="/app/images/common/{{ decoder == d ? 'topic_selected-16.png' : 'topic-16.png' }}">
+                    <a ng-click="selectDecoder(d)">{{ d.topic }}</a>
+
+                    <div ng-show="d.expanded" style="margin-left: 32px" ng-repeat="s in d.schemas">
+                        <img ng-src="/app/images/tabs/decoders/{{ s.error ? 'failed-16.png' : 'js-16.png' }}" title="Avro Schema">
+                        <a ng-click="selectSchema(s)">
+                            <span ng-class="s == schema ? 'highlighted' : ''">{{ s.name }}</span>
+                        </a>
+                        <img ng-show="s.modified" src="/app/images/tabs/decoders/modified-16.gif">
+                        <img ng-show="s.processing" src="/app/images/status/processing.gif">
+                    </div>
                 </div>
             </div>
         </fieldset>
 
-        <fieldset>
-            <legend>Associated Decoders</legend>
-            <div class="topics_container">
-                    <span ng-show="!decoder.schemas" class="warning bold">
-                        <img class="middle" src="/app/images/status/yellowlight.gif"> No decoders found
-                    </span>
-                <div ng-repeat="s in decoder.schemas" ng-class="s == schema ? 'highlighted' : ''">
-                    <img ng-src="/app/images/tabs/decoders/{{ s.error ? 'failed-16.png' : 'js-16.png' }}" title="Avro Schema">
-                    <a ng-click="selectSchema(s)">
-                        <span ng-class="s == schema ? 'highlighted' : ''">{{ s.name }}</span>
-                    </a>
-                    <img ng-show="s.modified" src="/app/images/tabs/decoders/modified-16.gif"
-                         style="float: right; margin-right: 5px">
-                    <img ng-show="s.processing" src="/app/images/status/processing.gif">
-                </div>
-            </div>
-        </fieldset>
+        <div>
+            <p>Above are the topics that have decoders associated with them (e.g. Avro). These decoders allow the
+            binary data of messages to be transformed into more human readable formats.</p>
+
+            <p>Additionally, when multiple decoders are associated to a topic, each decoder to tested sequentially
+                (starting with the most recently modified) until a decoder is found that successfully decodes the
+                message.</p>
+        </div>
     </div>
     <div style="display: inline; float: right; width: 69%; height: 100%; padding: 5px 0 5px 5px">
         <div class="d_editor_bar">
@@ -46,10 +47,18 @@
             <span ng-hide="schema.editMode" class="positive mode_label bold">View Mode</span>
         </div>
         <div class="new_schema_section" ng-show="schema.newSchema">
-            <b>Avro Schema Name</b>
-            <input class="d_schema_name_field" ng-model="schema.name" type="text">
-            <button class="d_save_button" ng-click="saveNewSchema(decoder, schema)">Save & Upload</button>
-            <button class="d_cancel_button" ng-click="cancelNewSchema(decoder, schema)">Cancel</button>
+            <div>
+                <span class="d_label">Associated Topic</span>
+                <select ng-model="schema.topic" ng-options="t for t in getTopicNames(false)"></select>
+            </div>
+            <div>
+                <span class="d_label">Decoder Name</span>
+                <input class="d_schema_name_field" ng-model="schema.name" type="text">
+                <button class="d_save_button" ng-click="saveNewSchema(decoder, schema)">Save & Upload</button>
+            </div>
+            <div>
+                <button class="d_cancel_button" ng-click="cancelNewSchema(decoder, schema)">Cancel</button>
+            </div>
         </div>
         <div ng-show="schema.error" class="schema_error">
             <span class="error">Compile Error:</span> {{ schema.error }}

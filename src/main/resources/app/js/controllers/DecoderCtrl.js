@@ -86,11 +86,31 @@
                 };
 
                 /**
+                 * Setups the new schema creation workflow
+                 * @param decoder the decoder to associate the schema to
+                 */
+                $scope.setupNewSchema = function(decoder) {
+                    //$scope.selectDecoder(decoder);
+                    $scope.schema = {
+                        "topic": decoder.topic,
+                        "name": "untitled.avsc",
+                        "originalSchemaString": "",
+                        "schemaString": "",
+                        "editMode": true,
+                        "modified": true,
+                        "newSchema": true
+                    };
+                };
+
+                /**
                  * Uploads a new schema to the remote server
                  * @param decoder the decoder containing the schema
                  * @param schema the new schema
                  */
                 $scope.saveNewSchema = function(decoder, schema) {
+                    // validate the form
+                    if(!validateNewSchemaForSaving(schema)) return;
+
                     schema.processing = true;
                     DecoderSvc.saveDecoderSchema(schema).then(
                         function(response) {
@@ -102,9 +122,13 @@
                                 $scope.addErrorMessage(response.message);
                             }
                             else {
-                                schema.newSchema = false;
-                                schema.editMode = false;
-                                schema.modified = false;
+                                DecoderSvc.getDecoders().then(
+                                    function(decoders) {
+                                       $scope.decoders = decoders;
+                                    },
+                                    function(err) {
+                                        $scope.addError(err);
+                                    });
                             }
                         },
                         function(err) {
@@ -113,6 +137,25 @@
                         }
                     );
                 };
+
+                function validateNewSchemaForSaving(schema) {
+                    $scope.clearMessages();
+                    var errors = 0;
+
+                    if(!schema.topic) {
+                        $scope.addErrorMessage("No topic selected");
+                        errors += 1;
+                    }
+                    if(!schema.name) {
+                        $scope.addErrorMessage("No decoder name specified");
+                        errors += 1;
+                    }
+                    if(!schema.schemaString) {
+                        $scope.addErrorMessage("No Avro Schema specified");
+                        errors += 1;
+                    }
+                    return errors == 0;
+                }
 
                 /**
                  * Saves (uploads) the schema to the remote server
@@ -144,6 +187,8 @@
                  */
                 $scope.selectDecoder = function(decoder) {
                     $scope.decoder = decoder;
+                    decoder.expanded = true;
+
                     var schemas = $scope.decoder.schemas;
                     if(schemas.length) {
                         $scope.schema = schemas[0];
@@ -161,26 +206,6 @@
                     if(schema.error) {
                         $scope.toggleEditMode();
                     }
-                };
-
-                /**
-                 * Setups the new schema creation workflow
-                 * @param decoder the decoder to associate the schema to
-                 */
-                $scope.setupNewSchema = function(decoder) {
-                    var schema = {
-                        "topic": decoder.topic,
-                        "name": "untitled.avsc",
-                        "originalSchemaString": "",
-                        "schemaString": "",
-                        "editMode": true,
-                        "modified": true,
-                        "newSchema": true
-                    };
-
-                    decoder.schemas.push(schema);
-                    $scope.selectDecoder(decoder);
-                    $scope.selectSchema(schema);
                 };
 
                 /**

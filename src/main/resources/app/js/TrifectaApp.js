@@ -9,10 +9,10 @@
         $resourceProvider.defaults.stripTrailingSlashes = false;
     }]);
 
-    app.run(function($rootScope, $log, $timeout, Consumers, Topics, WebSockets) {
+    app.run(function($rootScope, $log, $timeout, ConsumerSvc, TopicSvc, WebSockets) {
         $rootScope.version = "0.18.5";
-        $rootScope.Consumers = Consumers;
-        $rootScope.Topics = Topics;
+        $rootScope.ConsumerSvc = ConsumerSvc;
+        $rootScope.TopicSvc = TopicSvc;
         $rootScope.WebSockets = WebSockets;
 
         $rootScope.gloabalMessages = [];

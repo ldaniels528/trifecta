@@ -3,15 +3,15 @@
         <fieldset style="border-radius: 5px 5px 5px 5px">
             <legend>Topics</legend>
             <div class="topics_container">
-                <div ng-repeat="t in getTopics(hideEmptyTopics)|orderBy:'topic'" ng-class="t == topic ? 'highlighted' : ''">
-                    <img class="middle" ng-src="/app/images/status/{{t.totalMessages ? 'greenlight.png' : 'offlight.png'}}">
-                    <img class="middle" src="/app/images/common/topic-16.png">
+                <div ng-repeat="t in getTopics(hideEmptyTopics)" ng-class="t == topic ? 'highlighted' : ''">
+                    <img ng-src="/app/images/status/{{t.totalMessages ? 'greenlight.png' : 'offlight.png'}}">
+                    <img ng-src="/app/images/common/{{ topic == t ? 'topic_selected-16.png' : 'topic-16.png' }}">
                     <a ng-click="updateTopic(t)">
-                            <span ng-class="t == topic ? 'highlighted' : ''"> {{t.topic}}
-                                <span ng-show="t.totalMessages">
-                                    (<span ng-show="t.totalMessages > 0" ng-class="t == topic ? 'highlighted' : 'messages'">{{t.totalMessages | number}}</span>)
-                                </span>
+                        <span ng-class="t == topic ? 'highlighted' : ''"> {{t.topic}}
+                            <span ng-show="t.totalMessages">
+                                (<span ng-show="t.totalMessages > 0" ng-class="t == topic ? 'highlighted' : 'messages'">{{t.totalMessages | number}}</span>)
                             </span>
+                        </span>
                     </a>
                 </div>
             </div>
@@ -99,9 +99,13 @@
                 <img class="clickable" src="/app/images/tabs/inspect/message_export-16.png" ng-click="exportMessage(message)" title="export the document">
             </div>
             <div class="input_block">
-                <span class="header_label">Display</span>
+                <span class="header_label">View</span>
                 <input ng-model="displayMode.state" type="radio" value="key" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Key</span>
                 <input ng-model="displayMode.state" type="radio" value="message" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Message</span>
+            </div>
+            <div ng-show="message.type == 'json'" class="input_block">
+                <img ng-show="displayMode.avro == 'json'" class="clickable" src="/app/images/tabs/inspect/js-16.png" ng-click="toggleAvroOutput()" title="Switch to Avro-JSON output">
+                <img ng-show="displayMode.avro == 'avro'" class="clickable" src="/app/images/tabs/inspect/avro-16.gif" ng-click="toggleAvroOutput()" title="Switch to JSON output">
             </div>
         </div>
 
