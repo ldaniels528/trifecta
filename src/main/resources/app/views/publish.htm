@@ -1,11 +1,11 @@
 <div ng-controller="PublishCtrl" class="full_block" style="margin-top: 5px">
     <div style="display: inline; float: left; width: 69.9%">
         <div class="pub_bold_label" style="padding: 4px 4px 4px 0px ">
-            <div style="display: inline; float: left">
-                <span class="pub_bold_label bold">Message Key</span> &#8212; format:
+            <div style="display: inline; float: left; width: 50%">
+                <span class="pub_bold_label bold">Message Key &nbsp;</span> &#8212; format:
                 <select ng-model="messageBlob.keyFormat" ng-options="f for f in keyFormats"></select>
             </div>
-            <div style="display: inline; float: right">
+            <div style="display: inline">
                 <input ng-model="messageBlob.keyAuto" type="checkbox">
                 <span class="pub_bold_label bold">Auto-generate Key</span>
             </div>
@@ -13,14 +13,14 @@
         </div>
         <div class="pub_message_key_panel" ng-hide="messageBlob.keyAuto">
             <textarea ng-model="messageBlob.key" class="pub_editor"
-                      placeholder="Enter message key here (or choose auto-generation)">{{ messageBlob.key }}</textarea>
+                      placeholder="Enter the message key here (or choose auto-generation)">{{ messageBlob.key }}</textarea>
         </div>
         <div class="pub_bold_label">
-            <div style="display: inline; float: left">
+            <div style="display: inline; float: left; width: 50%">
                 <span class="bold">Message Body</span> &#8212; format:
                 <select ng-model="messageBlob.messageFormat" ng-options="f for f in messageFormats"></select>
             </div>
-            <div style="display: inline; float: right; text-align: center">
+            <div style="display: inline; text-align: center">
                 <span class="pub_bold_label bold">Destination Topic</span>
                 <select ng-model="messageBlob.topic" ng-options="t.topic for t in getTopics(false)"></select>
                 <button class="publish_button" ng-click="publishMessage(messageBlob)">Publish</button>
@@ -29,14 +29,17 @@
         </div>
         <div class="pub_message_data_panel">
             <textarea ng-model="messageBlob.message" class="pub_editor"
-                      placeholder="Enter message data here">{{ messageBlob.message }}</textarea>
+                      placeholder="Enter the message data here">{{ messageBlob.message }}</textarea>
         </div>
     </div>
 
     <div style="display: inline; float: right; width: 30%">
         <div style="height: 100%; margin-left: 10px; padding-left: 10px; border-left: 1px solid #cccccc">
-            <p>The <b><i>message key</i></b> could be a variety of different values. Trifecta provides the following
-            types to cover the most commonly-used options:</p>
+            <p>The <b><i>message key</i></b> could be a variety of different values.
+                <span class="bold">
+                    <span class="title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span>
+                </span>
+                provides the following types to cover the most commonly-used options:</p>
 
             <ul>
                 <li>ASCII text</li>
@@ -50,7 +53,8 @@
             <p>Optionally, you may leave the message key field blank and the key will be automatically generated
                 (for <i>EPOC</i> and <i>UUID</i> types only).</p>
 
-            <p>The <b><i>message body</i></b> can be represented in various formats; including: Avro, JSON, or Binary
+            <p>The <b><i>message body</i></b> can be represented in various formats; including:
+                <a href="http://avro.apache.org/" target="avro_window">Avro</a>, JSON, or Binary
                 (<b>NOTE</b>: ASCII text sequences are treated as binary).</p>
         </div>
     </div>
