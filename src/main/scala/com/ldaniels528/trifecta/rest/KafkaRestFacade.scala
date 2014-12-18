@@ -206,7 +206,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
         Nil
     }
 
-    (consumersA ++ consumersB) sortBy (_.topic)
+    (consumersA ++ consumersB)
   }
 
   /**
@@ -215,13 +215,12 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    */
   def getConsumerSet = Try {
     val consumers = getConsumerGroupsNative ++ (if (config.consumersPartitionManager) getConsumerGroupsPM else Nil)
-    val consumerTopics = consumers.groupBy(_.topic) map { case (topic, consumersA) =>
+    consumers.groupBy(_.topic) map { case (topic, consumersA) =>
       val results = (consumersA.groupBy(_.consumerId) map { case (consumerId, consumersB) =>
         ConsumerConsumerJs(consumerId, consumersB)
       }).toSeq
       ConsumerTopicJs(topic, results)
     }
-    consumerTopics.toSeq.sortBy(_.topic)
   }
 
   /**
@@ -233,7 +232,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
       ConsumerJs(c.consumerId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
-    } sortBy (_.topic)
+    }
   }
 
   /**
@@ -245,7 +244,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
       ConsumerJs(c.topologyName, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
-    } sortBy (_.topic)
+    }
   }
 
   /**
@@ -273,7 +272,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def getDecoders = {
     (config.getDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
       toDecoderJs(topic, myDecoders)
-    }).toSeq sortBy (_.topic)
+    }).toSeq
   }
 
   private def toDecoderJs(topic: String, decoders: Seq[TxDecoder]) = {

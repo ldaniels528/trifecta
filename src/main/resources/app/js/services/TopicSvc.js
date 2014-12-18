@@ -27,7 +27,7 @@
                         return topic;
                     }
                 }
-                return service.topics.length > 0 ? service.topics[0] : null;
+                return service.topics.length ? service.topics[0] : null;
             };
 
             service.getReplicas = function (topic) {
@@ -96,7 +96,11 @@
             // pre-load the topics
             service.getTopics().then(function(topics) {
                 $log.info("Retrieved " + topics.length + " topic(s)...");
-                service.topics = topics;
+                service.topics = topics.sort(function(a, b) {
+                    var ta = a.topic.toLowerCase();
+                    var tb = b.topic.toLowerCase();
+                    return ta > tb ? 1 : ta < tb ? -1 : 0;
+                });
             });
 
             return service;

@@ -10,7 +10,12 @@
             service.getDecoders = function () {
                 return $http.get("/rest/getDecoders")
                     .then(function (response) {
-                        return response.data;
+                        var decoders = response.data;
+                        return decoders.sort(function(a, b) {
+                            var ta = a.topic.toLowerCase();
+                            var tb = b.topic.toLowerCase();
+                            return ta > tb ? 1 : ta < tb ? -1 : 0;
+                        });
                     });
             };
 

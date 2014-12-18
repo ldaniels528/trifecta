@@ -12,14 +12,24 @@
             service.getConsumers = function () {
                 return $http.get("/rest/getConsumers")
                     .then(function (response) {
-                        return response.data;
+                        var consumers = response.data;
+                        return consumers.sort(function(a, b) {
+                            var ta = a.topic.toLowerCase();
+                            var tb = b.topic.toLowerCase();
+                            return ta > tb ? 1 : ta < tb ? -1 : 0;
+                        });
                     });
             };
 
             service.getConsumerMapping = function () {
                 return $http.get("/rest/getConsumerSet")
                     .then(function (response) {
-                        return response.data;
+                        var consumerSet = response.data;
+                        return consumerSet.sort(function(a, b) {
+                            var ta = a.topic.toLowerCase();
+                            var tb = b.topic.toLowerCase();
+                            return ta > tb ? 1 : ta < tb ? -1 : 0;
+                        });
                     });
             };
 

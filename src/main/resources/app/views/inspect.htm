@@ -3,7 +3,7 @@
         <fieldset style="border-radius: 5px 5px 5px 5px">
             <legend>Topics</legend>
             <div class="topics_container">
-                <div ng-repeat="t in getTopics(hideEmptyTopics)|orderBy:'topic'" ng-class="t == topic ? 'highlighted' : ''">
+                <div ng-repeat="t in getTopics(hideEmptyTopics)" ng-class="t == topic ? 'highlighted' : ''">
                     <img class="middle" ng-src="/app/images/status/{{t.totalMessages ? 'greenlight.png' : 'offlight.png'}}">
                     <img class="middle" src="/app/images/common/topic-16.png">
                     <a ng-click="updateTopic(t)">
