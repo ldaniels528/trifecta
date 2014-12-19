@@ -43,9 +43,6 @@ class KafkaModule(config: TxConfig) extends Module {
   private var zkProxy_? : Option[ZKProxy] = None
   private val out: PrintStream = config.out
 
-  // set the default correlation ID
-  private val correlationId: Int = (Math.random * Int.MaxValue).toInt
-
   // incoming messages cache
   private var incomingMessageCache = Map[TopicAndPartition, Inbound]()
   private var lastInboundCheck: Long = _
