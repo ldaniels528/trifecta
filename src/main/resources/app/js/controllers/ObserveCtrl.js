@@ -109,20 +109,10 @@
                             topic.replicas = replicas;
                         },
                         function (err) {
-                            $timeout(function() { topic.loading = false; }, 500);
+                            topic.loading = false;
                             $scope.addError(err);
                         });
                 }
-            };
-
-            $scope.getReplicas = function (topic) {
-                TopicSvc.getReplicas(topic).then(
-                    function (replicas) {
-                        $scope.replicas = replicas;
-                    },
-                    function (err) {
-                        $scope.addError(err);
-                    });
             };
 
             $scope.changeObserveTab = function (index, event) {
