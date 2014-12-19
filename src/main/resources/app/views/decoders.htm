@@ -10,7 +10,7 @@
                     <img class="clickable"
                          ng-click="d.expanded = !d.expanded"
                          ng-src="/app/images/buttons/{{ d.expanded ? 'collapse.png' : 'expand.png' }}">
-                    <img ng-src="/app/images/common/{{ decoder == d ? 'topic_selected-16.png' : 'topic-16.png' }}">
+                    <img ng-src="{{ getTopicIconSelection(d == decoder) }}">
                     <a ng-click="selectDecoder(d)">{{ d.topic }}</a>
 
                     <div ng-show="d.expanded" style="margin-left: 32px" ng-repeat="s in d.schemas">

@@ -152,6 +152,18 @@
                         });
                 };
 
+                $scope.getTopicIcon = function(topic, selected) {
+                    if(!topic.totalMessages) return "/app/images/common/topic_alert-16.png";
+                    else if(selected) return "/app/images/common/topic_selected-16.png";
+                    else return "/app/images/common/topic-16.png";
+                };
+
+                $scope.getTopicIconSelection = function(selected) {
+                    return selected
+                        ? "/app/images/common/topic_selected-16.png"
+                        : "/app/images/common/topic-16.png";
+                };
+
                 $scope.getTopics = function (hideEmptyTopics) {
                     return $scope.topics.filter(function (topic) {
                         return !hideEmptyTopics || topic.totalMessages > 0;
