@@ -1,4 +1,4 @@
-<div ng-controller="ObserveCtrl" ng-init="init()" class="full_block" style="padding-top: 10px">
+<div ng-controller="ObserveCtrl" ng-init="expandFirstItem()" class="full_block" style="padding-top: 10px">
     <!-- tabs -->
     <div style="display: inline; float: left; width: 14%; height: 500px; border-right: 1px solid #cccccc; padding-right: 5px">
         <tabset vertical="true" type="pills">
@@ -12,125 +12,141 @@
         <div class="streaming_topics_container" style="margin-right: 5px">
             <div class="full_block">
                 <div ng-show="observeTab.name == 'Consumers'">
-                    <!-- No Consumers -->
-                    <div ng-hide="consumerMapping.length">
-                        <div>
-                            <img src="/app/images/status/yellowlight.gif">
-                            <span class="warning">No consumers were found.</span>
+                    <div style="display: inline; float: left; width: 69.9%; height: 525px; border-right: 1px solid #cccccc">
+                        <!-- No Consumers -->
+                        <div ng-hide="consumerMapping.length">
+                            <div>
+                                <img src="/app/images/status/yellowlight.gif">
+                                <span class="warning">No consumers were found.</span>
+                            </div>
+                            <p style="margin-top: 5px">But if you believe some consumer data should have been found here,
+                                don't panic.</p>
+                            <p>Trifecta supports <u>two types</u> of consumers:</p>
+                            <ul>
+                                <li>Kafka-native Consumer Groups</li>
+                                <li>Kafka-Storm Partition Manager Consumers</li>
+                            </ul>
+
+                            <p><i>Kafka-native Consumer Groups</i> are retrieved by default. However, the
+                            <i>Kafka-Storm Partition Manager Consumers</i> require a property
+                                (<i>trifecta.storm.kafka.consumers.partitionManager</i>) to be set to <i>true</i> in
+                                <span style="color: blue">$HOME/.trifecta/config.properties</span>.</p>
+
+                            <p>Example:</p>
+                            <blockquote>
+                                <div style="color: #aaaaaa"># indicates whether Storm Partition Manager-style consumers should be read from Zookeeper</div>
+                                <div><span style="color: magenta">trifecta.storm.kafka.consumers.partitionManager</span> = <span style="color: blue">true</span></div>
+                            </blockquote>
+
+                            <p>If you're using Apache Storm, and you have not yet set the above property to true, please do
+                            so, then restart Trifecta for the change to take affect.</p>
                         </div>
-                        <p style="margin-top: 5px">But if you believe some consumer data should have been found here,
-                            don't panic.</p>
-                        <p>Trifecta supports <u>two types</u> of consumers:</p>
-                        <ul>
-                            <li>Kafka-native Consumer Groups</li>
-                            <li>Kafka-Storm Partition Manager Consumers</li>
-                        </ul>
 
-                        <p><i>Kafka-native Consumer Groups</i> are retrieved by default. However, the
-                        <i>Kafka-Storm Partition Manager Consumers</i> require a property
-                            (<i>trifecta.storm.kafka.consumers.partitionManager</i>) to be set to <i>true</i> in
-                            <span style="color: blue">$HOME/.trifecta/config.properties</span>.</p>
+                        <!-- Consumers -->
+                        <div class="block" ng-repeat="levelA in consumerMapping|orderBy:'topic'">
+                            <div>
+                                <a ng-click="levelA.expanded = !levelA.expanded">
+                                    <img ng-src="/app/images/buttons/{{levelA.expanded ? 'collapse' : 'expand'}}.png">
+                                    <img src="/app/images/common/topic-16.png">
+                                    <span>{{levelA.topic}}</span>
+                                    <img ng-show="levelA.loading" src="/app/images/status/processing.gif">
+                                </a>
+                            </div>
+                            <div ng-show="levelA.expanded" ng-repeat="levelB in levelA.consumers" style="margin-left: 32px">
+                                <a ng-click="levelB.expanded = !levelB.expanded">
+                                    <img ng-src="/app/images/buttons/{{levelB.expanded ? 'collapse' : 'expand'}}.png">
+                                    <img src="/app/images/common/consumers-16.png">
+                                    <span>{{levelB.consumerId}}</span>
+                                    <img src="/app/images/status/processing.gif" ng-show="levelB.expanded && isConsumerUpToDate(levelB)">
+                                </a>
 
-                        <p>Example:</p>
-                        <blockquote>
-                            <div style="color: #aaaaaa"># indicates whether Storm Partition Manager-style consumers should be read from Zookeeper</div>
-                            <div><span style="color: magenta">trifecta.storm.kafka.consumers.partitionManager</span> = <span style="color: blue">true</span></div>
-                        </blockquote>
+                                <div ng-show="levelB.expanded" style="margin-left: 32px">
+                                    <table>
+                                        <tr>
+                                            <th>Partition</th>
+                                            <th>Topic Offset</th>
+                                            <th>Consumer Offset</th>
+                                            <th>Remaining</th>
+                                            <th>Last Updated</th>
+                                        </tr>
 
-                        <p>If you're using Apache Storm, and you have not yet set the above property to true, please do
-                        so, then restart Trifecta for the change to take affect.</p>
+                                        <tr ng-repeat="levelC in levelB.details | orderBy:'partition'">
+                                            <td>{{ levelC.partition }}</td>
+                                            <td>
+                                                <a ng-click="switchToMessage(levelC.topic, levelC.partition, levelC.topicOffset)">
+                                                    {{ levelC.topicOffset }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <a ng-click="switchToMessage(levelC.topic, levelC.partition, levelC.offset)">
+                                                    {{ levelC.offset }}
+                                                </a>
+                                            </td>
+                                            <td>{{ levelC.messagesLeft | number }}</td>
+                                            <td>{{ levelC.lastModified | date:'yyyy-MM-dd HH:mm:ss Z' }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                    <div style="display: inline; float: right; width: 30%; padding-left: 4px">
+                        <p><img src="/app/images/common/help-16.png" style="padding: 2px"> Kafka uses Consumer Groups to
+                            track the current offset individual for individual consumers. This view allows users to view
+                            those offsets via web socket in near real-time.
+                            <div ng-include="'/app/views/partials/web_socket_refresh.htm'"></div></p>
+                    </div>
+                </div>
 
-                    <!-- Consumers -->
-                    <div class="block" ng-repeat="levelA in consumerMapping|orderBy:'topic'">
-                        <div>
-                            <a ng-click="levelA.expanded = !levelA.expanded">
-                                <img ng-src="/app/images/buttons/{{levelA.expanded ? 'collapse' : 'expand'}}.png">
-                                <img src="/app/images/common/topic-16.png">
-                                <span>{{levelA.topic}}</span>
-                                <img ng-show="levelA.loading" src="/app/images/status/processing.gif">
-                            </a>
+                <div ng-show="observeTab.name == 'Topics'">
+                    <div style="display: inline; float: left; width: 69.9%; height: 525px; border-right: 1px solid #cccccc">
+                        <!-- No Topics -->
+                        <div ng-hide="getTopics(true).length">
+                            <img src="/app/images/status/yellowlight.gif">
+                            <span class="warning">No topic with messages found.</span>
                         </div>
-                        <div ng-show="levelA.expanded" ng-repeat="levelB in levelA.consumers" style="margin-left: 32px">
-                            <a ng-click="levelB.expanded = !levelB.expanded">
-                                <img ng-src="/app/images/buttons/{{levelB.expanded ? 'collapse' : 'expand'}}.png">
-                                <img src="/app/images/common/consumers-16.png">
-                                <span>{{levelB.consumerId}}</span>
-                                <img src="/app/images/status/processing.gif" ng-show="levelB.expanded && isConsumerUpToDate(levelB)">
-                            </a>
 
-                            <div ng-show="levelB.expanded" style="margin-left: 32px">
+                        <!-- Topics -->
+                        <div class="block" ng-repeat="t in getTopics(true)|orderBy:'topic'">
+                            <a ng-click="t.expanded = !t.expanded">
+                                <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
+                                <img src="/app/images/common/topic-16.png"> {{ t.topic }}
+                                     <span ng-show="t.totalMessages > 0">
+                                        (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
+                                     </span>
+                            </a>
+                            <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
                                 <table>
                                     <tr>
                                         <th>Partition</th>
-                                        <th>Topic Offset</th>
-                                        <th>Consumer Offset</th>
-                                        <th>Remaining</th>
-                                        <th>Last Updated</th>
+                                        <th>First Offset</th>
+                                        <th>Last Offset</th>
+                                        <th>Messages</th>
                                     </tr>
 
-                                    <tr ng-repeat="levelC in levelB.details | orderBy:'partition'">
-                                        <td>{{ levelC.partition }}</td>
+                                    <tr ng-repeat="p in t.partitions | orderBy:'partition'">
+                                        <td>{{ p.partition }}  <img src="/app/images/status/loading.gif" ng-show="p.loading"></td>
                                         <td>
-                                            <a ng-click="switchToMessage(levelC.topic, levelC.partition, levelC.topicOffset)">
-                                                {{ levelC.topicOffset }}
+                                            <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
+                                                {{ p.startOffset }}
                                             </a>
                                         </td>
                                         <td>
-                                            <a ng-click="switchToMessage(levelC.topic, levelC.partition, levelC.offset)">
-                                                {{ levelC.offset }}
+                                            <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">
+                                                {{ p.endOffset }}
                                             </a>
                                         </td>
-                                        <td>{{ levelC.messagesLeft | number }}</td>
-                                        <td>{{ levelC.lastModified | date:'yyyy-MM-dd HH:mm:ss Z' }}</td>
+                                        <td>{{ p.messages | number }}</td>
                                     </tr>
                                 </table>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div ng-show="observeTab.name == 'Topics'">
-                    <!-- No Topics -->
-                    <div ng-hide="getTopics(true).length">
-                        <img src="/app/images/status/yellowlight.gif">
-                        <span class="warning">No topic with messages found.</span>
-                    </div>
-
-                    <!-- Topics -->
-                    <div class="block" ng-repeat="t in getTopics(true)|orderBy:'topic'">
-                        <a ng-click="t.expanded = !t.expanded">
-                            <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
-                            <img src="/app/images/common/topic-16.png"> {{ t.topic }}
-                                 <span ng-show="t.totalMessages > 0">
-                                    (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
-                                 </span>
-                        </a>
-                        <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
-                            <table>
-                                <tr>
-                                    <th>Partition</th>
-                                    <th>First Offset</th>
-                                    <th>Last Offset</th>
-                                    <th>Messages</th>
-                                </tr>
-
-                                <tr ng-repeat="p in t.partitions | orderBy:'partition'">
-                                    <td>{{ p.partition }}  <img src="/app/images/status/loading.gif" ng-show="p.loading"></td>
-                                    <td>
-                                        <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
-                                            {{ p.startOffset }}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">
-                                            {{ p.endOffset }}
-                                        </a>
-                                    </td>
-                                    <td>{{ p.messages | number }}</td>
-                                </tr>
-                            </table>
-                        </div>
+                    <div style="display: inline; float: right; width: 30%; padding-left: 4px">
+                        <p><img src="/app/images/common/help-16.png" style="padding: 2px"> This view provides the user
+                            with information about the current offset for all partitions within each non-empty topic
+                            (containing at least one message).
+                            <div ng-include="'/app/views/partials/web_socket_refresh.htm'"></div></p>
                     </div>
                 </div>
 

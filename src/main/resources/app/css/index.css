@@ -110,9 +110,10 @@ th { text-align: left }
 }
 
 .title_border {
+    /*
     border-top: 1px solid #cccccc;
     border-left: 1px solid #cccccc;
-    border-right: 1px solid #cccccc;
+    border-right: 1px solid #cccccc;*/
 }
 
 .title1 { color: #f00000 }
