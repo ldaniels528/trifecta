@@ -3,10 +3,12 @@
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
-    angular.module('trifecta').controller('ObserveCtrl', ['$scope', '$log', '$timeout', '$interval', 'ConsumerSvc', 'ZookeeperSvc',
-        function ($scope, $log, $timeout, $interval, ConsumerSvc, ZookeeperSvc) {
+    angular.module('trifecta').controller('ObserveCtrl', ['$scope', '$log', '$timeout', '$interval', 'ConsumerSvc', 'TopicSvc', 'ZookeeperSvc',
+        function ($scope, $log, $timeout, $interval, ConsumerSvc, TopicSvc, ZookeeperSvc) {
 
             $scope.consumerMapping = [];
+            $scope.replicas = [];
+
             $scope.formats = ["auto", "binary", "json", "plain-text"];
             $scope.selected = { "format": $scope.formats[0] };
             $scope.zkItem = null;
@@ -20,6 +22,10 @@
                 }, {
                     "name": "Topics",
                     "imageURL": "/app/images/tabs/observe/topics.png",
+                    "active": false
+                }, {
+                    "name": "Replicas",
+                    "imageURL": "/app/images/tabs/observe/replicas-24.png",
                     "active": false
                 }, {
                     "name": "Zookeeper",
@@ -90,6 +96,32 @@
                     function(err) {
                         item.loading = false;
                         errorHandler(err);
+                    });
+            };
+
+            $scope.expandReplicas = function(topic) {
+                topic.replicaExpanded = !topic.replicaExpanded;
+                if(topic.replicaExpanded && !topic.replicas) {
+                    topic.loading = true;
+                    TopicSvc.getReplicas(topic.topic).then(
+                        function (replicas) {
+                            $timeout(function() { topic.loading = false; }, 500);
+                            topic.replicas = replicas;
+                        },
+                        function (err) {
+                            $timeout(function() { topic.loading = false; }, 500);
+                            $scope.addError(err);
+                        });
+                }
+            };
+
+            $scope.getReplicas = function (topic) {
+                TopicSvc.getReplicas(topic).then(
+                    function (replicas) {
+                        $scope.replicas = replicas;
+                    },
+                    function (err) {
+                        $scope.addError(err);
                     });
             };
 
@@ -164,12 +196,15 @@
                 }
             });
 
-            /*
+
             $scope.$watch("TopicSvc.topics", function(newTopics, oldTopics) {
-                if(newTopics.length) {
-                    $scope.expandItem(newTopics[0]);
-                }
-            });*/
+                // asynchronously load the replicas for the topic
+                /*
+                var myTopicName = topic ? topic.topic : null;
+                if(myTopicName) {
+                    $scope.getReplicas(myTopicName);
+                }*/
+            });
 
         }])
 })();
