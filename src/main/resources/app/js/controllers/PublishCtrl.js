@@ -73,15 +73,14 @@
                 }
 
                 /**
-                 * Watch for topic changes, and when one occurs:
-                 * 1. select the first non-empty topic
-                 */
+                 * Watch for topic changes, then select the first non-empty topic
+                 *
                 $scope.$watch("TopicSvc.topics", function(topics) {
                     var topic = TopicSvc.findNonEmptyTopic(topics);
                     if(topic) {
                         $scope.messageBlob.topic = topic;
                     }
-                });
+                });*/
 
             }]);
 
