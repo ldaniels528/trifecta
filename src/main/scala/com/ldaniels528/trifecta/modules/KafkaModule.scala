@@ -9,7 +9,7 @@ import com.ldaniels528.trifecta.TxResultHandler.Ok
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroConversion._
-import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
+import com.ldaniels528.trifecta.io.avro.{AvroMessageDecoding, AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.io.kafka.KafkaCliFacade._
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{MessageData, contentFilter}
 import com.ldaniels528.trifecta.io.kafka._
@@ -42,9 +42,6 @@ import scala.util.{Failure, Success, Try}
 class KafkaModule(config: TxConfig) extends Module {
   private var zkProxy_? : Option[ZKProxy] = None
   private val out: PrintStream = config.out
-
-  // set the default correlation ID
-  private val correlationId: Int = (Math.random * Int.MaxValue).toInt
 
   // incoming messages cache
   private var incomingMessageCache = Map[TopicAndPartition, Inbound]()
@@ -583,8 +580,8 @@ class KafkaModule(config: TxConfig) extends Module {
    */
   private def decodeMessage(messageData: Option[BinaryMessage], aDecoder: MessageDecoder[_]): Option[GenericRecord] = {
     // only Avro decoders are supported
-    val decoder: AvroDecoder = aDecoder match {
-      case avDecoder: AvroDecoder => avDecoder
+    val decoder: AvroMessageDecoding = aDecoder match {
+      case avDecoder: AvroMessageDecoding => avDecoder
       case _ => throw new IllegalStateException("Only Avro decoding is supported")
     }
 
