@@ -6,7 +6,7 @@ import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.{AsyncIO, InputSource, OutputSource}
 import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.messages.query.{KQLQuery, KQLSelection}
-import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
+import com.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageCodecs, MessageDecoder}
 import com.ldaniels528.trifecta.modules._
 import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
@@ -29,6 +29,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
 
   // support registering decoders
   private val decoders = TrieMap[String, MessageDecoder[_]]()
+  private var once = true;
 
   // load the default decoders
   config.getDecoders foreach { txDecoder =>
@@ -57,7 +58,13 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
    * @param topicOrUrl the given topic or decoder URL
    * @return an option of a [[MessageDecoder]]
    */
-  def resolveDecoder(topicOrUrl: String): Option[MessageDecoder[_]] = {
+  def resolveDecoder(topicOrUrl: String)(implicit rt: TxRuntimeContext): Option[MessageDecoder[_]] = {
+    if(once) {
+      config.getDecoders.filter(_.decoder.isLeft).groupBy(_.topic) foreach { case (topic, decoders) =>
+        rt.registerDecoder(topic, new CompositeTxDecoder(decoders))
+      }
+      once = !once
+    }
     decoders.get(topicOrUrl) ?? MessageCodecs.getDecoder(topicOrUrl)
   }
 

@@ -9,7 +9,7 @@ import com.ldaniels528.trifecta.TxResultHandler.Ok
 import com.ldaniels528.trifecta.command._
 import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroConversion._
-import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder}
+import com.ldaniels528.trifecta.io.avro.{AvroMessageDecoding, AvroCodec, AvroDecoder}
 import com.ldaniels528.trifecta.io.kafka.KafkaCliFacade._
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{MessageData, contentFilter}
 import com.ldaniels528.trifecta.io.kafka._
@@ -583,8 +583,8 @@ class KafkaModule(config: TxConfig) extends Module {
    */
   private def decodeMessage(messageData: Option[BinaryMessage], aDecoder: MessageDecoder[_]): Option[GenericRecord] = {
     // only Avro decoders are supported
-    val decoder: AvroDecoder = aDecoder match {
-      case avDecoder: AvroDecoder => avDecoder
+    val decoder: AvroMessageDecoding = aDecoder match {
+      case avDecoder: AvroMessageDecoding => avDecoder
       case _ => throw new IllegalStateException("Only Avro decoding is supported")
     }
 
