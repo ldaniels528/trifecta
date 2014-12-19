@@ -12,8 +12,6 @@
             $scope.zkItem = null;
             $scope.zkItems = [{ name: "/ (root)", path: "/", expanded: false }];
 
-            $scope.showConcurrencyConfig = false;
-
             $scope.observeTabs = [
                 {
                     "name": "Consumers",

@@ -92,68 +92,61 @@
                     </div>
                     <div style="display: inline; float: right; width: 30%; padding-left: 4px">
                         <p><img src="/app/images/common/help-16.png" style="padding: 2px"> Kafka uses Consumer Groups to
-                            track the current offset individual for individual consumers. This tab allows users to view
-                            those offsets via web socket in near <a ng-click="showConcurrencyConfig = !showConcurrencyConfig">real-time</a>.
-
-                            <div ng-show="showConcurrencyConfig">
-                                <span class="bold title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span>
-                                provides a couple of configuration properties that allow you to control the frequency of
-                                topic and consumer group offset updates:
-
-                                <ul>
-                                    <li><i>trifecta.web.push.interval.consumer</i> defines the interval (in seconds) that changes
-                                        to consumer offsets will be pushed to web-socket clients</li>
-                                    <li><i>trifecta.web.push.interval.topic</i> defines the interval (in seconds) that changes
-                                        to topics (new messages) will be pushed to web-socket clients</li>
-                                </ul>
-                            </div>
-                            </p>
-
-                        <p></p>
+                            track the current offset individual for individual consumers. This view allows users to view
+                            those offsets via web socket in near real-time.
+                            <div ng-include="'/app/views/partials/web_socket_refresh.htm'"></div></p>
                     </div>
                 </div>
 
                 <div ng-show="observeTab.name == 'Topics'">
-                    <!-- No Topics -->
-                    <div ng-hide="getTopics(true).length">
-                        <img src="/app/images/status/yellowlight.gif">
-                        <span class="warning">No topic with messages found.</span>
-                    </div>
-
-                    <!-- Topics -->
-                    <div class="block" ng-repeat="t in getTopics(true)|orderBy:'topic'">
-                        <a ng-click="t.expanded = !t.expanded">
-                            <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
-                            <img src="/app/images/common/topic-16.png"> {{ t.topic }}
-                                 <span ng-show="t.totalMessages > 0">
-                                    (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
-                                 </span>
-                        </a>
-                        <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
-                            <table>
-                                <tr>
-                                    <th>Partition</th>
-                                    <th>First Offset</th>
-                                    <th>Last Offset</th>
-                                    <th>Messages</th>
-                                </tr>
-
-                                <tr ng-repeat="p in t.partitions | orderBy:'partition'">
-                                    <td>{{ p.partition }}  <img src="/app/images/status/loading.gif" ng-show="p.loading"></td>
-                                    <td>
-                                        <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
-                                            {{ p.startOffset }}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">
-                                            {{ p.endOffset }}
-                                        </a>
-                                    </td>
-                                    <td>{{ p.messages | number }}</td>
-                                </tr>
-                            </table>
+                    <div style="display: inline; float: left; width: 69.9%; height: 525px; border-right: 1px solid #cccccc">
+                        <!-- No Topics -->
+                        <div ng-hide="getTopics(true).length">
+                            <img src="/app/images/status/yellowlight.gif">
+                            <span class="warning">No topic with messages found.</span>
                         </div>
+
+                        <!-- Topics -->
+                        <div class="block" ng-repeat="t in getTopics(true)|orderBy:'topic'">
+                            <a ng-click="t.expanded = !t.expanded">
+                                <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
+                                <img src="/app/images/common/topic-16.png"> {{ t.topic }}
+                                     <span ng-show="t.totalMessages > 0">
+                                        (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
+                                     </span>
+                            </a>
+                            <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
+                                <table>
+                                    <tr>
+                                        <th>Partition</th>
+                                        <th>First Offset</th>
+                                        <th>Last Offset</th>
+                                        <th>Messages</th>
+                                    </tr>
+
+                                    <tr ng-repeat="p in t.partitions | orderBy:'partition'">
+                                        <td>{{ p.partition }}  <img src="/app/images/status/loading.gif" ng-show="p.loading"></td>
+                                        <td>
+                                            <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
+                                                {{ p.startOffset }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">
+                                                {{ p.endOffset }}
+                                            </a>
+                                        </td>
+                                        <td>{{ p.messages | number }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: inline; float: right; width: 30%; padding-left: 4px">
+                        <p><img src="/app/images/common/help-16.png" style="padding: 2px"> This view provides the user
+                            with information about the current offset for all partitions within each non-empty topic
+                            (containing at least one message).
+                            <div ng-include="'/app/views/partials/web_socket_refresh.htm'"></div></p>
                     </div>
                 </div>
 
