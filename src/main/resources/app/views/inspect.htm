@@ -4,8 +4,7 @@
             <legend>Topics</legend>
             <div class="topics_container">
                 <div ng-repeat="t in getTopics(hideEmptyTopics)" ng-class="t == topic ? 'highlighted' : ''">
-                    <img ng-src="/app/images/status/{{t.totalMessages ? 'greenlight.png' : 'offlight.png'}}">
-                    <img ng-src="/app/images/common/{{ topic == t ? 'topic_selected-16.png' : 'topic-16.png' }}">
+                    <img ng-src="{{ getTopicIcon(t, topic == t) }}">
                     <a ng-click="updateTopic(t)">
                         <span ng-class="t == topic ? 'highlighted' : ''"> {{t.topic}}
                             <span ng-show="t.totalMessages">

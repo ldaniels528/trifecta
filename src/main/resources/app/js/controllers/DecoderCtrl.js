@@ -79,6 +79,13 @@
                             if(decoders.length) {
                                 $scope.selectDecoder(decoders[0]);
                             }
+
+                            // every schema should know its parent decoder
+                            angular.forEach($scope.decoders, function(d) {
+                               angular.forEach(d.schemas, function(s) {
+                                   s.decoder = d;
+                               });
+                            });
                         },
                         function(err) {
                             $scope.addError(err);
@@ -200,6 +207,7 @@
                  * @param schema the given schema
                  */
                 $scope.selectSchema = function(schema) {
+                    $scope.selectDecoder(schema.decoder);
                     $scope.schema = schema;
 
                     // if there's an error... enable edit mode

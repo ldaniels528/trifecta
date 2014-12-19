@@ -4,8 +4,8 @@
  */
 (function () {
     angular.module('trifecta')
-        .controller('PublishCtrl', ['$scope', '$log','$timeout', 'MessageSvc',
-            function ($scope, $log, $timeout, MessageSvc) {
+        .controller('PublishCtrl', ['$scope', '$log','$timeout', 'MessageSvc', 'TopicSvc',
+            function ($scope, $log, $timeout, MessageSvc, TopicSvc) {
 
                 $scope.keyFormats = ["ASCII", "Hex-Notation", "EPOC", "UUID"];
                 $scope.messageFormats = ["ASCII", "Avro", "JSON", "Hex-Notation"];
@@ -71,6 +71,17 @@
                 function isBlank(s) {
                     return !s || s.trim().length == 0;
                 }
+
+                /**
+                 * Watch for topic changes, and when one occurs:
+                 * 1. select the first non-empty topic
+                 */
+                $scope.$watch("TopicSvc.topics", function(topics) {
+                    var topic = TopicSvc.findNonEmptyTopic(topics);
+                    if(topic) {
+                        $scope.messageBlob.topic = topic;
+                    }
+                });
 
             }]);
 
