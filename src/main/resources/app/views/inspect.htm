@@ -58,26 +58,6 @@
                 </div>
             </fieldset>
         </div>
-
-        <div class="separator">
-            <fieldset style="border-radius: 5px 5px 5px 5px">
-                <legend>Leaders and Replicas</legend>
-                <div class="leaders_and_replicas">
-                    <table class="full_width">
-                        <tr>
-                            <th>Partition</th>
-                            <th>Leader</th>
-                            <th>Replica</th>
-                        </tr>
-                        <tr ng-repeat="r in replicas">
-                            <td>{{ r.partition }}</td>
-                            <td>{{ r.leader.host }}:{{ r.leader.port }}</td>
-                            <td>{{ r.replica.host }}:{{ r.replica.port }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </fieldset>
-        </div>
     </div>
 
     <div style="display: inline; width: 59%; float: right; margin-top: 12px">

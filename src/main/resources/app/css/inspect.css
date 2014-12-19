@@ -25,18 +25,12 @@
     margin-right: 3px
 }
 
-.leaders_and_replicas {
-    clear: both;
-    width: auto;
-    height: 100px;
-    overflow: auto;
-}
-
 .messages_and_offsets {
     clear: both;
     width: auto;
-    height: 125px;
+    height: 200px;
     overflow: auto;
+    border-bottom: 1px solid #cccccc;
 }
 
 .message_panel {
@@ -57,6 +51,7 @@
 .topics_container {
     clear: both;
     width: auto;
-    height: 150px;
+    height: 250px;
     overflow: auto;
+    border-bottom: 1px solid #cccccc;
 }

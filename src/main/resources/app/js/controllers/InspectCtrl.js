@@ -8,7 +8,6 @@
             function ($scope, $interval, $log, $parse, $timeout, MessageSvc, MessageSearchSvc, TopicSvc) {
 
                 $scope.hideEmptyTopics = true;
-                $scope.replicas = [];
                 $scope.topics = [];
                 $scope.topic = null;
                 $scope.loading = 0;
@@ -140,16 +139,6 @@
                             }
                         }
                     });
-                };
-
-                $scope.getReplicas = function (topic) {
-                    TopicSvc.getReplicas(topic).then(
-                        function (replicas) {
-                            $scope.replicas = replicas;
-                        },
-                        function (err) {
-                            $scope.addError(err);
-                        });
                 };
 
                 $scope.getTopicIcon = function(topic, selected) {
@@ -300,12 +289,6 @@
                 $scope.updateTopic = function (topic) {
                     $scope.topic = topic;
 
-                    // asynchronously load the replicas for the topic
-                    var myTopicName = topic ? topic.topic : null;
-                    if(myTopicName) {
-                        $scope.getReplicas(myTopicName);
-                    }
-
                     var partitions = topic ? topic.partitions : null;
                     if (partitions) {
                         var partition = partitions[0];
@@ -361,13 +344,8 @@
                     return null;
                 }
 
-                // initially, clear the message
-               // $scope.clearMessage();
-
                 /**
-                 * Watch for topic changes, and when one occurs:
-                 * 1. select the first non-empty topic
-                 * 2. load the replicas for the topic
+                 * Watch for topic changes, and select the first non-empty topic
                  */
                 $scope.$watch("TopicSvc.topics", function(newTopics, oldTopics) {
                     $log.info("Loaded new topics (" + newTopics.length + ")");
@@ -378,5 +356,4 @@
                 });
 
             }]);
-
 })();
