@@ -60,13 +60,15 @@ Kafka topics and many other Big Data Systems (including Cassandra, ElasticSearch
 <li><a href="#trifecta-ui-start">Starting the embedded web server</a></li>
 <li><a href="#trifecta-ui-configure">Configuring Trifecta UI</a></li>
 <li><a href="#trifecta-ui-decoders">Default Decoders</a></li>
+<li><a href="#trifecta-ui-inspect">Inspecting Kafka Messages</a></li>
 <li><a href="#trifecta-ui-query">Queries</a></li>
 </ul>
 </li>
 <li>
-<a href="#usage">Usage Examples</a>
+<a href="#trifecta-cli">Trifecta CLI</a>
 
 <ul>
+<li><a href="#core-module">Core Module</a></li>
 <li>
 <a href="#kafka-module">Kafka Module</a>
 
@@ -214,6 +216,9 @@ trifecta.common.encoding = UTF-8
 # Kafka/Zookeeper properties
 trifecta.zookeeper.host = localhost:2181
 
+# indicates whether Storm Partition Manager-style consumers should be read from Zookeeper
+trifecta.storm.kafka.consumers.partitionManager = false
+
 # Cassandra properties
 trifecta.cassandra.hosts = localhost
 
@@ -248,9 +253,9 @@ trifecta.storm.hosts = localhost
 <a id="trifecta-ui" class="anchor" href="#trifecta-ui" aria-hidden="true"><span class="octicon octicon-link"></span></a>Trifecta UI</h3>
 
 <p>Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
-which offers many of the powerful features found in the CLI client application.</p>
+which offers a comprehensive and powerful set of features for inspecting Kafka topic partitions and messages.</p>
 
-<p><img src="http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png" alt=""></p>
+<p><img src="http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-observe.png" alt=""></p>
 
 <p><a name="trifecta-ui-start"></a></p>
 
@@ -305,23 +310,45 @@ file structure:</p>
 <p>The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
 restart Trifecta UI, and your messages will be displayed in JSON format.</p>
 
-<p>Additionally, once a "default" decoder is configured for a Kafka topic, the CLI application can use them as well.
-For more details about using default decoders with the CLI application <a href="#kafka-default-avro-decoder">click here</a>.</p>
+<p><img src="http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-decoders.png" alt=""></p>
+
+<p>Additionally, once a "default" decoder is configured for a Kafka topic, the <a href="#trifecta-cli">CLI application</a>
+can use them as well. For more details about using default decoders with the CLI application
+<a href="#kafka-default-avro-decoder">click here</a>.</p>
+
+<p><a name="trifecta-ui-inspect"></a></p>
+
+<h4>
+<a id="inspecting-kafka-messages" class="anchor" href="#inspecting-kafka-messages" aria-hidden="true"><span class="octicon octicon-link"></span></a>Inspecting Kafka Messages</h4>
+
+<p>Trifecta UI has powerful support for viewing Kafka messages, and when the messages are in either JSON or Avro format
+Trifecta displays them as human readable (read: pretty) JSON documents.</p>
+
+<p><img src="http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png" alt=""></p>
 
 <p><a name="trifecta-ui-query"></a></p>
 
 <h4>
 <a id="queries" class="anchor" href="#queries" aria-hidden="true"><span class="octicon octicon-link"></span></a>Queries</h4>
 
-<p>Trifecta UI also provides a way to execute queries against topics using BDQL (Big Data Query Language). For more
-detailed information about BDQL queries, <a href="#kafka-search-by-query">click here</a>.</p>
+<p>Trifecta UI also provides a way to execute queries against topics using KQL (Kafka Query Language). For more
+detailed information about KQL queries, <a href="#kafka-search-by-query">click here</a>.</p>
 
 <p><img src="http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png" alt=""></p>
 
-<p><a name="usage"></a></p>
+<p><a name="trifecta-cli"></a></p>
 
 <h3>
-<a id="usage-examples" class="anchor" href="#usage-examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage Examples</h3>
+<a id="trifecta-cli" class="anchor" href="#trifecta-cli" aria-hidden="true"><span class="octicon octicon-link"></span></a>Trifecta CLI</h3>
+
+<p>Trifecta CLI (Command Line Interface) is a REPL tool that simplifies inspecting Kafka messages, Zookeeper data,
+and optionally Elastic Search documents, MongoDB documents and Storm topologies via simple UNIX-like commands
+(or <a href="#kafka-search-by-query">SQL-like queries</a>).</p>
+
+<p><a name="core-module"></a></p>
+
+<h4>
+<a id="core-module" class="anchor" href="#core-module" aria-hidden="true"><span class="octicon octicon-link"></span></a>Core Module</h4>
 
 <p><em>Trifecta</em> exposes its commands through modules. At any time to see which modules are available one could issue the <code>modules</code> command.</p>
 
