@@ -2,7 +2,7 @@ Trifecta UI
 =======
 
 Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
-which offers many of the powerful features found in the CLI client application.
+which offers a comprehensive and powerful set of features for inspecting Kafka topic partitions and messages.
 
 Table of Contents
 
@@ -56,6 +56,8 @@ file structure:
 
 The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
 restart Trifecta UI, and your messages will be displayed in JSON format.
+
+![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-decoders.png)
 
 <a name="trifecta-ui-query"></a>
 #### Queries
