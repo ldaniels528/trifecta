@@ -214,9 +214,14 @@ KQL is a SQL-like language with syntax as follows:
 Consider the following example:
 
     select symbol, exchange, lastTrade, open, close, high, low
-    from "shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+    from "shocktrade.quotes.avro" with default
     where lastTrade <= 1 and volume >= 1,000,000
     limit 25
+
+The above query retrieves the `symbol`, `exchange`, `lastTrade`, `open`, `close`, `high` and `low` fields from messages
+within the Kafka topic `shocktrade.quotes.avro` using the `default` decoder filtering for only messages where the
+`lastTrade` is less than or equal to `1` and the `volume` is greater than or equal to `1,000,000`, and limiting the
+number of results to `25`.
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png)
 
