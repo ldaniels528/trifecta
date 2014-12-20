@@ -71,7 +71,22 @@ Trifecta displays them as human readable (read: pretty) JSON documents.
 <a name="trifecta-ui-query"></a>
 #### Queries
 
-Trifecta UI also provides a way to execute queries against topics using KQL (Kafka Query Language). For more
-detailed information about KQL queries, <a href="#kafka-search-by-query">click here</a>.
+Trifecta UI also provides a way to execute queries against Avro-encoded topics using the Kafka Query Language (KQL).
+KQL is a SQL-like language with syntax as follows:
+
+    select _<fields>_ from _<topic>_ with _<decoder>_
+    [where _<condition>_]
+    [limit _<count>_]
+
+Consider the following example:
+
+    select symbol, exchange, lastTrade, open, close, high, low
+    from "shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+    where lastTrade <= 1 and volume >= 1,000,000
+    limit 25
+
+The above query retrieves the `symbol`, `exchange`, `lastTrade`, `open`, `close`, `high` and `low` fields from messages
+within the Kafka topic `shocktrade.quotes.avro` filtering for only messages where the `lastTrade` is less than or equal
+to `1` and the `volume` is greater than or equal to one million, and limiting the number of results to `25`.
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png)
