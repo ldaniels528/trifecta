@@ -74,9 +74,9 @@ Trifecta displays them as human readable (read: pretty) JSON documents.
 Trifecta UI also provides a way to execute queries against Avro-encoded topics using the Kafka Query Language (KQL).
 KQL is a SQL-like language with syntax as follows:
 
-    select _<fields>_ from _<topic>_ with _<decoder>_
-    [where _<condition>_]
-    [limit _<count>_]
+    select _ <fields> _ from _ <topic> _ with _ <decoder> _
+    [where _ <condition> _]
+    [limit _ <count> _]
 
 Consider the following example:
 
