@@ -13,7 +13,7 @@ Table of Contents
     * <a href="#trifecta-ui-inspect">Inspecting Kafka Messages</a>
     * <a href="#trifecta-ui-query">Queries</a>
 
-![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png)
+![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-observe.png)
 
 <a name="trifecta-ui-start"></a>
 #### Starting the embedded web server
@@ -63,8 +63,8 @@ restart Trifecta UI, and your messages will be displayed in JSON format.
 <a name="trifecta-ui-inspect"></a>
 #### Inspecting Kafka Messages
 
-Trifecta UI has powerful support for viewing Kafka messages, and when the messages are either JSON or Avro it displays
-them as human readable (read: pretty) JSON documents.
+Trifecta UI has powerful support for viewing Kafka messages, and when the messages are in either JSON or Avro format
+Trifecta displays them as human readable (read: pretty) JSON documents.
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png)
 
