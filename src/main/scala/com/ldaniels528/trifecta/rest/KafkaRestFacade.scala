@@ -276,7 +276,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    */
   def getDecoders = {
     (config.getDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
-      toDecoderJs(topic, myDecoders)
+      toDecoderJs(topic, myDecoders.sortBy(-_.lastModified))
     }).toSeq
   }
 

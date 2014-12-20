@@ -60,6 +60,13 @@
                         });
                 };
 
+                $scope.getSchemaIcon = function(schema) {
+                    if(schema.error) return "/app/images/tabs/decoders/failed-16.png";
+                    else if(schema.modified) return "/app/images/tabs/decoders/modified-16.gif";
+                    else if(schema.processing) return "/app/images/status/processing.gif";
+                    else return "/app/images/tabs/decoders/js-16.png";
+                };
+
                 /**
                  * Reloads the given decoder
                  * @param decoder the given decoder

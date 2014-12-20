@@ -105,6 +105,7 @@
                     topic.loading = true;
                     TopicSvc.getReplicas(topic.topic).then(
                         function (replicas) {
+                            $log.info("replicas[0] = " + angular.toJson(replicas[0]));
                             $timeout(function() { topic.loading = false; }, 500);
                             topic.replicas = replicas;
                         },
