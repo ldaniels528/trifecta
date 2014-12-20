@@ -10,6 +10,7 @@ Table of Contents
     * <a href="#trifecta-ui-start">Starting the embedded web server</a>
     * <a href="#trifecta-ui-configure">Configuring Trifecta UI</a>
     * <a href="#trifecta-ui-decoders">Default Decoders</a>
+    * <a href="#trifecta-ui-inspect">Inspecting Kafka Messages</a>
     * <a href="#trifecta-ui-query">Queries</a>
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png)
@@ -58,6 +59,14 @@ The name of the actual schema file can be anything you'd like. Once the file has
 restart Trifecta UI, and your messages will be displayed in JSON format.
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-decoders.png)
+
+<a name="trifecta-ui-inspect"></a>
+#### Inspecting Kafka Messages
+
+Trifecta UI has powerful support for viewing Kafka messages, and when the messages are either JSON or Avro it displays
+them as human readable (read: pretty) JSON documents.
+
+![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png)
 
 <a name="trifecta-ui-query"></a>
 #### Queries
