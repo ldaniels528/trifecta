@@ -87,7 +87,7 @@ Consider the following example:
 
 The above query retrieves the `symbol`, `exchange`, `lastTrade`, `open`, `close`, `high` and `low` fields from messages
 within the Kafka topic `shocktrade.quotes.avro` using the `default` decoder filtering for only messages where the
-`lastTrade` is less than or equal to `1` and the `volume` is greater than or equal to `1,000,000`, and limiting the
+`lastTrade` is less than or equal to `1`, the `volume` is greater than or equal to `1,000,000`, and limiting the
 number of results to `25`.
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png)
