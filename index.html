@@ -1,34 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset='utf-8'>
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <title>Trifecta by ldaniels528</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-
-    <title>Trifecta by ldaniels528</title>
   </head>
-
   <body>
-    <header>
-      <div class="inner">
+    <div class="wrapper">
+      <header>
         <h1>Trifecta</h1>
-        <h2>Trifecta is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, publish  and verify messages (or data) in Kafka, Storm and Zookeeper</h2>
-        <a href="https://github.com/ldaniels528/trifecta" class="button"><small>View project on</small> GitHub</a>
-      </div>
-    </header>
-
-    <div id="content-wrapper">
-      <div class="inner clearfix">
-        <section id="main-content">
-          <h1>
+        <p>Trifecta is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, publish  and verify messages (or data) in Kafka, Storm and Zookeeper</p>
+        <p class="view"><a href="https://github.com/ldaniels528/trifecta">View the Project on GitHub <small>ldaniels528/trifecta</small></a></p>
+        <ul>
+          <li><a href="https://github.com/ldaniels528/trifecta/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/ldaniels528/trifecta/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/ldaniels528/trifecta">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
 <a id="trifecta-" class="anchor" href="#trifecta-" aria-hidden="true"><span class="octicon octicon-link"></span></a>Trifecta </h1>
 
 <p>Trifecta is a Command Line Interface (CLI) tool that enables users to quickly and easily inspect, verify and even query
@@ -331,10 +330,30 @@ Trifecta displays them as human readable (read: pretty) JSON documents.</p>
 <h4>
 <a id="queries" class="anchor" href="#queries" aria-hidden="true"><span class="octicon octicon-link"></span></a>Queries</h4>
 
-<p>Trifecta UI also provides a way to execute queries against topics using KQL (Kafka Query Language). For more
-detailed information about KQL queries, <a href="#kafka-search-by-query">click here</a>.</p>
+<p>Trifecta UI also provides a way to execute queries against Avro-encoded topics using the Kafka Query Language (KQL).
+KQL is a SQL-like language with syntax as follows:</p>
+
+<pre><code>select &lt;fields&gt; from &lt;topic&gt; with &lt;decoder&gt;
+[where &lt;condition&gt;]
+[limit &lt;count&gt;]
+</code></pre>
+
+<p>Consider the following example:</p>
+
+<pre><code>select symbol, exchange, lastTrade, open, close, high, low
+from "shocktrade.quotes.avro" with default
+where lastTrade &lt;= 1 and volume &gt;= 1,000,000
+limit 25
+</code></pre>
+
+<p>The above query retrieves the <code>symbol</code>, <code>exchange</code>, <code>lastTrade</code>, <code>open</code>, <code>close</code>, <code>high</code> and <code>low</code> fields from messages
+within the Kafka topic <code>shocktrade.quotes.avro</code> using the <code>default</code> decoder filtering for only messages where the
+<code>lastTrade</code> is less than or equal to <code>1</code>, the <code>volume</code> is greater than or equal to <code>1,000,000</code>, and limiting the
+number of results to <code>25</code>.</p>
 
 <p><img src="http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png" alt=""></p>
+
+<p>For more detailed information about KQL queries, <a href="#kafka-search-by-query">click here</a>.</p>
 
 <p><a name="trifecta-cli"></a></p>
 
@@ -1643,25 +1662,13 @@ ID for the Elastic Search document.</p>
  | spouts    storm   Retrieves the list of spouts for a given topology by ID              |
  + -------------------------------------------------------------------------------------- +
 </code></pre>
-        </section>
-
-        <aside id="sidebar">
-          <a href="https://github.com/ldaniels528/trifecta/zipball/master" class="button">
-            <small>Download</small>
-            .zip file
-          </a>
-          <a href="https://github.com/ldaniels528/trifecta/tarball/master" class="button">
-            <small>Download</small>
-            .tar.gz file
-          </a>
-
-          <p class="repo-owner"><a href="https://github.com/ldaniels528/trifecta"></a> is maintained by <a href="https://github.com/ldaniels528">ldaniels528</a>.</p>
-
-          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
-        </aside>
-      </div>
+      </section>
     </div>
-
-  
+    <footer>
+      <p>Project maintained by <a href="https://github.com/ldaniels528">ldaniels528</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
   </body>
 </html>
