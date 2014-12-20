@@ -20,6 +20,7 @@ Table of Contents
     * <a href="#trifecta-ui-start">Starting the embedded web server</a>
     * <a href="#trifecta-ui-configure">Configuring Trifecta UI</a>
     * <a href="#trifecta-ui-decoders">Default Decoders</a>
+    * <a href="#trifecta-ui-inspect">Inspecting Kafka Messages</a>
     * <a href="#trifecta-ui-query">Queries</a>
 * <a href="#trifecta-cli">Trifecta CLI</a>
     * <a href="#core-module">Core Module</a>
@@ -139,9 +140,9 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 ### Trifecta UI
 
 Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
-which offers many of the powerful features found in the CLI client application.
+which offers a comprehensive and powerful set of features for inspecting Kafka topic partitions and messages.
 
-![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png)
+![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-observe.png)
 
 <a name="trifecta-ui-start"></a>
 #### Starting the embedded web server
@@ -186,8 +187,19 @@ file structure:
 The name of the actual schema file can be anything you'd like. Once the file has been placed in the appropriate location,
 restart Trifecta UI, and your messages will be displayed in JSON format.
 
-Additionally, once a "default" decoder is configured for a Kafka topic, the CLI application can use them as well.
-For more details about using default decoders with the CLI application <a href="#kafka-default-avro-decoder">click here</a>.
+![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-decoders.png)
+
+Additionally, once a "default" decoder is configured for a Kafka topic, the <a href="#trifecta-cli">CLI application</a>
+can use them as well. For more details about using default decoders with the CLI application
+<a href="#kafka-default-avro-decoder">click here</a>.
+
+<a name="trifecta-ui-inspect"></a>
+#### Inspecting Kafka Messages
+
+Trifecta UI has powerful support for viewing Kafka messages, and when the messages are in either JSON or Avro format
+Trifecta displays them as human readable (read: pretty) JSON documents.
+
+![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png)
 
 <a name="trifecta-ui-query"></a>
 #### Queries
