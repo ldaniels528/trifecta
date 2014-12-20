@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.messages.query.parser
 
 import com.ldaniels528.trifecta.command.parser.TokenStream
-import com.ldaniels528.trifecta.messages.query.{KQLSelection, IOSource}
+import com.ldaniels528.trifecta.messages.query.{KQLQuery, KQLSelection, IOSource}
 import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.messages.logic.Expressions._
 
@@ -14,9 +14,9 @@ object KafkaQueryParser {
   /**
    * Parses a KQL query into a selection objects
    * @param queryString the given query string
-   * @return the [[KQLSelection]]
+   * @return the [[KQLQuery]]
    */
-  def apply(queryString: String): KQLSelection = {
+  def apply(queryString: String): KQLQuery = {
     // parse the query string
     val ts = TokenStream(KafkaQueryTokenizer.parse(queryString))
 
