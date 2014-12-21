@@ -53,6 +53,7 @@ Kafka topics and many other Big Data Systems (including Cassandra, ElasticSearch
 <li><a href="#running-the-app">Running the application</a></li>
 </ul>
 </li>
+<li><a href="#whats-new">What's New</a></li>
 <li>
 <a href="#trifecta-ui">Trifecta UI</a>
 
@@ -232,7 +233,7 @@ trifecta.mongodb.hosts = localhost
 trifecta.storm.hosts = localhost
 </code></pre>
 
-<p><a name="Running-the-app"></a> </p>
+<p><a name="running-the-app"></a></p>
 
 <h3>
 <a id="run-the-application" class="anchor" href="#run-the-application" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run the application</h3>
@@ -247,7 +248,39 @@ trifecta.storm.hosts = localhost
 <pre><code>$ java -jar trifecta.jar kls -l
 </code></pre>
 
-<p><a href="#trifecta-ui"></a></p>
+<p><a name="whats-new"></a></p>
+
+<h3>
+<a id="whats-new" class="anchor" href="#whats-new" aria-hidden="true"><span class="octicon octicon-link"></span></a>What's New</h3>
+
+<h4>
+<a id="v0187" class="anchor" href="#v0187" aria-hidden="true"><span class="octicon octicon-link"></span></a>v0.18.7</h4>
+
+<ul>
+<li>Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
+
+<ul>
+<li>The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary</li>
+</ul>
+</li>
+</ul>
+
+<h4>
+<a id="v0186" class="anchor" href="#v0186" aria-hidden="true"><span class="octicon octicon-link"></span></a>v0.18.6</h4>
+
+<ul>
+<li>Trifecta UI: "Decoder tab" user interface improvements</li>
+<li>Trifecta UI: "Query tab" user interface improvements</li>
+</ul>
+
+<h4>
+<a id="v0181" class="anchor" href="#v0181" aria-hidden="true"><span class="octicon octicon-link"></span></a>v0.18.1</h4>
+
+<ul>
+<li>Added Trifecta UI</li>
+</ul>
+
+<p><a name="trifecta-ui"></a></p>
 
 <h3>
 <a id="trifecta-ui" class="anchor" href="#trifecta-ui" aria-hidden="true"><span class="octicon octicon-link"></span></a>Trifecta UI</h3>
@@ -334,7 +367,7 @@ Trifecta displays them as human readable (read: pretty) JSON documents.</p>
 <p>Trifecta UI also provides a way to execute queries against Avro-encoded topics using the Kafka Query Language (KQL).
 KQL is a SQL-like language with syntax as follows:</p>
 
-<pre><code>select &lt;fields&gt; from &lt;topic&gt; with &lt;decoder&gt;
+<pre><code>select &lt;fields&gt; from &lt;topic&gt; [with &lt;decoder&gt;]
 [where &lt;condition&gt;]
 [limit &lt;count&gt;]
 </code></pre>
@@ -342,15 +375,23 @@ KQL is a SQL-like language with syntax as follows:</p>
 <p>Consider the following example:</p>
 
 <pre><code>select symbol, exchange, lastTrade, open, close, high, low
-from "shocktrade.quotes.avro" with default
+from "shocktrade.quotes.avro"
 where lastTrade &lt;= 1 and volume &gt;= 1,000,000
 limit 25
 </code></pre>
 
 <p>The above query retrieves the <code>symbol</code>, <code>exchange</code>, <code>lastTrade</code>, <code>open</code>, <code>close</code>, <code>high</code> and <code>low</code> fields from messages
-within the Kafka topic <code>shocktrade.quotes.avro</code> using the <code>default</code> decoder filtering for only messages where the
+within the Kafka topic <code>shocktrade.quotes.avro</code> (using the <em>default</em> decoder) filtering for only messages where the
 <code>lastTrade</code> is less than or equal to <code>1</code>, the <code>volume</code> is greater than or equal to <code>1,000,000</code>, and limiting the
 number of results to <code>25</code>.</p>
+
+<p>Now consider a similar example, except here we'll specify a custom decoder file (<code>avro/quotes.avsc</code>):</p>
+
+<pre><code>select symbol, exchange, lastTrade, open, close, high, low
+from "shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+where lastTrade &lt;= 1 and volume &gt;= 1,000,000
+limit 25
+</code></pre>
 
 <p><img src="http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png" alt=""></p>
 
