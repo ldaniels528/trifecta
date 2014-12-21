@@ -1,4 +1,4 @@
-<div ng-controller="QueryCtrl" ng-init="init()" class="full_block">
+<div ng-controller="QueryCtrl" ng-init="loadQueries()" class="full_block">
     <div style="display: inline; width: 25.8%; height: 587px; float: left; border-right: 1px solid #cccccc">
         <!-- Topics -->
         <fieldset>
@@ -7,7 +7,7 @@
                     <img class="middle" src="/app/images/status/yellowlight.gif"> No topics found
                 </span>
             <div class="q_topics_container">
-                <div ng-repeat="t in filterEmptyTopics(topics)|orderBy:'topic'">
+                <div ng-repeat="t in TopicSvc.filterEmptyTopics(topics)|orderBy:'topic'">
                     <img ng-src="{{ getTopicIcon(t, topic == t) }}"> {{ t.topic }}
                     <span ng-show="t.totalMessages">(<span class="messages">{{t.totalMessages | number}}</span>)</span>
                 </div>
@@ -71,13 +71,23 @@
         </fieldset>
     </div>
     <div style="display: inline; width: 74%;  height: 625px; float: right">
+        <!-- new query script setup -->
+        <div class="new_schema_section" ng-show="savedQuery.newFile">
+            <div>
+                <span class="d_label">File Name</span>
+                <input class="d_schema_name_field" ng-model="savedQuery.name" type="text">
+                <button class="d_save_button" ng-click="saveQuery(savedQuery)">Save & Upload</button>
+                <button class="d_cancel_button" ng-click="cancelNewQuery(savedQuery)">Cancel</button>
+            </div>
+        </div>
+
         <!-- Query script input -->
         <div style="width: 100%; height: 40%; padding: 2px 2px 2px 2px;">
-                <textarea class="q_editor" placeholder="Enter query here"
-                          ng-model="savedQuery.queryString"
-                          ng-change="savedQuery.modified = true"
-                          ng-disabled="{{ state.running }}">
-                </textarea>
+            <textarea class="q_editor" placeholder="Enter query here"
+                      ng-model="savedQuery.queryString"
+                      ng-change="savedQuery.modified = true"
+                      ng-disabled="{{ state.running }}">
+            </textarea>
         </div>
 
         <div style="width: 100%; height: 59%">

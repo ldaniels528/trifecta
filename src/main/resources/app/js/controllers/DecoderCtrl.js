@@ -104,7 +104,6 @@
                  * @param decoder the decoder to associate the schema to
                  */
                 $scope.setupNewSchema = function(decoder) {
-                    //$scope.selectDecoder(decoder);
                     $scope.schema = {
                         "topic": decoder.topic,
                         "name": "untitled.avsc",
