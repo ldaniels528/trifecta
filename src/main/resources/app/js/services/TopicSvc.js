@@ -16,6 +16,22 @@
             };
 
             /**
+             * Filters out topics without messages; returning only the topics containing messages
+             * @param topics the given array of topic summaries
+             * @returns Array of topics containing messages
+             */
+            service.filterEmptyTopics = function (topics) {
+                var filteredTopics = [];
+                for (var n = 0; n < topics.length; n++) {
+                    var ts = topics[n];
+                    if (ts.totalMessages > 0) {
+                        filteredTopics.push(ts);
+                    }
+                }
+                return filteredTopics;
+            };
+
+            /**
              * Attempts to find and return the first non-empty topic; however, if none are found, it returns the
              * first topic in the array
              * @returns the first non-empty topic

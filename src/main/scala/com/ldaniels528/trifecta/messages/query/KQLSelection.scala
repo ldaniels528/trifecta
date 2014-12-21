@@ -1,6 +1,14 @@
 package com.ldaniels528.trifecta.messages.query
 
+import com.ldaniels528.trifecta.TxRuntimeContext
+import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
+import com.ldaniels528.trifecta.io.{AsyncIO, InputSource, OutputSource}
+import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.messages.logic.Expressions.Expression
+import com.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
+import com.ldaniels528.trifecta.util.OptionHelper._
+
+import scala.concurrent.ExecutionContext
 
 /**
  * KQL Selection Query
@@ -12,6 +20,42 @@ case class KQLSelection(source: IOSource,
                         criteria: Option[Expression],
                         limit: Option[Int])
   extends KQLQuery {
+
+  /**
+   * Executes the given query
+   * @param rt the given [[TxRuntimeContext]]
+   */
+  override def executeQuery(rt: TxRuntimeContext)(implicit ec: ExecutionContext): AsyncIO = {
+    val counter = IOCounter(System.currentTimeMillis())
+
+    // get the input source and its decoder
+    val inputSource: Option[InputSource] = rt.getInputHandler(rt.getDeviceURLWithDefault("topic", source.deviceURL))
+    val inputDecoder: Option[MessageDecoder[_]] = source.decoderURL match {
+      case None | Some("default") =>
+        val topic = source.deviceURL.split("[:]").last
+        rt.lookupDecoderByName(topic)
+      case Some(decoderURL) =>
+        rt.lookupDecoderByName(decoderURL) ?? MessageCodecs.getDecoder(decoderURL)
+    }
+
+    // get the output source and its encoder
+    val outputSource: Option[OutputSource] = destination.flatMap(src => rt.getOutputHandler(src.deviceURL))
+    val outputDecoder: Option[MessageDecoder[_]] = for { dest <- destination; url <- dest.decoderURL; decoder <- MessageCodecs.getDecoder(url) } yield decoder
+
+    // compile conditions & get all other properties
+    val conditions = criteria.map(compile(_, inputDecoder)).toSeq
+    val maximum = limit ?? Some(25)
+
+    // perform the query/copy operation
+    val task = if (outputSource.nonEmpty) throw new IllegalStateException("Insert is not yet supported")
+    else {
+      val querySource = inputSource.flatMap(_.getQuerySource).orDie(s"No query compatible source found for URL '${source.deviceURL}'")
+      val decoder = inputDecoder.orDie(s"No decoder found for URL ${source.decoderURL}")
+      querySource.findAll(fields, decoder, conditions, maximum, counter)
+    }
+
+    AsyncIO(task, counter)
+  }
 
   /**
    * Returns the string representation of the query
@@ -31,12 +75,4 @@ case class KQLSelection(source: IOSource,
     sb.toString()
   }
 
-}
-
-/**
- * Represents an Input/Output source
- * @author Lawrence Daniels <lawrence.daniels@gmail.com>
- */
-case class IOSource(deviceURL: String, decoderURL: String) {
-  override def toString = s"$deviceURL with $decoderURL"
 }

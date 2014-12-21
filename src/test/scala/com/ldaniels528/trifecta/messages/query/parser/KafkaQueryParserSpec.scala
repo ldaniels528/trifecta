@@ -30,7 +30,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
 
       Then("The arguments should be successfully verified")
       query shouldBe KQLSelection(
-        source = IOSource(deviceURL = "topic:shocktrade.quotes.avro", decoderURL = "default"),
+        source = IOSource(deviceURL = "topic:shocktrade.quotes.avro", decoderURL = Some("default")),
         destination = None,
         fields = List("symbol", "exchange", "lastTrade", "open", "prevClose", "high", "low", "volume"),
         criteria = Some(AND(GE("volume", "1000000"), LE("lastTrade", "1"))),
@@ -53,7 +53,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
 
       Then("The arguments should be successfully verified")
       query shouldBe KQLSelection(
-        source = IOSource(deviceURL = "topic:shocktrade.quotes.avro", decoderURL = "avro:file:avro/quotes.avsc"),
+        source = IOSource(deviceURL = "topic:shocktrade.quotes.avro", decoderURL = Some("avro:file:avro/quotes.avsc")),
         destination = None,
         fields = List("symbol", "exchange", "lastTrade", "open", "prevClose", "high", "low", "volume"),
         criteria = Some(AND(GE("volume", "1000000"), LE("lastTrade", "1"))),
@@ -80,8 +80,8 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
 
       Then("The arguments should be successfully verified")
       query shouldBe KQLSelection(
-        source = IOSource(deviceURL = "topic:quotes", decoderURL = "avro:file:avro/quotes.avsc"),
-        destination = Some(IOSource(deviceURL = "es:/quotes/quote/AAPL", decoderURL = "json")),
+        source = IOSource(deviceURL = "topic:quotes", decoderURL = Some("avro:file:avro/quotes.avsc")),
+        destination = Some(IOSource(deviceURL = "es:/quotes/quote/AAPL", decoderURL = Some("json"))),
         fields = List("symbol", "exchange", "lastTrade", "volume"),
         criteria = Some(AND(AND(EQ("exchange", "OTCBB"), LE("lastTrade", "1.0")), GE("volume", "1000000"))),
         limit = Some(10))

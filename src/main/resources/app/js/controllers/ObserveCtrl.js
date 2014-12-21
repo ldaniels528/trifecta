@@ -105,24 +105,15 @@
                     topic.loading = true;
                     TopicSvc.getReplicas(topic.topic).then(
                         function (replicas) {
+                            $log.info("replicas[0] = " + angular.toJson(replicas[0]));
                             $timeout(function() { topic.loading = false; }, 500);
                             topic.replicas = replicas;
                         },
                         function (err) {
-                            $timeout(function() { topic.loading = false; }, 500);
+                            topic.loading = false;
                             $scope.addError(err);
                         });
                 }
-            };
-
-            $scope.getReplicas = function (topic) {
-                TopicSvc.getReplicas(topic).then(
-                    function (replicas) {
-                        $scope.replicas = replicas;
-                    },
-                    function (err) {
-                        $scope.addError(err);
-                    });
             };
 
             $scope.changeObserveTab = function (index, event) {

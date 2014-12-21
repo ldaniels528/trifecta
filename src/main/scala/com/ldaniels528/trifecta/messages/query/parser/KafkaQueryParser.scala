@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.messages.query.parser
 
 import com.ldaniels528.trifecta.command.parser.TokenStream
-import com.ldaniels528.trifecta.messages.query.{KQLSelection, IOSource}
+import com.ldaniels528.trifecta.messages.query.{KQLQuery, KQLSelection, IOSource}
 import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.ldaniels528.trifecta.messages.logic.Expressions._
 
@@ -14,9 +14,9 @@ object KafkaQueryParser {
   /**
    * Parses a KQL query into a selection objects
    * @param queryString the given query string
-   * @return the [[KQLSelection]]
+   * @return the [[KQLQuery]]
    */
-  def apply(queryString: String): KQLSelection = {
+  def apply(queryString: String): KQLQuery = {
     // parse the query string
     val ts = TokenStream(KafkaQueryTokenizer.parse(queryString))
 
@@ -53,8 +53,10 @@ object KafkaQueryParser {
    */
   private def parseFromExpression(ts: TokenStream): IOSource = {
     val deviceURL = ts.expect("from").getOrElse(throw new IllegalArgumentException("Device URL expected near 'from'"))
-    val decoderURL = ts.expect("with").getOrElse(throw new IllegalArgumentException("Decoder URL expected near 'with'"))
-    IOSource(deQuote(deviceURL), deQuote(decoderURL))
+    val decoderURL = ts.ifNext("with") {
+      ts.getOrElse(throw new IllegalArgumentException("Decoder URL expected near 'with'"))
+    } map deQuote
+    IOSource(deQuote(deviceURL), decoderURL)
   }
 
   /**
@@ -65,8 +67,10 @@ object KafkaQueryParser {
   private def parseIntoExpression(ts: TokenStream): Option[IOSource] = {
     ts.ifNext("into") {
       val deviceURL = ts.getOrElse(throw new IllegalArgumentException("Output source expected near 'into'"))
-      val decoderURL = ts.expect("with").getOrElse(throw new IllegalArgumentException("Decoder URL expected near 'with'"))
-      IOSource(deQuote(deviceURL), deQuote(decoderURL))
+      val decoderURL = ts.ifNext("with") {
+        ts.getOrElse(throw new IllegalArgumentException("Decoder URL expected near 'with'"))
+      } map deQuote
+      IOSource(deQuote(deviceURL), decoderURL)
     }
   }
 

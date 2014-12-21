@@ -15,7 +15,6 @@ import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
 import com.ldaniels528.trifecta.messages.logic.Condition
 import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
-import com.ldaniels528.trifecta.messages.query.KQLSelection
 import com.ldaniels528.trifecta.messages.query.parser.{KafkaQueryParser, KafkaQueryTokenizer}
 import com.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageDecoder}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
@@ -89,19 +88,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    */
   def executeQuery(jsonString: String) = {
     val query = JsonHelper.transform[QueryJs](jsonString)
-    val asyncIO = rt.executeQuery(compileQuery(query.queryString))
+    val asyncIO = KafkaQueryParser(query.queryString).executeQuery(rt)
     asyncIO.task
-  }
-
-  private def compileQuery(queryString: String): KQLSelection = {
-    val query = KafkaQueryParser(queryString)
-
-    // if the decoderURL == "default" we should create the query referencing the topic
-    if (query.source.decoderURL != "default") query
-    else {
-      val topic = query.source.deviceURL.split("[:]").last
-      query.copy(source = query.source.copy(decoderURL = topic))
-    }
   }
 
   def findOne(topic: String, criteria: String) = {
@@ -276,7 +264,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    */
   def getDecoders = {
     (config.getDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
-      toDecoderJs(topic, myDecoders)
+      toDecoderJs(topic, myDecoders.sortBy(-_.lastModified))
     }).toSeq
   }
 

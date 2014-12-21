@@ -14,12 +14,10 @@
                     <a ng-click="selectDecoder(d)">{{ d.topic }}</a>
 
                     <div ng-show="d.expanded" style="margin-left: 32px" ng-repeat="s in d.schemas">
-                        <img ng-src="/app/images/tabs/decoders/{{ s.error ? 'failed-16.png' : 'js-16.png' }}" title="Avro Schema">
+                        <img ng-src="{{ getSchemaIcon(s) }}" title="Avro Schema">
                         <a ng-click="selectSchema(s)">
                             <span ng-class="s == schema ? 'highlighted' : ''">{{ s.name }}</span>
                         </a>
-                        <img ng-show="s.modified" src="/app/images/tabs/decoders/modified-16.gif">
-                        <img ng-show="s.processing" src="/app/images/status/processing.gif">
                     </div>
                 </div>
             </div>
