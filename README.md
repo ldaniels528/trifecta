@@ -16,6 +16,7 @@ Table of Contents
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#configuring-the-app">Configuring the application</a>
 	* <a href="#running-the-app">Running the application</a>
+* <a href="#whats-new">What's New</a>
 * <a href="#trifecta-ui">Trifecta UI</a>
     * <a href="#trifecta-ui-start">Starting the embedded web server</a>
     * <a href="#trifecta-ui-configure">Configuring Trifecta UI</a>
@@ -125,7 +126,7 @@ contains the configuration properties and connection strings for all supported s
     # Storm properties
     trifecta.storm.hosts = localhost
 
-<a name="Running-the-app"></a> 
+<a name="running-the-app"></a>
 ### Run the application
 
 To start the _Trifecta_ REPL:
@@ -136,7 +137,18 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 	
 	$ java -jar trifecta.jar kls -l
 
-<a href="#trifecta-ui">
+<a name="whats-new"></a>
+### What's New
+
+#### v0.18.7
+* Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
+    * The "<a href='trifecta-ui-query'>with default</a>" clause is no longer necessary
+
+#### v0.18.6
+* Trifecta UI: "Decoder tab" user interface improvements
+* Trifecta UI: "Query tab" user interface improvements
+
+<a name="trifecta-ui"></a>
 ### Trifecta UI
 
 Trifecta offers a single-page web application (via Angular.js) with a REST service layer and web-socket support,
