@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.rest
 
+import com.ldaniels528.trifecta.util.OptionHelper._
 import java.io.File
 
 import com.ldaniels528.trifecta.TxConfig
@@ -38,7 +39,7 @@ object TxWebConfig {
   implicit class TxConfigExtensions(val config: TxConfig) extends AnyVal {
 
     def getQueries: Option[Seq[TxQuery]] = {
-      def removeExtension(name: String) = name.lastIndexOptionOf(".bdql") match {
+      def removeExtension(name: String) = name.lastIndexOptionOf(".bdql") ?? name.lastIndexOptionOf(".kql") match {
         case Some(index) => name.substring(0, index)
         case None => name
       }
