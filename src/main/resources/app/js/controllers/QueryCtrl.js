@@ -15,13 +15,13 @@
             $scope.savedQuery = $scope.savedQueries[0];
 
             // create the query state object
-            $scope.state = createNewQueryState();
+            $scope.state = createQuerySession();
 
             /**
-             * Creates a new query state object
+             * Creates a new query session object
              * @returns {{running: boolean, results: null, mappings: null, ascending: boolean, sortField: null}}
              */
-            function createNewQueryState() {
+            function createQuerySession() {
                 return {
                     "running": false,
                     "results": null,
@@ -32,47 +32,23 @@
             }
 
             /**
-             * Initializes the reference data
-             */
-            $scope.init = function() {
-                QuerySvc.getQueries().then(
-                    function(queries) {
-                        $scope.savedQueries = queries || [];
-                        if(!$scope.savedQueries.length) {
-                            $scope.savedQueries.push(newQueryScript());
-                        }
-
-                        // select the first query
-                        $scope.savedQuery = $scope.savedQueries[0];
-                    },
-                    function(err) {
-                        $scope.addError(err);
-                        $scope.savedQueries.push(newQueryScript());
-                        $scope.savedQuery = $scope.savedQueries[0];
-                    });
-            };
-
-            /**
-             * Downloads the query results as CSV
-             */
-            $scope.downloadResults = function(results) {
-                QuerySvc.transformResultsToCSV(results).then(
-                    function(response) {
-                        $log.info("response = " + angular.toJson(response));
-                    },
-                    function(err) {
-                        $scope.addError(err);
-                    }
-                );
-            };
-
-            /**
              * Adds a query to the Saved Queries list
              */
             $scope.addQuery = function() {
                 var queryScript = newQueryScript();
                 $scope.savedQueries.push(queryScript);
                 $scope.savedQuery = queryScript;
+            };
+
+            $scope.cancelNewQuery = function(savedQuery) {
+                if(savedQuery.newFile) {
+                    // remove the saved query from the list
+                    var savedQueries = $scope.savedQueries;
+                    var index = savedQueries.indexOf(savedQuery);
+                    if(index != -1) {
+                        savedQueries.splice(index, 1);
+                    }
+                }
             };
 
             /**
@@ -89,6 +65,20 @@
              */
             $scope.selectQuery = function(queryScript) {
                 $scope.savedQuery = queryScript;
+            };
+
+            /**
+             * Downloads the query results as CSV
+             */
+            $scope.downloadResults = function(results) {
+                QuerySvc.transformResultsToCSV(results).then(
+                    function(response) {
+                        $log.info("response = " + angular.toJson(response));
+                    },
+                    function(err) {
+                        $scope.addError(err);
+                    }
+                );
             };
 
             /**
@@ -149,22 +139,6 @@
                 );
             };
 
-            /**
-             * Filters out topics without messages; returning only the topics containing messages
-             * @param topics the given array of topic summaries
-             * @returns Array of topics containing messages
-             */
-            $scope.filterEmptyTopics = function (topics) {
-                var filteredTopics = [];
-                for (var n = 0; n < topics.length; n++) {
-                    var ts = topics[n];
-                    if (ts.totalMessages > 0) {
-                        filteredTopics.push(ts);
-                    }
-                }
-                return filteredTopics;
-            };
-
             $scope.filterLabels = function (labels) {
                 return labels ? labels.slice(0, labels.length - 2) : null
             };
@@ -174,6 +148,27 @@
                 return topic.topic == results.topic &&
                     partition.partition == $scope.partitionAt(index) &&
                     partition.offset == $scope.offsetAt(index);
+            };
+
+            /**
+             * Loads all saved queries
+             */
+            $scope.loadQueries = function() {
+                QuerySvc.getQueries().then(
+                    function(queries) {
+                        $scope.savedQueries = queries || [];
+                        if(!$scope.savedQueries.length) {
+                            $scope.savedQueries.push(newQueryScript());
+                        }
+
+                        // select the first query
+                        $scope.savedQuery = $scope.savedQueries[0];
+                    },
+                    function(err) {
+                        $scope.addError(err);
+                        $scope.savedQueries.push(newQueryScript());
+                        $scope.savedQuery = $scope.savedQueries[0];
+                    });
             };
 
             $scope.offsetAt = function (index) {
@@ -197,7 +192,9 @@
                                 query.syncing = false;
                             }
                             else {
+                                query.exists = true;
                                 query.modified = false;
+                                query.newFile = false;
                                 query.syncing = false;
                             }
                         },
@@ -267,6 +264,7 @@
                 return {
                     "name": getUntitledName(),
                     "queryString": "",
+                    "newFile": true,
                     "exists": false,
                     "modified": true
                 };
