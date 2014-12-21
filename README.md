@@ -142,7 +142,7 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 
 #### v0.18.7
 * Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
-    * The "<a href='trifecta-ui-query'>with default</a>" clause is no longer necessary
+    * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
 
 #### v0.18.6
 * Trifecta UI: "Decoder tab" user interface improvements
