@@ -148,6 +148,9 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 * Trifecta UI: "Decoder tab" user interface improvements
 * Trifecta UI: "Query tab" user interface improvements
 
+#### v0.18.1
+* Added Trifecta UI
+
 <a name="trifecta-ui"></a>
 ### Trifecta UI
 
