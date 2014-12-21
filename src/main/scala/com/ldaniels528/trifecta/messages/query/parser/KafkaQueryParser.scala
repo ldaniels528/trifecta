@@ -53,8 +53,10 @@ object KafkaQueryParser {
    */
   private def parseFromExpression(ts: TokenStream): IOSource = {
     val deviceURL = ts.expect("from").getOrElse(throw new IllegalArgumentException("Device URL expected near 'from'"))
-    val decoderURL = ts.expect("with").getOrElse(throw new IllegalArgumentException("Decoder URL expected near 'with'"))
-    IOSource(deQuote(deviceURL), deQuote(decoderURL))
+    val decoderURL = ts.ifNext("with") {
+      ts.getOrElse(throw new IllegalArgumentException("Decoder URL expected near 'with'"))
+    } map deQuote
+    IOSource(deQuote(deviceURL), decoderURL)
   }
 
   /**
@@ -65,8 +67,10 @@ object KafkaQueryParser {
   private def parseIntoExpression(ts: TokenStream): Option[IOSource] = {
     ts.ifNext("into") {
       val deviceURL = ts.getOrElse(throw new IllegalArgumentException("Output source expected near 'into'"))
-      val decoderURL = ts.expect("with").getOrElse(throw new IllegalArgumentException("Decoder URL expected near 'with'"))
-      IOSource(deQuote(deviceURL), deQuote(decoderURL))
+      val decoderURL = ts.ifNext("with") {
+        ts.getOrElse(throw new IllegalArgumentException("Decoder URL expected near 'with'"))
+      } map deQuote
+      IOSource(deQuote(deviceURL), decoderURL)
     }
   }
 

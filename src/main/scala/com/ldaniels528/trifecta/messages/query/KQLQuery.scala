@@ -5,9 +5,8 @@ import com.ldaniels528.trifecta.io.AsyncIO
 
 import scala.concurrent.ExecutionContext
 
-
 /**
- * KQL Query
+ * Represents a Kafka Query Language (KQL) Question
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 trait KQLQuery {

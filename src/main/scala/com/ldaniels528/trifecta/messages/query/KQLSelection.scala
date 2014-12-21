@@ -27,19 +27,20 @@ case class KQLSelection(source: IOSource,
    */
   override def executeQuery(rt: TxRuntimeContext)(implicit ec: ExecutionContext): AsyncIO = {
     val counter = IOCounter(System.currentTimeMillis())
+
     // get the input source and its decoder
     val inputSource: Option[InputSource] = rt.getInputHandler(rt.getDeviceURLWithDefault("topic", source.deviceURL))
     val inputDecoder: Option[MessageDecoder[_]] = source.decoderURL match {
-      case "default" =>
+      case None | Some("default") =>
         val topic = source.deviceURL.split("[:]").last
         rt.lookupDecoderByName(topic)
-      case _ =>
-        rt.lookupDecoderByName(source.decoderURL) ?? MessageCodecs.getDecoder(source.decoderURL)
+      case Some(decoderURL) =>
+        rt.lookupDecoderByName(decoderURL) ?? MessageCodecs.getDecoder(decoderURL)
     }
 
     // get the output source and its encoder
     val outputSource: Option[OutputSource] = destination.flatMap(src => rt.getOutputHandler(src.deviceURL))
-    val outputDecoder: Option[MessageDecoder[_]] = destination.flatMap(src => MessageCodecs.getDecoder(src.decoderURL))
+    val outputDecoder: Option[MessageDecoder[_]] = for { dest <- destination; url <- dest.decoderURL; decoder <- MessageCodecs.getDecoder(url) } yield decoder
 
     // compile conditions & get all other properties
     val conditions = criteria.map(compile(_, inputDecoder)).toSeq
