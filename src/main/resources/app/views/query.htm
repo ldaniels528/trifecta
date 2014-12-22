@@ -23,12 +23,12 @@
                             <div ng-class="'full_block ' + (q == savedQuery ? 'q_highlighted' : '')">
                                 <img ng-hide="q.results" src="/app/images/status/transparent-16.png">
                                 <img ng-show="q.results" class="clickable" ng-click="q.collapsed = !q.collapsed" ng-src="/app/images/buttons/{{ !q.collapsed ? 'collapse.png' : 'expand.png' }}">
-                                <img ng-src="/app/images/tabs/query/{{ q.modified ? 'modified.png' : 'query-16.png' }}">
+                                <img ng-src="/app/images/tabs/query/{{ q.modified ? 'modified-16.png' : 'query-16.png' }}">
                                 <span class="clickable" ng-click="selectQuery(q)">{{ q.name }}</span>
-                                <img ng-show="q.loading" src="/app/images/status/processing.gif">
+                                <img ng-show="q.running" src="/app/images/status/processing.gif">
                             </div>
 
-                            <div ng-show="!q.collapsed" style="margin-left: 32px" ng-repeat="r in q.results" ng-class="'full_block ' + (q == savedQuery && q.resultIndex == $index ? 'q_highlighted' : '')">
+                            <div ng-show="!q.collapsed" style="margin-left: 32px" ng-repeat="r in q.results" class="full_block" ng-class="q == savedQuery && r == q.savedResult ? 'q_highlighted' : ''">
                                 <img class="clickable" src="/app/images/tabs/query/remove-16.gif">
                                 <span class="clickable" ng-click="selectQueryResults(q, $index)">{{ r.name }}</span>
                                 <img class="clickable"
@@ -49,16 +49,17 @@
         </fieldset>
 
         <!-- Helpful hints -->
-        <div style="border-bottom: 1px solid #cccccc; margin-top: 15px; padding-left: 4px">
+        <div style="border-bottom: 1px solid #cccccc; margin-top: 15px; padding-left: 2px">
             <p><img src="/app/images/common/help-16.png"> This view allows users to:
                 <ul>
                     <li>Create queries (associating them to topics)</li>
                     <li>Upload queries to the server (located in $HOME/.trifecta/queries)</li>
-                    <li>Execute queries and manage the results</li>
+                    <li>Execute queries and manage the search results</li>
                 </ul>
             </p>
         </div>
     </div>
+
     <div style="display: inline; width: 70%;  height: 625px; float: right">
         <!-- new query script setup -->
         <div class="new_schema_section" ng-show="savedQuery.newFile">
@@ -75,7 +76,7 @@
             <textarea class="q_editor" placeholder="Enter query here"
                       ng-model="savedQuery.queryString"
                       ng-change="savedQuery.modified = true"
-                      ng-disabled="{{ state.running }}">
+                      ng-disabled="{{ savedQuery.running }}">
             </textarea>
         </div>
 
@@ -83,18 +84,18 @@
             <!-- Query Action Bar -->
             <div class="q_action_bar">
                 <div style="display: inline; float: left">
-                    <img class="q_action_icon" ng-src="/app/images/tabs/query/{{ state.running ? 'running-24.gif' : 'run-24.gif' }}" ng-click="executeQuery()" title="Execute the query script">
+                    <img class="q_action_icon" ng-src="/app/images/tabs/query/{{ savedQuery.running ? 'running-24.gif' : 'run-24.gif' }}" ng-click="executeQuery(savedQuery)" title="Execute the query script">
                     <img ng-show="savedQuery.modified" class="q_action_icon" src="/app/images/tabs/query/save-24.png" ng-click="saveQuery(savedQuery)" title="Save and upload the query script">
-                    <img ng-show="state.results" class="q_action_icon" src="/app/images/tabs/query/download-24.png" ng-click="downloadResults(state.results)" title="Download results">
+                    <img ng-show="savedQuery.results" class="q_action_icon" src="/app/images/tabs/query/download-24.png" ng-click="downloadResults(savedQuery.results)" title="Download results">
                 </div>
                 <div style="display: inline; float: right; vertical-align: middle">
-                    <span ng-show="state.running" style="margin: 15px; vertical-align: middle">
+                    <span ng-show="savedQuery.running" style="margin: 15px; vertical-align: middle">
                         <img class="middle" src="/app/images/tabs/query/clock-16.png">
-                        <span class="q_clock_text">{{ queryElaspedTime | number:0 }} sec(s)</span>
+                        <span class="q_clock_text">{{ savedQuery.queryElaspedTime | number:0 }} sec(s)</span>
                     </span>
-                    <span class="q_clock_text" ng-show="state.results" style="margin: 15px; vertical-align: middle">
-                        {{ state.results.values.length | number }} result(s) in
-                        <span class="positive">{{ state.results.runTimeMillis | number:1 }} sec(s)</span>
+                    <span class="q_clock_text" ng-show="savedQuery.savedResult" style="margin: 15px; vertical-align: middle">
+                        {{ savedQuery.savedResult.resultSet.values.length | number }} result(s) in
+                        <span class="positive">{{ savedQuery.savedResult.resultSet.runTimeMillis | number:1 }} sec(s)</span>
                     </span>
                 </div>
                 <br style="clear: both">
@@ -103,23 +104,23 @@
             <!-- Query Results -->
             <div style="width: 100%; min-height: 298px; background: #eeeeee; border: 1px solid #cccccc">
                 <div class="q_results_container">
-                    <table class="full_width" ng-show="state.results">
+                    <table class="full_width" ng-show="savedQuery.savedResult.resultSet">
                         <thead>
                         <tr style="border-bottom: 1px solid #aaaaaa">
-                            <th ng-repeat="label in state.mappings.labels">
-                                <a ng-click="toggleSortField(label)" title="sort by {{ label }}">
+                            <th ng-repeat="label in savedQuery.savedResult.mappings.labels">
+                                <a ng-click="toggleSortField(savedQuery, label)" title="sort by {{ label }}">
                                     {{ label }}
-                                    <img ng-show="state.sortField == label" class="middle clickable"
-                                         ng-src="/app/images/buttons/sort_{{ state.ascending ? 'up' : 'down' }}.gif">
+                                    <img ng-show="savedQuery.savedResult.sortField == label" class="middle clickable"
+                                         ng-src="/app/images/buttons/sort_{{ savedQuery.savedResult.ascending ? 'up' : 'down' }}.gif">
                                 </a>
                             </th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat="row in state.results.values" ng-class="isSelected(topic, partition, state.results, $index) ? 'highlighted' : $index % 2 == 0 ? '' : 'q_odd'">
-                            <td ng-repeat="column in state.mappings.labels">
+                        <tr ng-repeat="row in savedQuery.savedResult.resultSet.values" ng-class="isSelected(topic, partition, savedQuery.savedResult.results, $index) ? 'highlighted' : $index % 2 == 0 ? '' : 'q_odd'">
+                            <td ng-repeat="column in savedQuery.savedResult.mappings.labels">
                                 <span ng-show="$index == 0">
-                                    <a ng-click="switchToMessage(state.results.topic, partitionAt($parent.$index), offsetAt($parent.$index))">
+                                    <a ng-click="switchToMessage(savedQuery.savedResult.resultSet.topic, partitionAt($parent.$index), offsetAt($parent.$index))">
                                         <span class="q_key_field">{{ row[column] }}</span>
                                     </a>
                                 </span>

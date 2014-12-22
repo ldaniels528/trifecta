@@ -1,7 +1,7 @@
 <div ng-controller="DecoderCtrl" ng-init="reloadDecoders()" class="full_block" style="height: 587px">
     <div style="display: inline; float: left; width: 30.9%; height: 100%">
         <fieldset style="border-bottom: 1px solid #cccccc">
-            <legend>Configured Topics</legend>
+            <legend>Decoders By Topic</legend>
             <div class="d_topics_container">
                 <span ng-show="!decoders.length" class="warning bold">
                     <img src="/app/images/status/yellowlight.gif"> No topics with decoders found
@@ -23,8 +23,8 @@
             </div>
         </fieldset>
 
-        <div>
-            <p><img src="/app/images/common/help-16.png" style="padding: 2px"> Above are the topics that have decoders
+        <div style="border-bottom: 1px solid #cccccc">
+            <p><img src="/app/images/common/help-16.png" style="padding-left: 2px"> Above are the topics that have decoders
                 associated with them (e.g. <a href="http://avro.apache.org" target="avro_window">Avro</a>).
                 These decoders allow the binary data of messages to be transformed into more human readable formats.</p>
 
