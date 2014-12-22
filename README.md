@@ -140,6 +140,9 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.8
+* Trifecta UI: Redesigned the Query tab
+
 #### v0.18.7
 * Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
     * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
