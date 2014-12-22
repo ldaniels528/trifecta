@@ -88,6 +88,14 @@ th { text-align: left }
     color: #ffffff;
 }
 
+.hints_and_tips {
+    background: #337ab7;
+    color: #ffffff;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+}
+
 .inline {
     display: inline;
 }
