@@ -11,6 +11,7 @@ import com.ldaniels528.trifecta.util.PropertiesHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 
+import scala.collection.concurrent.TrieMap
 import scala.io.Source
 import scala.util.Properties._
 import scala.util.{Failure, Success, Try}
@@ -20,6 +21,7 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxConfig(val configProps: Properties) {
+  private val cachedDecoders = TrieMap[File, TxDecoder]()
 
   // Initializes the configuration
   Try {
@@ -99,32 +101,39 @@ class TxConfig(val configProps: Properties) {
    * @return the collection of [[TxDecoder]] instances
    */
   def getDecodersByTopic(topic: String): Seq[TxDecoder] = {
-    getDecodersByDirectory(new File(decoderDirectory, topic)) sortBy (-_.lastModified)
+    Option(new File(decoderDirectory, topic).listFiles)
+      .map(_.toSeq map (getDecoderFromFile(topic, _)))
+      .getOrElse(Nil)
+      .sortBy(-_.lastModified)
   }
 
   /**
    * Returns all available decoders
    * @return the collection of [[TxDecoder]]s
    */
-  def getDecoders: Seq[TxDecoder] = getDecodersByDirectory(decoderDirectory)
-
-  private def getDecodersByDirectory(directory: File): Seq[TxDecoder] = {
-    Option(directory.listFiles) map { topicDirectories =>
+  def getDecoders: Seq[TxDecoder] = {
+    Option(decoderDirectory.listFiles) map { topicDirectories =>
       (topicDirectories.toSeq flatMap { topicDirectory =>
         Option(topicDirectory.listFiles) map { decoderFiles =>
           decoderFiles map { decoderFile =>
             val topic = topicDirectory.getName
-            val schema = Source.fromFile(decoderFile).getLines().mkString
-            Try {
-              TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Left(AvroDecoder(decoderFile.getName, schema)))
-            } match {
-              case Success(decoder) => decoder
-              case Failure(e) => TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Right(TxFailedSchema(schema, e)))
-            }
+            getDecoderFromFile(topic, decoderFile)
           }
         }
       }).flatten
     } getOrElse Nil
+  }
+
+  private def getDecoderFromFile(topic: String, decoderFile: File): TxDecoder = {
+    cachedDecoders.getOrElseUpdate(decoderFile, {
+      val schema = Source.fromFile(decoderFile).getLines().mkString
+      Try {
+        TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Left(AvroDecoder(decoderFile.getName, schema)))
+      } match {
+        case Success(decoder) => decoder
+        case Failure(e) => TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Right(TxFailedSchema(schema, e)))
+      }
+    })
   }
 
   def getQueriesByTopic(topic: String): Option[Seq[TxQuery]] = {
