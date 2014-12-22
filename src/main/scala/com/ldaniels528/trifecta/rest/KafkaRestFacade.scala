@@ -352,7 +352,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return an option of a decoded message
    */
   private def decodeMessageData(topic: String, message_? : Option[MessageData]) = {
-    def decoders = config.getDecoders.filter(_.topic == topic).sortBy(-_.lastModified)
+    def decoders = config.getDecodersByTopic(topic)
     message_? map { md =>
       decoders.foldLeft[Option[MessageJs]](None) { (result, d) =>
         result ?? attemptDecode(md.message, d)
