@@ -8,11 +8,8 @@
 
             var queryStartTime = 0;
             $scope.queryElaspedTime = 0;
-
-            // saved queries
-            $scope.savedQueries = [];
-            $scope.savedQueries.push(newQueryScript());
-            $scope.savedQuery = $scope.savedQueries[0];
+            $scope.savedQuery = null;
+            $scope.hideEmptyTopics = false;
 
             // create the query state object
             $scope.state = createQuerySession();
@@ -31,22 +28,19 @@
                 };
             }
 
-            /**
-             * Adds a query to the Saved Queries list
-             */
-            $scope.addQuery = function() {
-                var queryScript = newQueryScript();
-                $scope.savedQueries.push(queryScript);
-                $scope.savedQuery = queryScript;
-            };
-
             $scope.cancelNewQuery = function(savedQuery) {
                 if(savedQuery.newFile) {
+                    var topic = savedQuery.topic;
+
                     // remove the saved query from the list
-                    var savedQueries = $scope.savedQueries;
+                    var savedQueries = topic.savedQueries || [];
                     var index = savedQueries.indexOf(savedQuery);
                     if(index != -1) {
                         savedQueries.splice(index, 1);
+                    }
+
+                    if($scope.savedQuery == savedQuery) {
+                        $scope.savedQuery = null;
                     }
                 }
             };
@@ -103,7 +97,7 @@
                 mySavedQuery.loading = true;
 
                 // execute the query
-                QuerySvc.executeQuery(mySavedQuery.name, mySavedQuery.queryString).then(
+                QuerySvc.executeQuery(mySavedQuery.name, mySavedQuery.topic, mySavedQuery.queryString).then(
                     function (results) {
                         $scope.state.running = false;
                         mySavedQuery.loading = false;
@@ -150,26 +144,25 @@
                     partition.offset == $scope.offsetAt(index);
             };
 
-            /**
-             * Loads all saved queries
-             */
-            $scope.loadQueries = function() {
-                QuerySvc.getQueries().then(
-                    function(queries) {
-                        $scope.savedQueries = queries || [];
-                        if(!$scope.savedQueries.length) {
-                            $scope.savedQueries.push(newQueryScript());
-                        }
-
-                        // select the first query
-                        $scope.savedQuery = $scope.savedQueries[0];
-                    },
-                    function(err) {
-                        $scope.addError(err);
-                        $scope.savedQueries.push(newQueryScript());
-                        $scope.savedQuery = $scope.savedQueries[0];
-                    });
+            $scope.expandTopicQueries = function(topic) {
+                topic.queriesExpanded = !topic.queriesExpanded;
+                if(topic.queriesExpanded) {
+                    loadQueriesByTopic(topic);
+                }
             };
+
+            function loadQueriesByTopic(topic) {
+                topic.loading = true;
+                QuerySvc.getQueriesByTopic(topic.topic).then(
+                    function (queries) {
+                        topic.loading = false;
+                        topic.savedQueries = queries || [];
+                    },
+                    function (err) {
+                        topic.loading = false;
+                        $scope.addError(err);
+                    });
+            }
 
             $scope.offsetAt = function (index) {
                 var row = $scope.state.results.values[index];
@@ -184,15 +177,14 @@
             $scope.saveQuery = function (query) {
                 if (query) {
                     query.syncing = true;
-                    $log.info("Uploading query '" + query.name + "'...");
-                    QuerySvc.saveQuery(query.name, query.queryString).then(
+                    $log.info("Uploading query '" + query.name + "' (topic " + query.topic + ")...");
+                    QuerySvc.saveQuery(query.name, query.topic, query.queryString).then(
                         function (response) {
                             if(response && response.type == 'error') {
                                 $scope.addErrorMessage(response.message);
                                 query.syncing = false;
                             }
                             else {
-                                query.exists = true;
                                 query.modified = false;
                                 query.newFile = false;
                                 query.syncing = false;
@@ -206,11 +198,17 @@
                 }
             };
 
-            $scope.selectQueryResults = function(index) {
-                $scope.savedQuery.resultIndex = index;
-                var savedResults = $scope.savedQuery.results[index];
+            $scope.selectQueryResults = function(savedQuery, index) {
+                savedQuery.resultIndex = index;
+                var savedResults = savedQuery.results[index];
                 $scope.state.results = savedResults.results;
                 $scope.state.mappings = savedResults.mappings;
+            };
+
+            $scope.setUpNewQueryDocument = function(topic) {
+                topic.savedQueries = topic.savedQueries || [];
+                topic.savedQueries.push(newQueryScript(topic));
+                $scope.savedQuery = topic.savedQueries[topic.savedQueries.length - 1];
             };
 
             $scope.toggleSortField = function (sortField) {
@@ -233,49 +231,42 @@
                 return {"labels": labels, "values": rows};
             }
 
-            function getUntitledName() {
+            function getUntitledName(topic) {
                 var index = 0;
                 var name = null;
 
                 do {
                     index++;
                     name = "Untitled" + index;
-                } while(nameExists(name));
+                } while(nameExists(topic, name));
                 return name;
             }
 
             /**
              * Indicates whether the given saved query (name) exists
+             * @param topic the parent topic
              * @param name the saved query name
              * @returns {boolean}
              */
-            function nameExists(name) {
-                for(var n = 0; n < $scope.savedQueries.length; n++) {
-                    if(name == $scope.savedQueries[n].name) return true;
+            function nameExists(topic, name) {
+                for(var n = 0; n < topic.savedQueries.length; n++) {
+                    if(name == topic.savedQueries[n].name) return true;
                 }
                 return false;
             }
 
             /**
              * Constructs a new query script data object
-             * @returns {{name: string, queryString: string, exists: boolean, modified: boolean}}
+             * @returns {{name: string, topic: string, queryString: string, newFile: boolean, modified: boolean}}
              */
-            function newQueryScript() {
+            function newQueryScript(topic) {
                 return {
-                    "name": getUntitledName(),
+                    "name": getUntitledName(topic),
+                    "topic" : topic,
                     "queryString": "",
                     "newFile": true,
-                    "exists": false,
                     "modified": true
                 };
-            }
-
-            /**
-             * Error response handler
-             * @param err the given error response
-             */
-            function setError(err) {
-                $scope.addError(err);
             }
 
             /**

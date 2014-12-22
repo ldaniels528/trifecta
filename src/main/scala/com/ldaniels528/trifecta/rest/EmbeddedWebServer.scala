@@ -146,7 +146,7 @@ object EmbeddedWebServer {
         }
       }"""
 
-  case class TxQuery(name: String, queryString: String, exists: Boolean, lastModified: Long)
+  case class TxQuery(name: String, topic: String, queryString: String, exists: Boolean, lastModified: Long)
 
   case class WebSocketSession(webSocketId: String, var requests: Long = 0)
 

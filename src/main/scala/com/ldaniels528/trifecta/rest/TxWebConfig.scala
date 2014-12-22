@@ -1,11 +1,11 @@
 package com.ldaniels528.trifecta.rest
 
-import com.ldaniels528.trifecta.util.OptionHelper._
 import java.io.File
 
 import com.ldaniels528.trifecta.TxConfig
 import com.ldaniels528.trifecta.TxConfig._
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer.TxQuery
+import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 
 import scala.io.Source
@@ -38,17 +38,21 @@ object TxWebConfig {
    */
   implicit class TxConfigExtensions(val config: TxConfig) extends AnyVal {
 
-    def getQueries: Option[Seq[TxQuery]] = {
-      def removeExtension(name: String) = name.lastIndexOptionOf(".bdql") ?? name.lastIndexOptionOf(".kql") match {
+    def getQueriesByTopic(topic: String): Option[Seq[TxQuery]] = {
+      Option(new File(queriesDirectory, topic).listFiles) map { queriesFiles =>
+        queriesFiles map (getQueryFromFile(topic, _))
+      }
+    }
+
+    private def getQueryFromFile(topic: String, file: File) = {
+      val name = getNameWithoutExtension(file.getName)
+      TxQuery(name, topic, Source.fromFile(file).getLines().mkString("\n"), file.exists(), file.lastModified())
+    }
+
+    private def getNameWithoutExtension(name: String) = {
+      name.lastIndexOptionOf(".bdql") ?? name.lastIndexOptionOf(".kql") match {
         case Some(index) => name.substring(0, index)
         case None => name
-      }
-
-      Option(queriesDirectory.listFiles) map { queriesFiles =>
-        queriesFiles map { file =>
-          val name = removeExtension(file.getName)
-          TxQuery(name, Source.fromFile(file).getLines().mkString("\n"), file.exists(), file.lastModified())
-        }
       }
     }
 

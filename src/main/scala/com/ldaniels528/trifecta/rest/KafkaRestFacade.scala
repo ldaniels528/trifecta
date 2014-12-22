@@ -53,11 +53,11 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     def reportFailure(t: Throwable) = logger.error("Error from thread pool", t)
   }
 
-  private val rt = TxRuntimeContext(config)
+  private val rt = TxRuntimeContext(config)(ec)
 
-  private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
+  private lazy val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
-  private val publisher = createPublisher(brokers)
+  private lazy val publisher = createPublisher(brokers)
 
   // load & register all decoders to their respective topics
   registerDecoders()
@@ -384,7 +384,12 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     case value => MessageJs(`type` = "json", payload = JsonHelper.makePretty(String.valueOf(value)))
   }
 
-  def getQueries = config.getQueries getOrElse Nil
+  /**
+   * Retrieves the list of available queries for the given topic
+   * @param topic the given topic (e.g. "shocktrade.quotes.avro")
+   * @return the list of available queries
+   */
+  def getQueriesByTopic(topic: String) = config.getQueriesByTopic(topic) getOrElse Nil
 
   /**
    * Retrieves the list of Kafka replicas for a given topic
@@ -565,8 +570,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def saveQuery(jsonString: String) = Try {
     // transform the JSON string into a query
     val query = JsonHelper.transform[QueryJs](jsonString)
-    val file = new File(TxWebConfig.queriesDirectory, s"${query.name}.kql")
-    // TODO add a check for new vs. replace?
+    val file = new File(new File(TxWebConfig.queriesDirectory, query.topic), s"${query.name}.kql")
+    // TODO should I add a check for new vs. replace?
 
     new FileOutputStream(file) use { fos =>
       fos.write(query.queryString.getBytes(config.encoding))
@@ -579,7 +584,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     // transform the JSON string into a schema
     val schema = JsonHelper.transform[SchemaJs](jsonString)
     val decoderFile = new File(new File(TxConfig.decoderDirectory, schema.topic), schema.name)
-    // TODO add a check for new vs. replace?
+    // TODO should I add a check for new vs. replace?
 
     new FileOutputStream(decoderFile) use { fos =>
       fos.write(schema.schemaString.getBytes(config.encoding))
@@ -679,7 +684,7 @@ object KafkaRestFacade {
 
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 
-  case class QueryJs(name: String, queryString: String)
+  case class QueryJs(name: String, topic: String, queryString: String)
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
 
