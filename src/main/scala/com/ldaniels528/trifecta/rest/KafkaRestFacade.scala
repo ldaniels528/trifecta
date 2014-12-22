@@ -18,7 +18,6 @@ import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.messages.query.parser.{KafkaQueryParser, KafkaQueryTokenizer}
 import com.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageDecoder}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
-import com.ldaniels528.trifecta.rest.TxWebConfig._
 import com.ldaniels528.trifecta.util.EitherHelper._
 import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
@@ -38,6 +37,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private implicit val formats = net.liftweb.json.DefaultFormats
   private implicit val zkProxy: ZKProxy = zk
   private val logger = LoggerFactory.getLogger(getClass)
+
+  // caches
   private var topicCache: Map[(String, Int), TopicDelta] = Map.empty
   private var consumerCache: Map[ConsumerDeltaKey, ConsumerJs] = Map.empty
 
@@ -244,7 +245,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns a decoder by topic
    * @return the collection of decoders
    */
-  def getDecoderByTopic(topic: String) = Try(toDecoderJs(topic, config.getDecoders filter (_.topic == topic)))
+  def getDecoderByTopic(topic: String) = Try(toDecoderJs(topic, config.getDecodersByTopic(topic)))
 
   /**
    * Returns a decoder by topic and schema name
@@ -446,9 +447,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }).toSeq
   }
 
-  def getTopicByName(topic: String) = Try {
-    KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic)
-  }
+  def getTopicByName(topic: String) = Try(KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic))
 
   def getTopicDetailsByName(topic: String) = {
     KafkaMicroConsumer.getTopicPartitions(topic) map { partition =>
@@ -655,7 +654,6 @@ object KafkaRestFacade {
       }
       else LoopBackCodec.decode(message)
     }
-
   }
 
   case class ConsumerJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long], rate: Option[Double]) {
