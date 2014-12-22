@@ -48,27 +48,16 @@
             </div>
         </fieldset>
 
-        <!-- Saved Results -->
-        <fieldset class="separator">
-            <legend>Query Results</legend>
-            <div class="q_saved_results_container">
-                <span ng-show="!savedQuery.results.length" class="warning bold">
-                    <img src="/app/images/status/yellowlight.gif"> No results available
-                </span>
-                <div class="full_block" ng-repeat="r in savedQuery.results" ng-class="savedQuery.resultIndex == $index ? 'highlighted' : ''">
-                    <img class="clickable" src="/app/images/tabs/query/remove-16.gif">
-                    <a ng-click="selectQueryResults($index)">
-                        <span ng-class="savedQuery.resultIndex == $index ? 'highlighted' : ''">{{ r.name }}</span>
-                    </a>
-
-                    <img class="clickable"
-                         style="float: right; margin-right: 8px"
-                         src="/app/images/tabs/query/download-16.png"
-                         ng-click="downloadResults(r.results)"
-                         title="Click to download result as CSV">
-                </div>
-            </div>
-        </fieldset>
+        <!-- Helpful hints -->
+        <div style="border-bottom: 1px solid #cccccc; margin-top: 15px; padding-left: 4px">
+            <p><img src="/app/images/common/help-16.png"> This view allows users to:
+                <ul>
+                    <li>Create queries (associating them to topics)</li>
+                    <li>Upload queries to the server (located in $HOME/.trifecta/queries)</li>
+                    <li>Execute queries and manage the results</li>
+                </ul>
+            </p>
+        </div>
     </div>
     <div style="display: inline; width: 70%;  height: 625px; float: right">
         <!-- new query script setup -->
