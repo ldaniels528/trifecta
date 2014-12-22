@@ -1,15 +1,6 @@
 package com.ldaniels528.trifecta.rest
 
-import java.io.File
-
 import com.ldaniels528.trifecta.TxConfig
-import com.ldaniels528.trifecta.TxConfig._
-import com.ldaniels528.trifecta.rest.EmbeddedWebServer.TxQuery
-import com.ldaniels528.trifecta.util.OptionHelper._
-import com.ldaniels528.trifecta.util.StringHelper._
-
-import scala.io.Source
-import scala.util.Try
 
 /**
  * Trifecta Web Configuration
@@ -18,43 +9,10 @@ import scala.util.Try
 object TxWebConfig {
 
   /**
-   * Initializes the configuration
-   */
-  def init(config: TxConfig): Unit = {
-    Seq(decoderDirectory, queriesDirectory) foreach { directory =>
-      if (!directory.exists()) Try(directory.mkdirs())
-    }
-  }
-
-  /**
-   * Returns the location of the queries directory
-   * @return the [[File]] representing the location of the queries directory
-   */
-  def queriesDirectory: File = new File(trifectaPrefs, "queries")
-
-  /**
    * Trifecta Configuration Extensions
    * @param config the given [[TxConfig]]
    */
   implicit class TxConfigExtensions(val config: TxConfig) extends AnyVal {
-
-    def getQueriesByTopic(topic: String): Option[Seq[TxQuery]] = {
-      Option(new File(queriesDirectory, topic).listFiles) map { queriesFiles =>
-        queriesFiles map (getQueryFromFile(topic, _))
-      }
-    }
-
-    private def getQueryFromFile(topic: String, file: File) = {
-      val name = getNameWithoutExtension(file.getName)
-      TxQuery(name, topic, Source.fromFile(file).getLines().mkString("\n"), file.exists(), file.lastModified())
-    }
-
-    private def getNameWithoutExtension(name: String) = {
-      name.lastIndexOptionOf(".bdql") ?? name.lastIndexOptionOf(".kql") match {
-        case Some(index) => name.substring(0, index)
-        case None => name
-      }
-    }
 
     /**
      * Returns the push interval (in seconds) for topic changes

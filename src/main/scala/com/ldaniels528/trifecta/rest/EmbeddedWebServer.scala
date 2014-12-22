@@ -29,9 +29,6 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 
   implicit val ec = actorSystem.dispatcher
 
-  // initialize the web configuration
-  TxWebConfig.init(config)
-
   // define all of the routes
   val routes = Routes({
     case HttpRequest(request) => wcActor ! request
@@ -145,8 +142,6 @@ object EmbeddedWebServer {
           }
         }
       }"""
-
-  case class TxQuery(name: String, topic: String, queryString: String, exists: Boolean, lastModified: Long)
 
   case class WebSocketSession(webSocketId: String, var requests: Long = 0)
 

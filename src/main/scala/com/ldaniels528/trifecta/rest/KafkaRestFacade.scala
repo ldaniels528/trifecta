@@ -570,7 +570,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def saveQuery(jsonString: String) = Try {
     // transform the JSON string into a query
     val query = JsonHelper.transform[QueryJs](jsonString)
-    val file = new File(new File(TxWebConfig.queriesDirectory, query.topic), s"${query.name}.kql")
+    val file = new File(new File(TxConfig.queriesDirectory, query.topic), s"${query.name}.kql")
     // TODO should I add a check for new vs. replace?
 
     new FileOutputStream(file) use { fos =>
