@@ -48,14 +48,20 @@
             </div>
         </fieldset>
 
-        <!-- Helpful hints -->
-        <div style="border-bottom: 1px solid #cccccc; margin-top: 15px; padding-left: 2px">
+        <!-- Hints & Tips -->
+        <div style="margin-top: 15px; padding-left: 2px">
+            <p><img class="bulb" src="/app/images/common/bulb-16.png">
+                <span class="title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span>
+                provides the Kafka Query Language (KQL), a special-purpose SQL-like programming language
+                designed for extracting/publishing messages to/from
+                <a href="http://avro.apache.org" target="arvo_window">Avro</a>-encoded Kafka topics.</p>
             <p><img class="bulb" src="/app/images/common/bulb-16.png"> This view allows users to:
                 <ul>
-                    <li>Create queries (associating them to topics)</li>
-                    <li>Upload queries to the server (located in
+                    <li>Create KQL queries (associating them to topics)</li>
+                    <li>Execute KQL queries and manage the search results</li>
+                    <li>Download KQL query search results as CSV files</li>
+                    <li>Upload KQL queries to the server (located in
                         <span class="italic">$HOME</span>/.trifecta/queries/<span class="italic">topic</span>)</li>
-                    <li>Execute queries and manage the search results</li>
                 </ul>
             </p>
         </div>
