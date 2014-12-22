@@ -566,6 +566,19 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }
   }
 
+  def saveDecoderSchema(jsonString: String) = Try {
+    // transform the JSON string into a schema
+    val schema = JsonHelper.transform[SchemaJs](jsonString)
+    val decoderFile = new File(new File(TxConfig.decoderDirectory, schema.topic), schema.name)
+    // TODO should I add a check for new vs. replace?
+
+    new FileOutputStream(decoderFile) use { fos =>
+      fos.write(schema.schemaString.getBytes(config.encoding))
+    }
+
+    ErrorJs(message = "Saved", `type` = "success")
+  }
+
   def saveQuery(jsonString: String) = Try {
     // transform the JSON string into a query
     val query = JsonHelper.transform[QueryJs](jsonString)
@@ -574,19 +587,6 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
     new FileOutputStream(file) use { fos =>
       fos.write(query.queryString.getBytes(config.encoding))
-    }
-
-    ErrorJs(message = "Saved", `type` = "success")
-  }
-
-  def saveSchema(jsonString: String) = Try {
-    // transform the JSON string into a schema
-    val schema = JsonHelper.transform[SchemaJs](jsonString)
-    val decoderFile = new File(new File(TxConfig.decoderDirectory, schema.topic), schema.name)
-    // TODO should I add a check for new vs. replace?
-
-    new FileOutputStream(decoderFile) use { fos =>
-      fos.write(schema.schemaString.getBytes(config.encoding))
     }
 
     ErrorJs(message = "Saved", `type` = "success")

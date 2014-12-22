@@ -197,7 +197,7 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
               case _ => missingArgs("topic")
             }
             case "saveQuery" => Left(facade.saveQuery(request.asJsonString).toJson.mimeJson)
-            case "saveSchema" => Left(facade.saveSchema(request.asJsonString).toJson.mimeJson)
+            case "saveSchema" => Left(facade.saveDecoderSchema(request.asJsonString).toJson.mimeJson)
             case "transformResultsToCSV" => Left(facade.transformResultsToCSV(request.asJsonString).mimeCSV)
             case _ => Left(None)
           }
