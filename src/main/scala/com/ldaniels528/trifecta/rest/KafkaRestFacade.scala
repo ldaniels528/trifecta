@@ -18,7 +18,6 @@ import com.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.ldaniels528.trifecta.messages.query.parser.{KafkaQueryParser, KafkaQueryTokenizer}
 import com.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageDecoder}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
-import com.ldaniels528.trifecta.rest.TxWebConfig._
 import com.ldaniels528.trifecta.util.EitherHelper._
 import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
@@ -38,6 +37,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private implicit val formats = net.liftweb.json.DefaultFormats
   private implicit val zkProxy: ZKProxy = zk
   private val logger = LoggerFactory.getLogger(getClass)
+
+  // caches
   private var topicCache: Map[(String, Int), TopicDelta] = Map.empty
   private var consumerCache: Map[ConsumerDeltaKey, ConsumerJs] = Map.empty
 
@@ -53,11 +54,11 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     def reportFailure(t: Throwable) = logger.error("Error from thread pool", t)
   }
 
-  private val rt = TxRuntimeContext(config)
+  private val rt = TxRuntimeContext(config)(ec)
 
-  private val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
+  private lazy val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
 
-  private val publisher = createPublisher(brokers)
+  private lazy val publisher = createPublisher(brokers)
 
   // load & register all decoders to their respective topics
   registerDecoders()
@@ -244,7 +245,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns a decoder by topic
    * @return the collection of decoders
    */
-  def getDecoderByTopic(topic: String) = Try(toDecoderJs(topic, config.getDecoders filter (_.topic == topic)))
+  def getDecoderByTopic(topic: String) = Try(toDecoderJs(topic, config.getDecodersByTopic(topic)))
 
   /**
    * Returns a decoder by topic and schema name
@@ -351,7 +352,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return an option of a decoded message
    */
   private def decodeMessageData(topic: String, message_? : Option[MessageData]) = {
-    def decoders = config.getDecoders.filter(_.topic == topic).sortBy(-_.lastModified)
+    def decoders = config.getDecodersByTopic(topic)
     message_? map { md =>
       decoders.foldLeft[Option[MessageJs]](None) { (result, d) =>
         result ?? attemptDecode(md.message, d)
@@ -384,7 +385,12 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     case value => MessageJs(`type` = "json", payload = JsonHelper.makePretty(String.valueOf(value)))
   }
 
-  def getQueries = config.getQueries getOrElse Nil
+  /**
+   * Retrieves the list of available queries for the given topic
+   * @param topic the given topic (e.g. "shocktrade.quotes.avro")
+   * @return the list of available queries
+   */
+  def getQueriesByTopic(topic: String) = config.getQueriesByTopic(topic) getOrElse Nil
 
   /**
    * Retrieves the list of Kafka replicas for a given topic
@@ -441,9 +447,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }).toSeq
   }
 
-  def getTopicByName(topic: String) = Try {
-    KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic)
-  }
+  def getTopicByName(topic: String) = Try(KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic))
 
   def getTopicDetailsByName(topic: String) = {
     KafkaMicroConsumer.getTopicPartitions(topic) map { partition =>
@@ -562,27 +566,27 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }
   }
 
-  def saveQuery(jsonString: String) = Try {
-    // transform the JSON string into a query
-    val query = JsonHelper.transform[QueryJs](jsonString)
-    val file = new File(TxWebConfig.queriesDirectory, s"${query.name}.kql")
-    // TODO add a check for new vs. replace?
+  def saveDecoderSchema(jsonString: String) = Try {
+    // transform the JSON string into a schema
+    val schema = JsonHelper.transform[SchemaJs](jsonString)
+    val decoderFile = new File(new File(TxConfig.decoderDirectory, schema.topic), schema.name)
+    // TODO should I add a check for new vs. replace?
 
-    new FileOutputStream(file) use { fos =>
-      fos.write(query.queryString.getBytes(config.encoding))
+    new FileOutputStream(decoderFile) use { fos =>
+      fos.write(schema.schemaString.getBytes(config.encoding))
     }
 
     ErrorJs(message = "Saved", `type` = "success")
   }
 
-  def saveSchema(jsonString: String) = Try {
-    // transform the JSON string into a schema
-    val schema = JsonHelper.transform[SchemaJs](jsonString)
-    val decoderFile = new File(new File(TxConfig.decoderDirectory, schema.topic), schema.name)
-    // TODO add a check for new vs. replace?
+  def saveQuery(jsonString: String) = Try {
+    // transform the JSON string into a query
+    val query = JsonHelper.transform[QueryJs](jsonString)
+    val file = new File(new File(TxConfig.queriesDirectory, query.topic), s"${query.name}.kql")
+    // TODO should I add a check for new vs. replace?
 
-    new FileOutputStream(decoderFile) use { fos =>
-      fos.write(schema.schemaString.getBytes(config.encoding))
+    new FileOutputStream(file) use { fos =>
+      fos.write(query.queryString.getBytes(config.encoding))
     }
 
     ErrorJs(message = "Saved", `type` = "success")
@@ -650,7 +654,6 @@ object KafkaRestFacade {
       }
       else LoopBackCodec.decode(message)
     }
-
   }
 
   case class ConsumerJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long], rate: Option[Double]) {
@@ -679,7 +682,7 @@ object KafkaRestFacade {
 
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 
-  case class QueryJs(name: String, queryString: String)
+  case class QueryJs(name: String, topic: String, queryString: String)
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
 

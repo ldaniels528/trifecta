@@ -7,29 +7,29 @@
         .factory('QuerySvc', function ($http) {
             var service = {};
 
-            service.executeQuery = function (name, queryString) {
+            service.executeQuery = function (name, topic, queryString) {
                 return $http({
                     url:"/rest/executeQuery",
                     method: "POST",
-                    data: { "name": name, "queryString": queryString },
+                    data: { "name": name, "topic": topic, "queryString": queryString },
                     headers: {'Content-Type': 'application/json'}
                 }).then(function (response) {
                     return response.data;
                 });
             };
 
-            service.getQueries = function () {
-                return $http.get("/rest/getQueries")
+            service.getQueriesByTopic = function (topic) {
+                return $http.get("/rest/getQueriesByTopic/" + encodeURI(topic))
                     .then(function (response) {
                         return response.data;
                     });
             };
 
-            service.saveQuery = function (name, queryString) {
+            service.saveQuery = function (name, topic, queryString) {
                 return $http({
                     url: "/rest/saveQuery",
                     method: "POST",
-                    data: { "name": name, "queryString" : queryString },
+                    data: { "name": name, "topic": topic, "queryString": queryString },
                     headers: {'Content-Type': 'application/json'}
                 }).then(function (response) {
                     return response.data;

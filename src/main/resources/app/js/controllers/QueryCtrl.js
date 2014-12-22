@@ -6,47 +6,33 @@
     angular.module('trifecta').controller('QueryCtrl', ['$scope', '$log', '$timeout', 'QuerySvc',
         function ($scope, $log, $timeout, QuerySvc) {
 
-            var queryStartTime = 0;
-            $scope.queryElaspedTime = 0;
-
-            // saved queries
-            $scope.savedQueries = [];
-            $scope.savedQueries.push(newQueryScript());
-            $scope.savedQuery = $scope.savedQueries[0];
-
-            // create the query state object
-            $scope.state = createQuerySession();
+            //$scope.savedQuery = null;
+            $scope.hideEmptyTopics = false;
 
             /**
-             * Creates a new query session object
+             * Creates a new default saved query instance
              * @returns {{running: boolean, results: null, mappings: null, ascending: boolean, sortField: null}}
              */
-            function createQuerySession() {
-                return {
-                    "running": false,
-                    "results": null,
-                    "mappings": null,
-                    "ascending": false,
-                    "sortField": null
-                };
-            }
-
-            /**
-             * Adds a query to the Saved Queries list
-             */
-            $scope.addQuery = function() {
-                var queryScript = newQueryScript();
-                $scope.savedQueries.push(queryScript);
-                $scope.savedQuery = queryScript;
+            $scope.savedQuery = {
+                "name": "UntitledName",
+                "topic": "default",
+                "newFile": true,
+                "modified": true
             };
 
             $scope.cancelNewQuery = function(savedQuery) {
                 if(savedQuery.newFile) {
+                    var topic = savedQuery.topic;
+
                     // remove the saved query from the list
-                    var savedQueries = $scope.savedQueries;
+                    var savedQueries = topic.savedQueries || [];
                     var index = savedQueries.indexOf(savedQuery);
                     if(index != -1) {
                         savedQueries.splice(index, 1);
+                    }
+
+                    if($scope.savedQuery == savedQuery) {
+                        $scope.savedQuery = null;
                     }
                 }
             };
@@ -57,14 +43,6 @@
              */
             $scope.deleteQuery = function(index) {
                 $scope.savedQueries.splice(index, 1);
-            };
-
-            /**
-             * Selects a query query from the list
-             * @param queryScript the query script to select
-             */
-            $scope.selectQuery = function(queryScript) {
-                $scope.savedQuery = queryScript;
             };
 
             /**
@@ -84,59 +62,55 @@
             /**
              * Executes the KQL query representing by the query string
              */
-            $scope.executeQuery = function () {
-                $scope.state.results = null;
-                $scope.state.mappings = null;
-                $scope.state.running = true;
+            $scope.executeQuery = function (mySavedQuery) {
+                mySavedQuery.running = true;
 
                 // setup the query clock
-                queryStartTime = new Date().getTime();
-                updatesQueryClock();
-
-                // ensure we have an array for storing the results
-                if(!$scope.savedQuery.results) {
-                    $scope.savedQuery.results = [];
-                }
-
-                // keep a reference to the original saved query
-                var mySavedQuery =  $scope.savedQuery;
-                mySavedQuery.loading = true;
+                mySavedQuery.queryElaspedTime = 0;
+                mySavedQuery.queryStartTime = new Date().getTime();
+                updatesQueryClock(mySavedQuery);
 
                 // execute the query
-                QuerySvc.executeQuery(mySavedQuery.name, mySavedQuery.queryString).then(
+                QuerySvc.executeQuery(mySavedQuery.name, mySavedQuery.topic, mySavedQuery.queryString).then(
                     function (results) {
-                        $scope.state.running = false;
-                        mySavedQuery.loading = false;
+                        mySavedQuery.running = false;
 
-                        //$log.info("results = " + angular.toJson(results));
-                        if (results.type == 'error') {
-                            $scope.addErrorMessage(results.message);
-                        }
-                        else if (results.type == 'warning') {
-                            $scope.addWarningMessage(results.message);
-                        }
-                        else if (results.type == 'info') {
-                            $scope.addInfoMessage(results.message);
-                        }
+                        if (results.type == 'error') $scope.addErrorMessage(results.message);
+                        else if (results.type == 'warning') $scope.addWarningMessage(results.message);
+                        else if (results.type == 'info') $scope.addInfoMessage(results.message);
                         else {
-                            $scope.state.results = results;
-                            $scope.state.mappings = generateDataArray(results.labels, results.values);
-                            //$log.info("mappings = " + angular.toJson($scope.state.mappings));
-
-                            mySavedQuery.results.push({
+                            var mappings = generateDataArray(results.labels, results.values);
+                            var mySavedResult = {
                                 "name": new Date().toTimeString(),
-                                "results": results,
-                                "mappings": $scope.state.mappings
-                            });
-                            mySavedQuery.resultIndex = mySavedQuery.results.length - 1;
+                                "resultSet": results,
+                                "mappings": mappings,
+                                "ascending": false,
+                                "sortField": null
+                            };
+
+                            // make sure the results array exists
+                            if(!mySavedQuery.results) {
+                                mySavedQuery.results = [];
+                            }
+
+                            mySavedQuery.results.push(mySavedResult);
+                            mySavedQuery.savedResult = mySavedResult;
+
+                            //$log.info("mySavedResult = " + JSON.stringify(mySavedResult, null, '\t'));
                         }
                     },
                     function (err) {
-                        $scope.state.running = false;
-                        mySavedQuery.loading = false;
+                        mySavedQuery.running = false;
                         $scope.addError(err);
                     }
                 );
+            };
+
+            $scope.expandTopicQueries = function(topic) {
+                topic.queriesExpanded = !topic.queriesExpanded;
+                if(topic.queriesExpanded) {
+                    loadQueriesByTopic(topic);
+                }
             };
 
             $scope.filterLabels = function (labels) {
@@ -150,49 +124,40 @@
                     partition.offset == $scope.offsetAt(index);
             };
 
-            /**
-             * Loads all saved queries
-             */
-            $scope.loadQueries = function() {
-                QuerySvc.getQueries().then(
-                    function(queries) {
-                        $scope.savedQueries = queries || [];
-                        if(!$scope.savedQueries.length) {
-                            $scope.savedQueries.push(newQueryScript());
-                        }
-
-                        // select the first query
-                        $scope.savedQuery = $scope.savedQueries[0];
+            function loadQueriesByTopic(topic) {
+                topic.loading = true;
+                QuerySvc.getQueriesByTopic(topic.topic).then(
+                    function (queries) {
+                        topic.loading = false;
+                        topic.savedQueries = queries || [];
                     },
-                    function(err) {
+                    function (err) {
+                        topic.loading = false;
                         $scope.addError(err);
-                        $scope.savedQueries.push(newQueryScript());
-                        $scope.savedQuery = $scope.savedQueries[0];
                     });
-            };
+            }
 
             $scope.offsetAt = function (index) {
-                var row = $scope.state.results.values[index];
+                var row = $scope.savedQuery.savedResult.resultSet.values[index];
                 return row["__offset"];
             };
 
             $scope.partitionAt = function (index) {
-                var row = $scope.state.results.values[index];
+                var row = $scope.savedQuery.savedResult.resultSet.values[index];
                 return row["__partition"];
             };
 
             $scope.saveQuery = function (query) {
                 if (query) {
                     query.syncing = true;
-                    $log.info("Uploading query '" + query.name + "'...");
-                    QuerySvc.saveQuery(query.name, query.queryString).then(
+                    $log.info("Uploading query '" + query.name + "' (topic " + query.topic + ")...");
+                    QuerySvc.saveQuery(query.name, query.topic, query.queryString).then(
                         function (response) {
                             if(response && response.type == 'error') {
                                 $scope.addErrorMessage(response.message);
                                 query.syncing = false;
                             }
                             else {
-                                query.exists = true;
                                 query.modified = false;
                                 query.newFile = false;
                                 query.syncing = false;
@@ -206,17 +171,32 @@
                 }
             };
 
-            $scope.selectQueryResults = function(index) {
-                $scope.savedQuery.resultIndex = index;
-                var savedResults = $scope.savedQuery.results[index];
-                $scope.state.results = savedResults.results;
-                $scope.state.mappings = savedResults.mappings;
+            /**
+             * Selects a query query from the list
+             * @param mySavedQuery the saved query object to select
+             */
+            $scope.selectQuery = function(mySavedQuery) {
+                $scope.savedQuery = mySavedQuery;
             };
 
-            $scope.toggleSortField = function (sortField) {
-                $scope.state.ascending = $scope.state.sortField == sortField ? !$scope.state.ascending : true;
-                $scope.state.sortField = sortField;
-                $scope.state.results.values = sortData($scope.state.results.values, sortField, $scope.state.ascending);
+            $scope.selectQueryResults = function(mySavedQuery, index) {
+                $scope.savedQuery = mySavedQuery;
+                mySavedQuery.savedResult = mySavedQuery.results[index];
+            };
+
+            $scope.setUpNewQueryDocument = function(topic) {
+                topic.savedQueries = topic.savedQueries || [];
+                topic.savedQueries.push(newQueryScript(topic));
+                $scope.savedQuery = topic.savedQueries[topic.savedQueries.length - 1];
+            };
+
+            $scope.toggleSortField = function (mySavedQuery, sortField) {
+                var mySavedResult = mySavedQuery.savedResult;
+                if(mySavedResult) {
+                    mySavedResult.ascending = mySavedResult.sortField == sortField ? !mySavedResult.ascending : true;
+                    mySavedResult.sortField = sortField;
+                    mySavedResult.resultSet.values = sortData(mySavedResult.resultSet.values, sortField, mySavedResult.ascending);
+                }
             };
 
             function generateDataArray(allLabels, results) {
@@ -233,49 +213,42 @@
                 return {"labels": labels, "values": rows};
             }
 
-            function getUntitledName() {
+            function getUntitledName(topic) {
                 var index = 0;
                 var name = null;
 
                 do {
                     index++;
                     name = "Untitled" + index;
-                } while(nameExists(name));
+                } while(nameExists(topic, name));
                 return name;
             }
 
             /**
              * Indicates whether the given saved query (name) exists
+             * @param topic the parent topic
              * @param name the saved query name
              * @returns {boolean}
              */
-            function nameExists(name) {
-                for(var n = 0; n < $scope.savedQueries.length; n++) {
-                    if(name == $scope.savedQueries[n].name) return true;
+            function nameExists(topic, name) {
+                for(var n = 0; n < topic.savedQueries.length; n++) {
+                    if(name == topic.savedQueries[n].name) return true;
                 }
                 return false;
             }
 
             /**
              * Constructs a new query script data object
-             * @returns {{name: string, queryString: string, exists: boolean, modified: boolean}}
+             * @returns {{name: string, topic: string, queryString: string, newFile: boolean, modified: boolean}}
              */
-            function newQueryScript() {
+            function newQueryScript(topic) {
                 return {
-                    "name": getUntitledName(),
+                    "name": getUntitledName(topic),
+                    "topic" : topic,
                     "queryString": "",
                     "newFile": true,
-                    "exists": false,
                     "modified": true
                 };
-            }
-
-            /**
-             * Error response handler
-             * @param err the given error response
-             */
-            function setError(err) {
-                $scope.addError(err);
             }
 
             /**
@@ -296,11 +269,11 @@
             /**
              * Schedules the query clock to result until the query has completed.
              */
-            function updatesQueryClock() {
-                $scope.queryElaspedTime = (new Date().getTime() - queryStartTime) / 1000;
-                if($scope.state.running) {
+            function updatesQueryClock(mySavedQuery) {
+                mySavedQuery.queryElaspedTime = (new Date().getTime() - mySavedQuery.queryStartTime) / 1000;
+                if(mySavedQuery.running) {
                     $timeout(function () {
-                        updatesQueryClock();
+                        updatesQueryClock(mySavedQuery);
                     }, 1000);
                 }
             }

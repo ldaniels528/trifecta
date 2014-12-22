@@ -6,9 +6,12 @@ import java.util.Properties
 
 import com.ldaniels528.trifecta.TxConfig._
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
+import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.PropertiesHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
+import com.ldaniels528.trifecta.util.StringHelper._
 
+import scala.collection.concurrent.TrieMap
 import scala.io.Source
 import scala.util.Properties._
 import scala.util.{Failure, Success, Try}
@@ -18,6 +21,16 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxConfig(val configProps: Properties) {
+  private val cachedDecoders = TrieMap[File, TxDecoder]()
+
+  // Initializes the configuration
+  Try {
+    // make sure the decoders and queries directories exist
+    Seq(decoderDirectory, queriesDirectory) foreach { directory =>
+      if (!directory.exists()) directory.mkdirs()
+    }
+  }
+
   // set the current working directory
   configProps.setProperty("trifecta.core.cwd", new File(".").getCanonicalPath)
 
@@ -87,7 +100,12 @@ class TxConfig(val configProps: Properties) {
    * Attempts to retrieve decoders by topic
    * @return the collection of [[TxDecoder]] instances
    */
-  def getDecodersByTopic(topic: String): Seq[TxDecoder] = getDecoders.filter(_.topic == topic) sortBy(-_.lastModified)
+  def getDecodersByTopic(topic: String): Seq[TxDecoder] = {
+    Option(new File(decoderDirectory, topic).listFiles)
+      .map(_.toSeq map (getDecoderFromFile(topic, _)))
+      .getOrElse(Nil)
+      .sortBy(-_.lastModified)
+  }
 
   /**
    * Returns all available decoders
@@ -99,17 +117,41 @@ class TxConfig(val configProps: Properties) {
         Option(topicDirectory.listFiles) map { decoderFiles =>
           decoderFiles map { decoderFile =>
             val topic = topicDirectory.getName
-            val schema = Source.fromFile(decoderFile).getLines().mkString
-            Try {
-              TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Left(AvroDecoder(decoderFile.getName, schema)))
-            } match {
-              case Success(decoder) => decoder
-              case Failure(e) => TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Right(TxFailedSchema(schema, e)))
-            }
+            getDecoderFromFile(topic, decoderFile)
           }
         }
       }).flatten
     } getOrElse Nil
+  }
+
+  private def getDecoderFromFile(topic: String, decoderFile: File): TxDecoder = {
+    cachedDecoders.getOrElseUpdate(decoderFile, {
+      val schema = Source.fromFile(decoderFile).getLines().mkString
+      Try {
+        TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Left(AvroDecoder(decoderFile.getName, schema)))
+      } match {
+        case Success(decoder) => decoder
+        case Failure(e) => TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Right(TxFailedSchema(schema, e)))
+      }
+    })
+  }
+
+  def getQueriesByTopic(topic: String): Option[Seq[TxQuery]] = {
+    Option(new File(queriesDirectory, topic).listFiles) map { queriesFiles =>
+      queriesFiles map (getQueryFromFile(topic, _))
+    }
+  }
+
+  private def getQueryFromFile(topic: String, file: File) = {
+    val name = getQueryNameWithoutExtension(file.getName)
+    TxQuery(name, topic, Source.fromFile(file).getLines().mkString("\n"), file.exists(), file.lastModified())
+  }
+
+  private def getQueryNameWithoutExtension(name: String) = {
+    name.lastIndexOptionOf(".bdql") ?? name.lastIndexOptionOf(".kql") match {
+      case Some(index) => name.substring(0, index)
+      case None => name
+    }
   }
 
   /**
@@ -193,6 +235,12 @@ object TxConfig {
   def decoderDirectory: File = new File(trifectaPrefs, "decoders")
 
   /**
+   * Returns the location of the queries directory
+   * @return the [[File]] representing the location of the queries directory
+   */
+  def queriesDirectory: File = new File(trifectaPrefs, "queries")
+
+  /**
    * Returns the default configuration
    * @return the default configuration
    */
@@ -223,6 +271,8 @@ object TxConfig {
   case class TxDecoder(topic: String, name: String, lastModified: Long, decoder: Either[AvroDecoder, TxFailedSchema])
 
   case class TxFailedSchema(schemaString: String, error: Throwable)
+
+  case class TxQuery(name: String, topic: String, queryString: String, exists: Boolean, lastModified: Long)
 
 }
 

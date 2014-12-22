@@ -91,6 +91,9 @@
                             angular.forEach($scope.decoders, function(d) {
                                angular.forEach(d.schemas, function(s) {
                                    s.decoder = d;
+                                   if(s.error) {
+                                       s.editMode = true;
+                                   }
                                });
                             });
                         },

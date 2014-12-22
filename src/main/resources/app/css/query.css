@@ -22,6 +22,11 @@
     background-color: #eeffff;
 }
 
+.q_highlighted {
+    color: #337ab7;
+    text-decoration: underline;
+}
+
 .q_key_field {
     color: #aa00aa;
 }
@@ -40,18 +45,18 @@
     margin: 2px 2px 2px 2px;
 }
 
+.q_new_query {
+    color: #888888;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
 .q_topics_container {
     clear: both;
     width: auto;
-    height: 120px;
+    height: 350px;
     overflow: auto;
-}
-
-.q_saved_queries_container {
-    clear: both;
-    width: auto;
-    height: 150px;
-    overflow: auto;
+    border-bottom: 1px solid #cccccc;
 }
 
 .q_saved_results_container {
