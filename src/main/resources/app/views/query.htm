@@ -40,7 +40,7 @@
                     </div>
                 </div>
             </div>
-            <div style="text-align: right; font-size: 10pt">
+            <div style="text-align: right; font-size: 10pt; margin-right: 5px">
                 <a ng-click="hideEmptyTopics = !hideEmptyTopics">
                     <span ng-show="hideEmptyTopics">[Show empty topics]</span>
                     <span ng-show="!hideEmptyTopics">[Hide empty topics]</span>
@@ -50,10 +50,11 @@
 
         <!-- Helpful hints -->
         <div style="border-bottom: 1px solid #cccccc; margin-top: 15px; padding-left: 2px">
-            <p><img src="/app/images/common/help-16.png"> This view allows users to:
+            <p><img class="bulb" src="/app/images/common/bulb-16.png"> This view allows users to:
                 <ul>
                     <li>Create queries (associating them to topics)</li>
-                    <li>Upload queries to the server (located in $HOME/.trifecta/queries)</li>
+                    <li>Upload queries to the server (located in
+                        <span class="italic">$HOME</span>/.trifecta/queries/<span class="italic">topic</span>)</li>
                     <li>Execute queries and manage the search results</li>
                 </ul>
             </p>

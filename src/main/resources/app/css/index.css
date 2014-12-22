@@ -36,6 +36,8 @@ th { text-align: left }
 
 .bold { font-weight: bold }
 
+.bulb { padding-left: 2px }
+
 .clickable { cursor: pointer; }
 
 .error {
@@ -88,6 +90,11 @@ th { text-align: left }
 
 .inline {
     display: inline;
+}
+
+.italic {
+    color: cornflowerblue;
+    font-style: italic;
 }
 
 .messages { color: #00cc00 }
