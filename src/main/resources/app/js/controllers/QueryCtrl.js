@@ -195,7 +195,7 @@
                 if(mySavedResult) {
                     mySavedResult.ascending = mySavedResult.sortField == sortField ? !mySavedResult.ascending : true;
                     mySavedResult.sortField = sortField;
-                    mySavedResult.results.values = sortData(mySavedResult.results.values, sortField, mySavedResult.ascending);
+                    mySavedResult.resultSet.values = sortData(mySavedResult.resultSet.values, sortField, mySavedResult.ascending);
                 }
             };
 
