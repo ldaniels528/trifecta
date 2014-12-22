@@ -11,7 +11,6 @@ import com.ldaniels528.trifecta.util.PropertiesHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 
-import scala.collection.concurrent.TrieMap
 import scala.io.Source
 import scala.util.Properties._
 import scala.util.{Failure, Success, Try}
@@ -21,7 +20,6 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxConfig(val configProps: Properties) {
-  private val queries = TrieMap[File, TxQuery]()
 
   // Initializes the configuration
   Try {
@@ -100,14 +98,18 @@ class TxConfig(val configProps: Properties) {
    * Attempts to retrieve decoders by topic
    * @return the collection of [[TxDecoder]] instances
    */
-  def getDecodersByTopic(topic: String): Seq[TxDecoder] = getDecoders.filter(_.topic == topic) sortBy (-_.lastModified)
+  def getDecodersByTopic(topic: String): Seq[TxDecoder] = {
+    getDecodersByDirectory(new File(decoderDirectory, topic)) sortBy (-_.lastModified)
+  }
 
   /**
    * Returns all available decoders
    * @return the collection of [[TxDecoder]]s
    */
-  def getDecoders: Seq[TxDecoder] = {
-    Option(decoderDirectory.listFiles) map { topicDirectories =>
+  def getDecoders: Seq[TxDecoder] = getDecodersByDirectory(decoderDirectory)
+
+  private def getDecodersByDirectory(directory: File): Seq[TxDecoder] = {
+    Option(directory.listFiles) map { topicDirectories =>
       (topicDirectories.toSeq flatMap { topicDirectory =>
         Option(topicDirectory.listFiles) map { decoderFiles =>
           decoderFiles map { decoderFile =>
@@ -132,13 +134,11 @@ class TxConfig(val configProps: Properties) {
   }
 
   private def getQueryFromFile(topic: String, file: File) = {
-    queries.getOrElseUpdate(file, {
-      val name = getNameWithoutExtension(file.getName)
-      TxQuery(name, topic, Source.fromFile(file).getLines().mkString("\n"), file.exists(), file.lastModified())
-    })
+    val name = getQueryNameWithoutExtension(file.getName)
+    TxQuery(name, topic, Source.fromFile(file).getLines().mkString("\n"), file.exists(), file.lastModified())
   }
 
-  private def getNameWithoutExtension(name: String) = {
+  private def getQueryNameWithoutExtension(name: String) = {
     name.lastIndexOptionOf(".bdql") ?? name.lastIndexOptionOf(".kql") match {
       case Some(index) => name.substring(0, index)
       case None => name
