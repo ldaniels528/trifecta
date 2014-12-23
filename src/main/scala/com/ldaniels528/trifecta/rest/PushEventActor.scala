@@ -17,7 +17,7 @@ class PushEventActor(webServer: WebServer, facade: KafkaRestFacade) extends Acto
     case PushConsumers => pushConsumerUpdateEvents()
     case PushTopics => pushTopicUpdateEvents()
     case message =>
-      logger.info(s"received unknown message of type: $message")
+      logger.warn(s"received unknown message of type: $message")
       unhandled(message)
   }
 
