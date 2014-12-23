@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 class WebSocketActor(facade: KafkaRestFacade) extends Actor {
   private lazy val logger = LoggerFactory.getLogger(getClass)
 
-  def receive = {
+  override def receive = {
     case event: WebSocketFrameEvent => writeWebSocketResponse(event)
     case message =>
       logger.warn(s"received unknown message of type: $message")

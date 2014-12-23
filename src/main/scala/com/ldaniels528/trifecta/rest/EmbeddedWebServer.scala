@@ -13,7 +13,6 @@ import org.mashupbots.socko.routes._
 import org.mashupbots.socko.webserver.{WebServer, WebServerConfig}
 import org.slf4j.LoggerFactory
 
-import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration._
 import scala.util.Try
 
@@ -25,7 +24,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(getActorConfig))
   private val facade = new KafkaRestFacade(config, zk)
-  private val sessions = TrieMap[String, WebSocketSession]()
+  private val sessionMgr = new WebSocketSessionManager()
 
   implicit val ec = actorSystem.dispatcher
 
@@ -36,8 +35,8 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
       case Path("/websocket/") =>
         logger.info(s"Authorizing web socket handshake...")
         wsHandshake.authorize(
-          onComplete = Option(onWebSocketHandshakeComplete),
-          onClose = Option(onWebSocketClose))
+          onComplete = Option(sessionMgr.onWebSocketHandshakeComplete),
+          onClose = Option(sessionMgr.onWebSocketClose))
     }
     case WebSocketFrame(wsFrame) => wsActor ! wsFrame
   })
@@ -55,7 +54,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 
   // create the push event actors
   private var pushRouter = 0
-  private val pushActors = (1 to 2) map (_ => actorSystem.actorOf(Props(new PushEventActor(webServer, facade))))
+  private val pushActors = (1 to 2) map (_ => actorSystem.actorOf(Props(new PushEventActor(sessionMgr, webServer, facade))))
 
   // create the actor references
   private def wcActor = wcActors(wcRouter % wcActors.length) and (_ => wcRouter += 1)
@@ -79,14 +78,14 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 
     // setup consumer update push events
     actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = config.consumerPushInterval.seconds) {
-      if (sessions.nonEmpty) {
+      if (sessionMgr.sessionsExist) {
         pushActor ! PushConsumers
       }
     }
 
     // setup topic update push events
     actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = config.topicPushInterval.seconds) {
-      if (sessions.nonEmpty) {
+      if (sessionMgr.sessionsExist) {
         pushActor ! PushTopics
       }
     }
@@ -98,18 +97,6 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
    */
   def stop() {
     Try(webServer.stop())
-    ()
-  }
-
-  private def onWebSocketHandshakeComplete(webSocketId: String) {
-    logger.info(s"Web Socket $webSocketId connected")
-    sessions += webSocketId -> WebSocketSession(webSocketId)
-    ()
-  }
-
-  private def onWebSocketClose(webSocketId: String) {
-    logger.info(s"Web Socket $webSocketId closed")
-    sessions -= webSocketId
     ()
   }
 
@@ -142,8 +129,5 @@ object EmbeddedWebServer {
           }
         }
       }"""
-
-  case class WebSocketSession(webSocketId: String, var requests: Long = 0)
-
 
 }
