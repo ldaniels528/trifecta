@@ -8,6 +8,7 @@
 
             $scope.consumerMapping = [];
             $scope.replicas = [];
+            $scope.myHideEmptyTopics = false;
 
             $scope.formats = ["auto", "binary", "json", "plain-text"];
             $scope.selected = { "format": $scope.formats[0] };
@@ -37,6 +38,10 @@
             // select the default tab and make it active
             $scope.observeTab = $scope.observeTabs[0];
             $scope.observeTab.active = true;
+
+            $scope.toggleHideShowEmptyTopics = function() {
+                $scope.myHideEmptyTopics = !$scope.myHideEmptyTopics;
+            };
 
             /**
              * Expands the first Zookeeper item

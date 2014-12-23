@@ -74,29 +74,43 @@
                     });
             };
 
-            service.updateTopic = function(myTopic) {
-                for(var n = 0; n < service.topics.length; n++) {
-                    var t = service.topics[n];
-                    if(t.topic == myTopic.topic) {
-                        var p = service.findPartition(t, myTopic.partition);
-                        if(p) {
-                            p.loading = p.loading ? p.loading + 1 : 1;
-                            p.startOffset = myTopic.startOffset;
-                            p.endOffset = myTopic.endOffset;
-                            p.messages = myTopic.messages;
+            service.updateTopic = function(updatedTopic) {
+                angular.forEach(service.topics, function(t) {
+                    if(t.topic == updatedTopic.topic) {
+                        if(!t.updatingTopics) t.updatingTopics = 0;
 
-                            $timeout(function() {
-                                p.loading -= 1;
-                            }, 1000);
+                        // setup the topic update indicator
+                        (function() {
+                            t.updatingTopics++;
+                            $timeout(function () {
+                                t.updatingTopics--;
+                            }, 15000);
+                        })();
+
+                        // update the topic with the delta information
+                        t.totalMessages = updatedTopic.totalMessages;
+                        var p = service.findPartition(t, updatedTopic.partition);
+                        if(p) {
+                            p.delta = updatedTopic.endOffset - p.endOffset;
+                            p.startOffset = updatedTopic.startOffset;
+                            p.endOffset = updatedTopic.endOffset;
+                            p.messages = updatedTopic.messages;
+
+                            // deltas should exist for 60 seconds (since the last update)
+                            (function() {
+                                var lastDelta = p.delta;
+                                $timeout(function () {
+                                    if(p.delta == lastDelta) p.delta = null;
+                                }, 60000);
+                            })();
                         }
                     }
-                }
-
+                });
             };
 
-            service.updateTopics = function(topics) {
-                angular.forEach(topics, function (topic) {
-                    service.updateTopic(topic);
+            service.updateTopics = function(updatedTopics) {
+                angular.forEach(updatedTopics, function (updatedTopic) {
+                    service.updateTopic(updatedTopic);
                 });
             };
 

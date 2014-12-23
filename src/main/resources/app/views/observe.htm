@@ -13,6 +13,8 @@
             <div class="full_block">
                 <div ng-show="observeTab.name == 'Consumers'">
                     <div style="display: inline; float: left; width: 69.9%; height: 525px; border-right: 1px solid #cccccc">
+                        <div ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
+                        
                         <!-- No Consumers -->
                         <div ng-hide="consumerMapping.length">
                             <div>
@@ -101,7 +103,8 @@
 
                 <div ng-show="observeTab.name == 'Replicas'">
                     <div style="display: inline; float: left; width: 69.9%">
-                        <div ng-repeat="t in getTopics(false)">
+                        <div ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
+                        <div ng-repeat="t in getTopics(myHideEmptyTopics)">
                             <a ng-click="t.expanded = !t.expanded">
                                 <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
                                 <img ng-src="{{ getTopicIcon(t, t == topic) }}"> {{ t.topic }}
@@ -138,20 +141,23 @@
 
                 <div ng-show="observeTab.name == 'Topics'">
                     <div style="display: inline; float: left; width: 69.9%; height: 525px; border-right: 1px solid #cccccc">
+                        <div ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
+
                         <!-- No Topics -->
-                        <div ng-hide="getTopics(true).length">
+                        <div ng-hide="getTopics(myHideEmptyTopics).length">
                             <img src="/app/images/status/yellowlight.gif">
                             <span class="warning">No topic with messages found.</span>
                         </div>
 
                         <!-- Topics -->
-                        <div class="block" ng-repeat="t in getTopics(true)">
+                        <div class="block" ng-repeat="t in getTopics(myHideEmptyTopics)">
                             <a ng-click="t.expanded = !t.expanded">
                                 <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
                                 <img ng-src="{{ getTopicIcon(t, topic == t) }}"> {{ t.topic }}
-                                     <span ng-show="t.totalMessages > 0">
-                                        (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
-                                     </span>
+                                 <span ng-show="t.totalMessages > 0">
+                                    (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
+                                 </span>
+                                <img src="/app/images/status/processing.gif" ng-show="t.updatingTopics">
                             </a>
                             <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
                                 <table>
@@ -163,7 +169,7 @@
                                     </tr>
 
                                     <tr ng-repeat="p in t.partitions | orderBy:'partition'">
-                                        <td>{{ p.partition }}  <img src="/app/images/status/loading.gif" ng-show="p.loading"></td>
+                                        <td>{{ p.partition }}</td>
                                         <td>
                                             <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
                                                 {{ p.startOffset }}
@@ -174,7 +180,10 @@
                                                 {{ p.endOffset }}
                                             </a>
                                         </td>
-                                        <td>{{ p.messages | number }}</td>
+                                        <td>
+                                            {{ p.messages | number }}
+                                            <span class="positive" ng-show="p.delta"> (+{{ p.delta | number }})</span>
+                                        </td>
                                     </tr>
                                 </table>
                             </div>

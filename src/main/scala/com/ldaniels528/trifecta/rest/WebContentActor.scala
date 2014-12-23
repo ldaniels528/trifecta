@@ -24,7 +24,7 @@ import scala.util.{Failure, Success, Try}
 class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) extends Actor {
   private lazy val logger = LoggerFactory.getLogger(getClass)
 
-  def receive = {
+  override def receive = {
     case event: HttpRequestEvent =>
       val startTime = System.nanoTime()
       val request = event.request
