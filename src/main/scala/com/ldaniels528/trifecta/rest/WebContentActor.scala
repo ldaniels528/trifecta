@@ -36,8 +36,8 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
         event.response.write100Continue()
       }
 
-       getContent(path, request) onComplete {
-        case Success((mimeType, bytes)) =>
+      getContent(path, request) onComplete {
+        case Success(Content(mimeType, bytes)) =>
           val elapsedTime = (System.nanoTime() - startTime).toDouble / 1e+6
           logger.info(f"${verb(path)} '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
           response.contentType = mimeType
@@ -48,35 +48,37 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
       }
   }
 
+  /**
+   * Retrieves the given resource from the class path
+   * @param resourcePath the given resource path (e.g. "/images/greenLight.png")
+   * @return the option of an array of bytes representing the content
+   */
+  private def getContent(resourcePath: String, request: CurrentHttpRequestMessage): Future[Content] = {
+    resourcePath match {
+      case path if path.startsWith(RestRoot) => processRestRequest(path, request)
+      case path => handleResourceRequest(path)
+    }
+  }
+
+  /**
+   * Asynchronously handles the GET request for the given resource path
+   * @param path the given resource path
+   * @return a promise of a piece of content
+   */
+  private def handleResourceRequest(path: String) = Future {
+    (for {
+      bytes <- Resource(path) map (url =>
+        new ByteArrayOutputStream(1024) use { out =>
+          url.openStream() use (IOUtils.copy(_, out))
+          out.toByteArray
+        })
+      mimeType <- guessMimeType(path)
+    } yield Content(mimeType, bytes)).orDie(s"Resource '$path' not found")
+  }
+
   private def verb(path: String) = if (path.startsWith(RestRoot)) "Executed" else "Retrieved"
 
   private def statusCode(path: String) = if (path.startsWith(RestRoot)) HttpResponseStatus.INTERNAL_SERVER_ERROR else HttpResponseStatus.NOT_FOUND
-
-  /**
-   * Retrieves the given resource from the class path
-   * @param path the given resource path (e.g. "/images/greenLight.png")
-   * @return the option of an array of bytes representing the content
-   */
-  private def getContent(path: String, request: CurrentHttpRequestMessage): Future[(String, Array[Byte])] = {
-    path match {
-      // REST requests
-      case s if s.startsWith(RestRoot) =>
-        processRestRequest(path, request)
-
-      // resource requests
-      case s =>
-        Future {
-          (for {
-            bytes <- Resource(s) map (url =>
-              new ByteArrayOutputStream(1024) use { out =>
-                url.openStream() use (IOUtils.copy(_, out))
-                out.toByteArray
-              })
-            mimeType <- guessMimeType(s)
-          } yield mimeType -> bytes).orDie(s"Resource '$s' not found")
-        }
-    }
-  }
 
   /**
    * Returns the MIME type for the given resource
@@ -102,7 +104,7 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
     }
   }
 
-  private def processRestRequest(path: String, request: CurrentHttpRequestMessage): Future[(String, Array[Byte])] = {
+  private def processRestRequest(path: String, request: CurrentHttpRequestMessage): Future[Content] = {
     import java.net.URLDecoder.decode
 
     /**
@@ -225,6 +227,13 @@ object WebContentActor {
   private val MimeJson = "application/json"
 
   /**
+   * Represents a "piece" of web content
+   * @param mimeType the given MIME type of the content
+   * @param bytes the binary representation of the content
+   */
+  case class Content(mimeType:String, bytes: Array[Byte])
+
+  /**
    * Convenience method for returning a parameter from a data map
    * @param dataMap the given data map
    */
@@ -252,18 +261,18 @@ object WebContentActor {
    */
   implicit class FutureJsonExtensionB[T](val outcome: Future[JValue]) extends AnyVal {
 
-    def mimeJson(implicit ec: ExecutionContext): Future[(String, Array[Byte])] = {
-      outcome map (js => (MimeJson, compact(render(js)).getBytes(encoding)))
+    def mimeJson(implicit ec: ExecutionContext): Future[Content] = {
+      outcome map (js => Content(MimeJson, compact(render(js)).getBytes(encoding)))
     }
 
   }
 
   implicit class FutureJsonExtensionsC(val outcome: Future[Option[List[String]]]) extends AnyVal {
 
-    def mimeCSV(implicit ec: ExecutionContext): Future[(String, Array[Byte])] = {
+    def mimeCSV(implicit ec: ExecutionContext): Future[Content] = {
       outcome map {
-        case Some(list) => (MimeCsv, list.mkString("\n").getBytes(encoding))
-        case None => (MimeCsv, Array.empty[Byte])
+        case Some(list) => Content(MimeCsv, list.mkString("\n").getBytes(encoding))
+        case None => Content(MimeCsv, Array.empty[Byte])
       }
     }
 
