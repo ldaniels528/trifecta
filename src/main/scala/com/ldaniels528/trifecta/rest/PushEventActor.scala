@@ -27,7 +27,7 @@ class PushEventActor(sessionMgr: WebSocketSessionManager, webServer: WebServer, 
   private def pushConsumerUpdateEvents() {
     val deltas = facade.getConsumerDeltas
     if (deltas.nonEmpty) {
-      logger.info(s"Transferring ${deltas.length} consumer(s) to ${sessionMgr.sessionsCount} clients...")
+      logger.debug(s"Transferring ${deltas.length} consumer(s) to ${sessionMgr.sessionsCount} clients...")
       webServer.webSocketConnections.writeText(JsonHelper.makeCompact(deltas))
     }
   }
@@ -38,7 +38,7 @@ class PushEventActor(sessionMgr: WebSocketSessionManager, webServer: WebServer, 
   private def pushTopicUpdateEvents() {
     val deltas = facade.getTopicDeltas
     if (deltas.nonEmpty) {
-      logger.info(s"Transferring ${deltas.length} topic(s) to ${sessionMgr.sessionsCount} clients...")
+      logger.debug(s"Transferring ${deltas.length} topic(s) to ${sessionMgr.sessionsCount} clients...")
       webServer.webSocketConnections.writeText(JsonHelper.makeCompact(deltas))
     }
   }

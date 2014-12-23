@@ -77,12 +77,13 @@
             service.updateTopic = function(updatedTopic) {
                 angular.forEach(service.topics, function(t) {
                     if(t.topic == updatedTopic.topic) {
-                        // setup the loading sequence
+                        if(!t.updatingTopics) t.updatingTopics = 0;
+
+                        // setup the topic update indicator
                         (function() {
-                            t.updating = t.updating ? t.updating + 1 : 1;
-                            var count = t.updating;
+                            t.updatingTopics++;
                             $timeout(function () {
-                                if (t.updating == count) t.updating = 0;
+                                t.updatingTopics--;
                             }, 15000);
                         })();
 
@@ -95,6 +96,7 @@
                             p.endOffset = updatedTopic.endOffset;
                             p.messages = updatedTopic.messages;
 
+                            // deltas should exist for 60 seconds (since the last update)
                             (function() {
                                 var lastDelta = p.delta;
                                 $timeout(function () {
