@@ -14,7 +14,7 @@ class WebSocketActor(facade: KafkaRestFacade) extends Actor {
   def receive = {
     case event: WebSocketFrameEvent => writeWebSocketResponse(event)
     case message =>
-      logger.info(s"received unknown message of type: $message")
+      logger.warn(s"received unknown message of type: $message")
       unhandled(message)
   }
 
