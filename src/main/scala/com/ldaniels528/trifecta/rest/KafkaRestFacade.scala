@@ -39,7 +39,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private val logger = LoggerFactory.getLogger(getClass)
 
   // caches
-  private var topicCache: Map[(String, Int), TopicDelta] = Map.empty
+  private var topicCache: Map[(String, Int), TopicDeltaWithTotals] = Map.empty
   private var consumerCache: Map[ConsumerDeltaKey, ConsumerJs] = Map.empty
 
   // define the custom thread pool
@@ -410,10 +410,16 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       } yield TopicDelta(t.topic, t.partitionId, firstOffset, lastOffset, messages = Math.max(0, lastOffset - firstOffset))
     }
 
+    // get the total message counts
+    val totalMessageCounts = topics.groupBy(_.topic) map { case (topic, info) => (topic, info.map(_.messages).sum)}
+    val topicsWithCounts = topics map { t =>
+      TopicDeltaWithTotals(t.topic, t.partition, t.startOffset, t.endOffset, t.messages, totalMessageCounts(t.topic))
+    }
+
     // extract and return only the topics that have changed
-    val deltas = if (topicCache.isEmpty) topics
+    val deltas = if (topicCache.isEmpty) topicsWithCounts
     else {
-      topics.flatMap(t =>
+      topicsWithCounts.flatMap(t =>
         topicCache.get((t.topic, t.partition)) match {
           case Some(prev) => if (prev != t) Option(t) else None
           case None => Option(t)
@@ -421,7 +427,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }
 
     // rebuild the message cache with the latest data
-    topicCache = topicCache ++ Map(topics.map(t => (t.topic -> t.partition) -> t): _*)
+    topicCache = topicCache ++ Map(topicsWithCounts.map(t => (t.topic -> t.partition) -> t): _*)
     deltas
   }
 
@@ -687,6 +693,8 @@ object KafkaRestFacade {
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
 
   case class TopicDelta(topic: String, partition: Int, startOffset: Long, endOffset: Long, messages: Long)
+
+  case class TopicDeltaWithTotals(topic: String, partition: Int, startOffset: Long, endOffset: Long, messages: Long, totalMessages: Long)
 
   case class TopicSummaryJs(topic: String, partitions: Seq[TopicPartitionJs], totalMessages: Long)
 

@@ -17,7 +17,7 @@
                 var endpoint = "ws://" + $location.host() + ":" + $location.port() + "/websocket/";
                 $log.info("Connecting to websocket endpoint '" + endpoint + "'...");
                 socket = new WebSocket(endpoint);
-                $log.info("socket = " + angular.toJson(socket));
+                // $log.info("socket = " + angular.toJson(socket));
 
                 socket.onopen = function (event) {
                     // $log.info("onOpen: event = " + angular.toJson(event));
