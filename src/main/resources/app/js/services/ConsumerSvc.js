@@ -9,8 +9,8 @@
                 "consumers": []
             };
 
-            service.getConsumers = function () {
-                return $http.get("/rest/getConsumers")
+            service.getConsumerDetails = function () {
+                return $http.get("/rest/getConsumerDetails")
                     .then(function (response) {
                         var consumers = response.data;
                         return consumers.sort(function(a, b) {

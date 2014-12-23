@@ -39,10 +39,6 @@
             $scope.observeTab = $scope.observeTabs[0];
             $scope.observeTab.active = true;
 
-            $scope.toggleHideShowEmptyTopics = function() {
-                $scope.myHideEmptyTopics = !$scope.myHideEmptyTopics;
-            };
-
             /**
              * Expands the first Zookeeper item
              */
@@ -140,8 +136,15 @@
                 }
             };
 
+            /**
+             * Toggles the empty topic hide/show flag
+             */
+            $scope.toggleHideShowEmptyTopics = function() {
+                $scope.myHideEmptyTopics = !$scope.myHideEmptyTopics;
+            };
+
             $scope.updateConsumers = function () {
-                ConsumerSvc.getConsumers().then(
+                ConsumerSvc.getConsumerDetails().then(
                     function (consumers) {
                         if ((consumers || []).length > 0) {
                             angular.forEach($scope.consumerMapping, function (root) {

@@ -362,7 +362,7 @@ object KafkaMicroConsumer {
   /**
    * Retrieves the list of consumers from Zookeeper
    */
-  def getConsumerList(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
+  def getConsumerDetails(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
     val basePath = "/consumers"
 
     // start with the list of consumer IDs
@@ -404,10 +404,10 @@ object KafkaMicroConsumer {
   }
 
   /**
-   * Retrieves the list of consumers from Zookeeper (Kafka Spout / Partition Manager Version)
+   * Retrieves the list of consumers from Zookeeper (Kafka-Storm Partition Manager Version)
    */
-  def getSpoutConsumerList()(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
-    zk.getFamily(path = "/").distinct filter (_.matches( """\S+[/]partition_\d+""")) flatMap { path =>
+  def getStormConsumerList()(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
+    zk.getFamily(path = "/").distinct filter (_.matches("""\S+[/]partition_\d+""")) flatMap { path =>
       zk.readString(path) flatMap { jsonString =>
         val lastModified = zk.getModificationTime(path)
         Try {

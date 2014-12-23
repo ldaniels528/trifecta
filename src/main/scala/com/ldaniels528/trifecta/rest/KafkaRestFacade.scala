@@ -26,7 +26,7 @@ import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -40,11 +40,11 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   // caches
   private var topicCache: Map[(String, Int), TopicDeltaWithTotals] = Map.empty
-  private var consumerCache: Map[ConsumerDeltaKey, ConsumerJs] = Map.empty
+  private var consumerCache: Map[ConsumerDeltaKey, ConsumerDetailJs] = Map.empty
 
   // define the custom thread pool
   private implicit val ec = new ExecutionContext {
-    private val threadPool = Executors.newFixedThreadPool(50)
+    private val threadPool = Executors.newFixedThreadPool(8)
 
     def execute(runnable: Runnable) = {
       threadPool.submit(runnable)
@@ -139,15 +139,15 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns the list of brokers
    * @return the JSON list of brokers
    */
-  def getBrokers = Try(brokers)
+  def getBrokers = Future(brokers)
 
   /**
    * Returns a collection of consumers that have changed since the last call
-   * @return a collection of [[ConsumerJs]] objects
+   * @return a collection of [[ConsumerDetailJs]] objects
    */
-  def getConsumerDeltas: Seq[ConsumerJs] = {
+  def getConsumerDeltas: Future[Seq[ConsumerDetailJs]] = Future {
     // combine the futures for the two lists
-    val consumers = Try(getConsumerGroupsNative).getOrElse(Nil) ++ Try(getConsumerGroupsPM).getOrElse(Nil)
+    val consumers = Try(getConsumerGroupsNative()).getOrElse(Nil) ++ Try(getConsumerGroupsPM).getOrElse(Nil)
 
     // extract and return only the consumers that have changed
     val deltas = if (consumerCache.isEmpty) consumers
@@ -164,7 +164,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
 
-  private def computeTransferRate(a: ConsumerJs, b: ConsumerJs): Option[Double] = {
+  private def computeTransferRate(a: ConsumerDetailJs, b: ConsumerDetailJs): Option[Double] = {
     for {
     // compute the delta of the messages
       messages0 <- a.messagesLeft
@@ -182,33 +182,31 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   /**
-   * Returns all consumers for all topics
+   * Returns the consumer details for all topics
    * @return a list of consumers
    */
-  def getConsumers = Try {
-    val consumersA = Try(getConsumerGroupsNative) match {
-      case Success(v) => v
-      case Failure(e) =>
-        logger.error("Failed to retrieve the Kafka-native consumers", e)
-        Nil
+  def getConsumerDetails: Future[Seq[ConsumerDetailJs]] = {
+    val taskA = Future(getConsumerGroupsNative())
+    val taskB = Future {
+      if (config.consumersPartitionManager) getConsumerGroupsPM else Nil
     }
 
-    val consumersB = Try(getConsumerGroupsPM) match {
-      case Success(v) => v
-      case Failure(e) =>
-        logger.error("Failed to retrieve the Kafka-Storm partition manager consumers", e)
-        Nil
-    }
+    for {
+      native <- taskA
+      storm <- taskB
+    } yield native ++ storm
+  }
 
-    consumersA ++ consumersB
+  def getConsumersByTopic(topic: String): Future[Seq[ConsumerDetailJs]] = {
+    getConsumerDetails map(_ filter (_.topic == topic))
   }
 
   /**
    * Returns all consumers for all topics
    * @return a list of consumers
    */
-  def getConsumerSet = Try {
-    val consumers = getConsumerGroupsNative ++ (if (config.consumersPartitionManager) getConsumerGroupsPM else Nil)
+  def getConsumerSet = Future {
+    val consumers = getConsumerGroupsNative() ++ (if (config.consumersPartitionManager) getConsumerGroupsPM else Nil)
     consumers.groupBy(_.topic) map { case (topic, consumersA) =>
       val results = (consumersA.groupBy(_.consumerId) map { case (consumerId, consumersB) =>
         ConsumerConsumerJs(consumerId, consumersB)
@@ -221,11 +219,11 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns the Kafka-native consumer groups
    * @return the Kafka-native consumer groups
    */
-  private def getConsumerGroupsNative: Seq[ConsumerJs] = {
-    KafkaMicroConsumer.getConsumerList() map { c =>
+  private def getConsumerGroupsNative(topicPrefix: Option[String] = None): Seq[ConsumerDetailJs] = {
+    KafkaMicroConsumer.getConsumerDetails() map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-      ConsumerJs(c.consumerId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
+      ConsumerDetailJs(c.consumerId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
     }
   }
 
@@ -233,11 +231,11 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns the Kafka Spout consumers (Partition Manager)
    * @return the Kafka Spout consumers
    */
-  private def getConsumerGroupsPM: Seq[ConsumerJs] = {
-    KafkaMicroConsumer.getSpoutConsumerList() map { c =>
+  private def getConsumerGroupsPM: Seq[ConsumerDetailJs] = {
+    KafkaMicroConsumer.getStormConsumerList() map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-      ConsumerJs(c.topologyName, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
+      ConsumerDetailJs(c.topologyName, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
     }
   }
 
@@ -245,13 +243,13 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns a decoder by topic
    * @return the collection of decoders
    */
-  def getDecoderByTopic(topic: String) = Try(toDecoderJs(topic, config.getDecodersByTopic(topic)))
+  def getDecoderByTopic(topic: String) = Future(toDecoderJs(topic, config.getDecodersByTopic(topic)))
 
   /**
    * Returns a decoder by topic and schema name
    * @return the option of a decoder
    */
-  def getDecoderSchemaByName(topic: String, schemaName: String) = Try {
+  def getDecoderSchemaByName(topic: String, schemaName: String) = Future {
     val decoders = config.getDecoders.filter(_.topic == topic)
     decoders.filter(_.name == schemaName).map(_.decoder match {
       case Left(v) => v.schema.toString(true)
@@ -263,7 +261,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns all available decoders
    * @return the collection of decoders
    */
-  def getDecoders = {
+  def getDecoders = Future {
     (config.getDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
       toDecoderJs(topic, myDecoders.sortBy(-_.lastModified))
     }).toSeq
@@ -296,7 +294,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   /**
    * Retrieves the list of partition leaders and replicas for a given topic
    */
-  def getLeaderAndReplicas(topic: String) = {
+  def getLeaderAndReplicas(topic: String) = Future {
     KafkaMicroConsumer.getLeaderAndReplicas(topic, brokers) flatMap {
       case LeaderAndReplicas(partition, leader, replicas) =>
         replicas map (LeaderAndReplicasJs(partition, leader, _))
@@ -310,7 +308,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @param offset the given offset
    * @return the JSON representation of the message
    */
-  def getMessageData(topic: String, partition: Int, offset: Long) = Try {
+  def getMessageData(topic: String, partition: Int, offset: Long) = Future {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
       getDefinedOffset(cons, offset) map { o =>
         decodeMessageData(topic, cons.fetch(o)(fetchSize = DEFAULT_FETCH_SIZE).headOption)
@@ -325,7 +323,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @param offset the given offset
    * @return the JSON representation of the message key
    */
-  def getMessageKey(topic: String, partition: Int, offset: Long) = Try {
+  def getMessageKey(topic: String, partition: Int, offset: Long) = Future {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
       getDefinedOffset(cons, offset) map { o =>
         cons.fetch(o)(fetchSize = DEFAULT_FETCH_SIZE).headOption map (md => toMessage(md.key))
@@ -390,18 +388,20 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @param topic the given topic (e.g. "shocktrade.quotes.avro")
    * @return the list of available queries
    */
-  def getQueriesByTopic(topic: String) = config.getQueriesByTopic(topic) getOrElse Nil
+  def getQueriesByTopic(topic: String) = Future(config.getQueriesByTopic(topic) getOrElse Nil)
 
   /**
    * Retrieves the list of Kafka replicas for a given topic
    */
-  def getReplicas(topic: String) = KafkaMicroConsumer.getReplicas(topic, brokers) sortBy (_.partition)
+  def getReplicas(topic: String) = Future {
+    KafkaMicroConsumer.getReplicas(topic, brokers) sortBy (_.partition)
+  }
 
   /**
    * Returns a collection of topics that have changed since the last call
    * @return a collection of [[TopicDelta]] objects
    */
-  def getTopicDeltas = {
+  def getTopicDeltas = Future {
     // retrieve all topic/partitions for analysis
     val topics = KafkaMicroConsumer.getTopicList(brokers) flatMap { t =>
       for {
@@ -431,9 +431,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     deltas
   }
 
-  def getTopics = Try(KafkaMicroConsumer.getTopicList(brokers))
+  def getTopics = Future(KafkaMicroConsumer.getTopicList(brokers))
 
-  def getTopicSummaries = {
+  def getTopicSummaries = Future {
     (KafkaMicroConsumer.getTopicList(brokers).groupBy(_.topic) map { case (topic, details) =>
       // produce the partitions
       val partitions = details map { detail =>
@@ -453,9 +453,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }).toSeq
   }
 
-  def getTopicByName(topic: String) = Try(KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic))
+  def getTopicByName(topic: String) = Future(KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic))
 
-  def getTopicDetailsByName(topic: String) = {
+  def getTopicDetailsByName(topic: String) = Future {
     KafkaMicroConsumer.getTopicPartitions(topic) map { partition =>
       new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
         val startOffset = consumer.getFirstOffset
@@ -469,7 +469,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def getZkData(path: String, format: String) = {
     import net.liftweb.json._
 
-    Try {
+    Future {
       val decoder = codecs.get(format).orDie(s"No decoder of type '$format' was found")
       zk.read(path) map decoder.decode
     } map {
@@ -481,7 +481,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }
   }
 
-  def getZkInfo(path: String) = Try {
+  def getZkInfo(path: String) = Future {
     val creationTime = zk.getCreationTime(path)
     val lastModified = zk.getModificationTime(path)
     val data_? = zk.read(path)
@@ -490,13 +490,13 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     ZkItemInfo(path, creationTime, lastModified, size_?, formattedData_?)
   }
 
-  def getZkPath(parentPath: String) = {
+  def getZkPath(parentPath: String) = Future {
     zk.getChildren(parentPath) map { name =>
       ZkItem(name, path = if (parentPath == "/") s"/$name" else s"$parentPath/$name")
     }
   }
 
-  def publishMessage(topic: String, jsonString: String) = Try {
+  def publishMessage(topic: String, jsonString: String) = Future {
     // deserialize the JSON
     val blob = JsonHelper.transform[MessageBlobJs](jsonString)
 
@@ -572,7 +572,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     }
   }
 
-  def saveDecoderSchema(jsonString: String) = Try {
+  def saveDecoderSchema(jsonString: String) = Future {
     // transform the JSON string into a schema
     val schema = JsonHelper.transform[SchemaJs](jsonString)
     val decoderFile = new File(new File(TxConfig.decoderDirectory, schema.topic), schema.name)
@@ -585,7 +585,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     ErrorJs(message = "Saved", `type` = "success")
   }
 
-  def saveQuery(jsonString: String) = Try {
+  def saveQuery(jsonString: String) = Future {
     // transform the JSON string into a query
     val query = JsonHelper.transform[QueryJs](jsonString)
     val file = new File(new File(TxConfig.queriesDirectory, query.topic), s"${query.name}.kql")
@@ -605,7 +605,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    */
   def transformResultsToCSV(queryResults: String) = {
     def toCSV(values: List[String]): String = values.map(s => s""""$s"""").mkString(",")
-    Try {
+    Future {
       val js = JsonHelper.toJson(queryResults)
       for {
         topic <- (js \ "topic").extractOpt[String]
@@ -662,7 +662,7 @@ object KafkaRestFacade {
     }
   }
 
-  case class ConsumerJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long], rate: Option[Double]) {
+  case class ConsumerDetailJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long], rate: Option[Double]) {
 
     def getKey = ConsumerDeltaKey(consumerId, topic, partition)
 
@@ -672,7 +672,7 @@ object KafkaRestFacade {
 
   case class ConsumerTopicJs(topic: String, consumers: Seq[ConsumerConsumerJs])
 
-  case class ConsumerConsumerJs(consumerId: String, details: Seq[ConsumerJs])
+  case class ConsumerConsumerJs(consumerId: String, details: Seq[ConsumerDetailJs])
 
   case class DecoderJs(topic: String, schemas: Seq[SchemaJs])
 

@@ -96,6 +96,8 @@ th { text-align: left }
     width: 100%;
 }
 
+.indent { margin-left: 32px; }
+
 .inline {
     display: inline;
 }
