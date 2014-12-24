@@ -85,7 +85,7 @@
                     if(consumers) {
                         var detail = service.findConsumerDetail(consumers, u);
                         if(detail) {
-                            detail.delta = u.offset - detail.offset;
+                            detail.delta = Math.max(0, u.offset - detail.offset);
                             detail.messagesLeft = u.messagesLeft;
                             detail.lastModified = u.lastModified;
                             detail.offset = u.offset;
