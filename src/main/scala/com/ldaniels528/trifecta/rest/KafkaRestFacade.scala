@@ -143,26 +143,24 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   /**
    * Returns a collection of consumers that have changed since the last call
-   * @return a collection of [[ConsumerDetailJs]] objects
+   * @return a promise of a collection of [[ConsumerDetailJs]]
    */
-  def getConsumerDeltas: Future[Seq[ConsumerDetailJs]] = Future {
-    // combine the futures for the two lists
-    val consumers = Try(getConsumerGroupsNative()).getOrElse(Nil) ++ Try(getConsumerGroupsPM).getOrElse(Nil)
+  def getConsumerDeltas: Future[Seq[ConsumerDetailJs]] = {
+    getConsumerDetails map { consumers =>
+      // extract and return only the consumers that have changed
+      val deltas = if (consumerCache.isEmpty) consumers
+      else {
+        consumers.flatMap(c =>
+          consumerCache.get(c.getKey) match {
+            case Some(prev) => if (prev != c) Option(c.copy(rate = computeTransferRate(prev, c))) else None
+            case None => Option(c)
+          })
+      }
 
-    // extract and return only the consumers that have changed
-    val deltas = if (consumerCache.isEmpty) consumers
-    else {
-      consumers.flatMap(c =>
-        consumerCache.get(c.getKey) match {
-          case Some(prev) => if (prev != c) Option(c.copy(rate = computeTransferRate(prev, c))) else None
-          case None => Option(c)
-        })
+      consumerCache = consumerCache ++ Map(consumers.map(c => c.getKey -> c): _*)
+      deltas
     }
-
-    consumerCache = consumerCache ++ Map(consumers.map(c => c.getKey -> c): _*)
-    deltas
   }
-
 
   private def computeTransferRate(a: ConsumerDetailJs, b: ConsumerDetailJs): Option[Double] = {
     for {
@@ -186,32 +184,31 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @return a list of consumers
    */
   def getConsumerDetails: Future[Seq[ConsumerDetailJs]] = {
-    val taskA = Future(getConsumerGroupsNative())
-    val taskB = Future {
-      if (config.consumersPartitionManager) getConsumerGroupsPM else Nil
-    }
+    val taskA = getConsumerGroupsNative()
+    val taskB = if (config.consumersPartitionManager) getConsumerGroupsPM else Future.successful(Nil)
 
     for {
-      native <- taskA
+      kafka <- taskA
       storm <- taskB
-    } yield native ++ storm
+    } yield kafka ++ storm
   }
 
   def getConsumersByTopic(topic: String): Future[Seq[ConsumerDetailJs]] = {
-    getConsumerDetails map(_ filter (_.topic == topic))
+    getConsumerDetails map (_ filter (_.topic == topic))
   }
 
   /**
    * Returns all consumers for all topics
    * @return a list of consumers
    */
-  def getConsumerSet = Future {
-    val consumers = getConsumerGroupsNative() ++ (if (config.consumersPartitionManager) getConsumerGroupsPM else Nil)
-    consumers.groupBy(_.topic) map { case (topic, consumersA) =>
-      val results = (consumersA.groupBy(_.consumerId) map { case (consumerId, consumersB) =>
-        ConsumerConsumerJs(consumerId, consumersB)
-      }).toSeq
-      ConsumerTopicJs(topic, results)
+  def getConsumerSet = {
+    getConsumerDetails map { consumers =>
+      consumers.groupBy(_.topic) map { case (topic, consumersA) =>
+        val results = (consumersA.groupBy(_.consumerId) map { case (consumerId, consumersB) =>
+          ConsumerConsumerJs(consumerId, consumersB)
+        }).toSeq
+        ConsumerTopicJs(topic, results)
+      }
     }
   }
 
@@ -219,7 +216,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns the Kafka-native consumer groups
    * @return the Kafka-native consumer groups
    */
-  private def getConsumerGroupsNative(topicPrefix: Option[String] = None): Seq[ConsumerDetailJs] = {
+  private def getConsumerGroupsNative(topicPrefix: Option[String] = None): Future[Seq[ConsumerDetailJs]] = Future {
     KafkaMicroConsumer.getConsumerDetails() map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
@@ -231,7 +228,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Returns the Kafka Spout consumers (Partition Manager)
    * @return the Kafka Spout consumers
    */
-  private def getConsumerGroupsPM: Seq[ConsumerDetailJs] = {
+  private def getConsumerGroupsPM: Future[Seq[ConsumerDetailJs]] = Future {
     KafkaMicroConsumer.getStormConsumerList() map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
