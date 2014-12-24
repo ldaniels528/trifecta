@@ -141,9 +141,10 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 ### What's New
 
 #### v0.18.9
+* Trifecta UI: the REST server is now supports asynchronous request/response flows
 * Trifecta UI: Minor improvements the Observe tab
-    * The Consumers section has been enhanced to display topic and consumer offset deltas.
-    * The Topics section has been enhanced to display topic offset deltas.
+    * The Consumers section has been enhanced to display topic and consumer offset deltas
+    * The Topics section has been enhanced to display topic offset deltas
 
 #### v0.18.8
 * Trifecta UI: Redesigned the Query tab
@@ -159,7 +160,7 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 * Trifecta UI: "Query tab" user interface improvements
 
 #### v0.18.1
-* Added Trifecta UI
+* Added Trifecta UI, a web-based interface to complement the CLI application.
 
 <a name="trifecta-ui"></a>
 ### Trifecta UI
