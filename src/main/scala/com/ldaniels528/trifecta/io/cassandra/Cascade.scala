@@ -21,6 +21,8 @@ object Cascade extends ScalaBeanUtil {
    * collection of instances of the specified bean class.
    */
   def extract[T](beanClass: Class[T], rs: ResultSet): Seq[T] = {
+    import scala.language.existentials
+
     // get the constructor and methods
     val (cons, methods) = getContructorWithMethods(beanClass)
 

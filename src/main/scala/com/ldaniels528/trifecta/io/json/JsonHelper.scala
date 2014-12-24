@@ -73,15 +73,18 @@ object JsonHelper {
    */
   def toDocument(js: JValue): Q = {
     js.values match {
-      case m: Map[String, Any] => convertToMDB(m).asInstanceOf[Q]
+      case m: Map[_, _] =>
+        val mapping = m.map { case (k, v) => (String.valueOf(k), v)}
+        convertToMDB(mapping).asInstanceOf[Q]
       case x => throw new IllegalArgumentException(s"$x (${Option(x).map(_.getClass.getName)})")
     }
   }
 
   private def convertToMDB[T](input: T): Any = {
     input match {
-      case m: Map[String, Any] =>
-        m.foldLeft(Q()) { case (result, (key, value)) =>
+      case m: Map[_, _] =>
+        val mapping = m.map { case (k, v) => (String.valueOf(k), v)}
+        mapping.foldLeft(Q()) { case (result, (key, value)) =>
           result ++ Q(key -> convertToMDB(value))
         }
       case x => x
