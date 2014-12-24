@@ -43,8 +43,9 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
           response.contentType = mimeType
           response.write(bytes)
         case Failure(e) =>
-          logger.error(s"Resource '$path' failed during processing", e)
-          response.write(statusCode(path), s"Resource '$path' failed during processing")
+          val message = s"Resource '$path' failed unexpectedly"
+          logger.error(message, e)
+          response.write(statusCode(path), message)
       }
   }
 
@@ -191,7 +192,7 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
           case "saveQuery" => facade.saveQuery(request.asJsonString).toJson.mimeJson
           case "saveSchema" => facade.saveDecoderSchema(request.asJsonString).toJson.mimeJson
           case "transformResultsToCSV" => facade.transformResultsToCSV(request.asJsonString).mimeCSV
-          case unknown => Future.failed(new RuntimeException(s"Action not found '$unknown'"))
+          case unknown => throw new RuntimeException(s"Action not found '$unknown'")
         }
     }
   }
