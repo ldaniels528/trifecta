@@ -26,6 +26,7 @@ import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
 import org.slf4j.LoggerFactory
 
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
@@ -39,8 +40,8 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   private val logger = LoggerFactory.getLogger(getClass)
 
   // caches
-  private var topicCache: Map[(String, Int), TopicDeltaWithTotals] = Map.empty
-  private var consumerCache: Map[ConsumerDeltaKey, ConsumerDetailJs] = Map.empty
+  private val topicCache = TrieMap[(String, Int), TopicDeltaWithTotals]()
+  private val consumerCache = TrieMap[ConsumerDeltaKey, ConsumerDetailJs]()
 
   // define the custom thread pool
   private implicit val ec = new ExecutionContext {
@@ -150,14 +151,19 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       // extract and return only the consumers that have changed
       val deltas = if (consumerCache.isEmpty) consumers
       else {
-        consumers.flatMap(c =>
-          consumerCache.get(c.getKey) match {
-            case Some(prev) => if (prev != c) Option(c.copy(rate = computeTransferRate(prev, c))) else None
+        consumers.flatMap { c =>
+          consumerCache.get(c.getKey) match { // Option(c.copy(rate = computeTransferRate(prev, c)))
+            case Some(prev) => if(prev != c) Option(c) else None
             case None => Option(c)
-          })
+          }
+        }
       }
 
-      consumerCache = consumerCache ++ Map(consumers.map(c => c.getKey -> c): _*)
+      // update the cache
+      deltas.foreach { c =>
+        consumerCache(c.getKey) = c
+      }
+
       deltas
     }
   }
@@ -193,22 +199,12 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     } yield kafka ++ storm
   }
 
-  def getConsumersByTopic(topic: String): Future[Seq[ConsumerDetailJs]] = {
-    getConsumerDetails map (_ filter (_.topic == topic))
-  }
-
-  /**
-   * Returns all consumers for all topics
-   * @return a list of consumers
-   */
-  def getConsumerSet = {
+  def getConsumersByTopic(topic: String) = {
     getConsumerDetails map { consumers =>
-      consumers.groupBy(_.topic) map { case (topic, consumersA) =>
-        val results = (consumersA.groupBy(_.consumerId) map { case (consumerId, consumersB) =>
-          ConsumerConsumerJs(consumerId, consumersB)
-        }).toSeq
-        ConsumerTopicJs(topic, results)
-      }
+      consumers
+        .filter(_.topic == topic)
+        .groupBy(_.consumerId)
+        .map { case (consumerId, details) => ConsumerByTopicJs(consumerId, details)}
     }
   }
 
@@ -423,8 +419,11 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
         })
     }
 
-    // rebuild the message cache with the latest data
-    topicCache = topicCache ++ Map(topicsWithCounts.map(t => (t.topic -> t.partition) -> t): _*)
+    // update the cache
+    deltas.foreach { t =>
+      topicCache(t.topic -> t.partition) = t
+    }
+
     deltas
   }
 
@@ -659,6 +658,8 @@ object KafkaRestFacade {
     }
   }
 
+  case class ConsumerByTopicJs(consumerId: String, details: Seq[ConsumerDetailJs])
+
   case class ConsumerDetailJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long], rate: Option[Double]) {
 
     def getKey = ConsumerDeltaKey(consumerId, topic, partition)
@@ -666,10 +667,6 @@ object KafkaRestFacade {
   }
 
   case class ConsumerDeltaKey(consumerId: String, topic: String, partition: Int)
-
-  case class ConsumerTopicJs(topic: String, consumers: Seq[ConsumerConsumerJs])
-
-  case class ConsumerConsumerJs(consumerId: String, details: Seq[ConsumerDetailJs])
 
   case class DecoderJs(topic: String, schemas: Seq[SchemaJs])
 

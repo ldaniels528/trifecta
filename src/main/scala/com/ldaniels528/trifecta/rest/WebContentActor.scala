@@ -141,7 +141,6 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
             case topic :: Nil => facade.getConsumersByTopic(topic).toJson.mimeJson
             case _ => missingArgs("topic")
           }
-          case "getConsumerSet" => facade.getConsumerSet.toJson.mimeJson
           case "getDecoders" => facade.getDecoders.toJson.mimeJson
           case "getDecoderByTopic" => args match {
             case topic :: Nil => facade.getDecoderByTopic(topic).toJson.mimeJson

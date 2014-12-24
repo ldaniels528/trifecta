@@ -13,10 +13,10 @@
             <div class="full_block">
                 <div ng-show="observeTab.name == 'Consumers'">
                     <div style="display: inline; float: left; width: 69.9%; height: 525px; border-right: 1px solid #cccccc">
-                        <div ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
+                        <div ng-show="ConsumerSvc.consumers.length" ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
                         
                         <!-- No Consumers -->
-                        <div ng-hide="consumerMapping.length">
+                        <div ng-hide="ConsumerSvc.consumers.length">
                             <div>
                                 <img src="/app/images/status/yellowlight.gif">
                                 <span class="warning">No consumers were found.</span>
@@ -45,10 +45,13 @@
                         </div>
 
                         <!-- Consumers -->
-                        <div class="block" ng-repeat="t in getTopics(myHideEmptyTopics)">
-                            <a ng-click="t.expanded = !t.expanded">
-                                <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
+                        <div ng-show="ConsumerSvc.consumers.length" class="block" ng-repeat="t in getTopics(myHideEmptyTopics)">
+                            <a ng-click="expandTopicConsumers(t)">
+                                <img ng-src="/app/images/{{t.loadingConsumers ? 'status/loading.gif' : t.expanded ? 'buttons/collapse.png' : 'buttons/expand.png'}}">
                                 <img ng-src="{{ getTopicIcon(t, t == topic) }}"> {{ t.topic }}
+                                <span ng-show="t.totalMessages > 0">
+                                    (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
+                                </span>
                             </a>
 
                             <div ng-show="t.expanded" ng-repeat="consumer in t.consumers" class="indent">
@@ -80,58 +83,10 @@
                                                 <a ng-click="switchToMessage(detail.topic, detail.partition, detail.offset)">
                                                     {{ detail.offset }}
                                                 </a>
+                                                <span class="positive" ng-show="detail.delta"> (+{{ detail.delta | number }})</span>
                                             </td>
                                             <td>{{ detail.messagesLeft | number }}</td>
                                             <td>{{ detail.lastModified | date:'yyyy-MM-dd HH:mm:ss Z' }}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="full_block"><hr></div>
-
-                        <div class="block" ng-repeat="levelA in consumerMapping|orderBy:'topic'">
-                            <div>
-                                <a ng-click="levelA.expanded = !levelA.expanded">
-                                    <img ng-src="/app/images/buttons/{{levelA.expanded ? 'collapse' : 'expand'}}.png">
-                                    <img src="/app/images/common/topic-16.png">
-                                    <span>{{levelA.topic}}</span>
-                                    <img ng-show="levelA.loading" src="/app/images/status/processing.gif">
-                                </a>
-                            </div>
-                            <div ng-show="levelA.expanded" ng-repeat="levelB in levelA.consumers" class="indent">
-                                <a ng-click="levelB.expanded = !levelB.expanded">
-                                    <img ng-src="/app/images/buttons/{{levelB.expanded ? 'collapse' : 'expand'}}.png">
-                                    <img src="/app/images/common/consumers-16.png">
-                                    <span>{{levelB.consumerId}}</span>
-                                    <img src="/app/images/status/processing.gif" ng-show="levelB.expanded && isConsumerUpToDate(levelB)">
-                                </a>
-
-                                <div ng-show="levelB.expanded" class="indent">
-                                    <table>
-                                        <tr>
-                                            <th>Partition</th>
-                                            <th>Topic Offset</th>
-                                            <th>Consumer Offset</th>
-                                            <th>Remaining</th>
-                                            <th>Last Updated</th>
-                                        </tr>
-
-                                        <tr ng-repeat="levelC in levelB.details | orderBy:'partition'">
-                                            <td>{{ levelC.partition }}</td>
-                                            <td>
-                                                <a ng-click="switchToMessage(levelC.topic, levelC.partition, levelC.topicOffset)">
-                                                    {{ levelC.topicOffset }}
-                                                </a>
-                                            </td>
-                                            <td>
-                                                <a ng-click="switchToMessage(levelC.topic, levelC.partition, levelC.offset)">
-                                                    {{ levelC.offset }}
-                                                </a>
-                                            </td>
-                                            <td>{{ levelC.messagesLeft | number }}</td>
-                                            <td>{{ levelC.lastModified | date:'yyyy-MM-dd HH:mm:ss Z' }}</td>
                                         </tr>
                                     </table>
                                 </div>
@@ -200,9 +155,9 @@
                             <a ng-click="t.expanded = !t.expanded">
                                 <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
                                 <img ng-src="{{ getTopicIcon(t, topic == t) }}"> {{ t.topic }}
-                                 <span ng-show="t.totalMessages > 0">
+                                <span ng-show="t.totalMessages > 0">
                                     (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
-                                 </span>
+                                </span>
                                 <img src="/app/images/status/processing.gif" ng-show="t.updatingTopics">
                             </a>
                             <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
