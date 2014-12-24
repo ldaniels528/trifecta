@@ -1,3 +1,10 @@
+.hide_show_topics {
+    background: #337ab7;
+    color: white;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
 .streaming_topics_container {
     clear: both;
     width: auto;

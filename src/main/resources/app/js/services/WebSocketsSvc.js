@@ -4,7 +4,7 @@
  */
 (function () {
     angular.module('trifecta')
-        .factory('WebSockets', function ($location, $log, ConsumerSvc, TopicSvc) {
+        .factory('WebSockets', function ($location, $log, TopicSvc) {
             var service = {};
 
             // establish the web socket connection
@@ -30,10 +30,13 @@
                 socket.onmessage = function (event) {
                     if(event.data) {
                         var data = angular.fromJson(event.data);
+                        // $log.info("data = " + angular.toJson(data));
 
                         // consumer update?
                         if(data[0].consumerId) {
-                            ConsumerSvc.updateConsumers(data);
+                            angular.element('#TrifectaMain').scope().$apply(function(scope) {
+                                TopicSvc.updateConsumers(data);
+                            });
                         }
 
                         // topic update?

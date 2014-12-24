@@ -39,8 +39,25 @@
             $scope.observeTab = $scope.observeTabs[0];
             $scope.observeTab.active = true;
 
-            $scope.toggleHideShowEmptyTopics = function() {
-                $scope.myHideEmptyTopics = !$scope.myHideEmptyTopics;
+            /**
+             * Expands the consumers for the given topic
+             * @param topic the given topic
+             */
+            $scope.expandTopicConsumers = function(topic) {
+                topic.expanded = !topic.expanded;
+                if(topic.expanded) {
+                    topic.loadingConsumers = true;
+                    ConsumerSvc.getConsumersByTopic(topic.topic).then(
+                        function(consumers) {
+                            topic.loadingConsumers = false;
+                            topic.consumers = consumers;
+                        },
+                        function(err) {
+                            topic.loadingConsumers = false;
+                            $scope.addError(err);
+                        }
+                    );
+                }
             };
 
             /**
@@ -140,67 +157,16 @@
                 }
             };
 
-            $scope.updateConsumers = function () {
-                ConsumerSvc.getConsumers().then(
-                    function (consumers) {
-                        if ((consumers || []).length > 0) {
-                            angular.forEach($scope.consumerMapping, function (root) {
-                                root.loading = true;
-
-                                angular.forEach(root.consumers, function (consumer) {
-                                    angular.forEach(consumer.details, function (c) {
-                                        var nc = findConsumer(consumers, c);
-                                        if (nc && (c.offset != nc.offset || c.topicOffset != nc.topicOffset ||
-                                            c.messagesLeft != nc.messagesLeft || c.lastModified != nc.lastModified)) {
-                                            c.offset = nc.offset;
-                                            c.topicOffset = nc.topicOffset;
-                                            c.messagesLeft = nc.messagesLeft;
-                                            c.lastModified = nc.lastModified;
-                                        }
-                                    });
-                                });
-                                $timeout(function () {
-                                    root.loading = false;
-                                }, 500);
-                            });
-                        }
-                        else {
-                            console.log("No consumers found");
-                        }
-                    },
-                    errorHandler);
+            /**
+             * Toggles the empty topic hide/show flag
+             */
+            $scope.toggleHideShowEmptyTopics = function() {
+                $scope.myHideEmptyTopics = !$scope.myHideEmptyTopics;
             };
-
-            function findConsumer(consumers, consumer) {
-                for (var n = 0; n < consumers.length; n++) {
-                    var c = consumers[n];
-                    if (c.topic == consumer.topic && c.partition == consumer.partition && c.consumerId == consumer.consumerId) {
-                        return c;
-                    }
-                }
-                return null;
-            }
 
             function errorHandler(err) {
                 $scope.addError(err);
             }
-
-            $scope.$watch("ConsumerSvc.consumers", function(newConsumers, oldConsumers) {
-                if(newConsumers && newConsumers.length) {
-                    $log.info("Loaded new consumers (" + newConsumers.length + ")");
-                    $scope.consumerMapping = newConsumers;
-                }
-            });
-
-
-            $scope.$watch("TopicSvc.topics", function(newTopics, oldTopics) {
-                // asynchronously load the replicas for the topic
-                /*
-                var myTopicName = topic ? topic.topic : null;
-                if(myTopicName) {
-                    $scope.getReplicas(myTopicName);
-                }*/
-            });
 
         }])
 })();

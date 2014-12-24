@@ -8,7 +8,7 @@
             function ($scope, $interval, $log, $parse, $timeout, MessageSvc, MessageSearchSvc, TopicSvc) {
 
                 $scope.hideEmptyTopics = true;
-                $scope.topics = [];
+                $scope.topics = TopicSvc.topics;
                 $scope.topic = null;
                 $scope.loading = 0;
                 $scope.message = {};
@@ -347,12 +347,14 @@
                 /**
                  * Watch for topic changes, and select the first non-empty topic
                  */
-                $scope.$watch("TopicSvc.topics", function(newTopics, oldTopics) {
+                $scope.$watchCollection("TopicSvc.topics", function(newTopics, oldTopics) {
                     $log.info("Loaded new topics (" + newTopics.length + ")");
-                    $scope.topics = newTopics;
+                    //$scope.topics = newTopics;
 
-                    var myTopic = findNonEmptyTopic($scope.topics);
-                    $scope.updateTopic(myTopic);
+                    if(!$scope.topic) {
+                        var myTopic = findNonEmptyTopic($scope.topics);
+                        $scope.updateTopic(myTopic);
+                    }
                 });
 
             }]);

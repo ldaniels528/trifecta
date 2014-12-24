@@ -74,6 +74,50 @@
                     });
             };
 
+            /**
+             * {"consumerId":"dev","topic":"shocktrade.keystats.avro","partition":1,"offset":4910,"topicOffset":8388,"lastModified":1419391037744,"messagesLeft":3478}
+             * @param updatedConsumers
+             */
+            service.updateConsumers = function (updatedConsumers) {
+                angular.forEach(updatedConsumers, function(u) {
+                    var t = service.findTopicByName(u.topic);
+                    var consumers = t ? t.consumers : null;
+                    if(consumers) {
+                        var detail = service.findConsumerDetail(consumers, u);
+                        if(detail) {
+                            detail.deltaT = Math.max(0, u.topicOffset - detail.topicOffset);
+                            detail.deltaC = Math.max(0, u.offset - detail.offset);
+                            detail.messagesLeft = u.messagesLeft;
+                            detail.lastModified = u.lastModified;
+                            detail.offset = u.offset;
+                            detail.topicOffset = u.topicOffset;
+                            detail.messagesLeft = u.messagesLeft;
+                            detail.lastModified = u.lastModified;
+
+                            // topic deltas should exist for 60 seconds (since the last update)
+                            if(detail.deltaT) {
+                                (function () {
+                                    var lastDelta = detail.deltaT;
+                                    $timeout(function () {
+                                        if (detail.deltaT == lastDelta) detail.deltaT = null;
+                                    }, 60000);
+                                })();
+                            }
+
+                            // consumer deltas should exist for 60 seconds (since the last update)
+                            if(detail.deltaC) {
+                                (function () {
+                                    var lastDelta = detail.deltaC;
+                                    $timeout(function () {
+                                        if (detail.deltaC == lastDelta) detail.deltaC = null;
+                                    }, 60000);
+                                })();
+                            }
+                        }
+                    }
+                });
+            };
+
             service.updateTopic = function(updatedTopic) {
                 angular.forEach(service.topics, function(t) {
                     if(t.topic == updatedTopic.topic) {
@@ -84,7 +128,7 @@
                             t.updatingTopics++;
                             $timeout(function () {
                                 t.updatingTopics--;
-                            }, 15000);
+                            }, 7500);
                         })();
 
                         // update the topic with the delta information
@@ -97,12 +141,14 @@
                             p.messages = updatedTopic.messages;
 
                             // deltas should exist for 60 seconds (since the last update)
-                            (function() {
-                                var lastDelta = p.delta;
-                                $timeout(function () {
-                                    if(p.delta == lastDelta) p.delta = null;
-                                }, 60000);
-                            })();
+                            if(p.delta) {
+                                (function () {
+                                    var lastDelta = p.delta;
+                                    $timeout(function () {
+                                        if (p.delta == lastDelta) p.delta = null;
+                                    }, 60000);
+                                })();
+                            }
                         }
                     }
                 });
@@ -112,6 +158,26 @@
                 angular.forEach(updatedTopics, function (updatedTopic) {
                     service.updateTopic(updatedTopic);
                 });
+            };
+
+            service.findConsumerDetail = function(consumers, consumerDelta) {
+                for(var n = 0; n < consumers.length; n++) {
+                    if(consumers[n].consumerId == consumerDelta.consumerId) {
+                        var details = consumers[n].details;
+                        for(var m = 0; m < details.length; m++) {
+                            if(details[m].partition == consumerDelta.partition) return details[m];
+                        }
+                    }
+                }
+                return null;
+            };
+
+            service.findTopicByName = function(topicName) {
+                for(var n = 0; n < service.topics.length; n++) {
+                    var t = service.topics[n];
+                    if(t.topic == topicName) return t;
+                }
+                return null;
             };
 
             service.findPartition = function(topic, partitionId) {
@@ -126,10 +192,15 @@
             // pre-load the topics
             service.getTopics().then(function(topics) {
                 $log.info("Retrieved " + topics.length + " topic(s)...");
-                service.topics = topics.sort(function(a, b) {
+                var sortedTopics = topics.sort(function(a, b) {
                     var ta = a.topic.toLowerCase();
                     var tb = b.topic.toLowerCase();
                     return ta > tb ? 1 : ta < tb ? -1 : 0;
+                });
+
+                angular.forEach(sortedTopics, function(t) {
+                    t.consumers = [];
+                    service.topics.push(t);
                 });
             });
 
