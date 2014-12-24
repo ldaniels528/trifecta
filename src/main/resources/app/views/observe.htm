@@ -78,12 +78,13 @@
                                                 <a ng-click="switchToMessage(detail.topic, detail.partition, detail.topicOffset)">
                                                     {{ detail.topicOffset }}
                                                 </a>
+                                                <span class="positive" ng-show="detail.deltaT"> (+{{ detail.deltaT | number }})</span>
                                             </td>
                                             <td>
                                                 <a ng-click="switchToMessage(detail.topic, detail.partition, detail.offset)">
                                                     {{ detail.offset }}
                                                 </a>
-                                                <span class="positive" ng-show="detail.delta"> (+{{ detail.delta | number }})</span>
+                                                <span class="positive" ng-show="detail.deltaC"> (+{{ detail.deltaC | number }})</span>
                                             </td>
                                             <td>{{ detail.messagesLeft | number }}</td>
                                             <td>{{ detail.lastModified | date:'yyyy-MM-dd HH:mm:ss Z' }}</td>

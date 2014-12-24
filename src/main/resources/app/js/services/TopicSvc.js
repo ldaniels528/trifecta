@@ -85,7 +85,8 @@
                     if(consumers) {
                         var detail = service.findConsumerDetail(consumers, u);
                         if(detail) {
-                            detail.delta = Math.max(0, u.offset - detail.offset);
+                            detail.deltaT = Math.max(0, u.topicOffset - detail.topicOffset);
+                            detail.deltaC = Math.max(0, u.offset - detail.offset);
                             detail.messagesLeft = u.messagesLeft;
                             detail.lastModified = u.lastModified;
                             detail.offset = u.offset;
@@ -93,13 +94,25 @@
                             detail.messagesLeft = u.messagesLeft;
                             detail.lastModified = u.lastModified;
 
-                            // deltas should exist for 60 seconds (since the last update)
-                            (function() {
-                                var lastDelta = detail.delta;
-                                $timeout(function () {
-                                    if(detail.delta == lastDelta) detail.delta = null;
-                                }, 60000);
-                            })();
+                            // topic deltas should exist for 60 seconds (since the last update)
+                            if(detail.deltaT) {
+                                (function () {
+                                    var lastDelta = detail.deltaT;
+                                    $timeout(function () {
+                                        if (detail.deltaT == lastDelta) detail.deltaT = null;
+                                    }, 60000);
+                                })();
+                            }
+
+                            // consumer deltas should exist for 60 seconds (since the last update)
+                            if(detail.deltaC) {
+                                (function () {
+                                    var lastDelta = detail.deltaC;
+                                    $timeout(function () {
+                                        if (detail.deltaC == lastDelta) detail.deltaC = null;
+                                    }, 60000);
+                                })();
+                            }
                         }
                     }
                 });
@@ -128,12 +141,14 @@
                             p.messages = updatedTopic.messages;
 
                             // deltas should exist for 60 seconds (since the last update)
-                            (function() {
-                                var lastDelta = p.delta;
-                                $timeout(function () {
-                                    if(p.delta == lastDelta) p.delta = null;
-                                }, 60000);
-                            })();
+                            if(p.delta) {
+                                (function () {
+                                    var lastDelta = p.delta;
+                                    $timeout(function () {
+                                        if (p.delta == lastDelta) p.delta = null;
+                                    }, 60000);
+                                })();
+                            }
                         }
                     }
                 });
