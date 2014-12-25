@@ -134,7 +134,7 @@
 
             $scope.expandReplicas = function(topic) {
                 topic.replicaExpanded = !topic.replicaExpanded;
-                if(topic.replicaExpanded && !topic.replicas) {
+                if(topic.replicaExpanded) {
                     topic.loading = true;
                     TopicSvc.getReplicas(topic.topic).then(
                         function (replicas) {
