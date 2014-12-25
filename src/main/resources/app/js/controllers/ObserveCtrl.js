@@ -158,6 +158,12 @@
                 else return "in_sync_yellow";
             };
 
+            $scope.getInSyncBulbImage = function(inSyncPct) {
+                if(inSyncPct == 0) return "/app/images/status/redlight.png";
+                else if(inSyncPct == 100) return "/app/images/status/greenlight.png";
+                else return "/app/images/status/yellowlight.gif";
+            };
+
             $scope.isConsumerUpToDate = function(consumer) {
                 var details = consumer.details || [];
                 if(!details.length) return false;

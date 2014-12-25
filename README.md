@@ -22,6 +22,7 @@ Table of Contents
     * <a href="#trifecta-ui-configure">Configuring Trifecta UI</a>
     * <a href="#trifecta-ui-decoders">Default Decoders</a>
     * <a href="#trifecta-ui-inspect">Inspecting Kafka Messages</a>
+    * <a href="#trifecta-ui-replicas">Replicas</a>
     * <a href="#trifecta-ui-query">Queries</a>
 * <a href="#trifecta-cli">Trifecta CLI</a>
     * <a href="#core-module">Core Module</a>
@@ -140,6 +141,9 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.10
+* Trifecta UI: Redesigned the Replicas view to report under-replicated partitions.
+
 #### v0.18.9
 * Trifecta UI: the REST server is now supports asynchronous request/response flows
 * Trifecta UI: Minor improvements the Observe tab
@@ -158,9 +162,6 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 #### v0.18.6
 * Trifecta UI: "Decoder tab" user interface improvements
 * Trifecta UI: "Query tab" user interface improvements
-
-#### v0.18.1
-* Added Trifecta UI, a web-based interface to complement the CLI application.
 
 <a name="trifecta-ui"></a>
 ### Trifecta UI
@@ -226,6 +227,13 @@ Trifecta UI has powerful support for viewing Kafka messages, and when the messag
 Trifecta displays them as human readable (read: pretty) JSON documents.
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-inspect.png)
+
+<a name="trifecta-ui-replicas"></a>
+#### Replicas
+
+Trifecta UI provides a comprehensive view of the current state of replication for each topic partition.
+
+![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-observe-replicas.png)
 
 <a name="trifecta-ui-query"></a>
 #### Queries
