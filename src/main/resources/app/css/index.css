@@ -86,7 +86,8 @@ th { text-align: left }
 }
 
 .highlighted {
-    color: red;
+    color: #00aaaa;
+    font-weight: bold;
     text-decoration: underline;
 }
 
