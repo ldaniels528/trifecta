@@ -565,10 +565,14 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def saveDecoderSchema(jsonString: String) = Future {
     // transform the JSON string into a schema
     val schema = JsonHelper.transform[SchemaJs](jsonString)
-    val decoderFile = new File(new File(TxConfig.decoderDirectory, schema.topic), schema.name)
+    val schemaFile = new File(new File(TxConfig.decoderDirectory, schema.topic), getNameWithExtension(schema.name, ".avsc"))
     // TODO should I add a check for new vs. replace?
 
-    new FileOutputStream(decoderFile) use { fos =>
+    // ensure the parent directory exists
+    createParentDirectory(schemaFile)
+
+    // save the schema file to disk
+    new FileOutputStream(schemaFile) use { fos =>
       fos.write(schema.schemaString.getBytes(config.encoding))
     }
 
@@ -578,14 +582,33 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   def saveQuery(jsonString: String) = Future {
     // transform the JSON string into a query
     val query = JsonHelper.transform[QueryJs](jsonString)
-    val file = new File(new File(TxConfig.queriesDirectory, query.topic), s"${query.name}.kql")
+    val queryFile = new File(new File(TxConfig.queriesDirectory, query.topic), getNameWithExtension(query.name, ".kql"))
     // TODO should I add a check for new vs. replace?
 
-    new FileOutputStream(file) use { fos =>
+    // ensure the parent directory exists
+    createParentDirectory(queryFile)
+
+    // save the query file to disk
+    new FileOutputStream(queryFile) use { fos =>
       fos.write(query.queryString.getBytes(config.encoding))
     }
 
     ErrorJs(message = "Saved", `type` = "success")
+  }
+
+  private def createParentDirectory(file: File): Unit = {
+    val parentDirectory = file.getParentFile
+    if(!parentDirectory.exists) {
+      logger.info(s"Creating directory '${parentDirectory.getAbsolutePath}'...")
+      parentDirectory.mkdirs()
+    }
+  }
+
+  private def getNameWithExtension(name: String, extension: String): String = {
+    name.lastIndexOptionOf(extension) match {
+      case Some(_) => name
+      case None => name + extension
+    }
   }
 
   /**

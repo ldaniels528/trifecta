@@ -3,8 +3,10 @@
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
-    angular.module('trifecta').controller('QueryCtrl', ['$scope', '$log', '$timeout', 'QuerySvc',
-        function ($scope, $log, $timeout, QuerySvc) {
+    angular.module('trifecta').controller('QueryCtrl', ['$scope', '$log', '$timeout', 'QuerySvc', 'TopicSvc',
+        function ($scope, $log, $timeout, QuerySvc, TopicSvc) {
+
+            $scope.collection = null;
 
             /**
              * Creates a new default saved query instance
@@ -92,8 +94,6 @@
 
                             mySavedQuery.results.push(mySavedResult);
                             mySavedQuery.savedResult = mySavedResult;
-
-                            //$log.info("mySavedResult = " + JSON.stringify(mySavedResult, null, '\t'));
                         }
                     },
                     function (err) {
@@ -103,10 +103,10 @@
                 );
             };
 
-            $scope.expandTopicQueries = function(topic) {
-                topic.queriesExpanded = !topic.queriesExpanded;
-                if(topic.queriesExpanded) {
-                    loadQueriesByTopic(topic);
+            $scope.expandQueryCollection = function(collection, callback) {
+                collection.queriesExpanded = !collection.queriesExpanded;
+                if(collection.queriesExpanded) {
+                    loadQueriesByTopic(collection, callback);
                 }
             };
 
@@ -121,12 +121,21 @@
                     partition.offset == $scope.offsetAt(index);
             };
 
-            function loadQueriesByTopic(topic) {
+            function loadQueriesByTopic(topic, callback) {
                 topic.loading = true;
                 QuerySvc.getQueriesByTopic(topic.topic).then(
                     function (queries) {
                         topic.loading = false;
                         topic.savedQueries = queries || [];
+
+                        // enrich the queries
+                        angular.forEach(queries, function(q) {
+                            q.collection = topic;
+                        });
+
+                        if(callback) {
+                            callback(topic.savedQueries);
+                        }
                     },
                     function (err) {
                         topic.loading = false;
@@ -150,7 +159,7 @@
                     $log.info("Uploading query '" + query.name + "' (topic " + query.topic + ")...");
                     QuerySvc.saveQuery(query.name, query.topic, query.queryString).then(
                         function (response) {
-                            if(response && response.type == 'error') {
+                            if(response.type == 'error') {
                                 $scope.addErrorMessage(response.message);
                                 query.syncing = false;
                             }
@@ -158,6 +167,7 @@
                                 query.modified = false;
                                 query.newFile = false;
                                 query.syncing = false;
+                                $log.info("Query '" + query.name + "' saved.")
                             }
                         },
                         function (err) {
@@ -169,11 +179,33 @@
             };
 
             /**
+             * Select the given collection
+             * @param collection the given collection
+             */
+            $scope.selectQueryCollection = function(collection) {
+                $scope.collection = collection;
+
+                // is the collection expanded?
+                if(!collection.queriesExpanded) {
+                    $scope.expandQueryCollection(collection, function(queries) {
+                        $scope.selectQuery(queries.length ? queries[0] : null);
+                    });
+                }
+                else {
+                    var queries = collection.savedQueries;
+                    $scope.selectQuery(queries.length ? queries[0] : null);
+                }
+            };
+
+            /**
              * Selects a query query from the list
              * @param mySavedQuery the saved query object to select
              */
             $scope.selectQuery = function(mySavedQuery) {
                 $scope.savedQuery = mySavedQuery;
+                if(mySavedQuery && mySavedQuery.collection != $scope.collection) {
+                    $scope.collection = mySavedQuery.collection;
+                }
             };
 
             $scope.selectQueryResults = function(mySavedQuery, index) {
@@ -274,6 +306,17 @@
                     }, 1000);
                 }
             }
+
+            /**
+             * Watch for topic changes, and select the first non-empty topic
+             */
+            $scope.$watchCollection("TopicSvc.topics", function(newTopics, oldTopics) {
+                if(!$scope.collection && newTopics.length) {
+                    var myCollection = TopicSvc.findNonEmptyTopic();
+                    $log.info("Setting first collection " + myCollection);
+                    $scope.selectQueryCollection(myCollection);
+                }
+            });
 
         }]);
 

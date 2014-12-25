@@ -52,10 +52,17 @@ img.d_editor_bar {
     width: 100%;
 }
 
+.d_hints_tips_container {
+    clear: both;
+    width: auto;
+    height: 210px;
+    overflow: auto
+}
+
 .d_topics_container {
     clear: both;
     width: auto;
-    height: 330px;
+    height: 305px;
     overflow: auto;
 }
 

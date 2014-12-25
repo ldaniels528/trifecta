@@ -141,19 +141,20 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.12
+* Trifecta UI
+    * Updated Decoder and Query views for consistency
+
 #### v0.18.11
 * Trifecta UI
     * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
 
-#### v0.18.10
-* Trifecta UI
-    * Redesigned the Replicas view to report under-replicated partitions.
-
-#### v0.18.1 to v0.18.9
+#### v0.18.1 to v0.18.10
 * Trifecta UI
     * "Decoder tab" user interface improvements
     * "Observe tab" user interface improvements
         * The Consumers section has been enhanced to display topic and consumer offset deltas
+        * Redesigned the Replicas view to report under-replicated partitions.
         * The Topics section has been enhanced to display topic offset deltas
     * "Query tab" user interface improvements
         * Multiple queries can be executed concurrently

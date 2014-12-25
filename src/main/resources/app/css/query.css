@@ -51,10 +51,17 @@
     text-decoration: underline;
 }
 
+.q_hints_tips_container {
+    clear: both;
+    width: auto;
+    height: 225px;
+    overflow: auto
+}
+
 .q_topics_container {
     clear: both;
     width: auto;
-    height: 235px;
+    height: 305px;
     overflow: auto;
     border-bottom: 1px solid #cccccc;
 }
