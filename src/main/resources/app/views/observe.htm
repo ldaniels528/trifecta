@@ -122,9 +122,16 @@
                             </a>
 
                             <div ng-show="t.replicaExpanded" ng-repeat="r in t.replicas" class="indent">
-                                <img ng-click="r.partitionExpanded = !r.partitionExpanded" ng-src="/app/images/buttons/{{r.partitionExpanded ? 'collapse.png' : 'expand.png'}}"> Partition{{ r.partition }}
-                                <div ng-show="r.partitionExpanded" ng-repeat="host in r.hosts" class="indent">
-                                    <img src="/app/images/status/greenlight.png"> {{ host }}
+                                <img ng-click="r.partitionExpanded = !r.partitionExpanded" ng-src="/app/images/buttons/{{r.partitionExpanded ? 'collapse.png' : 'expand.png'}}">
+                                <img ng-show="r.inSyncPct == 100" src="/app/images/status/greenlight.png">
+                                <img ng-show="r.inSyncPct > 0 && r.inSyncPct < 100" src="/app/images/status/yellowlight.gif">
+                                <img ng-show="r.inSyncPct == 0" src="/app/images/status/redlight.png">
+                                Partition{{ r.partition }} (<span ng-class="getInSyncClass(r.inSyncPct)">{{r.inSyncPct}}%</span>)
+
+                                <div ng-show="r.partitionExpanded" ng-repeat="broker in r.replicas" class="indent">
+                                    <img ng-show="broker.inSync" src="/app/images/status/greenlight.png">
+                                    <img ng-hide="broker.inSync" src="/app/images/status/redlight.png">
+                                    {{ broker.host }}
                                 </div>
                             </div>
                         </div>
