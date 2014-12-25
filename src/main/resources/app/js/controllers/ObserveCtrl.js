@@ -8,7 +8,6 @@
 
             $scope.consumerMapping = [];
             $scope.replicas = [];
-            $scope.myHideEmptyTopics = false;
 
             $scope.formats = ["auto", "binary", "json", "plain-text"];
             $scope.selected = { "format": $scope.formats[0] };
@@ -155,13 +154,6 @@
                     }
                     return false;
                 }
-            };
-
-            /**
-             * Toggles the empty topic hide/show flag
-             */
-            $scope.toggleHideShowEmptyTopics = function() {
-                $scope.myHideEmptyTopics = !$scope.myHideEmptyTopics;
             };
 
             function errorHandler(err) {

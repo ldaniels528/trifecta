@@ -85,6 +85,7 @@
                     if(consumers) {
                         var detail = service.findConsumerDetail(consumers, u);
                         if(detail) {
+                            // update the consumer detail
                             detail.deltaT = Math.max(0, u.topicOffset - detail.topicOffset);
                             detail.deltaC = Math.max(0, u.offset - detail.offset);
                             detail.messagesLeft = u.messagesLeft;
@@ -94,25 +95,9 @@
                             detail.messagesLeft = u.messagesLeft;
                             detail.lastModified = u.lastModified;
 
-                            // topic deltas should exist for 60 seconds (since the last update)
-                            if(detail.deltaT) {
-                                (function () {
-                                    var lastDelta = detail.deltaT;
-                                    $timeout(function () {
-                                        if (detail.deltaT == lastDelta) detail.deltaT = null;
-                                    }, 60000);
-                                })();
-                            }
-
-                            // consumer deltas should exist for 60 seconds (since the last update)
-                            if(detail.deltaC) {
-                                (function () {
-                                    var lastDelta = detail.deltaC;
-                                    $timeout(function () {
-                                        if (detail.deltaC == lastDelta) detail.deltaC = null;
-                                    }, 60000);
-                                })();
-                            }
+                            // consumer & topic deltas should exist for 30 seconds (since the last update)
+                            //setDeltaTimeOut(detail.deltaT);
+                            //setDeltaTimeOut(detail.deltaC);
                         }
                     }
                 });
@@ -121,34 +106,20 @@
             service.updateTopic = function(updatedTopic) {
                 angular.forEach(service.topics, function(t) {
                     if(t.topic == updatedTopic.topic) {
-                        if(!t.updatingTopics) t.updatingTopics = 0;
-
                         // setup the topic update indicator
-                        (function() {
-                            t.updatingTopics++;
-                            $timeout(function () {
-                                t.updatingTopics--;
-                            }, 7500);
-                        })();
+                        setTopicUpdateIndicator(t);
 
                         // update the topic with the delta information
                         t.totalMessages = updatedTopic.totalMessages;
                         var p = service.findPartition(t, updatedTopic.partition);
                         if(p) {
-                            p.delta = updatedTopic.endOffset - p.endOffset;
+                            p.delta = Math.max(0, updatedTopic.endOffset - p.endOffset);
                             p.startOffset = updatedTopic.startOffset;
                             p.endOffset = updatedTopic.endOffset;
                             p.messages = updatedTopic.messages;
 
-                            // deltas should exist for 60 seconds (since the last update)
-                            if(p.delta) {
-                                (function () {
-                                    var lastDelta = p.delta;
-                                    $timeout(function () {
-                                        if (p.delta == lastDelta) p.delta = null;
-                                    }, 60000);
-                                })();
-                            }
+                            // deltas should exist for 30 seconds (since the last update)
+                            //setDeltaTimeOut(p.delta);
                         }
                     }
                 });
@@ -188,6 +159,27 @@
                 }
                 return null;
             };
+
+            function setDeltaTimeOut(entity) {
+                // deltas should be ephemeral
+                if(entity.delta) {
+                    (function () {
+                        var lastDelta = entity.delta;
+                        $timeout(function () {
+                            if (entity.delta == lastDelta) entity.delta = 0;
+                        }, 5000);
+                    })();
+                }
+            }
+
+            function setTopicUpdateIndicator(topic) {
+                if(!topic.updatingTopics) topic.updatingTopics = 0;
+
+                topic.updatingTopics++;
+                $timeout(function () {
+                    topic.updatingTopics--;
+                }, 5000);
+            }
 
             // pre-load the topics
             service.getTopics().then(function(topics) {

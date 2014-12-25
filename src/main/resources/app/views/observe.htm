@@ -45,7 +45,7 @@
                         </div>
 
                         <!-- Consumers -->
-                        <div ng-show="ConsumerSvc.consumers.length" class="block" ng-repeat="t in getTopics(myHideEmptyTopics)">
+                        <div ng-show="ConsumerSvc.consumers.length" class="block" ng-repeat="t in getTopics(hideEmptyTopics)">
                             <a ng-click="expandTopicConsumers(t)">
                                 <img ng-src="/app/images/{{t.loadingConsumers ? 'status/loading.gif' : t.expanded ? 'buttons/collapse.png' : 'buttons/expand.png'}}">
                                 <img ng-src="{{ getTopicIcon(t, t == topic) }}"> {{ t.topic }}
@@ -73,21 +73,27 @@
                                         </tr>
 
                                         <tr ng-repeat="detail in consumer.details | orderBy:'partition'">
-                                            <td>{{ detail.partition }}</td>
-                                            <td>
+                                            <td class="center">{{ detail.partition }}</td>
+                                            <td class="left">
                                                 <a ng-click="switchToMessage(detail.topic, detail.partition, detail.topicOffset)">
                                                     {{ detail.topicOffset }}
                                                 </a>
-                                                <span class="positive" ng-show="detail.deltaT"> (+{{ detail.deltaT | number }})</span>
+                                                <span class="delta_topic" ng-show="detail.deltaT">
+                                                    <img src="/app/images/tabs/observe/arrow_topic.gif"> {{ detail.deltaT | number }}
+                                                </span>
                                             </td>
-                                            <td>
+                                            <td class="left">
                                                 <a ng-click="switchToMessage(detail.topic, detail.partition, detail.offset)">
                                                     {{ detail.offset }}
                                                 </a>
-                                                <span class="positive" ng-show="detail.deltaC"> (+{{ detail.deltaC | number }})</span>
+                                                <span class="delta_consumer" ng-show="detail.deltaC">
+                                                    <img src="/app/images/tabs/observe/arrow_consumer.gif"> {{ detail.deltaC | number }}
+                                                </span>
                                             </td>
-                                            <td>{{ detail.messagesLeft | number }}</td>
-                                            <td>{{ detail.lastModified | date:'yyyy-MM-dd HH:mm:ss Z' }}</td>
+                                            <td class="left">{{ detail.messagesLeft | number }}</td>
+                                            <td>
+                                                {{ detail.lastModified | date:getDateFormat(detail.lastModified) }}
+                                            </td>
                                         </tr>
                                     </table>
                                 </div>
@@ -106,10 +112,13 @@
                 <div ng-show="observeTab.name == 'Replicas'">
                     <div style="display: inline; float: left; width: 69.9%">
                         <div ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
-                        <div ng-repeat="t in getTopics(myHideEmptyTopics)">
+                        <div ng-repeat="t in getTopics(hideEmptyTopics)">
                             <a ng-click="t.expanded = !t.expanded">
                                 <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
                                 <img ng-src="{{ getTopicIcon(t, t == topic) }}"> {{ t.topic }}
+                                <span ng-show="t.totalMessages > 0">
+                                    (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
+                                </span>
                             </a>
 
                             <div ng-show="t.expanded" class="indent">
@@ -124,7 +133,7 @@
                                             <th>Replica</th>
                                         </tr>
                                         <tr ng-repeat="r in t.replicas">
-                                            <td>{{ r.partition }}</td>
+                                            <td class="center">{{ r.partition }}</td>
                                             <td>{{ r.leader.host }}:{{ r.leader.port }}</td>
                                             <td>{{ r.replica.host }}:{{ r.replica.port }}</td>
                                         </tr>
@@ -146,13 +155,13 @@
                         <div ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
 
                         <!-- No Topics -->
-                        <div ng-hide="getTopics(myHideEmptyTopics).length">
+                        <div ng-hide="getTopics(hideEmptyTopics).length">
                             <img src="/app/images/status/yellowlight.gif">
                             <span class="warning">No topic with messages found.</span>
                         </div>
 
                         <!-- Topics -->
-                        <div class="block" ng-repeat="t in getTopics(myHideEmptyTopics)">
+                        <div class="block" ng-repeat="t in getTopics(hideEmptyTopics)">
                             <a ng-click="t.expanded = !t.expanded">
                                 <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
                                 <img ng-src="{{ getTopicIcon(t, topic == t) }}"> {{ t.topic }}
@@ -165,18 +174,13 @@
                                 <table>
                                     <tr>
                                         <th>Partition</th>
-                                        <th>First Offset</th>
                                         <th>Last Offset</th>
                                         <th>Messages</th>
+                                        <th>Leader</th>
                                     </tr>
 
                                     <tr ng-repeat="p in t.partitions | orderBy:'partition'">
-                                        <td>{{ p.partition }}</td>
-                                        <td>
-                                            <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">
-                                                {{ p.startOffset }}
-                                            </a>
-                                        </td>
+                                        <td class="center">{{ p.partition }}</td>
                                         <td>
                                             <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">
                                                 {{ p.endOffset }}
@@ -184,7 +188,12 @@
                                         </td>
                                         <td>
                                             {{ p.messages | number }}
-                                            <span class="positive" ng-show="p.delta"> (+{{ p.delta | number }})</span>
+                                            <span class="delta_topic" ng-show="p.delta">
+                                                <img src="/app/images/tabs/observe/arrow_topic.gif"> {{ p.delta | number }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span ng-show="p.leader">{{ p.leader.host }}:{{ p.leader.port }}</span>
                                         </td>
                                     </tr>
                                 </table>

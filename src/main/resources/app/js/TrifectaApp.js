@@ -15,7 +15,10 @@
         $rootScope.TopicSvc = TopicSvc;
         $rootScope.WebSockets = WebSockets;
 
-        $rootScope.gloabalMessages = [];
+        /******************************************************************
+         *  Tab-related Methods
+         ******************************************************************/
+
         $rootScope.tabs = [
             {
                 "name": "Inspect",
@@ -66,6 +69,30 @@
                 event.preventDefault();
             }
         };
+
+        /******************************************************************
+         *  Date-related Methods
+         ******************************************************************/
+
+        $rootScope.getDateFormat = function(ts) {
+            var now = new Date();
+            var then = new Date(ts);
+
+            var sameYear = then.getFullYear() == now.getFullYear();
+            var sameMonth = then.getMonth() == now.getMonth();
+            var sameDay = then.getDay() == now.getDay();
+
+            // did the event occur today?
+            if(sameYear && sameMonth && sameDay) return "HH:mm:ss Z";
+            else if(sameYear && sameMonth) return "MM-dd HH:mm Z";
+            else return "MM-dd-yyyy Z";
+        };
+
+        /******************************************************************
+         *  Error-related Methods
+         ******************************************************************/
+
+        $rootScope.gloabalMessages = [];
 
         $rootScope.clearMessages = function () {
             $rootScope.gloabalMessages = [];

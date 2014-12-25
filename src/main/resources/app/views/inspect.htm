@@ -1,7 +1,8 @@
 <div class="full_block">
     <div style="display: inline; width: 40%; float: left">
-        <fieldset style="border-radius: 5px 5px 5px 5px">
-            <legend>Topics</legend>
+        <fieldset>
+            <legend style="margin-bottom: 4px">Topics</legend>
+            <div ng-show="topics.length" ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
             <div class="topics_container">
                 <div ng-repeat="t in getTopics(hideEmptyTopics)" ng-class="t == topic ? 'highlighted' : ''">
                     <img ng-src="{{ getTopicIcon(t, topic == t) }}">
@@ -13,13 +14,6 @@
                         </span>
                     </a>
                 </div>
-            </div>
-
-            <div style="text-align: right; font-size: 10pt">
-                <a ng-click="hideEmptyTopics = !hideEmptyTopics">
-                    <span ng-show="hideEmptyTopics">[Show empty topics]</span>
-                    <span ng-show="!hideEmptyTopics">[Hide empty topics]</span>
-                </a>
             </div>
         </fieldset>
 

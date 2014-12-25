@@ -6,9 +6,6 @@
     angular.module('trifecta').controller('QueryCtrl', ['$scope', '$log', '$timeout', 'QuerySvc',
         function ($scope, $log, $timeout, QuerySvc) {
 
-            //$scope.savedQuery = null;
-            $scope.hideEmptyTopics = false;
-
             /**
              * Creates a new default saved query instance
              * @returns {{running: boolean, results: null, mappings: null, ascending: boolean, sortField: null}}

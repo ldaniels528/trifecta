@@ -5,6 +5,10 @@
     padding-right: 10px;
 }
 
+.delta_consumer { color: #f00000 }
+
+.delta_topic { color: #00cc00 }
+
 .streaming_topics_container {
     clear: both;
     width: auto;
