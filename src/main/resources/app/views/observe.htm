@@ -130,9 +130,9 @@
                                 </span>
 
                                 <div ng-show="r.partitionExpanded" ng-repeat="broker in r.replicas" class="indent">
-                                    <img ng-show="broker.inSync" src="/app/images/status/greenlight.png">
-                                    <img ng-hide="broker.inSync" src="/app/images/status/redlight.png">
-                                    {{ broker.host }}
+                                    <img ng-show="broker.inSync" src="/app/images/status/online-16.png">
+                                    <img ng-hide="broker.inSync" src="/app/images/status/offline-16.png">
+                                    <span ng-class="!broker.inSync ? 'in_sync_red' : ''">{{ broker.host }}</span>
                                 </div>
                             </div>
                         </div>
