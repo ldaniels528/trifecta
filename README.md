@@ -141,27 +141,25 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.11
+* Trifecta UI
+    * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
+
 #### v0.18.10
-* Trifecta UI: Redesigned the Replicas view to report under-replicated partitions.
+* Trifecta UI
+    * Redesigned the Replicas view to report under-replicated partitions.
 
-#### v0.18.9
-* Trifecta UI: the REST server is now supports asynchronous request/response flows
-* Trifecta UI: Minor improvements the Observe tab
-    * The Consumers section has been enhanced to display topic and consumer offset deltas
-    * The Topics section has been enhanced to display topic offset deltas
-
-#### v0.18.8
-* Trifecta UI: Redesigned the Query tab
-    * The Query tab has a new look and feel
-    * Multiple queries can be executed concurrently
-
-#### v0.18.7
+#### v0.18.1 to v0.18.9
+* Trifecta UI
+    * "Decoder tab" user interface improvements
+    * "Observe tab" user interface improvements
+        * The Consumers section has been enhanced to display topic and consumer offset deltas
+        * The Topics section has been enhanced to display topic offset deltas
+    * "Query tab" user interface improvements
+        * Multiple queries can be executed concurrently
 * Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
     * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
-
-#### v0.18.6
-* Trifecta UI: "Decoder tab" user interface improvements
-* Trifecta UI: "Query tab" user interface improvements
+* The embedded web server now supports asynchronous request/response flows
 
 <a name="trifecta-ui"></a>
 ### Trifecta UI

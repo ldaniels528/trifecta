@@ -166,6 +166,12 @@
                     });
                 };
 
+                $scope.gotoDecoder = function(topic) {
+                    if(angular.element('#Decoders').scope().switchToDecoderByTopic(topic)) {
+                        $scope.changeTab(4, null); // Decoders
+                    }
+                };
+
                 $scope.loadMessage = function () {
                     var topic = $scope.topic.topic;
                     var partition = $scope.partition.partition;

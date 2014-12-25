@@ -108,7 +108,7 @@
         <img ng-src="/app/images/{{ item.loading ? 'status/loading.gif' : (item.expanded ? 'buttons/collapse.png' : 'buttons/expand.png') }}"
              ng-click="expandItem(item)"
              class="clickable">
-        <img ng-show="item.path == '/'" class="middle" src="/app/images/tabs/observe/root.png">
+        <img ng-show="item.path == '/'" class="middle" src="/app/images/common/root-16.png">
         <a ng-click="getItemInfo(item)">
             <span ng-show="zkItem.path == item.path" class="highlighted">{{ item.name }}</span>
             <span ng-show="zkItem.path != item.path">{{ item.name }}</span>
