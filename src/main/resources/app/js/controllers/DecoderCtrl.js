@@ -225,6 +225,18 @@
                     }
                 };
 
+                $scope.switchToDecoderByTopic = function(topic) {
+                    var decoder = findDecoderByTopic(topic);
+                    if(decoder) {
+                        $scope.selectDecoder(decoder);
+                        return true;
+                    }
+                    else {
+                        $scope.addErrorMessage("Could not find a decoder for topic " + topic);
+                        return false;
+                    }
+                };
+
                 /**
                  * Toggles edit mode on/off
                  */
@@ -236,6 +248,14 @@
                         }
                     }
                 };
+
+                function findDecoderByTopic(topic) {
+                    var decoders = $scope.decoders;
+                    for(var n = 0; n < decoders.length; n++) {
+                        if(decoders[n].topic == topic) return decoders[n];
+                    }
+                    return null;
+                }
 
             }]);
 
