@@ -214,7 +214,7 @@
                         <div ng-repeat="item in zkItems" ng-include="'zk_item_tree.htm'"></div>
                     </div>
                     <div style="display: inline; width: 59%; float: right">
-                        <div style="width: 100%; margin-left: 5px">
+                        <div class="full_block" style="margin-left: 5px">
                             <table ng-show="zkItem" style="border-collapse: separate; border-spacing: 4px;">
                                 <tr>
                                     <th>Path:</th>
@@ -235,7 +235,7 @@
                             </table>
 
                             <div ng-show="zkItem.data" style="margin-top: 20px">
-                                <span style="font-weight: bold">Data Format:</span>
+                                <span class="bold">Data Format:</span>
                                 <select ng-model="selected.format" ng-options="format for format in formats"
                                         ng-change="formatData(zkItem.path, selected.format)">
                                 </select>

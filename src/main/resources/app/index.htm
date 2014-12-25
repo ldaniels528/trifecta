@@ -110,7 +110,7 @@
              class="clickable">
         <img ng-show="item.path == '/'" class="middle" src="/app/images/tabs/observe/root.png">
         <a ng-click="getItemInfo(item)">
-            <span ng-show="zkItem.path == item.path" style="background: #ffff00; font-weight: bold">{{ item.name }}</span>
+            <span ng-show="zkItem.path == item.path" class="highlighted">{{ item.name }}</span>
             <span ng-show="zkItem.path != item.path">{{ item.name }}</span>
         </a>
 
