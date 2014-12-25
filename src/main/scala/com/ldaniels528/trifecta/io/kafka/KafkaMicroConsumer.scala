@@ -396,13 +396,6 @@ object KafkaMicroConsumer {
     }
   }
 
-  def getLeaderAndReplicas(topic: String, brokers: Seq[Broker])(implicit zk: ZKProxy): Seq[LeaderAndReplicas] = {
-    for {
-      partition <- getTopicPartitions(topic)
-      (leader, pmd, replicas) <- getLeaderPartitionMetaDataAndReplicas(TopicAndPartition(topic, partition), brokers)
-    } yield LeaderAndReplicas(partition, leader, replicas)
-  }
-
   /**
    * Retrieves the list of consumers from Zookeeper (Kafka-Storm Partition Manager Version)
    */
@@ -624,8 +617,6 @@ object KafkaMicroConsumer {
     extends BinaryMessage
 
   case class ReplicaBroker(partition: Int, host: String, port: Int, id: Int)
-
-  case class LeaderAndReplicas(partition: Int, leader: Broker, replicas: Seq[Broker])
 
   /**
    * Represents the details for a Kafka topic

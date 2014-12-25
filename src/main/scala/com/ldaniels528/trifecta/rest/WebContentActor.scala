@@ -150,10 +150,6 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
             case topic :: schemaName :: Nil => facade.getDecoderSchemaByName(topic, schemaName).toJson.mimeJson
             case _ => missingArgs("topic", "schemaName")
           }
-          case "getLeaderAndReplicas" => args match {
-            case topic :: Nil => facade.getLeaderAndReplicas(topic).toJson.mimeJson
-            case _ => missingArgs("topic")
-          }
           case "getMessage" => args match {
             case topic :: partition :: offset :: Nil => facade.getMessageData(topic, partition.toInt, offset.toLong).toJson.mimeJson
             case _ => missingArgs("topic", "partition", "offset")
@@ -191,13 +187,13 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
           case "saveQuery" => facade.saveQuery(request.asJsonString).toJson.mimeJson
           case "saveSchema" => facade.saveDecoderSchema(request.asJsonString).toJson.mimeJson
           case "transformResultsToCSV" => facade.transformResultsToCSV(request.asJsonString).mimeCSV
-          case unknown => throw new RuntimeException(s"Action not found '$unknown'")
+          case unknown => Future.failed(new RuntimeException(s"Action not found '$unknown'"))
         }
     }
   }
 
-  private def missingArgs[S](argNames: String*): S = {
-    throw new RuntimeException(s"Expected arguments (${argNames mkString ", "}) are missing")
+  private def missingArgs(argNames: String*) = {
+    Future.failed(new RuntimeException(s"Expected arguments (${argNames mkString ", "}) are missing"))
   }
 
   private def toZkPath(args: List[String]): String = "/" + args.mkString("/")
