@@ -18,7 +18,7 @@ legend { color: #999999 }
 
 table {
     border-collapse: collapse;
-    border-spacing: 0px;
+    border-spacing: 0;
 }
 
 th { padding: 4px 4px 4px 4px }
@@ -37,6 +37,8 @@ th { text-align: left }
 .bold { font-weight: bold }
 
 .bulb { padding-left: 2px }
+
+.center { text-align: center }
 
 .clickable { cursor: pointer; }
 
@@ -84,8 +86,8 @@ th { text-align: left }
 }
 
 .highlighted {
-    background: #337ab7;
-    color: #ffffff;
+    color: red;
+    text-decoration: underline;
 }
 
 .hints_and_tips {
@@ -107,12 +109,17 @@ th { text-align: left }
     font-style: italic;
 }
 
+.left { text-align: left }
+
 .messages { color: #00cc00 }
 
+.middle { vertical-align: middle }
+
 .negative { color: #f00000 }
+
 .positive { color: #00cc00 }
 
-.middle { vertical-align: middle }
+.right { text-align: right }
 
 .tab_active {
     border: 2px solid #000000;

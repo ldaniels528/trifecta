@@ -1,7 +1,8 @@
 <div ng-controller="DecoderCtrl" ng-init="reloadDecoders()" class="full_block" style="height: 587px">
     <div style="display: inline; float: left; width: 30.9%; height: 100%">
-        <fieldset style="border-bottom: 1px solid #cccccc">
-            <legend>Decoders By Topic</legend>
+        <fieldset>
+            <legend style="margin-bottom: 4px">Decoders</legend>
+            <div ng-show="topics.length" ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
             <div class="d_topics_container">
                 <span ng-show="!decoders.length" class="warning bold">
                     <img src="/app/images/status/yellowlight.gif"> No topics with decoders found

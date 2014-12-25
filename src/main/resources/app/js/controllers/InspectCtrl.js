@@ -254,8 +254,18 @@
                     }
                 };
 
+                /**
+                 * Toggles the Avro/JSON output flag
+                 */
                 $scope.toggleAvroOutput = function() {
                     $scope.displayMode.avro = $scope.displayMode.avro == 'json' ? 'avro' : 'json';
+                };
+
+                /**
+                 * Toggles the empty topic hide/show flag
+                 */
+                $scope.toggleHideShowEmptyTopics = function() {
+                    $scope.hideEmptyTopics = !$scope.hideEmptyTopics;
                 };
 
                 /**
