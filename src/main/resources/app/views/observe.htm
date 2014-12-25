@@ -122,18 +122,32 @@
                             </a>
 
                             <div ng-show="t.replicaExpanded" ng-repeat="r in t.replicas" class="indent">
-                                <img ng-click="r.partitionExpanded = !r.partitionExpanded" ng-src="/app/images/buttons/{{r.partitionExpanded ? 'collapse.png' : 'expand.png'}}"> Partition{{ r.partition }}
-                                <div ng-show="r.partitionExpanded" ng-repeat="host in r.hosts" class="indent">
-                                    <img src="/app/images/status/greenlight.png"> {{ host }}
+                                <img ng-click="r.partitionExpanded = !r.partitionExpanded" ng-src="/app/images/buttons/{{r.partitionExpanded ? 'collapse.png' : 'expand.png'}}">
+                                <img ng-src="{{ getInSyncBulbImage(r.inSyncPct) }}">
+                                Partition {{ r.partition }}
+                                <span style="color: #aaaaaa">
+                                    (<span ng-class="getInSyncClass(r.inSyncPct)">{{r.inSyncPct}}%</span>)
+                                </span>
+
+                                <div ng-show="r.partitionExpanded" ng-repeat="broker in r.replicas" class="indent">
+                                    <img ng-show="broker.inSync" src="/app/images/status/online-16.png">
+                                    <img ng-hide="broker.inSync" src="/app/images/status/offline-16.png">
+                                    <span ng-class="!broker.inSync ? 'in_sync_red' : ''">{{ broker.host }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div style="display: inline; float: right; width: 30%; border-left: 1px solid #cccccc; padding-left: 4px">
+                    <div style="display: inline; float: right; width: 30%; height: 100%; border-left: 1px solid #cccccc; padding-left: 4px">
                         <div ng-include="'/app/views/partials/hints_and_tips.htm'"></div>
                         <p><img class="bulb" src="/app/images/common/bulb-16.png"> This view provides the user
-                            with information about the leader and replica brokers for each topic partition.</p>
-                        <div ng-include="'/app/views/partials/web_socket_refresh.htm'"></div>
+                            with information about the replication of topic partitions. The replication state of each partition
+                            is displayed as a percentage:
+                            <ul>
+                                <li><span class="in_sync_green">100%</span> &#8212; indicates a healthy fully replicated partition</li>
+                                <li><span class="in_sync_yellow">1% to 99%</span> &#8212; indicates an under-replicated partition</li>
+                                <li><span class="in_sync_red">0%</span> &#8212; indicates a partition that is completely unavailable</li>
+                            </ul>
+                        </p>
                     </div>
                 </div>
 

@@ -9,6 +9,10 @@
 
 .delta_topic { color: #00cc00 }
 
+.in_sync_red { color: #cc0000 }
+.in_sync_green { color: #00bb00 }
+.in_sync_yellow { color: #eebb00 }
+
 .streaming_topics_container {
     clear: both;
     width: auto;

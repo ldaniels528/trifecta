@@ -379,9 +379,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    */
   def getReplicas(topic: String) = Future {
     KafkaMicroConsumer.getReplicas(topic, brokers)
-      .map(r => (s"${r.host}:${r.port}", r.partition))
-      .groupBy(_._2)
-      .map { case (partition, hostPorts) => ReplicaJs(partition, hostPorts.map(_._1))}
+      .map(r => (r.partition, ReplicaHostJs(s"${r.host}:${r.port}", r.inSync)))
+      .groupBy(_._1)
+      .map { case (partition, replicas) => ReplicaJs(partition, replicas.map(_._2)) }
   }
 
   /**
@@ -678,7 +678,9 @@ object KafkaRestFacade {
 
   case class QueryJs(name: String, topic: String, queryString: String)
 
-  case class ReplicaJs(partition: Int, hosts: Seq[String])
+  case class ReplicaJs(partition: Int, replicas: Seq[ReplicaHostJs])
+
+  case class ReplicaHostJs(host: String, inSync: Boolean)
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
 

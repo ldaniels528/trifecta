@@ -14,6 +14,7 @@ import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
 import net.liftweb.json._
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.postfixOps
@@ -24,7 +25,6 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[Broker]) {
-
   // get the leader, meta data and replica brokers
   val (leader, _, replicas) = getLeaderPartitionMetaDataAndReplicas(topicAndPartition, seedBrokers)
     .getOrElse(throw new VxKafkaTopicException("The leader broker could not be determined", topicAndPartition))
@@ -166,6 +166,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object KafkaMicroConsumer {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   private implicit val formats = net.liftweb.json.DefaultFormats
   private val correlationIdGen = new AtomicInteger(-1)
 
@@ -389,10 +390,11 @@ object KafkaMicroConsumer {
     val results = for {
       partition <- getTopicPartitions(topic)
       (leader, pmd, replicas) <- getLeaderPartitionMetaDataAndReplicas(TopicAndPartition(topic, partition), brokers)
-    } yield partition -> replicas
+      inSyncReplicas = pmd.isr map(r => Broker(r.host, r.port, r.id))
+    } yield (partition, replicas, inSyncReplicas)
 
-    results flatMap { case (partition, replicas) => replicas map (r =>
-      ReplicaBroker(partition, r.host, r.port, r.brokerId))
+    results flatMap { case (partition, replicas, insSyncReplicas) => replicas map (r =>
+      ReplicaBroker(partition, r.host, r.port, r.brokerId, insSyncReplicas.contains(r)))
     }
   }
 
@@ -400,7 +402,7 @@ object KafkaMicroConsumer {
    * Retrieves the list of consumers from Zookeeper (Kafka-Storm Partition Manager Version)
    */
   def getStormConsumerList()(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
-    zk.getFamily(path = "/").distinct filter (_.matches("""\S+[/]partition_\d+""")) flatMap { path =>
+    zk.getFamily(path = "/").distinct filter (_.matches( """\S+[/]partition_\d+""")) flatMap { path =>
       zk.readString(path) flatMap { jsonString =>
         val lastModified = zk.getModificationTime(path)
         Try {
@@ -616,7 +618,7 @@ object KafkaMicroConsumer {
   case class MessageData(partition: Int, offset: Long, nextOffset: Long, lastOffset: Long, key: Array[Byte], message: Array[Byte])
     extends BinaryMessage
 
-  case class ReplicaBroker(partition: Int, host: String, port: Int, id: Int)
+  case class ReplicaBroker(partition: Int, host: String, port: Int, id: Int, inSync: Boolean)
 
   /**
    * Represents the details for a Kafka topic

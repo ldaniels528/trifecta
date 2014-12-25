@@ -39,6 +39,18 @@
             $scope.observeTab.active = true;
 
             /**
+             * Changes the Observe sub-tab
+             * @param index the given tab index
+             * @param event the given event
+             */
+            $scope.changeObserveTab = function (index, event) {
+                $scope.observeTab = $scope.observeTabs[index];
+                if (event) {
+                    event.preventDefault();
+                }
+            };
+
+            /**
              * Expands the consumers for the given topic
              * @param topic the given topic
              */
@@ -122,13 +134,16 @@
 
             $scope.expandReplicas = function(topic) {
                 topic.replicaExpanded = !topic.replicaExpanded;
-                if(topic.replicaExpanded && !topic.replicas) {
+                if(topic.replicaExpanded) {
                     topic.loading = true;
                     TopicSvc.getReplicas(topic.topic).then(
                         function (replicas) {
-                            $log.info("replicas[0] = " + angular.toJson(replicas[0]));
                             $timeout(function() { topic.loading = false; }, 500);
                             topic.replicas = replicas;
+
+                            angular.forEach(replicas, function(r) {
+                                r.inSyncPct = computeInSyncPct(r);
+                            });
                         },
                         function (err) {
                             topic.loading = false;
@@ -137,11 +152,16 @@
                 }
             };
 
-            $scope.changeObserveTab = function (index, event) {
-                $scope.observeTab = $scope.observeTabs[index];
-                if (event) {
-                    event.preventDefault();
-                }
+            $scope.getInSyncClass = function(inSyncPct) {
+                if(inSyncPct == 0) return "in_sync_red";
+                else if(inSyncPct == 100) return "in_sync_green";
+                else return "in_sync_yellow";
+            };
+
+            $scope.getInSyncBulbImage = function(inSyncPct) {
+                if(inSyncPct == 0) return "/app/images/status/redlight.png";
+                else if(inSyncPct == 100) return "/app/images/status/greenlight.png";
+                else return "/app/images/status/yellowlight.gif";
             };
 
             $scope.isConsumerUpToDate = function(consumer) {
@@ -155,6 +175,16 @@
                     return false;
                 }
             };
+
+            function computeInSyncPct(replicaPartition) {
+                var replicas = replicaPartition.replicas;
+                var syncCount = 0;
+                for(var n = 0; n < replicas.length; n++) {
+                    var replica = replicas[n];
+                    if(replica.inSync) syncCount++;
+                }
+                return Math.round(100 * syncCount / replicas.length);
+            }
 
             function errorHandler(err) {
                 $scope.addError(err);
