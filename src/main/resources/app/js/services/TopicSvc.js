@@ -47,7 +47,7 @@
             };
 
             service.getReplicas = function (topic) {
-                return $http.get("/rest/getLeaderAndReplicas/" + topic)
+                return $http.get("/rest/getReplicas/" + topic)
                     .then(function (response) {
                         return response.data;
                     });

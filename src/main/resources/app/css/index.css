@@ -12,6 +12,23 @@ body {
 
 fieldset { border-color: #cccccc }
 
+h4 {
+     margin-top: 5px;
+     margin-bottom: 10px;
+     padding-left: 5px;
+     font-size: 15px;
+     background-color: #1a96eb;
+     color: white;
+     text-shadow: 1px 1px 2px black;
+     border: 2px solid #1a96eb;
+     border-radius: 0px;
+     box-shadow: 2px 2px 2px #030972;
+     overflow: hidden;
+     width: 250px;
+     height: 18px;
+     font-weight: bold;
+}
+
 img { vertical-align: middle }
 
 legend { color: #999999 }

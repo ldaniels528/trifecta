@@ -113,31 +113,18 @@
                     <div style="display: inline; float: left; width: 69.9%">
                         <div ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
                         <div ng-repeat="t in getTopics(hideEmptyTopics)">
-                            <a ng-click="t.expanded = !t.expanded">
-                                <img ng-src="/app/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
+                            <a ng-click="expandReplicas(t)">
+                                <img ng-src="/app/images/{{t.loading ? 'status/loading.gif' : t.replicaExpanded ? 'buttons/collapse.png' : 'buttons/expand.png'}}">
                                 <img ng-src="{{ getTopicIcon(t, t == topic) }}"> {{ t.topic }}
                                 <span ng-show="t.totalMessages > 0">
                                     (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
                                 </span>
                             </a>
 
-                            <div ng-show="t.expanded" class="indent">
-                                <a ng-click="expandReplicas(t)">
-                                    <img ng-src="/app/images/{{t.loading ? 'status/loading.gif' : t.replicaExpanded ? 'buttons/collapse.png' : 'buttons/expand.png'}}"> Replicas
-                                </a>
-                                <div ng-show="t.replicaExpanded" class="indent">
-                                    <table class="full_width">
-                                        <tr>
-                                            <th>Partition</th>
-                                            <th>Leader</th>
-                                            <th>Replica</th>
-                                        </tr>
-                                        <tr ng-repeat="r in t.replicas">
-                                            <td class="center">{{ r.partition }}</td>
-                                            <td>{{ r.leader.host }}:{{ r.leader.port }}</td>
-                                            <td>{{ r.replica.host }}:{{ r.replica.port }}</td>
-                                        </tr>
-                                    </table>
+                            <div ng-show="t.replicaExpanded" ng-repeat="r in t.replicas" class="indent">
+                                <img ng-click="r.partitionExpanded = !r.partitionExpanded" ng-src="/app/images/buttons/{{r.partitionExpanded ? 'collapse.png' : 'expand.png'}}"> Partition{{ r.partition }}
+                                <div ng-show="r.partitionExpanded" ng-repeat="host in r.hosts" class="indent">
+                                    <img src="/app/images/status/greenlight.png"> {{ host }}
                                 </div>
                             </div>
                         </div>

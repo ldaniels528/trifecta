@@ -9,7 +9,7 @@ import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.io.ByteBufferUtils
 import com.ldaniels528.trifecta.io.avro.AvroConversion
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
-import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{DEFAULT_FETCH_SIZE, LeaderAndReplicas, MessageData}
+import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{DEFAULT_FETCH_SIZE, MessageData}
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
@@ -152,8 +152,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
       val deltas = if (consumerCache.isEmpty) consumers
       else {
         consumers.flatMap { c =>
-          consumerCache.get(c.getKey) match { // Option(c.copy(rate = computeTransferRate(prev, c)))
-            case Some(prev) => if(prev != c) Option(c) else None
+          consumerCache.get(c.getKey) match {
+            // Option(c.copy(rate = computeTransferRate(prev, c)))
+            case Some(prev) => if (prev != c) Option(c) else None
             case None => Option(c)
           }
         }
@@ -285,16 +286,6 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
   }
 
   /**
-   * Retrieves the list of partition leaders and replicas for a given topic
-   */
-  def getLeaderAndReplicas(topic: String) = Future {
-    KafkaMicroConsumer.getLeaderAndReplicas(topic, brokers) flatMap {
-      case LeaderAndReplicas(partition, leader, replicas) =>
-        replicas map (LeaderAndReplicasJs(partition, leader, _))
-    } sortBy (_.partition)
-  }
-
-  /**
    * Retrieves the message data for given topic, partition and offset
    * @param topic the given topic
    * @param partition the given partition
@@ -387,7 +378,10 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * Retrieves the list of Kafka replicas for a given topic
    */
   def getReplicas(topic: String) = Future {
-    KafkaMicroConsumer.getReplicas(topic, brokers) sortBy (_.partition)
+    KafkaMicroConsumer.getReplicas(topic, brokers)
+      .map(r => (s"${r.host}:${r.port}", r.partition))
+      .groupBy(_._2)
+      .map { case (partition, hostPorts) => ReplicaJs(partition, hostPorts.map(_._1))}
   }
 
   /**
@@ -683,6 +677,8 @@ object KafkaRestFacade {
   case class MessageJs(`type`: String, payload: Any, topic: Option[String] = None, partition: Option[Int] = None, offset: Option[Long] = None)
 
   case class QueryJs(name: String, topic: String, queryString: String)
+
+  case class ReplicaJs(partition: Int, hosts: Seq[String])
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
 
