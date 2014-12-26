@@ -4,6 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import com.ldaniels528.trifecta.TxConfig
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer._
+import com.ldaniels528.trifecta.rest.KafkaRestFacade.{SamplingCursor, TopicAndPartitions}
 import com.ldaniels528.trifecta.rest.PushEventActor._
 import com.ldaniels528.trifecta.rest.TxWebConfig._
 import com.ldaniels528.trifecta.util.ResourceHelper._
@@ -13,36 +14,38 @@ import org.mashupbots.socko.routes._
 import org.mashupbots.socko.webserver.{WebServer, WebServerConfig}
 import org.slf4j.LoggerFactory
 
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration._
 import scala.util.Try
 
 /**
- * Embedded Web Server
+ * Trifecta Embedded Web Server
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(getActorConfig))
-  private val facade = new KafkaRestFacade(config, zk)
-  private val sessionMgr = new WebSocketSessionManager()
+  private val sessions = TrieMap[String, WebSocketSession]()
+  val sampling = TrieMap[String, TopicAndPartitions]()
+  val facade = new KafkaRestFacade(config, zk)
 
   implicit val ec = actorSystem.dispatcher
 
   // define all of the routes
-  val routes = Routes({
+  private val routes = Routes({
     case HttpRequest(request) => wcActor ! request
     case WebSocketHandshake(wsHandshake) => wsHandshake match {
       case Path("/websocket/") =>
         logger.info(s"Authorizing web socket handshake...")
         wsHandshake.authorize(
-          onComplete = Option(sessionMgr.onWebSocketHandshakeComplete),
-          onClose = Option(sessionMgr.onWebSocketClose))
+          onComplete = Option(onWebSocketHandshakeComplete),
+          onClose = Option(onWebSocketClose))
     }
     case WebSocketFrame(wsFrame) => wsActor ! wsFrame
   })
 
   // create the web service instance
-  private val webServer = new WebServer(WebServerConfig(hostname = config.webHost, port = config.webPort), routes, actorSystem)
+  val webServer = new WebServer(WebServerConfig(hostname = config.webHost, port = config.webPort), routes, actorSystem)
 
   // create the web content actors
   private var wcRouter = 0
@@ -50,11 +53,11 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 
   // create the web socket actors
   private var wsRouter = 0
-  private val wsActors = (1 to config.webActorConcurrency) map (_ => actorSystem.actorOf(Props(new WebSocketActor(facade))))
+  private val wsActors = (1 to config.webActorConcurrency) map (_ => actorSystem.actorOf(Props(new WebSocketActor(this))))
 
   // create the push event actors
   private var pushRouter = 0
-  private val pushActors = (1 to 2) map (_ => actorSystem.actorOf(Props(new PushEventActor(sessionMgr, webServer, facade))))
+  private val pushActors = (1 to 2) map (_ => actorSystem.actorOf(Props(new PushEventActor(this))))
 
   // create the actor references
   private def wcActor = wcActors(wcRouter % wcActors.length) and (_ => wcRouter += 1)
@@ -65,37 +68,79 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() = {
-      EmbeddedWebServer.this.stop()
+      EmbeddedWebServer.this.stopServer()
     }
   })
 
   /**
+   * Retrieves a session by the client's web socket ID
+   * @param webSocketId the client's web socket ID
+   * @return an option of a [[WebSocketSession]]
+   */
+  def getSession(webSocketId: String) = sessions.get(webSocketId)
+
+  def onWebSocketHandshakeComplete(webSocketId: String) {
+    logger.info(s"Web Socket $webSocketId connected")
+    sessions += webSocketId -> WebSocketSession(webSocketId)
+    ()
+  }
+
+  def onWebSocketClose(webSocketId: String) {
+    logger.info(s"Web Socket $webSocketId closed")
+    sessions -= webSocketId
+    ()
+  }
+
+  /**
    * Starts the embedded app server
    */
-  def start() {
+  def startServer() {
     implicit val ec = actorSystem.dispatcher
     webServer.start()
 
     // setup consumer update push events
-    actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = config.consumerPushInterval.seconds) {
-      if (sessionMgr.sessionsExist) {
+    actorSystem.scheduler.schedule(initialDelay = 0.seconds, interval = config.consumerPushInterval.seconds) {
+      if (sessions.nonEmpty) {
         pushActor ! PushConsumers
       }
     }
 
     // setup topic update push events
-    actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = config.topicPushInterval.seconds) {
-      if (sessionMgr.sessionsExist) {
+    actorSystem.scheduler.schedule(initialDelay = 0.seconds, interval = config.topicPushInterval.seconds) {
+      if (sessions.nonEmpty) {
         pushActor ! PushTopics
+      }
+    }
+
+    // setup message sampling push events
+    actorSystem.scheduler.schedule(initialDelay = 0.seconds, interval = config.samplingPushInterval.seconds) {
+      if (sessions.nonEmpty) {
+        sampling foreach { case (webSocketId, topicAndPartitions) =>
+          pushActor ! PushMessage(webSocketId, topicAndPartitions)
+        }
       }
     }
     ()
   }
 
+  def startMessageSampling(webSocketId: String, topic: String, partitions: Seq[Long]): Unit = {
+    logger.info(s"Starting subscription for message updates for topic '$topic'")
+    sessions.get(webSocketId) foreach { session =>
+      sampling += webSocketId -> TopicAndPartitions(topic, partitions)
+    }
+  }
+
+  def stopMessageSampling(webSocketId: String, topic: String): Unit = {
+    logger.info(s"Ending subscription for message updates for topic '$topic'")
+    sessions.get(webSocketId) foreach { session =>
+      sampling -= webSocketId
+    }
+  }
+
   /**
    * Stops the embedded app server
    */
-  def stop() {
+  def stopServer() {
     Try(webServer.stop())
     ()
   }
@@ -129,5 +174,9 @@ object EmbeddedWebServer {
           }
         }
       }"""
+
+  case class WebSocketSession(webSocketId: String) {
+    val cursors = new TrieMap[String, SamplingCursor]() // topic -> SamplingCursor
+  }
 
 }

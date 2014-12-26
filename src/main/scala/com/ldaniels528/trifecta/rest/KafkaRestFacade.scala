@@ -34,7 +34,7 @@ import scala.util.{Failure, Success, Try}
  * Kafka REST Facade
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0) {
+case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
   private implicit val formats = net.liftweb.json.DefaultFormats
   private implicit val zkProxy: ZKProxy = zk
   private val logger = LoggerFactory.getLogger(getClass)
@@ -110,6 +110,59 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
         throw new RuntimeException("Failed to retrieve a message")
     }
   }
+
+  /**
+   * Returns the promise of the option of a message based on the given search criteria
+   * @param c the given [[SamplingCursor]]
+   * @return the promise of the option of a message based on the given search criteria
+   */
+  def findNext(c: SamplingCursor, attempts: Int = 0): Future[Option[MessageJs]] = Future {
+    // attempt to find at least one offset with messages available
+    c.offsets.find(co => co.consumerOffset.exists(c => co.topicOffset.exists(t => c <= t))) flatMap { offset =>
+      new KafkaMicroConsumer(TopicAndPartition(c.topic, offset.partition), brokers) use { subs =>
+        val message = for {
+          consumerOfs <- offset.consumerOffset
+          message <- subs.fetch(consumerOfs)(fetchSize = 65535).headOption
+        } yield message
+
+        message.foreach(_ => offset.consumerOffset = offset.consumerOffset.map(_ + 1))
+        decodeMessageData(c.topic, message)
+      }
+    }
+  } flatMap {
+    case result@Some(_) => Future.successful(result)
+    case None =>
+      if (attempts >= 3) {
+        logger.info(s"Maximum retries reached ($attempts attempts)")
+        Future.successful(None)
+      }
+      else {
+        updateOffsets(c) flatMap { _ =>
+          findNext(c, attempts + 1)
+        }
+      }
+  }
+
+  def createSamplingCursorOffsets(tap: TopicAndPartitions): Seq[SamplingCursorOffsets] = {
+    (0 to tap.partitions.length - 1) zip tap.partitions map { case (partition, offset) =>
+      new KafkaMicroConsumer(TopicAndPartition(tap.topic, partition), brokers) use { subs =>
+        SamplingCursorOffsets(
+          partition,
+          topicOffset = subs.getLastOffset,
+          consumerOffset = subs.getFirstOffset.map(Math.max(offset, _)))
+      }
+    } sortBy (c => -(c.topicOffset.getOrElse(0L) - c.consumerOffset.getOrElse(0L)))
+  }
+
+  private def updateOffsets(c: SamplingCursor) = Future.sequence(
+    c.offsets.map { co =>
+      Future {
+        new KafkaMicroConsumer(TopicAndPartition(c.topic, co.partition), brokers) use { subs =>
+          co.topicOffset = subs.getLastOffset
+          co
+        }
+      }
+    })
 
   /**
    * Parses a condition statement
@@ -333,12 +386,12 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @param message_? an option of a [[MessageData]]
    * @return an option of a decoded message
    */
-  private def decodeMessageData(topic: String, message_? : Option[MessageData]) = {
+  private def decodeMessageData(topic: String, message_? : Option[MessageData]): Option[MessageJs] = {
     def decoders = config.getDecodersByTopic(topic)
-    message_? map { md =>
+    message_? flatMap { md =>
       decoders.foldLeft[Option[MessageJs]](None) { (result, d) =>
         result ?? attemptDecode(md.message, d)
-      } getOrElse message_?.map(toMessage)
+      } ?? message_?.map(toMessage)
     }
   }
 
@@ -348,7 +401,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
    * @param txDecoder the given [[TxDecoder]]
    * @return an option of a decoded message
    */
-  private def attemptDecode(bytes: Array[Byte], txDecoder: TxDecoder) = {
+  private def attemptDecode(bytes: Array[Byte], txDecoder: TxDecoder): Option[MessageJs] = {
     txDecoder.decoder match {
       case Left(av) =>
         av.decode(bytes) match {
@@ -381,7 +434,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     KafkaMicroConsumer.getReplicas(topic, brokers)
       .map(r => (r.partition, ReplicaHostJs(s"${r.host}:${r.port}", r.inSync)))
       .groupBy(_._1)
-      .map { case (partition, replicas) => ReplicaJs(partition, replicas.map(_._2)) }
+      .map { case (partition, replicas) => ReplicaJs(partition, replicas.map(_._2))}
   }
 
   /**
@@ -516,7 +569,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
     format match {
       case "ASCII" => value.getBytes(config.encoding)
       case "Avro" => toAvroBinary(topic, value).orDie(s"No suitable decoder found for topic $topic")
-      case "JSON" => JsonHelper.makeCompact(value).getBytes(config.encoding)
+      case "JSON" => JsonHelper.compressJson(value).getBytes(config.encoding)
       case "Hex-Notation" => CommandParser.parseDottedHex(value)
       case "EPOC" => ByteBufferUtils.longToBytes(value.toLong)
       case "UUID" => ByteBufferUtils.uuidToBytes(UUID.fromString(value))
@@ -598,9 +651,11 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy, correlationId: Int = 0
 
   private def createParentDirectory(file: File): Unit = {
     val parentDirectory = file.getParentFile
-    if(!parentDirectory.exists) {
+    if (!parentDirectory.exists) {
       logger.info(s"Creating directory '${parentDirectory.getAbsolutePath}'...")
-      parentDirectory.mkdirs()
+      if (!parentDirectory.mkdirs()) {
+        logger.warn(s"Directory '${parentDirectory.getAbsolutePath}' could not be created")
+      }
     }
   }
 
@@ -704,6 +759,12 @@ object KafkaRestFacade {
   case class ReplicaJs(partition: Int, replicas: Seq[ReplicaHostJs])
 
   case class ReplicaHostJs(host: String, inSync: Boolean)
+
+  case class SamplingCursor(topic: String, offsets: Seq[SamplingCursorOffsets])
+
+  case class SamplingCursorOffsets(partition: Int, var topicOffset: Option[Long], var consumerOffset: Option[Long])
+
+  case class TopicAndPartitions(topic: String, partitions: Seq[Long])
 
   case class TopicDetailsJs(topic: String, partition: Int, startOffset: Option[Long], endOffset: Option[Long], messages: Option[Long])
 

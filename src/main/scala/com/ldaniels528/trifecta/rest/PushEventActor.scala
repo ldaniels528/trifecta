@@ -2,22 +2,24 @@ package com.ldaniels528.trifecta.rest
 
 import akka.actor.Actor
 import com.ldaniels528.trifecta.io.json.JsonHelper
+import com.ldaniels528.trifecta.rest.KafkaRestFacade.{SamplingCursor, TopicAndPartitions}
 import com.ldaniels528.trifecta.rest.PushEventActor._
-import org.mashupbots.socko.webserver.WebServer
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext
 
 /**
- * Push Event Actor
+ * Push Events Actor
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class PushEventActor(sessionMgr: WebSocketSessionManager, webServer: WebServer, facade: KafkaRestFacade)(implicit ec: ExecutionContext)
+class PushEventActor(embeddedWebServer: EmbeddedWebServer)(implicit ec: ExecutionContext)
   extends Actor {
   private lazy val logger = LoggerFactory.getLogger(getClass)
+  private val facade = embeddedWebServer.facade
 
   override def receive = {
     case PushConsumers => pushConsumerUpdateEvents()
+    case PushMessage(webSocketId, topicAndPartitions) => pushMessageSamplingEvent(webSocketId, topicAndPartitions)
     case PushTopics => pushTopicUpdateEvents()
     case message =>
       logger.warn(s"received unknown message of type: $message")
@@ -30,8 +32,8 @@ class PushEventActor(sessionMgr: WebSocketSessionManager, webServer: WebServer, 
   private def pushConsumerUpdateEvents() {
     facade.getConsumerDeltas.foreach { deltas =>
       if (deltas.nonEmpty) {
-        logger.debug(s"Transferring ${deltas.length} consumer(s) to ${sessionMgr.sessionsCount} clients...")
-        webServer.webSocketConnections.writeText(JsonHelper.makeCompact(deltas))
+        val jsonMessage = JsonHelper.toJsonString(PushEvent(action = "consumerDeltas", deltas))
+        embeddedWebServer.webServer.webSocketConnections.writeText(jsonMessage)
       }
     }
   }
@@ -42,21 +44,41 @@ class PushEventActor(sessionMgr: WebSocketSessionManager, webServer: WebServer, 
   private def pushTopicUpdateEvents() {
     facade.getTopicDeltas.foreach { deltas =>
       if (deltas.nonEmpty) {
-        logger.debug(s"Transferring ${deltas.length} topic(s) to ${sessionMgr.sessionsCount} clients...")
-        webServer.webSocketConnections.writeText(JsonHelper.makeCompact(deltas))
+        val jsonMessage = JsonHelper.toJsonString(PushEvent(action = "topicDeltas", deltas))
+        embeddedWebServer.webServer.webSocketConnections.writeText(jsonMessage)
       }
+    }
+  }
+
+  /**
+   * Pushes message sampling events for a given web socket client and topic
+   * @param webSocketId the given web socket client ID
+   * @param tap the given topic
+   */
+  private def pushMessageSamplingEvent(webSocketId: String, tap: TopicAndPartitions): Unit = {
+    embeddedWebServer.getSession(webSocketId) foreach { session =>
+      val cursorOffsets = facade.createSamplingCursorOffsets(tap)
+      val cursor = session.cursors.getOrElseUpdate(webSocketId, SamplingCursor(tap.topic, cursorOffsets))
+      facade.findNext(cursor) foreach (_ foreach { message =>
+        val jsonMessage = JsonHelper.toJsonString(PushEvent(action = "sample", message))
+        embeddedWebServer.webServer.webSocketConnections.writeText(jsonMessage, webSocketId)
+      })
     }
   }
 
 }
 
 /**
- * Push Event Actor Singleton
+ * Push Events Actor Singleton
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object PushEventActor {
 
   case object PushConsumers
+
+  case class PushEvent(action: String, data: AnyRef)
+
+  case class PushMessage(webSocketId: String, topicAndPartitions: TopicAndPartitions)
 
   case object PushTopics
 

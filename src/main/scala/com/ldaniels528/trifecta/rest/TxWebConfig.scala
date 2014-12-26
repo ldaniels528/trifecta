@@ -15,16 +15,22 @@ object TxWebConfig {
   implicit class TxConfigExtensions(val config: TxConfig) extends AnyVal {
 
     /**
+     * Returns the push interval (in seconds) for consumer offset changes
+     * @return the interval in seconds
+     */
+    def consumerPushInterval: Int = config.getOrElse("trifecta.web.push.interval.consumer", "15").toInt
+
+    /**
      * Returns the push interval (in seconds) for topic changes
-     * @return the interval
+     * @return the interval in seconds
      */
     def topicPushInterval: Int = config.getOrElse("trifecta.web.push.interval.topic", "15").toInt
 
     /**
-     * Returns the push interval (in seconds) for consumer offset changes
-     * @return the interval
+     * Returns the push interval (in seconds) for message sampling
+     * @return the interval in seconds
      */
-    def consumerPushInterval: Int = config.getOrElse("trifecta.web.push.interval.consumer", "15").toInt
+    def samplingPushInterval: Int = config.getOrElse("trifecta.web.push.interval.sampling", "2").toInt
 
     /**
      * Returns the web actor execution concurrency

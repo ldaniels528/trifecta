@@ -141,22 +141,23 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.13
+* Trifecta UI
+    * Added message sampling capability to the _Inspect_ tab
+
 #### v0.18.12
 * Trifecta UI
     * Updated Decoder and Query views for consistency
 
-#### v0.18.11
+#### v0.18.1 to v0.18.11
 * Trifecta UI
     * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
-
-#### v0.18.1 to v0.18.10
-* Trifecta UI
-    * "Decoder tab" user interface improvements
-    * "Observe tab" user interface improvements
+    * _Decoder_ tab user interface improvements
+    * _Observe_ tab user interface improvements
         * The Consumers section has been enhanced to display topic and consumer offset deltas
         * Redesigned the Replicas view to report under-replicated partitions.
         * The Topics section has been enhanced to display topic offset deltas
-    * "Query tab" user interface improvements
+    * _Query_ tab user interface improvements
         * Multiple queries can be executed concurrently
 * Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
     * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
@@ -193,6 +194,9 @@ $HOME/.trifecta/config.properties). **NOTE**: The property values shown below ar
 
     # the interval (in seconds) that changes to consumer offsets will be pushed to web-socket clients
     trifecta.web.push.interval.consumer = 15
+
+    # the interval (in seconds) that sampling messages will be pushed to web-socket clients
+    trifecta.web.push.interval.sampling = 2
 
     # the interval (in seconds) that changes to topics (new messages) will be pushed to web-socket clients
     trifecta.web.push.interval.topic = 15

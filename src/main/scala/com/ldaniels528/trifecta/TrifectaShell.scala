@@ -153,7 +153,7 @@ class TrifectaShell(rt: TxRuntimeContext) {
  */
 object TrifectaShell {
   private val logger = LoggerFactory.getLogger(getClass)
-  val VERSION = "0.18.12"
+  val VERSION = "0.18.13"
 
   /**
    * Application entry point
@@ -184,7 +184,7 @@ object TrifectaShell {
     // startup in HTTP listener mode?
     if (args.contains("--http-start")) {
       val zk = ZKProxy(config.zooKeeperConnect)
-      new EmbeddedWebServer(config, zk).start()
+      new EmbeddedWebServer(config, zk).startServer()
 
       logger.info(s"Open your browser and navigate to http://${config.webHost}:${config.webPort}")
     }

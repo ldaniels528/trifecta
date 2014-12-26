@@ -54,29 +54,28 @@
     <div style="display: inline; width: 59%; float: right; margin-top: 12px">
         <div style="display: block; margin-bottom: 3px">
             <div class="input_block">
-                <img ng-src="/app/images/{{ loading ? 'status/loading.gif' : 'common/root-16.png' }}">
-            </div>
-            <div class="input_block">
-                <span class="header_label">Offset</span> <input ng-model="partition.offset" type="text" class="input-mir" ng-change="convertOffsetToInt(partition, partition.offset)">
-                <img class="clickable" src="/app/images/tabs/inspect/message-first.gif" ng-click="firstMessage()" title="move to first message">
-                <img class="clickable" src="/app/images/tabs/inspect/message-prev.gif" ng-click="previousMessage()" title="move to previous message">
-                <img class="clickable" src="/app/images/tabs/inspect/message-middle.png" ng-click="medianMessage()" title="move to median message">
-                <img class="clickable" src="/app/images/tabs/inspect/message-next.gif" ng-click="nextMessage()" title="move to next message">
-                <img class="clickable" src="/app/images/tabs/inspect/message-last.gif" ng-click="lastMessage()" title="move to last message">
-            </div>
-            <div class="input_block">
+                <img ng-src="/app/images/{{ loading || isLimitedControls() ? 'status/loading.gif' : 'common/root-16.png' }}">
                 <img class="clickable" src="/app/images/tabs/inspect/search-16.png" ng-click="messageFinderPopup()" title="search for a message">
-                <!--
-                <img class="clickable" src="/app/images/tabs/inspect/message_export-16.png" ng-click="exportMessage(message)" title="export the message">
-                -->
-                <img class="clickable" src="/app/images/tabs/inspect/schema-16.png" ng-click="gotoDecoder(topic)" title="goto the decoder(s) for this message">
+                <img class="clickable" src="/app/images/tabs/inspect/decoder-16.png" ng-click="gotoDecoder(topic)" title="goto the decoder(s) for this message">
+                <img ng-show="sampling.status == 'started'" class="clickable" src="/app/images/tabs/inspect/pause-16.png" ng-click="messageSamplingStop(topic)" title="start message sampling">
+                <img ng-show="sampling.status == 'stopped'" class="clickable" src="/app/images/tabs/inspect/play-16.png" ng-click="messageSamplingStart(topic)" title="pause message sampling">
             </div>
-            <div class="input_block">
-                <span class="header_label">View</span>
+            <div class="input_block" ng-hide="isLimitedControls()">
+                <span class="header_label">View </span>
                 <input ng-model="displayMode.state" type="radio" value="key" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Key</span>
                 <input ng-model="displayMode.state" type="radio" value="message" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Message</span>
             </div>
+            <div class="input_block" ng-hide="isLimitedControls()">
+                <span class="header_label">Offset</span> <input ng-model="partition.offset" type="text" class="input-mir" ng-change="convertOffsetToInt(partition, partition.offset)">
+                <img class="clickable" src="/app/images/tabs/inspect/message-first.gif" ng-click="firstMessage()" title="move to first message">
+                <img class="clickable" src="/app/images/tabs/inspect/message-prev.gif" ng-click="previousMessage()" title="move to previous message">
+                <img class="clickable" src="/app/images/tabs/inspect/message-next.gif" ng-click="nextMessage()" title="move to next message">
+                <img class="clickable" src="/app/images/tabs/inspect/message-last.gif" ng-click="lastMessage()" title="move to last message">
+            </div>
             <!--
+            <div class="input_block">
+                <img class="clickable" src="/app/images/tabs/inspect/message_export-16.png" ng-click="exportMessage(message)" title="export the message">
+             </div>
             <div ng-show="message.type == 'json'" class="input_block">
                 <img ng-show="displayMode.avro == 'json'" class="clickable" src="/app/images/tabs/inspect/js-16.png" ng-click="toggleAvroOutput()" title="Switch to Avro-JSON output">
                 <img ng-show="displayMode.avro == 'avro'" class="clickable" src="/app/images/tabs/inspect/avro-16.gif" ng-click="toggleAvroOutput()" title="Switch to JSON output">

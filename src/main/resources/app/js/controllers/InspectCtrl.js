@@ -4,8 +4,8 @@
  */
 (function () {
     angular.module('trifecta')
-        .controller('InspectCtrl', ['$scope', '$interval', '$log', '$parse', '$timeout', 'MessageSvc', 'MessageSearchSvc', 'TopicSvc',
-            function ($scope, $interval, $log, $parse, $timeout, MessageSvc, MessageSearchSvc, TopicSvc) {
+        .controller('InspectCtrl', ['$scope', '$interval', '$log', '$parse', '$timeout', 'MessageSvc', 'MessageSearchSvc', 'TopicSvc', 'WebSockets',
+            function ($scope, $interval, $log, $parse, $timeout, MessageSvc, MessageSearchSvc, TopicSvc, WebSockets) {
 
                 $scope.hideEmptyTopics = true;
                 $scope.topics = TopicSvc.topics;
@@ -16,6 +16,10 @@
                 $scope.displayMode = {
                     "state" : "message",
                     "avro" : "json"
+                };
+
+                $scope.sampling = {
+                    "status": "stopped"
                 };
 
                 $scope.clearMessage = function() {
@@ -68,6 +72,10 @@
                             if($scope.loading) $scope.loading--;
                             $timeout.cancel(promise);
                         });
+                };
+
+                $scope.setMessageData = function(message) {
+                    $scope.message = message;
                 };
 
                 /**
@@ -172,6 +180,10 @@
                     }
                 };
 
+                $scope.isLimitedControls = function() {
+                    return $scope.sampling.status == 'started';
+                };
+
                 $scope.loadMessage = function () {
                     var topic = $scope.topic.topic;
                     var partition = $scope.partition.partition;
@@ -212,6 +224,40 @@
                     if (partition.offset != median) {
                         partition.offset = median;
                         $scope.loadMessage();
+                    }
+                };
+
+                $scope.messageSamplingStart = function(topic) {
+                    // build the request
+                    var partitions = [];
+                    angular.forEach(topic.partitions, function(p) {
+                        partitions.push(p.offset != null ? p.offset : p.endOffset);
+                    });
+                    var json = angular.toJson({
+                        "action": "startMessageSampling",
+                        "topic": topic.topic,
+                        "partitions": partitions
+                    });
+
+                    // transfer the request
+                    if(WebSockets.send(json)) {
+                        $scope.sampling.status = "started";
+                    }
+                    else {
+                        $scope.addErrorMessage("Failed to start message sampling");
+                    }
+                };
+
+                $scope.messageSamplingStop = function(topic) {
+                    // build the request
+                    var json = angular.toJson({ "action": "stopMessageSampling", "topic": topic.topic });
+
+                    // transfer the request
+                    if(WebSockets.send(json)) {
+                        $scope.sampling.status = "stopped";
+                    }
+                    else {
+                        $scope.addErrorMessage("Failed to stop message sampling");
                     }
                 };
 
