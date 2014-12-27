@@ -143,7 +143,7 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 ### Downloads
 
 Trifecta binaries are available for immediate download. Click here to download
-<a href="http://ldaniels528.github.io/trifecta/downloads/trifecta-bundle-0.18.13.bin.jar">Trifecta v0.18.13</a>
+<a href="http://ldaniels528.github.io/trifecta/downloads/trifecta-bundle-0.18.13.bin.jar">Trifecta v0.18.13</a> (66MB)
 
 <a name="whats-new"></a>
 ### What's New
