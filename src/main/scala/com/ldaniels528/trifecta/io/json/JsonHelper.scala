@@ -62,9 +62,9 @@ object JsonHelper {
 
   def toJson[T](results: Seq[T]): JValue = Extraction.decompose(results)
 
-  def makeCompact[T](results: Seq[T]): String = compact(render(Extraction.decompose(results)))
+  def toJsonString(bean: AnyRef): String = compact(render(Extraction.decompose(bean)))
 
-  def makeCompact(jsString: String): String = compact(render(parse(jsString)))
+  def compressJson(jsString: String): String = compact(render(parse(jsString)))
 
   /**
    * Converts the given JSON value into a MongoDB document

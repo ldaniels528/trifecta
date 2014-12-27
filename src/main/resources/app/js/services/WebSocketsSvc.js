@@ -28,26 +28,7 @@
                 };
 
                 socket.onmessage = function (event) {
-                    if(event.data) {
-                        var data = angular.fromJson(event.data);
-                        // $log.info("data = " + angular.toJson(data));
-
-                        // consumer update?
-                        if(data[0].consumerId) {
-                            angular.element('#TrifectaMain').scope().$apply(function(scope) {
-                                TopicSvc.updateConsumers(data);
-                            });
-                        }
-
-                        // topic update?
-                        else if(data[0].topic) {
-                            TopicSvc.updateTopics(data);
-                        }
-
-                        else {
-                            $log.warn("message unhandled: " + angular.toJson(data));
-                        }
-                    }
+                    handleMessage(event);
                 };
             } else {
                 alert("Your browser does not support Web Sockets.");
@@ -56,17 +37,56 @@
             /**
              * Transmits the message to the server via web-socket
              * @param message the given message
+             * @param scope the given scope
              */
-            service.send = function (message) {
+            service.send = function (message, scope) {
                 if (!window.WebSocket) {
-                    return;
+                    scope.addErrorMessage("Web socket closed");
+                    return false;
                 }
                 if (socket.readyState == WebSocket.OPEN) {
                     socket.send(message);
+                    return true;
                 } else {
-                    $log.error("The socket is not open: readyState = " + socket.readyState);
+                    scope.addErrorMessage("Web socket closed: readyState = " + socket.readyState);
+                    return false;
                 }
             };
+
+            /**
+             * Handles the incoming web socket message event
+             * @param event the given web socket message event
+             */
+            function handleMessage(event) {
+                if(event.data) {
+                    var message = angular.fromJson(event.data);
+
+                    // is it a sampling action?
+                    if(message.action == "sample") {
+                        //$log.info("sample: " + angular.toJson(message.data));
+                        angular.element('#TrifectaMain').scope().$apply(function ($scope) {
+                            $scope.setMessageData(message.data);
+                        });
+                    }
+
+                    // is it a set of consumer deltas?
+                    else if(message.action == "consumerDeltas") {
+                        angular.element('#TrifectaMain').scope().$apply(function ($scope) {
+                            TopicSvc.updateConsumers(message.data);
+                        });
+                    }
+
+                    // is it a set of topic deltas?
+                    else if (message.action == "topicDeltas") {
+                        TopicSvc.updateTopics(message.data);
+                    }
+
+                    // unrecognized push event
+                    else {
+                        $log.warn("Message was unhandled: action = '" + message.action + "', data =" + angular.toJson(message.data));
+                    }
+                }
+            }
 
             return service;
         });

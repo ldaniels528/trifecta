@@ -46,6 +46,14 @@
     overflow: auto;
 }
 
+.kmr_controls {
+    display: inline;
+    border: 1px solid #888888;
+    background: white;
+    width: 300px;
+    height: 100%;
+}
+
 .separator { margin-top: 10px }
 
 .topics_container {
