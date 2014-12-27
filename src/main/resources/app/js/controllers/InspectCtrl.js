@@ -76,6 +76,13 @@
 
                 $scope.setMessageData = function(message) {
                     $scope.message = message;
+
+                    // update the partition with the offset
+                    var partition = TopicSvc.findPartition($scope.topic, message.partition);
+                    if(partition) {
+                        $scope.partition = partition;
+                        partition.offset = message.offset;
+                    }
                 };
 
                 /**
