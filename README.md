@@ -150,7 +150,7 @@ Trifecta binaries are available for immediate download. Click here to download
 
 #### v0.18.13
 * Trifecta UI
-    * Added message sampling capability to the _Inspect_ tab
+    * Added real-time message streaming capability to the _Inspect_ tab
 
 #### v0.18.12
 * Trifecta UI
