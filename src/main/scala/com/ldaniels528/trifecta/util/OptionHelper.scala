@@ -1,5 +1,6 @@
 package com.ldaniels528.trifecta.util
 
+import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -7,6 +8,12 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object OptionHelper {
+
+  object Risky {
+
+    implicit def value2Option[T](value: T): Option[T] = Option(value)
+
+  }
 
   /**
    * Facilitates option chaining

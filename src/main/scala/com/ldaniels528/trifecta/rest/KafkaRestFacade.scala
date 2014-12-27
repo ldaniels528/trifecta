@@ -4,12 +4,13 @@ import java.io.{File, FileOutputStream}
 import java.util.UUID
 import java.util.concurrent.Executors
 
+import com.ldaniels528.trifecta.util.OptionHelper.Risky._
 import com.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.io.ByteBufferUtils
 import com.ldaniels528.trifecta.io.avro.AvroConversion
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
-import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{DEFAULT_FETCH_SIZE, MessageData}
+import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{MessageData, DEFAULT_FETCH_SIZE}
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
@@ -390,22 +391,23 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     def decoders = config.getDecodersByTopic(topic)
     message_? flatMap { md =>
       decoders.foldLeft[Option[MessageJs]](None) { (result, d) =>
-        result ?? attemptDecode(md.message, d)
+        result ?? attemptDecode(md, d)
       } ?? message_?.map(toMessage)
     }
   }
 
   /**
    * Attempts to decode the given message with the given decoder
-   * @param bytes the given array of bytes
+   * @param md the given [[MessageData]]
    * @param txDecoder the given [[TxDecoder]]
    * @return an option of a decoded message
    */
-  private def attemptDecode(bytes: Array[Byte], txDecoder: TxDecoder): Option[MessageJs] = {
+  private def attemptDecode(md: MessageData, txDecoder: TxDecoder): Option[MessageJs] = {
     txDecoder.decoder match {
       case Left(av) =>
-        av.decode(bytes) match {
-          case Success(record) => Option(toMessage(record))
+        av.decode(md.message) match {
+          case Success(record) =>
+            Option(MessageJs(`type` = "json", partition = md.partition, offset = md.offset, payload = JsonHelper.makePretty(record.toString)))
           case Failure(e) => None
         }
       case _ => None
@@ -414,10 +416,14 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   private def toMessage(message: Any): MessageJs = message match {
     case opt: Option[Any] => toMessage(opt.orNull)
-    case bytes: Array[Byte] => MessageJs(`type` = "bytes", payload = toByteArray(bytes))
-    case md: MessageData if JsonHelper.isJson(new String(md.message)) => MessageJs(`type` = "json", payload = new String(md.message))
-    case md: MessageData => MessageJs(`type` = "bytes", payload = toByteArray(md.message))
-    case value => MessageJs(`type` = "json", payload = JsonHelper.makePretty(String.valueOf(value)))
+    case bytes: Array[Byte] =>
+      MessageJs(`type` = "bytes", payload = toByteArray(bytes))
+    case md: MessageData if JsonHelper.isJson(new String(md.message)) =>
+      MessageJs(`type` = "json", partition = md.partition, offset = md.offset, payload = new String(md.message))
+    case md: MessageData =>
+      MessageJs(`type` = "bytes", partition = md.partition, offset = md.offset, payload = toByteArray(md.message))
+    case value =>
+      MessageJs(`type` = "json", payload = JsonHelper.makePretty(String.valueOf(value)))
   }
 
   /**

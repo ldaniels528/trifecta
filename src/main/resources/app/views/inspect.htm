@@ -57,8 +57,18 @@
                 <img ng-src="/app/images/{{ loading || isLimitedControls() ? 'status/loading.gif' : 'common/root-16.png' }}">
                 <img class="clickable" src="/app/images/tabs/inspect/search-16.png" ng-click="messageFinderPopup()" title="search for a message">
                 <img class="clickable" src="/app/images/tabs/inspect/decoder-16.png" ng-click="gotoDecoder(topic)" title="goto the decoder(s) for this message">
-                <img ng-show="sampling.status == 'started'" class="clickable" src="/app/images/tabs/inspect/pause-16.png" ng-click="messageSamplingStop(topic)" title="start message sampling">
-                <img ng-show="sampling.status == 'stopped'" class="clickable" src="/app/images/tabs/inspect/play-16.png" ng-click="messageSamplingStart(topic)" title="pause message sampling">
+                <img ng-show="sampling.status == 'started'" class="clickable" src="/app/images/tabs/inspect/pause-16.png" ng-click="messageSamplingStop(topic)" title="stop message streaming">
+                <img ng-show="sampling.status == 'stopped'" class="clickable" src="/app/images/tabs/inspect/play-16.png" ng-click="messageSamplingStart(topic)" title="start message streaming">
+            </div>
+            <div class="input_block" ng-show="isLimitedControls()">
+                <span class="negative bold">Streaming: </span>
+                <span class="header_label">Partition</span>
+                <span ng-show="message.partition != null">{{ message.partition }}</span>
+                <span class="inactive" ng-hide="message.partition != null">****</span>
+
+                <span class="header_label">Offset</span>
+                <span ng-show="message.offset != null">{{ message.offset }}</span>
+                <span class="inactive" ng-hide="message.offset != null">****</span>
             </div>
             <div class="input_block" ng-hide="isLimitedControls()">
                 <span class="header_label">View </span>
