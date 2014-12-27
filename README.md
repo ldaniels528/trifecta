@@ -16,6 +16,7 @@ Table of Contents
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#configuring-the-app">Configuring the application</a>
 	* <a href="#running-the-app">Running the application</a>
+* <a href="#downloads">Downloads</a>
 * <a href="#whats-new">What's New</a>
 * <a href="#trifecta-ui">Trifecta UI</a>
     * <a href="#trifecta-ui-start">Starting the embedded web server</a>
@@ -137,6 +138,12 @@ To start the _Trifecta_ REPL:
 Optionally, you can execute _Trifecta_ instructions (commands) right from the command line:
 	
 	$ java -jar trifecta.jar kls -l
+
+<a name="downloads"></a>
+### Downloads
+
+Trifecta binaries are available for immediate download. Click here to download
+<a href="http://ldaniels528.github.io/trifecta/downloads/trifecta-bundle-0.18.13.bin.jar">Trifecta v0.18.13</a>
 
 <a name="whats-new"></a>
 ### What's New
