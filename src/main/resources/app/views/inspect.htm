@@ -43,7 +43,7 @@
                             </td>
                             <td>
                                 <span ng-class="p == partition ? 'highlighted' : ''">
-                                    {{ isLimitedControls() ? p.endOffset - p.offset : p.messages | number }}
+                                    {{ isLimitedControls() ? getRemainingCount(p) : p.messages | number }}
                                 </span>
                             </td>
                         </tr>
