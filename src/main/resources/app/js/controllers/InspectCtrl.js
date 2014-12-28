@@ -114,6 +114,10 @@
                         });
                 };
 
+                $scope.getRemainingCount = function(p) {
+                    return Math.max(p.endOffset - p.offset, 0);
+                };
+
                 $scope.messageFinderPopup = function () {
                     MessageSearchSvc.finderDialog($scope).then(function (form) {
                         // perform the validation of the form
