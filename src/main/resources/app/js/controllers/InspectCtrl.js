@@ -417,6 +417,71 @@
                     return null;
                 }
 
+                /******************************************************************
+                 *  Error-related Functions
+                 ******************************************************************/
+
+                $scope.gloabalMessages = [];
+
+                $scope.clearMessages = function () {
+                    $scope.gloabalMessages = [];
+                };
+
+                $scope.addError = function (err) {
+                    $scope.gloabalMessages.push({
+                        "type": "error",
+                        "text": (err.statusText != "")
+                            ? "HTTP/" + err.status + " - " + err.statusText
+                            : "General fault or communications error"
+                    });
+                    scheduleRemoval($scope.gloabalMessages);
+                };
+
+                $scope.addErrorMessage = function (messageText) {
+                    $scope.gloabalMessages.push({
+                        "type": "error",
+                        "text": messageText
+                    });
+                    scheduleRemoval();
+                };
+
+                $scope.addInfoMessage = function (messageText) {
+                    $scope.gloabalMessages.push({
+                        "type": "info",
+                        "text": messageText
+                    });
+                    scheduleRemoval();
+                };
+
+                $scope.addWarningMessage = function (messageText) {
+                    $scope.gloabalMessages.push({
+                        "type": "warning",
+                        "text": messageText
+                    });
+                    scheduleRemoval();
+                };
+
+                $scope.removeMessage = function (index) {
+                    $scope.gloabalMessages.splice(index, 1);
+                };
+
+                function scheduleRemoval() {
+                    var messages = $scope.gloabalMessages;
+                    var message = messages[messages.length - 1];
+
+                    $timeout(function() {
+                        var index = messages.indexOf(message);
+                        $log.info("Removing message[" + index + "]...");
+                        if(index != -1) {
+                            $scope.removeMessage(index);
+                        }
+                    }, 10000 + $scope.gloabalMessages.length * 500);
+                }
+
+                /******************************************************************
+                 *  Watched Functions
+                 ******************************************************************/
+
                 /**
                  * Watch for topic changes, and select the first non-empty topic
                  */

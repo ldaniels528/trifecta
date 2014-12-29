@@ -10,7 +10,7 @@
     }]);
 
     app.run(function($rootScope, $log, $timeout, ConsumerSvc, TopicSvc, WebSockets) {
-        $rootScope.version = "0.18.13";
+        $rootScope.version = "0.18.14";
         $rootScope.ConsumerSvc = ConsumerSvc;
         $rootScope.TopicSvc = TopicSvc;
         $rootScope.WebSockets = WebSockets;
@@ -87,67 +87,6 @@
             else if(sameYear && sameMonth) return "MM-dd HH:mm Z";
             else return "MM-dd-yyyy Z";
         };
-
-        /******************************************************************
-         *  Error-related Methods
-         ******************************************************************/
-
-        $rootScope.gloabalMessages = [];
-
-        $rootScope.clearMessages = function () {
-            $rootScope.gloabalMessages = [];
-        };
-
-        $rootScope.addError = function (err) {
-            $rootScope.gloabalMessages.push({
-                "type": "error",
-                "text": (err.statusText != "")
-                    ? "HTTP/" + err.status + " - " + err.statusText
-                    : "General fault or communications error"
-            });
-            scheduleRemoval($rootScope.gloabalMessages);
-        };
-
-        $rootScope.addErrorMessage = function (messageText) {
-            $rootScope.gloabalMessages.push({
-                "type": "error",
-                "text": messageText
-            });
-            scheduleRemoval();
-        };
-
-        $rootScope.addInfoMessage = function (messageText) {
-            $rootScope.gloabalMessages.push({
-                "type": "info",
-                "text": messageText
-            });
-            scheduleRemoval();
-        };
-
-        $rootScope.addWarningMessage = function (messageText) {
-            $rootScope.gloabalMessages.push({
-                "type": "warning",
-                "text": messageText
-            });
-            scheduleRemoval();
-        };
-
-        $rootScope.removeMessage = function (index) {
-            $rootScope.gloabalMessages.splice(index, 1);
-        };
-
-        function scheduleRemoval() {
-            var messages = $rootScope.gloabalMessages;
-            var message = messages[messages.length - 1];
-
-            $timeout(function() {
-                var index = messages.indexOf(message);
-                $log.info("Removing message[" + index + "]...");
-                if(index != -1) {
-                    $rootScope.removeMessage(index);
-                }
-            }, 10000 + $rootScope.gloabalMessages.length * 500);
-        }
 
     });
 
