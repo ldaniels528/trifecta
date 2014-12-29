@@ -192,7 +192,13 @@
 
                 angular.forEach(sortedTopics, function(t) {
                     t.consumers = [];
+                    t.replicas = [];
                     service.topics.push(t);
+
+                    // set the default current offset
+                    angular.forEach(t.partitions, function(p) {
+                        p.offset = p.endOffset;
+                    });
                 });
             });
 
