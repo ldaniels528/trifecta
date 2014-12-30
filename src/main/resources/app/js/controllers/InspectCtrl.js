@@ -423,10 +423,6 @@
 
                 $scope.gloabalMessages = [];
 
-                $scope.clearMessages = function () {
-                    $scope.gloabalMessages = [];
-                };
-
                 $scope.addError = function (err) {
                     $scope.gloabalMessages.push({
                         "type": "error",
@@ -459,6 +455,10 @@
                         "text": messageText
                     });
                     scheduleRemoval();
+                };
+
+                $scope.removeAllMessages = function () {
+                    $scope.gloabalMessages = [];
                 };
 
                 $scope.removeMessage = function (index) {
