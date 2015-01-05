@@ -6,6 +6,8 @@ import com.ldaniels528.trifecta.util.PropertiesHelper._
 import kafka.javaapi.producer.Producer
 import kafka.producer.{KeyedMessage, ProducerConfig}
 
+import scala.util.Try
+
 /**
  * Kafka Publisher
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
@@ -34,15 +36,15 @@ class KafkaPublisher(config: ProducerConfig) {
    * @param key the given message key
    * @param message the given message payload
    */
-  def publish(topic: String, key: Array[Byte], message: Array[Byte]) {
-    producer.foreach(_.send(new KeyedMessage(topic = topic, key = key, message = message)))
+  def publish(topic: String, key: Array[Byte], message: Array[Byte]) = Try {
+    producer.foreach(_.send(new KeyedMessage(topic, key, message)))
   }
 
   /**
    * Transports a message to the messaging server
    * @param km the given keyed message value
    */
-  def publish(km: KeyedMessage[Array[Byte], Array[Byte]]): Unit = producer.foreach(_.send(km))
+  def publish(km: KeyedMessage[Array[Byte], Array[Byte]]): Unit = Try(producer.foreach(_.send(km)))
 
 }
 
