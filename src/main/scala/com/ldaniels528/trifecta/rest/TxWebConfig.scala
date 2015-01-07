@@ -42,7 +42,7 @@ object TxWebConfig {
      * Returns the embedded web server host/IP
      * @return the embedded web server host/IP
      */
-    def webHost: String = config.getOrElse("trifecta.web.host", "localhost")
+    def webHost: String = config.getOrElse("trifecta.web.host", "0.0.0.0")
 
     /**
      * Returns the embedded web server port
