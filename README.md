@@ -150,15 +150,16 @@ Trifecta binaries are available for immediate download.
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.14
+* Trifecta UI
+    * Upgraded to Kafka 0.8.2-beta and Storm 0.9.3
+    * Miscellaneous bug fixes
+
 #### v0.18.13
 * Trifecta UI
     * Added real-time message streaming capability to the _Inspect_ tab
 
-#### v0.18.12
-* Trifecta UI
-    * Updated Decoder and Query views for consistency
-
-#### v0.18.1 to v0.18.11
+#### v0.18.1 to v0.18.12
 * Trifecta UI
     * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
     * _Decoder_ tab user interface improvements
