@@ -37,20 +37,20 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
 
 // General Dependencies
 libraryDependencies ++= Seq(
-  "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.1",
+  "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.4",
   "com.101tec" % "zkclient" % "0.4",
-  "com.twitter" %% "bijection-core" % "0.7.0",
-  "com.twitter" %% "bijection-avro" % "0.7.0",
-  "com.typesafe.akka" %% "akka-actor" % "2.3.7",
+  "com.twitter" %% "bijection-core" % "0.7.2",
+  "com.twitter" %% "bijection-avro" % "0.7.2",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.8",
   "jline" % "jline" % "2.12",
-  "net.liftweb" %% "lift-json" % "3.0-M2",
+  "net.liftweb" %% "lift-json" % "3.0-M3",
   "org.apache.avro" % "avro" % "1.7.7",
-  "org.apache.curator" % "curator-framework" % "2.7.0",
-  "org.apache.curator" % "curator-test" % "2.7.0",
+  "org.apache.curator" % "curator-framework" % "2.7.1",
+  "org.apache.curator" % "curator-test" % "2.7.1",
   "org.apache.kafka" %% "kafka" % "0.8.2-beta"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
-  "org.apache.storm" % "storm-core" % "0.9.2-incubating"
+  "org.apache.storm" % "storm-core" % "0.9.3"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
@@ -60,15 +60,15 @@ libraryDependencies ++= Seq(
   "org.mongodb" %% "casbah-commons" % "2.7.4"
     exclude("org.slf4j", "slf4j-jcl"),
   "org.fusesource.jansi" % "jansi" % "1.11",
-  "org.slf4j" % "slf4j-api" % "1.7.7",
+  "org.slf4j" % "slf4j-api" % "1.7.10",
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
 )
 
 // Testing Dependencies
 libraryDependencies ++= Seq(
-  "junit" % "junit" % "4.11" % "test",
-  "org.mockito" % "mockito-all" % "1.9.5" % "test",
-  "org.scalatest" %% "scalatest" % "2.2.2" % "test"
+  "junit" % "junit" % "4.12" % "test",
+  "org.mockito" % "mockito-all" % "1.10.19" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.3" % "test"
 )
 
 // define the resolvers
