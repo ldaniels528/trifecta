@@ -13,7 +13,7 @@ organization := "com.ldaniels528"
 
 version := "0.18.14"
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.10.4"
 
 scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.6", "-unchecked",
   "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint")
@@ -43,7 +43,7 @@ libraryDependencies ++= Seq(
   "com.twitter" %% "bijection-avro" % "0.7.2",
   "com.typesafe.akka" %% "akka-actor" % "2.3.8",
   "jline" % "jline" % "2.12",
-  "net.liftweb" %% "lift-json" % "3.0-M3",
+  "net.liftweb" %% "lift-json" % "3.0-M1",
   "org.apache.avro" % "avro" % "1.7.7",
   "org.apache.curator" % "curator-framework" % "2.7.1",
   "org.apache.curator" % "curator-test" % "2.7.1",
@@ -54,7 +54,7 @@ libraryDependencies ++= Seq(
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
-  "org.mashupbots.socko" %% "socko-webserver" % "0.6.0",
+  "org.mashupbots.socko" %% "socko-webserver" % "0.4.0",
   "org.mongodb" %% "casbah-core" % "2.7.4"
     exclude("org.slf4j", "slf4j-jcl"),
   "org.mongodb" %% "casbah-commons" % "2.7.4"
