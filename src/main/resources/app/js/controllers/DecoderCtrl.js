@@ -293,7 +293,7 @@
                  * @returns {boolean}
                  */
                 function validSchemaForSaving(schema) {
-                    $scope.clearMessages();
+                    $scope.removeAllMessages();
                     var errors = 0;
 
                     if(!schema.topic) {

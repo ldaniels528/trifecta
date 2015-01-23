@@ -75,6 +75,7 @@ make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like 
 ### Build Requirements
 
 * [Java SDK 1.7] (http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
+* [Scala 2.10.4] (http://scala-lang.org/download/)
 * [SBT 0.13+] (http://www.scala-sbt.org/download.html)
 
 <a name="configuring-your-ide"></a>
@@ -258,10 +259,12 @@ KQL is a SQL-like language with syntax as follows:
 
 Consider the following example:
 
-    select symbol, exchange, lastTrade, open, close, high, low
-    from "shocktrade.quotes.avro"
-    where lastTrade <= 1 and volume >= 1,000,000
-    limit 25
+```sql
+select symbol, exchange, lastTrade, open, close, high, low
+from "shocktrade.quotes.avro"
+where lastTrade <= 1 and volume >= 1,000,000
+limit 25
+```
 
 The above query retrieves the `symbol`, `exchange`, `lastTrade`, `open`, `close`, `high` and `low` fields from messages
 within the Kafka topic `shocktrade.quotes.avro` (using the _default_ decoder) filtering for only messages where the
@@ -270,10 +273,12 @@ number of results to `25`.
 
 Now consider a similar example, except here we'll specify a custom decoder file (`avro/quotes.avsc`):
 
-    select symbol, exchange, lastTrade, open, close, high, low
-    from "shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
-    where lastTrade <= 1 and volume >= 1,000,000
-    limit 25
+```sql
+select symbol, exchange, lastTrade, open, close, high, low
+from "shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+where lastTrade <= 1 and volume >= 1,000,000
+limit 25
+```
 
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-query.png)
 
