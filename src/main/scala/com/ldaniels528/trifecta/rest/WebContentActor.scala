@@ -15,7 +15,7 @@ import org.mashupbots.socko.events.{CurrentHttpRequestMessage, HttpRequestEvent,
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Try, Failure, Success}
 
 /**
  * Web Content Actor
@@ -205,6 +205,7 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
    */
   private def translatePath(path: String) = path match {
     case "/" | "/index.htm" | "/index.html" => s"$DocumentRoot/index.htm"
+    case "/favicon.ico" => s"$DocumentRoot/favicon.ico"
     case s => s
   }
 
@@ -215,6 +216,7 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 object WebContentActor {
+  private[this] lazy val logger = LoggerFactory.getLogger(getClass)
   private val DocumentRoot = "/app"
   private val RestRoot = "/rest"
   private val encoding = "UTF8"
@@ -227,7 +229,7 @@ object WebContentActor {
    * @param mimeType the given MIME type of the content
    * @param bytes the binary representation of the content
    */
-  case class Content(mimeType:String, bytes: Array[Byte])
+  case class Content(mimeType: String, bytes: Array[Byte])
 
   /**
    * Convenience method for returning a parameter from a data map
@@ -258,7 +260,19 @@ object WebContentActor {
   implicit class FutureJsonExtensionB[T](val outcome: Future[JValue]) extends AnyVal {
 
     def mimeJson(implicit ec: ExecutionContext): Future[Content] = {
-      outcome map (js => Content(MimeJson, compact(render(js)).getBytes(encoding)))
+      outcome map (js => Content(MimeJson, express(js)))
+    }
+
+    private def express(js: JValue): Array[Byte] = {
+      if(js == JNothing) Array.empty
+      else {
+        Try(compact(render(js)).getBytes(encoding)) match {
+          case Success(bytes) => bytes
+          case Failure(e) =>
+            logger.error(s"Unexpected error rendering: $js", e)
+            Array.empty
+        }
+      }
     }
 
   }
