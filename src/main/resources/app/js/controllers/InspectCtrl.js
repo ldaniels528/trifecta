@@ -465,6 +465,13 @@
                     $scope.gloabalMessages.splice(index, 1);
                 };
 
+                function allTopicsEmpty(topics) {
+                    for(var n = 0; n < topics.length; n++) {
+                        if(t.totalMessages) return false;
+                    }
+                    return true;
+                }
+
                 function scheduleRemoval() {
                     var messages = $scope.gloabalMessages;
                     var message = messages[messages.length - 1];
@@ -488,6 +495,9 @@
                 $scope.$watchCollection("TopicSvc.topics", function(newTopics, oldTopics) {
                     $log.info("Loaded new topics (" + newTopics.length + ")");
                     //$scope.topics = newTopics;
+                    if(allTopicsEmpty(newTopics)) {
+                        $scope.hideEmptyTopics = false;
+                    }
 
                     if(!$scope.topic) {
                         var myTopic = findNonEmptyTopic($scope.topics);
