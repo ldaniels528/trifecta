@@ -369,7 +369,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     }
   }
 
-  private def getDefinedOffset(cons: KafkaMicroConsumer, offset: Long) = {
+  private def getDefinedOffset(cons: KafkaMicroConsumer, offset: Long): Option[Long] = {
     for {
       firstOffset <- cons.getFirstOffset
       lastOffset <- cons.getLastOffset
