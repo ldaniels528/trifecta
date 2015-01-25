@@ -146,8 +146,7 @@ Optionally, you can execute _Trifecta_ instructions (commands) right from the co
 Trifecta binaries are available for immediate download.
 
 * <a href="http://ldaniels528.github.io/trifecta/downloads/trifecta-bundle-0.18.13.bin.jar">Trifecta Bundle v0.18.13 (Scala 2.10)</a> (66MB) &#8212; Kafka 0.8.1.1, Storm 0.9.1
-* <a href="http://ldaniels528.github.io/trifecta/downloads/trifecta-bundle-0.18.14-2.10.bin.jar">Trifecta Bundle v0.18.14 (Scala 2.10)</a> (72MB) &#8212; Kafka 0.8.2-beta, Storm 0.9.3
-* <a href="http://ldaniels528.github.io/trifecta/downloads/trifecta-bundle-0.18.14-2.11.bin.jar">Trifecta Bundle v0.18.14 (Scala 2.11)</a> (72MB) &#8212; Kafka 0.8.2-beta, Storm 0.9.3
+* <a href="http://ldaniels528.github.io/trifecta/downloads/trifecta-bundle-0.18.14.bin.jar">Trifecta Bundle v0.18.14 (Scala 2.11)</a> (72MB) &#8212; Kafka 0.8.2-beta, Storm 0.9.3
 
 <a name="whats-new"></a>
 ### What's New
