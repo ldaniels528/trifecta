@@ -1,9 +1,7 @@
 import sbt._
-import Keys._
+import sbt.Keys._
+import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin._
-import AssemblyKeys._
-import com.typesafe.sbt.SbtNativePackager._
-import NativePackagerKeys._
 
 assemblySettings
 
@@ -26,13 +24,12 @@ test in assembly := {}
 
 jarName in assembly := "trifecta.jar"
 
-mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
-{
-  case PathList("stax", "stax-api", xs @ _*) => MergeStrategy.first
-  case PathList("log4j-over-slf4j", xs @ _*) => MergeStrategy.discard
-  case PathList("META-INF", "MANIFEST.MF", xs @ _*) => MergeStrategy.discard
-  case x => MergeStrategy.first
-}
+mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
+    case PathList("stax", "stax-api", xs@_*) => MergeStrategy.first
+    case PathList("log4j-over-slf4j", xs@_*) => MergeStrategy.discard
+    case PathList("META-INF", "MANIFEST.MF", xs@_*) => MergeStrategy.discard
+    case x => MergeStrategy.first
+  }
 }
 
 // General Dependencies
@@ -83,5 +80,3 @@ resolvers ++= Seq(
   "Typesafe Releases Repository" at "http://repo.typesafe.com/typesafe/releases/",
   "Typesafe Snapshots Repository" at "http://repo.typesafe.com/typesafe/snapshots/"
 )
-
-resolvers += Resolver.file("Local repo", file(System.getProperty("user.home") + "/.ivy2/local"))(Resolver.ivyStylePatterns)
