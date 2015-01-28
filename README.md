@@ -75,7 +75,7 @@ make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like 
 ### Build Requirements
 
 * [Java SDK 1.7] (http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
-* [Scala 2.10.4] (http://scala-lang.org/download/)
+* [Scala 2.11.4] (http://scala-lang.org/download/)
 * [SBT 0.13+] (http://www.scala-sbt.org/download.html)
 
 <a name="configuring-your-ide"></a>
@@ -151,17 +151,18 @@ Trifecta binaries are available for immediate download.
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.15
+* Trifecta UI
+    * Fixed issue with the application failing if the configuration file is not found
+
 #### v0.18.14
 * Trifecta UI
     * Upgraded to Kafka 0.8.2-beta and Storm 0.9.3
     * Miscellaneous bug fixes
 
-#### v0.18.13
-* Trifecta UI
-    * Added real-time message streaming capability to the _Inspect_ tab
-
 #### v0.18.1 to v0.18.12
 * Trifecta UI
+    * Added real-time message streaming capability to the _Inspect_ tab
     * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
     * _Decoder_ tab user interface improvements
     * _Observe_ tab user interface improvements
