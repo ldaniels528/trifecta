@@ -1,6 +1,5 @@
 package com.ldaniels528.trifecta
 
-import java.io.File._
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
 
@@ -10,6 +9,7 @@ import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.PropertiesHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
+import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
 import scala.io.Source
@@ -21,6 +21,7 @@ import scala.util.{Failure, Success, Try}
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 class TxConfig(val configProps: Properties) {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   private val cachedDecoders = TrieMap[File, TxDecoder]()
 
   // Initializes the configuration
@@ -196,6 +197,14 @@ class TxConfig(val configProps: Properties) {
    */
   def save(configFile: File): Unit = {
     Try {
+      // if the parent directory doesn't exist, create it
+      val parentDirectory = configFile.getParentFile
+      if(!parentDirectory.exists()) {
+        logger.info(s"Creating directory '${parentDirectory.getAbsolutePath}'...")
+        parentDirectory.mkdirs()
+      }
+
+      // save the configuration file
       new FileOutputStream(configFile) use { fos =>
         configProps.store(fos, "Trifecta configuration properties")
       }
@@ -214,7 +223,7 @@ object TxConfig {
   /**
    * Defines the directory for all Trifecta preferences
    */
-  var trifectaPrefs: File = new File(s"$userHome$separator.trifecta")
+  var trifectaPrefs: File = new File(new File(userHome), ".trifecta")
 
   /**
    * Returns the location of the history properties

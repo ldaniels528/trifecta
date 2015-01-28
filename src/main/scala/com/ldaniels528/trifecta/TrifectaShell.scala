@@ -36,9 +36,6 @@ class TrifectaShell(rt: TxRuntimeContext) {
   // make sure we shutdown the ZooKeeper connection
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() {
-      // save the configuration
-      //config.save(TxConfig.configFile)
-
       // shutdown the ZooKeeper instance
       rt.shutdown()
 
@@ -138,7 +135,7 @@ class TrifectaShell(rt: TxRuntimeContext) {
    * @return true, if the line of execution is ineligible for addition into the session history
    */
   private def ineligibleHistory(line: String): Boolean = {
-    line.startsWith("history") || line.startsWith("!") || SessionManagement.history.last.exists(_ == line)
+    line.startsWith("history") || line.startsWith("!") || SessionManagement.history.last.contains(line)
   }
 
   private def getErrorMessage(t: Throwable): String = {
@@ -168,9 +165,15 @@ object TrifectaShell {
     }
 
     // load the configuration
-    val config = TxConfig.load(TxConfig.configFile)
-    if (!TxConfig.configFile.exists()) {
-      config.save(TxConfig.configFile)
+    val config = Try(TxConfig.load(TxConfig.configFile)) match {
+      case Success(cfg) => cfg
+      case Failure(e) =>
+        val cfg = TxConfig.defaultConfig
+        if (!TxConfig.configFile.exists()) {
+          logger.info(s"Creating default configuration file (${TxConfig.configFile.getAbsolutePath})...")
+          cfg.save(TxConfig.configFile)
+        }
+        cfg
     }
 
     // startup the Kafka Sandbox?
