@@ -149,6 +149,10 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.16
+* Added configuration key to support custom Zookeeper broker properties
+* Upgraded to Kafka 0.8.2.0
+
 #### v0.18.15
 * Trifecta UI
     * Fixed issue with the application failing if the configuration file is not found
@@ -158,7 +162,7 @@ Trifecta binaries are available for immediate download in the "<a href='https://
     * Upgraded to Kafka 0.8.2-beta and Storm 0.9.3
     * Miscellaneous bug fixes
 
-#### v0.18.1 to v0.18.12
+#### v0.18.1 to v0.18.13
 * Trifecta UI
     * Added real-time message streaming capability to the _Inspect_ tab
     * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
