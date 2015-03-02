@@ -88,6 +88,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   def onWebSocketClose(webSocketId: String) {
     logger.info(s"Web Socket $webSocketId closed")
     sessions -= webSocketId
+    sampling -= webSocketId
     ()
   }
 

@@ -90,10 +90,17 @@ class TxConfig(val configProps: Properties) {
   }
 
   // Zookeeper connection string
-  def zooKeeperConnect = configProps.getOrElse("trifecta.zookeeper.host", "localhost:2181")
+  def zooKeeperConnect: String = configProps.getOrElse("trifecta.zookeeper.host", "localhost:2181")
 
   def zooKeeperConnect_=(connectionString: String): Unit = {
     configProps.setProperty("trifecta.zookeeper.host", connectionString)
+    ()
+  }
+
+  def kafkaBrokersRootPath: String = configProps.getOrElse("trifecta.zookeeper.kafka.brokers.path", "/brokers")
+
+  def kafkaBrokersRootPath_=(path: String): Unit = {
+    configProps.setProperty("trifecta.zookeeper.kafka.brokers.path", path)
     ()
   }
 
@@ -199,7 +206,7 @@ class TxConfig(val configProps: Properties) {
     Try {
       // if the parent directory doesn't exist, create it
       val parentDirectory = configFile.getParentFile
-      if(!parentDirectory.exists()) {
+      if (!parentDirectory.exists()) {
         logger.info(s"Creating directory '${parentDirectory.getAbsolutePath}'...")
         parentDirectory.mkdirs()
       }

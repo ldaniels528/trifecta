@@ -21,7 +21,7 @@ import scala.util.{Failure, Success}
  * Kafka CLI Facade
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaCliFacade() {
+class KafkaCliFacade(zkBrokersRootPath: String = "/brokers") {
   private var publisher_? : Option[KafkaPublisher] = None
 
   /**
@@ -30,7 +30,7 @@ class KafkaCliFacade() {
    * @return a collection of brokers
    */
   def brokers(implicit zk: ZKProxy): Seq[Broker] = {
-    KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
+    KafkaMicroConsumer.getBrokerList(zkBrokersRootPath) map (b => Broker(b.host, b.port))
   }
 
   /**

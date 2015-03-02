@@ -9,9 +9,9 @@ name := "trifecta"
 
 organization := "com.ldaniels528"
 
-version := "0.18.15"
+version := "0.18.16"
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.5"
 
 scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.6", "-unchecked",
   "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint")
@@ -44,7 +44,7 @@ libraryDependencies ++= Seq(
   "org.apache.avro" % "avro" % "1.7.7",
   "org.apache.curator" % "curator-framework" % "2.7.1",
   "org.apache.curator" % "curator-test" % "2.7.1",
-  "org.apache.kafka" %% "kafka" % "0.8.2-beta"
+  "org.apache.kafka" %% "kafka" % "0.8.2.0"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.storm" % "storm-core" % "0.9.3"
@@ -52,11 +52,12 @@ libraryDependencies ++= Seq(
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",
   "org.mashupbots.socko" %% "socko-webserver" % "0.6.0",
-  "org.mongodb" %% "casbah-core" % "2.7.4"
+  "org.mongodb" %% "casbah-core" % "2.8.0"
     exclude("org.slf4j", "slf4j-jcl"),
-  "org.mongodb" %% "casbah-commons" % "2.7.4"
+  "org.mongodb" %% "casbah-commons" % "2.8.0"
     exclude("org.slf4j", "slf4j-jcl"),
   "org.fusesource.jansi" % "jansi" % "1.11",
+  "org.scala-lang" % "scala-library" % "2.11.5",
   "org.slf4j" % "slf4j-api" % "1.7.10",
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
 )

@@ -58,7 +58,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   private val rt = TxRuntimeContext(config)(ec)
 
-  private lazy val brokers: Seq[Broker] = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
+  private lazy val brokers: Seq[Broker] = {
+    KafkaMicroConsumer.getBrokerList(config.kafkaBrokersRootPath) map (b => Broker(b.host, b.port))
+  }
 
   private lazy val publisher = createPublisher(brokers)
 

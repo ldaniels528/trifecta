@@ -48,7 +48,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
    */
   def commitOffsets(groupId: String, offset: Long, metadata: String) {
     // create the topic/partition and request information
-    val requestInfo = Map(topicAndPartition ->  OffsetAndMetadata(offset, metadata, timestamp = System.currentTimeMillis()))
+    val requestInfo = Map(topicAndPartition -> OffsetAndMetadata(offset, metadata, timestamp = System.currentTimeMillis()))
 
     // submit the request, and retrieve the response
     val request = OffsetCommitRequest(groupId, requestInfo, OffsetRequest.CurrentVersion, correlationId, clientID)
@@ -348,9 +348,9 @@ object KafkaMicroConsumer {
   /**
    * Retrieves the list of defined brokers from Zookeeper
    */
-  def getBrokerList(implicit zk: ZKProxy): Seq[BrokerDetails] = {
+  def getBrokerList(rootPath: String = "/brokers")(implicit zk: ZKProxy): Seq[BrokerDetails] = {
     val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
-    val basePath = "/brokers/ids"
+    val basePath = s"$rootPath/ids"
     zk.getChildren(basePath) flatMap { brokerId =>
       zk.readString(s"$basePath/$brokerId") map { json =>
         val details = parse(json).extract[BrokerDetails]
@@ -390,7 +390,7 @@ object KafkaMicroConsumer {
     val results = for {
       partition <- getTopicPartitions(topic)
       (leader, pmd, replicas) <- getLeaderPartitionMetaDataAndReplicas(TopicAndPartition(topic, partition), brokers)
-      inSyncReplicas = pmd.isr map(r => Broker(r.host, r.port, r.id))
+      inSyncReplicas = pmd.isr map (r => Broker(r.host, r.port, r.id))
     } yield (partition, replicas, inSyncReplicas)
 
     results flatMap { case (partition, replicas, insSyncReplicas) => replicas map (r =>
