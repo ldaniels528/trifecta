@@ -55,7 +55,7 @@ class KafkaModule(config: TxConfig) extends Module {
   private var watching: Boolean = false
 
   // create the facade
-  private val facade = new KafkaCliFacade(config.kafkaBrokersRootPath)
+  private val facade = new KafkaCliFacade(config)
 
   /**
    * Returns the list of brokers from Zookeeper
@@ -402,7 +402,7 @@ class KafkaModule(config: TxConfig) extends Module {
   /**
    * Retrieves the list of Kafka brokers
    */
-  def getBrokers(params: UnixLikeArgs) = KafkaMicroConsumer.getBrokerList(config.kafkaBrokersRootPath)
+  def getBrokers(params: UnixLikeArgs) = KafkaMicroConsumer.getBrokerList
 
   /**
    * Retrieves the list of Kafka replicas for a given topic

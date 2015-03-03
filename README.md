@@ -113,7 +113,9 @@ contains the configuration properties and connection strings for all supported s
     
     # Kafka/Zookeeper properties
     trifecta.zookeeper.host = localhost:2181
-    trifecta.zookeeper.kafka.brokers.path = /brokers
+
+    # supports the setting of a path prefix for multi-tenant Zookeeper setups
+    #trifecta.zookeeper.kafka.root.path = /kafka
 
     # indicates whether Storm Partition Manager-style consumers should be read from Zookeeper
     trifecta.storm.kafka.consumers.partitionManager = false

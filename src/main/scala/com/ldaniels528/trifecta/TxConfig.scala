@@ -97,10 +97,10 @@ class TxConfig(val configProps: Properties) {
     ()
   }
 
-  def kafkaBrokersRootPath: String = configProps.getOrElse("trifecta.zookeeper.kafka.brokers.path", "/brokers")
+  def kafkaRootPath: String = configProps.getOrElse("trifecta.zookeeper.kafka.root.path", "")
 
-  def kafkaBrokersRootPath_=(path: String): Unit = {
-    configProps.setProperty("trifecta.zookeeper.kafka.brokers.path", path)
+  def kafkaRootPath_=(path: String): Unit = {
+    configProps.setProperty("trifecta.zookeeper.kafka.root.path", path)
     ()
   }
 

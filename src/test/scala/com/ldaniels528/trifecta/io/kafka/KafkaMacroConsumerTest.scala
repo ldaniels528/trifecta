@@ -63,7 +63,7 @@ class KafkaMacroConsumerTest {
    */
   private def resetOffsets(topic: String, partitions: Int, groupId: String)(implicit zk: ZKProxy): Unit = {
     logger.info("Retrieving Kafka brokers...")
-    val brokerDetails = KafkaMicroConsumer.getBrokerList()
+    val brokerDetails = KafkaMicroConsumer.getBrokerList
     tabular.transform(brokerDetails) foreach logger.info
 
     // extract just the broker objects

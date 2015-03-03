@@ -44,6 +44,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
   private val topicCache = TrieMap[(String, Int), TopicDeltaWithTotals]()
   private val consumerCache = TrieMap[ConsumerDeltaKey, ConsumerDetailJs]()
 
+  // set user defined Kafka root directory
+  KafkaMicroConsumer.rootKafkaPath = config.kafkaRootPath
+
   // define the custom thread pool
   private implicit val ec = new ExecutionContext {
     private val threadPool = Executors.newFixedThreadPool(8)
@@ -59,7 +62,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
   private val rt = TxRuntimeContext(config)(ec)
 
   private lazy val brokers: Seq[Broker] = {
-    KafkaMicroConsumer.getBrokerList(config.kafkaBrokersRootPath) map (b => Broker(b.host, b.port))
+    KafkaMicroConsumer.getBrokerList map (b => Broker(b.host, b.port))
   }
 
   private lazy val publisher = createPublisher(brokers)

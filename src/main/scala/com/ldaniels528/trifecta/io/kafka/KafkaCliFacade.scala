@@ -2,6 +2,7 @@ package com.ldaniels528.trifecta.io.kafka
 
 import java.util.Date
 
+import com.ldaniels528.trifecta.TxConfig
 import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.ldaniels528.trifecta.io.kafka.KafkaCliFacade._
@@ -21,8 +22,11 @@ import scala.util.{Failure, Success}
  * Kafka CLI Facade
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaCliFacade(zkBrokersRootPath: String = "/brokers") {
+class KafkaCliFacade(config: TxConfig) {
   private var publisher_? : Option[KafkaPublisher] = None
+
+  // set user defined Kafka root directory
+  KafkaMicroConsumer.rootKafkaPath = config.kafkaRootPath
 
   /**
    * Returns a collection of brokers
@@ -30,7 +34,7 @@ class KafkaCliFacade(zkBrokersRootPath: String = "/brokers") {
    * @return a collection of brokers
    */
   def brokers(implicit zk: ZKProxy): Seq[Broker] = {
-    KafkaMicroConsumer.getBrokerList(zkBrokersRootPath) map (b => Broker(b.host, b.port))
+    KafkaMicroConsumer.getBrokerList map (b => Broker(b.host, b.port))
   }
 
   /**

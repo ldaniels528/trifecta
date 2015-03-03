@@ -170,6 +170,7 @@ object KafkaMicroConsumer {
   private implicit val formats = net.liftweb.json.DefaultFormats
   private val correlationIdGen = new AtomicInteger(-1)
 
+  var rootKafkaPath: String = "/"
   val DEFAULT_FETCH_SIZE: Int = 65536
 
   /**
@@ -348,9 +349,9 @@ object KafkaMicroConsumer {
   /**
    * Retrieves the list of defined brokers from Zookeeper
    */
-  def getBrokerList(rootPath: String = "/brokers")(implicit zk: ZKProxy): Seq[BrokerDetails] = {
+  def getBrokerList(implicit zk: ZKProxy): Seq[BrokerDetails] = {
     val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
-    val basePath = s"$rootPath/ids"
+    val basePath = getPrefixedPath("/brokers/ids")
     zk.getChildren(basePath) flatMap { brokerId =>
       zk.readString(s"$basePath/$brokerId") map { json =>
         val details = parse(json).extract[BrokerDetails]
@@ -364,7 +365,7 @@ object KafkaMicroConsumer {
    * Retrieves the list of consumers from Zookeeper
    */
   def getConsumerDetails(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
-    val basePath = "/consumers"
+    val basePath = getPrefixedPath("/consumers")
 
     // start with the list of consumer IDs
     zk.getChildren(basePath) flatMap { consumerId =>
@@ -402,7 +403,7 @@ object KafkaMicroConsumer {
    * Retrieves the list of consumers from Zookeeper (Kafka-Storm Partition Manager Version)
    */
   def getStormConsumerList()(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
-    zk.getFamily(path = "/").distinct filter (_.matches( """\S+[/]partition_\d+""")) flatMap { path =>
+    zk.getFamily(path = getPrefixedPath("/")).distinct filter (_.matches( """\S+[/]partition_\d+""")) flatMap { path =>
       zk.readString(path) flatMap { jsonString =>
         val lastModified = zk.getModificationTime(path)
         Try {
@@ -434,7 +435,7 @@ object KafkaMicroConsumer {
    * Returns the list of partitions for the given topic
    */
   def getTopicPartitions(topic: String)(implicit zk: ZKProxy): Seq[Int] = {
-    zk.getChildren(path = s"/brokers/topics/$topic/partitions") map (_.toInt)
+    zk.getChildren(path = getPrefixedPath(s"/brokers/topics/$topic/partitions")) map (_.toInt)
   }
 
   /**
@@ -442,7 +443,7 @@ object KafkaMicroConsumer {
    */
   def getTopicList(brokers: Seq[Broker])(implicit zk: ZKProxy): Seq[TopicDetails] = {
     // get the list of topics
-    val topics = zk.getChildren(path = "/brokers/topics")
+    val topics = zk.getChildren(path = getPrefixedPath("/brokers/topics"))
 
     // capture the meta data for all topics
     brokers.headOption map { broker =>
@@ -573,6 +574,14 @@ object KafkaMicroConsumer {
       }
     }
   }
+
+  /**
+   * Prefixes the given path to support instances where the Zookeeper is either multi-tenant or uses
+   * a custom-directory structure.
+   * @param path the given Zookeeper/Kafka path
+   * @return the prefixed path
+   */
+  private def getPrefixedPath(path: String) = s"$rootKafkaPath$path"
 
   /**
    * Retrieves the partition meta data for the given broker
