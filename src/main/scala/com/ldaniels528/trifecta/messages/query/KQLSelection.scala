@@ -40,7 +40,7 @@ case class KQLSelection(source: IOSource,
 
     // get the output source and its encoder
     val outputSource: Option[OutputSource] = destination.flatMap(src => rt.getOutputHandler(src.deviceURL))
-    val outputDecoder: Option[MessageDecoder[_]] = for { dest <- destination; url <- dest.decoderURL; decoder <- MessageCodecs.getDecoder(url) } yield decoder
+    val outputDecoder: Option[MessageDecoder[_]] = for {dest <- destination; url <- dest.decoderURL; decoder <- MessageCodecs.getDecoder(url)} yield decoder
 
     // compile conditions & get all other properties
     val conditions = criteria.map(compile(_, inputDecoder)).toSeq

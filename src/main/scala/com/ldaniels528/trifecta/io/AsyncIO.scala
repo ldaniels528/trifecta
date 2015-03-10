@@ -26,6 +26,16 @@ case class AsyncIO(task: Future[_], counter: IOCounter) {
  */
 object AsyncIO {
 
+  /**
+   * Syntactic sugar for executing asynchronous I/O as an executable block
+   * @param block the given code block
+   * @return the asynchronous I/O instance
+   */
+  def apply(block: IOCounter => Unit): AsyncIO = {
+    val counter = IOCounter(System.currentTimeMillis())
+    AsyncIO(Future(block), counter)
+  }
+
   case class IOCounter(startTimeMillis: Long) {
     private var lastCount: Long = 0L
 

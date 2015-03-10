@@ -7,9 +7,8 @@ import java.util.Date
 import _root_.kafka.common.TopicAndPartition
 import com.ldaniels528.trifecta.TxResultHandler.Ok
 import com.ldaniels528.trifecta.command._
-import com.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.ldaniels528.trifecta.io.avro.AvroConversion._
-import com.ldaniels528.trifecta.io.avro.{AvroMessageDecoding, AvroCodec, AvroDecoder}
+import com.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder, AvroMessageDecoding}
 import com.ldaniels528.trifecta.io.kafka.KafkaCliFacade._
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{MessageData, contentFilter}
 import com.ldaniels528.trifecta.io.kafka._
@@ -71,7 +70,7 @@ class KafkaModule(config: TxConfig) extends Module {
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     // connection-related commands
     Command(this, "kconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to Zookeeper"),
-    Command(this, "ksandbox", sandBox, UnixLikeParams(), help = "Launches a Kafka Sandbox (local server instance)"),
+    Command(this, "ksandbox", sandBox, UnixLikeParams(), help = "Launches a Kafka Sandbox (local/embedded server instance)"),
 
     // basic message creation & retrieval commands
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-ts" -> "YYYY-MM-DDTHH:MM:SS")), help = "Retrieves the message at the specified offset for a given topic partition"),
@@ -223,15 +222,12 @@ class KafkaModule(config: TxConfig) extends Module {
    * Copies messages from the input source to the output source
    * @return an asynchronous I/O result
    */
-  private def copyOperation(reader: InputSource, writer: OutputSource, decoder: Option[AvroDecoder]): AsyncIO = {
-    val startTime = System.currentTimeMillis()
-    val counter = new IOCounter(startTime)
-
-    val task = Future {
+  private def copyOperation(reader: InputSource, writer: OutputSource, decoder: Option[AvroDecoder]) = {
+    AsyncIO { counter =>
       var found: Boolean = true
 
-      blocking {
-        try {
+      reader use { in =>
+        writer use { out =>
           while (found) {
             // read the record
             val data = reader.read
@@ -244,16 +240,9 @@ class KafkaModule(config: TxConfig) extends Module {
               counter.updateWriteCount(1)
             }
           }
-        } finally {
-          // close the reader and writer
-          Try(reader.close())
-          Try(writer.close())
-          ()
         }
       }
     }
-
-    AsyncIO(task, counter)
   }
 
   /**
@@ -1005,8 +994,8 @@ class KafkaModule(config: TxConfig) extends Module {
    * @return a collection of [[Condition]] objects
    */
   private def parseCondition(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]]): Condition = {
-    import com.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser.deQuote
     import com.ldaniels528.trifecta.messages.logic.ConditionCompiler._
+    import com.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser.deQuote
 
     val it = params.args.iterator
     var criteria: Option[Expression] = None
