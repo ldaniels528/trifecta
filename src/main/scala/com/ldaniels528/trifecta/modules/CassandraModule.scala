@@ -1,10 +1,13 @@
 package com.ldaniels528.trifecta.modules
 
+import java.io.File
+
 import com.datastax.driver.core.{ConsistencyLevel, ResultSet}
 import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.io.InputSource
 import com.ldaniels528.trifecta.io.cassandra.{CassandraOutputSource, Casserole, CasseroleSession}
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
+import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
@@ -27,8 +30,9 @@ class CassandraModule(config: TxConfig) extends Module {
    */
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "clusterinfo", clusterInfo, UnixLikeParams(), help = "Retrieves the cluster information"),
-    Command(this, "cqconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to Cassandra"),
+    Command(this, "cqconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false), Seq("-k" -> "keySpace")), help = "Establishes a connection to Cassandra"),
     Command(this, "cql", cql, UnixLikeParams(Seq("query" -> false), Seq("-cl" -> "consistencyLevel")), help = "Executes a CQL query"),
+    Command(this, "cqlexport", cqlExport, UnixLikeParams(Seq("table" -> true, "limit" -> false), Seq("-f" -> "file", "-cl" -> "consistencyLevel")), help = "Executes a CQL query"),
     Command(this, "columnfamilies", columnFamilies, UnixLikeParams(Seq("query" -> false), Seq("-cl" -> "consistencyLevel")), help = "Displays the list of column families for the current keyspace"),
     Command(this, "describe", describe, UnixLikeParams(Seq("tableName" -> false)), help = "Displays the creation CQL for a table"),
     Command(this, "keyspace", useKeySpace, UnixLikeParams(Seq("keySpaceName" -> false)), help = "Opens a session to a given Cassandra keyspace"),
@@ -130,9 +134,12 @@ class CassandraModule(config: TxConfig) extends Module {
    * Establishes a connection to Zookeeper
    * @example cqconnect
    * @example cqconnect localhost
+   * @example cqconnect localhost -k myKeySpace
    * @example cqconnect dev601,dev602,dev603
    */
   def connect(params: UnixLikeArgs): Unit = {
+    val keySpace_? = params("-k")
+
     // determine the requested end-point
     val endPoints = params.args match {
       case path :: Nil => path.split(",")
@@ -142,6 +149,12 @@ class CassandraModule(config: TxConfig) extends Module {
     // connect to the remote peer
     conn_?.foreach(_.close())
     conn_? = Option(Casserole(endPoints))
+
+    // optionally setup the session
+    keySpace_?.foreach { _ =>
+      session_?.foreach(_.close())
+      session_? = keySpace_?.map(connection.getSession)
+    }
   }
 
   /**
@@ -152,6 +165,25 @@ class CassandraModule(config: TxConfig) extends Module {
     val cl = params("-cl") map getConsistencyLevelByName getOrElse getDefaultConsistencyLevel
     val query = params.args.headOption getOrElse dieSyntax(params)
     session.executeQuery(query)(cl)
+  }
+
+  /**
+   * Exports the contents of a table to disk as CSV
+   * @example cqlexport stockQuotes -f /tmp/stockQuotes.txt
+   * @return a promise of a count of the number of records written
+   */
+  def cqlExport(params: UnixLikeArgs)(implicit ec: ExecutionContext) = {
+    val file = params("-f") map (new File(_)) orDie "No file specified"
+    val cl = params("-cl") map getConsistencyLevelByName getOrElse getDefaultConsistencyLevel
+
+    val (tableName, limit) = params.args match {
+      case List(aTable) => (aTable, None)
+      case List(aTable, aLimit) => (aTable, Some(aLimit.toLong))
+      case _ => dieSyntax(params)
+    }
+
+    val query = s"SELECT * FROM $tableName LIMIT ${limit.getOrElse(10000L)}"
+    session.export(file, query)(cl, ec)
   }
 
   /**
@@ -226,7 +258,7 @@ class CassandraModule(config: TxConfig) extends Module {
 
   private def session: CasseroleSession = {
     connection
-    session_? getOrElse die(s"No Cassandra session. Use: use <keySpace>")
+    session_? getOrElse die(s"No Cassandra session. Use: keyspace <keySpace>")
   }
 
 }

@@ -1,23 +1,83 @@
 package com.ldaniels528.trifecta.io.cassandra
 
+import java.io.{File, FileOutputStream, PrintWriter}
+import java.text.SimpleDateFormat
 import java.util.concurrent.ExecutorService
 
 import com.datastax.driver.core._
+import com.ldaniels528.trifecta.io.AsyncIO
+import com.ldaniels528.trifecta.util.ResourceHelper._
+import org.slf4j.LoggerFactory
 
+import scala.collection.JavaConversions._
 import scala.collection.concurrent.TrieMap
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.language.postfixOps
 
 /**
  * Casserole Session
  * @author lawrence.daniels@gmail.com
  */
 case class CasseroleSession(session: Session, threadPool: ExecutorService) {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   private val psCache = new TrieMap[String, PreparedStatement]()
 
   /**
    * Closes the session
    */
   def close(): Unit = session.close()
+
+  /**
+   * Exports the query results to the given file
+   * @param file the given [[File]]
+   * @param cql the given CQL query
+   * @param values the given query parameters
+   * @param cl the given [[ConsistencyLevel]]
+   * @param ec the given [[ExecutionContext]]
+   * @return the promise of the number of records written
+   */
+  def export(file: File, cql: String, values: Any*)(implicit cl: ConsistencyLevel, ec: ExecutionContext): AsyncIO = {
+    val ps = getPreparedStatement(cql)
+
+    // create & populate the bound statement
+    val bs = new BoundStatement(ps)
+    bs.bind(values map (_.asInstanceOf[Object]): _*)
+
+    val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ") // 2015-03-06 09:08:03-0800
+    AsyncIO { counter =>
+      // write the query results to disk
+      new PrintWriter(new FileOutputStream(file)) use { out =>
+        val rs = session.execute(bs)
+        val columns = rs.getColumnDefinitions.asList() map (cf => (cf.getName, cf)) toSeq
+        val labels = columns.map(_._1).toSeq
+
+        // write the header row
+        out.println(labels map (s => s""""$s"""") mkString ",")
+
+        // write each row of data
+        rs.iterator() foreach { row =>
+          counter.updateReadCount(1)
+          val values = (columns map { case (label, column) =>
+            column.getType.getName.toString match {
+              case "boolean" => row.getBool(label)
+              case "bigint" => row.getLong(label)
+              case "char" | "varchar" => Option(row.getString(label)) map (s => s""""$s"""") getOrElse ""
+              case "double" => row.getDouble(label)
+              case "date" | "timestamp" => Option(row.getDate(label)) map (d => dateFormat.format(d)) getOrElse ""
+              case "int" => row.getInt(label)
+              case "uuid" | "timeuuid" => row.getUUID(label)
+              case unhandledType =>
+                logger.warn(s"No mapping found for column ${column.getName} (type $unhandledType, class ${column.getType.asJavaClass.getName})")
+                null
+            }
+          }).toSeq
+          out.println(values mkString ",")
+          counter.updateWriteCount(1)
+        }
+      }
+      counter.written.get()
+    }
+  }
 
   /**
    * Asynchronously executes the given CQL query
