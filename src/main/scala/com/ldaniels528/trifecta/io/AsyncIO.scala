@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong
 import com.google.common.util.concurrent.AtomicDouble
 import com.ldaniels528.trifecta.io.AsyncIO.{IOCount, IOCounter}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * This class acts as a wrapper for an asynchronous job processing
@@ -31,7 +31,7 @@ object AsyncIO {
    * @param block the given code block
    * @return the asynchronous I/O instance
    */
-  def apply(block: IOCounter => Unit): AsyncIO = {
+  def apply(block: IOCounter => Unit)(implicit ec: ExecutionContext): AsyncIO = {
     val counter = IOCounter(System.currentTimeMillis())
     AsyncIO(Future(block), counter)
   }
