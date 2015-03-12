@@ -3,6 +3,7 @@ package com.ldaniels528.trifecta
 import java.io.PrintStream
 
 import com.ldaniels528.trifecta.TxConsole._
+import com.ldaniels528.trifecta.io.AsyncIO
 import com.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer
@@ -122,6 +123,7 @@ class TrifectaShell(rt: TxRuntimeContext) {
   private def showDebug(result: Any): Unit = {
     result match {
       case Failure(e) => e.printStackTrace(out)
+      case AsyncIO(task, counter) => showDebug(task.value)
       case f: Future[_] => showDebug(f.value)
       case Some(v) => showDebug(v)
       case Success(v) => showDebug(v)
@@ -150,7 +152,7 @@ class TrifectaShell(rt: TxRuntimeContext) {
  */
 object TrifectaShell {
   private val logger = LoggerFactory.getLogger(getClass)
-  val VERSION = "0.18.16"
+  val VERSION = "0.18.16-beta-2"
 
   /**
    * Application entry point

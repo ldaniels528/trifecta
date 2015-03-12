@@ -27,7 +27,7 @@ import scala.util.{Failure, Success, Try}
 class TxResultHandler(config: TxConfig) extends BinaryMessaging {
   // define the tabular instance
   val tabular = new Tabular() with AvroTables
-  val out: PrintStream = config.out
+  val out = config.out
 
   /**
    * Handles the processing and/or display of the given result of a command execution
@@ -36,14 +36,14 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
    */
   def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) {
     result match {
+      // handle the asynchronous I/O cases
+      case a: AsyncIO => handleAsyncResult(a, input)
+
       // handle binary data
       case message: Array[Byte] if message.isEmpty => out.println("No data returned")
       case message: Array[Byte] => dumpMessage(message)(config)
       case MessageData(_, offset, _, _, _, message) => dumpMessage(offset, message)(config)
       case StreamedMessage(_, _, offset, _, message) => dumpMessage(offset, message)(config)
-
-      // handle the asynchronous I/O cases
-      case a: AsyncIO => handleAsyncResult(a, input)
 
       // handle Either cases
       case e: Either[_, _] => e match {

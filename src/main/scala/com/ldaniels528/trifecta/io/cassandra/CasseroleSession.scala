@@ -75,7 +75,6 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
           counter.updateWriteCount(1)
         }
       }
-      counter.written.get()
     }
   }
 

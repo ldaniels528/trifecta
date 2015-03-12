@@ -182,8 +182,7 @@ class CassandraModule(config: TxConfig) extends Module {
       case _ => dieSyntax(params)
     }
 
-    val query = s"SELECT * FROM $tableName LIMIT ${limit.getOrElse(10000L)}"
-    session.export(file, query)(cl, ec)
+    session.export(file, s"SELECT * FROM $tableName LIMIT ${limit.getOrElse(10000L)}")(cl, ec)
   }
 
   /**
