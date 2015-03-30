@@ -1,16 +1,14 @@
 package com.ldaniels528.trifecta
 
-import java.io.PrintStream
-
 import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.trifecta.io.AsyncIO
 import com.ldaniels528.trifecta.io.avro.AvroTables
-import com.ldaniels528.trifecta.messages.BinaryMessaging
-import com.ldaniels528.trifecta.messages.query.KQLResult
 import com.ldaniels528.trifecta.io.json.JsonHelper
 import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.MessageData
 import com.ldaniels528.trifecta.io.kafka.StreamedMessage
+import com.ldaniels528.trifecta.messages.BinaryMessaging
+import com.ldaniels528.trifecta.messages.query.KQLResult
 import net.liftweb.json._
 import org.apache.avro.generic.GenericRecord
 
@@ -129,22 +127,18 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
    * @param input the executing command
    */
   private def handleAsyncResult(asyncIO: AsyncIO, input: String)(implicit ec: ExecutionContext) {
-    import asyncIO._
+    val task = asyncIO.task
 
-    // initially, wait for 5 seconds for the task to complete.
-    // if it fails to complete in that time, queue it as an asynchronous job
-    Try(Await.result(task, 5.seconds)) match {
-      case Success(value) => handleResult(value, input)
-      case Failure(e1) =>
-        out.println("Task is now running in the background (use 'jobs' to view)")
-        val job = config.jobManager.createJob(asyncIO, input)
-        task.onComplete {
-          case Success(value) =>
-            out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
-            handleResult(asyncIO.getCount, input)
-          case Failure(e2) =>
-            out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
-        }
+    out.println("Task is now running in the background (use 'jobs' to view)")
+    val job = config.jobManager.createJob(asyncIO, input)
+    task.onComplete {
+      case Success(value) =>
+        out.println()
+        out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
+        handleResult(asyncIO.getCount, input)
+      case Failure(e2) =>
+        out.println()
+        out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
     }
   }
 

@@ -583,7 +583,7 @@ class CoreModule(config: TxConfig) extends Module {
     }
   }
 
-  private def toJobDetail(job: JobItem): JobDetail = {
+  private[trifecta] def toJobDetail(job: JobItem): JobDetail = {
     val myTask = job.task
     val jobStatus: String = if (myTask.isCompleted) "Completed" else "Running"
     val jobElapsedTime: Option[Double] = {
