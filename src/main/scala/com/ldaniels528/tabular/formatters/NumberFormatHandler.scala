@@ -1,5 +1,7 @@
 package com.ldaniels528.tabular.formatters
 
+import java.text.NumberFormat
+
 import com.ldaniels528.tabular.Tabular
 
 import scala.language.reflectiveCalls
@@ -23,7 +25,8 @@ trait NumberFormatHandler extends FormatHandler {
    */
   override def handles(value: Any): Boolean = value match {
     case s: String => false
-    case n: DecimalLike => true
+    case n@(Byte | Double | Float | Int | Long | Short) => true
+    case n: java.lang.Number => true
     case _ => false
   }
 
@@ -41,8 +44,13 @@ trait NumberFormatHandler extends FormatHandler {
           case Success(v) => v
           case Failure(e) => None
         }
+      case n: java.lang.Number =>
+        Try(Some(NumberFormat.getInstance().format(n.doubleValue))) match {
+          case Success(v) => v
+          case Failure(e) => None
+        }
       case _ => None
     }
   }
-
+  
 }
