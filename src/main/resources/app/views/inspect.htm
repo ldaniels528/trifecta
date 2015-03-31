@@ -32,14 +32,20 @@
                                 </a>
                             </td>
                             <td>
-                                <a ng-click="switchToMessage(topic.topic, p.partition, p.offset)">
-                                    <span ng-class="p == partition ? 'highlighted' : ''">{{p.offset}}</span>
-                                </a>
+                                <span ng-show="p.startOffset < p.endOffset">
+                                    <a ng-click="switchToMessage(topic.topic, p.partition, p.offset)">
+                                        <span ng-class="p == partition ? 'highlighted' : ''">{{p.offset}}</span>
+                                    </a>
+                                </span>
+                                <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                             </td>
                             <td>
-                                <a ng-click="switchToMessage(topic.topic, p.partition, p.endOffset)">
-                                    <span ng-class="p == partition ? 'highlighted' : ''">{{p.endOffset}}</span>
-                                </a>
+                                <span ng-show="p.startOffset < p.endOffset">
+                                    <a ng-click="switchToMessage(topic.topic, p.partition, p.endOffset)">
+                                        <span ng-class="p == partition ? 'highlighted' : ''">{{p.endOffset}}</span>
+                                    </a>
+                                </span>
+                                <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                             </td>
                             <td>
                                 <span ng-class="p == partition ? 'highlighted' : ''">

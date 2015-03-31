@@ -87,8 +87,7 @@ th { text-align: left }
 
 .highlighted {
     color: #337ab7;
-    font-weight: bold;
-    text-decoration: underline;
+    background-color: #ffff00;
 }
 
 .hints_and_tips {
