@@ -22,7 +22,7 @@ mainClass in assembly := Some("com.ldaniels528.trifecta.TrifectaShell")
 
 test in assembly := {}
 
-jarName in assembly := "trifecta.jar"
+jarName in assembly := "trifecta_" + version.value + ".bin.jar"
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
     case PathList("stax", "stax-api", xs@_*) => MergeStrategy.first
