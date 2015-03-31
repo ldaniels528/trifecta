@@ -467,6 +467,7 @@
 
                 function allTopicsEmpty(topics) {
                     for(var n = 0; n < topics.length; n++) {
+                        var t = topics[n];
                         if(t.totalMessages) return false;
                     }
                     return true;
