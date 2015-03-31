@@ -20,7 +20,7 @@
                     "imageURL": "/app/images/tabs/observe/consumers.png",
                     "active": false
                 }, {
-                    "name": "Topics",
+                    "name": "Leaders",
                     "imageURL": "/app/images/tabs/observe/topics.png",
                     "active": false
                 }, {
