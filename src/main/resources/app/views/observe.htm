@@ -175,6 +175,7 @@
                                 <table>
                                     <tr>
                                         <th>Partition</th>
+                                        <th>First Offset</th>
                                         <th>Last Offset</th>
                                         <th>Messages</th>
                                         <th>Leader</th>
@@ -183,9 +184,16 @@
                                     <tr ng-repeat="p in t.partitions | orderBy:'partition'">
                                         <td class="center">{{ p.partition }}</td>
                                         <td>
-                                            <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">
-                                                {{ p.endOffset }}
-                                            </a>
+                                            <span ng-show="p.startOffset < p.endOffset">
+                                                <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">{{ p.startOffset }}</a>
+                                            </span>
+                                            <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
+                                        </td>
+                                        <td>
+                                            <span ng-show="p.startOffset < p.endOffset">
+                                                <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">{{ p.endOffset }}</a>
+                                            </span>
+                                            <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                                         </td>
                                         <td>
                                             {{ p.messages | number }}
