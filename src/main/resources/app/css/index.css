@@ -90,6 +90,11 @@ th { text-align: left }
     background-color: #ffff00;
 }
 
+.sub_highlighted {
+    color: #337ab7;
+    background-color: #00ffff;
+}
+
 .hints_and_tips {
     background: #337ab7;
     color: #ffffff;

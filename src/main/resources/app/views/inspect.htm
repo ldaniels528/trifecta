@@ -4,7 +4,7 @@
             <legend style="margin-bottom: 0">Message Topics</legend>
             <div ng-show="topics.length" ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
             <div class="topics_container">
-                <div ng-repeat="t in getTopics(hideEmptyTopics)">
+                <div ng-repeat="t in getTopics(hideEmptyTopics)" ng-class="t == topic ? 'highlighted' : ''">
                     <img ng-src="{{ getTopicIcon(t, topic == t) }}">
                     <span ng-click="updateTopic(t)" ng-class="t == topic ? 'highlighted' : ''" class="clickable">{{t.topic}}</span>
                     <span ng-show="t.totalMessages">
@@ -28,30 +28,22 @@
                         <tr ng-repeat="p in topic.partitions" ng-class="p == partition ? 'highlighted' : ''">
                             <td>
                                 <a ng-click="updatePartition(p)">
-                                    <span ng-class="p == partition ? 'highlighted' : ''" style="padding-left: 5px">{{p.partition}}</span>
+                                    <span style="padding-left: 5px">{{p.partition}}</span>
                                 </a>
                             </td>
                             <td>
                                 <span ng-show="p.startOffset < p.endOffset">
-                                    <a ng-click="switchToMessage(topic.topic, p.partition, p.offset)">
-                                        <span ng-class="p == partition ? 'highlighted' : ''">{{p.offset}}</span>
-                                    </a>
+                                    <a ng-click="switchToMessage(topic.topic, p.partition, p.offset)">{{p.offset}}</a>
                                 </span>
                                 <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                             </td>
                             <td>
                                 <span ng-show="p.startOffset < p.endOffset">
-                                    <a ng-click="switchToMessage(topic.topic, p.partition, p.endOffset)">
-                                        <span ng-class="p == partition ? 'highlighted' : ''">{{p.endOffset}}</span>
-                                    </a>
+                                    <a ng-click="switchToMessage(topic.topic, p.partition, p.endOffset)">{{p.endOffset}}</a>
                                 </span>
                                 <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                             </td>
-                            <td>
-                                <span ng-class="p == partition ? 'highlighted' : ''">
-                                    {{ isLimitedControls() ? getRemainingCount(p) : p.messages | number }}
-                                </span>
-                            </td>
+                            <td>{{ isLimitedControls() ? getRemainingCount(p) : p.messages | number }}</td>
                         </tr>
                     </table>
                 </div>

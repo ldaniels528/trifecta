@@ -9,7 +9,7 @@ name := "trifecta"
 
 organization := "com.ldaniels528"
 
-version := "0.18.16-beta-4"
+version := "0.18.16"
 
 scalaVersion := "2.11.5"
 

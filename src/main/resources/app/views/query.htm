@@ -5,12 +5,14 @@
             <div ng-show="topics.length" ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
             <div class="q_topics_container">
                 <div ng-repeat="t in getTopics(hideEmptyTopics)">
-                    <img class="clickable"
-                         ng-click="expandQueryCollection(t)"
-                         ng-src="/app/images/{{ t.loading ? 'status/loading.gif' : t.queriesExpanded ? 'buttons/collapse.png' : 'buttons/expand.png' }}">
-                    <img ng-src="{{ getTopicIcon(t, t == collection) }}">
-                    <span ng-click="selectQueryCollection(t)" ng-class="t == collection ? 'highlighted' : ''" class="clickable">{{ t.topic }}</span>
-                    <span ng-show="t.totalMessages">(<span class="messages">{{t.totalMessages | number}}</span>)</span>
+                    <div ng-class="t == collection ? 'highlighted' : ''">
+                        <img class="clickable"
+                             ng-click="expandQueryCollection(t)"
+                             ng-src="/app/images/{{ t.loading ? 'status/loading.gif' : t.queriesExpanded ? 'buttons/collapse.png' : 'buttons/expand.png' }}">
+                        <img ng-src="{{ getTopicIcon(t, t == collection) }}">
+                        <span ng-click="selectQueryCollection(t)" class="clickable">{{ t.topic }}</span>
+                        <span ng-show="t.totalMessages">(<span class="messages">{{t.totalMessages | number}}</span>)</span>
+                    </div>
 
                     <div ng-show="t.queriesExpanded" class="indent">
                         <div ng-show="t == collection" style="margin-left: 20px">
@@ -18,7 +20,7 @@
                             <span class="q_new_query" ng-click="setUpNewQueryDocument(t)">[new query]</span>
                         </div>
                         <div ng-repeat="q in t.savedQueries">
-                            <div ng-class="'full_block ' + (q == savedQuery ? 'highlighted' : '')">
+                            <div ng-class="'full_block ' + (q == savedQuery ? 'sub_highlighted' : '')">
                                 <img ng-hide="q.results" src="/app/images/status/transparent-16.png">
                                 <img ng-show="q.results" class="clickable" ng-click="q.collapsed = !q.collapsed" ng-src="/app/images/buttons/{{ !q.collapsed ? 'collapse.png' : 'expand.png' }}">
                                 <img ng-src="/app/images/tabs/query/{{ q.modified ? 'modified-16.png' : 'query-16.png' }}">

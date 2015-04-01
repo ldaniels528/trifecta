@@ -5,11 +5,13 @@
             <div ng-show="topics.length" ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
             <div class="d_topics_container">
                 <div ng-repeat="t in getTopics(hideEmptyTopics)">
-                    <img class="clickable"
-                         ng-click="expandCollapseDecoder(t)"
-                         ng-src="/app/images/{{ t.loading ? 'status/loading.gif' : t.decoderExpanded ? 'buttons/collapse.png' : 'buttons/expand.png' }}">
-                    <img ng-src="{{ getTopicIconSelection(t == decoder) }}">
-                    <span ng-click="selectDecoder(t)" ng-class="t == decoder ? 'highlighted' : ''" class="clickable">{{ t.topic }}</span>
+                    <div ng-class="t == decoder ? 'highlighted' : ''">
+                        <img class="clickable"
+                             ng-click="expandCollapseDecoder(t)"
+                             ng-src="/app/images/{{ t.loading ? 'status/loading.gif' : t.decoderExpanded ? 'buttons/collapse.png' : 'buttons/expand.png' }}">
+                        <img ng-src="{{ getTopicIconSelection(t == decoder) }}">
+                        <span ng-click="selectDecoder(t)"  class="clickable">{{ t.topic }}</span>
+                    </div>
 
                     <div ng-show="t.decoderExpanded">
                         <div ng-show="t == decoder" class="indent">
@@ -18,7 +20,7 @@
                         </div>
                         <div ng-repeat="s in t.schemas" class="indent">
                             <img ng-src="{{ getSchemaIcon(s) }}" title="Avro Schema">
-                            <span ng-click="selectSchema(s)" ng-class="s == schema ? 'highlighted' : ''" class="clickable">{{ s.name }}</span>
+                            <span ng-click="selectSchema(s)" ng-class="s == schema ? 'sub_highlighted' : ''" class="clickable">{{ s.name }}</span>
                         </div>
                     </div>
                 </div>
