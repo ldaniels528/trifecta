@@ -152,7 +152,8 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 ### What's New
 
 #### v0.18.16
-* Added configuration key to support custom Zookeeper broker properties
+* Trifecta UI: Minor UI tweaks and fixes
+* Added configuration key to support multi-tenant Zookeeper setups
 * Upgraded to Kafka 0.8.2.0
 
 #### v0.18.15
