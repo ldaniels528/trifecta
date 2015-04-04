@@ -151,6 +151,9 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.17
+* Trifecta UI: Add a new Brokers view to the Observe module
+
 #### v0.18.16
 * Trifecta UI: Minor UI tweaks and fixes
 * Added configuration key to support multi-tenant Zookeeper setups

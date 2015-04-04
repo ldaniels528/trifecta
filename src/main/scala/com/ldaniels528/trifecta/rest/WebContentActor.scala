@@ -2,7 +2,7 @@ package com.ldaniels528.trifecta.rest
 
 import java.io.ByteArrayOutputStream
 
-import akka.actor.Actor
+import akka.actor.{ActorLogging, Actor}
 import com.ldaniels528.trifecta.io.json.JsonHelper
 import com.ldaniels528.trifecta.rest.WebContentActor._
 import com.ldaniels528.trifecta.util.OptionHelper._
@@ -21,9 +21,7 @@ import scala.util.{Try, Failure, Success}
  * Web Content Actor
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) extends Actor {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
-
+class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) extends Actor with ActorLogging {
   override def receive = {
     case event: HttpRequestEvent =>
       val startTime = System.nanoTime()
@@ -39,12 +37,12 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
       getContent(path, request) onComplete {
         case Success(Content(mimeType, bytes)) =>
           val elapsedTime = (System.nanoTime() - startTime).toDouble / 1e+6
-          logger.info(f"${verb(path)} '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
+          log.info(f"${verb(path)} '$path' (${bytes.length} bytes) [$elapsedTime%.1f msec]")
           response.contentType = mimeType
           response.write(bytes)
         case Failure(e) =>
           val message = s"Resource '$path' failed unexpectedly"
-          logger.error(message, e)
+          log.error(message, e)
           response.write(statusCode(path), message)
       }
   }
@@ -100,7 +98,7 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
       case "png" => Some("image/png")
       case "xml" => Some("application/xml")
       case _ =>
-        logger.warn(s"No MIME type found for '$path'")
+        log.warning(s"No MIME type found for '$path'")
         None
     }
   }
@@ -135,6 +133,7 @@ class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) ex
             case _ => missingArgs("topic", "criteria")
           }
           case "getBrokers" => facade.getBrokers.toJson.mimeJson
+          case "getBrokerDetails" => facade.getBrokerDetails.toJson.mimeJson
           case "getConsumerDeltas" => facade.getConsumerDeltas.toJson.mimeJson
           case "getConsumerDetails" => facade.getConsumerDetails.toJson.mimeJson
           case "getConsumersByTopic" => args match {

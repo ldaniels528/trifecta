@@ -9,8 +9,9 @@
         $resourceProvider.defaults.stripTrailingSlashes = false;
     }]);
 
-    app.run(function($rootScope, $log, $timeout, ConsumerSvc, TopicSvc, WebSockets) {
-        $rootScope.version = "0.18.16";
+    app.run(function($rootScope, $log, $timeout, BrokerSvc, ConsumerSvc, TopicSvc, WebSockets) {
+        $rootScope.version = "0.18.17";
+        $rootScope.BrokerSvc = BrokerSvc;
         $rootScope.ConsumerSvc = ConsumerSvc;
         $rootScope.TopicSvc = TopicSvc;
         $rootScope.WebSockets = WebSockets;

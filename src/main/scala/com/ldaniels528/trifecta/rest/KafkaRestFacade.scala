@@ -202,6 +202,12 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
   def getBrokers = Future(brokers)
 
   /**
+   * Returns the list of brokers
+   * @return the JSON list of brokers
+   */
+  def getBrokerDetails = Future(KafkaMicroConsumer.getBrokerList)
+
+  /**
    * Returns a collection of consumers that have changed since the last call
    * @return a promise of a collection of [[ConsumerDetailJs]]
    */

@@ -16,6 +16,10 @@
 
             $scope.observeTabs = [
                 {
+                    "name": "Brokers",
+                    "imageURL": "/app/images/tabs/observe/brokers.png",
+                    "active": false
+                }, {
                     "name": "Consumers",
                     "imageURL": "/app/images/tabs/observe/consumers.png",
                     "active": false

@@ -11,6 +11,61 @@
     <div style="display: inline; float: right; width: 85%">
         <div class="streaming_topics_container" style="margin-right: 5px">
             <div class="full_block">
+                <!-- Brokers -->
+                <div ng-show="observeTab.name == 'Brokers'">
+                    <div style="display: inline; float: left; width: 69.9%; height: 525px; border-right: 1px solid #cccccc">
+                        <div ng-show="BrokerSvc.brokers.length" class="full_block hide_show_topics">{{ BrokerSvc.brokers.length }} broker(s) shown</div>
+                        <table ng-show="BrokerSvc.brokers.length" class="full_width">
+                            <tr>
+                                <th>Host</th>
+                                <th class="center">Version</th>
+                                <th class="center">Timestamp</th>
+                                <th class="center">JMX Port</th>
+                            </tr>
+                            <tr ng-repeat="b in BrokerSvc.brokers">
+                                <td>{{ b.host }}:{{ b.port }}</td>
+                                <td class="center">{{ b.version }}</td>
+                                <td class="center">{{ b.timestamp }}</td>
+                                <td class="center">
+                                    <span ng-show="b.jmxPort">{{ b.jmxPort }}</span>
+                                    <span ng-hide="b.jmxPort" class="inactive">N/A</span>
+                                </td>
+                            </tr>
+                        </table>
+                        <div ng-hide="BrokerSvc.brokers.length">
+                            <div>
+                                <img src="/app/images/status/yellowlight.gif">
+                                <span class="warning">No brokers were found.</span>
+                            </div>
+                            <div style="margin-top: 10px">
+                                This usually means that either:
+                                <ul>
+                                    <li>Kafka has not been setup on the Zookeeper node for which you are pointing.</li>
+                                    <li>Or, Trifecta has not been configured to point to the Zookeeper instance that is
+                                    running Kafka.
+                                        <blockquote>
+                                            <div style="color: #aaaaaa"># the Zookeeper instance the Kafka Brokers are pointing to</div>
+                                            <div><span style="color: magenta">trifecta.zookeeper.host</span> = <span style="color: blue">localhost:2181</span></div>
+                                        </blockquote>
+                                    </li>
+                                </ul>
+                                <p>Please review/update the configuration properties found in <span style="color: blue">$HOME/.trifecta/config.properties</span>,
+                                and restart Trifecta.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: inline; float: right; width: 30%; padding-left: 4px">
+                        <div ng-include="'/app/views/partials/hints_and_tips.htm'"></div>
+                        <p><img class="bulb" src="/app/images/common/bulb-16.png"> Kafka producers send data directly to
+                            the broker that is the leader for the partition without any intervening routing tier. To help
+                            the producer do this all Kafka nodes can answer a request for metadata about which servers are
+                            alive and where the leaders for the partitions of a topic are at any given time to allow the
+                            producer to appropriate direct its requests.</p>
+                    </div>
+                    <br style="clear: both"/>
+                </div>
+
+                <!-- Consumers -->
                 <div ng-show="observeTab.name == 'Consumers'">
                     <div style="display: inline; float: left; width: 69.9%; height: 525px; border-right: 1px solid #cccccc">
                         <div ng-show="ConsumerSvc.consumers.length" ng-include="'/app/views/partials/hide_show_empty_topics.htm'"></div>
