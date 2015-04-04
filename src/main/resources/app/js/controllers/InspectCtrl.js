@@ -3,508 +3,196 @@
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
 (function () {
-    angular.module('trifecta')
-        .controller('InspectCtrl', ['$scope', '$interval', '$log', '$parse', '$timeout', 'MessageSvc', 'MessageSearchSvc', 'TopicSvc', 'WebSockets',
-            function ($scope, $interval, $log, $parse, $timeout, MessageSvc, MessageSearchSvc, TopicSvc, WebSockets) {
+    angular.module('trifecta').controller('InspectCtrl', ['$scope', '$log', '$timeout', '$interval', 'ConsumerSvc', 'TopicSvc', 'ZookeeperSvc',
+        function ($scope, $log, $timeout, $interval, ConsumerSvc, TopicSvc, ZookeeperSvc) {
 
-                $scope.hideEmptyTopics = true;
-                $scope.topics = TopicSvc.topics;
-                $scope.topic = null;
-                $scope.loading = 0;
-                $scope.message = {};
+            $scope.consumerMapping = [];
+            $scope.replicas = [];
 
-                $scope.displayMode = {
-                    "state" : "message",
-                    "avro" : "json"
-                };
+            $scope.formats = ["auto", "binary", "json", "plain-text"];
+            $scope.selected = { "format": $scope.formats[0] };
+            $scope.zkItem = null;
+            $scope.zkItems = [{ name: "/ (root)", path: "/", expanded: false }];
 
-                $scope.sampling = {
-                    "status": "stopped"
-                };
+            $scope.inspectTabs = [
+                {
+                    "name": "Brokers",
+                    "imageURL": "/app/images/tabs/inspect/brokers.png",
+                    "active": false
+                }, {
+                    "name": "Consumers",
+                    "imageURL": "/app/images/tabs/inspect/consumers.png",
+                    "active": false
+                }, {
+                    "name": "Leaders",
+                    "imageURL": "/app/images/tabs/inspect/topics.png",
+                    "active": false
+                }, {
+                    "name": "Replicas",
+                    "imageURL": "/app/images/tabs/inspect/replicas-24.png",
+                    "active": false
+                }, {
+                    "name": "Zookeeper",
+                    "imageURL": "/app/images/tabs/inspect/zookeeper.png",
+                    "active": false
+                }
+            ];
 
-                $scope.clearMessage = function() {
-                    $scope.message = {};
-                };
+            // select the default tab and make it active
+            $scope.inspectTab = $scope.inspectTabs[0];
+            $scope.inspectTab.active = true;
 
-                /**
-                 * Converts the given offset from a string value to an integer
-                 * @param partition the partition that the offset value will be updated within
-                 * @param offset the given offset string value
-                 */
-                $scope.convertOffsetToInt = function(partition, offset) {
-                    partition.offset = parseInt(offset);
-                };
+            /**
+             * Changes the Inspect sub-tab
+             * @param index the given tab index
+             * @param event the given event
+             */
+            $scope.changeInspectTab = function (index, event) {
+                $scope.inspectTab = $scope.inspectTabs[index];
+                if (event) {
+                    event.preventDefault();
+                }
+            };
 
-                /**
-                 * Exports the given message to an external system
-                 * @param topic the given topic
-                 * @param partition the given partition
-                 * @param offset the given offset
-                 */
-                $scope.exportMessage = function(topic, partition, offset) {
-                    alert("Not yet implemented");
-                };
+            /**
+             * Expands the consumers for the given topic
+             * @param topic the given topic
+             */
+            $scope.expandTopicConsumers = function(topic) {
+                topic.expanded = !topic.expanded;
+                if(topic.expanded) {
+                    topic.loadingConsumers = true;
+                    ConsumerSvc.getConsumersByTopic(topic.topic).then(
+                        function(consumers) {
+                            topic.loadingConsumers = false;
+                            topic.consumers = consumers;
+                        },
+                        function(err) {
+                            topic.loadingConsumers = false;
+                            $scope.addError(err);
+                        }
+                    );
+                }
+            };
 
-                /**
-                 * Retrieves message data for the given offset within the topic partition.
-                 * @param topic the given topic
-                 * @param partition the given partition
-                 * @param offset the given offset
-                 */
-                $scope.getMessageData = function (topic, partition, offset) {
-                    $scope.clearMessage();
-                    $scope.loading++;
+            /**
+             * Expands the first Zookeeper item
+             */
+            $scope.expandFirstItem = function () {
+                // load the children for the root key
+                if($scope.zkItems.length) {
+                    var firstItem = $scope.zkItems[0];
+                    if (firstItem) {
+                        $scope.expandItem(firstItem);
+                        $scope.getItemInfo(firstItem);
+                    }
+                }
+            };
 
-                    // ensure the loading animation stops
-                    var promise = $timeout(function() {
-                        $log.warn("Timeout reached for loading animation: loading = " + $scope.loading);
-                        if($scope.loading) $scope.loading--;
-                    }, 5000);
+            /**
+             * Expands or collapses the given Zookeeper item
+             * @param item the given Zookeeper item
+             */
+            $scope.expandItem = function(item) {
+                item.expanded = !item.expanded;
+                if(item.expanded) {
+                    item.loading = true;
+                    ZookeeperSvc.getZkPath(item.path).then(
+                        function (zkItems) {
+                            item.loading = false;
+                            item.children = zkItems;
+                        },
+                        function(err) {
+                            item.loading = false;
+                            errorHandler(err);
+                        });
+                }
+            };
 
-                    MessageSvc.getMessage(topic, partition, offset).then(
-                        function (message) {
-                            $scope.message = message;
-                            if($scope.loading) $scope.loading--;
-                            $timeout.cancel(promise);
+            $scope.formatData = function(path, format) {
+                ZookeeperSvc.getZkData(path, format).then(
+                    function (data) {
+                        $scope.zkItem.data = data;
+                        if(format == 'auto') {
+                            $scope.selected.format = data.type;
+                        }
+                    },
+                    function(err) {
+                        errorHandler(err);
+                    });
+            };
+
+            $scope.getItemInfo = function(item) {
+                item.loading = true;
+                ZookeeperSvc.getZkInfo(item.path).then(
+                    function (itemInfo) {
+                        item.loading = false;
+                        //$scope.selected.format = $scope.formats[0];
+                        $scope.zkItem = itemInfo;
+                    },
+                    function(err) {
+                        item.loading = false;
+                        errorHandler(err);
+                    });
+            };
+
+            $scope.expandReplicas = function(topic) {
+                topic.replicaExpanded = !topic.replicaExpanded;
+                if(topic.replicaExpanded) {
+                    topic.loading = true;
+                    TopicSvc.getReplicas(topic.topic).then(
+                        function (replicas) {
+                            $timeout(function() { topic.loading = false; }, 500);
+                            topic.replicas = replicas;
+
+                            angular.forEach(replicas, function(r) {
+                                r.inSyncPct = computeInSyncPct(r);
+                            });
                         },
                         function (err) {
+                            topic.loading = false;
                             $scope.addError(err);
-                            if($scope.loading) $scope.loading--;
-                            $timeout.cancel(promise);
                         });
-                };
-
-                $scope.setMessageData = function(message) {
-                    $scope.message = message;
-
-                    // update the partition with the offset
-                    var partition = TopicSvc.findPartition($scope.topic, message.partition);
-                    if(partition) {
-                        $scope.partition = partition;
-                        partition.offset = message.offset;
-                    }
-                };
-
-                /**
-                 * Retrieves message key for the given offset within the topic partition.
-                 * @param topic the given topic
-                 * @param partition the given partition
-                 * @param offset the given offset
-                 */
-                $scope.getMessageKey = function (topic, partition, offset) {
-                    $scope.clearMessage();
-                    $scope.loading++;
-
-                    // ensure the loading animation stops
-                    var promise = $timeout(function() {
-                        $log.warn("Timeout reached for loading animation: loading = " + $scope.loading);
-                        if($scope.loading) $scope.loading--;
-                    }, 5000);
-
-                    MessageSvc.getMessageKey(topic, partition, offset).then(
-                        function (message) {
-                            $scope.message = message;
-                            if($scope.loading) $scope.loading--;
-                            $timeout.cancel(promise);
-                        },
-                        function (err) {
-                            $scope.addError(err);
-                            if($scope.loading) $scope.loading--;
-                            $timeout.cancel(promise);
-                        });
-                };
-
-                $scope.getRemainingCount = function(p) {
-                    return Math.max(p.endOffset - p.offset, 0);
-                };
-
-                $scope.messageFinderPopup = function () {
-                    MessageSearchSvc.finderDialog($scope).then(function (form) {
-                        // perform the validation of the form
-                        if(!form || !form.topic) {
-                            $scope.addErrorMessage("No topic selected")
-                        }
-                        else if(!form.criteria) {
-                            $scope.addErrorMessage("No criteria specified")
-                        }
-                        else {
-                            form.topic = form.topic.topic;
-                            if (form.topic && form.criteria) {
-                                // display the loading dialog
-                                var loadingDialog = MessageSearchSvc.loadingDialog($scope);
-
-                                // perform the search
-                                MessageSvc.findOne(form.topic, form.criteria)
-                                    .then(function (message) {
-                                        loadingDialog.close({});
-                                        if (message.type == "error") {
-                                            $scope.addErrorMessage(message.message);
-                                        }
-                                        else {
-                                            $scope.message = message;
-
-                                            // find the topic and partition
-                                            var myTopic = findTopicByName(message.topic);
-                                            if (myTopic) {
-                                                var myPartition = findPartitionByID(myTopic, message.partition);
-                                                if (myPartition) {
-                                                    $scope.topic = myTopic;
-                                                    $scope.partition = myPartition;
-                                                    $scope.partition.offset = message.offset
-                                                }
-                                            }
-                                        }
-                                    });
-                            }
-                        }
-                    });
-                };
-
-                $scope.getTopicIcon = function(topic, selected) {
-                    if(!topic.totalMessages) return "/app/images/common/topic_alert-16.png";
-                    else if(selected) return "/app/images/common/topic_selected-16.png";
-                    else return "/app/images/common/topic-16.png";
-                };
-
-                $scope.getTopicIconSelection = function(selected) {
-                    return selected
-                        ? "/app/images/common/topic_selected-16.png"
-                        : "/app/images/common/topic-16.png";
-                };
-
-                $scope.getTopics = function (hideEmptyTopics) {
-                    return $scope.topics.filter(function (topic) {
-                        return !hideEmptyTopics || topic.totalMessages > 0;
-                    });
-                };
-
-                $scope.getTopicNames = function (hideEmptyTopics) {
-                    var topics = $scope.getTopics(hideEmptyTopics);
-                    return topics.map(function(t) {
-                        return t.topic;
-                    });
-                };
-
-                $scope.gotoDecoder = function(topic) {
-                    if(angular.element('#Decoders').scope().switchToDecoderByTopic(topic)) {
-                        $scope.changeTab(4, null); // Decoders
-                    }
-                };
-
-                $scope.isLimitedControls = function() {
-                    return $scope.sampling.status == 'started';
-                };
-
-                $scope.loadMessage = function () {
-                    var topic = $scope.topic.topic;
-                    var partition = $scope.partition.partition;
-                    var offset = $scope.partition.offset;
-
-                    switch($scope.displayMode.state) {
-                        case "key":
-                            $scope.getMessageKey(topic, partition, offset);
-                            break;
-                        case "message":
-                            $scope.getMessageData(topic, partition, offset);
-                            break;
-                        default:
-                            $log.error("Unrecognized display mode (mode = " + $scope.displayMode.state + ")");
-                    }
-                };
-
-                $scope.firstMessage = function () {
-                    ensureOffset($scope.partition);
-                    if ($scope.partition.offset != $scope.partition.startOffset) {
-                        $scope.partition.offset = $scope.partition.startOffset;
-                        $scope.loadMessage();
-                    }
-                };
-
-                $scope.lastMessage = function () {
-                    ensureOffset($scope.partition);
-                    if ($scope.partition.offset != $scope.partition.endOffset) {
-                        $scope.partition.offset = $scope.partition.endOffset;
-                        $scope.loadMessage();
-                    }
-                };
-
-                $scope.medianMessage = function() {
-                    var partition = $scope.partition;
-                    ensureOffset(partition);
-                    var median = Math.round(partition.startOffset + (partition.endOffset - partition.startOffset)/2);
-                    if (partition.offset != median) {
-                        partition.offset = median;
-                        $scope.loadMessage();
-                    }
-                };
-
-                $scope.messageSamplingStart = function(topic) {
-                    // build the request
-                    var partitions = [];
-                    angular.forEach(topic.partitions, function(p) {
-                        partitions.push(p.offset != null ? p.offset : p.endOffset);
-                    });
-                    var json = angular.toJson({
-                        "action": "startMessageSampling",
-                        "topic": topic.topic,
-                        "partitions": partitions
-                    });
-
-                    // transfer the request
-                    if(WebSockets.send(json)) {
-                        $scope.sampling.status = "started";
-                    }
-                    else {
-                        $scope.addErrorMessage("Failed to start message sampling");
-                    }
-                };
-
-                $scope.messageSamplingStop = function(topic) {
-                    // build the request
-                    var json = angular.toJson({ "action": "stopMessageSampling", "topic": topic.topic });
-
-                    // transfer the request
-                    if(WebSockets.send(json)) {
-                        $scope.sampling.status = "stopped";
-                    }
-                    else {
-                        $scope.addErrorMessage("Failed to stop message sampling");
-                    }
-                };
-
-                $scope.nextMessage = function () {
-                    ensureOffset($scope.partition);
-                    var offset = $scope.partition.offset;
-                    if (offset < $scope.partition.endOffset) {
-                        $scope.partition.offset += 1;
-                    }
-                    $scope.loadMessage();
-                };
-
-                $scope.previousMessage = function () {
-                    ensureOffset($scope.partition);
-                    var offset = $scope.partition.offset;
-                    if (offset && offset > $scope.partition.startOffset) {
-                        $scope.partition.offset -= 1;
-                    }
-                    $scope.loadMessage();
-                };
-
-                $scope.resetMessageState = function(mode, topic, partition, offset) {
-                    $log.info("mode = " + mode + ", topic = " + topic + ", partition = " + partition + ", offset = " + offset);
-                    switch(mode) {
-                        case "key":
-                            $scope.getMessageKey(topic, partition, offset);
-                            break;
-                        case "message":
-                            $scope.getMessageData(topic, partition, offset);
-                            break;
-                        default:
-                            $log.error("Unrecognized display mode (mode = " + mode + ")");
-                    }
-                };
-
-                $scope.switchToMessage = function (topicID, partitionID, offset) {
-                    $log.info("switchToMessage: topicID = " + topicID + ", partitionID = " + partitionID + ", offset = " + offset);
-                    var topic = findTopicByName(topicID);
-                    var partition = topic ? findPartitionByID(topic, partitionID) : null;
-                    if (partition) {
-                        $scope.topic = topic;
-                        $scope.partition = partition;
-                        $scope.partition.offset = offset;
-                        $scope.loadMessage();
-                        $scope.changeTab(0, null); // Inspect
-                    }
-                };
-
-                /**
-                 * Toggles the Avro/JSON output flag
-                 */
-                $scope.toggleAvroOutput = function() {
-                    $scope.displayMode.avro = $scope.displayMode.avro == 'json' ? 'avro' : 'json';
-                };
-
-                /**
-                 * Toggles the empty topic hide/show flag
-                 */
-                $scope.toggleHideShowEmptyTopics = function() {
-                    $scope.hideEmptyTopics = !$scope.hideEmptyTopics;
-                };
-
-                /**
-                 * Formats a JSON object as a color-coded JSON expression
-                 * @param objStr the JSON object
-                 * @param tabWidth the number of tabs to use in formatting
-                 * @returns {*}
-                 */
-                $scope.toPrettyJSON = function (objStr, tabWidth) {
-                    var obj = null;
-                    try {
-                        obj = $parse(objStr)({});
-                    } catch (e) {
-                        //$scope.addErrorMessage("Error parsing JSON document");
-                        $log.error(e);
-                        return "";
-                    }
-                    return JSON.stringify(obj, null, Number(tabWidth));
-                };
-
-                $scope.updatePartition = function (partition) {
-                    $scope.partition = partition;
-
-                    // if the current offset is not set, set it at the starting offset.
-                    ensureOffset(partition);
-
-                    // load the first message
-                    $scope.loadMessage();
-                };
-
-                $scope.updateTopic = function (topic) {
-                    $scope.topic = topic;
-
-                    var partitions = topic ? topic.partitions : null;
-                    if (partitions) {
-                        var partition = partitions[0];
-                        $scope.updatePartition(partition);
-
-                        $log.info("topic = " + ( $scope.topic ? $scope.topic.topic : null ) +
-                        ", partition = " + ($scope.partition ? $scope.partition.partition : null ) +
-                        ", offset = " + ($scope.partition ? $scope.partition.offset : null ));
-
-                        // load the message
-                        //$scope.loadMessage();
-                    }
-                    else {
-                        console.log("No partitions found");
-                        $scope.partition = {};
-                        $scope.clearMessage();
-                    }
-                };
-
-                function ensureOffset(partition) {
-                    if(partition && partition.offset == null) {
-                        partition.offset = partition.endOffset;
-                    }
                 }
+            };
 
-                /**
-                 * Attempts to find and return the first non-empty topic; however, if none are found, it returns the
-                 * first topic in the array
-                 * @param topicSummaries the given array of topic summaries
-                 * @returns the first non-empty topic
-                 */
-                function findNonEmptyTopic(topicSummaries) {
-                    for (var n = 0; n < topicSummaries.length; n++) {
-                        var ts = topicSummaries[n];
-                        if (ts.totalMessages > 0) return ts;
+            $scope.getInSyncClass = function(inSyncPct) {
+                if(inSyncPct == 0) return "in_sync_red";
+                else if(inSyncPct == 100) return "in_sync_green";
+                else return "in_sync_yellow";
+            };
+
+            $scope.getInSyncBulbImage = function(inSyncPct) {
+                if(inSyncPct == 0) return "/app/images/status/redlight.png";
+                else if(inSyncPct == 100) return "/app/images/status/greenlight.png";
+                else return "/app/images/status/yellowlight.gif";
+            };
+
+            $scope.isConsumerUpToDate = function(consumer) {
+                var details = consumer.details || [];
+                if(!details.length) return false;
+                else {
+                    var time = new Date().getTime() - 300000; // 5 minutes ago
+                    for(var n = 0; n < details.length; n++) {
+                        if(details[n].lastModified >= time) return true;
                     }
-                    return topicSummaries.length > 0 ? topicSummaries[0] : null;
+                    return false;
                 }
+            };
 
-                function findPartitionByID(topic, partitionId) {
-                    var partitions = topic.partitions;
-                    for (var n = 0; n < partitions.length; n++) {
-                        if (partitions[n].partition == partitionId) return partitions[n];
-                    }
-                    return null;
+            function computeInSyncPct(replicaPartition) {
+                var replicas = replicaPartition.replicas;
+                var syncCount = 0;
+                for(var n = 0; n < replicas.length; n++) {
+                    var replica = replicas[n];
+                    if(replica.inSync) syncCount++;
                 }
+                return Math.round(100 * syncCount / replicas.length);
+            }
 
-                function findTopicByName(topicId) {
-                    var topics = $scope.topics;
-                    for (var n = 0; n < topics.length; n++) {
-                        if (topics[n].topic == topicId) return topics[n];
-                    }
-                    return null;
-                }
+            function errorHandler(err) {
+                $scope.addError(err);
+            }
 
-                /******************************************************************
-                 *  Error-related Functions
-                 ******************************************************************/
-
-                $scope.gloabalMessages = [];
-
-                $scope.addError = function (err) {
-                    $scope.gloabalMessages.push({
-                        "type": "error",
-                        "text": (err.statusText != "")
-                            ? "HTTP/" + err.status + " - " + err.statusText
-                            : "General fault or communications error"
-                    });
-                    scheduleRemoval($scope.gloabalMessages);
-                };
-
-                $scope.addErrorMessage = function (messageText) {
-                    $scope.gloabalMessages.push({
-                        "type": "error",
-                        "text": messageText
-                    });
-                    scheduleRemoval();
-                };
-
-                $scope.addInfoMessage = function (messageText) {
-                    $scope.gloabalMessages.push({
-                        "type": "info",
-                        "text": messageText
-                    });
-                    scheduleRemoval();
-                };
-
-                $scope.addWarningMessage = function (messageText) {
-                    $scope.gloabalMessages.push({
-                        "type": "warning",
-                        "text": messageText
-                    });
-                    scheduleRemoval();
-                };
-
-                $scope.removeAllMessages = function () {
-                    $scope.gloabalMessages = [];
-                };
-
-                $scope.removeMessage = function (index) {
-                    $scope.gloabalMessages.splice(index, 1);
-                };
-
-                function allTopicsEmpty(topics) {
-                    for(var n = 0; n < topics.length; n++) {
-                        var t = topics[n];
-                        if(t.totalMessages) return false;
-                    }
-                    return true;
-                }
-
-                function scheduleRemoval() {
-                    var messages = $scope.gloabalMessages;
-                    var message = messages[messages.length - 1];
-
-                    $timeout(function() {
-                        var index = messages.indexOf(message);
-                        $log.info("Removing message[" + index + "]...");
-                        if(index != -1) {
-                            $scope.removeMessage(index);
-                        }
-                    }, 10000 + $scope.gloabalMessages.length * 500);
-                }
-
-                /******************************************************************
-                 *  Watched Functions
-                 ******************************************************************/
-
-                /**
-                 * Watch for topic changes, and select the first non-empty topic
-                 */
-                $scope.$watchCollection("TopicSvc.topics", function(newTopics, oldTopics) {
-                    $log.info("Loaded new topics (" + newTopics.length + ")");
-                    //$scope.topics = newTopics;
-                    if(allTopicsEmpty(newTopics)) {
-                        $scope.hideEmptyTopics = false;
-                    }
-
-                    if(!$scope.topic) {
-                        var myTopic = findNonEmptyTopic($scope.topics);
-                        $scope.updateTopic(myTopic);
-                    }
-                });
-
-            }]);
+        }])
 })();
