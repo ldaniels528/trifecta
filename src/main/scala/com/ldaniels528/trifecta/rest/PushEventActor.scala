@@ -1,28 +1,25 @@
 package com.ldaniels528.trifecta.rest
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorLogging}
 import com.ldaniels528.trifecta.io.json.JsonHelper
 import com.ldaniels528.trifecta.rest.KafkaRestFacade.{SamplingCursor, TopicAndPartitions}
 import com.ldaniels528.trifecta.rest.PushEventActor._
-import org.slf4j.LoggerFactory
-
-import scala.concurrent.ExecutionContext
 
 /**
  * Push Events Actor
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class PushEventActor(embeddedWebServer: EmbeddedWebServer)(implicit ec: ExecutionContext)
-  extends Actor {
-  private lazy val logger = LoggerFactory.getLogger(getClass)
+class PushEventActor(embeddedWebServer: EmbeddedWebServer) extends Actor with ActorLogging {
   private val facade = embeddedWebServer.facade
+
+  import context.dispatcher
 
   override def receive = {
     case PushConsumers => pushConsumerUpdateEvents()
     case PushMessage(webSocketId, topicAndPartitions) => pushMessageSamplingEvent(webSocketId, topicAndPartitions)
     case PushTopics => pushTopicUpdateEvents()
     case message =>
-      logger.warn(s"received unknown message of type: $message")
+      log.warning(s"received unknown message of type: $message")
       unhandled(message)
   }
 

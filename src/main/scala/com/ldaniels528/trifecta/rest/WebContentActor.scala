@@ -21,7 +21,9 @@ import scala.util.{Try, Failure, Success}
  * Web Content Actor
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class WebContentActor(facade: KafkaRestFacade)(implicit ec: ExecutionContext) extends Actor with ActorLogging {
+class WebContentActor(facade: KafkaRestFacade) extends Actor with ActorLogging {
+  import context.dispatcher
+
   override def receive = {
     case event: HttpRequestEvent =>
       val startTime = System.nanoTime()
