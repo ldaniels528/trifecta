@@ -179,7 +179,7 @@
                                 </span>
                             </a>
 
-                            <div ng-show="t.replicaExpanded" ng-repeat="r in t.replicas" class="indent">
+                            <div ng-show="t.replicaExpanded" ng-repeat="r in t.replicas | orderBy:'partition'" class="indent">
                                 <img ng-click="r.partitionExpanded = !r.partitionExpanded" ng-src="/app/images/buttons/{{r.partitionExpanded ? 'collapse.png' : 'expand.png'}}">
                                 <img ng-src="{{ getInSyncBulbImage(r.inSyncPct) }}">
                                 Partition {{ r.partition }}
