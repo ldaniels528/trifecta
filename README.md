@@ -153,8 +153,8 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 
 #### v0.18.17
 * Trifecta UI
-    * Swapped the Inspect and Observe tabs
-    * Add a new Brokers view to the Observe module
+    * Swapped the Inspect and Observe modules
+    * Added a new Brokers view to the Observe module
 
 #### v0.18.16
 * Trifecta UI: Minor UI tweaks and fixes
