@@ -54,6 +54,10 @@
                 }
             };
 
+            $scope.expandBroker = function(broker) {
+                broker.expanded = !broker.expanded;
+            };
+
             /**
              * Expands the consumers for the given topic
              * @param topic the given topic

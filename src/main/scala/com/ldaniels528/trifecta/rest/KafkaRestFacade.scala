@@ -4,13 +4,12 @@ import java.io.{File, FileOutputStream}
 import java.util.UUID
 import java.util.concurrent.Executors
 
-import com.ldaniels528.trifecta.util.OptionHelper.Risky._
 import com.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.ldaniels528.trifecta.command.parser.CommandParser
 import com.ldaniels528.trifecta.io.ByteBufferUtils
 import com.ldaniels528.trifecta.io.avro.AvroConversion
 import com.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
-import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{MessageData, DEFAULT_FETCH_SIZE}
+import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{BrokerDetails, DEFAULT_FETCH_SIZE, MessageData}
 import com.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
@@ -20,6 +19,7 @@ import com.ldaniels528.trifecta.messages.query.parser.{KafkaQueryParser, KafkaQu
 import com.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageDecoder}
 import com.ldaniels528.trifecta.rest.KafkaRestFacade._
 import com.ldaniels528.trifecta.util.EitherHelper._
+import com.ldaniels528.trifecta.util.OptionHelper.Risky._
 import com.ldaniels528.trifecta.util.OptionHelper._
 import com.ldaniels528.trifecta.util.ResourceHelper._
 import com.ldaniels528.trifecta.util.StringHelper._
@@ -199,13 +199,15 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
    * Returns the list of brokers
    * @return the JSON list of brokers
    */
-  def getBrokers = Future(brokers)
+  def getBrokers = Future.successful(brokers)
 
   /**
    * Returns the list of brokers
    * @return the JSON list of brokers
    */
-  def getBrokerDetails = Future(KafkaMicroConsumer.getBrokerList)
+  def getBrokerDetails = Future {
+    KafkaMicroConsumer.getBrokerList.groupBy(_.host) map { case (host, details) => BrokeDetailsJs(host, details) }
+  }
 
   /**
    * Returns a collection of consumers that have changed since the last call
@@ -270,7 +272,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
       consumers
         .filter(_.topic == topic)
         .groupBy(_.consumerId)
-        .map { case (consumerId, details) => ConsumerByTopicJs(consumerId, details)}
+        .map { case (consumerId, details) => ConsumerByTopicJs(consumerId, details) }
     }
   }
 
@@ -451,7 +453,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     KafkaMicroConsumer.getReplicas(topic, brokers)
       .map(r => (r.partition, ReplicaHostJs(s"${r.host}:${r.port}", r.inSync)))
       .groupBy(_._1)
-      .map { case (partition, replicas) => ReplicaJs(partition, replicas.map(_._2))}
+      .map { case (partition, replicas) => ReplicaJs(partition, replicas.map(_._2)) }
   }
 
   /**
@@ -468,7 +470,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     }
 
     // get the total message counts
-    val totalMessageCounts = topics.groupBy(_.topic) map { case (topic, info) => (topic, info.map(_.messages).sum)}
+    val totalMessageCounts = topics.groupBy(_.topic) map { case (topic, info) => (topic, info.map(_.messages).sum) }
     val topicsWithCounts = topics map { t =>
       TopicDeltaWithTotals(t.topic, t.partition, t.startOffset, t.endOffset, t.messages, totalMessageCounts(t.topic))
     }
@@ -746,6 +748,8 @@ object KafkaRestFacade {
       else LoopBackCodec.decode(message)
     }
   }
+
+  case class BrokeDetailsJs(host: String, details: Seq[BrokerDetails])
 
   case class ConsumerByTopicJs(consumerId: String, details: Seq[ConsumerDetailJs])
 

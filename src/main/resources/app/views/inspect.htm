@@ -14,24 +14,27 @@
                 <!-- Brokers -->
                 <div ng-show="inspectTab.name == 'Brokers'">
                     <div style="display: inline; float: left; width: 69.9%; height: 525px; border-right: 1px solid #cccccc">
-                        <div ng-show="BrokerSvc.brokers.length" class="full_block hide_show_topics">{{ BrokerSvc.brokers.length }} broker(s) found.</div>
-                        <table ng-show="BrokerSvc.brokers.length" class="full_width">
-                            <tr>
-                                <th>Host</th>
-                                <th class="center">Version</th>
-                                <th class="center">Timestamp</th>
-                                <th class="center">JMX Port</th>
-                            </tr>
-                            <tr ng-repeat="b in BrokerSvc.brokers">
-                                <td>{{ b.host }}:{{ b.port }}</td>
-                                <td class="center">{{ b.version }}</td>
-                                <td class="center">{{ b.timestamp }}</td>
-                                <td class="center">
-                                    <span ng-show="b.jmxPort">{{ b.jmxPort }}</span>
-                                    <span ng-hide="b.jmxPort" class="inactive">N/A</span>
-                                </td>
-                            </tr>
-                        </table>
+                        <div ng-show="BrokerSvc.brokers.length" class="full_block hide_show_topics">{{ BrokerSvc.brokers.length }} host(s) found.</div>
+                        <div ng-repeat="inst in BrokerSvc.brokers | orderBy:'host'">
+                            <img class="clickable" ng-click="expandBroker(inst)" ng-src="/app/images/buttons/{{ inst.expanded ? 'collapse' : 'expand' }}.png"> {{ inst.host }} ({{ inst.details.length }} instances)
+                            <table ng-show="inst.expanded" class="full_width indent">
+                                <tr>
+                                    <th>Port</th>
+                                    <th class="center">Version</th>
+                                    <th class="center">Timestamp</th>
+                                    <th class="center">JMX Port</th>
+                                </tr>
+                                <tr ng-repeat="b in inst.details | orderBy:'port'">
+                                    <td>{{ b.port }}</td>
+                                    <td class="center">{{ b.version }}</td>
+                                    <td class="center">{{ b.timestamp }}</td>
+                                    <td class="center">
+                                        <span ng-show="b.jmxPort">{{ b.jmxPort }}</span>
+                                        <span ng-hide="b.jmxPort" class="inactive">N/A</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
                         <div ng-hide="BrokerSvc.brokers.length">
                             <div>
                                 <img src="/app/images/status/yellowlight.gif">
