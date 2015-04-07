@@ -151,26 +151,29 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.18
+* Trifecta UI
+    * Reworked the Brokers view (Inspect module)
+    * Fixed sort ordering of partitions in the Replicas view (Inspect module)
+
 #### v0.18.17
 * Trifecta UI
     * Swapped the Inspect and Observe modules
     * Added a new Brokers view to the Observe module
 
 #### v0.18.16
-* Trifecta UI: Minor UI tweaks and fixes
-* Added configuration key to support multi-tenant Zookeeper setups
-* Upgraded to Kafka 0.8.2.0
-
-#### v0.18.15
+* Trifecta Core
+    * Upgraded to Kafka 0.8.2.0
+    * Added configuration key to support multi-tenant Zookeeper setups
 * Trifecta UI
+    * Minor UI tweaks and fixes
+    
+#### v0.18.1 to v0.18.15
+* Trifecta Core
     * Fixed issue with the application failing if the configuration file is not found
-
-#### v0.18.14
-* Trifecta UI
     * Upgraded to Kafka 0.8.2-beta and Storm 0.9.3
-    * Miscellaneous bug fixes
-
-#### v0.18.1 to v0.18.13
+    * Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
+        * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
 * Trifecta UI
     * Added real-time message streaming capability to the _Inspect_ tab
     * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
@@ -181,9 +184,7 @@ Trifecta binaries are available for immediate download in the "<a href='https://
         * The Topics section has been enhanced to display topic offset deltas
     * _Query_ tab user interface improvements
         * Multiple queries can be executed concurrently
-* Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
-    * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
-* The embedded web server now supports asynchronous request/response flows
+    * The embedded web server now supports asynchronous request/response flows
 
 <a name="trifecta-ui"></a>
 ### Trifecta UI

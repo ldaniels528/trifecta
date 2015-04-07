@@ -10,7 +10,7 @@
     }]);
 
     app.run(function($rootScope, $log, $timeout, BrokerSvc, ConsumerSvc, TopicSvc, WebSockets) {
-        $rootScope.version = "0.18.17";
+        $rootScope.version = "0.18.18";
         $rootScope.BrokerSvc = BrokerSvc;
         $rootScope.ConsumerSvc = ConsumerSvc;
         $rootScope.TopicSvc = TopicSvc;
