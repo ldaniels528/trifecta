@@ -151,6 +151,10 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.19
+* Trifecta Core
+    * Fixed potential bug related to retrieving the list of available brokers
+
 #### v0.18.18
 * Trifecta UI
     * Reworked the Brokers view (Inspect module)
