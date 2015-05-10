@@ -282,7 +282,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
    */
   private def getConsumerGroupsNative(topicPrefix: Option[String] = None): Future[Seq[ConsumerDetailJs]] = Future {
     KafkaMicroConsumer.getConsumerDetails() map { c =>
-      val topicOffset = getLastOffset(c.topic, c.partition)
+      val topicOffset = Try(getLastOffset(c.topic, c.partition)) getOrElse None
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
       ConsumerDetailJs(c.consumerId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
     }

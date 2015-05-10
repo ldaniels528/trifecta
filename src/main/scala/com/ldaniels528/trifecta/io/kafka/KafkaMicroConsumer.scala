@@ -371,6 +371,7 @@ object KafkaMicroConsumer {
     zk.getChildren(basePath) flatMap { consumerId =>
       // get the list of topics
       val offsetPath = s"$basePath/$consumerId/offsets"
+      try {
       val topics = zk.getChildren(offsetPath).distinct filter (contentFilter(topicPrefix, _))
 
       // get the list of partitions
@@ -383,6 +384,9 @@ object KafkaMicroConsumer {
             Try(ConsumerDetails(consumerId, topic, partitionId.toInt, offset.toLong, lastModified)).toOption
           }
         }
+      } 
+      } catch {
+        case e : Exception => None
       }
     }
   }
