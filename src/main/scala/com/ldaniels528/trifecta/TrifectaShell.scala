@@ -152,7 +152,7 @@ class TrifectaShell(rt: TxRuntimeContext) {
  */
 object TrifectaShell {
   private val logger = LoggerFactory.getLogger(getClass)
-  val VERSION = "0.18.19"
+  val VERSION = "0.18.20"
 
   /**
    * Application entry point
@@ -167,6 +167,7 @@ object TrifectaShell {
     }
 
     // load the configuration
+    logger.info(s"Loading configuration file '${TxConfig.configFile}'...")
     val config = Try(TxConfig.load(TxConfig.configFile)) match {
       case Success(cfg) => cfg
       case Failure(e) =>

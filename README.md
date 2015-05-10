@@ -75,8 +75,9 @@ make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like 
 ### Build Requirements
 
 * [Java SDK 1.7] (http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
-* [Scala 2.11.4] (http://scala-lang.org/download/)
+* [Scala 2.11.6] (http://scala-lang.org/download/)
 * [SBT 0.13+] (http://www.scala-sbt.org/download.html)
+* [Tabular 0.1.1] (https://github.com/ldaniels528/tabular)
 
 <a name="configuring-your-ide"></a>
 ### Configuring the project for your IDE
@@ -151,6 +152,10 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.18.20
+* Trifecta
+    * Added support for Kafka v0.8.2.0 consumers
+
 #### v0.18.19
 * Trifecta Core
     * Fixed potential bug related to retrieving the list of available brokers
@@ -160,26 +165,15 @@ Trifecta binaries are available for immediate download in the "<a href='https://
     * Reworked the Brokers view (Inspect module)
     * Fixed sort ordering of partitions in the Replicas view (Inspect module)
 
-#### v0.18.17
-* Trifecta UI
-    * Swapped the Inspect and Observe modules
-    * Added a new Brokers view to the Observe module
-
-#### v0.18.16
-* Trifecta Core
-    * Upgraded to Kafka 0.8.2.0
-    * Added configuration key to support multi-tenant Zookeeper setups
-* Trifecta UI
-    * Minor UI tweaks and fixes
-    
-#### v0.18.1 to v0.18.15
+#### v0.18.1 to v0.18.17
 * Trifecta Core
     * Fixed issue with the application failing if the configuration file is not found
     * Upgraded to Kafka 0.8.2-beta and Storm 0.9.3
     * Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
         * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
+    * Upgraded to Kafka 0.8.2.0
+    * Added configuration key to support multi-tenant Zookeeper setups    
 * Trifecta UI
-    * Added real-time message streaming capability to the _Inspect_ tab
     * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
     * _Decoder_ tab user interface improvements
     * _Observe_ tab user interface improvements
@@ -189,6 +183,9 @@ Trifecta binaries are available for immediate download in the "<a href='https://
     * _Query_ tab user interface improvements
         * Multiple queries can be executed concurrently
     * The embedded web server now supports asynchronous request/response flows
+    * Added real-time message streaming capability to the _Inspect_ tab
+    * Swapped the Inspect and Observe modules
+    * Added a new Brokers view to the Observe module
 
 <a name="trifecta-ui"></a>
 ### Trifecta UI
