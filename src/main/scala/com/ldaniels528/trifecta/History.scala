@@ -2,7 +2,7 @@ package com.ldaniels528.trifecta
 
 import java.io.File
 
-import com.ldaniels528.trifecta.util.ResourceHelper._
+import com.ldaniels528.commons.helpers.ResourceHelper._
 
 import scala.util.Try
 

@@ -3,7 +3,7 @@ package com.ldaniels528.trifecta.io.cassandra
 import java.lang.reflect.{Constructor, Method}
 
 import com.datastax.driver.core._
-import com.ldaniels528.trifecta.util.ScalaBeanUtil
+import com.ldaniels528.commons.helpers.ScalaBeanUtil
 
 import scala.collection.JavaConversions._
 import scala.collection.concurrent.TrieMap

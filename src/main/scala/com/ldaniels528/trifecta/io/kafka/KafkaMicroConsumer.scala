@@ -8,8 +8,8 @@ import com.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer._
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.messages.BinaryMessage
 import com.ldaniels528.trifecta.messages.logic.Condition
-import com.ldaniels528.trifecta.util.OptionHelper._
-import com.ldaniels528.trifecta.util.ResourceHelper._
+import com.ldaniels528.commons.helpers.OptionHelper._
+import com.ldaniels528.commons.helpers.ResourceHelper._
 import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
@@ -372,21 +372,23 @@ object KafkaMicroConsumer {
       // get the list of topics
       val offsetPath = s"$basePath/$consumerId/offsets"
       try {
-      val topics = zk.getChildren(offsetPath).distinct filter (contentFilter(topicPrefix, _))
+        val topics = zk.getChildren(offsetPath).distinct filter (contentFilter(topicPrefix, _))
 
-      // get the list of partitions
-      topics flatMap { topic =>
-        val topicPath = s"$offsetPath/$topic"
-        zk.getChildren(topicPath) flatMap { partitionId =>
-          val partitionPath = s"$topicPath/$partitionId"
-          zk.readString(partitionPath) flatMap { offset =>
-            val lastModified = zk.getModificationTime(partitionPath)
-            Try(ConsumerDetails(consumerId, topic, partitionId.toInt, offset.toLong, lastModified)).toOption
+        // get the list of partitions
+        topics flatMap { topic =>
+          val topicPath = s"$offsetPath/$topic"
+          zk.getChildren(topicPath) flatMap { partitionId =>
+            val partitionPath = s"$topicPath/$partitionId"
+            zk.readString(partitionPath) flatMap { offset =>
+              val lastModified = zk.getModificationTime(partitionPath)
+              Try(ConsumerDetails(consumerId, topic, partitionId.toInt, offset.toLong, lastModified)).toOption
+            }
           }
         }
-      } 
       } catch {
-        case e : Exception => None
+        case e: Exception =>
+          logger.warn("Failed to retrieve consumers", e)
+          None
       }
     }
   }
@@ -586,7 +588,7 @@ object KafkaMicroConsumer {
    * @return the prefixed path
    */
   private def getPrefixedPath(path: String) = s"$rootKafkaPath$path".replaceAllLiterally("//", "/")
-  
+
   /**
    * Retrieves the partition meta data for the given broker
    */

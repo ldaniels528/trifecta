@@ -4,8 +4,8 @@ import akka.actor.{Actor, ActorSystem, Props}
 import com.ldaniels528.tabular.Tabular
 import com.ldaniels528.trifecta.io.kafka.KafkaMacroConsumerTest._
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
-import com.ldaniels528.trifecta.util.ResourceHelper._
-import com.ldaniels528.trifecta.util.TimeHelper.Implicits._
+import com.ldaniels528.commons.helpers.ResourceHelper._
+import com.ldaniels528.commons.helpers.TimeHelper.Implicits._
 import kafka.common.TopicAndPartition
 import org.junit.{After, Before, Test}
 import org.slf4j.LoggerFactory

@@ -9,7 +9,7 @@ import com.ldaniels528.trifecta.messages.MessageCursor
 import com.ldaniels528.trifecta.modules.ElasticSearchModule.{ElasticCursor, _}
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.ldaniels528.trifecta.util.ParsingHelper._
-import com.ldaniels528.trifecta.util.StringHelper._
+import com.ldaniels528.commons.helpers.StringHelper._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.ning.http.client.Response
 import net.liftweb.json.JsonAST.JValue

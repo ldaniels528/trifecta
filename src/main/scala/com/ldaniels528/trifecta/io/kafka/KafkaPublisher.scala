@@ -2,24 +2,21 @@ package com.ldaniels528.trifecta.io.kafka
 
 import java.util.Properties
 
-import com.ldaniels528.trifecta.util.PropertiesHelper._
-import kafka.javaapi.producer.Producer
-import kafka.producer.{KeyedMessage, ProducerConfig}
-
-import scala.util.Try
+import com.ldaniels528.commons.helpers.PropertiesHelper._
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 
 /**
  * Kafka Publisher
  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
  */
-class KafkaPublisher(config: ProducerConfig) {
-  private var producer: Option[Producer[Array[Byte], Array[Byte]]] = None
+class KafkaPublisher(config: Properties) {
+  private var producer: Option[KafkaProducer[Array[Byte], Array[Byte]]] = None
 
   /**
    * Opens the connection to the message publisher
    */
   def open() {
-    producer = Option(new Producer(config))
+    producer = Option(new KafkaProducer(config))
   }
 
   /**
@@ -36,15 +33,25 @@ class KafkaPublisher(config: ProducerConfig) {
    * @param key the given message key
    * @param message the given message payload
    */
-  def publish(topic: String, key: Array[Byte], message: Array[Byte]) = Try {
-    producer.foreach(_.send(new KeyedMessage(topic, key, message)))
+  def publish(topic: String, key: Array[Byte], message: Array[Byte]) = {
+    producer match {
+      case Some(kp) => kp.send(new ProducerRecord(topic, key, message))
+      case None =>
+        throw new IllegalStateException("No connection established. Use open() to connect.")
+    }
   }
 
   /**
    * Transports a message to the messaging server
-   * @param km the given keyed message value
+   * @param rec the given [[ProducerRecord producer record]]
    */
-  def publish(km: KeyedMessage[Array[Byte], Array[Byte]]): Unit = Try(producer.foreach(_.send(km)))
+  def publish(rec: ProducerRecord[Array[Byte], Array[Byte]]) = {
+    producer match {
+      case Some(kp) => kp.send(rec)
+      case None =>
+        throw new IllegalStateException("No connection established. Use open() to connect.")
+    }
+  }
 
 }
 
@@ -55,18 +62,19 @@ class KafkaPublisher(config: ProducerConfig) {
 object KafkaPublisher {
 
   def apply(brokers: Seq[Broker]): KafkaPublisher = {
-    val m = Map("metadata.broker.list" -> mkBrokerList(brokers),
-      "key.serializer.class" -> "kafka.serializer.DefaultEncoder",
-      "serializer.class" -> "kafka.serializer.DefaultEncoder",
-      "partitioner.class" -> "kafka.producer.DefaultPartitioner",
-      "request.required.acks" -> "1",
-      "compression.codec" -> "none")
-    new KafkaPublisher(new ProducerConfig(m.toProps))
+    val m = Map[String, Object](
+      ProducerConfig.BOOTSTRAP_SERVERS_CONFIG -> mkBrokerList(brokers),
+      ProducerConfig.RETRIES_CONFIG -> "3",
+      ProducerConfig.ACKS_CONFIG -> "all",
+      ProducerConfig.COMPRESSION_TYPE_CONFIG -> "none",
+      ProducerConfig.BATCH_SIZE_CONFIG -> (200: Integer),
+      ProducerConfig.BLOCK_ON_BUFFER_FULL_CONFIG -> (true: java.lang.Boolean),
+      ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG -> "org.apache.kafka.common.serialization.StringSerializer",
+      ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG -> "org.apache.kafka.common.serialization.ByteArraySerializer")
+    new KafkaPublisher(m.toProps)
   }
 
-  def apply(brokers: Seq[Broker], p: Properties): KafkaPublisher = {
-    new KafkaPublisher(new ProducerConfig(p))
-  }
+  def apply(brokers: Seq[Broker], p: Properties): KafkaPublisher = new KafkaPublisher(p)
 
   private def mkBrokerList(brokers: Seq[Broker]): String = {
     brokers map (b => s"${b.host}:${b.port}") mkString ","

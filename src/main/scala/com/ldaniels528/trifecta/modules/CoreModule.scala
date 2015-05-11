@@ -12,9 +12,9 @@ import com.ldaniels528.trifecta.io._
 import com.ldaniels528.trifecta.io.avro.{AvroFileInputSource, AvroFileOutputSource}
 import com.ldaniels528.trifecta.io.json.{JSONFileInputSource, JSONFileOutputSource}
 import com.ldaniels528.trifecta.util.ParsingHelper._
-import com.ldaniels528.trifecta.util.PathHelper._
-import com.ldaniels528.trifecta.util.ResourceHelper._
-import com.ldaniels528.trifecta.util.StringHelper._
+import com.ldaniels528.commons.helpers.PathHelper._
+import com.ldaniels528.commons.helpers.ResourceHelper._
+import com.ldaniels528.commons.helpers.StringHelper._
 import org.apache.commons.io.IOUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global

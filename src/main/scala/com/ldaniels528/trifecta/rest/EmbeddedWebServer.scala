@@ -7,7 +7,7 @@ import com.ldaniels528.trifecta.rest.EmbeddedWebServer._
 import com.ldaniels528.trifecta.rest.KafkaRestFacade.{SamplingCursor, TopicAndPartitions}
 import com.ldaniels528.trifecta.rest.PushEventActor._
 import com.ldaniels528.trifecta.rest.TxWebConfig._
-import com.ldaniels528.trifecta.util.ResourceHelper._
+import com.ldaniels528.commons.helpers.ResourceHelper._
 import com.typesafe.config.ConfigFactory
 import org.mashupbots.socko.infrastructure.Logger
 import org.mashupbots.socko.routes._

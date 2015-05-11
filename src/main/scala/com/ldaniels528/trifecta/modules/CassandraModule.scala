@@ -7,8 +7,8 @@ import com.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.ldaniels528.trifecta.io.InputSource
 import com.ldaniels528.trifecta.io.cassandra.{CassandraOutputSource, Casserole, CasseroleSession}
 import com.ldaniels528.trifecta.modules.Module.NameValuePair
-import com.ldaniels528.trifecta.util.OptionHelper._
-import com.ldaniels528.trifecta.util.StringHelper._
+import com.ldaniels528.commons.helpers.OptionHelper._
+import com.ldaniels528.commons.helpers.StringHelper._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
 import scala.collection.JavaConversions._

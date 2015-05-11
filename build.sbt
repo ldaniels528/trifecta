@@ -34,6 +34,7 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
 
 // ldaniels528 Dependencies
 libraryDependencies ++= Seq(
+  "com.ldaniels528" %% "commons-helpers" % "0.1.0",
   "com.ldaniels528" %% "tabular" % "0.1.1"
 )
 
@@ -49,7 +50,7 @@ libraryDependencies ++= Seq(
   "com.101tec" % "zkclient" % "0.4",
   "org.apache.curator" % "curator-framework" % "2.7.1",
   "org.apache.curator" % "curator-test" % "2.7.1",
-  "org.apache.kafka" %% "kafka" % "0.8.2.0"
+  "org.apache.kafka" %% "kafka" % "0.8.2.1"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j"),
   "org.apache.zookeeper" % "zookeeper" % "3.4.6",

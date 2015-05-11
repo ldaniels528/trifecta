@@ -5,10 +5,10 @@ import java.util.Properties
 
 import com.ldaniels528.trifecta.TxConfig._
 import com.ldaniels528.trifecta.io.avro.AvroDecoder
-import com.ldaniels528.trifecta.util.OptionHelper._
-import com.ldaniels528.trifecta.util.PropertiesHelper._
-import com.ldaniels528.trifecta.util.ResourceHelper._
-import com.ldaniels528.trifecta.util.StringHelper._
+import com.ldaniels528.commons.helpers.OptionHelper._
+import com.ldaniels528.commons.helpers.PropertiesHelper._
+import com.ldaniels528.commons.helpers.ResourceHelper._
+import com.ldaniels528.commons.helpers.StringHelper._
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
