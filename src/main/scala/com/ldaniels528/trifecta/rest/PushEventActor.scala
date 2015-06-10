@@ -15,12 +15,22 @@ class PushEventActor(embeddedWebServer: EmbeddedWebServer) extends Actor with Ac
   import context.dispatcher
 
   override def receive = {
-    case PushConsumers => pushConsumerUpdateEvents()
-    case PushMessage(webSocketId, topicAndPartitions) => pushMessageSamplingEvent(webSocketId, topicAndPartitions)
-    case PushTopics => pushTopicUpdateEvents()
+    case PushConsumers =>
+      pushConsumerUpdateEvents()
+      context.stop(self)
+
+    case PushMessage(webSocketId, topicAndPartitions) =>
+      pushMessageSamplingEvent(webSocketId, topicAndPartitions)
+      context.stop(self)
+
+    case PushTopics =>
+      pushTopicUpdateEvents()
+      context.stop(self)
+
     case message =>
       log.warning(s"received unknown message of type: $message")
       unhandled(message)
+      context.stop(self)
   }
 
   /**

@@ -20,6 +20,7 @@ class KafkaTopicOutputSource(brokers: Seq[Broker], outputTopic: String) extends 
    */
   override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) {
     publisher.publish(outputTopic, data.key, data.message)
+    ()
   }
 
   override def close() = publisher.close()

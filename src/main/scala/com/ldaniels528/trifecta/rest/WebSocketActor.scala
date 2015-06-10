@@ -14,9 +14,12 @@ class WebSocketActor(embeddedWebServer: EmbeddedWebServer) extends Actor with Ac
   override def receive = {
     case event: WebSocketFrameEvent =>
       writeWebSocketResponse(event)
+      context.stop(self)
+
     case message =>
       log.warning(s"received unknown message of type: $message")
       unhandled(message)
+      context.stop(self)
   }
 
   /**
