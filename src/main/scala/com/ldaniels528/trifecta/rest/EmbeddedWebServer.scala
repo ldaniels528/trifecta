@@ -161,6 +161,7 @@ object EmbeddedWebServer {
       }
       akka {
         event-handlers = ["akka.event.slf4j.Slf4jEventHandler"]
+        loggers = ["akka.event.slf4j.Slf4jLogger"]
         loglevel=DEBUG
         actor {
           deployment {
