@@ -452,21 +452,28 @@ object KafkaMicroConsumer {
     // capture the meta data for all topics
     brokers.headOption map { broker =>
       getTopicMetadata(broker, topics) flatMap { tmd =>
+        logger.debug(s"Trying to fetch ${tmd.topic}")
         // check for errors
-        if (tmd.errorCode != 0) throw new VxKafkaCodeException(tmd.errorCode)
-
-        // translate the partition meta data into topic information instances
-        tmd.partitionsMetadata map { pmd =>
-          // check for errors
-          if (pmd.errorCode != 0) throw new VxKafkaCodeException(pmd.errorCode)
-
-          TopicDetails(
-            tmd.topic,
-            pmd.partitionId,
-            pmd.leader map (b => Broker(b.host, b.port, b.id)),
-            pmd.replicas map (b => Broker(b.host, b.port, b.id)),
-            pmd.isr map (b => Broker(b.host, b.port, b.id)),
-            tmd.sizeInBytes)
+        if (tmd.errorCode != 0) {
+          logger.warn(s"Could not read topic ${tmd.topic}, error: ${tmd.errorCode}")
+          None
+        } else {
+          // translate the partition meta data into topic information instances
+          tmd.partitionsMetadata flatMap { pmd =>
+            // check for errors
+            if (pmd.errorCode != 0) {
+              logger.warn(s"Could not read partition ${tmd.topic}/${pmd.partitionId}, error: ${pmd.errorCode}")
+              None
+            } else Some(
+              TopicDetails(
+                tmd.topic,
+                pmd.partitionId,
+                pmd.leader map (b => Broker(b.host, b.port, b.id)),
+                pmd.replicas map (b => Broker(b.host, b.port, b.id)),
+                pmd.isr map (b => Broker(b.host, b.port, b.id)),
+                tmd.sizeInBytes)
+            )
+          }
         }
       }
     } getOrElse Nil
