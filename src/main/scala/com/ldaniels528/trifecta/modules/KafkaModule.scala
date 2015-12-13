@@ -459,7 +459,7 @@ class KafkaModule(config: TxConfig) extends Module {
     val (topic, partition0) = extractTopicAndPartition(params.args)
 
     // check for a partition override flag
-    val partition: Int = params("-p") map parsePartition getOrElse partition0
+    val partition = params("-p") map parsePartition getOrElse partition0
 
     // return the first message for the topic partition
     facade.getFirstOffset(topic, partition) map (getMessage(topic, partition, _, params))

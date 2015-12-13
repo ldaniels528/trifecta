@@ -50,10 +50,9 @@ libraryDependencies ++= Seq(
   "com.101tec" % "zkclient" % "0.4",
   "org.apache.curator" % "curator-framework" % "2.7.1",
   "org.apache.curator" % "curator-test" % "2.7.1",
-  "org.apache.kafka" %% "kafka" % "0.8.2.1"
-    exclude("org.apache.zookeeper", "zookeeper")
+  "org.apache.kafka" %% "kafka" % "0.8.2.2"
     exclude("org.slf4j", "log4j-over-slf4j"),
-  "org.apache.zookeeper" % "zookeeper" % "3.4.6",
+  "org.apache.kafka" % "kafka-clients" % "0.8.2.2",
   "org.apache.storm" % "storm-core" % "0.9.3"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j")
