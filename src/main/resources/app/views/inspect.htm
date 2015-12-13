@@ -134,7 +134,7 @@
                                             <td class="center">{{ detail.partition }}</td>
                                             <td class="left">
                                                 <a ng-click="switchToMessage(detail.topic, detail.partition, detail.topicOffset)">
-                                                    {{ detail.topicOffset }}
+                                                    {{ detail.topicOffset | number }}
                                                 </a>
                                                 <span class="delta_topic" ng-show="detail.deltaT">
                                                     <img src="/app/images/tabs/inspect/arrow_topic.gif"> {{ detail.deltaT | number }}
@@ -142,7 +142,7 @@
                                             </td>
                                             <td class="left">
                                                 <a ng-click="switchToMessage(detail.topic, detail.partition, detail.offset)">
-                                                    {{ detail.offset }}
+                                                    {{ detail.offset | number }}
                                                 </a>
                                                 <span class="delta_consumer" ng-show="detail.deltaC">
                                                     <img src="/app/images/tabs/inspect/arrow_consumer.gif"> {{ detail.deltaC | number }}
@@ -243,13 +243,13 @@
                                         <td class="center">{{ p.partition }}</td>
                                         <td>
                                             <span ng-show="p.startOffset < p.endOffset">
-                                                <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">{{ p.startOffset }}</a>
+                                                <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">{{ p.startOffset | number }}</a>
                                             </span>
                                             <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                                         </td>
                                         <td>
                                             <span ng-show="p.startOffset < p.endOffset">
-                                                <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">{{ p.endOffset }}</a>
+                                                <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">{{ p.endOffset | number }}</a>
                                             </span>
                                             <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                                         </td>
