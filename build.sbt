@@ -57,6 +57,9 @@ libraryDependencies ++= Seq(
   "org.apache.storm" % "storm-core" % "0.9.3"
     exclude("org.apache.zookeeper", "zookeeper")
     exclude("org.slf4j", "log4j-over-slf4j")
+    exclude("ch.qos.logback", "logback-classic")
+    exclude("ch.qos.logback", "logback-core")
+    exclude("commons-logging", "commons-logging")
 )
 
 // SQL/NOSQL Dependencies
@@ -73,11 +76,14 @@ libraryDependencies ++= Seq(
 // General Dependencies
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.9",
+  "com.typesafe.akka" %% "akka-slf4j" % "2.3.9",
   "jline" % "jline" % "2.12",
   "net.liftweb" %% "lift-json" % "3.0-M3",
-  "org.mashupbots.socko" %% "socko-webserver" % "0.6.0",
+  "org.mashupbots.socko" %% "socko-webserver" % "0.6.0"
+    exclude("ch.qos.logback", "logback-classic"),
   "org.fusesource.jansi" % "jansi" % "1.11",
   "org.slf4j" % "slf4j-api" % "1.7.10",
+  "org.slf4j" % "slf4j-log4j12" % "1.7.10",
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.2"
 )
 

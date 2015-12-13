@@ -14,7 +14,7 @@
 
             var socket;
             if (window.WebSocket) {
-                var endpoint = "ws://" + $location.host() + ":" + $location.port() + "/websocket/";
+                var endpoint = ($location.protocol() == "https" ? "wss" : "ws") + "://" + $location.host() + ":" + $location.port() + "/websocket/";
                 $log.info("Connecting to websocket endpoint '" + endpoint + "'...");
                 socket = new WebSocket(endpoint);
                 // $log.info("socket = " + angular.toJson(socket));
