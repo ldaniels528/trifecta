@@ -154,7 +154,7 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 
 #### v0.18.20
 * Trifecta
-    * Added support for Kafka v0.8.2.0 consumers
+    * Added support for Kafka ~~v0.8.2.0~~ v9.0.0 consumers
 
 #### v0.18.19
 * Trifecta Core
