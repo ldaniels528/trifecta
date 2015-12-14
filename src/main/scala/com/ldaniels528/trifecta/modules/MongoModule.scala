@@ -11,8 +11,10 @@ import com.ldaniels528.commons.helpers.StringHelper._
 import com.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.mongodb.WriteResult
 import net.liftweb.json.JsonAST.JValue
+import net.liftweb.json.{compact, render}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Try
 
 /**
  * MongoDB Module
@@ -28,7 +30,8 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
    */
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
     Command(this, "mconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to a MongoDB cluster"),
-    Command(this, "mfindone", getDocument, UnixLikeParams(Seq("collection" -> true, "query" -> true, "fields" -> false), Seq("-o" -> "outputSource")), help = "Retrieves a document from MongoDB"),
+    Command(this, "mfindone", getDocument, UnixLikeParams(Seq("collection" -> true, "query" -> false, "fields" -> false), Seq("-o" -> "outputSource")), help = "Retrieves a document from MongoDB"),
+    Command(this, "mfind", getDocuments, UnixLikeParams(Seq("collection" -> true, "query" -> false, "fields" -> false), Seq("-o" -> "outputSource")), help = "Retrieves a document from MongoDB"),
     Command(this, "mget", getDocument, UnixLikeParams(Seq("collection" -> true, "query" -> true, "fields" -> false), Seq("-o" -> "outputSource")), help = "Retrieves a document from MongoDB"),
     Command(this, "mput", insertDocument, UnixLikeParams(Seq("collection" -> true, "json" -> true)), help = "Inserts a document into MongoDB"),
     Command(this, "use", selectDatabase, UnixLikeParams(Seq("database" -> true)), help = "Sets the current MongoDB database")
@@ -58,19 +61,21 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
    * Returns the name of the prefix (e.g. Seq("file"))
    * @return the name of the prefix
    */
-  override def supportedPrefixes: Seq[String] = Seq("mongo")
+  override def supportedPrefixes = Seq("mongo")
 
   /**
    * Returns the label of the module (e.g. "kafka")
    * @return the label of the module
    */
-  override def moduleLabel: String = "mongo"
+  override def moduleLabel = "mongo"
 
   /**
    * Returns the name of the module (e.g. "kafka")
    * @return the name of the module
    */
-  override def moduleName: String = "mongodb"
+  override def moduleName = "mongodb"
+
+  override def prompt = database_?.map(_.databaseName).getOrElse("[default]")
 
   /**
    * Called when the application is shutting down
@@ -91,7 +96,7 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
     }
 
     // connect to the remote peer
-    cluster_?.foreach(_.close())
+    Try(cluster_?.foreach(_.close()))
     cluster_? = Option(TxMongoCluster(hosts))
   }
 
@@ -104,6 +109,7 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
   def getDocument(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[JValue] = {
     // retrieve the document from the collection
     val doc = params.args match {
+      case List(tableName) => database.getCollection(tableName).findOne()
       case List(tableName, query) => database.getCollection(tableName).findOne(toJson(query))
       case List(tableName, query, fields) => database.getCollection(tableName).findOne(toJson(query), toJson(fields))
       case _ => dieSyntax(params)
@@ -118,7 +124,37 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
       outputSource <- getOutputSource(params)
     } {
       val key = hexToBytes((mydoc \ "_id" \ "$oid").values.toString)
-      val value = mydoc.toString.getBytes(config.encoding)
+      val value = compact(render(mydoc)).getBytes(config.encoding)
+      outputSource.write(KeyAndMessage(key, value), decoder)
+    }
+
+    doc
+  }
+
+  /**
+    * Retrieves a list of MongoDB documents
+    * @example mfind Stocks { "symbol" : "AAPL" } -o es:/quotes/quote/AAPL
+    * @example mfind Stocks { "symbol" : "AAPL" } { "symbol":true, "exchange":true, "lastTrade":true } -o es:/quotes/quote/AAPL
+    */
+  def getDocuments(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
+    // retrieve the document from the collection
+    val doc = params.args match {
+      case List(tableName) => database.getCollection(tableName).find()
+      case List(tableName, query) => database.getCollection(tableName).find(toJson(query))
+      case List(tableName, query, fields) => database.getCollection(tableName).find(toJson(query), toJson(fields))
+      case _ => dieSyntax(params)
+    }
+
+    // determine which decoder to use; either the user specified decoder, cursor's decoder or none
+    val decoder: Option[MessageDecoder[_]] = params("-a") map AvroCodec.resolve
+
+    // write the document to an output source?
+    for {
+      mydoc <- doc
+      outputSource <- getOutputSource(params)
+    } {
+      val key = hexToBytes((mydoc \ "_id" \ "$oid").values.toString)
+      val value = compact(render(mydoc)).getBytes(config.encoding)
       outputSource.write(KeyAndMessage(key, value), decoder)
     }
 

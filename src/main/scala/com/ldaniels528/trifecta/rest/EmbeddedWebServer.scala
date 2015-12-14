@@ -1,7 +1,7 @@
 package com.ldaniels528.trifecta.rest
 
 import akka.actor.{ActorSystem, Props}
-import akka.routing.RoundRobinRouter
+import akka.routing.RoundRobinPool
 import com.ldaniels528.trifecta.TxConfig
 import com.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.ldaniels528.trifecta.rest.EmbeddedWebServer._
@@ -19,9 +19,9 @@ import scala.concurrent.duration._
 import scala.util.Try
 
 /**
- * Trifecta Embedded Web Server
- * @author Lawrence Daniels <lawrence.daniels@gmail.com>
- */
+  * Trifecta Embedded Web Server
+  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+  */
 class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val actorSystem = ActorSystem("EmbeddedWebServer", ConfigFactory.parseString(getActorConfig))
@@ -30,7 +30,7 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   val facade = new KafkaRestFacade(config, zk)
 
   // create the web content actors
-  private val wcActor = actorSystem.actorOf(Props(new WebContentActor(facade)).withRouter(RoundRobinRouter(nrOfInstances = config.webActorConcurrency)))
+  private val wcActor = actorSystem.actorOf(Props(new WebContentActor(facade)).withRouter(RoundRobinPool(nrOfInstances = config.webActorConcurrency)))
 
   implicit val ec = actorSystem.dispatcher
 
@@ -54,8 +54,8 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   val webServer = new WebServer(WebServerConfig(hostname = config.webHost, port = config.webPort), routes, actorSystem)
 
   /**
-   * Setup the shutdown hook to shutdown the server
-   */
+    * Setup the shutdown hook to shutdown the server
+    */
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run() = {
       EmbeddedWebServer.this.stopServer()
@@ -63,10 +63,10 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   })
 
   /**
-   * Retrieves a session by the client's web socket ID
-   * @param webSocketId the client's web socket ID
-   * @return an option of a [[WebSocketSession]]
-   */
+    * Retrieves a session by the client's web socket ID
+    * @param webSocketId the client's web socket ID
+    * @return an option of a [[WebSocketSession]]
+    */
   def getSession(webSocketId: String) = sessions.get(webSocketId)
 
   def onWebSocketHandshakeComplete(webSocketId: String) {
@@ -83,8 +83,8 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   }
 
   /**
-   * Starts the embedded app server
-   */
+    * Starts the embedded app server
+    */
   def startServer() {
     implicit val ec = actorSystem.dispatcher
     webServer.start()
@@ -132,8 +132,8 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
   }
 
   /**
-   * Stops the embedded app server
-   */
+    * Stops the embedded app server
+    */
   def stopServer() {
     Try(webServer.stop())
     ()
@@ -142,12 +142,13 @@ class EmbeddedWebServer(config: TxConfig, zk: ZKProxy) extends Logger {
 }
 
 /**
- * Embedded Web Server Singleton
- * @author Lawrence Daniels <lawrence.daniels@gmail.com>
- */
+  * Embedded Web Server Singleton
+  * @author Lawrence Daniels <lawrence.daniels@gmail.com>
+  */
 object EmbeddedWebServer {
 
-  private def getActorConfig = """
+  private def getActorConfig =
+    """
       my-pinned-dispatcher {
         type=PinnedDispatcher
         executor=thread-pool-executor
