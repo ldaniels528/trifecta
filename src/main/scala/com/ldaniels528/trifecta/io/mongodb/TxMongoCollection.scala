@@ -13,6 +13,12 @@ case class TxMongoCollection(mc: MongoCollection) {
   var writeConcern: WriteConcern = WriteConcern.Safe // Safe | JournalSafe
 
   /**
+    * Retrieves documents matching the given criteria
+    * @return the resultant documents
+    */
+  def find(): Iterator[JValue] = mc.find().map(toJson)
+
+  /**
    * Retrieves documents matching the given criteria
    * @param criteria the given criteria
    * @return the resultant documents
@@ -22,13 +28,19 @@ case class TxMongoCollection(mc: MongoCollection) {
   }
 
   /**
-   * Retrieves a document matching the given criteria
-   * @param criteria the given criteria
-   * @return the resultant document
-   */
-  def findOne(criteria: JValue, fields: JValue): Option[JValue] = {
-    mc.findOne(o = toDocument(criteria), fields = toDocument(fields)) map toJson
+    * Retrieves documents matching the given criteria
+    * @param criteria the given criteria
+    * @return the resultant documents
+    */
+  def find(criteria: JValue, fields: JValue): Iterator[JValue] = {
+    mc.find(ref = toDocument(criteria), keys = toDocument(fields)).map(toJson)
   }
+
+  /**
+    * Retrieves a document matching the given criteria
+    * @return the resultant document
+    */
+  def findOne(): Option[JValue] = mc.findOne() map toJson
 
   /**
    * Retrieves a document matching the given criteria
@@ -37,6 +49,15 @@ case class TxMongoCollection(mc: MongoCollection) {
    */
   def findOne(criteria: JValue): Option[JValue] = {
     mc.findOne(o = toDocument(criteria)) map toJson
+  }
+
+  /**
+    * Retrieves a document matching the given criteria
+    * @param criteria the given criteria
+    * @return the resultant document
+    */
+  def findOne(criteria: JValue, fields: JValue): Option[JValue] = {
+    mc.findOne(o = toDocument(criteria), fields = toDocument(fields)) map toJson
   }
 
   /**

@@ -135,7 +135,7 @@ class KafkaModule(config: TxConfig) extends Module {
   override def moduleLabel = "kafka"
 
   override def prompt: String = {
-    (if (!navigableCursor.isDefined || (watching && watchCursor.isDefined)) promptForWatchCursor
+    (if (navigableCursor.isEmpty || (watching && watchCursor.isDefined)) promptForWatchCursor
     else promptForNavigableCursor) getOrElse "/"
   }
 
