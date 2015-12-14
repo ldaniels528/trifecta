@@ -1,0 +1,1804 @@
+[info ] Loading project definition from /Users/ldaniels/git/trifecta/project
+[info ] Set current project to trifecta (in build file:/Users/ldaniels/git/trifecta/)
+[info ] Set current project to trifecta_ui (in build file:/Users/ldaniels/git/trifecta/)
+[info ] com.github.ldaniels528:trifecta_js_sjs0.6_2.11:0.19.0 [S]
+[info ]   +-be.doeraene:scalajs-jquery_sjs0.6_2.11:0.8.1 [S]
+[info ]   | +-org.scala-js:scalajs-dom_sjs0.6_2.11:0.8.2 [S]
+[info ]   | | +-org.scala-js:scalajs-library_2.11:0.6.2 (evicted by: 0.6.5)
+[info ]   | | +-org.scala-js:scalajs-library_2.11:0.6.5 [S]
+[info ]   | | 
+[info ]   | +-org.scala-js:scalajs-library_2.11:0.6.2 (evicted by: 0.6.5)
+[info ]   | +-org.scala-js:scalajs-library_2.11:0.6.5 [S]
+[info ]   | +-org.webjars:jquery:2.1.3
+[info ]   | 
+[info ]   +-com.github.ldaniels528:scalascript_sjs0.6_2.11:0.2.15 [S]
+[info ]   | +-be.doeraene:scalajs-jquery_sjs0.6_2.11:0.8.1 [S]
+[info ]   | | +-org.scala-js:scalajs-dom_sjs0.6_2.11:0.8.2 [S]
+[info ]   | | | +-org.scala-js:scalajs-library_2.11:0.6.2 (evicted by: 0.6.5)
+[info ]   | | | +-org.scala-js:scalajs-library_2.11:0.6.5 [S]
+[info ]   | | | 
+[info ]   | | +-org.scala-js:scalajs-library_2.11:0.6.2 (evicted by: 0.6.5)
+[info ]   | | +-org.scala-js:scalajs-library_2.11:0.6.5 [S]
+[info ]   | | +-org.webjars:jquery:2.1.3
+[info ]   | | 
+[info ]   | +-org.scala-js:scalajs-dom_sjs0.6_2.11:0.8.1 (evicted by: 0.8.2)
+[info ]   | +-org.scala-js:scalajs-dom_sjs0.6_2.11:0.8.2 [S]
+[info ]   | | +-org.scala-js:scalajs-library_2.11:0.6.2 (evicted by: 0.6.5)
+[info ]   | | +-org.scala-js:scalajs-library_2.11:0.6.5 [S]
+[info ]   | | 
+[info ]   | +-org.scala-js:scalajs-library_2.11:0.6.2 (evicted by: 0.6.5)
+[info ]   | +-org.scala-js:scalajs-library_2.11:0.6.5 [S]
+[info ]   | +-org.scala-lang:scala-reflect:2.11.1 (evicted by: 2.11.7)
+[info ]   | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | 
+[info ]   +-com.vmunier:play-scalajs-sourcemaps_2.11:0.1.0 [S]
+[info ]   | +-com.typesafe.play:play_2.11:2.3.0 [S]
+[info ]   | | +-ch.qos.logback:logback-classic:1.1.1
+[info ]   | | | +-ch.qos.logback:logback-core:1.1.1
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.6
+[info ]   | | | 
+[info ]   | | +-ch.qos.logback:logback-core:1.1.1
+[info ]   | | +-com.fasterxml.jackson.core:jackson-annotations:2.3.0 (evicted by: 2.3.2)
+[info ]   | | +-com.fasterxml.jackson.core:jackson-annotations:2.3.2
+[info ]   | | +-com.fasterxml.jackson.core:jackson-core:2.3.2
+[info ]   | | +-com.fasterxml.jackson.core:jackson-databind:2.3.2
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.3.0 (evicted by: 2.3.2)
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.3.2
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.3.2
+[info ]   | | | 
+[info ]   | | +-com.typesafe.akka:akka-actor_2.11:2.3.3 [S]
+[info ]   | | | +-com.typesafe:config:1.2.0 (evicted by: 1.2.1)
+[info ]   | | | +-com.typesafe:config:1.2.1
+[info ]   | | | 
+[info ]   | | +-com.typesafe.akka:akka-slf4j_2.11:2.3.3 [S]
+[info ]   | | | +-com.typesafe.akka:akka-actor_2.11:2.3.3 [S]
+[info ]   | | | | +-com.typesafe:config:1.2.0 (evicted by: 1.2.1)
+[info ]   | | | | +-com.typesafe:config:1.2.1
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.6)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.6
+[info ]   | | | 
+[info ]   | | +-com.typesafe.netty:netty-http-pipelining:1.1.2
+[info ]   | | | +-io.netty:netty:3.6.3.Final (evicted by: 3.9.1.Final)
+[info ]   | | | +-io.netty:netty:3.9.1.Final
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:build-link:2.3.0
+[info ]   | | | +-com.typesafe.play:play-exceptions:2.3.0
+[info ]   | | | +-org.javassist:javassist:3.18.2-GA
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:play-exceptions:2.3.0
+[info ]   | | +-com.typesafe.play:play-iteratees_2.11:2.3.0 [S]
+[info ]   | | | +-com.typesafe:config:1.2.0 (evicted by: 1.2.1)
+[info ]   | | | +-com.typesafe:config:1.2.1
+[info ]   | | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:play-json_2.11:2.3.0 [S]
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.3.0 (evicted by: 2.3.2)
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.3.2
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.3.2
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-databind:2.3.2
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-annotations:2.3.0 (evicted by: 2.3.2)
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-annotations:2.3.2
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-core:2.3.2
+[info ]   | | | | 
+[info ]   | | | +-com.typesafe.play:play-datacommons_2.11:2.3.0 [S]
+[info ]   | | | +-com.typesafe.play:play-functional_2.11:2.3.0 [S]
+[info ]   | | | +-com.typesafe.play:play-iteratees_2.11:2.3.0 [S]
+[info ]   | | | | +-com.typesafe:config:1.2.0 (evicted by: 1.2.1)
+[info ]   | | | | +-com.typesafe:config:1.2.1
+[info ]   | | | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | | | 
+[info ]   | | | +-joda-time:joda-time:2.3
+[info ]   | | | +-org.joda:joda-convert:1.6
+[info ]   | | | +-org.scala-lang:scala-reflect:2.11.1 (evicted by: 2.11.7)
+[info ]   | | | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:twirl-api_2.11:1.0.0 [S]
+[info ]   | | | +-org.apache.commons:commons-lang3:3.1
+[info ]   | | | +-org.scala-lang.modules:scala-xml_2.11:1.0.1 [S]
+[info ]   | | | 
+[info ]   | | +-commons-codec:commons-codec:1.9
+[info ]   | | +-io.netty:netty:3.6.3.Final (evicted by: 3.9.1.Final)
+[info ]   | | +-io.netty:netty:3.9.1.Final
+[info ]   | | +-javax.transaction:jta:1.1
+[info ]   | | +-joda-time:joda-time:2.3
+[info ]   | | +-org.apache.commons:commons-lang3:3.1
+[info ]   | | +-org.joda:joda-convert:1.6
+[info ]   | | +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.1 [S]
+[info ]   | | +-org.scala-lang:scala-reflect:2.11.1 (evicted by: 2.11.7)
+[info ]   | | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | +-org.slf4j:jcl-over-slf4j:1.7.6
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.6
+[info ]   | | | 
+[info ]   | | +-org.slf4j:jul-to-slf4j:1.7.6
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.6
+[info ]   | | | 
+[info ]   | | +-org.slf4j:slf4j-api:1.7.6
+[info ]   | | +-xerces:xercesImpl:2.11.0
+[info ]   | |   +-xml-apis:xml-apis:1.4.01
+[info ]   | |   
+[info ]   | +-com.typesafe.play:twirl-api_2.11:1.0.0 [S]
+[info ]   |   +-org.apache.commons:commons-lang3:3.1
+[info ]   |   +-org.scala-lang.modules:scala-xml_2.11:1.0.1 [S]
+[info ]   |   
+[info ]   +-org.scala-js:scalajs-dom_sjs0.6_2.11:0.8.2 [S]
+[info ]   | +-org.scala-js:scalajs-library_2.11:0.6.2 (evicted by: 0.6.5)
+[info ]   | +-org.scala-js:scalajs-library_2.11:0.6.5 [S]
+[info ]   | 
+[info ]   +-org.scala-js:scalajs-library_2.11:0.6.2 (evicted by: 0.6.5)
+[info ]   +-org.scala-js:scalajs-library_2.11:0.6.5 [S]
+[info ]   
+[info ] com.github.ldaniels528:trifecta_ui_2.11:0.19.0 [S]
+[info ]   +-com.101tec:zkclient:0.7
+[info ]   | +-log4j:log4j:1.2.15 (evicted by: 1.2.17)
+[info ]   | +-log4j:log4j:1.2.17
+[info ]   | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | +-io.netty:netty:3.10.3.Final
+[info ]   | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | +-jline:jline:2.12
+[info ]   | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | +-log4j:log4j:1.2.17
+[info ]   | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | 
+[info ]   +-com.datastax.cassandra:cassandra-driver-core:2.1.9
+[info ]   | +-com.codahale.metrics:metrics-core:3.0.2
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | | 
+[info ]   | +-com.google.guava:guava:14.0.1 (evicted by: 18.0)
+[info ]   | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | +-com.google.guava:guava:18.0
+[info ]   | +-io.netty:netty-handler:4.0.27.Final
+[info ]   |   +-io.netty:netty-buffer:4.0.27.Final
+[info ]   |   | +-io.netty:netty-common:4.0.27.Final
+[info ]   |   | 
+[info ]   |   +-io.netty:netty-codec:4.0.27.Final
+[info ]   |   | +-io.netty:netty-transport:4.0.27.Final
+[info ]   |   |   +-io.netty:netty-buffer:4.0.27.Final
+[info ]   |   |     +-io.netty:netty-common:4.0.27.Final
+[info ]   |   |     
+[info ]   |   +-io.netty:netty-transport:4.0.27.Final
+[info ]   |     +-io.netty:netty-buffer:4.0.27.Final
+[info ]   |       +-io.netty:netty-common:4.0.27.Final
+[info ]   |       
+[info ]   +-com.github.ldaniels528:trifecta_cli_2.11:0.19.0 [S]
+[info ]   | +-com.101tec:zkclient:0.7
+[info ]   | | +-log4j:log4j:1.2.15 (evicted by: 1.2.17)
+[info ]   | | +-log4j:log4j:1.2.17
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | | +-io.netty:netty:3.10.3.Final
+[info ]   | | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | | +-jline:jline:2.12
+[info ]   | | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | | +-log4j:log4j:1.2.17
+[info ]   | | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-com.datastax.cassandra:cassandra-driver-core:2.1.9
+[info ]   | | +-com.codahale.metrics:metrics-core:3.0.2
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | | | 
+[info ]   | | +-com.google.guava:guava:14.0.1 (evicted by: 18.0)
+[info ]   | | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | | +-com.google.guava:guava:18.0
+[info ]   | | +-io.netty:netty-handler:4.0.27.Final
+[info ]   | |   +-io.netty:netty-buffer:4.0.27.Final
+[info ]   | |   | +-io.netty:netty-common:4.0.27.Final
+[info ]   | |   | 
+[info ]   | |   +-io.netty:netty-codec:4.0.27.Final
+[info ]   | |   | +-io.netty:netty-transport:4.0.27.Final
+[info ]   | |   |   +-io.netty:netty-buffer:4.0.27.Final
+[info ]   | |   |     +-io.netty:netty-common:4.0.27.Final
+[info ]   | |   |     
+[info ]   | |   +-io.netty:netty-transport:4.0.27.Final
+[info ]   | |     +-io.netty:netty-buffer:4.0.27.Final
+[info ]   | |       +-io.netty:netty-common:4.0.27.Final
+[info ]   | |       
+[info ]   | +-com.ldaniels528:commons-helpers_2.11:0.1.0 [S]
+[info ]   | | +-org.slf4j:slf4j-api:1.7.10 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-com.ldaniels528:tabular_2.11:0.1.1 [S]
+[info ]   | | +-log4j:log4j:1.2.17
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-log4j12:1.7.7
+[info ]   | |   +-log4j:log4j:1.2.17
+[info ]   | |   +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
+[info ]   | |   
+[info ]   | +-com.twitter:bijection-avro_2.11:0.7.2 [S]
+[info ]   | | +-com.twitter:bijection-core_2.11:0.7.2 [S]
+[info ]   | | +-org.apache.avro:avro:1.7.5 (evicted by: 1.7.7)
+[info ]   | | +-org.apache.avro:avro:1.7.7
+[info ]   | |   +-com.thoughtworks.paranamer:paranamer:2.3 (evicted by: 2.4.1)
+[info ]   | |   +-com.thoughtworks.paranamer:paranamer:2.4.1
+[info ]   | |   +-org.apache.commons:commons-compress:1.4.1
+[info ]   | |   | +-org.tukaani:xz:1.0
+[info ]   | |   | 
+[info ]   | |   +-org.codehaus.jackson:jackson-core-asl:1.9.13
+[info ]   | |   +-org.codehaus.jackson:jackson-mapper-asl:1.9.13
+[info ]   | |   | +-org.codehaus.jackson:jackson-core-asl:1.9.13
+[info ]   | |   | 
+[info ]   | |   +-org.slf4j:slf4j-api:1.6.4 (evicted by: 1.7.12)
+[info ]   | |   +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   +-org.xerial.snappy:snappy-java:1.0.5 (evicted by: 1.1.1.7)
+[info ]   | |   +-org.xerial.snappy:snappy-java:1.1.1.7
+[info ]   | |   
+[info ]   | +-com.twitter:bijection-core_2.11:0.7.2 [S]
+[info ]   | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | | +-com.typesafe:config:1.3.0
+[info ]   | | 
+[info ]   | +-com.typesafe.akka:akka-slf4j_2.11:2.3.14 [S]
+[info ]   | | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | | | +-com.typesafe:config:1.3.0
+[info ]   | | | 
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | | 
+[info ]   | +-com.typesafe.akka:akka-slf4j_2.11:2.3.6 (evicted by: 2.3.14)
+[info ]   | +-com.typesafe.play:play-json_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   | +-com.typesafe.play:play-json_2.11:2.4.6 [S]
+[info ]   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | 
+[info ]   | | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | |   
+[info ]   | | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | |   
+[info ]   | | +-com.typesafe.play:play-datacommons_2.11:2.4.6 [S]
+[info ]   | | +-com.typesafe.play:play-functional_2.11:2.4.6 [S]
+[info ]   | | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   | | | +-com.typesafe:config:1.3.0
+[info ]   | | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | | 
+[info ]   | | +-joda-time:joda-time:2.8.1 (evicted by: 2.9.1)
+[info ]   | | +-joda-time:joda-time:2.9.1
+[info ]   | | +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   | | +-org.joda:joda-convert:1.8.1
+[info ]   | | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | | 
+[info ]   | +-jline:jline:2.12
+[info ]   | +-joda-time:joda-time:2.9.1
+[info ]   | +-net.databinder.dispatch:dispatch-core_2.11:0.11.2 [S]
+[info ]   | | +-com.ning:async-http-client:1.8.10 (evicted by: 1.9.21)
+[info ]   | | | +-io.netty:netty:3.10.3.Final
+[info ]   | | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | | | 
+[info ]   | | +-com.ning:async-http-client:1.9.21
+[info ]   | | | +-io.netty:netty:3.10.1.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-io.netty:netty:3.10.3.Final
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.scala-lang.modules:scala-xml_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   | | +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   | | 
+[info ]   | +-net.liftweb:lift-json_2.11:3.0-M7 [S]
+[info ]   | | +-com.thoughtworks.paranamer:paranamer:2.4.1
+[info ]   | | +-org.scala-lang:scalap:2.11.4
+[info ]   | |   +-org.scala-lang:scala-compiler:2.11.7 [S]
+[info ]   | |     +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4 [S]
+[info ]   | |     +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   | |     +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | |     
+[info ]   | +-org.apache.avro:avro:1.7.7
+[info ]   | | +-com.thoughtworks.paranamer:paranamer:2.3 (evicted by: 2.4.1)
+[info ]   | | +-com.thoughtworks.paranamer:paranamer:2.4.1
+[info ]   | | +-org.apache.commons:commons-compress:1.4.1
+[info ]   | | | +-org.tukaani:xz:1.0
+[info ]   | | | 
+[info ]   | | +-org.codehaus.jackson:jackson-core-asl:1.9.13
+[info ]   | | +-org.codehaus.jackson:jackson-mapper-asl:1.9.13
+[info ]   | | | +-org.codehaus.jackson:jackson-core-asl:1.9.13
+[info ]   | | | 
+[info ]   | | +-org.slf4j:slf4j-api:1.6.4 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-org.xerial.snappy:snappy-java:1.0.5 (evicted by: 1.1.1.7)
+[info ]   | | +-org.xerial.snappy:snappy-java:1.1.1.7
+[info ]   | | 
+[info ]   | +-org.apache.curator:curator-framework:2.7.1
+[info ]   | | +-com.google.guava:guava:14.0.1 (evicted by: 18.0)
+[info ]   | | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | | +-com.google.guava:guava:18.0
+[info ]   | | +-org.apache.curator:curator-client:2.7.1
+[info ]   | | | +-com.google.guava:guava:14.0.1 (evicted by: 18.0)
+[info ]   | | | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | | | +-com.google.guava:guava:18.0
+[info ]   | | | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | | | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | | | +-io.netty:netty:3.10.3.Final
+[info ]   | | | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | | | +-jline:jline:2.12
+[info ]   | | | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | | | +-log4j:log4j:1.2.17
+[info ]   | | | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
+[info ]   | | | 
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | |   +-io.netty:netty:3.10.3.Final
+[info ]   | |   +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | |   +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | |   +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | |   +-jline:jline:2.12
+[info ]   | |   +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | |   +-log4j:log4j:1.2.17
+[info ]   | |   +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | |   +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   
+[info ]   | +-org.apache.curator:curator-test:2.7.1
+[info ]   | | +-com.google.guava:guava:14.0.1 (evicted by: 18.0)
+[info ]   | | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | | +-com.google.guava:guava:18.0
+[info ]   | | +-org.apache.commons:commons-math:2.2
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | | +-io.netty:netty:3.10.3.Final
+[info ]   | | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | | +-jline:jline:2.12
+[info ]   | | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | | +-log4j:log4j:1.2.17
+[info ]   | | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.javassist:javassist:3.18.1-GA (evicted by: 3.19.0-GA)
+[info ]   | | +-org.javassist:javassist:3.19.0-GA
+[info ]   | | 
+[info ]   | +-org.apache.kafka:kafka-clients:0.9.0.0
+[info ]   | | +-net.jpountz.lz4:lz4:1.2.0
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
+[info ]   | | +-org.xerial.snappy:snappy-java:1.1.1.7
+[info ]   | | 
+[info ]   | +-org.apache.kafka:kafka_2.11:0.9.0.0 [S]
+[info ]   | | +-com.101tec:zkclient:0.7
+[info ]   | | | +-log4j:log4j:1.2.15 (evicted by: 1.2.17)
+[info ]   | | | +-log4j:log4j:1.2.17
+[info ]   | | | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | | | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | | | +-io.netty:netty:3.10.3.Final
+[info ]   | | | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | | | +-jline:jline:2.12
+[info ]   | | | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | | | +-log4j:log4j:1.2.17
+[info ]   | | | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-com.yammer.metrics:metrics-core:2.2.0
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.2 (evicted by: 1.7.12)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
+[info ]   | | | 
+[info ]   | | +-net.sf.jopt-simple:jopt-simple:3.2
+[info ]   | | +-org.apache.kafka:kafka-clients:0.9.0.0
+[info ]   | | | +-net.jpountz.lz4:lz4:1.2.0
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
+[info ]   | | | +-org.xerial.snappy:snappy-java:1.1.1.7
+[info ]   | | | 
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | | +-io.netty:netty:3.10.3.Final
+[info ]   | | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | | +-jline:jline:2.12
+[info ]   | | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | | +-log4j:log4j:1.2.17
+[info ]   | | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4 [S]
+[info ]   | | +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   | | 
+[info ]   | +-org.apache.storm:storm-core:0.9.3
+[info ]   | | +-clj-stacktrace:clj-stacktrace:0.2.2
+[info ]   | | +-clj-time:clj-time:0.4.1
+[info ]   | | | +-joda-time:joda-time:2.0 (evicted by: 2.9.1)
+[info ]   | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | 
+[info ]   | | +-clout:clout:1.0.1
+[info ]   | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | 
+[info ]   | | +-com.esotericsoftware.kryo:kryo:2.21
+[info ]   | | | +-com.esotericsoftware.minlog:minlog:1.2
+[info ]   | | | +-com.esotericsoftware.reflectasm:reflectasm:1.07
+[info ]   | | | | +-org.ow2.asm:asm:4.0
+[info ]   | | | | 
+[info ]   | | | +-org.objenesis:objenesis:1.2
+[info ]   | | | 
+[info ]   | | +-com.esotericsoftware.minlog:minlog:1.2
+[info ]   | | +-com.esotericsoftware.reflectasm:reflectasm:1.07
+[info ]   | | | +-org.ow2.asm:asm:4.0
+[info ]   | | | 
+[info ]   | | +-com.googlecode.disruptor:disruptor:2.10.1
+[info ]   | | +-com.googlecode.json-simple:json-simple:1.1
+[info ]   | | +-com.twitter:carbonite:1.4.0
+[info ]   | | | +-com.esotericsoftware.kryo:kryo:2.21
+[info ]   | | | | +-com.esotericsoftware.minlog:minlog:1.2
+[info ]   | | | | +-com.esotericsoftware.reflectasm:reflectasm:1.07
+[info ]   | | | | | +-org.ow2.asm:asm:4.0
+[info ]   | | | | | 
+[info ]   | | | | +-org.objenesis:objenesis:1.2
+[info ]   | | | | 
+[info ]   | | | +-com.twitter:chill-java:0.3.5
+[info ]   | | | | +-com.esotericsoftware.kryo:kryo:2.21
+[info ]   | | | |   +-com.esotericsoftware.minlog:minlog:1.2
+[info ]   | | | |   +-com.esotericsoftware.reflectasm:reflectasm:1.07
+[info ]   | | | |   | +-org.ow2.asm:asm:4.0
+[info ]   | | | |   | 
+[info ]   | | | |   +-org.objenesis:objenesis:1.2
+[info ]   | | | |   
+[info ]   | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | 
+[info ]   | | +-com.twitter:chill-java:0.3.5
+[info ]   | | | +-com.esotericsoftware.kryo:kryo:2.21
+[info ]   | | |   +-com.esotericsoftware.minlog:minlog:1.2
+[info ]   | | |   +-com.esotericsoftware.reflectasm:reflectasm:1.07
+[info ]   | | |   | +-org.ow2.asm:asm:4.0
+[info ]   | | |   | 
+[info ]   | | |   +-org.objenesis:objenesis:1.2
+[info ]   | | |   
+[info ]   | | +-commons-codec:commons-codec:1.10
+[info ]   | | +-commons-codec:commons-codec:1.6 (evicted by: 1.10)
+[info ]   | | +-commons-fileupload:commons-fileupload:1.2.1
+[info ]   | | +-commons-io:commons-io:2.4
+[info ]   | | +-commons-lang:commons-lang:2.5
+[info ]   | | +-compojure:compojure:1.1.3
+[info ]   | | | +-clout:clout:1.0.1
+[info ]   | | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | | 
+[info ]   | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | +-org.clojure:core.incubator:0.1.0
+[info ]   | | | +-org.clojure:tools.macro:0.1.0
+[info ]   | | | +-ring:ring-core:1.1.5
+[info ]   | | |   +-clj-time:clj-time:0.4.1
+[info ]   | | |   | +-joda-time:joda-time:2.0 (evicted by: 2.9.1)
+[info ]   | | |   | +-joda-time:joda-time:2.9.1
+[info ]   | | |   | +-org.clojure:clojure:1.5.1
+[info ]   | | |   | 
+[info ]   | | |   +-commons-codec:commons-codec:1.10
+[info ]   | | |   +-commons-codec:commons-codec:1.6 (evicted by: 1.10)
+[info ]   | | |   +-commons-fileupload:commons-fileupload:1.2.1
+[info ]   | | |   +-commons-io:commons-io:2.4
+[info ]   | | |   +-javax.servlet:servlet-api:2.5
+[info ]   | | |   +-org.clojure:clojure:1.5.1
+[info ]   | | |   
+[info ]   | | +-hiccup:hiccup:0.3.6
+[info ]   | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | 
+[info ]   | | +-javax.servlet:servlet-api:2.5
+[info ]   | | +-jline:jline:2.11 (evicted by: 2.12)
+[info ]   | | +-jline:jline:2.12
+[info ]   | | +-joda-time:joda-time:2.0 (evicted by: 2.9.1)
+[info ]   | | +-joda-time:joda-time:2.9.1
+[info ]   | | +-org.apache.commons:commons-exec:1.1
+[info ]   | | +-org.clojure:clojure:1.5.1
+[info ]   | | +-org.clojure:core.incubator:0.1.0
+[info ]   | | +-org.clojure:math.numeric-tower:0.0.1
+[info ]   | | +-org.clojure:tools.cli:0.2.4
+[info ]   | | +-org.clojure:tools.logging:0.2.3
+[info ]   | | +-org.clojure:tools.macro:0.1.0
+[info ]   | | +-org.jgrapht:jgrapht-core:0.9.0
+[info ]   | | +-org.mortbay.jetty:jetty-util:6.1.26
+[info ]   | | +-org.mortbay.jetty:jetty:6.1.26
+[info ]   | | | +-org.mortbay.jetty:jetty-util:6.1.26
+[info ]   | | | +-org.mortbay.jetty:servlet-api:2.5-20081211
+[info ]   | | | 
+[info ]   | | +-org.objenesis:objenesis:1.2
+[info ]   | | +-org.ow2.asm:asm:4.0
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | | +-org.yaml:snakeyaml:1.11
+[info ]   | | +-ring:ring-core:1.1.5
+[info ]   | | | +-clj-time:clj-time:0.4.1
+[info ]   | | | | +-joda-time:joda-time:2.0 (evicted by: 2.9.1)
+[info ]   | | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | | 
+[info ]   | | | +-commons-codec:commons-codec:1.10
+[info ]   | | | +-commons-codec:commons-codec:1.6 (evicted by: 1.10)
+[info ]   | | | +-commons-fileupload:commons-fileupload:1.2.1
+[info ]   | | | +-commons-io:commons-io:2.4
+[info ]   | | | +-javax.servlet:servlet-api:2.5
+[info ]   | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | 
+[info ]   | | +-ring:ring-devel:0.3.11
+[info ]   | | | +-clj-stacktrace:clj-stacktrace:0.2.2
+[info ]   | | | +-hiccup:hiccup:0.3.6
+[info ]   | | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | | 
+[info ]   | | | +-ring:ring-core:0.3.11 (evicted by: 1.1.5)
+[info ]   | | | +-ring:ring-core:1.1.5
+[info ]   | | |   +-clj-time:clj-time:0.4.1
+[info ]   | | |   | +-joda-time:joda-time:2.0 (evicted by: 2.9.1)
+[info ]   | | |   | +-joda-time:joda-time:2.9.1
+[info ]   | | |   | +-org.clojure:clojure:1.5.1
+[info ]   | | |   | 
+[info ]   | | |   +-commons-codec:commons-codec:1.10
+[info ]   | | |   +-commons-codec:commons-codec:1.6 (evicted by: 1.10)
+[info ]   | | |   +-commons-fileupload:commons-fileupload:1.2.1
+[info ]   | | |   +-commons-io:commons-io:2.4
+[info ]   | | |   +-javax.servlet:servlet-api:2.5
+[info ]   | | |   +-org.clojure:clojure:1.5.1
+[info ]   | | |   
+[info ]   | | +-ring:ring-jetty-adapter:0.3.11
+[info ]   | | | +-org.mortbay.jetty:jetty-util:6.1.26
+[info ]   | | | +-org.mortbay.jetty:jetty:6.1.26
+[info ]   | | | | +-org.mortbay.jetty:jetty-util:6.1.26
+[info ]   | | | | +-org.mortbay.jetty:servlet-api:2.5-20081211
+[info ]   | | | | 
+[info ]   | | | +-ring:ring-core:0.3.11 (evicted by: 1.1.5)
+[info ]   | | | +-ring:ring-core:1.1.5
+[info ]   | | | | +-clj-time:clj-time:0.4.1
+[info ]   | | | | | +-joda-time:joda-time:2.0 (evicted by: 2.9.1)
+[info ]   | | | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | | | 
+[info ]   | | | | +-commons-codec:commons-codec:1.10
+[info ]   | | | | +-commons-codec:commons-codec:1.6 (evicted by: 1.10)
+[info ]   | | | | +-commons-fileupload:commons-fileupload:1.2.1
+[info ]   | | | | +-commons-io:commons-io:2.4
+[info ]   | | | | +-javax.servlet:servlet-api:2.5
+[info ]   | | | | +-org.clojure:clojure:1.5.1
+[info ]   | | | | 
+[info ]   | | | +-ring:ring-servlet:0.3.11
+[info ]   | | |   +-javax.servlet:servlet-api:2.5
+[info ]   | | |   +-ring:ring-core:0.3.11 (evicted by: 1.1.5)
+[info ]   | | |   +-ring:ring-core:1.1.5
+[info ]   | | |     +-clj-time:clj-time:0.4.1
+[info ]   | | |     | +-joda-time:joda-time:2.0 (evicted by: 2.9.1)
+[info ]   | | |     | +-joda-time:joda-time:2.9.1
+[info ]   | | |     | +-org.clojure:clojure:1.5.1
+[info ]   | | |     | 
+[info ]   | | |     +-commons-codec:commons-codec:1.10
+[info ]   | | |     +-commons-codec:commons-codec:1.6 (evicted by: 1.10)
+[info ]   | | |     +-commons-fileupload:commons-fileupload:1.2.1
+[info ]   | | |     +-commons-io:commons-io:2.4
+[info ]   | | |     +-javax.servlet:servlet-api:2.5
+[info ]   | | |     +-org.clojure:clojure:1.5.1
+[info ]   | | |     
+[info ]   | | +-ring:ring-servlet:0.3.11
+[info ]   | |   +-javax.servlet:servlet-api:2.5
+[info ]   | |   +-ring:ring-core:0.3.11 (evicted by: 1.1.5)
+[info ]   | |   +-ring:ring-core:1.1.5
+[info ]   | |     +-clj-time:clj-time:0.4.1
+[info ]   | |     | +-joda-time:joda-time:2.0 (evicted by: 2.9.1)
+[info ]   | |     | +-joda-time:joda-time:2.9.1
+[info ]   | |     | +-org.clojure:clojure:1.5.1
+[info ]   | |     | 
+[info ]   | |     +-commons-codec:commons-codec:1.10
+[info ]   | |     +-commons-codec:commons-codec:1.6 (evicted by: 1.10)
+[info ]   | |     +-commons-fileupload:commons-fileupload:1.2.1
+[info ]   | |     +-commons-io:commons-io:2.4
+[info ]   | |     +-javax.servlet:servlet-api:2.5
+[info ]   | |     +-org.clojure:clojure:1.5.1
+[info ]   | |     
+[info ]   | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | +-io.netty:netty:3.10.3.Final
+[info ]   | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | +-jline:jline:2.12
+[info ]   | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | +-log4j:log4j:1.2.17
+[info ]   | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-org.fusesource.jansi:jansi:1.11
+[info ]   | +-org.joda:joda-convert:1.8.1
+[info ]   | +-org.mashupbots.socko:socko-webserver_2.11:0.6.0 [S]
+[info ]   | | +-com.googlecode.concurrentlinkedhashmap:concurrentlinkedhashmap-lru:1.3.2
+[info ]   | | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | | | +-com.typesafe:config:1.3.0
+[info ]   | | | 
+[info ]   | | +-com.typesafe.akka:akka-actor_2.11:2.3.6 (evicted by: 2.3.14)
+[info ]   | | +-com.typesafe.akka:akka-slf4j_2.11:2.3.14 [S]
+[info ]   | | | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | | | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | | | | +-com.typesafe:config:1.3.0
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | | | 
+[info ]   | | +-com.typesafe.akka:akka-slf4j_2.11:2.3.6 (evicted by: 2.3.14)
+[info ]   | | +-io.netty:netty-all:4.0.23.Final
+[info ]   | | +-org.eclipse.jetty.npn:npn-api:1.1.0.v20120525
+[info ]   | | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | | 
+[info ]   | +-org.mongodb:casbah-commons_2.11:2.8.0 [S]
+[info ]   | | +-com.github.nscala-time:nscala-time_2.11:1.0.0 [S]
+[info ]   | | | +-joda-time:joda-time:2.3 (evicted by: 2.9.1)
+[info ]   | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | +-org.joda:joda-convert:1.2 (evicted by: 1.8.1)
+[info ]   | | | +-org.joda:joda-convert:1.8.1
+[info ]   | | | 
+[info ]   | | +-org.mongodb:mongo-java-driver:2.13.0
+[info ]   | | +-org.slf4j:slf4j-api:1.6.0 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-org.mongodb:casbah-core_2.11:2.8.0 [S]
+[info ]   | | +-com.github.nscala-time:nscala-time_2.11:1.0.0 [S]
+[info ]   | | | +-joda-time:joda-time:2.3 (evicted by: 2.9.1)
+[info ]   | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | +-org.joda:joda-convert:1.2 (evicted by: 1.8.1)
+[info ]   | | | +-org.joda:joda-convert:1.8.1
+[info ]   | | | 
+[info ]   | | +-org.mongodb:casbah-commons_2.11:2.8.0 [S]
+[info ]   | | | +-com.github.nscala-time:nscala-time_2.11:1.0.0 [S]
+[info ]   | | | | +-joda-time:joda-time:2.3 (evicted by: 2.9.1)
+[info ]   | | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | | +-org.joda:joda-convert:1.2 (evicted by: 1.8.1)
+[info ]   | | | | +-org.joda:joda-convert:1.8.1
+[info ]   | | | | 
+[info ]   | | | +-org.mongodb:mongo-java-driver:2.13.0
+[info ]   | | | +-org.slf4j:slf4j-api:1.6.0 (evicted by: 1.7.12)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.mongodb:casbah-query_2.11:2.8.0 [S]
+[info ]   | | | +-com.github.nscala-time:nscala-time_2.11:1.0.0 [S]
+[info ]   | | | | +-joda-time:joda-time:2.3 (evicted by: 2.9.1)
+[info ]   | | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | | +-org.joda:joda-convert:1.2 (evicted by: 1.8.1)
+[info ]   | | | | +-org.joda:joda-convert:1.8.1
+[info ]   | | | | 
+[info ]   | | | +-org.mongodb:casbah-commons_2.11:2.8.0 [S]
+[info ]   | | | | +-com.github.nscala-time:nscala-time_2.11:1.0.0 [S]
+[info ]   | | | | | +-joda-time:joda-time:2.3 (evicted by: 2.9.1)
+[info ]   | | | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | | | +-org.joda:joda-convert:1.2 (evicted by: 1.8.1)
+[info ]   | | | | | +-org.joda:joda-convert:1.8.1
+[info ]   | | | | | 
+[info ]   | | | | +-org.mongodb:mongo-java-driver:2.13.0
+[info ]   | | | | +-org.slf4j:slf4j-api:1.6.0 (evicted by: 1.7.12)
+[info ]   | | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:slf4j-api:1.6.0 (evicted by: 1.7.12)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.slf4j:slf4j-api:1.6.0 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-org.scalaz:scalaz-core_2.11:7.2.0 [S]
+[info ]   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
+[info ]   | 
+[info ]   +-com.ldaniels528:commons-helpers_2.11:0.1.0 [S]
+[info ]   | +-org.slf4j:slf4j-api:1.7.10 (evicted by: 1.7.12)
+[info ]   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | 
+[info ]   +-com.ldaniels528:tabular_2.11:0.1.1 [S]
+[info ]   | +-log4j:log4j:1.2.17
+[info ]   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
+[info ]   | +-org.slf4j:slf4j-log4j12:1.7.7
+[info ]   |   +-log4j:log4j:1.2.17
+[info ]   |   +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
+[info ]   |   
+[info ]   +-com.twitter:bijection-avro_2.11:0.7.2 [S]
+[info ]   | +-com.twitter:bijection-core_2.11:0.7.2 [S]
+[info ]   | +-org.apache.avro:avro:1.7.5 (evicted by: 1.7.7)
+[info ]   | +-org.apache.avro:avro:1.7.7
+[info ]   |   +-com.thoughtworks.paranamer:paranamer:2.3 (evicted by: 2.4.1)
+[info ]   |   +-com.thoughtworks.paranamer:paranamer:2.4.1
+[info ]   |   +-org.apache.commons:commons-compress:1.4.1
+[info ]   |   | +-org.tukaani:xz:1.0
+[info ]   |   | 
+[info ]   |   +-org.codehaus.jackson:jackson-core-asl:1.9.13
+[info ]   |   +-org.codehaus.jackson:jackson-mapper-asl:1.9.13
+[info ]   |   | +-org.codehaus.jackson:jackson-core-asl:1.9.13
+[info ]   |   | 
+[info ]   |   +-org.slf4j:slf4j-api:1.6.4 (evicted by: 1.7.12)
+[info ]   |   +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   +-org.xerial.snappy:snappy-java:1.0.5 (evicted by: 1.1.1.7)
+[info ]   |   +-org.xerial.snappy:snappy-java:1.1.1.7
+[info ]   |   
+[info ]   +-com.twitter:bijection-core_2.11:0.7.2 [S]
+[info ]   +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | +-com.typesafe:config:1.3.0
+[info ]   | 
+[info ]   +-com.typesafe.akka:akka-slf4j_2.11:2.3.14 [S]
+[info ]   | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | | +-com.typesafe:config:1.3.0
+[info ]   | | 
+[info ]   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | 
+[info ]   +-com.typesafe.akka:akka-slf4j_2.11:2.3.6 (evicted by: 2.3.14)
+[info ]   +-com.typesafe.play:filters-helpers_2.11:2.4.0 [S]
+[info ]   | +-com.typesafe.play:play_2.11:2.4.0 [S]
+[info ]   |   +-ch.qos.logback:logback-classic:1.1.3
+[info ]   |   | +-ch.qos.logback:logback-core:1.1.3
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
+[info ]   |   | 
+[info ]   |   +-ch.qos.logback:logback-core:1.1.3
+[info ]   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.3 (evicted by: 2.5.4)
+[info ]   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   +-com.fasterxml.jackson.core:jackson-core:2.5.3 (evicted by: 2.5.4)
+[info ]   |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   +-com.fasterxml.jackson.core:jackson-databind:2.5.3 (evicted by: 2.5.4)
+[info ]   |   +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | 
+[info ]   |   +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.3 (evicted by: 2.5.4)
+[info ]   |   +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   |   
+[info ]   |   +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.3 (evicted by: 2.5.4)
+[info ]   |   +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   |   
+[info ]   |   +-com.google.inject.extensions:guice-assistedinject:4.0
+[info ]   |   | +-com.google.inject:guice:4.0
+[info ]   |   |   +-aopalliance:aopalliance:1.0
+[info ]   |   |   +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   |   |   +-com.google.guava:guava:18.0
+[info ]   |   |   +-javax.inject:javax.inject:1
+[info ]   |   |   
+[info ]   |   +-com.google.inject:guice:4.0
+[info ]   |   | +-aopalliance:aopalliance:1.0
+[info ]   |   | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   |   | +-com.google.guava:guava:18.0
+[info ]   |   | +-javax.inject:javax.inject:1
+[info ]   |   | 
+[info ]   |   +-com.typesafe.akka:akka-actor_2.11:2.3.11 (evicted by: 2.3.14)
+[info ]   |   +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   |   | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   |   | +-com.typesafe:config:1.3.0
+[info ]   |   | 
+[info ]   |   +-com.typesafe.akka:akka-slf4j_2.11:2.3.11 (evicted by: 2.3.14)
+[info ]   |   +-com.typesafe.akka:akka-slf4j_2.11:2.3.14 [S]
+[info ]   |   | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   |   | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   |   | | +-com.typesafe:config:1.3.0
+[info ]   |   | | 
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   |   | 
+[info ]   |   +-com.typesafe.play:build-link:2.4.0
+[info ]   |   | +-com.typesafe.play:play-exceptions:2.4.0
+[info ]   |   | +-org.javassist:javassist:3.19.0-GA
+[info ]   |   | 
+[info ]   |   +-com.typesafe.play:play-iteratees_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   |   +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   |   | +-com.typesafe:config:1.3.0
+[info ]   |   | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   |   | 
+[info ]   |   +-com.typesafe.play:play-json_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   |   +-com.typesafe.play:play-json_2.11:2.4.6 [S]
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | | 
+[info ]   |   | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | |   
+[info ]   |   | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | |   
+[info ]   |   | +-com.typesafe.play:play-datacommons_2.11:2.4.6 [S]
+[info ]   |   | +-com.typesafe.play:play-functional_2.11:2.4.6 [S]
+[info ]   |   | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   |   | | +-com.typesafe:config:1.3.0
+[info ]   |   | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   |   | | 
+[info ]   |   | +-joda-time:joda-time:2.8.1 (evicted by: 2.9.1)
+[info ]   |   | +-joda-time:joda-time:2.9.1
+[info ]   |   | +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   |   | +-org.joda:joda-convert:1.8.1
+[info ]   |   | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   |   | 
+[info ]   |   +-com.typesafe.play:play-netty-utils:2.4.0
+[info ]   |   | +-org.slf4j:jcl-over-slf4j:1.7.12
+[info ]   |   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | | 
+[info ]   |   | +-org.slf4j:jul-to-slf4j:1.7.12
+[info ]   |   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | | 
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | 
+[info ]   |   +-com.typesafe.play:twirl-api_2.11:1.1.1 [S]
+[info ]   |   | +-org.apache.commons:commons-lang3:3.4
+[info ]   |   | +-org.scala-lang.modules:scala-xml_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   |   | +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   |   | 
+[info ]   |   +-commons-codec:commons-codec:1.10
+[info ]   |   +-javax.transaction:jta:1.1
+[info ]   |   +-joda-time:joda-time:2.7 (evicted by: 2.9.1)
+[info ]   |   +-joda-time:joda-time:2.9.1
+[info ]   |   +-org.apache.commons:commons-lang3:3.4
+[info ]   |   +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   |   +-org.joda:joda-convert:1.8.1
+[info ]   |   +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   |   +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4 [S]
+[info ]   |   +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   |   +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   |   +-org.slf4j:jcl-over-slf4j:1.7.12
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | 
+[info ]   |   +-org.slf4j:jul-to-slf4j:1.7.12
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | 
+[info ]   |   +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   +-xerces:xercesImpl:2.11.0
+[info ]   |     +-xml-apis:xml-apis:1.4.01
+[info ]   |     
+[info ]   +-com.typesafe.play:play-cache_2.11:2.4.0 [S]
+[info ]   | +-com.typesafe.play:play_2.11:2.4.0 [S]
+[info ]   | | +-ch.qos.logback:logback-classic:1.1.3
+[info ]   | | | +-ch.qos.logback:logback-core:1.1.3
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
+[info ]   | | | 
+[info ]   | | +-ch.qos.logback:logback-core:1.1.3
+[info ]   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.3 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-core:2.5.3 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.3 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | 
+[info ]   | | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.3 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | |   
+[info ]   | | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.3 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | |   
+[info ]   | | +-com.google.inject.extensions:guice-assistedinject:4.0
+[info ]   | | | +-com.google.inject:guice:4.0
+[info ]   | | |   +-aopalliance:aopalliance:1.0
+[info ]   | | |   +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | | |   +-com.google.guava:guava:18.0
+[info ]   | | |   +-javax.inject:javax.inject:1
+[info ]   | | |   
+[info ]   | | +-com.google.inject:guice:4.0
+[info ]   | | | +-aopalliance:aopalliance:1.0
+[info ]   | | | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | | | +-com.google.guava:guava:18.0
+[info ]   | | | +-javax.inject:javax.inject:1
+[info ]   | | | 
+[info ]   | | +-com.typesafe.akka:akka-actor_2.11:2.3.11 (evicted by: 2.3.14)
+[info ]   | | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | | | +-com.typesafe:config:1.3.0
+[info ]   | | | 
+[info ]   | | +-com.typesafe.akka:akka-slf4j_2.11:2.3.11 (evicted by: 2.3.14)
+[info ]   | | +-com.typesafe.akka:akka-slf4j_2.11:2.3.14 [S]
+[info ]   | | | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | | | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | | | | +-com.typesafe:config:1.3.0
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:build-link:2.4.0
+[info ]   | | | +-com.typesafe.play:play-exceptions:2.4.0
+[info ]   | | | +-org.javassist:javassist:3.19.0-GA
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:play-iteratees_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   | | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   | | | +-com.typesafe:config:1.3.0
+[info ]   | | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:play-json_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   | | +-com.typesafe.play:play-json_2.11:2.4.6 [S]
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | | 
+[info ]   | | | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | |   
+[info ]   | | | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | |   
+[info ]   | | | +-com.typesafe.play:play-datacommons_2.11:2.4.6 [S]
+[info ]   | | | +-com.typesafe.play:play-functional_2.11:2.4.6 [S]
+[info ]   | | | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   | | | | +-com.typesafe:config:1.3.0
+[info ]   | | | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | | | 
+[info ]   | | | +-joda-time:joda-time:2.8.1 (evicted by: 2.9.1)
+[info ]   | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   | | | +-org.joda:joda-convert:1.8.1
+[info ]   | | | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:play-netty-utils:2.4.0
+[info ]   | | | +-org.slf4j:jcl-over-slf4j:1.7.12
+[info ]   | | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:jul-to-slf4j:1.7.12
+[info ]   | | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:twirl-api_2.11:1.1.1 [S]
+[info ]   | | | +-org.apache.commons:commons-lang3:3.4
+[info ]   | | | +-org.scala-lang.modules:scala-xml_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   | | | +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   | | | 
+[info ]   | | +-commons-codec:commons-codec:1.10
+[info ]   | | +-javax.transaction:jta:1.1
+[info ]   | | +-joda-time:joda-time:2.7 (evicted by: 2.9.1)
+[info ]   | | +-joda-time:joda-time:2.9.1
+[info ]   | | +-org.apache.commons:commons-lang3:3.4
+[info ]   | | +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   | | +-org.joda:joda-convert:1.8.1
+[info ]   | | +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   | | +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4 [S]
+[info ]   | | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | +-org.slf4j:jcl-over-slf4j:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.slf4j:jul-to-slf4j:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-xerces:xercesImpl:2.11.0
+[info ]   | |   +-xml-apis:xml-apis:1.4.01
+[info ]   | |   
+[info ]   | +-net.sf.ehcache:ehcache-core:2.6.11
+[info ]   |   +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   |   +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   
+[info ]   +-com.typesafe.play:play-json_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   +-com.typesafe.play:play-json_2.11:2.4.6 [S]
+[info ]   | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | 
+[info ]   | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   
+[info ]   | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   
+[info ]   | +-com.typesafe.play:play-datacommons_2.11:2.4.6 [S]
+[info ]   | +-com.typesafe.play:play-functional_2.11:2.4.6 [S]
+[info ]   | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   | | +-com.typesafe:config:1.3.0
+[info ]   | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | 
+[info ]   | +-joda-time:joda-time:2.8.1 (evicted by: 2.9.1)
+[info ]   | +-joda-time:joda-time:2.9.1
+[info ]   | +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   | +-org.joda:joda-convert:1.8.1
+[info ]   | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | 
+[info ]   +-com.typesafe.play:play-netty-server_2.11:2.4.0 [S]
+[info ]   | +-com.typesafe.netty:netty-http-pipelining:1.1.4
+[info ]   | | +-io.netty:netty:3.10.1.Final (evicted by: 3.10.3.Final)
+[info ]   | | +-io.netty:netty:3.10.3.Final
+[info ]   | | 
+[info ]   | +-com.typesafe.play:play-server_2.11:2.4.0 [S]
+[info ]   | | +-com.typesafe.play:play-iteratees_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   | | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   | | | +-com.typesafe:config:1.3.0
+[info ]   | | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:play_2.11:2.4.0 [S]
+[info ]   | |   +-ch.qos.logback:logback-classic:1.1.3
+[info ]   | |   | +-ch.qos.logback:logback-core:1.1.3
+[info ]   | |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   | +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
+[info ]   | |   | 
+[info ]   | |   +-ch.qos.logback:logback-core:1.1.3
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.3 (evicted by: 2.5.4)
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-core:2.5.3 (evicted by: 2.5.4)
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-databind:2.5.3 (evicted by: 2.5.4)
+[info ]   | |   +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | |   | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | |   | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   | 
+[info ]   | |   +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.3 (evicted by: 2.5.4)
+[info ]   | |   +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   | |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | |   |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   |   
+[info ]   | |   +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.3 (evicted by: 2.5.4)
+[info ]   | |   +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   | |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | |   |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   |   
+[info ]   | |   +-com.google.inject.extensions:guice-assistedinject:4.0
+[info ]   | |   | +-com.google.inject:guice:4.0
+[info ]   | |   |   +-aopalliance:aopalliance:1.0
+[info ]   | |   |   +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | |   |   +-com.google.guava:guava:18.0
+[info ]   | |   |   +-javax.inject:javax.inject:1
+[info ]   | |   |   
+[info ]   | |   +-com.google.inject:guice:4.0
+[info ]   | |   | +-aopalliance:aopalliance:1.0
+[info ]   | |   | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | |   | +-com.google.guava:guava:18.0
+[info ]   | |   | +-javax.inject:javax.inject:1
+[info ]   | |   | 
+[info ]   | |   +-com.typesafe.akka:akka-actor_2.11:2.3.11 (evicted by: 2.3.14)
+[info ]   | |   +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | |   | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | |   | +-com.typesafe:config:1.3.0
+[info ]   | |   | 
+[info ]   | |   +-com.typesafe.akka:akka-slf4j_2.11:2.3.11 (evicted by: 2.3.14)
+[info ]   | |   +-com.typesafe.akka:akka-slf4j_2.11:2.3.14 [S]
+[info ]   | |   | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | |   | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | |   | | +-com.typesafe:config:1.3.0
+[info ]   | |   | | 
+[info ]   | |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | |   | 
+[info ]   | |   +-com.typesafe.play:build-link:2.4.0
+[info ]   | |   | +-com.typesafe.play:play-exceptions:2.4.0
+[info ]   | |   | +-org.javassist:javassist:3.19.0-GA
+[info ]   | |   | 
+[info ]   | |   +-com.typesafe.play:play-iteratees_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   | |   +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   | |   | +-com.typesafe:config:1.3.0
+[info ]   | |   | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | |   | 
+[info ]   | |   +-com.typesafe.play:play-json_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   | |   +-com.typesafe.play:play-json_2.11:2.4.6 [S]
+[info ]   | |   | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | |   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | |   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | |   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   | | 
+[info ]   | |   | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   | |   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | |   | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   | |   
+[info ]   | |   | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   | |   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | |   | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | |   | |   
+[info ]   | |   | +-com.typesafe.play:play-datacommons_2.11:2.4.6 [S]
+[info ]   | |   | +-com.typesafe.play:play-functional_2.11:2.4.6 [S]
+[info ]   | |   | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   | |   | | +-com.typesafe:config:1.3.0
+[info ]   | |   | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | |   | | 
+[info ]   | |   | +-joda-time:joda-time:2.8.1 (evicted by: 2.9.1)
+[info ]   | |   | +-joda-time:joda-time:2.9.1
+[info ]   | |   | +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   | |   | +-org.joda:joda-convert:1.8.1
+[info ]   | |   | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | |   | 
+[info ]   | |   +-com.typesafe.play:play-netty-utils:2.4.0
+[info ]   | |   | +-org.slf4j:jcl-over-slf4j:1.7.12
+[info ]   | |   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   | | 
+[info ]   | |   | +-org.slf4j:jul-to-slf4j:1.7.12
+[info ]   | |   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   | | 
+[info ]   | |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   | 
+[info ]   | |   +-com.typesafe.play:twirl-api_2.11:1.1.1 [S]
+[info ]   | |   | +-org.apache.commons:commons-lang3:3.4
+[info ]   | |   | +-org.scala-lang.modules:scala-xml_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   | |   | +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   | |   | 
+[info ]   | |   +-commons-codec:commons-codec:1.10
+[info ]   | |   +-javax.transaction:jta:1.1
+[info ]   | |   +-joda-time:joda-time:2.7 (evicted by: 2.9.1)
+[info ]   | |   +-joda-time:joda-time:2.9.1
+[info ]   | |   +-org.apache.commons:commons-lang3:3.4
+[info ]   | |   +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   | |   +-org.joda:joda-convert:1.8.1
+[info ]   | |   +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   | |   +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4 [S]
+[info ]   | |   +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | |   +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | |   +-org.slf4j:jcl-over-slf4j:1.7.12
+[info ]   | |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   | 
+[info ]   | |   +-org.slf4j:jul-to-slf4j:1.7.12
+[info ]   | |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   | 
+[info ]   | |   +-org.slf4j:slf4j-api:1.7.12
+[info ]   | |   +-xerces:xercesImpl:2.11.0
+[info ]   | |     +-xml-apis:xml-apis:1.4.01
+[info ]   | |     
+[info ]   | +-io.netty:netty:3.10.3.Final
+[info ]   | 
+[info ]   +-com.typesafe.play:play-server_2.11:2.4.0 [S]
+[info ]   | +-com.typesafe.play:play-iteratees_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   | | +-com.typesafe:config:1.3.0
+[info ]   | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | 
+[info ]   | +-com.typesafe.play:play_2.11:2.4.0 [S]
+[info ]   |   +-ch.qos.logback:logback-classic:1.1.3
+[info ]   |   | +-ch.qos.logback:logback-core:1.1.3
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
+[info ]   |   | 
+[info ]   |   +-ch.qos.logback:logback-core:1.1.3
+[info ]   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.3 (evicted by: 2.5.4)
+[info ]   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   +-com.fasterxml.jackson.core:jackson-core:2.5.3 (evicted by: 2.5.4)
+[info ]   |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   +-com.fasterxml.jackson.core:jackson-databind:2.5.3 (evicted by: 2.5.4)
+[info ]   |   +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | 
+[info ]   |   +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.3 (evicted by: 2.5.4)
+[info ]   |   +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   |   
+[info ]   |   +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.3 (evicted by: 2.5.4)
+[info ]   |   +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   |   
+[info ]   |   +-com.google.inject.extensions:guice-assistedinject:4.0
+[info ]   |   | +-com.google.inject:guice:4.0
+[info ]   |   |   +-aopalliance:aopalliance:1.0
+[info ]   |   |   +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   |   |   +-com.google.guava:guava:18.0
+[info ]   |   |   +-javax.inject:javax.inject:1
+[info ]   |   |   
+[info ]   |   +-com.google.inject:guice:4.0
+[info ]   |   | +-aopalliance:aopalliance:1.0
+[info ]   |   | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   |   | +-com.google.guava:guava:18.0
+[info ]   |   | +-javax.inject:javax.inject:1
+[info ]   |   | 
+[info ]   |   +-com.typesafe.akka:akka-actor_2.11:2.3.11 (evicted by: 2.3.14)
+[info ]   |   +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   |   | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   |   | +-com.typesafe:config:1.3.0
+[info ]   |   | 
+[info ]   |   +-com.typesafe.akka:akka-slf4j_2.11:2.3.11 (evicted by: 2.3.14)
+[info ]   |   +-com.typesafe.akka:akka-slf4j_2.11:2.3.14 [S]
+[info ]   |   | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   |   | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   |   | | +-com.typesafe:config:1.3.0
+[info ]   |   | | 
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   |   | 
+[info ]   |   +-com.typesafe.play:build-link:2.4.0
+[info ]   |   | +-com.typesafe.play:play-exceptions:2.4.0
+[info ]   |   | +-org.javassist:javassist:3.19.0-GA
+[info ]   |   | 
+[info ]   |   +-com.typesafe.play:play-iteratees_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   |   +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   |   | +-com.typesafe:config:1.3.0
+[info ]   |   | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   |   | 
+[info ]   |   +-com.typesafe.play:play-json_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   |   +-com.typesafe.play:play-json_2.11:2.4.6 [S]
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | | 
+[info ]   |   | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | |   
+[info ]   |   | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   |   | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   |   | |   
+[info ]   |   | +-com.typesafe.play:play-datacommons_2.11:2.4.6 [S]
+[info ]   |   | +-com.typesafe.play:play-functional_2.11:2.4.6 [S]
+[info ]   |   | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   |   | | +-com.typesafe:config:1.3.0
+[info ]   |   | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   |   | | 
+[info ]   |   | +-joda-time:joda-time:2.8.1 (evicted by: 2.9.1)
+[info ]   |   | +-joda-time:joda-time:2.9.1
+[info ]   |   | +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   |   | +-org.joda:joda-convert:1.8.1
+[info ]   |   | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   |   | 
+[info ]   |   +-com.typesafe.play:play-netty-utils:2.4.0
+[info ]   |   | +-org.slf4j:jcl-over-slf4j:1.7.12
+[info ]   |   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | | 
+[info ]   |   | +-org.slf4j:jul-to-slf4j:1.7.12
+[info ]   |   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | | 
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | 
+[info ]   |   +-com.typesafe.play:twirl-api_2.11:1.1.1 [S]
+[info ]   |   | +-org.apache.commons:commons-lang3:3.4
+[info ]   |   | +-org.scala-lang.modules:scala-xml_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   |   | +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   |   | 
+[info ]   |   +-commons-codec:commons-codec:1.10
+[info ]   |   +-javax.transaction:jta:1.1
+[info ]   |   +-joda-time:joda-time:2.7 (evicted by: 2.9.1)
+[info ]   |   +-joda-time:joda-time:2.9.1
+[info ]   |   +-org.apache.commons:commons-lang3:3.4
+[info ]   |   +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   |   +-org.joda:joda-convert:1.8.1
+[info ]   |   +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   |   +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4 [S]
+[info ]   |   +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   |   +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   |   +-org.slf4j:jcl-over-slf4j:1.7.12
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | 
+[info ]   |   +-org.slf4j:jul-to-slf4j:1.7.12
+[info ]   |   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   | 
+[info ]   |   +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   +-xerces:xercesImpl:2.11.0
+[info ]   |     +-xml-apis:xml-apis:1.4.01
+[info ]   |     
+[info ]   +-com.typesafe.play:play-ws_2.11:2.4.0 [S]
+[info ]   | +-com.google.guava:guava:18.0
+[info ]   | +-com.ning:async-http-client:1.9.21
+[info ]   | | +-io.netty:netty:3.10.1.Final (evicted by: 3.10.3.Final)
+[info ]   | | +-io.netty:netty:3.10.3.Final
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-com.typesafe.play:play_2.11:2.4.0 [S]
+[info ]   | | +-ch.qos.logback:logback-classic:1.1.3
+[info ]   | | | +-ch.qos.logback:logback-core:1.1.3
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
+[info ]   | | | 
+[info ]   | | +-ch.qos.logback:logback-core:1.1.3
+[info ]   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.3 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-core:2.5.3 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.3 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | 
+[info ]   | | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.3 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | |   
+[info ]   | | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.3 (evicted by: 2.5.4)
+[info ]   | | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | |   
+[info ]   | | +-com.google.inject.extensions:guice-assistedinject:4.0
+[info ]   | | | +-com.google.inject:guice:4.0
+[info ]   | | |   +-aopalliance:aopalliance:1.0
+[info ]   | | |   +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | | |   +-com.google.guava:guava:18.0
+[info ]   | | |   +-javax.inject:javax.inject:1
+[info ]   | | |   
+[info ]   | | +-com.google.inject:guice:4.0
+[info ]   | | | +-aopalliance:aopalliance:1.0
+[info ]   | | | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | | | +-com.google.guava:guava:18.0
+[info ]   | | | +-javax.inject:javax.inject:1
+[info ]   | | | 
+[info ]   | | +-com.typesafe.akka:akka-actor_2.11:2.3.11 (evicted by: 2.3.14)
+[info ]   | | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | | | +-com.typesafe:config:1.3.0
+[info ]   | | | 
+[info ]   | | +-com.typesafe.akka:akka-slf4j_2.11:2.3.11 (evicted by: 2.3.14)
+[info ]   | | +-com.typesafe.akka:akka-slf4j_2.11:2.3.14 [S]
+[info ]   | | | +-com.typesafe.akka:akka-actor_2.11:2.3.14 [S]
+[info ]   | | | | +-com.typesafe:config:1.2.1 (evicted by: 1.3.0)
+[info ]   | | | | +-com.typesafe:config:1.3.0
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:build-link:2.4.0
+[info ]   | | | +-com.typesafe.play:play-exceptions:2.4.0
+[info ]   | | | +-org.javassist:javassist:3.19.0-GA
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:play-iteratees_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   | | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   | | | +-com.typesafe:config:1.3.0
+[info ]   | | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:play-json_2.11:2.4.0 (evicted by: 2.4.6)
+[info ]   | | +-com.typesafe.play:play-json_2.11:2.4.6 [S]
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | | 
+[info ]   | | | +-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | |   
+[info ]   | | | +-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | | +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]   | | | |   +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]   | | | |   
+[info ]   | | | +-com.typesafe.play:play-datacommons_2.11:2.4.6 [S]
+[info ]   | | | +-com.typesafe.play:play-functional_2.11:2.4.6 [S]
+[info ]   | | | +-com.typesafe.play:play-iteratees_2.11:2.4.6 [S]
+[info ]   | | | | +-com.typesafe:config:1.3.0
+[info ]   | | | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | | | 
+[info ]   | | | +-joda-time:joda-time:2.8.1 (evicted by: 2.9.1)
+[info ]   | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   | | | +-org.joda:joda-convert:1.8.1
+[info ]   | | | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:play-netty-utils:2.4.0
+[info ]   | | | +-org.slf4j:jcl-over-slf4j:1.7.12
+[info ]   | | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:jul-to-slf4j:1.7.12
+[info ]   | | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | | 
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-com.typesafe.play:twirl-api_2.11:1.1.1 [S]
+[info ]   | | | +-org.apache.commons:commons-lang3:3.4
+[info ]   | | | +-org.scala-lang.modules:scala-xml_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   | | | +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   | | | 
+[info ]   | | +-commons-codec:commons-codec:1.10
+[info ]   | | +-javax.transaction:jta:1.1
+[info ]   | | +-joda-time:joda-time:2.7 (evicted by: 2.9.1)
+[info ]   | | +-joda-time:joda-time:2.9.1
+[info ]   | | +-org.apache.commons:commons-lang3:3.4
+[info ]   | | +-org.joda:joda-convert:1.7 (evicted by: 1.8.1)
+[info ]   | | +-org.joda:joda-convert:1.8.1
+[info ]   | | +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   | | +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4 [S]
+[info ]   | | +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   | | +-org.scala-stm:scala-stm_2.11:0.7 [S]
+[info ]   | | +-org.slf4j:jcl-over-slf4j:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.slf4j:jul-to-slf4j:1.7.12
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-xerces:xercesImpl:2.11.0
+[info ]   | |   +-xml-apis:xml-apis:1.4.01
+[info ]   | |   
+[info ]   | +-oauth.signpost:signpost-commonshttp4:1.2.1.2
+[info ]   | | +-oauth.signpost:signpost-core:1.2.1.2
+[info ]   | | | +-commons-codec:commons-codec:1.10
+[info ]   | | | +-commons-codec:commons-codec:1.3 (evicted by: 1.10)
+[info ]   | | | 
+[info ]   | | +-org.apache.httpcomponents:httpclient:4.0.1
+[info ]   | | | +-commons-codec:commons-codec:1.10
+[info ]   | | | +-commons-codec:commons-codec:1.3 (evicted by: 1.10)
+[info ]   | | | +-commons-logging:commons-logging:1.1.1
+[info ]   | | | +-org.apache.httpcomponents:httpcore:4.0.1
+[info ]   | | | 
+[info ]   | | +-org.apache.httpcomponents:httpcore:4.0.1
+[info ]   | | 
+[info ]   | +-oauth.signpost:signpost-core:1.2.1.2
+[info ]   |   +-commons-codec:commons-codec:1.10
+[info ]   |   +-commons-codec:commons-codec:1.3 (evicted by: 1.10)
+[info ]   |   
+[info ]   +-com.typesafe.play:twirl-api_2.11:1.1.1 [S]
+[info ]   | +-org.apache.commons:commons-lang3:3.4
+[info ]   | +-org.scala-lang.modules:scala-xml_2.11:1.0.1 (evicted by: 1.0.4)
+[info ]   | +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   | 
+[info ]   +-joda-time:joda-time:2.9.1
+[info ]   +-net.liftweb:lift-json_2.11:3.0-M7 [S]
+[info ]   | +-com.thoughtworks.paranamer:paranamer:2.4.1
+[info ]   | +-org.scala-lang:scalap:2.11.4
+[info ]   |   +-org.scala-lang:scala-compiler:2.11.7 [S]
+[info ]   |     +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4 [S]
+[info ]   |     +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   |     +-org.scala-lang:scala-reflect:2.11.7 [S]
+[info ]   |     
+[info ]   +-org.apache.avro:avro:1.7.7
+[info ]   | +-com.thoughtworks.paranamer:paranamer:2.3 (evicted by: 2.4.1)
+[info ]   | +-com.thoughtworks.paranamer:paranamer:2.4.1
+[info ]   | +-org.apache.commons:commons-compress:1.4.1
+[info ]   | | +-org.tukaani:xz:1.0
+[info ]   | | 
+[info ]   | +-org.codehaus.jackson:jackson-core-asl:1.9.13
+[info ]   | +-org.codehaus.jackson:jackson-mapper-asl:1.9.13
+[info ]   | | +-org.codehaus.jackson:jackson-core-asl:1.9.13
+[info ]   | | 
+[info ]   | +-org.slf4j:slf4j-api:1.6.4 (evicted by: 1.7.12)
+[info ]   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | +-org.xerial.snappy:snappy-java:1.0.5 (evicted by: 1.1.1.7)
+[info ]   | +-org.xerial.snappy:snappy-java:1.1.1.7
+[info ]   | 
+[info ]   +-org.apache.curator:curator-framework:2.7.1
+[info ]   | +-com.google.guava:guava:14.0.1 (evicted by: 18.0)
+[info ]   | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | +-com.google.guava:guava:18.0
+[info ]   | +-org.apache.curator:curator-client:2.7.1
+[info ]   | | +-com.google.guava:guava:14.0.1 (evicted by: 18.0)
+[info ]   | | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | | +-com.google.guava:guava:18.0
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | | +-io.netty:netty:3.10.3.Final
+[info ]   | | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | | +-jline:jline:2.12
+[info ]   | | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | | +-log4j:log4j:1.2.17
+[info ]   | | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
+[info ]   | | 
+[info ]   | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   |   +-io.netty:netty:3.10.3.Final
+[info ]   |   +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   |   +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   |   +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   |   +-jline:jline:2.12
+[info ]   |   +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   |   +-log4j:log4j:1.2.17
+[info ]   |   +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   |   +-org.slf4j:slf4j-api:1.7.12
+[info ]   |   
+[info ]   +-org.apache.curator:curator-test:2.7.1
+[info ]   | +-com.google.guava:guava:14.0.1 (evicted by: 18.0)
+[info ]   | +-com.google.guava:guava:16.0.1 (evicted by: 18.0)
+[info ]   | +-com.google.guava:guava:18.0
+[info ]   | +-org.apache.commons:commons-math:2.2
+[info ]   | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | +-io.netty:netty:3.10.3.Final
+[info ]   | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | +-jline:jline:2.12
+[info ]   | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | +-log4j:log4j:1.2.17
+[info ]   | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-org.javassist:javassist:3.18.1-GA (evicted by: 3.19.0-GA)
+[info ]   | +-org.javassist:javassist:3.19.0-GA
+[info ]   | 
+[info ]   +-org.apache.kafka:kafka-clients:0.9.0.0
+[info ]   | +-net.jpountz.lz4:lz4:1.2.0
+[info ]   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
+[info ]   | +-org.xerial.snappy:snappy-java:1.1.1.7
+[info ]   | 
+[info ]   +-org.apache.kafka:kafka_2.11:0.9.0.0 [S]
+[info ]   | +-com.101tec:zkclient:0.7
+[info ]   | | +-log4j:log4j:1.2.15 (evicted by: 1.2.17)
+[info ]   | | +-log4j:log4j:1.2.17
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | | +-io.netty:netty:3.10.3.Final
+[info ]   | | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | | +-jline:jline:2.12
+[info ]   | | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | | +-log4j:log4j:1.2.17
+[info ]   | | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-com.yammer.metrics:metrics-core:2.2.0
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-org.slf4j:slf4j-api:1.7.2 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
+[info ]   | | 
+[info ]   | +-net.sf.jopt-simple:jopt-simple:3.2
+[info ]   | +-org.apache.kafka:kafka-clients:0.9.0.0
+[info ]   | | +-net.jpountz.lz4:lz4:1.2.0
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
+[info ]   | | +-org.xerial.snappy:snappy-java:1.1.1.7
+[info ]   | | 
+[info ]   | +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   | +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | | +-io.netty:netty:3.10.3.Final
+[info ]   | | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | | +-jline:jline:2.12
+[info ]   | | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | | +-log4j:log4j:1.2.17
+[info ]   | | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4 [S]
+[info ]   | +-org.scala-lang.modules:scala-xml_2.11:1.0.4 [S]
+[info ]   | 
+[info ]   +-org.apache.zookeeper:zookeeper:3.4.6 (evicted by: 3.4.7)
+[info ]   +-org.apache.zookeeper:zookeeper:3.4.7
+[info ]   | +-io.netty:netty:3.10.3.Final
+[info ]   | +-io.netty:netty:3.7.0.Final (evicted by: 3.10.3.Final)
+[info ]   | +-io.netty:netty:3.9.2.Final (evicted by: 3.10.3.Final)
+[info ]   | +-jline:jline:0.9.94 (evicted by: 2.12)
+[info ]   | +-jline:jline:2.12
+[info ]   | +-log4j:log4j:1.2.16 (evicted by: 1.2.17)
+[info ]   | +-log4j:log4j:1.2.17
+[info ]   | +-org.slf4j:slf4j-api:1.6.1 (evicted by: 1.7.12)
+[info ]   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | 
+[info ]   +-org.joda:joda-convert:1.8.1
+[info ]   +-org.mongodb:casbah-commons_2.11:2.8.0 [S]
+[info ]   | +-com.github.nscala-time:nscala-time_2.11:1.0.0 [S]
+[info ]   | | +-joda-time:joda-time:2.3 (evicted by: 2.9.1)
+[info ]   | | +-joda-time:joda-time:2.9.1
+[info ]   | | +-org.joda:joda-convert:1.2 (evicted by: 1.8.1)
+[info ]   | | +-org.joda:joda-convert:1.8.1
+[info ]   | | 
+[info ]   | +-org.mongodb:mongo-java-driver:2.13.0
+[info ]   | +-org.slf4j:slf4j-api:1.6.0 (evicted by: 1.7.12)
+[info ]   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | 
+[info ]   +-org.mongodb:casbah-core_2.11:2.8.0 [S]
+[info ]   | +-com.github.nscala-time:nscala-time_2.11:1.0.0 [S]
+[info ]   | | +-joda-time:joda-time:2.3 (evicted by: 2.9.1)
+[info ]   | | +-joda-time:joda-time:2.9.1
+[info ]   | | +-org.joda:joda-convert:1.2 (evicted by: 1.8.1)
+[info ]   | | +-org.joda:joda-convert:1.8.1
+[info ]   | | 
+[info ]   | +-org.mongodb:casbah-commons_2.11:2.8.0 [S]
+[info ]   | | +-com.github.nscala-time:nscala-time_2.11:1.0.0 [S]
+[info ]   | | | +-joda-time:joda-time:2.3 (evicted by: 2.9.1)
+[info ]   | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | +-org.joda:joda-convert:1.2 (evicted by: 1.8.1)
+[info ]   | | | +-org.joda:joda-convert:1.8.1
+[info ]   | | | 
+[info ]   | | +-org.mongodb:mongo-java-driver:2.13.0
+[info ]   | | +-org.slf4j:slf4j-api:1.6.0 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-org.mongodb:casbah-query_2.11:2.8.0 [S]
+[info ]   | | +-com.github.nscala-time:nscala-time_2.11:1.0.0 [S]
+[info ]   | | | +-joda-time:joda-time:2.3 (evicted by: 2.9.1)
+[info ]   | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | +-org.joda:joda-convert:1.2 (evicted by: 1.8.1)
+[info ]   | | | +-org.joda:joda-convert:1.8.1
+[info ]   | | | 
+[info ]   | | +-org.mongodb:casbah-commons_2.11:2.8.0 [S]
+[info ]   | | | +-com.github.nscala-time:nscala-time_2.11:1.0.0 [S]
+[info ]   | | | | +-joda-time:joda-time:2.3 (evicted by: 2.9.1)
+[info ]   | | | | +-joda-time:joda-time:2.9.1
+[info ]   | | | | +-org.joda:joda-convert:1.2 (evicted by: 1.8.1)
+[info ]   | | | | +-org.joda:joda-convert:1.8.1
+[info ]   | | | | 
+[info ]   | | | +-org.mongodb:mongo-java-driver:2.13.0
+[info ]   | | | +-org.slf4j:slf4j-api:1.6.0 (evicted by: 1.7.12)
+[info ]   | | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | | 
+[info ]   | | +-org.slf4j:slf4j-api:1.6.0 (evicted by: 1.7.12)
+[info ]   | | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | | 
+[info ]   | +-org.slf4j:slf4j-api:1.6.0 (evicted by: 1.7.12)
+[info ]   | +-org.slf4j:slf4j-api:1.7.12
+[info ]   | 
+[info ]   +-org.scalaz:scalaz-core_2.11:7.2.0 [S]
+[info ]   +-org.slf4j:slf4j-api:1.7.12
+[info ]   +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
+[info ]   +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
+[info ]   +-org.webjars:angular-highlightjs:0.4.3
+[info ]   | +-org.webjars:angularjs:1.2.27 (evicted by: 1.4.8)
+[info ]   | +-org.webjars:angularjs:1.4.8
+[info ]   | +-org.webjars:highlightjs:8.4-4 (evicted by: 8.7)
+[info ]   | +-org.webjars:highlightjs:8.7
+[info ]   | 
+[info ]   +-org.webjars:angular-ui-bootstrap:0.14.3
+[info ]   | +-org.webjars:angularjs:1.2.16-2 (evicted by: 1.4.8)
+[info ]   | +-org.webjars:angularjs:1.4.8
+[info ]   | +-org.webjars:bootstrap:3.1.1-1 (evicted by: 3.3.6)
+[info ]   | +-org.webjars:bootstrap:3.3.6
+[info ]   |   +-org.webjars:jquery:1.11.1 (evicted by: 2.1.3)
+[info ]   |   +-org.webjars:jquery:2.1.3
+[info ]   |   
+[info ]   +-org.webjars:angular-ui-router:0.2.13
+[info ]   | +-org.webjars:angularjs:1.2.16-2 (evicted by: 1.4.8)
+[info ]   | +-org.webjars:angularjs:1.4.8
+[info ]   | 
+[info ]   +-org.webjars:angularjs-nvd3-directives:0.0.7-1
+[info ]   | +-org.webjars:angularjs:1.2.14 (evicted by: 1.4.8)
+[info ]   | +-org.webjars:angularjs:1.2.26 (evicted by: 1.4.8)
+[info ]   | +-org.webjars:angularjs:1.4.8
+[info ]   | +-org.webjars:d3js:2.10.3 (evicted by: 3.4.1)
+[info ]   | +-org.webjars:d3js:3.4.1
+[info ]   | +-org.webjars:nvd3:1.1.15-beta
+[info ]   |   +-org.webjars:d3js:2.10.3 (evicted by: 3.4.1)
+[info ]   |   +-org.webjars:d3js:3.4.1
+[info ]   |   
+[info ]   +-org.webjars:angularjs-toaster:0.4.8
+[info ]   | +-org.webjars:angularjs:1.2.26 (evicted by: 1.4.8)
+[info ]   | +-org.webjars:angularjs:1.4.8
+[info ]   | 
+[info ]   +-org.webjars:angularjs:1.2.14 (evicted by: 1.4.8)
+[info ]   +-org.webjars:angularjs:1.2.26 (evicted by: 1.4.8)
+[info ]   +-org.webjars:angularjs:1.4.8
+[info ]   +-org.webjars:bootstrap:3.3.6
+[info ]   | +-org.webjars:jquery:1.11.1 (evicted by: 2.1.3)
+[info ]   | +-org.webjars:jquery:2.1.3
+[info ]   | 
+[info ]   +-org.webjars:font-awesome:4.5.0
+[info ]   +-org.webjars:highlightjs:8.7
+[info ]   +-org.webjars:jquery:2.1.3
+[info ]   +-org.webjars:nervgh-angular-file-upload:2.1.1
+[info ]   | +-org.webjars:angularjs:1.2.26 (evicted by: 1.4.8)
+[info ]   | +-org.webjars:angularjs:1.4.8
+[info ]   | 
+[info ]   +-org.webjars:webjars-play_2.11:2.4.0-1 [S]
+[info ]     +-org.webjars:requirejs:2.1.15
+[info ]     +-org.webjars:webjars-locator:0.23
+[info ]       +-com.fasterxml.jackson.core:jackson-databind:2.3.3 (evicted by: 2.5.4)
+[info ]       +-com.fasterxml.jackson.core:jackson-databind:2.5.4
+[info ]       | +-com.fasterxml.jackson.core:jackson-annotations:2.5.0 (evicted by: 2.5.4)
+[info ]       | +-com.fasterxml.jackson.core:jackson-annotations:2.5.4
+[info ]       | +-com.fasterxml.jackson.core:jackson-core:2.5.4
+[info ]       | 
+[info ]       +-org.webjars:webjars-locator-core:0.22
+[info ]         +-org.slf4j:slf4j-api:1.7.12
+[info ]         +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
+[info ]         
+[success] Total time: 0 s, completed Dec 16, 2015 11:15:57 PM

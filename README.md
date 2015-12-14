@@ -12,7 +12,7 @@ Table of Contents
 * <a href="#development">Development</a>
 	* <a href="#build-requirements">Build Requirements</a>
 	* <a href="#configuring-your-ide">Configuring the project for your IDE</a>
-	* <a href="#building-the-code">Building the code</a>
+	* <a href="#building-the-code">Building the applications</a>
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#configuring-the-app">Configuring the application</a>
 	* <a href="#running-the-app">Running the application</a>
@@ -44,8 +44,7 @@ Table of Contents
     * <a href="#cassandra">Cassandra Module</a>
     * <a href="#elastic-search">Elastic Search Module</a>  
         * <a href="#es-avro-to-json">Avro-to-Document support</a>
-    * <a href="#mongodb-module">MongoDB Module</a>  
-    * <a href="#storm-module">Storm Module</a>     
+    * <a href="#mongodb-module">MongoDB Module</a>    
 
 
 <a name="motivations"></a>
@@ -65,7 +64,6 @@ make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like 
     * Zookeeper &#8212; Avro support (coming soon)
 * <a href="#elastic-search">Elastic Search</a> integration (experimental)
 * <a href="#kafka-module">Kafka</a> integration
-* <a href="#storm-module">Storm</a> integration
 * <a href="#zookeeper-module">Zookeeper</a> integration
 
 <a name="development"></a>
@@ -91,10 +89,23 @@ make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like 
     $ sbt gen-idea
 
 <a name="building-the-code"></a>
-### Building the code
+### Building the applications
 
-    $ sbt clean assembly
+Trifecta's build process produces two distinct applications, the command-line interface (trifecta_cli) and
+the Web-based user interface (trifecta_ui)
+
+#### Building Trifecta CLI (Command-line interface)
+
+    $ sbt 
+    > project trifecta_cli
+    > assembly
     
+#### Building Trifecta UI (Web-based interface)
+
+    $ sbt 
+    > project trifecta_ui
+    > dist
+        
 <a name="testing-the-code"></a>    
 ### Running the tests
 
@@ -129,9 +140,6 @@ contains the configuration properties and connection strings for all supported s
     
     # MongoDB properties
     trifecta.mongodb.hosts = localhost
-    
-    # Storm properties
-    trifecta.storm.hosts = localhost
 
 <a name="running-the-app"></a>
 ### Run the application
@@ -168,7 +176,7 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 #### v0.18.1 to v0.18.17
 * Trifecta Core
     * Fixed issue with the application failing if the configuration file is not found
-    * Upgraded to Kafka 0.8.2-beta and Storm 0.9.3
+    * Upgraded to Kafka 0.8.2-beta
     * Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
         * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
     * Upgraded to Kafka 0.8.2.0
@@ -303,7 +311,7 @@ For more detailed information about KQL queries, <a href="#kafka-search-by-query
 ### Trifecta CLI
 
 Trifecta CLI (Command Line Interface) is a REPL tool that simplifies inspecting Kafka messages, Zookeeper data,
-and optionally Elastic Search documents, MongoDB documents and Storm topologies via simple UNIX-like commands
+and optionally Elastic Search documents and MongoDB documents via simple UNIX-like commands
 (or <a href="#kafka-search-by-query">SQL-like queries</a>).
 
 <a name="core-module"></a>
@@ -312,17 +320,16 @@ and optionally Elastic Search documents, MongoDB documents and Storm topologies 
 _Trifecta_ exposes its commands through modules. At any time to see which modules are available one could issue the `modules` command.
 
     core:/home/ldaniels> modules
-    + ------------------------------------------------------------------------------------- +
-    | name           className                                             loaded  active   |
-    + ------------------------------------------------------------------------------------- +
-    | cassandra      com.ldaniels528.trifecta.modules.CassandraModule      true    false    |
-    | core           com.ldaniels528.trifecta.modules.CoreModule           true    true     |
-    | elasticSearch  com.ldaniels528.trifecta.modules.ElasticSearchModule  true    false    |
-    | kafka          com.ldaniels528.trifecta.modules.KafkaModule          true    false    |
-    | mongodb        com.ldaniels528.trifecta.modules.MongoModule          true    false    |
-    | storm          com.ldaniels528.trifecta.modules.StormModule          true    false    |
-    | zookeeper      com.ldaniels528.trifecta.modules.ZookeeperModule      true    false    |
-    + ------------------------------------------------------------------------------------- +
+    + -------------------------------------------------------------------------------------------- +
+    | name           className                                             loaded  active          |
+    + -------------------------------------------------------------------------------------------- +
+    | cassandra      com.github.ldaniels528.trifecta.modules.CassandraModule      true    false    |
+    | core           com.github.ldaniels528.trifecta.modules.CoreModule           true    true     |
+    | elasticSearch  com.github.ldaniels528.trifecta.modules.ElasticSearchModule  true    false    |
+    | kafka          com.github.ldaniels528.trifecta.modules.KafkaModule          true    false    |
+    | mongodb        com.github.ldaniels528.trifecta.modules.MongoModule          true    false    |
+    | zookeeper      com.github.ldaniels528.trifecta.modules.ZookeeperModule      true    false    |
+    + -------------------------------------------------------------------------------------------- +
 
 To execute local system commands, enclose the command you'd like to execute using the back-ticks (`) symbol:
     
@@ -1398,82 +1405,3 @@ To view all of the MongoDB commands, use the `-m` switch and the module name (`m
     | use       mongodb  Sets the current MongoDB database               |
     + ------------------------------------------------------------------ +            
                             
-<a name="storm-module"></a>
-#### Storm Module
-
-Let's view the currently running topologies:
-
-    storm:localhost> sls
-    + ---------------------------------------------------------------------------------------------------------------------------------------------- +
-    | name                                     topologyId                                            status  workers  executors  tasks  uptimeSecs   |
-    + ---------------------------------------------------------------------------------------------------------------------------------------------- +
-    | AvroSummaryMetricCounterTopology         AvroSummaryMetricCounterTopology-42-1410749701        ACTIVE  4        48         48     93153        |
-    | Hydra-Listener-Traffic-Rates             Hydra-Listener-Traffic-Rates-3-1409671097             ACTIVE  4        30         30     1171757      |
-    | TopTalkersTopologyV5                     TopTalkersTopologyV5-44-1410803756                    ACTIVE  4        53         53     39098        |
-    | NetworkMonitoringTrafficRateAggregation  NetworkMonitoringTrafficRateAggregation-2-1409671007  ACTIVE  4        22         22     1171847      |
-    + ---------------------------------------------------------------------------------------------------------------------------------------------- +
-
-Next, let's look at the details of one of the topologies by ID:
-
-    storm:localhost> sget TopTalkersTopologyV5-44-1410803756
-    + --------------------------------------------------- +
-    | topologyId                          bolts  spouts   |
-    + --------------------------------------------------- +
-    | TopTalkersTopologyV5-44-1410803756  7      1        |
-    + --------------------------------------------------- +
-
-Let's look at the Topology's bolts:
-
-    storm:localhost> sbolts TopTalkersTopologyV5-44-1410803756
-    + ------------------------------------------------------------------------------------------------------------------------------------------- +
-    | topologyId                          name                  parallelism  input                 groupingFields  groupingType   tickTupleFreq   |
-    + ------------------------------------------------------------------------------------------------------------------------------------------- +
-    | TopTalkersTopologyV5-44-1410803756  decoderBolt           10           kafkaSpout                            Local/Shuffle                  |
-    | TopTalkersTopologyV5-44-1410803756  kafkaSinkVipOnlyBolt  1            summaryByVipOnlyBolt                  Local/Shuffle                  |
-    | TopTalkersTopologyV5-44-1410803756  kafkaSinkVipSiteBolt  1            summaryByVipSiteBolt                  Local/Shuffle                  |
-    | TopTalkersTopologyV5-44-1410803756  summaryByVipOnlyBolt  20           decoderBolt           vip             Fields         60              |
-    | TopTalkersTopologyV5-44-1410803756  summaryByVipSiteBolt  20           decoderBolt           vip, site       Fields         60              |
-    + ------------------------------------------------------------------------------------------------------------------------------------------- +
-
-Let's look at the Topology's spouts:
-
-    storm:localhost> spouts TopTalkersTopologyV5-44-1410803756
-    + ------------------------------------------------------------- +
-    | topologyId                          name        parallelism   |
-    + ------------------------------------------------------------- +
-    | TopTalkersTopologyV5-44-1410803756  kafkaSpout  1             |
-    + ------------------------------------------------------------- +
-
-Finally, let's take a look at the connection properties for this session:
-
-    storm:localhost> sconf
-    + ---------------------------------------------------------------------------------------------------------- +
-    | key                                            value                                                       |
-    + ---------------------------------------------------------------------------------------------------------- +
-    | nimbus.childopts                               -Xmx1024m                                                   |
-    | nimbus.host                                    localhost                                                   |
-    | nimbus.inbox.jar.expiration.secs               3600                                                        |
-    .                                                                                                            .
-    .                                                                                                            .
-    .                                                                                                            .
-    | worker.heartbeat.frequency.secs                1                                                           |
-    | zmq.hwm                                        0                                                           |
-    | zmq.linger.millis                              5000                                                        |
-    | zmq.threads                                    1                                                           |
-    + ---------------------------------------------------------------------------------------------------------- +
-
-To view all of the Storm commands, use the `-m` switch and the module name (`storm` in this case):
-
-    storm:localhost> ? -m storm
-     + -------------------------------------------------------------------------------------- +
-     | command   module  description                                                          |
-     + -------------------------------------------------------------------------------------- +
-     | sbolts    storm   Retrieves the list of bolts for s given topology by ID               |
-     | sconf     storm   Lists, retrieves or sets the configuration keys                      |
-     | sconnect  storm   Establishes (or re-establishes) a connect to the Storm Nimbus Host   |
-     | sget      storm   Retrieves the information for a topology                             |
-     | skill     storm   Kills a running topology                                             |
-     | sls       storm   Lists available topologies                                           |
-     | spouts    storm   Retrieves the list of spouts for a given topology by ID              |
-     + -------------------------------------------------------------------------------------- +
-

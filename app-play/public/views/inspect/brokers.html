@@ -1,0 +1,52 @@
+<div class="col-md-8" style="height: 525px; border-right: 1px solid #cccccc">
+    <div ng-show="brokers.length" class="full_block hide_show_topics">{{ brokers.length }} host(s) found.</div>
+    <div ng-repeat="inst in brokers | orderBy:'host'">
+        <img class="clickable" ng-click="expandBroker(inst)" ng-src="/assets/images/buttons/{{ inst.expanded ? 'collapse' : 'expand' }}.png"> {{ inst.host }} ({{ inst.details.length }} instances)
+        <table ng-show="inst.expanded" class="full_width indent">
+            <tr>
+                <th>Port</th>
+                <th class="center">Version</th>
+                <th class="center">Timestamp</th>
+                <th class="center">JMX Port</th>
+            </tr>
+            <tr ng-repeat="b in inst.details | orderBy:'port'">
+                <td>{{ b.port }}</td>
+                <td class="center">{{ b.version }}</td>
+                <td class="center">{{ b.timestamp }}</td>
+                <td class="center">
+                    <span ng-show="b.jmxPort">{{ b.jmxPort }}</span>
+                    <span ng-hide="b.jmxPort" class="inactive">N/A</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div ng-hide="brokers.length">
+        <div>
+            <img src="/assets/images/status/yellowlight.gif">
+            <span class="warning">No brokers were found.</span>
+        </div>
+        <div style="margin-top: 10px">
+            This usually means that either:
+            <ul>
+                <li>Kafka has not been setup on the Zookeeper node for which you are pointing.</li>
+                <li>Or, Trifecta has not been configured to point to the Zookeeper instance that is
+                    running Kafka.
+                    <blockquote>
+                        <div style="color: #aaaaaa"># the Zookeeper instance the Kafka Brokers are pointing to</div>
+                        <div><span style="color: magenta">trifecta.zookeeper.host</span> = <span style="color: blue">localhost:2181</span></div>
+                    </blockquote>
+                </li>
+            </ul>
+            <p>Please review/update the configuration properties found in <span style="color: blue">$HOME/.trifecta/config.properties</span>,
+                and restart Trifecta.</p>
+        </div>
+    </div>
+</div>
+<div class="col-md-8">
+    <div ng-include="'/assets/views/partials/hints_and_tips.html'"></div>
+    <p><img class="bulb" src="/assets/images/common/bulb-16.png"> Kafka producers send data directly to
+        the broker that is the leader for the partition without any intervening routing tier. To help
+        the producer do this all Kafka nodes can answer a request for metadata about which servers are
+        alive and where the leaders for the partitions of a topic are at any given time to allow the
+        producer to appropriate direct its requests.</p>
+</div>

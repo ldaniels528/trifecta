@@ -1,0 +1,99 @@
+<div class="col-md-8" style="height: 525px; border-right: 1px solid #cccccc">
+    <div ng-show="consumers.length" ng-include="'/assets/views/partials/hide_show_empty_topics.html'"></div>
+
+    <!-- No Consumers -->
+    <div ng-hide="consumers.length">
+        <div>
+            <img src="/assets/images/status/yellowlight.gif">
+            <span class="warning">No consumers were found.</span>
+        </div>
+        <p style="margin-top: 5px">But if you believe some consumer data should have been found here,
+            don't panic.</p>
+        <p>Trifecta supports <u>two types</u> of consumers:</p>
+        <ul>
+            <li>Kafka-native Consumer Groups</li>
+            <li>Kafka-Storm Partition Manager Consumers</li>
+        </ul>
+
+        <p><i>Kafka-native Consumer Groups</i> are retrieved by default. However, the
+            <i>Kafka-Storm Partition Manager Consumers</i> require a property
+            (<i>trifecta.storm.kafka.consumers.partitionManager</i>) to be set to <i>true</i> in
+            <span style="color: blue">$HOME/.trifecta/config.properties</span>.</p>
+
+        <p>Example:</p>
+        <blockquote>
+            <div style="color: #aaaaaa"># indicates whether Storm Partition Manager-style consumers should be read from
+                Zookeeper
+            </div>
+            <div>
+                <span style="color: magenta">trifecta.storm.kafka.consumers.partitionManager</span> = <span style="color: blue">true</span>
+            </div>
+        </blockquote>
+
+        <p>If you're using Apache Storm, and you have not yet set the above property to true, please do
+            so, then restart Trifecta for the change to take affect.</p>
+    </div>
+
+    <!-- Consumers -->
+    <div ng-show="consumers.length" class="block" ng-repeat="t in getTopics() | orderBy:'topic'">
+        <a ng-click="expandTopicConsumers(t)">
+            <img ng-src="/assets/images/{{t.loadingConsumers ? 'status/loading.gif' : t.expanded ? 'buttons/collapse.png' : 'buttons/expand.png'}}">
+            <img ng-src="{{ getTopicIcon(t, t == topic) }}"> {{ t.topic }}
+            <span ng-show="t.totalMessages > 0">
+                (<span class="messages">{{t.totalMessages | number}}</span>)
+            </span>
+        </a>
+
+        <div ng-show="t.expanded" ng-repeat="consumer in getConsumersForTopic(t.topic)" class="indent">
+            <a ng-click="consumer.expanded = !consumer.expanded">
+                <img ng-src="/assets/images/buttons/{{consumer.expanded ? 'collapse' : 'expand'}}.png">
+                <img src="/assets/images/common/consumers-16.png">
+                <span>{{consumer.consumerId}}</span>
+                <img src="/assets/images/status/processing.gif" ng-show="consumer.expanded && isConsumerUpToDate(consumer)">
+            </a>
+
+            <div ng-show="consumer.expanded" class="indent">
+                <table style="width: 90%">
+                    <tr>
+                        <th>Partition</th>
+                        <th>Topic Offset</th>
+                        <th>Consumer Offset</th>
+                        <th>Remaining</th>
+                        <th>Last Updated</th>
+                    </tr>
+
+                    <tr ng-repeat="detail in getConsumersForIdAndTopic(consumer.consumerId, t.topic) | orderBy:'partition'">
+                        <td class="center">{{ detail.partition }}</td>
+                        <td class="left">
+                            <a ng-click="switchToMessage(detail.topic, detail.partition, detail.topicOffset)">
+                                {{ detail.topicOffset | number }}
+                            </a>
+                            <span class="delta_topic" ng-show="detail.deltaT">
+                                <img src="/assets/images/tabs/inspect/arrow_topic.gif"> {{ detail.deltaT | number }}
+                            </span>
+                        </td>
+                        <td class="left">
+                            <a ng-click="switchToMessage(detail.topic, detail.partition, detail.offset)">
+                                {{ detail.offset | number }}
+                            </a>
+                            <span class="delta_consumer" ng-show="detail.deltaC">
+                                <img src="/assets/images/tabs/inspect/arrow_consumer.gif"> {{ detail.deltaC | number }}
+                            </span>
+                        </td>
+                        <td class="left">{{ detail.messagesLeft | number }}</td>
+                        <td>
+                            {{ detail.lastModified | duration }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-md-4">
+    <div ng-include="'/assets/views/partials/hints_and_tips.html'"></div>
+    <p><img class="bulb" src="/assets/images/common/bulb-16.png"> Kafka uses Consumer Groups to
+        track the current offset individual for individual consumers. This view allows users to view
+        those offsets via web socket in near real-time.</p>
+    <div ng-include="'/assets/views/partials/web_socket_refresh.html'"></div>
+</div>

@@ -1,0 +1,64 @@
+<div class="col-md-8" style="height: 525px; border-right: 1px solid #cccccc">
+    <div ng-include="'/assets/views/partials/hide_show_empty_topics.html'"></div>
+
+    <!-- No Topics -->
+    <div ng-hide="getTopics().length">
+        <img src="/assets/images/status/yellowlight.gif">
+        <span class="warning">No topic with messages found.</span>
+    </div>
+
+    <!-- Topics -->
+    <div class="block" ng-repeat="t in getTopics() | orderBy:'topic'">
+        <a ng-click="t.expanded = !t.expanded">
+            <img ng-src="/assets/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
+            <img ng-src="{{ getTopicIcon(t, topic == t) }}"> {{ t.topic }}
+            <span ng-show="t.totalMessages > 0">
+                (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
+            </span>
+            <img src="/assets/images/status/processing.gif" ng-show="t.updatingTopics">
+        </a>
+        <div ng-show="t.expanded" style="width: 100%; margin-left: 32px">
+            <table>
+                <tr>
+                    <th>Partition</th>
+                    <th>First Offset</th>
+                    <th>Last Offset</th>
+                    <th>Messages</th>
+                    <th>Leader</th>
+                </tr>
+
+                <tr ng-repeat="p in t.partitions | orderBy:'partition'">
+                    <td class="center">{{ p.partition }}</td>
+                    <td>
+                        <span ng-show="p.startOffset < p.endOffset">
+                            <a ng-click="switchToMessage(t.topic, p.partition, p.startOffset)">{{ p.startOffset | number }}</a>
+                        </span>
+                        <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
+                    </td>
+                    <td>
+                        <span ng-show="p.startOffset < p.endOffset">
+                            <a ng-click="switchToMessage(t.topic, p.partition, p.endOffset)">{{ p.endOffset | number }}</a>
+                        </span>
+                        <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
+                    </td>
+                    <td>
+                        {{ p.messages | number }}
+                        <span class="delta_topic" ng-show="p.delta">
+                            <img src="/assets/images/tabs/inspect/arrow_topic.gif"> {{ p.delta | number }}
+                        </span>
+                    </td>
+                    <td>
+                        <span ng-show="p.leader">{{ p.leader.host }}:{{ p.leader.port }}</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="col-md-4">
+    <div ng-include="'/assets/views/partials/hints_and_tips.html'"></div>
+    <p><img class="bulb" src="/assets/images/common/bulb-16.png"> This view provides the user
+        with information about the current offset for all partitions within each non-empty topic
+        (containing at least one message).</p>
+    <div ng-include="'/assets/views/partials/web_socket_refresh.html'"></div>
+</div>

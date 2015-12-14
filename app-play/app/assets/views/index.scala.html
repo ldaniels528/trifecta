@@ -1,0 +1,122 @@
+@()
+
+<!DOCTYPE html>
+<html ng-app="trifecta">
+<head>
+    <title>Trifecta: Dashboard</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+    <!-- WebJar Stylesheets -->
+    <link href='@routes.WebJarAssets.at(WebJarAssets.locate("bootstrap.min.css"))' type="text/css" rel="stylesheet" media="screen">
+    <link href='@routes.WebJarAssets.at(WebJarAssets.locate("tomorrow.min.css"))' type="text/css" rel="stylesheet" media="screen">
+
+    <!-- Application-specific Stylesheets -->
+    <link href='@routes.Assets.versioned("stylesheets/decoders.css")' type="text/css" rel="stylesheet" media=screen>
+    <link href='@routes.Assets.versioned("stylesheets/index.css")' type="text/css" rel="stylesheet" media=screen>
+    <link href='@routes.Assets.versioned("stylesheets/inspect.css")' type="text/css" rel="stylesheet" media=screen>
+    <link href='@routes.Assets.versioned("stylesheets/observe.css")' type="text/css" rel="stylesheet" media=screen>
+    <link href='@routes.Assets.versioned("stylesheets/publish.css")' type="text/css" rel="stylesheet" media=screen>
+    <link href='@routes.Assets.versioned("stylesheets/query.css")' type="text/css" rel="stylesheet" media=screen>
+
+    <!-- WebJar JS Libraries -->
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("jquery.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-animate.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-cookies.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-file-upload.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("highlight.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-highlightjs.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-resource.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-route.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-sanitize.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("d3.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("nv.d3.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("toaster.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("ui-bootstrap-tpls.min.js"))' type="text/javascript"></script>
+
+    <!-- Scala.js Resources -->
+    <script src="@routes.Assets.versioned(s"javascripts/trifecta_js-fastopt.js?ts=${System.currentTimeMillis()}")"></script>
+    <script src="@routes.Assets.versioned("javascripts/trifecta_js-launcher.js")"></script>
+</head>
+
+<body id="TrifectaMain" ng-controller="MainCtrl">
+    <h2><span class="title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span> <span class="version">v{{ version }}</span></h2>
+
+    <!-- global error messages -->
+    <div ng-repeat="message in globalMessages" class="full_width">
+        <div ng-class="'global_' + message.type" >
+            <img class="middle" ng-src="/assets/images/status/{{ message.type == 'error' ? 'redlight.png' : message.type == 'info' ? 'bluelight.png' : 'yellowlight.gif' }}">
+            {{ message.text }}
+            <img class="clickable middle" style="float: right"
+                 src="/assets/images/buttons/delete.png"
+                 ng-click="removeMessage($index)">
+        </div>
+    </div>
+
+    <!-- application tabs -->
+    <div class="title_border">
+        <tabset>
+            <tab ng-repeat="tab in tabs" active="tab.active" select="changeTab(tab, $event)">
+                <tab-heading><img ng-class="isActiveTab(tab) ? 'tab_active' : 'tab_inactive'" ng-src="{{ tab.imageURL }}"> {{ tab.name }}</tab-heading>
+            </tab>
+        </tabset>
+    </div>
+
+    <!-- the active tab view -->
+    <div ng-view ng-cloak></div>
+
+    <!-- Message Search: Find Dialog -->
+    <script type="text/ng-template" id="message_search_finder.htm">
+        <div class="modal-header">
+            <h4>Find Message</h4>
+        </div>
+        <div class="modal-body">
+            <div class="full_block" style="margin: 10px">
+                <div class="full_block">
+                    <span class="header_label">Topic</span>
+                    <select ng-model="form.topic" ng-options="t.topic for t in getTopics(false)">
+                    </select> <span ng-show="form.topic != null"> &#8212; <span ng-class="form.topic.totalMessages == 0 ? 'negative' : 'positive'">{{ form.topic.totalMessages | number }} message(s)</span></span>
+                </div>
+
+                <div class="full_block" style="margin-top: 10px">
+                    <span class="header_item">Criteria</span> <span>(e.g. symbol == "AAPL")</span>
+                    <div>
+                        <textarea ng-model="form.criteria" rows="4" cols="80" title="Enter query criteria here"></textarea>
+                    </div>
+                </div>
+
+                <div class="full_block">
+                    <button style="margin-top: 10px" ng-click="ok()">Search</button>
+                    <button style="float: right; margin-top: 10px" ng-click="cancel()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <!-- Message Search: Loading Dialog -->
+    <script type="text/ng-template" id="message_search_loading.htm">
+        <div class="modal-body">
+            <div class="full_block">
+                <progressbar class="progress-striped active" max="100" value="100" type="success"><i>Searching...</i></progressbar>
+            </div>
+        </div>
+    </script>
+
+    <!-- Zookeeper Item Tree -->
+    <script type="text/ng-template" id="zk_item_tree.htm">
+        <img ng-src="/assets/images/{{ item.loading ? 'status/loading.gif' : (item.expanded ? 'buttons/collapse.png' : 'buttons/expand.png') }}"
+             ng-click="expandItem(item)"
+             class="clickable">
+        <img ng-show="item.path == '/'" class="middle" src="/assets/images/common/root-16.png">
+        <a ng-click="getItemInfo(item)">
+            <span ng-show="zkItem.path == item.path" class="highlighted">{{ item.name }}</span>
+            <span ng-show="zkItem.path != item.path">{{ item.name }}</span>
+        </a>
+
+        <div style="margin-left: 20px" ng-show="item.expanded">
+            <div ng-repeat="item in item.children" ng-include="'zk_item_tree.htm'"></div>
+        </div>
+    </script>
+
+</body>
+</html>

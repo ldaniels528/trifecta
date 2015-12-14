@@ -1,0 +1,13 @@
+<div class="full_block hide_show_topics">
+    <span>
+        {{ getTopics().length | number }} of {{ topics.length }} Topic(s) shown
+    </span>
+    <span ng-click="toggleHideShowEmptyTopics()" class="clickable" style="float: right">
+        <span ng-show="hideEmptyTopics">[Show empty]</span>
+        <span ng-hide="hideEmptyTopics">[Hide empty]</span>
+    </span>
+    <br style="clear: both">
+</div>
+<div ng-show="!topics.length" class="warning bold">
+    <img src="/assets/images/status/yellowlight.gif"> No topics found
+</div>

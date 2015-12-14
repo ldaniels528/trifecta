@@ -1,0 +1,42 @@
+<div class="col-md-5 zk_item_container" style="border-right: 1px solid #cccccc">
+    <div ng-repeat="item in zkItems" ng-include="'zk_item_tree.htm'"></div>
+</div>
+<div class="col-md-7">
+    <div class="full_block" style="margin-left: 5px">
+        <table ng-show="zkItem" style="border-collapse: separate; border-spacing: 4px;">
+            <tr>
+                <th>Path:</th>
+                <td>{{ zkItem.path }}</td>
+            </tr>
+            <tr>
+                <th>Created:</th>
+                <td>{{ zkItem.creationTime | date:'MM-dd-yyyy hh:mm:ss' }}</td>
+            </tr>
+            <tr>
+                <th>Last Modified:</th>
+                <td>{{ zkItem.lastModified | date:'MM-dd-yyyy hh:mm:ss' }}</td>
+            </tr>
+            <tr ng-show="zkItem.size">
+                <th>Size (in bytes):</th>
+                <td>{{ zkItem.size | number }}</td>
+            </tr>
+        </table>
+
+        <div ng-show="zkItem.data" style="margin-top: 20px">
+            <span class="bold">Data Format:</span>
+            <select ng-model="selected.format" ng-options="format for format in formats"
+                    ng-change="formatData(zkItem.path, selected.format)">
+            </select>
+
+            <table class="full_width" ng-if="zkItem.data.type == 'binary'">
+                <tr ng-repeat="tuple in zkItem.data.value track by $index">
+                    <td style="background: #cceeff; border: 1px solid #cccccc">{{ tuple[0] }}</td>
+                    <td style="background: #ffff88; border: 1px solid #cccccc">{{ tuple[1] }}</td>
+                </tr>
+            </table>
+
+            <div ng-if="zkItem.data.type == 'json'" hljs source="toPrettyJSON(zkItem.data.value, 4)"></div>
+            <div ng-if="zkItem.data.type == 'plain-text'">{{ zkItem.data.value }}</div>
+        </div>
+    </div>
+</div>

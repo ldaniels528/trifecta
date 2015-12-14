@@ -1,0 +1,61 @@
+########################################################################################################################
+#       Application Views and API Routes
+########################################################################################################################
+
+GET           /                                                  com.github.ldaniels528.trifecta.controllers.Application.index
+
+GET           /assets/*file                                      controllers.Assets.versioned(path="/public", file: Asset)
+GET           /webjars/*file                                     controllers.WebJarAssets.at(file)
+
+########################################################################################################################
+#       REST API Routes
+########################################################################################################################
+
+# Server Side Events
+GET           /api/sse/connect                                   com.github.ldaniels528.trifecta.controllers.Application.sseConnect
+GET           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.controllers.KafkaController.getSamplingSession
+PUT           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.controllers.KafkaController.startSampling
+DELETE        /api/sse/sampling/:sessionId                       @com.github.ldaniels528.trifecta.controllers.KafkaController.stopSampling(sessionId)
+
+# Brokers & Replicas
+GET           /api/brokers                                       @com.github.ldaniels528.trifecta.controllers.KafkaController.getBrokers
+GET           /api/brokers/grouped                               @com.github.ldaniels528.trifecta.controllers.KafkaController.getBrokerDetails
+GET           /api/replicas/:topic                               @com.github.ldaniels528.trifecta.controllers.KafkaController.getReplicas(topic: String)
+
+# Consumers
+GET           /api/consumers/deltas                              @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumerDeltas
+GET           /api/consumers                                     @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumerDetails
+GET           /api/consumers/topic/:topic                        @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumersByTopic(topic: String)
+
+# Decoders
+GET           /api/decoders                                      @com.github.ldaniels528.trifecta.controllers.QueryController.getDecoders
+GET           /api/decoders/topic/:topic                         @com.github.ldaniels528.trifecta.controllers.QueryController.getDecoderByTopic(topic: String)
+
+# Messages
+GET           /api/message_key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.controllers.KafkaController.getMessageKey(topic: String, partition: Int, offset: Long)
+GET           /api/message_data/:topic/:partition/:offset        @com.github.ldaniels528.trifecta.controllers.KafkaController.getMessageData(topic: String, partition: Int, offset: Long)
+POST          /api/message/:topic                                @com.github.ldaniels528.trifecta.controllers.KafkaController.publishMessage(topic: String)
+
+# Queries
+POST          /api/query                                         @com.github.ldaniels528.trifecta.controllers.QueryController.saveQuery
+GET           /api/query/:topic                                  @com.github.ldaniels528.trifecta.controllers.QueryController.getQueriesByTopic(topic: String)
+POST          /api/query/all                                     @com.github.ldaniels528.trifecta.controllers.QueryController.executeQuery
+POST          /api/query/one/:topic                              @com.github.ldaniels528.trifecta.controllers.QueryController.findOne(topic: String)
+PUT           /api/results/csv                                   @com.github.ldaniels528.trifecta.controllers.QueryController.transformResultsToCSV
+
+# Schemas
+POST          /api/schema                                        @com.github.ldaniels528.trifecta.controllers.QueryController.saveSchema
+GET           /api/schema/:topic/:name                           @com.github.ldaniels528.trifecta.controllers.QueryController.getDecoderSchemaByName(topic: String, name: String)
+
+# Topics
+GET           /api/topic/:topic                                  @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopicByName(topic: String)
+GET           /api/topics                                        @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopics
+GET           /api/topics/deltas                                 @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopicDeltas
+GET           /api/topics/details                                @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopicSummaries
+GET           /api/topics/details/:topic                         @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopicDetailsByName(topic: String)
+
+# Zookeeper
+GET           /api/zookeeper/data                                @com.github.ldaniels528.trifecta.controllers.ZookeeperController.getZkData(path: String, format: String)
+GET           /api/zookeeper/info                                @com.github.ldaniels528.trifecta.controllers.ZookeeperController.getZkInfo(path: String)
+GET           /api/zookeeper/path                                @com.github.ldaniels528.trifecta.controllers.ZookeeperController.getZkPath(path: String)
+

@@ -1,0 +1,58 @@
+<div ng-controller="PublishCtrl" class="full_block" style="margin-top: 5px">
+    <div class="col-md-8">
+        <div class="pub_bold_label">
+            <div class="col-md-6">
+                <span class="pub_bold_label bold">Message Key &nbsp;</span> &#8212; format:
+                <select ng-model="messageBlob.keyFormat" ng-options="f for f in keyFormats"></select>
+            </div>
+            <div class="col-md-6">
+                <input id="keyAuto" ng-model="messageBlob.keyAuto" type="checkbox">
+                <label for="keyAuto" class="pub_bold_label bold">Auto-generate Key</label>
+            </div>
+        </div>
+        <div class="pub_message_key_panel" ng-hide="messageBlob.keyAuto">
+            <textarea ng-model="messageBlob.key" class="pub_editor"
+                      placeholder="Enter the message key here (or choose auto-generation)">{{ messageBlob.key }}</textarea>
+        </div>
+        <div class="pub_bold_label">
+            <div class="col-md-6">
+                <span class="bold">Message Body</span> &#8212; format:
+                <select ng-model="messageBlob.messageFormat" ng-options="f for f in messageFormats"></select>
+            </div>
+            <div class="col-md-6">
+                <span class="pub_bold_label bold">Output Topic</span>
+                <select ng-model="messageBlob.topic" ng-options="t.topic for t in getTopics(false)"></select>
+                <button class="publish_button" ng-click="publishMessage(messageBlob)">Publish</button>
+            </div>
+        </div>
+        <div class="pub_message_data_panel">
+            <textarea ng-model="messageBlob.message" class="pub_editor"
+                      placeholder="Enter the message data here">{{ messageBlob.message }}</textarea>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div style="height: 100%; margin-left: 10px; padding-left: 10px; border-left: 1px solid #cccccc">
+            <div ng-include="'/assets/views/partials/hints_and_tips.html'"></div>
+            <p><img class="bulb" src="/assets/images/common/bulb-16.png"> The <b><i>message key</i></b> could be a
+                variety of different values. <span class="title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span>
+                provides the following types to cover the most commonly-used options:</p>
+
+            <ul>
+                <li>ASCII text</li>
+                <li>EPOC (milliseconds)</li>
+                <li>Binary sequences represented via hexadecimal dot-notation
+                    (e.g.  <span class="pub_hex_note"><i>00.ca.fe.ba.be.00</i></span>)</li>
+                <li>Universally unique identifiers (UUID)
+                    (e.g. <span class="pub_hex_note"><i>de305d54-75b4-431b-adb2-eb6b9e546013</i></span></li>
+            </ul>
+
+            <p><img class="bulb" src="/assets/images/common/bulb-16.png"> Optionally, you may elect to have the message key
+                automatically generated (for <i>EPOC</i> and <i>UUID</i> types only).</p>
+
+            <p><img class="bulb" src="/assets/images/common/bulb-16.png"> The <b><i>message body</i></b> can be represented
+                in various formats; including: <a href="http://avro.apache.org/" target="avro_window">Avro</a>, JSON,
+                or Binary (<b>NOTE</b>: ASCII text sequences are treated as binary).</p>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,39 @@
+<div class="col-md-8">
+    <div ng-include="'/assets/views/partials/hide_show_empty_topics.html'"></div>
+    <div ng-repeat="t in getTopics() | orderBy:'topic'">
+        <a ng-click="expandReplicas(t)">
+            <img ng-src="/assets/images/{{t.loading ? 'status/loading.gif' : t.replicaExpanded ? 'buttons/collapse.png' : 'buttons/expand.png'}}">
+            <img ng-src="{{ getTopicIcon(t, t == topic) }}"> {{ t.topic }}
+            <span ng-show="t.totalMessages > 0">
+                (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
+            </span>
+        </a>
+
+        <div ng-show="t.replicaExpanded" ng-repeat="r in t.replicas | orderBy:'partition'" class="indent">
+            <img ng-click="r.partitionExpanded = !r.partitionExpanded" ng-src="/assets/images/buttons/{{r.partitionExpanded ? 'collapse.png' : 'expand.png'}}">
+            <img ng-src="{{ getInSyncBulbImage(r.inSyncPct) }}">
+            Partition {{ r.partition }}
+            <span style="color: #aaaaaa">
+                (<span ng-class="getInSyncClass(r.inSyncPct)">{{r.inSyncPct}}%</span>)
+            </span>
+
+            <div ng-show="r.partitionExpanded" ng-repeat="broker in r.replicas" class="indent">
+                <img ng-show="broker.inSync" src="/assets/images/status/online-16.png">
+                <img ng-hide="broker.inSync" src="/assets/images/status/offline-16.png">
+                <span ng-class="!broker.inSync ? 'in_sync_red' : ''">{{ broker.host }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-md-4" style="height: 100%; border-left: 1px solid #cccccc">
+    <div ng-include="'/assets/views/partials/hints_and_tips.html'"></div>
+    <p><img class="bulb" src="/assets/images/common/bulb-16.png"> This view provides the user
+        with information about the replication of topic partitions. The replication state of each partition
+        is displayed as a percentage:
+    <ul>
+        <li><span class="in_sync_green">100%</span> &#8212; indicates a healthy fully replicated partition</li>
+        <li><span class="in_sync_yellow">1% to 99%</span> &#8212; indicates an under-replicated partition</li>
+        <li><span class="in_sync_red">0%</span> &#8212; indicates a partition that is completely unavailable</li>
+    </ul>
+    <p>&nbsp;</p>
+</div>
