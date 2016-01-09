@@ -47,7 +47,7 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
 
   $scope.init = () => {
     console.log("Initializing Observe Controller...")
-    $scope.updatePartition($scope.topic.flatMap(_.partitions.find(_.messages.exists(_ > 0)).orUndefined))
+    $scope.updatePartition($scope.topic.flatMap(_.partitions.sortBy(_.partition.getOrElse(0)).find(_.messages.exists(_ > 0)).orUndefined))
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -111,12 +111,11 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
       message <- aMessage
       topic <- $scope.topic
       partitionId <- message.partition
-      index = topic.partitions.indexWhere(_.partition.contains(partitionId))
-      partition <- topic.partitions.find(_.partition.contains(partitionId)).orUndefined
+      partition <- topic(partitionId).orUndefined
     } {
       // update the partition with the offset
       $scope.partition = partition
-      topic.partitions(index) = partition.copy(offset = message.offset)
+      topic.replace(message)
     }
   }
 
@@ -174,7 +173,7 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
                 for {
                   myTopic <- $scope.findTopicByName(topic)
                   partitionID <- message.partition
-                  myPartition <- myTopic.findPartition(partitionID)
+                  myPartition <- myTopic(partitionID)
                 } {
                   $scope.topic = myTopic
                   $scope.partition = myPartition
@@ -336,7 +335,7 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
       offset <- anOffset
       _ = console.info(s"switchToMessage: topicID = $topicID, partitionID = $partitionID, offset = $offset")
       topic <- $scope.findTopicByName(topicID)
-      partition <- topic.findPartition(partitionID).orUndefined
+      partition <- topic(partitionID).orUndefined
     } {
       $scope.topic = topic
       $scope.partition = partition

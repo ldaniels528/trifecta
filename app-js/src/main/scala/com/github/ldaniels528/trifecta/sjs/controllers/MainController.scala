@@ -239,21 +239,12 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
     for {
       delta <- deltas
       partitionId <- delta.partition
-      topic <- $scope.topics.find(_.topic == delta.topic)
-      index = topic.partitions.indexWhere(_.partition.contains(partitionId))
+      topic <- $scope.topics.find(t => delta.topic.contains(t.topic)).orUndefined
     } {
-      val replacementPartition = topic.partitions(index).copy(
-        startOffset = delta.startOffset,
-        endOffset = delta.endOffset,
-        messages = delta.messages,
-        totalMessages = delta.totalMessages
-      )
-
-      console.info(s"Updating partition #$partitionId: ${angular.toJson(replacementPartition)}")
-      topic.partitions(index) = replacementPartition
+      topic.replace(delta)
 
       // clear the delta after 5 seconds
-      $timeout(() => topic.partitions(index).delta = js.undefined, 5.seconds)
+      $timeout(() => topic(partitionId).foreach(_.delta = js.undefined), 5.seconds)
     }
   }
 
@@ -284,9 +275,9 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
     outcome onComplete {
       case Success((topics, brokers, consumers)) =>
         console.info(s"Loaded ${topics.length} topic(s)")
-        enrichTopics(topics)
-        $scope.topic = topics.find(_.totalMessages > 0).orUndefined
-        $scope.topics = topics
+       val sortedTopics = enrichTopics(topics.sortBy(_.topic))
+        $scope.topic = sortedTopics.find(_.totalMessages > 0).orUndefined
+        $scope.topics = sortedTopics
         $scope.brokers = brokers
         $scope.consumers = consumers
 
@@ -295,7 +286,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
         $scope.$broadcast(REFERENCE_DATA_LOADED, ReferenceData(
           brokers = brokers,
           consumers = consumers,
-          topics = topics,
+          topics = $scope.topics,
           topic = $scope.topic
         ))
       case Failure(e) =>
@@ -309,6 +300,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
       t <- topics
       p <- t.partitions
     } p.offset = p.endOffset
+    topics
   }
 
   // initialize the controller
