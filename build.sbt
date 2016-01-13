@@ -32,7 +32,7 @@ lazy val coreDeps = Seq(
   //
   // ldaniels528 Dependencies
   "com.ldaniels528" %% "commons-helpers" % "0.1.0",
-  "com.ldaniels528" %% "tabular" % "0.1.1" exclude("org.slf4j", "slf4j-log4j12"),
+  "com.ldaniels528" %% "tabular" % "0.1.3" exclude("org.slf4j", "slf4j-log4j12"),
   //
   // Akka dependencies
   "com.typesafe.akka" %% "akka-actor" % myAkkaVersion,
