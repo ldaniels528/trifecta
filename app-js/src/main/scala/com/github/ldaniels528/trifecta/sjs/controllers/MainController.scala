@@ -50,11 +50,11 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
       name = "Observe",
       contentURL = "/observe",
       imageURL = "/assets/images/tabs/main/observe-24.png"
-    ), MainTab(
+    ), /*MainTab(
       name = "Publish",
       contentURL = "/publish",
       imageURL = "/assets/images/tabs/main/publish-24.png"
-    ), MainTab(
+    ),*/ MainTab(
       name = "Query",
       contentURL = "/query",
       imageURL = "/assets/images/tabs/main/query-24.png"
