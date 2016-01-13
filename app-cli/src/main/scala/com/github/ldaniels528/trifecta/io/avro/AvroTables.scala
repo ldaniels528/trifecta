@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.io.avro
 
-import com.ldaniels528.tabular.Tabular
+import com.github.ldaniels528.tabular.Tabular
 import org.apache.avro.generic.GenericRecord
 
 import scala.collection.JavaConversions._

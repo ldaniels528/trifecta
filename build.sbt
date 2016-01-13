@@ -31,8 +31,8 @@ lazy val trifecta_js = (project in file("app-js"))
 lazy val coreDeps = Seq(
   //
   // ldaniels528 Dependencies
-  "com.ldaniels528" %% "commons-helpers" % "0.1.0",
-  "com.ldaniels528" %% "tabular" % "0.1.3" exclude("org.slf4j", "slf4j-log4j12"),
+  "com.github.ldaniels528" %% "commons-helpers" % "0.1.1",
+  "com.github.ldaniels528" %% "tabular" % "0.1.3" exclude("org.slf4j", "slf4j-log4j12"),
   //
   // Akka dependencies
   "com.typesafe.akka" %% "akka-actor" % myAkkaVersion,
@@ -96,6 +96,8 @@ lazy val trifecta_cli = (project in file("app-cli"))
     }
     },
     resolvers += "google-sedis-fix" at "http://pk11-scratch.googlecode.com/svn/trunk",
+    resolvers += "clojars" at "https://clojars.org/repo",
+    resolvers += "conjars" at "http://conjars.org/repo",
     libraryDependencies ++= coreDeps ++ Seq(
       //
       // General Scala Dependencies

@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta
 
 import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
-import com.ldaniels528.tabular.Tabular
+import com.github.ldaniels528.tabular.Tabular
 import com.github.ldaniels528.trifecta.io.AsyncIO
 import com.github.ldaniels528.trifecta.io.avro.AvroTables
 import com.github.ldaniels528.trifecta.io.json.JsonHelper
