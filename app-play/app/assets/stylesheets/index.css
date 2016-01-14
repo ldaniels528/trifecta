@@ -124,6 +124,8 @@ th { text-align: left }
 
 .negative { color: #f00000 }
 
+.null { color: #aaaaaa }
+
 .positive { color: #00cc00 }
 
 .right { text-align: right }

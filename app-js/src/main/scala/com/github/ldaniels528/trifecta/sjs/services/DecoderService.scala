@@ -64,12 +64,12 @@ class DecoderService($http: Http) extends Service {
   def saveDecoderSchema(schema: DecoderSchema) = {
     $http.post[DecoderSchema](
       url = "/api/schema",
+      headers = js.Dictionary("Content-Type" -> "application/json"),
       data = literal(
         topic = schema.topic,
         name = schema.name,
         schemaString = schema.schemaString
-      ),
-      headers = js.Dictionary("Content-Type" -> "application/json"))
+      ))
   }
 
 }

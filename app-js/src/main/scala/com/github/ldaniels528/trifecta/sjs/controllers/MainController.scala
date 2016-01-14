@@ -118,6 +118,20 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
   }
 
   /////////////////////////////////////////////////////////////////////////////////
+  //        JSON-related Functions
+  /////////////////////////////////////////////////////////////////////////////////
+
+  /**
+    * Formats a JSON object as a color-coded JSON expression
+    * @@param objStr the JSON object
+    * @@param tabWidth the number of tabs to use in formatting
+    * @return a pretty formatted JSON string
+    */
+  $scope.toPrettyJSON = (anObject: js.UndefOr[String], aTabWidth: js.UndefOr[Int]) => anObject map { value =>
+    angular.toJson(angular.fromJson(value), pretty = true)
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////
   //        Error-related Functions
   /////////////////////////////////////////////////////////////////////////////////
 
@@ -317,5 +331,6 @@ trait MainControllerScope extends RootScope with GlobalDataAware with GlobalLoad
   // functions
   var getDateFormat: js.Function1[js.UndefOr[Int], js.UndefOr[String]] = js.native
   var isActiveTab: js.Function1[js.UndefOr[MainTab], Boolean] = js.native
+  var toPrettyJSON: js.Function2[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[String]] = js.native
 
 }

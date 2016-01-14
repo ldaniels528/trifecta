@@ -1,13 +1,12 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.scalascript.angular
 import com.github.ldaniels528.scalascript.core.TimerConversions._
 import com.github.ldaniels528.scalascript.core._
 import com.github.ldaniels528.scalascript.extensions.Toaster
 import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
-import com.github.ldaniels528.scalascript.{Controller, Scope, injected}
+import com.github.ldaniels528.scalascript.{Controller, Scope, angular, injected}
 import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
-import com.github.ldaniels528.trifecta.sjs.models.{Decoder, DecoderSchema, ReferenceData}
+import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.DecoderService
 import com.github.ldaniels528.trifecta.sjs.util.NamingUtil
 import org.scalajs.dom
@@ -30,6 +29,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   implicit val scope = $scope
 
   $scope.decoder = js.undefined
+  $scope.decoders = emptyArray
   $scope.schema = js.undefined
 
   ///////////////////////////////////////////////////////////////////////////
@@ -38,11 +38,13 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
 
   $scope.init = () => {
     console.log("Initializing Decoder Controller...")
-    /*
-    $scope.findNonEmptyTopic() map(_.asInstanceOf[Decoder]) foreach { decoder =>
-      $log.info(s"Setting first decoder '${decoder.topic}'...")
-      $scope.selectDecoder(decoder)
-    }*/
+    decoderSvc.getDecoders onComplete {
+      case Success(decoders) =>
+        $scope.decoders = decoders map enrichDecoder
+        $scope.decoder = decoders.headOption.orUndefined
+      case Failure(e) =>
+        toaster.error("Failed to read decoders", e.displayMessage)
+    }
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -92,7 +94,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   $scope.downloadSchema = (aDecoder: js.UndefOr[Decoder], aSchema: js.UndefOr[DecoderSchema]) => {
     for {
       decoder <- aDecoder
-      topic = decoder.topic
+      topic <- decoder.topic
       schema <- aSchema
       schemaName <- schema.name
     } {
@@ -113,7 +115,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   $scope.expandCollapseDecoder = (aDecoder: js.UndefOr[Decoder]) => {
     for {
       decoder <- aDecoder
-      topic = decoder.topic
+      topic <- decoder.topic
     } {
       decoder.decoderExpanded = !decoder.decoderExpanded.contains(true)
       if (decoder.decoderExpanded.contains(true)) {
@@ -129,19 +131,17 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
 
             // perform the callback with the schemas
             $scope.schema = decoder.schemas.toOption.flatMap(_.headOption).orUndefined
-            /*
-            aCallback.toOption match {
-              case Some(callback) => callback.call(decoder.schemas)
-              case None =>
-                $scope.selectDecoder(decoder)
-            }*/
+
           case Failure(e) =>
             decoder.loading = false
-            $scope.addErrorMessage(e.displayMessage)
-            //aCallback.foreach(_.call(new js.Object()))
+            toaster.error(e.displayMessage)
         }
       }
     }
+  }
+
+  $scope.getDecoders = () => {
+    if ($scope.hideEmptyTopics) $scope.decoders.filter(_.schemas.exists(_.nonEmpty)) else $scope.decoders
   }
 
   /**
@@ -163,7 +163,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   $scope.reloadDecoder = (aDecoder: js.UndefOr[Decoder]) => {
     for {
       decoder <- aDecoder
-      topic = decoder.topic
+      topic <- decoder.topic
     } {
       decoder.loading = true
       decoderSvc.getDecoderByTopic(topic) onComplete {
@@ -279,6 +279,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
 
   private def enrichDecoder(decoder: Decoder) = {
     decoder.schemas.foreach(_ foreach (_.decoder = decoder))
+    decoder
   }
 
   private def newDecoderSchema(decoder: Decoder) = {
@@ -338,6 +339,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
 trait DecoderControllerScope extends Scope with GlobalLoading with GlobalErrorHandling with GlobalDataAware with ReferenceDataAware {
   // properties
   var decoder: js.UndefOr[Decoder] = js.native
+  var decoders: js.Array[Decoder] = js.native
   var schema: js.UndefOr[DecoderSchema] = js.native
 
   // functions
@@ -346,6 +348,7 @@ trait DecoderControllerScope extends Scope with GlobalLoading with GlobalErrorHa
   var cancelNewSchema: js.Function2[js.UndefOr[Decoder], js.UndefOr[DecoderSchema], Unit] = js.native
   var downloadSchema: js.Function2[js.UndefOr[Decoder], js.UndefOr[DecoderSchema], Unit] = js.native
   var expandCollapseDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
+  var getDecoders: js.Function0[js.Array[Decoder]] = js.native
   var getSchemaIcon: js.Function1[js.UndefOr[DecoderSchema], js.UndefOr[String]] = js.native
   var reloadDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
   var saveSchema: js.Function1[js.UndefOr[DecoderSchema], Unit] = js.native

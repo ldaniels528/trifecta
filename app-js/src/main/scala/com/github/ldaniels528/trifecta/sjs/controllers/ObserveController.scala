@@ -358,16 +358,6 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
     * @@param tabWidth the number of tabs to use in formatting
     * @return a pretty formatted JSON string
     */
-  $scope.toPrettyJSON = (anObject: js.UndefOr[String], aTabWidth: js.UndefOr[Int]) => anObject map { value =>
-    angular.toJson(angular.fromJson(value), pretty = true)
-  }
-
-  /**
-    * Formats a JSON object as a color-coded JSON expression
-    * @@param objStr the JSON object
-    * @@param tabWidth the number of tabs to use in formatting
-    * @return a pretty formatted JSON string
-    */
   $scope.messageAsJSON = (aMessage: js.UndefOr[Message], aTabWidth: js.UndefOr[Int]) => {
     for {
       message <- aMessage
@@ -466,7 +456,6 @@ trait ObserveControllerScope extends Scope with GlobalDataAware with GlobalError
   var isSelected: js.Function1[js.UndefOr[PartitionDetails], Boolean] = js.native
   var messageAsJSON: js.Function2[js.UndefOr[Message], js.UndefOr[Int], js.UndefOr[String]] = js.native
   var toggleAvroOutput: js.Function0[Unit] = js.native
-  var toPrettyJSON: js.Function2[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[String]] = js.native
   var updatePartition: js.Function1[js.UndefOr[PartitionDetails], Unit] = js.native
   var updateTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
 

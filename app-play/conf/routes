@@ -27,9 +27,11 @@ GET           /api/consumers/deltas                              @com.github.lda
 GET           /api/consumers                                     @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumerDetails
 GET           /api/consumers/topic/:topic                        @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumersByTopic(topic: String)
 
-# Decoders
-GET           /api/decoders                                      @com.github.ldaniels528.trifecta.controllers.QueryController.getDecoders
-GET           /api/decoders/topic/:topic                         @com.github.ldaniels528.trifecta.controllers.QueryController.getDecoderByTopic(topic: String)
+# Decoders & Schemas
+GET           /api/decoders                                      @com.github.ldaniels528.trifecta.controllers.DecoderController.getDecoders
+GET           /api/decoders/topic/:topic                         @com.github.ldaniels528.trifecta.controllers.DecoderController.getDecoderByTopic(topic: String)
+POST          /api/schema                                        @com.github.ldaniels528.trifecta.controllers.DecoderController.saveDecoderSchema
+GET           /api/schema/:topic/:name                           @com.github.ldaniels528.trifecta.controllers.DecoderController.getDecoderSchemaByName(topic: String, name: String)
 
 # Messages
 GET           /api/message_key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.controllers.KafkaController.getMessageKey(topic: String, partition: Int, offset: Long)
@@ -42,10 +44,6 @@ GET           /api/query/:topic                                  @com.github.lda
 POST          /api/query/all                                     @com.github.ldaniels528.trifecta.controllers.QueryController.executeQuery
 POST          /api/query/one/:topic                              @com.github.ldaniels528.trifecta.controllers.QueryController.findOne(topic: String)
 PUT           /api/results/csv                                   @com.github.ldaniels528.trifecta.controllers.QueryController.transformResultsToCSV
-
-# Schemas
-POST          /api/schema                                        @com.github.ldaniels528.trifecta.controllers.QueryController.saveSchema
-GET           /api/schema/:topic/:name                           @com.github.ldaniels528.trifecta.controllers.QueryController.getDecoderSchemaByName(topic: String, name: String)
 
 # Topics
 GET           /api/topic/:topic                                  @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopicByName(topic: String)

@@ -260,13 +260,13 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns a decoder by topic
     * @return the collection of decoders
     */
-  def getDecoderByTopic(topic: String)(implicit ec: ExecutionContext) = toDecoderJs(topic, config.getDecodersByTopic(topic))
+  def getDecoderByTopic(topic: String) = toDecoderJs(topic, config.getDecodersByTopic(topic))
 
   /**
     * Returns a decoder by topic and schema name
     * @return the option of a decoder
     */
-  def getDecoderSchemaByName(topic: String, schemaName: String)(implicit ec: ExecutionContext) = {
+  def getDecoderSchemaByName(topic: String, schemaName: String) = {
     val decoders = config.getDecoders.filter(_.topic == topic)
     decoders.filter(_.name == schemaName).map(_.decoder match {
       case Left(v) => v.schema.toString(true)
@@ -278,7 +278,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns all available decoders
     * @return the collection of decoders
     */
-  def getDecoders(implicit ec: ExecutionContext) = {
+  def getDecoders = {
     (config.getDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
       toDecoderJs(topic, myDecoders.sortBy(-_.lastModified))
     }).toSeq
@@ -592,7 +592,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     }
   }
 
-  def saveDecoderSchema(schema: SchemaJs)(implicit ec: ExecutionContext) = Future {
+  def saveDecoderSchema(schema: SchemaJs) = {
     val schemaFile = new File(new File(TxConfig.decoderDirectory, schema.topic), getNameWithExtension(schema.name, ".avsc"))
     // TODO should I add a check for new vs. replace?
 

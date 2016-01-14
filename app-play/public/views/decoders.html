@@ -2,23 +2,24 @@
     <div id="Decoders" class="col-md-5" style="height: 100%">
         <fieldset>
             <legend style="margin-bottom: 0">Decoders</legend>
-            <div ng-show="topics.length" ng-include="'/assets/views/partials/hide_show_empty_topics.html'"></div>
+            <div ng-show="decoders.length" ng-include="'/assets/views/partials/hide_show_empty_decoders.html'"></div>
             <div class="d_topics_container">
-                <div ng-repeat="t in getTopics() | orderBy:'topic'">
-                    <div ng-class="t == decoder ? 'highlighted' : ''">
+                <div ng-repeat="myDecoder in getDecoders() | orderBy:'topic'">
+                    <div ng-class="myDecoder == decoder ? 'highlighted' : ''">
                         <img class="clickable"
-                             ng-click="expandCollapseDecoder(t)"
-                             ng-src="/assets/images/{{ t.loading ? 'status/loading.gif' : t.decoderExpanded ? 'buttons/collapse.png' : 'buttons/expand.png' }}">
-                        <img ng-src="{{ getTopicIconSelection(t == decoder) }}">
-                        <span ng-click="selectDecoder(t)" class="clickable">{{ t.topic }}</span>
+                             ng-click="expandCollapseDecoder(myDecoder)"
+                             ng-src="/assets/images/{{ myDecoder.loading ? 'status/loading.gif' : myDecoder.decoderExpanded ? 'buttons/collapse.png' : 'buttons/expand.png' }}">
+                        <img ng-src="{{ getTopicIconSelection(myDecoder == decoder) }}">
+                        <span ng-click="selectDecoder(myDecoder)" class="clickable">{{ myDecoder.topic }}</span>
+                        <span class="null">(<span class="messages">{{ myDecoder.schemas.length || 0 }}</span>)</span>
                     </div>
 
-                    <div ng-show="t.decoderExpanded">
-                        <div ng-show="t == decoder" class="indent">
+                    <div ng-show="myDecoder.decoderExpanded">
+                        <div ng-show="myDecoder == decoder" class="indent">
                             <img src="/assets/images/tabs/decoders/add_schema-16.png">
-                            <span class="q_new_query" ng-click="setUpNewDecoderSchema(t)">[add decoder]</span>
+                            <span class="q_new_query" ng-click="setUpNewDecoderSchema(myDecoder)">[add decoder]</span>
                         </div>
-                        <div ng-repeat="s in t.schemas | orderBy:'name'" class="indent">
+                        <div ng-repeat="s in myDecoder.schemas | orderBy:'name'" class="indent">
                             <img ng-src="{{ getSchemaIcon(s) }}" title="Avro Schema">
                             <span ng-click="selectSchema(s)" ng-class="s == schema ? 'sub_highlighted' : ''" class="clickable">{{ s.name }}</span>
                         </div>
