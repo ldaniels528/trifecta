@@ -398,11 +398,17 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
   }
 
   /**
+    * Retrieves the list of available queries for the any topic
+    * @return the list of available queries
+    */
+  def getQueries = config.getQueries.map(_.map(_.asJson)) getOrElse Nil
+
+  /**
     * Retrieves the list of available queries for the given topic
     * @param topic the given topic (e.g. "shocktrade.quotes.avro")
     * @return the list of available queries
     */
-  def getQueriesByTopic(topic: String)(implicit ec: ExecutionContext) = Future {
+  def getQueriesByTopic(topic: String) = {
     config.getQueriesByTopic(topic).map(_.map(_.asJson)) getOrElse Nil
   }
 

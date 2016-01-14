@@ -25,6 +25,8 @@ class QueryService($http: Http) extends Service {
     $http.get[Message](s"/api/query/one/$topic/${g.encodeURI(criteria)}")
   }
 
+  def getQueries = $http.get[js.Array[Query]]("/api/queries")
+
   def getQueriesByTopic(topic: String) = {
     $http.get[js.Array[Query]](s"/api/query/${g.encodeURI(topic)}")
   }

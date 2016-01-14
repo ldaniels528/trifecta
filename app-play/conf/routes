@@ -43,6 +43,7 @@ POST          /api/query                                         @com.github.lda
 GET           /api/query/:topic                                  @com.github.ldaniels528.trifecta.controllers.QueryController.getQueriesByTopic(topic: String)
 POST          /api/query/all                                     @com.github.ldaniels528.trifecta.controllers.QueryController.executeQuery
 POST          /api/query/one/:topic                              @com.github.ldaniels528.trifecta.controllers.QueryController.findOne(topic: String)
+GET           /api/queries                                       @com.github.ldaniels528.trifecta.controllers.QueryController.getQueries
 PUT           /api/results/csv                                   @com.github.ldaniels528.trifecta.controllers.QueryController.transformResultsToCSV
 
 # Topics

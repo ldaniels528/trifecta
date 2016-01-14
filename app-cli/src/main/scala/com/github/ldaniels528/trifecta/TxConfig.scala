@@ -17,9 +17,9 @@ import scala.util.Properties._
 import scala.util.{Failure, Success, Try}
 
 /**
- * Trifecta Configuration
- * @author lawrence.daniels@gmail.com
- */
+  * Trifecta Configuration
+  * @author lawrence.daniels@gmail.com
+  */
 class TxConfig(val configProps: Properties) {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val cachedDecoders = TrieMap[File, TxDecoder]()
@@ -105,9 +105,9 @@ class TxConfig(val configProps: Properties) {
   }
 
   /**
-   * Attempts to retrieve decoders by topic
-   * @return the collection of [[TxDecoder]] instances
-   */
+    * Attempts to retrieve decoders by topic
+    * @return the collection of [[TxDecoder]] instances
+    */
   def getDecodersByTopic(topic: String): Seq[TxDecoder] = {
     Option(new File(decoderDirectory, topic).listFiles)
       .map(_.toSeq map (getDecoderFromFile(topic, _)))
@@ -116,9 +116,9 @@ class TxConfig(val configProps: Properties) {
   }
 
   /**
-   * Returns all available decoders
-   * @return the collection of [[TxDecoder]]s
-   */
+    * Returns all available decoders
+    * @return the collection of [[TxDecoder]]s
+    */
   def getDecoders: Seq[TxDecoder] = {
     Option(decoderDirectory.listFiles) map { topicDirectories =>
       (topicDirectories.toSeq flatMap { topicDirectory =>
@@ -144,6 +144,13 @@ class TxConfig(val configProps: Properties) {
     })
   }
 
+  def getQueries: Option[Seq[TxQuery]]  = {
+    Option(queriesDirectory.listFiles) map (_.toSeq.filter(_.isDirectory)) map (_ flatMap { topicDirectory =>
+      val topic = topicDirectory.getName
+      Option(topicDirectory.listFiles) map (_ map (getQueryFromFile(topic, _)))
+    }) map(_.flatten)
+  }
+
   def getQueriesByTopic(topic: String): Option[Seq[TxQuery]] = {
     Option(new File(queriesDirectory, topic).listFiles) map { queriesFiles =>
       queriesFiles map (getQueryFromFile(topic, _))
@@ -163,26 +170,26 @@ class TxConfig(val configProps: Properties) {
   }
 
   /**
-   * Returns an option of the value corresponding to the given key
-   * @param key the given key
-   * @return an option of the value
-   */
+    * Returns an option of the value corresponding to the given key
+    * @param key the given key
+    * @return an option of the value
+    */
   def get(key: String): Option[String] = Option(configProps.getProperty(key))
 
   /**
-   * Retrieves the value of the key or the default value
-   * @param key the given key
-   * @param default the given value
-   * @return the value of the key or the default value
-   */
+    * Retrieves the value of the key or the default value
+    * @param key the given key
+    * @param default the given value
+    * @return the value of the key or the default value
+    */
   def getOrElse(key: String, default: => String): String = configProps.getOrElse(key, default)
 
   /**
-   * Retrieves either the value of the key or the default value
-   * @param key the given key
-   * @param default the given value
-   * @return either the value of the key or the default value
-   */
+    * Retrieves either the value of the key or the default value
+    * @param key the given key
+    * @param default the given value
+    * @return either the value of the key or the default value
+    */
   def getEither[T](key: String, default: => T): Either[String, T] = {
     Option(configProps.getProperty(key)) match {
       case Some(value) => Left(value)
@@ -191,17 +198,17 @@ class TxConfig(val configProps: Properties) {
   }
 
   /**
-   * Sets the value for the given key
-   * @param key the given key
-   * @param value the given value
-   * @return an option of the previous value for the key
-   */
+    * Sets the value for the given key
+    * @param key the given key
+    * @param value the given value
+    * @return an option of the previous value for the key
+    */
   def set(key: String, value: String): Option[AnyRef] = Option(configProps.setProperty(key, value))
 
   /**
-   * Saves the current configuration to disk
-   * @param configFile the configuration file
-   */
+    * Saves the current configuration to disk
+    * @param configFile the configuration file
+    */
   def save(configFile: File): Unit = {
     Try {
       // if the parent directory doesn't exist, create it
@@ -222,49 +229,49 @@ class TxConfig(val configProps: Properties) {
 }
 
 /**
- * Trifecta Configuration Singleton
- * @author lawrence.daniels@gmail.com
- */
+  * Trifecta Configuration Singleton
+  * @author lawrence.daniels@gmail.com
+  */
 object TxConfig {
 
   /**
-   * Defines the directory for all Trifecta preferences
-   */
+    * Defines the directory for all Trifecta preferences
+    */
   var trifectaPrefs: File = new File(new File(userHome), ".trifecta")
 
   /**
-   * Returns the location of the history properties
-   * @return the [[File]] representing the location of history properties
-   */
+    * Returns the location of the history properties
+    * @return the [[File]] representing the location of history properties
+    */
   def historyFile: File = new File(trifectaPrefs, "history.txt")
 
   /**
-   * Returns the location of the configuration properties
-   * @return the [[File]] representing the location of configuration properties
-   */
+    * Returns the location of the configuration properties
+    * @return the [[File]] representing the location of configuration properties
+    */
   def configFile: File = new File(trifectaPrefs, "config.properties")
 
   /**
-   * Returns the location of the decoders directory
-   * @return the [[File]] representing the location of the decoders directory
-   */
+    * Returns the location of the decoders directory
+    * @return the [[File]] representing the location of the decoders directory
+    */
   def decoderDirectory: File = new File(trifectaPrefs, "decoders")
 
   /**
-   * Returns the location of the queries directory
-   * @return the [[File]] representing the location of the queries directory
-   */
+    * Returns the location of the queries directory
+    * @return the [[File]] representing the location of the queries directory
+    */
   def queriesDirectory: File = new File(trifectaPrefs, "queries")
 
   /**
-   * Returns the default configuration
-   * @return the default configuration
-   */
+    * Returns the default configuration
+    * @return the default configuration
+    */
   def defaultConfig: TxConfig = new TxConfig(getDefaultProperties)
 
   /**
-   * Loads the configuration file
-   */
+    * Loads the configuration file
+    */
   def load(configFile: File): TxConfig = {
     val p = getDefaultProperties
     if (configFile.exists()) new FileInputStream(configFile) use (in => Try(p.load(in)))

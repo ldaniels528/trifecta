@@ -6,6 +6,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, Controller}
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 /**
   * Query Controller
@@ -39,11 +40,17 @@ class QueryController extends Controller {
     }
   }
 
-  def getQueriesByTopic(topic: String) = Action.async {
-    WebConfig.facade.getQueriesByTopic(topic) map { queries =>
-      Ok(Json.toJson(queries))
-    } recover { case e: Throwable =>
-      InternalServerError(e.getMessage)
+  def getQueries = Action {
+    Try(WebConfig.facade.getQueries) match {
+      case Success(queries) => Ok(Json.toJson(queries))
+      case Failure(e) => InternalServerError(e.getMessage)
+    }
+  }
+
+  def getQueriesByTopic(topic: String) = Action {
+    Try(WebConfig.facade.getQueriesByTopic(topic)) match {
+      case Success(queries) => Ok(Json.toJson(queries))
+      case Failure(e) => InternalServerError(e.getMessage)
     }
   }
 
