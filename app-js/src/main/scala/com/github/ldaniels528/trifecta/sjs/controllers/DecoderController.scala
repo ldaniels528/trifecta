@@ -4,11 +4,10 @@ import com.github.ldaniels528.scalascript.core.TimerConversions._
 import com.github.ldaniels528.scalascript.core._
 import com.github.ldaniels528.scalascript.extensions.Toaster
 import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
-import com.github.ldaniels528.scalascript.{Controller, Scope, angular, injected}
+import com.github.ldaniels528.scalascript.{Controller, Scope, injected}
 import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.DecoderService
-import com.github.ldaniels528.trifecta.sjs.util.NamingUtil
 import org.scalajs.dom
 import org.scalajs.dom.console
 
@@ -50,41 +49,6 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   ///////////////////////////////////////////////////////////////////////////
   //    Decoder Functions
   ///////////////////////////////////////////////////////////////////////////
-
-  /**
-    * Cancels the edit workflow for a schema and reverts the schema back to its original content
-    * @@param schema the given schema
-    */
-  $scope.cancelEdit = (aSchema: js.UndefOr[DecoderSchema]) => aSchema foreach { schema =>
-    if (schema.editMode.contains(true)) {
-      schema.editMode = false
-      schema.schemaString = schema.originalSchemaString
-      schema.modified = false
-    }
-  }
-
-  /**
-    * Cancels the new schema workflow
-    * @@param decoder the given decoder
-    * @@param schema the given schema
-    */
-  $scope.cancelNewSchema = (aDecoder: js.UndefOr[Decoder], aSchema: js.UndefOr[DecoderSchema]) => {
-    for {
-      decoder <- aDecoder
-      schema <- aSchema
-    } {
-      if (schema.newSchema.contains(true)) {
-        // remove the schema from the decoder
-        decoder.schemas.map(_.indexOf(schema)) foreach {
-          case -1 =>
-          case index => decoder.schemas.foreach(_.splice(index, 1))
-        }
-
-        // select a different schema
-        $scope.selectSchema(decoder.schemas.toOption.flatMap(_.headOption).orUndefined)
-      }
-    }
-  }
 
   /**
     * Downloads the given schema
@@ -151,7 +115,6 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
     */
   $scope.getSchemaIcon = (aSchema: js.UndefOr[DecoderSchema]) => aSchema map { schema =>
     if (schema.error.exists(_.nonBlank)) "/assets/images/tabs/decoders/failed-16.png"
-    else if (schema.modified.contains(true)) "/assets/images/tabs/decoders/modified-16.gif"
     else if (schema.processing.contains(true)) "/assets/images/status/processing.gif"
     else "/assets/images/tabs/decoders/js-16.png"
   }
@@ -182,59 +145,10 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   }
 
   /**
-    * Uploads a new schema to the remote server
-    * @@param schema the new schema
-    */
-  $scope.saveNewSchema = (aSchema: js.UndefOr[DecoderSchema]) => aSchema foreach { schema =>
-    // validate the form
-    if (validSchemaForSaving(schema)) {
-      schema.decoder foreach { myDecoder =>
-        schema.processing = true
-
-        decoderSvc.saveDecoderSchema(schema) onComplete {
-          case Success(response) =>
-            $timeout(() => schema.processing = false, 1.second)
-            $scope.reloadDecoder(myDecoder)
-          case Failure(e) =>
-            schema.processing = false
-            $scope.addErrorMessage(e.displayMessage)
-        }
-      }
-    }
-  }
-
-  $scope.setUpNewDecoderSchema = (aDecoder: js.UndefOr[Decoder]) => aDecoder foreach { decoder =>
-    if (decoder.schemas.isEmpty) decoder.schemas = emptyArray[DecoderSchema]
-    decoder.schemas.foreach(_.push(newDecoderSchema(decoder)))
-    $scope.schema = decoder.schemas.map(_.last)
-  }
-
-  /**
-    * Saves (uploads) the schema to the remote server
-    * @@param schema the given schema
-    */
-  $scope.saveSchema = (aSchema: js.UndefOr[DecoderSchema]) => aSchema foreach { schema =>
-    schema.processing = true
-    decoderSvc.saveDecoderSchema(schema) onComplete {
-      case Success(response) =>
-        $timeout(() => schema.processing = false, 1.second)
-        schema.editMode = false
-        schema.modified = false
-
-        // refresh the schema list
-        $scope.reloadDecoder(schema.decoder)
-      case Failure(e) =>
-        schema.processing = false
-        $scope.addErrorMessage(e.displayMessage)
-    }
-  }
-
-  /**
     * Selects the given decoder
     * @@param decoder the given decoder (topic)
     */
   $scope.selectDecoder = (aDecoder: js.UndefOr[Decoder]) => {
-    console.log(s"aDecoder = ${angular.toJson(aDecoder)}")
     $scope.decoder = aDecoder
 
     aDecoder foreach { decoder =>
@@ -255,11 +169,6 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   $scope.selectSchema = (aSchema: js.UndefOr[DecoderSchema]) => aSchema foreach { schema =>
     $scope.selectDecoder(schema.decoder)
     $scope.schema = schema
-
-    // if there's an error... enable edit mode
-    if (schema.error.exists(_.nonBlank)) {
-      $scope.toggleEditMode(schema)
-    }
   }
 
   $scope.switchToDecoderByTopic = (aDecoder: js.UndefOr[Decoder]) => aDecoder exists { decoder =>
@@ -267,27 +176,9 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
     true
   }
 
-  /**
-    * Toggles edit mode on/off
-    */
-  $scope.toggleEditMode = (aSchema: js.UndefOr[DecoderSchema]) => aSchema foreach { schema =>
-    schema.editMode = !schema.editMode.contains(true)
-    if (schema.editMode.contains(true)) {
-      $scope.schema.foreach(schema => schema.originalSchemaString = schema.schemaString)
-    }
-  }
-
   private def enrichDecoder(decoder: Decoder) = {
     decoder.schemas.foreach(_ foreach (_.decoder = decoder))
     decoder
-  }
-
-  private def newDecoderSchema(decoder: Decoder) = {
-    DecoderSchema(
-      decoder = decoder,
-      topic = decoder.topic,
-      name = NamingUtil.getUntitledName(decoder)(nameExists)
-    )
   }
 
   /**
@@ -344,19 +235,13 @@ trait DecoderControllerScope extends Scope with GlobalLoading with GlobalErrorHa
 
   // functions
   var init: js.Function0[Unit] = js.native
-  var cancelEdit: js.Function1[js.UndefOr[DecoderSchema], Unit] = js.native
-  var cancelNewSchema: js.Function2[js.UndefOr[Decoder], js.UndefOr[DecoderSchema], Unit] = js.native
   var downloadSchema: js.Function2[js.UndefOr[Decoder], js.UndefOr[DecoderSchema], Unit] = js.native
   var expandCollapseDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
   var getDecoders: js.Function0[js.Array[Decoder]] = js.native
   var getSchemaIcon: js.Function1[js.UndefOr[DecoderSchema], js.UndefOr[String]] = js.native
   var reloadDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
-  var saveSchema: js.Function1[js.UndefOr[DecoderSchema], Unit] = js.native
-  var saveNewSchema: js.Function1[js.UndefOr[DecoderSchema], Unit] = js.native
   var selectDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
   var selectSchema: js.Function1[js.UndefOr[DecoderSchema], Unit] = js.native
-  var setUpNewDecoderSchema: js.Function1[js.UndefOr[Decoder], Unit] = js.native
   var switchToDecoderByTopic: js.Function1[js.UndefOr[Decoder], Boolean] = js.native
-  var toggleEditMode: js.Function1[js.UndefOr[DecoderSchema], Unit] = js.native
 
 }

@@ -15,11 +15,7 @@ trait DecoderSchema extends js.Object {
 
   // ui-related properties
   var decoder: js.UndefOr[Decoder] = js.native
-  var editMode: js.UndefOr[Boolean] = js.native
   var error: js.UndefOr[String] = js.native
-  var modified: js.UndefOr[Boolean] = js.native
-  var newSchema: js.UndefOr[Boolean] = js.native
-  var originalSchemaString: js.UndefOr[String] = js.native
   var processing: js.UndefOr[Boolean] = js.native
 }
 
