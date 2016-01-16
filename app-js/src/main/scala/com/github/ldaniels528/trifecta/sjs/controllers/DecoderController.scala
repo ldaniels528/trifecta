@@ -19,6 +19,7 @@ import scala.util.{Failure, Success}
 
 /**
   * Decoder Controller
+  *
   * @author lawrence.daniels@gmail.com
   */
 class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Timeout, toaster: Toaster,
@@ -41,6 +42,11 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
       case Success(decoders) =>
         $scope.decoders = decoders map enrichDecoder
         $scope.decoder = decoders.headOption.orUndefined
+        $scope.schema = $scope.decoder.flatMap(_.schemas).flatMap(_.headOption.orUndefined)
+        $scope.decoder.foreach { decoder =>
+          enrichDecoder(decoder)
+          decoder.decoderExpanded = $scope.schema.isDefined
+        }
       case Failure(e) =>
         toaster.error("Failed to read decoders", e.displayMessage)
     }
@@ -111,6 +117,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   /**
     * Returns the icon for the given schema
     * @@param schema the given schema
+    *
     * @return {string}
     */
   $scope.getSchemaIcon = (aSchema: js.UndefOr[DecoderSchema]) => aSchema map { schema =>
@@ -164,7 +171,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
 
   /**
     * Selects the given schema
-    * @@param schema the given schema
+    * @@param aSchema the given schema
     */
   $scope.selectSchema = (aSchema: js.UndefOr[DecoderSchema]) => aSchema foreach { schema =>
     $scope.selectDecoder(schema.decoder)
@@ -179,40 +186,6 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   private def enrichDecoder(decoder: Decoder) = {
     decoder.schemas.foreach(_ foreach (_.decoder = decoder))
     decoder
-  }
-
-  /**
-    * Indicates whether the given saved query (name) exists
-    * @param decoder the parent topic
-    * @param name the saved query name
-    * @return {boolean}
-    */
-  private def nameExists(decoder: Decoder, name: String) = {
-    decoder.schemas.exists(_.exists(_.name.contains(name)))
-  }
-
-  /**
-    * Validates the schema form for persistence
-    * @param schema the given schema
-    * @return {boolean}
-    */
-  private def validSchemaForSaving(schema: DecoderSchema) = {
-    $scope.removeAllMessages()
-    var errors = 0
-
-    if (!schema.topic.exists(_.nonBlank)) {
-      $scope.addErrorMessage("No topic selected")
-      errors += 1
-    }
-    if (!schema.name.exists(_.nonBlank)) {
-      $scope.addErrorMessage("No decoder name specified")
-      errors += 1
-    }
-    if (!schema.schemaString.exists(_.nonBlank)) {
-      $scope.addErrorMessage("No Avro Schema specified")
-      errors += 1
-    }
-    errors == 0
   }
 
   ///////////////////////////////////////////////////////////////////////////
