@@ -18,11 +18,11 @@ import com.github.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expressi
 import com.github.ldaniels528.trifecta.messages.query.parser.{KafkaQueryParser, KafkaQueryTokenizer}
 import com.github.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageDecoder}
 import com.github.ldaniels528.trifecta.rest.KafkaRestFacade._
-import com.ldaniels528.commons.helpers.EitherHelper._
-import com.ldaniels528.commons.helpers.OptionHelper.Risky._
-import com.ldaniels528.commons.helpers.OptionHelper._
-import com.ldaniels528.commons.helpers.ResourceHelper._
-import com.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.commons.helpers.EitherHelper._
+import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
+import com.github.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
 import org.slf4j.LoggerFactory

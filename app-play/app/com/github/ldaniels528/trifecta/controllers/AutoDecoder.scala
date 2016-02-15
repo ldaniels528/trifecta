@@ -3,7 +3,7 @@ package com.github.ldaniels528.trifecta.controllers
 import com.github.ldaniels528.trifecta.io.json.JsonDecoder
 import com.github.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
 import com.github.ldaniels528.trifecta.messages.MessageDecoder
-import com.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
 
 import scala.util.Try
 

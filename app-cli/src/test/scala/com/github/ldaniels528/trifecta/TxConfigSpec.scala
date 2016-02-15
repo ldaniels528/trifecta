@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta
 
-import com.ldaniels528.commons.helpers.OptionHelper._
-import com.ldaniels528.commons.helpers.Resource
+import com.github.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.Resource
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
 

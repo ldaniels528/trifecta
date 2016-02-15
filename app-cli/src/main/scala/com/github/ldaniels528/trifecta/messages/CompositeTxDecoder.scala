@@ -6,7 +6,7 @@ import com.github.ldaniels528.trifecta.io.avro.AvroMessageDecoding
 import com.github.ldaniels528.trifecta.io.json.JsonTranscoding
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
 import com.github.ldaniels528.trifecta.messages.logic.{Condition, MessageEvaluation}
-import com.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 import net.liftweb.json._
 import org.apache.avro.generic.GenericRecord
 

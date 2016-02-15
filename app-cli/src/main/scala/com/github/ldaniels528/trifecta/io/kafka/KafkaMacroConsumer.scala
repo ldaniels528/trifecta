@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import akka.actor.ActorRef
 import com.github.ldaniels528.trifecta.messages.logic.Condition
-import com.ldaniels528.commons.helpers.PropertiesHelper._
+import com.github.ldaniels528.commons.helpers.PropertiesHelper._
 import kafka.consumer.{Consumer, ConsumerConfig}
 
 import scala.concurrent.{ExecutionContext, Future, Promise}

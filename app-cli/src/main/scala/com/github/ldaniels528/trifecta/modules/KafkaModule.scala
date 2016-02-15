@@ -20,10 +20,10 @@ import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import com.github.ldaniels528.trifecta.modules.ModuleHelper._
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
-import com.ldaniels528.commons.helpers.OptionHelper._
-import com.ldaniels528.commons.helpers.ResourceHelper._
-import com.ldaniels528.commons.helpers.StringHelper._
-import com.ldaniels528.commons.helpers.TimeHelper.Implicits._
+import com.github.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.commons.helpers.TimeHelper.Implicits._
 import net.liftweb.json.JValue
 import org.apache.avro.generic.GenericRecord
 

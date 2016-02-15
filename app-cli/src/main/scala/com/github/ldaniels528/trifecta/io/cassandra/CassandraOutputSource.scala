@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.io.cassandra
 
-import com.ldaniels528.commons.helpers.OptionHelper.Risky._
+import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
 import com.datastax.driver.core.ConsistencyLevel
 import com.github.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.github.ldaniels528.trifecta.io.{KeyAndMessage, OutputSource}

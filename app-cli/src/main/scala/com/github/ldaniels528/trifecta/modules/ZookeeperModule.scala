@@ -8,7 +8,7 @@ import com.github.ldaniels528.trifecta.io.InputSource
 import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.github.ldaniels528.trifecta.io.zookeeper.ZkSupportHelper._
 import com.github.ldaniels528.trifecta.io.zookeeper.{ZKProxy, ZookeeperOutputSource}
-import com.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
 import scala.util.Try

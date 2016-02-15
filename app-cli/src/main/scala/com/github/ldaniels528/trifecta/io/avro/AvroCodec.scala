@@ -5,10 +5,10 @@ import java.net.URL
 
 import com.github.ldaniels528.trifecta.messages.MessageDecoder
 import com.github.ldaniels528.trifecta.messages.logic.Condition
-import com.ldaniels528.commons.helpers.PathHelper._
-import com.ldaniels528.commons.helpers.Resource
-import com.ldaniels528.commons.helpers.ResourceHelper._
-import com.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.commons.helpers.PathHelper._
+import com.github.ldaniels528.commons.helpers.Resource
+import com.github.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.util.Utf8
 

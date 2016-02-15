@@ -24,11 +24,11 @@ import com.github.ldaniels528.trifecta.models.QueryDetailsJs._
 import com.github.ldaniels528.trifecta.models.TopicDetailsJs._
 import com.github.ldaniels528.trifecta.models._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
-import com.ldaniels528.commons.helpers.EitherHelper._
-import com.ldaniels528.commons.helpers.OptionHelper.Risky._
-import com.ldaniels528.commons.helpers.OptionHelper._
-import com.ldaniels528.commons.helpers.ResourceHelper._
-import com.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.commons.helpers.EitherHelper._
+import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
+import com.github.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
 import kafka.common.TopicAndPartition
 import play.api.Logger
 import play.api.libs.json.{JsString, Json}

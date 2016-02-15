@@ -22,7 +22,7 @@ lazy val trifecta_js = (project in file("app-js"))
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     libraryDependencies ++= Seq(
       "com.github.ldaniels528" %%% "scalascript" % "0.2.19",
-      "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0",
+//      "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0",
       "org.scala-js" %%% "scalajs-dom" % "0.8.2",
       "be.doeraene" %%% "scalajs-jquery" % "0.8.1"
     ))
@@ -31,7 +31,7 @@ lazy val trifecta_js = (project in file("app-js"))
 lazy val coreDeps = Seq(
   //
   // ldaniels528 Dependencies
-  "com.github.ldaniels528" %% "commons-helpers" % "0.1.1",
+  "com.github.ldaniels528" %% "commons-helpers" % "0.1.2",
   "com.github.ldaniels528" %% "tabular" % "0.1.3" exclude("org.slf4j", "slf4j-log4j12"),
   //
   // Akka dependencies
@@ -40,9 +40,9 @@ lazy val coreDeps = Seq(
   "com.typesafe.akka" %% "akka-testkit" % myAkkaVersion % "test",
   //
   // Avro Dependencies
-  "com.twitter" %% "bijection-core" % "0.7.2",
-  "com.twitter" %% "bijection-avro" % "0.7.2",
-  "org.apache.avro" % "avro" % "1.7.7",
+  "com.twitter" %% "bijection-core" % "0.9.0",
+  "com.twitter" %% "bijection-avro" % "0.9.0",
+  "org.apache.avro" % "avro" % "1.8.0",
   //
   // JSON dependencies
   "com.typesafe.play" %% "play-json" % myPlayVersion,

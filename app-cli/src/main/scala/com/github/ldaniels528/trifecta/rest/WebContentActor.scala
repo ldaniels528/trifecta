@@ -5,10 +5,10 @@ import java.io.ByteArrayOutputStream
 import akka.actor.{ActorLogging, Actor}
 import com.github.ldaniels528.trifecta.io.json.JsonHelper
 import com.github.ldaniels528.trifecta.rest.WebContentActor._
-import com.ldaniels528.commons.helpers.OptionHelper._
-import com.ldaniels528.commons.helpers.Resource
-import com.ldaniels528.commons.helpers.ResourceHelper._
-import com.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.Resource
+import com.github.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
 import net.liftweb.json._
 import org.apache.commons.io.IOUtils
 import org.mashupbots.socko.events.{CurrentHttpRequestMessage, HttpRequestEvent, HttpResponseStatus}

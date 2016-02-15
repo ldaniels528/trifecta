@@ -209,11 +209,11 @@
 [info ]   | |     +-io.netty:netty-buffer:4.0.27.Final
 [info ]   | |       +-io.netty:netty-common:4.0.27.Final
 [info ]   | |       
-[info ]   | +-com.ldaniels528:commons-helpers_2.11:0.1.0 [S]
+[info ]   | +-com.github.ldaniels528:commons-helpers_2.11:0.1.0 [S]
 [info ]   | | +-org.slf4j:slf4j-api:1.7.10 (evicted by: 1.7.12)
 [info ]   | | +-org.slf4j:slf4j-api:1.7.12
 [info ]   | | 
-[info ]   | +-com.ldaniels528:tabular_2.11:0.1.1 [S]
+[info ]   | +-com.github.ldaniels528:tabular_2.11:0.1.1 [S]
 [info ]   | | +-log4j:log4j:1.2.17
 [info ]   | | +-org.slf4j:slf4j-api:1.7.12
 [info ]   | | +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)
@@ -712,11 +712,11 @@
 [info ]   | +-org.slf4j:slf4j-api:1.7.5 (evicted by: 1.7.12)
 [info ]   | +-org.slf4j:slf4j-api:1.7.6 (evicted by: 1.7.12)
 [info ]   | 
-[info ]   +-com.ldaniels528:commons-helpers_2.11:0.1.0 [S]
+[info ]   +-com.github.ldaniels528:commons-helpers_2.11:0.1.0 [S]
 [info ]   | +-org.slf4j:slf4j-api:1.7.10 (evicted by: 1.7.12)
 [info ]   | +-org.slf4j:slf4j-api:1.7.12
 [info ]   | 
-[info ]   +-com.ldaniels528:tabular_2.11:0.1.1 [S]
+[info ]   +-com.github.ldaniels528:tabular_2.11:0.1.1 [S]
 [info ]   | +-log4j:log4j:1.2.17
 [info ]   | +-org.slf4j:slf4j-api:1.7.12
 [info ]   | +-org.slf4j:slf4j-api:1.7.7 (evicted by: 1.7.12)

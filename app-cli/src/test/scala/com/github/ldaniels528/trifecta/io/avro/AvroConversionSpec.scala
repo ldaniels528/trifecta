@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.io.avro
 
 import com.github.ldaniels528.trifecta.io.avro.AvroConversionSpec.{StudentA, StudentB, StudentBean}
-import com.ldaniels528.tabular.Tabular
+import com.github.ldaniels528.tabular.Tabular
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 

@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.io.elasticsearch
 
-import com.ldaniels528.tabular.Tabular
+import com.github.ldaniels528.tabular.Tabular
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 
 import scala.concurrent.duration._

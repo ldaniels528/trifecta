@@ -6,7 +6,7 @@ import com.github.ldaniels528.trifecta.io.{AsyncIO, InputSource, OutputSource}
 import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.Expression
 import com.github.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
-import com.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 
 import scala.concurrent.ExecutionContext
 

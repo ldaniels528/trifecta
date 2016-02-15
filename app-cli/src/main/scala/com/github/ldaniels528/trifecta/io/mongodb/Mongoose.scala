@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.io.mongodb
 
-import com.ldaniels528.commons.helpers.ScalaBeanUtil
+import com.github.ldaniels528.commons.helpers.ScalaBeanUtil
 import com.mongodb.casbah.Imports._
 
 import scala.collection.JavaConversions._

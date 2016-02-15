@@ -2,7 +2,7 @@ package com.github.ldaniels528.trifecta.models
 
 import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.TopicDetails
 import com.github.ldaniels528.trifecta.models.BrokerJs._
-import com.ldaniels528.commons.helpers.OptionHelper.Risky._
+import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
 import play.api.libs.json.Json
 
 /**

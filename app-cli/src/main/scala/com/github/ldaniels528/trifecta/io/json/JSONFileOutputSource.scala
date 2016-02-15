@@ -4,7 +4,7 @@ import java.io._
 
 import com.github.ldaniels528.trifecta.io.{KeyAndMessage, OutputSource}
 import com.github.ldaniels528.trifecta.messages.MessageDecoder
-import com.ldaniels528.commons.helpers.OptionHelper.Risky._
+import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}

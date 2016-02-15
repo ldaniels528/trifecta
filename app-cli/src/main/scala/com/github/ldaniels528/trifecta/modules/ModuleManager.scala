@@ -2,7 +2,7 @@ package com.github.ldaniels528.trifecta.modules
 
 import com.github.ldaniels528.trifecta.TxRuntimeContext
 import com.github.ldaniels528.trifecta.command.Command
-import com.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 
 /**
  * Module Manager

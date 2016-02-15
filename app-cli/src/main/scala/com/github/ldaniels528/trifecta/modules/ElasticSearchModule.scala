@@ -10,8 +10,8 @@ import com.github.ldaniels528.trifecta.modules.ElasticSearchModule.{ElasticCurso
 import com.github.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
-import com.ldaniels528.commons.helpers.ResourceHelper._
-import com.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.ning.http.client.Response
 import net.liftweb.json.JsonAST.JValue
 import net.liftweb.json._

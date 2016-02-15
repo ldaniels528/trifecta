@@ -5,8 +5,8 @@ import com.github.ldaniels528.trifecta.io.{InputSource, OutputSource}
 import com.github.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser
 import com.github.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageCodecs, MessageDecoder}
 import com.github.ldaniels528.trifecta.modules._
-import com.ldaniels528.commons.helpers.OptionHelper._
-import com.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap

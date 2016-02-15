@@ -2,7 +2,7 @@ package com.github.ldaniels528.trifecta.io.kafka
 
 import java.util.Properties
 
-import com.ldaniels528.commons.helpers.PropertiesHelper._
+import com.github.ldaniels528.commons.helpers.PropertiesHelper._
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 
 /**

@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.io.kafka
 
-import com.ldaniels528.commons.helpers.OptionHelper.Risky._
+import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
 import com.github.ldaniels528.trifecta.io.{KeyAndMessage, OutputSource}
 import com.github.ldaniels528.trifecta.messages.MessageDecoder
 

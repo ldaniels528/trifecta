@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutorService
 
 import com.datastax.driver.core._
 import com.github.ldaniels528.trifecta.io.AsyncIO
-import com.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
