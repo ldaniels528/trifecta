@@ -8,6 +8,7 @@ import scala.scalajs.js
   * Decoder Schema
   * @author lawrence.daniels@gmail.com
   */
+@js.native
 trait DecoderSchema extends js.Object {
   var topic: js.UndefOr[String] = js.native
   var name: js.UndefOr[String] = js.native
