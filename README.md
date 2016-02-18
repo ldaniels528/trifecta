@@ -11,7 +11,7 @@ Table of Contents
 * <a href="#features">Features</a>
 * <a href="#development">Development</a>
 	* <a href="#build-requirements">Build Requirements</a>
-	* <a href="#configuring-your-ide">Configuring the project for your IDE</a>
+	* <a href="#external-dependencies">External Dependencies</a>
 	* <a href="#building-the-code">Building the applications</a>
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#configuring-the-app">Configuring the application</a>
@@ -75,18 +75,18 @@ make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like 
 * [Java SDK 1.7] (http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
 * [Scala 2.11.6] (http://scala-lang.org/download/)
 * [SBT 0.13+] (http://www.scala-sbt.org/download.html)
-* [Tabular 0.1.1] (https://github.com/ldaniels528/tabular)
 
-<a name="configuring-your-ide"></a>
-### Configuring the project for your IDE
+<a name="external-dependencies"></a>
+### External Dependencies
 
-#### Generating an Eclipse project
+* [Commons-Helpers 0.1.2] (https://github.com/ldaniels528/commons-helpers)
+* [ScalaScript 0.2.20] (https://github.com/ldaniels528/scalascript)
+* [Tabular 0.1.3] (https://github.com/ldaniels528/tabular)
 
-    $ sbt eclipse
-    
-#### Generating an Intellij Idea project
+In order to build from the source, you'll need to download the above dependencies and issue
+the following command for each of them:
 
-    $ sbt gen-idea
+    $ sbt publish-local
 
 <a name="building-the-code"></a>
 ### Building the applications

@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta.modules
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import org.scalatest.mock.MockitoSugar
@@ -12,7 +13,7 @@ import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
 class CoreModuleSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWhenThen with MockitoSugar {
   private val config = TxConfig.defaultConfig
   private implicit val zk = mock[ZKProxy]
-  private implicit val rt = new TxRuntimeContext(config)
+  private implicit val rt = new TxRuntimeContext(config)(global)
   private val module = new CoreModule(config)
 
   info("As a Core Module")

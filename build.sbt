@@ -111,7 +111,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
         exclude("commons-logging", "commons-logging"),
       //
       // General Java Dependencies
-      "jline" % "jline" % "2.12",
+      "org.scala-lang" % "jline" % "2.10.6",
       "org.fusesource.jansi" % "jansi" % "1.11"
     )
   )
