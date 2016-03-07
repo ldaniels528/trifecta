@@ -160,6 +160,12 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.19.0
+* Trifecta UI
+    * Now a TypeSafe Play Application
+    * Updated the user interface
+    * Bug fixes
+
 #### v0.18.20
 * Trifecta
     * Added support for Kafka ~~v0.8.2.0~~ v9.0.0 consumers
