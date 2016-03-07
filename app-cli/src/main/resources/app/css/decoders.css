@@ -1,0 +1,80 @@
+.d_cancel_button {
+    border-radius: 4px 4px 4px 4px;
+    background: #ff9933;
+    color: #ffffff;
+    font-size: 9pt;
+}
+
+.d_editor {
+    background: #fffff0;
+    border: 1px solid #cccccc;
+    width:100%;
+    height:100%;
+    box-sizing: border-box;         /* For IE and modern versions of Chrome */
+    -moz-box-sizing: border-box;    /* For Firefox                          */
+    -webkit-box-sizing: border-box; /* For Safari                           */
+}
+
+div.d_editor_bar {
+    display: block;
+    width: 100%;
+    height: 24px;
+    background: #eeeeee;
+    border: 1px solid #cccccc;
+    border-radius: 4px 4px 4px 4px;
+    vertical-align: middle;
+}
+
+img.d_editor_bar {
+    margin-left: 15px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.d_label {
+    color: #337ab7;
+    font-weight: bold;
+}
+
+.d_save_button {
+    border-radius: 4px 4px 4px 4px;
+    background: #337ab7;
+    color: #ffffff;
+    font-size: 9pt;
+}
+
+.d_schema_name_field {
+    width: 200px
+}
+
+.new_schema_section {
+    display: block;
+    width: 100%;
+}
+
+.d_hints_tips_container {
+    clear: both;
+    width: auto;
+    height: 210px;
+    overflow: auto
+}
+
+.d_topics_container {
+    clear: both;
+    width: auto;
+    height: 305px;
+    overflow: auto;
+}
+
+.mode_label {
+    float: right;
+    margin-right: 15px
+}
+
+.schema_error {
+    display: block;
+    width: 100%;
+    border: 1px solid #ff0000;
+    border-radius: 4px 4px 4px 4px;
+    padding: 4px 4px 4px 4px;
+}

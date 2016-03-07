@@ -1,0 +1,28 @@
+.hide_show_topics {
+    background: #337ab7;
+    color: white;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.delta_consumer { color: #f00000 }
+
+.delta_topic { color: #00cc00 }
+
+.in_sync_red { color: #cc0000 }
+.in_sync_green { color: #00bb00 }
+.in_sync_yellow { color: #eebb00 }
+
+.streaming_topics_container {
+    clear: both;
+    width: auto;
+    height: 525px;
+    overflow: auto;
+}
+
+.zk_item_container {
+    clear: both;
+    width: auto;
+    height: 525px;
+    overflow: auto;
+}

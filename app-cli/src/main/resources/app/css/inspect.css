@@ -1,0 +1,65 @@
+.binary_message_left {
+    display: inline;
+    float: left;
+    color: #000000;
+}
+
+.binary_message_right {
+    display: inline;
+    float: right;
+    color: #0000ff;
+}
+
+.input-mir {
+    width: 125px;
+    height: 24px;
+}
+
+.input_block {
+    display: inline;
+    height: 50px;
+    border: 1px solid #bbbbbb;
+    border-radius: 5px 5px 5px 5px;
+    background: #eeeeee;
+    padding: 3px;
+    margin-right: 3px
+}
+
+.messages_and_offsets {
+    clear: both;
+    width: auto;
+    height: 200px;
+    overflow: auto;
+    border-bottom: 1px solid #cccccc;
+}
+
+.message_panel {
+    display: block;
+    border: 1px solid #cccccc;
+    border-radius: 5px 5px 5px 5px;
+    background: #eeeeee;
+    padding: 10px;
+
+    clear: both;
+    width: auto;
+    height: 540px;
+    overflow: auto;
+}
+
+.kmr_controls {
+    display: inline;
+    border: 1px solid #888888;
+    background: white;
+    width: 300px;
+    height: 100%;
+}
+
+.separator { margin-top: 10px }
+
+.topics_container {
+    clear: both;
+    width: auto;
+    height: 250px;
+    overflow: auto;
+    border-bottom: 1px solid #cccccc;
+}
