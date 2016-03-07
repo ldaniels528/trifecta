@@ -13,7 +13,7 @@ lazy val trifecta_js = (project in file("app-js"))
   .settings(
     name := "trifecta_js",
     organization := "com.github.ldaniels528",
-    version := "0.19.0",
+    version := "0.19.1",
     scalaVersion := myScalaVersion,
     relativeSourceMaps := true,
     persistLauncher := true,
@@ -79,7 +79,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
   .settings(
     name := "trifecta_cli",
     organization := "com.github.ldaniels528",
-    version := "0.19.0",
+    version := "0.19.1",
     scalaVersion := myScalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
@@ -121,7 +121,7 @@ lazy val trifecta_ui = (project in file("app-play"))
   .settings(
     name := "trifecta_ui",
     organization := "com.github.ldaniels528",
-    version := "0.19.0",
+    version := "0.19.1",
     scalaVersion := myScalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
