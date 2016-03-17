@@ -13,7 +13,7 @@ lazy val trifecta_js = (project in file("app-js"))
   .settings(
     name := "trifecta_js",
     organization := "com.github.ldaniels528",
-    version := "0.19.1",
+    version := "0.20.0",
     scalaVersion := myScalaVersion,
     relativeSourceMaps := true,
     persistLauncher := true,
@@ -55,10 +55,15 @@ lazy val coreDeps = Seq(
   "org.apache.kafka" % "kafka-clients" % "0.9.0.0",
   "org.apache.zookeeper" % "zookeeper" % "3.4.7" exclude("org.slf4j", "slf4j-log4j12"),
   //
+  // Microsoft/Azure Dependencies
+  "com.microsoft.azure" % "azure-documentdb" % "1.5.1",
+  "com.microsoft.azure" % "azure-storage" % "4.0.0",
+  "com.microsoft.sqlserver" % "sqljdbc4" % "4.0",
+  //
   // SQL/NOSQL Dependencies
-  "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.9",
-  "org.mongodb" %% "casbah-commons" % "2.8.0" exclude("org.slf4j", "slf4j-log4j12"),
-  "org.mongodb" %% "casbah-core" % "2.8.0" exclude("org.slf4j", "slf4j-log4j12"),
+  "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0",
+  "org.mongodb" %% "casbah-commons" % "3.1.0" exclude("org.slf4j", "slf4j-log4j12"),
+  "org.mongodb" %% "casbah-core" % "3.1.0" exclude("org.slf4j", "slf4j-log4j12"),
   //
   // General Scala Dependencies
   "org.scalaz" %% "scalaz-core" % "7.2.0",
@@ -79,7 +84,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
   .settings(
     name := "trifecta_cli",
     organization := "com.github.ldaniels528",
-    version := "0.19.1",
+    version := "0.20.0",
     scalaVersion := myScalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
@@ -121,7 +126,7 @@ lazy val trifecta_ui = (project in file("app-play"))
   .settings(
     name := "trifecta_ui",
     organization := "com.github.ldaniels528",
-    version := "0.19.1",
+    version := "0.20.0",
     scalaVersion := myScalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),

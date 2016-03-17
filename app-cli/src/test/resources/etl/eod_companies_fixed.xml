@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<story id="eod_companies_fixed">
+
+    <import path="./app-cli/src/test/resources/etl/global_settings.xml" />
+
+    <triggers>
+        <StartUpTrigger id="File_Combining_Trigger">
+            <Compositelow id="combiner">
+                <input-sources>
+                    <include source="AMEX.txt" />
+                    <include source="NASDAQ.txt" />
+                    <include source="NYSE.txt" />
+                    <include source="OTCBB.txt" />
+                </input-sources>
+                <output-sources>
+                    <include source="output.txt" />
+                </output-sources>
+            </Compositelow>
+        </StartUpTrigger>
+    </triggers>
+
+    <data-sources>
+        <TextFileInputSource id="AMEX.txt" path="./app-cli/src/test/resources/etl/files/AMEX.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="NASDAQ.txt" path="./app-cli/src/test/resources/etl/files/NASDAQ.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="NYSE.txt" path="./app-cli/src/test/resources/etl/files/NYSE.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="OTCBB.txt" path="./app-cli/src/test/resources/etl/files/OTCBB.txt" layout="eod_company_input_layout" />
+        <TextFileOutputSource id="output.txt" path="{{ java.io.tmpdir }}/eod_companies_fixed.txt" layout="fixed-output" />
+    </data-sources>
+
+    <layouts>
+        <MultiPartLayout id="fixed-output">
+            <header>
+                <record id="fixed_header" format="fixed">
+                    <field name="symbol" value="Symbol" type="string" length="10" />
+                    <field name="description" value="Description" type="string" length="50"/>
+                    <field name="source" type="string" value="Source" length="40" />
+                    <field name="lineNo" type="string" value="Line Number" length="12" />
+                </record>
+            </header>
+            <body>
+                <record id="fixed_body" format="fixed">
+                    <field name="symbol" type="string" length="10" value="{{ symbol }}"/>
+                    <field name="description" type="string" length="50" value="{{ description }}"/>
+                    <field name="source" type="string" length="40" value="{{ flow.input.filename }}" />
+                    <field name="lineNo" type="int" length="12" value="{{ flow.input.offset }}" />
+                </record>
+            </body>
+        </MultiPartLayout>
+    </layouts>
+</story>

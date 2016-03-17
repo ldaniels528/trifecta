@@ -8,7 +8,7 @@ import com.github.ldaniels528.trifecta.sjs.models.TopicDetails
 import com.github.ldaniels528.trifecta.sjs.services.TopicService
 import org.scalajs.dom.console
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.util.{Failure, Success}
 

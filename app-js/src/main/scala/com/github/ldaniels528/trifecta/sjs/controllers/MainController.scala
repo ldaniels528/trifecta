@@ -14,7 +14,7 @@ import org.scalajs.dom
 import org.scalajs.dom.console
 
 import scala.concurrent.duration._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.util.{Failure, Success}

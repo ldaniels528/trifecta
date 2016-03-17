@@ -3,15 +3,17 @@ package com.github.ldaniels528.trifecta.controllers
 import java.io.{File, FileOutputStream}
 import java.util.UUID
 
+import com.github.ldaniels528.commons.helpers.EitherHelper._
+import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
+import com.github.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.github.ldaniels528.trifecta.command.parser.CommandParser
 import com.github.ldaniels528.trifecta.controllers.KafkaRestFacade._
 import com.github.ldaniels528.trifecta.io.ByteBufferUtils
 import com.github.ldaniels528.trifecta.io.avro.AvroConversion
 import com.github.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
-import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{DEFAULT_FETCH_SIZE, MessageData}
-import com.github.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
-import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
@@ -23,12 +25,11 @@ import com.github.ldaniels528.trifecta.models.ConsumerDetailJs.ConsumerDeltaKey
 import com.github.ldaniels528.trifecta.models.QueryDetailsJs._
 import com.github.ldaniels528.trifecta.models.TopicDetailsJs._
 import com.github.ldaniels528.trifecta.models._
+import com.github.ldaniels528.trifecta.modules.ModuleHelper._
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.{DEFAULT_FETCH_SIZE, MessageData}
+import com.github.ldaniels528.trifecta.modules.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
-import com.github.ldaniels528.commons.helpers.EitherHelper._
-import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
-import com.github.ldaniels528.commons.helpers.OptionHelper._
-import com.github.ldaniels528.commons.helpers.ResourceHelper._
-import com.github.ldaniels528.commons.helpers.StringHelper._
 import kafka.common.TopicAndPartition
 import play.api.Logger
 import play.api.libs.json.{JsString, Json}
@@ -87,6 +88,12 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     asyncIO.task
   }
 
+  /**
+    * Returns the option of a message based on the given search criteria
+    * @param topic the given topic
+    * @param criteria the given search criteria
+    * @return the option of a message based on the given search criteria
+    */
   def findOne(topic: String, criteria: String)(implicit ec: ExecutionContext) = {
     val decoder_? = rt.lookupDecoderByName(topic)
     val conditions = parseCondition(criteria, decoder_?)
@@ -97,19 +104,17 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
       }) map {
       case Some((partition, offset, Some(Success(message)))) =>
         MessageJs(`type` = "json", payload = Json.parse(message.toString), topic = Option(topic), partition = Some(partition), offset = Some(offset))
-      case Some(_) =>
-        throw new RuntimeException("Failed to retrieve a message")
-      case None =>
-        throw new RuntimeException("Failed to retrieve a message")
+      case Some(_) => die("Failed to retrieve a message")
+      case None => die("Failed to retrieve a message")
     }
   }
 
   /**
-    * Returns the promise of the option of a message based on the given search criteria
+    * Returns the option of a message based on the given search criteria
     * @param c the given [[SamplingCursor]]
-    * @return the promise of the option of a message based on the given search criteria
+    * @return the option of a message based on the given search criteria
     */
-  def findNext(c: SamplingCursor, attempts: Int = 0)(implicit ec: ExecutionContext): Option[MessageJs] = {
+  def findNext(c: SamplingCursor)(implicit ec: ExecutionContext): Option[MessageJs] = {
     // attempt to find at least one offset with messages available
     c.offsets.find(co => co.consumerOffset.exists(c => co.topicOffset.exists(t => c <= t))) flatMap { offset =>
       new KafkaMicroConsumer(TopicAndPartition(c.topic, offset.partition), brokers) use { subs =>
@@ -139,7 +144,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
   /**
     * Parses a condition statement
     * @param expression the given expression
-    * @param decoder the optional [[MessageDecoder]]
+    * @param decoder    the optional [[MessageDecoder]]
     * @example lastTrade < 1 and volume > 1000000
     * @return a collection of [[Condition]] objects
     */
@@ -155,10 +160,10 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
         case List(keyword, field, operator, value) if keyword.equalsIgnoreCase("and") => criteria.map(AND(_, compile(field, operator, deQuote(value))))
         case List(keyword, field, operator, value) if keyword.equalsIgnoreCase("or") => criteria.map(OR(_, compile(field, operator, deQuote(value))))
         case List(field, operator, value) => Option(compile(field, operator, deQuote(value)))
-        case unknown => throw new IllegalArgumentException(s"Illegal operand $unknown")
+        case unknown => die(s"Illegal operand $unknown")
       }
     }
-    criteria.map(compile(_, decoder)).getOrElse(throw new IllegalArgumentException(s"Invalid expression: $expression"))
+    criteria.map(compile(_, decoder)).getOrElse(die(s"Invalid expression: $expression"))
   }
 
   /**
@@ -310,9 +315,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Retrieves the message data for given topic, partition and offset
-    * @param topic the given topic
+    * @param topic     the given topic
     * @param partition the given partition
-    * @param offset the given offset
+    * @param offset    the given offset
     * @return the JSON representation of the message
     */
   def getMessageData(topic: String, partition: Int, offset: Long)(implicit ec: ExecutionContext) = {
@@ -327,9 +332,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Retrieves the message key for given topic, partition and offset
-    * @param topic the given topic
+    * @param topic     the given topic
     * @param partition the given partition
-    * @param offset the given offset
+    * @param offset    the given offset
     * @return the JSON representation of the message key
     */
   def getMessageKey(topic: String, partition: Int, offset: Long)(implicit ec: ExecutionContext) = {
@@ -354,7 +359,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Sequentially tests each decoder for the given topic until one is found that will decode the given message
-    * @param topic the given Kafka topic
+    * @param topic     the given Kafka topic
     * @param message_? an option of a [[MessageData]]
     * @return an option of a decoded message
     */
@@ -369,7 +374,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Attempts to decode the given message with the given decoder
-    * @param md the given [[MessageData]]
+    * @param md        the given [[MessageData]]
     * @param txDecoder the given [[TxDecoder]]
     * @return an option of a decoded message
     */
@@ -544,7 +549,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Converts the given value to the specified format
-    * @param value the given value
+    * @param value  the given value
     * @param format the specified format
     * @return the binary result
     */
@@ -556,14 +561,13 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
       case "Hex-Notation" => CommandParser.parseDottedHex(value)
       case "EPOC" => ByteBufferUtils.longToBytes(value.toLong)
       case "UUID" => ByteBufferUtils.uuidToBytes(UUID.fromString(value))
-      case _ =>
-        throw new IllegalArgumentException(s"Invalid format type '$format'")
+      case _ => die(s"Invalid format type '$format'")
     }
   }
 
   /**
     * Transcodes the given JSON document into an Avro-compatible byte array
-    * @param topic the given topic (e.g. "shocktrade.keystats.avro")
+    * @param topic   the given topic (e.g. "shocktrade.keystats.avro")
     * @param jsonDoc the given JSON document
     * @return an option of an Avro-compatible byte array
     */
@@ -593,8 +597,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     format match {
       case "EPOC" => ByteBufferUtils.longToBytes(System.currentTimeMillis())
       case "UUID" => ByteBufferUtils.uuidToBytes(UUID.randomUUID())
-      case _ =>
-        throw new IllegalArgumentException(s"Format type '$format' cannot be automatically generated")
+      case _ => die(s"Format type '$format' cannot be automatically generated")
     }
   }
 

@@ -30,7 +30,7 @@ object PartitionDetails {
   def apply(delta: PartitionDelta) = {
     val partition = makeNew[PartitionDetails]
     partition.partition = delta.partition
-    partition.offset = delta.endOffset
+    partition.offset = delta.startOffset
     partition.startOffset = delta.startOffset
     partition.endOffset = delta.endOffset
     partition.messages = delta.messages

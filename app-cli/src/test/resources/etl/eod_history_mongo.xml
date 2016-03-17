@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<story id="eod-history-mongo">
+
+    <import path="./app-cli/src/test/resources/etl/global_settings.xml" />
+
+    <triggers>
+        <FileTrigger id="Repo1">
+            <directory path="{{ user.home }}/broadway/incoming/tradingHistory" archive="DataStore">
+                <feed pattern="AMEX_(.*)[.]txt">
+                    <SimpleFlow input-source="input_file" output-source="mongo_output" />
+                </feed>
+                <feed pattern="NASDAQ_(.*)[.]txt">
+                    <SimpleFlow input-source="input_file" output-source="mongo_output" />
+                </feed>
+                <feed pattern="NYSE_(.*)[.]txt">
+                    <SimpleFlow input-source="input_file" output-source="mongo_output" />
+                </feed>
+                <feed pattern="OTCBB_(.*)[.]txt">
+                    <SimpleFlow input-source="input_file" output-source="mongo_output" />
+                </feed>
+            </directory>
+        </FileTrigger>
+    </triggers>
+
+    <data-sources>
+        <TextFileInputSource id="input_file" path="{{ flow.input.path }}" layout="eod_history_input_layout" />
+        <MongoOutputSource id="mongo_output" servers="localhost" database="shocktrade" collection="test_history" layout="mongo_layout"/>
+    </data-sources>
+
+    <layouts>
+        <MultiPartLayout id="mongo_layout">
+            <body>
+                <record id="json_body" format="json">
+                    <field name="ticker" type="string" value="{{ ticker }}"/>
+                    <field name="date" type="string" value="{{ date }}"/>
+                    <field name="open" type="double" value="{{ open }}"/>
+                    <field name="high" type="double" value="{{ high }}"/>
+                    <field name="low" type="double" value="{{ low }}"/>
+                    <field name="close" type="string" value="{{ close }}"/>
+                    <field name="volume" type="long" value="{{ volume }}"/>
+                </record>
+            </body>
+        </MultiPartLayout>
+    </layouts>
+</story>

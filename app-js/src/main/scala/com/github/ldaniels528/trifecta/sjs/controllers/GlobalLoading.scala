@@ -4,7 +4,7 @@ import com.github.ldaniels528.scalascript.core.HttpPromise
 import com.github.ldaniels528.scalascript.{CancellablePromise, Scope}
 
 import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 
 /**

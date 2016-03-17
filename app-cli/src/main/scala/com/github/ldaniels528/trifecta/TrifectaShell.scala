@@ -4,8 +4,8 @@ import java.io.PrintStream
 
 import com.github.ldaniels528.trifecta.TxConsole._
 import com.github.ldaniels528.trifecta.io.AsyncIO
-import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
-import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaSandbox
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.rest.EmbeddedWebServer
 import com.github.ldaniels528.trifecta.rest.TxWebConfig._
 import org.apache.zookeeper.KeeperException.ConnectionLossException
@@ -25,7 +25,7 @@ import scala.util.{Failure, Success, Try}
   */
 object TrifectaShell {
   private val logger = LoggerFactory.getLogger(getClass)
-  val VERSION = "0.19.1"
+  val VERSION = "0.20.0"
 
   /**
     * Application entry point
@@ -103,13 +103,7 @@ object TrifectaShell {
 
     // make sure we shutdown the ZooKeeper connection
     Runtime.getRuntime.addShutdownHook(new Thread {
-      override def run() {
-        // shutdown the ZooKeeper instance
-        rt.shutdown()
-
-        // close each module
-        rt.moduleManager.shutdown()
-      }
+      override def run() = rt.shutdown()
     })
 
     /**

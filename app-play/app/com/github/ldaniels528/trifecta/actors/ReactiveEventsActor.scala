@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorLogging, Cancellable}
 import com.github.ldaniels528.trifecta.actors.ReactiveEventsActor._
 import com.github.ldaniels528.trifecta.controllers.WebConfig
 import com.github.ldaniels528.trifecta.models._
+import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
 
@@ -14,6 +15,7 @@ import scala.concurrent.duration._
   * @author lawrence.daniels@gmail.com
   */
 class ReactiveEventsActor() extends Actor with ActorLogging {
+  Logger.info(s"created actor ${getClass.getName}")
 
   override def receive = {
     case message: MessageSamplingStartRequest =>
@@ -52,6 +54,7 @@ class ReactiveEventsActor() extends Actor with ActorLogging {
     log.info("Preparing streaming consumer updates...")
     context.system.scheduler.schedule(frequency, frequency) {
       val deltas = WebConfig.facade.getConsumerDeltas
+      log.debug(s"Streaming ${deltas.size} consumer updates...")
       if (deltas.nonEmpty) SSE ! SSEMessage(`type` = CONSUMER_DELTA, message = Json.toJson(deltas))
     }
   }
@@ -60,6 +63,7 @@ class ReactiveEventsActor() extends Actor with ActorLogging {
     log.info("Preparing streaming topic updates...")
     context.system.scheduler.schedule(frequency, frequency) {
       val deltas = WebConfig.facade.getTopicDeltas
+      log.debug(s"Streaming ${deltas.size} topic updates...")
       if (deltas.nonEmpty) SSE ! SSEMessage(`type` = TOPIC_DELTA, message = Json.toJson(deltas))
     }
   }

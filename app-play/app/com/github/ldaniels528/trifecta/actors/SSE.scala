@@ -17,11 +17,11 @@ object SSE {
 
   /**
     * Establishes an SSE connection; launching an actor to support the given user
-    * @param sessionID the given session ID
+    * @param sessionID     the given session ID
     * @param sseOutChannel the given [[Concurrent.Channel channel]]
     * @return a newly created [[ActorRef actor]]
     */
-  def connect(sessionID: String, sseOutChannel: Concurrent.Channel[JsValue]): ActorRef = {
+  def connect(sessionID: String, sseOutChannel: Concurrent.Channel[JsValue]) = {
     Akka.system.actorOf(SSEClientHandlingActor.props(sessionID, sseOutChannel))
   }
 
@@ -30,8 +30,10 @@ object SSE {
     * @param session the given [[SSESession session]]
     */
   def link(session: SSESession) = {
-    Logger.info(s"Registering new SSE session '${session.sessionId}'...")
-    sessions.put(session.sessionId, session)
+    sessions.getOrElseUpdate(session.sessionId, {
+      Logger.info(s"Registering new SSE session '${session.sessionId}'...")
+      session
+    })
     ()
   }
 
@@ -50,8 +52,10 @@ object SSE {
     * @param message the given [[SSEMessage SSE message]]
     */
   def !(message: SSEMessage): Unit = {
+    val js = Json.toJson(message)
+    Logger.debug(s"Sending [${sessions.size} clients] $js")
     sessions.foreach { case (_, SSESession(_, actor)) =>
-      actor ! Json.toJson(message)
+      actor ! js
     }
   }
 

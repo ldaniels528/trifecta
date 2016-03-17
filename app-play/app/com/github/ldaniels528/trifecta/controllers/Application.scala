@@ -13,18 +13,19 @@ import play.api.mvc.{Action, Controller}
   * @author lawrence.daniels@gmail.com
   */
 object Application extends Controller {
+  private val SESSION_KEY = "SESSION_ID"
 
   def index = Action {
     Ok(assets.views.html.index())
   }
 
   def sseConnect = Action { implicit request =>
-    val sessionID = UUID.randomUUID().toString.replaceAllLiterally("-", "")
+    val sessionID = request.session.get(SESSION_KEY) getOrElse UUID.randomUUID().toString.replaceAllLiterally("-", "")
     val (out, sseOutChannel) = Concurrent.broadcast[JsValue]
     SSE.connect(sessionID, sseOutChannel)
     Ok.chunked(out &> EventSource())
       .as("text/event-stream")
-      .withSession(request.session + "SESSION_ID" -> sessionID)
+      .withSession(request.session + SESSION_KEY -> sessionID)
   }
 
 }

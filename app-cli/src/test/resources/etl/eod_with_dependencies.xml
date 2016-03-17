@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<story id="eod-history-with-dependencies">
+
+    <import path="./app-cli/src/test/resources/etl/global_settings.xml" />
+
+    <triggers>
+        <FileTrigger id="trading_history_trigger">
+            <feed-set pattern=".*_(\\S*)[.]txt" path="{{ user.home }}/broadway/incoming/tradingHistory" archive="DataStore">
+                <feed starts-with="AMEX">
+                    <SimpleFlow id="amex_flow" input-source="input_file" output-source="output_file" />
+                </feed>
+                <feed starts-with="NASDAQ">
+                    <SimpleFlow id="nasdaq_flow" input-source="input_file" output-source="output_file" />
+                </feed>
+                <feed starts-with="NYSE">
+                    <SimpleFlow id="nyse_flow" input-source="input_file" output-source="output_file" />
+                </feed>
+                <feed starts-with="OTCBB">
+                    <SimpleFlow id="otcbb_flow" input-source="input_file" output-source="output_file" />
+                </feed>
+            </feed-set>
+        </FileTrigger>
+    </triggers>
+
+    <data-sources>
+        <TextFileInputSource id="input_file" path="{{ flow.input.path }}" layout="eod_history_input_layout" />
+        <TextFileOutputSource id="output_file" path="{{ java.io.tmpdir }}/fixed_{{ flow.input.filename }}" layout="output_layout" />
+    </data-sources>
+
+    <layouts>
+        <MultiPartLayout id="output_layout">
+            <header>
+                <record id="output_header" format="fixed">
+                    <field name="symbol" type="string" length="10">Symbol</field>
+                    <field name="date" type="string" length="15">Date</field>
+                    <field name="open" type="string" length="12">Open</field>
+                    <field name="high" type="string" length="12">High</field>
+                    <field name="low" type="string" length="12">Low</field>
+                    <field name="close" type="string" length="12">Close</field>
+                    <field name="volume" type="string" length="12">Volume</field>
+                </record>
+            </header>
+            <body>
+                <record id="output_body" format="fixed">
+                    <field name="symbol" type="string" length="10">{{ ticker }}</field>
+                    <field name="date" type="date" length="15">{{ date | date:parse:"yyyyMMdd" }}</field>
+                    <field name="open" type="string" length="12">{{ open }}</field>
+                    <field name="high" type="string" length="12">{{ high }}</field>
+                    <field name="low" type="string" length="12">{{ low }}</field>
+                    <field name="close" type="string" length="12">{{ close }}</field>
+                    <field name="volume" type="string" length="12">{{ volume }}</field>
+                </record>
+            </body>
+            <trailer>
+                <record id="output_trailer_1" format="fixed">
+                    <field name="date" type="string" length="30">{{ flow.input.filename }}</field>
+                    <field name="date" type="string" length="10">{{ flow.input.count }}</field>
+                </record>
+                <record id="output_trailer_2" format="fixed">
+                    <field name="date" type="string" length="30">{{ flow.output.filename }}</field>
+                    <field name="date" type="string" length="10">{{ flow.output.count }}</field>
+                </record>
+            </trailer>
+        </MultiPartLayout>
+    </layouts>
+</story>

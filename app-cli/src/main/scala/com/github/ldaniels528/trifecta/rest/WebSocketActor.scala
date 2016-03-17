@@ -1,10 +1,9 @@
 package com.github.ldaniels528.trifecta.rest
 
-import akka.actor.{ActorLogging, Actor}
+import akka.actor.{Actor, ActorLogging}
 import com.github.ldaniels528.trifecta.io.json.JsonHelper
 import com.github.ldaniels528.trifecta.rest.WebSocketActor._
 import org.mashupbots.socko.events.WebSocketFrameEvent
-import org.slf4j.LoggerFactory
 
 /**
  * Web Socket Actor

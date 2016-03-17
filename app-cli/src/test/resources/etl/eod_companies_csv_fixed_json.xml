@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<story id="eod_companies_csv">
+
+    <import path="./app-cli/src/test/resources/etl/global_settings.xml" />
+
+    <triggers>
+        <StartUpTrigger id="File_Combining_Trigger">
+            <CompositeFlow id="combiner_flow">
+                <input-sources>
+                    <include source="AMEX" />
+                    <include source="NASDAQ" />
+                    <include source="NYSE" />
+                    <include source="OTCBB" />
+                </input-sources>
+                <output-sources>
+                    <include source="output_csv" />
+                    <include source="output_fixed" />
+                    <include source="output_json" />
+                </output-sources>
+            </CompositeFlow>
+        </StartUpTrigger>
+    </triggers>
+
+    <data-sources>
+        <TextFileInputSource id="AMEX" path="./app-cli/src/test/resources/etl/files/AMEX.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="NASDAQ" path="./app-cli/src/test/resources/etl/files/NASDAQ.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="NYSE" path="./app-cli/src/test/resources/etl/files/NYSE.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="OTCBB" path="./app-cli/src/test/resources/etl/files/OTCBB.txt" layout="eod_company_input_layout" />
+
+        <TextFileOutputSource id="output_csv" path="{{ java.io.tmpdir }}/eod_companies_csv.txt" layout="csv_layout" />
+        <TextFileOutputSource id="output_fixed" path="{{ java.io.tmpdir }}/eod_companies_fixed.txt" layout="fixed_layout" />
+        <TextFileOutputSource id="output_json" path="{{ java.io.tmpdir }}/eod_companies_json.txt" layout="json_layout" />
+    </data-sources>
+
+    <layouts>
+        <MultiPartLayout id="csv_layout">
+            <header>
+                <record id="cvs_header" format="csv">
+                    <field name="exchange" type="string" value="Exchange" />
+                    <field name="symbol" type="string" value="Ticker" />
+                    <field name="description" type="string" value="Description" />
+                    <field name="source" type="string" value="Source" />
+                    <field name="lineNo" type="string" value="Line Number" />
+                </record>
+            </header>
+            <body>
+                <record id="csv_data" format="csv">
+                    <field name="exchange" type="string">{{ flow.input.id }}</field>
+                    <field name="symbol" type="string">{{ symbol }}</field>
+                    <field name="description" type="string">{{ description }}</field>
+                    <field name="source" type="string">{{ flow.input.filename }}</field>
+                    <field name="lineNo" type="int">{{ flow.input.offset }}</field>
+                </record>
+            </body>
+        </MultiPartLayout>
+
+        <MultiPartLayout id="fixed_layout">
+            <header>
+                <record id="fixed_header" format="fixed">
+                    <field name="symbol" value="Symbol" type="string" length="10" />
+                    <field name="description" value="Description" type="string" length="50"/>
+                    <field name="source" type="string" value="Source" length="40" />
+                    <field name="lineNo" type="string" value="Line Number" length="12" />
+                </record>
+            </header>
+            <body>
+                <record id="fixed_body" format="fixed">
+                    <field name="symbol" type="string" length="10" value="{{ symbol }}"/>
+                    <field name="description" type="string" length="50" value="{{ description }}"/>
+                    <field name="source" type="string" length="40" value="{{ flow.input.filename }}" />
+                    <field name="lineNo" type="int" length="12" value="{{ flow.input.offset }}" />
+                </record>
+            </body>
+        </MultiPartLayout>
+
+        <MultiPartLayout id="json_layout">
+            <body>
+                <record id="json_body" format="json">
+                    <field name="symbol" type="string" value="{{ symbol }}" />
+                    <field name="description" type="string" value="{{ description }}" />
+                </record>
+            </body>
+        </MultiPartLayout>
+    </layouts>
+</story>

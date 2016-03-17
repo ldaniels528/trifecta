@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<story id="eod-companies">
+
+    <import path="./app-cli/src/test/resources/etl/global_settings.xml" />
+
+    <triggers>
+        <StartUpTrigger id="Files_Combiner">
+            <SimpleFlow id="AMEX" input-source="AMEX.txt" output-source="kafka_topic" />
+            <SimpleFlow id="NASDAQ" input-source="NASDAQ.txt" output-source="kafka_topic" />
+            <SimpleFlow id="NYSE" input-source="NYSE.txt" output-source="kafka_topic" />
+            <SimpleFlow id="OTCBB" input-source="OTCBB.txt" output-source="kafka_topic" />
+        </StartUpTrigger>
+    </triggers>
+
+    <data-sources>
+        <TextFileInputSource id="AMEX.txt" path="./app-cli/src/test/resources/etl/files/AMEX.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="NASDAQ.txt" path="./app-cli/src/test/resources/etl/files/NASDAQ.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="NYSE.txt" path="./app-cli/src/test/resources/etl/files/NYSE.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="OTCBB.txt" path="./app-cli/src/test/resources/etl/files/OTCBB.txt" layout="eod_company_input_layout" />
+        <KafkaOutputSource id="kafka_topic" topic="shocktrade.companies.avro" connectionString="vault114:2181" layout="avro_layout" />
+    </data-sources>
+
+    <layouts>
+        <MultiPartLayout id="avro_layout">
+            <body>
+                <record id="avro_body" format="avro" name="EodCompanyInfo" namespace="com.shocktrade.avro" doc="EOD Data companies schema">
+                    <field name="symbol" type="string">{{ symbol }}</field>
+                    <field name="description" type="string">{{ description }}</field>
+                </record>
+            </body>
+        </MultiPartLayout>
+    </layouts>
+</story>

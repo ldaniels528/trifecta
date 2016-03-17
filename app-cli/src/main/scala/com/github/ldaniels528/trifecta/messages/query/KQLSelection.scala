@@ -2,7 +2,7 @@ package com.github.ldaniels528.trifecta.messages.query
 
 import com.github.ldaniels528.trifecta.TxRuntimeContext
 import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
-import com.github.ldaniels528.trifecta.io.{AsyncIO, InputSource, OutputSource}
+import com.github.ldaniels528.trifecta.io.{AsyncIO, MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.Expression
 import com.github.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
@@ -29,7 +29,7 @@ case class KQLSelection(source: IOSource,
     val counter = IOCounter(System.currentTimeMillis())
 
     // get the input source and its decoder
-    val inputSource: Option[InputSource] = rt.getInputHandler(rt.getDeviceURLWithDefault("topic", source.deviceURL))
+    val inputSource: Option[MessageInputSource] = rt.getInputHandler(rt.getDeviceURLWithDefault("topic", source.deviceURL))
     val inputDecoder: Option[MessageDecoder[_]] = source.decoderURL match {
       case None | Some("default") =>
         val topic = source.deviceURL.split("[:]").last
@@ -39,7 +39,7 @@ case class KQLSelection(source: IOSource,
     }
 
     // get the output source and its encoder
-    val outputSource: Option[OutputSource] = destination.flatMap(src => rt.getOutputHandler(src.deviceURL))
+    val outputSource: Option[MessageOutputSource] = destination.flatMap(src => rt.getOutputHandler(src.deviceURL))
     val outputDecoder: Option[MessageDecoder[_]] = for {dest <- destination; url <- dest.decoderURL; decoder <- MessageCodecs.getDecoder(rt.config, url)} yield decoder
 
     // compile conditions & get all other properties

@@ -1,0 +1,16 @@
+{
+    "type": "record",
+    "name": "EodDataRecord",
+    "namespace": "com.shocktrade.avro",
+    "fields":[
+        { "name": "symbol", "type":"string", "doc":"stock symbol" },
+        { "name": "exchange", "type":["null", "string"], "doc":"stock exchange", "default":null },
+        { "name": "tradeDate", "type":["null", "long"], "doc":"last sale date", "default":null },
+        { "name": "open", "type":["null", "double"], "doc":"open price", "default":null },
+        { "name": "close", "type":["null", "double"], "doc":"close price", "default":null },
+        { "name": "high", "type":["null", "double"], "doc":"day's high price", "default":null },
+        { "name": "low", "type":["null", "double"], "doc":"day's low price", "default":null },
+        { "name": "volume", "type":["null", "long"], "doc":"day's volume", "default":null }
+    ],
+    "doc": "A schema for EodData quotes"
+}

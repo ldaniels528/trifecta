@@ -28,14 +28,14 @@ trait Module {
    * @param url the given input URL
    * @return the option of an input source
    */
-  def getInputSource(url: String): Option[InputSource]
+  def getInputSource(url: String): Option[MessageInputSource]
 
   /**
    * Attempts to retrieve an output source for the given URL
    * @param url the given output URL
    * @return the option of an output source
    */
-  def getOutputSource(url: String): Option[OutputSource]
+  def getOutputSource(url: String): Option[MessageOutputSource]
 
   /**
    * Returns the name of the module (e.g. "kafka")
@@ -70,9 +70,9 @@ trait Module {
 
   protected def dieInvalidOutputURL[S](url: String, example: String): S = die(s"Invalid output URL '$url' - Example usage: $example")
 
-  protected def dieNoInputHandler[S](device: InputSource): S = die(s"Unhandled input source $device")
+  protected def dieNoInputHandler[S](device: MessageInputSource): S = die(s"Unhandled input source $device")
 
-  protected def dieNoOutputHandler[S](device: OutputSource): S = die(s"Unhandled output source $device")
+  protected def dieNoOutputHandler[S](device: MessageOutputSource): S = die(s"Unhandled output source $device")
 
   protected def dieSyntax[S](unixArgs: UnixLikeArgs): S = {
     die( s"""Invalid arguments - use "syntax ${unixArgs.commandName.get}" to see usage""")
@@ -121,11 +121,11 @@ trait Module {
 
   private def formatJson(value: String): String = prettyRender(parse(value))
 
-  protected def getInputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[InputSource] = {
+  protected def getInputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[MessageInputSource] = {
     params("-i") flatMap rt.getInputHandler
   }
 
-  protected def getOutputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[OutputSource] = {
+  protected def getOutputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[MessageOutputSource] = {
     params("-o") flatMap rt.getOutputHandler
   }
 

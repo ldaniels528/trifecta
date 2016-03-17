@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<story id="powerball_history">
+
+    <import path="./app-cli/src/test/resources/etl/global_settings.xml" />
+
+    <triggers>
+        <StartUpTrigger id="powerball_file_trigger">
+            <CompositeFlow id="dual_output_flow">
+                <input-sources>
+                    <include source="input_file" />
+                </input-sources>
+                <output-sources>
+                    <include source="csv_output" />
+                    <include source="sql_output" />
+                    <include source="docdb_output" />
+                </output-sources>
+            </CompositeFlow>
+        </StartUpTrigger>
+    </triggers>
+
+    <data-sources>
+        <TextFileInputSource id="input_file" path="./app-cli/src/test/resources/etl/files/DownloadAllNumbers.txt" layout="powerball_layout" />
+
+        <TextFileOutputSource id="csv_output" path="{{ java.io.tmpdir }}/powerball.txt" layout="csv_layout" />
+
+        <SQLOutputSource id="sql_output"
+                         table="dbo.powerball_history"
+                         layout="sql_layout"
+                         driver="com.microsoft.sqlserver.jdbc.SQLServerDriver"
+                         url="{{ sqlserver.secret.url }}"
+                         user="{{ sqlserver.secret.user }}" password="{{ sqlserver.secret.password }}" />
+
+        <DocumentDBOutputSource id="docdb_output"
+                                database="broadway"
+                                collection="powerball_history"
+                                host="{{ documentdb.secret.host }}"
+                                master-key="{{ documentdb.secret.master_key }}"
+                                layout="json_layout" />
+
+    </data-sources>
+
+    <layouts>
+        <MultiPartLayout id="powerball_layout">
+            <header>
+                <record id="fixed_header1" format="fixed">
+                    <field name="line1" type="string" length="100" />
+                </record>
+                <record id="fixed_header2" format="fixed">
+                    <field name="line2" type="string" length="100" />
+                </record>
+                <record id="fixed_header3" format="fixed">
+                    <field name="line3" type="string" length="100" />
+                </record>
+                <record id="fixed_header4" format="fixed">
+                    <field name="line4" type="string" length="100" />
+                </record>
+                <record id="fixed_header5" format="fixed">
+                    <field name="line5" type="string" length="100" />
+                </record>
+            </header>
+            <body>
+                <record id="fixed_body" format="fixed">
+                    <field name="draw_num" type="string" length="6"/>
+                    <field name="draw_date" type="string" length="24"/> <!-- Sat. Jan 30, 2016 -->
+                    <field name="number_1" type="string" length="12"/>
+                    <field name="number_2" type="string" length="12"/>
+                    <field name="number_3" type="string" length="12"/>
+                    <field name="number_4" type="string" length="12"/>
+                    <field name="number_5" type="string" length="12"/>
+                    <field name="powerball" type="string" length="12"/>
+                </record>
+            </body>
+        </MultiPartLayout>
+
+        <MultiPartLayout id="csv_layout">
+            <header>
+                <record id="csv_header" format="csv">
+                    <field name="draw_num" type="string">Draw Number</field>
+                    <field name="draw_date" type="string">Draw Number</field>
+                    <field name="number_1" type="string">Number 1</field>
+                    <field name="number_2" type="string">Number 2</field>
+                    <field name="number_3" type="string">Number 3</field>
+                    <field name="number_4" type="string">Number 4</field>
+                    <field name="number_5" type="string">Number 5</field>
+                    <field name="powerball" type="string">Powerball</field>
+                </record>
+            </header>
+            <body>
+                <record id="csv_body" format="csv">
+                    <field name="draw_num" type="string">{{ draw_num }}</field>
+                    <field name="draw_date" type="string">{{ draw_date | date:parse:"EEE'.' MMM dd',' yyyy" | date:format:yyyyMMdd }}</field>
+                    <field name="number_1" type="string">{{ number_1 }}</field>
+                    <field name="number_2" type="string">{{ number_2 }}</field>
+                    <field name="number_3" type="string">{{ number_3 }}</field>
+                    <field name="number_4" type="string">{{ number_4 }}</field>
+                    <field name="number_5" type="string">{{ number_5 }}</field>
+                    <field name="powerball" type="string">{{ powerball }}</field>
+                </record>
+            </body>
+        </MultiPartLayout>
+
+        <MultiPartLayout id="json_layout">
+            <body>
+                <record id="history_json" format="json">
+                    <field name="draw_num" type="string">{{ draw_num }}</field>
+                    <field name="draw_date" type="date">{{ draw_date | date:parse:"EEE'.' MMM dd',' yyyy" }}</field>
+                    <field name="number_1" type="string">{{ number_1 }}</field>
+                    <field name="number_2" type="string">{{ number_2 }}</field>
+                    <field name="number_3" type="string">{{ number_3 }}</field>
+                    <field name="number_4" type="string">{{ number_4 }}</field>
+                    <field name="number_5" type="string">{{ number_5 }}</field>
+                    <field name="powerball" type="string">{{ powerball }}</field>
+                </record>
+            </body>
+        </MultiPartLayout>
+
+        <MultiPartLayout id="sql_layout">
+            <body>
+                <record id="history_sql" type="sql">
+                    <field name="draw_num" type="string">{{ draw_num }}</field>
+                    <field name="draw_date" type="date">{{ draw_date | date:parse:"EEE'.' MMM dd',' yyyy" }}</field>
+                    <field name="number_1" type="string">{{ number_1 }}</field>
+                    <field name="number_2" type="string">{{ number_2 }}</field>
+                    <field name="number_3" type="string">{{ number_3 }}</field>
+                    <field name="number_4" type="string">{{ number_4 }}</field>
+                    <field name="number_5" type="string">{{ number_5 }}</field>
+                    <field name="powerball" type="string">{{ powerball }}</field>
+                </record>
+            </body>
+        </MultiPartLayout>
+    </layouts>
+</story>

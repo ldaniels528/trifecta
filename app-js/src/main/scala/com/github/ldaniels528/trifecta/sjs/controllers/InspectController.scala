@@ -12,7 +12,7 @@ import org.scalajs.dom
 import org.scalajs.dom.console
 
 import scala.concurrent.duration._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.util.{Failure, Success}
 
@@ -160,8 +160,8 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
     * @@param item the given Zookeeper item
     */
   $scope.expandItem = (anItem: js.UndefOr[ZkItem]) => anItem foreach { item =>
-    item.expanded = !item.expanded
-    if (item.expanded) {
+    item.expanded = !item.expanded.contains(true)
+    if (item.expanded.contains(true)) {
       item.loading = true
       zookeeperSvc.getZkPath(item.path).withGlobalLoading.withTimer("Retrieving Zookeeper path") onComplete {
         case Success(zkItems) =>

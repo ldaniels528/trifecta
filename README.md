@@ -160,6 +160,16 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.20.0
+* Trifecta UI (CLI version)
+    * Miscellaneous bug fixes
+* Trifecta UI (TypeSafe Play version)
+    * Miscellaneous bug fixes
+    
+#### v0.19.2
+* Trifecta UI (TypeSafe version)
+    * Fixed issue with out of memory errors while streaming messages
+
 #### v0.19.1
 * Trifecta UI (CLI version)
     * Fixed issue with missing web resources
@@ -170,27 +180,15 @@ Trifecta binaries are available for immediate download in the "<a href='https://
     * Updated the user interface
     * Bug fixes
 
-#### v0.18.20
-* Trifecta
-    * Added support for Kafka ~~v0.8.2.0~~ v9.0.0 consumers
-
-#### v0.18.19
-* Trifecta Core
-    * Fixed potential bug related to retrieving the list of available brokers
-
-#### v0.18.18
-* Trifecta UI
-    * Reworked the Brokers view (Inspect module)
-    * Fixed sort ordering of partitions in the Replicas view (Inspect module)
-
-#### v0.18.1 to v0.18.17
+#### v0.18.1 to v0.18.20
 * Trifecta Core
     * Fixed issue with the application failing if the configuration file is not found
-    * Upgraded to Kafka 0.8.2-beta
     * Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
         * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
     * Upgraded to Kafka 0.8.2.0
-    * Added configuration key to support multi-tenant Zookeeper setups    
+    * Added configuration key to support multi-tenant Zookeeper setups  
+    * Fixed potential bug related to retrieving the list of available brokers 
+    * Added support for Kafka v9.0.0 consumers
 * Trifecta UI
     * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
     * _Decoder_ tab user interface improvements
@@ -204,7 +202,9 @@ Trifecta binaries are available for immediate download in the "<a href='https://
     * Added real-time message streaming capability to the _Inspect_ tab
     * Swapped the Inspect and Observe modules
     * Added a new Brokers view to the Observe module
-
+    * Reworked the Brokers view (Inspect module)
+    * Fixed sort ordering of partitions in the Replicas view (Inspect module)
+    
 <a name="trifecta-ui"></a>
 ### Trifecta UI
 
@@ -330,16 +330,17 @@ and optionally Elastic Search documents and MongoDB documents via simple UNIX-li
 _Trifecta_ exposes its commands through modules. At any time to see which modules are available one could issue the `modules` command.
 
     core:/home/ldaniels> modules
-    + -------------------------------------------------------------------------------------------- +
-    | name           className                                             loaded  active          |
-    + -------------------------------------------------------------------------------------------- +
-    | cassandra      com.github.ldaniels528.trifecta.modules.CassandraModule      true    false    |
-    | core           com.github.ldaniels528.trifecta.modules.CoreModule           true    true     |
-    | elasticSearch  com.github.ldaniels528.trifecta.modules.ElasticSearchModule  true    false    |
-    | kafka          com.github.ldaniels528.trifecta.modules.KafkaModule          true    false    |
-    | mongodb        com.github.ldaniels528.trifecta.modules.MongoModule          true    false    |
-    | zookeeper      com.github.ldaniels528.trifecta.modules.ZookeeperModule      true    false    |
-    + -------------------------------------------------------------------------------------------- +
+    + ---------------------------------------------------------------------------------------------------------- +
+    | name           className                                                                  loaded  active   |
+    + ---------------------------------------------------------------------------------------------------------- +
+    | cassandra      com.github.ldaniels528.trifecta.modules.cassandra.CassandraModule          true    false    |
+    | core           com.github.ldaniels528.trifecta.modules.core.CoreModule                    true    true     |
+    | elasticSearch  com.github.ldaniels528.trifecta.modules.elasticsearch.ElasticSearchModule  true    false    |
+    | etl            com.github.ldaniels528.trifecta.modules.etl.ETLModule                      true    false    |
+    | kafka          com.github.ldaniels528.trifecta.modules.kafka.KafkaModule                  true    false    |
+    | mongodb        com.github.ldaniels528.trifecta.modules.mongodb.MongoModule                true    false    |
+    | zookeeper      com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule          true    false    |
+    + ---------------------------------------------------------------------------------------------------------- +
 
 To execute local system commands, enclose the command you'd like to execute using the back-ticks (`) symbol:
     

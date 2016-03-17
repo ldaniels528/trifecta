@@ -1,16 +1,17 @@
 package com.github.ldaniels528.trifecta
 
-import com.datastax.driver.core.{ColumnDefinitions, ResultSet, Row}
+import com.datastax.driver.core.{CodecRegistry, ColumnDefinitions, ResultSet, Row}
 import com.github.ldaniels528.tabular.Tabular
 import com.github.ldaniels528.trifecta.io.AsyncIO
 import com.github.ldaniels528.trifecta.io.avro.AvroTables
 import com.github.ldaniels528.trifecta.io.json.JsonHelper
-import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.MessageData
-import com.github.ldaniels528.trifecta.io.kafka.StreamedMessage
 import com.github.ldaniels528.trifecta.messages.BinaryMessaging
 import com.github.ldaniels528.trifecta.messages.query.KQLResult
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.MessageData
+import com.github.ldaniels528.trifecta.modules.kafka.StreamedMessage
 import net.liftweb.json._
 import org.apache.avro.generic.GenericRecord
+import play.api.libs.json.{JsValue, Json}
 
 import scala.collection.GenTraversableOnce
 import scala.collection.JavaConversions._
@@ -19,19 +20,19 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /**
- * Trifecta Result Handler
- * @author lawrence.daniels@gmail.com
- */
+  * Trifecta Result Handler
+  * @author lawrence.daniels@gmail.com
+  */
 class TxResultHandler(config: TxConfig) extends BinaryMessaging {
   // define the tabular instance
   val tabular = new Tabular() with AvroTables
   val out = config.out
 
   /**
-   * Handles the processing and/or display of the given result of a command execution
-   * @param result the given result
-   * @param ec the given execution context
-   */
+    * Handles the processing and/or display of the given result of a command execution
+    * @param result the given result
+    * @param ec     the given execution context
+    */
   def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) {
     result match {
       // handle the asynchronous I/O cases
@@ -61,6 +62,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
 
       // handle JSON values
       case js: JValue => out.println(prettyRender(js))
+      case js: JsValue => out.println(Json.prettyPrint(js))
 
       // handle Option cases
       case o: Option[_] => o match {
@@ -96,10 +98,10 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
   }
 
   /**
-   * Handles an asynchronous result
-   * @param task the given asynchronous task
-   * @param input the executing command
-   */
+    * Handles an asynchronous result
+    * @param task  the given asynchronous task
+    * @param input the executing command
+    */
   private def handleAsyncResult(task: Future[_], input: String)(implicit ec: ExecutionContext) {
     // capture the start time
     val startTime = System.currentTimeMillis()
@@ -122,10 +124,10 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
   }
 
   /**
-   * Handles an asynchronous I/O result
-   * @param asyncIO the given asynchronous I/O task
-   * @param input the executing command
-   */
+    * Handles an asynchronous I/O result
+    * @param asyncIO the given asynchronous I/O task
+    * @param input   the executing command
+    */
   private def handleAsyncResult(asyncIO: AsyncIO, input: String)(implicit ec: ExecutionContext) {
     val task = asyncIO.task
 
@@ -143,9 +145,9 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
   }
 
   /**
-   * Handles a Cassandra Result Set
-   * @param rs the given [[ResultSet]]
-   */
+    * Handles a Cassandra Result Set
+    * @param rs the given [[ResultSet]]
+    */
   private def handleCassandraResultSet(rs: ResultSet): Unit = {
     val cds = rs.getColumnDefinitions.asList().toSeq
     val records = rs.all() map (decodeRow(_, cds))
@@ -155,7 +157,8 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
   private def decodeRow(row: Row, cds: Seq[ColumnDefinitions.Definition]): Map[String, Any] = {
     Map(cds map { cd =>
       val name = cd.getName
-      val value = cd.getType.asJavaClass() match {
+      val javaType = CodecRegistry.DEFAULT_INSTANCE.codecFor(cd.getType).getJavaType.getRawType
+      val value = javaType match {
         case c if c == classOf[Array[Byte]] => row.getBytes(name)
         case c if c == classOf[java.math.BigDecimal] => row.getDecimal(name)
         case c if c == classOf[java.math.BigInteger] => row.getVarint(name)
@@ -170,7 +173,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
         case c if c == classOf[String] => row.getString(name)
         case c if c == classOf[java.util.UUID] => row.getUUID(name)
         case c =>
-          throw new IllegalStateException(s"Unsupported class type ${c.getName} for column ${cd.getTable}.$name")
+          throw new IllegalStateException(s"Unsupported class type ${javaType.getName} for column ${cd.getTable}.$name")
       }
       (name, value)
     }: _*)
@@ -179,9 +182,9 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
 }
 
 /**
- * Trifecta Result Handler Singleton
- * @author lawrence.daniels@gmail.com
- */
+  * Trifecta Result Handler Singleton
+  * @author lawrence.daniels@gmail.com
+  */
 object TxResultHandler {
 
   case class Ok() {

@@ -3,7 +3,7 @@ package com.github.ldaniels528.trifecta.rest
 import akka.actor.{ActorSystem, Props}
 import akka.routing.RoundRobinPool
 import com.github.ldaniels528.trifecta.TxConfig
-import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.rest.EmbeddedWebServer._
 import com.github.ldaniels528.trifecta.rest.KafkaRestFacade.{SamplingCursor, TopicAndPartitions}
 import com.github.ldaniels528.trifecta.rest.PushEventActor._
