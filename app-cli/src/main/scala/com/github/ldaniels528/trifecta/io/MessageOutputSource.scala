@@ -19,7 +19,6 @@ trait MessageOutputSource {
   /**
    * Writes the given key and decoded message to the underlying stream
    * @param data the given key and message
-   * @return the response value
    */
   def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]] = None)(implicit ec: ExecutionContext): Unit
 

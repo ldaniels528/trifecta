@@ -124,8 +124,8 @@ object StoryConfigParser {
       options = DocumentDBConnectionInfo(
         host = node \\@ "host",
         masterKey = node \\@ "master-key",
-        database = node \\@ "database",
-        collection = node \\@ "collection",
+        databaseName = node \\@ "database",
+        collectionName = node \\@ "collection",
         consistencyLevel = (node \?@ "consistency-level").map(ConsistencyLevel.valueOf) getOrElse ConsistencyLevel.Session),
       layout = lookupLayout(layouts, id = node \\@ "layout"))
   }
@@ -280,7 +280,7 @@ object StoryConfigParser {
       defaultValue = node \?@ "value" ?? node.text_?,
       length = (node \?@ "length") map (_.toInt),
       nullable = (node \?@ "nullable") map (_.toBoolean),
-      updateKey = (node \?@ "updateKey") map (_.split(',').map(_.trim))
+      updateKey = (node \?@ "updateKey") map (_.toBoolean)
     )
   }
 

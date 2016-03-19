@@ -24,7 +24,7 @@ case class Field(name: String,
                  defaultValue: Option[String] = None,
                  length: Option[Int] = None,
                  nullable: Option[Boolean] = None,
-                 updateKey: Option[Seq[String]] = None,
+                 updateKey: Option[Boolean] = None,
                  properties: Seq[Field] = Nil,
                  elements: Seq[Field] = Nil) {
 

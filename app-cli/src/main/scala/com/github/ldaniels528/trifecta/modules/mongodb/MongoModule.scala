@@ -3,9 +3,9 @@ package com.github.ldaniels528.trifecta.modules.mongodb
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
+import com.github.ldaniels528.trifecta.io.KeyAndMessage
 import com.github.ldaniels528.trifecta.io.avro.AvroCodec
 import com.github.ldaniels528.trifecta.io.json.JsonHelper._
-import com.github.ldaniels528.trifecta.io.{KeyAndMessage, MessageInputSource}
 import com.github.ldaniels528.trifecta.messages.{BinaryMessaging, MessageDecoder}
 import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
@@ -29,7 +29,7 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
     * Returns the commands that are bound to the module
     * @return the commands that are bound to the module
     */
-  override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
+  override def getCommands(implicit rt: TxRuntimeContext) = Seq(
     Command(this, "mconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false)), help = "Establishes a connection to a MongoDB cluster"),
     Command(this, "mfindone", findDocument, UnixLikeParams(Seq("collection" -> true, "query" -> false, "fields" -> false), Seq("-o" -> "outputSource")), help = "Retrieves a document from MongoDB"),
     Command(this, "mfind", findDocuments, UnixLikeParams(Seq("collection" -> true, "query" -> false, "fields" -> false), Seq("-o" -> "outputSource")), help = "Retrieves a document from MongoDB"),
@@ -43,14 +43,14 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
     * @param url the given input URL
     * @return the option of an input source
     */
-  override def getInputSource(url: String): Option[MessageInputSource] = None
+  override def getInputSource(url: String) = None
 
   /**
     * Attempts to retrieve an output source for the given URL
     * @param url the given output URL
     * @return the option of an output source
     */
-  override def getOutputSource(url: String): Option[MongoMessageOutputSource] = {
+  override def getOutputSource(url: String) = {
     for {
       databaseName <- url.extractProperty("mongo:")
       db <- database_?
@@ -76,6 +76,10 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
     */
   override def moduleName = "mongodb"
 
+  /**
+    * Returns the the information that is to be displayed while the module is active
+    * @return the the information that is to be displayed while the module is active
+    */
   override def prompt = database_?.map(_.databaseName).getOrElse("[default]")
 
   /**

@@ -8,7 +8,9 @@ import com.github.ldaniels528.trifecta.io.MessageOutputSource
  */
 object ModuleHelper {
 
-  def die[S](message: String): S = throw new IllegalArgumentException(message)
+  def die[S](message: String): S = throw new IllegalStateException(message)
+
+  def die[S](message: String, cause: Throwable): S = throw new IllegalStateException(message, cause)
 
   def dieNoCursor[S](): S = die("No topic/partition specified and no cursor exists")
 
