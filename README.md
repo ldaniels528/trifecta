@@ -160,6 +160,10 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.19.2
+* Trifecta UI (TypeSafe version)
+    * Fixed issue with out of memory errors while streaming messages
+
 #### v0.19.1
 * Trifecta UI (CLI version)
     * Fixed issue with missing web resources

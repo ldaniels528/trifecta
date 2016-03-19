@@ -1,14 +1,12 @@
 package com.github.ldaniels528.trifecta.controllers
 
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicBoolean
 
 import akka.actor.Props
-import akka.pattern.ask
 import akka.util.Timeout
 import com.github.ldaniels528.trifecta.actors.ReactiveEventsActor
 import com.github.ldaniels528.trifecta.actors.ReactiveEventsActor.SamplingSession
-import com.github.ldaniels528.trifecta.controllers.KafkaController.{initialized, sessions}
+import com.github.ldaniels528.trifecta.controllers.KafkaController.{reactiveActor, sessions}
 import com.github.ldaniels528.trifecta.models._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
@@ -25,14 +23,6 @@ import scala.util.{Failure, Success, Try}
   * @author lawrence.daniels@gmail.com
   */
 class KafkaController() extends Controller {
-  private val system = Akka.system
-  private val reactiveActor = system.actorOf(Props[ReactiveEventsActor])
-
-  // schedule streaming updates
-  if (initialized.compareAndSet(false, true)) {
-    reactiveActor ! StreamingConsumerUpdateRequest(15)
-    reactiveActor ! StreamingTopicUpdateRequest(15)
-  }
 
   def getBrokers = Action {
     Try(WebConfig.facade.getBrokers) match {
@@ -152,6 +142,8 @@ class KafkaController() extends Controller {
   }
 
   def startSampling = Action.async { implicit request =>
+    import akka.pattern.ask
+
     val results = for {
       startRequest <- request.body.asJson.flatMap(_.asOpt[MessageSamplingStartRequest])
       sessionId = UUID.randomUUID().toString.replaceAllLiterally("-", "")
@@ -164,6 +156,8 @@ class KafkaController() extends Controller {
         outcome map { session =>
           sessions.put(sessionId, session)
           Ok(Json.obj("sessionId" -> sessionId)).withSession("sessionId" -> sessionId)
+        } recover { case e =>
+          InternalServerError(e.getMessage)
         }
       case None =>
         Future.successful(BadRequest("Message Sampling Start Request object expected"))
@@ -186,7 +180,11 @@ class KafkaController() extends Controller {
   * @author lawrence.daniels@gmail.com
   */
 object KafkaController {
-  val initialized = new AtomicBoolean(false)
   val sessions = TrieMap[String, SamplingSession]()
+  val reactiveActor = Akka.system.actorOf(Props[ReactiveEventsActor])
+
+  // schedule streaming updates
+  reactiveActor ! StreamingConsumerUpdateRequest(15)
+  reactiveActor ! StreamingTopicUpdateRequest(15)
 
 }

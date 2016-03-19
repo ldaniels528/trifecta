@@ -13,7 +13,7 @@ lazy val trifecta_js = (project in file("app-js"))
   .settings(
     name := "trifecta_js",
     organization := "com.github.ldaniels528",
-    version := "0.19.1",
+    version := "0.19.2",
     scalaVersion := myScalaVersion,
     relativeSourceMaps := true,
     persistLauncher := true,
@@ -79,7 +79,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
   .settings(
     name := "trifecta_cli",
     organization := "com.github.ldaniels528",
-    version := "0.19.1",
+    version := "0.19.2",
     scalaVersion := myScalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
@@ -87,7 +87,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
     assemblySettings,
     mainClass in assembly := Some("com.github.ldaniels528.trifecta.TrifectaShell"),
     test in assembly := {},
-    jarName in assembly := "trifecta_" + version.value + ".bin.jar",
+    jarName in assembly := "trifecta_cli_" + version.value + ".bin.jar",
     mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
       case PathList("stax", "stax-api", xs@_*) => MergeStrategy.first
       case PathList("log4j-over-slf4j", xs@_*) => MergeStrategy.discard
@@ -121,7 +121,7 @@ lazy val trifecta_ui = (project in file("app-play"))
   .settings(
     name := "trifecta_ui",
     organization := "com.github.ldaniels528",
-    version := "0.19.1",
+    version := "0.19.2",
     scalaVersion := myScalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
