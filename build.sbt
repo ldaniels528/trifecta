@@ -92,7 +92,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
     assemblySettings,
     mainClass in assembly := Some("com.github.ldaniels528.trifecta.TrifectaShell"),
     test in assembly := {},
-    jarName in assembly := "trifecta_" + version.value + ".bin.jar",
+    jarName in assembly := "trifecta_cli_" + version.value + ".bin.jar",
     mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) => {
       case PathList("stax", "stax-api", xs@_*) => MergeStrategy.first
       case PathList("log4j-over-slf4j", xs@_*) => MergeStrategy.discard
