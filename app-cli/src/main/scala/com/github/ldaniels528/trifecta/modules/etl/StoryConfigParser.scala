@@ -36,7 +36,7 @@ object StoryConfigParser {
 
   def parse(xml: Node): Seq[StoryConfig] = {
     (xml \\ "story") map { node =>
-      // first create the base configuration; processing all import statements
+      // first, create the base configuration; processing all import statements
       val baseConfig: StoryConfig = parseImports(node)
         .foldLeft(StoryConfig(id = "baseConfig", filters = getbuiltInFilters)) { (accumulator, config) =>
           accumulator.copy(
@@ -96,8 +96,9 @@ object StoryConfigParser {
         node.label match {
           case "ConcurrentOutputSource" => parseDataSources_ConcurrentOutput(node, layouts)
           case "DocumentDBOutputSource" => parseDataSources_DocumentDBOutput(node, layouts)
-          case "LoopbackOutputSource" => parseDataSources_LoopBackOutput(node, layouts)
+          case "LoopBackOutputSource" => parseDataSources_LoopBackOutput(node, layouts)
           case "KafkaOutputSource" => parseDataSources_KafkaOutput(node, layouts)
+          case "MongoInputSource" => parseDataSources_MongoInput(node, layouts)
           case "MongoOutputSource" => parseDataSources_MongoOutput(node, layouts)
           case "SQLOutputSource" => parseDataSources_SQLOutput(node, layouts)
           case "TextFileInputSource" => parseDataSources_TextFileInput(node, layouts)
@@ -118,14 +119,13 @@ object StoryConfigParser {
 
   private def parseDataSources_DocumentDBOutput(node: Node, layouts: Seq[Layout]) = {
     import com.microsoft.azure.documentdb.ConsistencyLevel
-
     DocumentDBOutputSource(
       id = node \\@ "id",
       options = DocumentDBConnectionInfo(
         host = node \\@ "host",
         masterKey = node \\@ "master-key",
-        databaseName = node \\@ "database",
-        collectionName = node \\@ "collection",
+        database = node \\@ "database",
+        collection = node \\@ "collection",
         consistencyLevel = (node \?@ "consistency-level").map(ConsistencyLevel.valueOf) getOrElse ConsistencyLevel.Session),
       layout = lookupLayout(layouts, id = node \\@ "layout"))
   }
@@ -141,6 +141,15 @@ object StoryConfigParser {
       id = node \\@ "id",
       topic = node \\@ "topic",
       zk = ZKProxy(connectionString = node \\@ "connectionString"),
+      layout = lookupLayout(layouts, id = node \\@ "layout"))
+  }
+
+  private def parseDataSources_MongoInput(node: Node, layouts: Seq[Layout]) = {
+    MongoDbInputSource(
+      id = node \\@ "id",
+      serverList = node \\@ "servers",
+      database = node \\@ "database",
+      collection = node \\@ "collection",
       layout = lookupLayout(layouts, id = node \\@ "layout"))
   }
 
@@ -280,8 +289,7 @@ object StoryConfigParser {
       defaultValue = node \?@ "value" ?? node.text_?,
       length = (node \?@ "length") map (_.toInt),
       nullable = (node \?@ "nullable") map (_.toBoolean),
-      updateKey = (node \?@ "updateKey") map (_.toBoolean)
-    )
+      updateKey = (node \?@ "updateKey") map (_.toBoolean))
   }
 
   private def parseRecord_Format(node: Node, id: String, fields: Seq[Field], format: String) = {

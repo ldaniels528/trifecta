@@ -3,14 +3,15 @@ package com.github.ldaniels528.trifecta.modules.etl.io.device.impl
 import java.sql.{Connection, DriverManager, PreparedStatement, Timestamp}
 import java.util.{Date, UUID}
 
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.trifecta.modules.etl.io.Scope
 import com.github.ldaniels528.trifecta.modules.etl.io.device.impl.SQLOutputSource._
 import com.github.ldaniels528.trifecta.modules.etl.io.device.{DataSet, OutputSource}
 import com.github.ldaniels528.trifecta.modules.etl.io.layout.Layout
 import com.github.ldaniels528.trifecta.modules.etl.io.record.DataTypes._
 import com.github.ldaniels528.trifecta.modules.etl.io.record.{Field, Record}
-import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.trifecta.util.ResourcePool
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
@@ -43,7 +44,7 @@ case class SQLOutputSource(id: String, connectionInfo: SQLConnectionInfo, layout
   override def writeRecord(record: Record, dataSet: DataSet)(implicit scope: Scope) = {
     scope.getResource[Connection](uuid) map { conn =>
       val sql = sqlCache.getOrElseUpdate(s"${tableName}_INSERT", SQLInsert(conn, record, tableName))
-      updateCount(sql.execute())
+      updateCount(sql.execute(dataSet))
     } orDie s"SQL output source '$id' has not been opened"
   }
 
@@ -94,19 +95,27 @@ object SQLOutputSource {
     */
   trait SQLStatement {
 
-    def execute()(implicit scope: Scope): Int
+    def execute(dataSet: DataSet)(implicit scope: Scope): Int
 
-    protected def populateAndExecute(ps: PreparedStatement, fields: Seq[Field])(implicit scope: Scope) = {
+    protected def populateAndExecute(ps: PreparedStatement, fields: Seq[Field], dataSet: DataSet)(implicit scope: Scope) = {
+      val values = Map(dataSet.data flatMap {
+        case (key, Some(value)) => Some(key -> value)
+        case _ => None
+      }: _*)
+
       // populate the prepared statement
       fields zip fields.indices.map(_ + 1) foreach { case (field, index) =>
-        field.value match {
-          case Some(value) =>
-            value match {
-              case date: Date => ps.setTimestamp(index, new Timestamp(date.getTime))
-              case v => ps.setObject(index, v)
-            }
-
-          case None => ps.setNull(index, getSQLType(field.`type`))
+        values.get(field.name) match {
+          case Some(v) if v.getClass == classOf[Date] =>
+            ps.setTimestamp(index, new Timestamp(v.asInstanceOf[Date].getTime))
+          case Some(v) if v.getClass == classOf[DateTime] =>
+            ps.setTimestamp(index, new Timestamp(v.asInstanceOf[DateTime].toDate.getTime))
+          case Some(v) if v.getClass == classOf[Timestamp] =>
+            ps.setTimestamp(index, v.asInstanceOf[Timestamp])
+          case Some(v) =>
+            ps.setObject(index, v)
+          case None =>
+            ps.setNull(index, getSQLType(field.`type`))
         }
       }
 
@@ -125,9 +134,9 @@ object SQLOutputSource {
     private val query = generateQuery()
     private val psCache = ResourcePool[PreparedStatement](() => conn.prepareStatement(query))
 
-    override def execute()(implicit scope: Scope) = {
+    override def execute(dataSet: DataSet)(implicit scope: Scope) = {
       val ps = psCache.take
-      try populateAndExecute(ps, record.fields) finally psCache.give(ps)
+      try populateAndExecute(ps, record.fields, dataSet) finally psCache.give(ps)
     }
 
     override def toString = query
@@ -151,9 +160,9 @@ object SQLOutputSource {
     private val psCache = ResourcePool[PreparedStatement](() => conn.prepareStatement(query))
     private val fields = record.fields ++ record.fields.filter(_.updateKey.contains(true))
 
-    override def execute()(implicit scope: Scope) = {
+    override def execute(dataSet: DataSet)(implicit scope: Scope) = {
       val ps = psCache.take
-      try populateAndExecute(ps, fields) finally psCache.give(ps)
+      try populateAndExecute(ps, fields, dataSet) finally psCache.give(ps)
     }
 
     override def toString = query

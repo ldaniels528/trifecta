@@ -3,6 +3,7 @@ package com.github.ldaniels528.trifecta.modules.etl.io.layout
 import com.github.ldaniels528.trifecta.modules.etl.io.Scope
 import com.github.ldaniels528.trifecta.modules.etl.io.device.{DataSet, InputSource, OutputSource}
 import com.github.ldaniels528.trifecta.modules.etl.io.layout.Layout.InputSet
+import org.slf4j.LoggerFactory
 
 /**
   * Represents the logic layout of a text format
@@ -23,6 +24,13 @@ trait Layout {
   * @author lawrence.daniels@gmail.com
   */
 object Layout {
+  private[this] lazy val logger = LoggerFactory.getLogger(getClass)
+
+  def dump(inputSet: InputSet) = {
+    inputSet.dataSets foreach { dataSet =>
+      logger.info(s"dataSet: $dataSet")
+    }
+  }
 
   /**
     * Input Set

@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.modules.etl.io.device
 
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.trifecta.modules.etl.io.Scope
 import com.github.ldaniels528.trifecta.modules.etl.io.record._
-import com.github.ldaniels528.commons.helpers.OptionHelper._
 import play.api.libs.json.JsObject
 
 /**
@@ -33,10 +33,22 @@ case class DataSet(data: Seq[(String, Option[Any])]) {
   }
 
   def values(fields: Seq[Field]) = {
-    fields map (field => field.name -> toMap.get(field.name) ?? field.defaultValue)
+    fields map (field => field.name -> toMap.get(field.name) ?? getDefaultValue(field))
+  }
+
+  private def getDefaultValue(field: Field) = {
+    field.defaultValue flatMap {
+      case value if value.contains("{{") && value.contains("}}") =>
+        val start = value.indexOf("{{")
+        val end = value.indexOf("}}")
+        val newValue = (if (end > start && start >= 0) new StringBuilder(value).replace(start, end + 2, "") else value).toString.trim
+        if (newValue.nonEmpty) Some(newValue) else None
+      case value => Option(value)
+    }
   }
 
   lazy val toMap = Map(data flatMap { case (name, value) => value.map(name -> _) }: _*)
 
 }
+
 
