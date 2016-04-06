@@ -237,7 +237,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     * @return the Kafka-native consumer groups
     */
   private def getConsumerGroupsNative(topicPrefix: Option[String] = None)(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
-    KafkaMicroConsumer.getConsumerDetails() map { c =>
+    KafkaMicroConsumer.getConsumerFromZookeeper() map { c =>
       val topicOffset = Try(getLastOffset(c.topic, c.partition)) getOrElse None
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
       ConsumerDetailJs(c.consumerId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
@@ -249,7 +249,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     * @return the Kafka Spout consumers
     */
   private def getConsumerGroupsPM(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
-    KafkaMicroConsumer.getStormConsumerList() map { c =>
+    KafkaMicroConsumer.getConsumersForStorm() map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
       ConsumerDetailJs(c.topologyName, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)

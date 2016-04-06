@@ -63,7 +63,7 @@ object TrifectaJsApp extends js.JSApp {
 
     // start the application
     module.run({ ($rootScope: RootScope, ServerSideEventsSvc: ServerSideEventsService) =>
-      $rootScope.version = "0.19.2"
+      $rootScope.version = "0.19.3"
 
       console.log("Initializing application...")
       ServerSideEventsSvc.connect()

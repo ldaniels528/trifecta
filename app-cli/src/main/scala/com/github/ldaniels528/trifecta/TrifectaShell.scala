@@ -25,7 +25,7 @@ import scala.util.{Failure, Success, Try}
   */
 object TrifectaShell {
   private val logger = LoggerFactory.getLogger(getClass)
-  val VERSION = "0.19.2"
+  val VERSION = "0.19.3"
 
   /**
     * Application entry point
