@@ -81,7 +81,7 @@ class DocumentDbModule(config: TxConfig) extends Module with BinaryMessaging {
   /**
     * Called when the application is shutting down
     */
-  override def shutdown(): Unit = ()
+  override def shutdown() = {}
 
   /**
     * Establishes a connection to a remote DocumentDB cluster

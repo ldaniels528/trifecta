@@ -8,6 +8,7 @@ import com.github.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser
 import com.github.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageCodecs, MessageDecoder}
 import com.github.ldaniels528.trifecta.modules.ModuleHelper._
 import com.github.ldaniels528.trifecta.modules._
+import com.github.ldaniels528.trifecta.modules.azure.AzureModule
 import com.github.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.github.ldaniels528.trifecta.modules.core.CoreModule
 import com.github.ldaniels528.trifecta.modules.documentdb.DocumentDbModule
@@ -48,6 +49,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   // create the module manager and load the built-in modules
   val moduleManager = new ModuleManager()(this)
   moduleManager ++= Seq(
+    new AzureModule(config),
     new CassandraModule(config),
     new CoreModule(config),
     new DocumentDbModule(config),

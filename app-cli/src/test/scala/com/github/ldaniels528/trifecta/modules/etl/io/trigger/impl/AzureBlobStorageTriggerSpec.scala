@@ -16,7 +16,7 @@ import scala.collection.JavaConversions._
   * @author lawrence.daniels@gmail.com
   */
 class AzureBlobStorageTriggerSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWhenThen with MockitoSugar {
-  val connectionString = getConnectionString orDie "Property 'blobstoage.secret.connect' could not be retrieved"
+  val connectionString = getConnectionString orDie "Property 'blobstorage.secret.connect' could not be retrieved"
 
   info("As a AzureBlobStorageTrigger instance")
   info("I want to be able to create, list, download and upload blobs")

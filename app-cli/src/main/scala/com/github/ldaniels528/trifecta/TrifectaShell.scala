@@ -177,6 +177,8 @@ object TrifectaShell {
           }
         }
       } while (config.alive)
+
+      sys.exit(0)
     }
 
     private def showDebug(result: Any): Unit = {
