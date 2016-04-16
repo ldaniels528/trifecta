@@ -88,14 +88,15 @@ lazy val trifecta_cli = (project in file("app-cli"))
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.8", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.7", "-g:vars"),
-//    assemblySettings,
     mainClass in assembly := Some("com.github.ldaniels528.trifecta.TrifectaShell"),
+    //aggregate in assembly := false,
     test in assembly := {},
     assemblyJarName in assembly := "trifecta_cli_" + version.value + ".bin.jar",
     assemblyMergeStrategy in assembly <<= (assemblyMergeStrategy in assembly) { (old) => {
       case PathList("stax", "stax-api", xs@_*) => MergeStrategy.first
       case PathList("log4j-over-slf4j", xs@_*) => MergeStrategy.discard
       case PathList("META-INF", "MANIFEST.MF", xs@_*) => MergeStrategy.discard
+      case PathList("META-INF", "LICENSE", xs@_*) => MergeStrategy.discard
       case x => MergeStrategy.first
     }
     },
@@ -105,7 +106,6 @@ lazy val trifecta_cli = (project in file("app-cli"))
     libraryDependencies ++= coreDeps ++ Seq(
       //
       // General Scala Dependencies
-      "org.mashupbots.socko" %% "socko-webserver" % "0.6.0",
       "net.databinder.dispatch" %% "dispatch-core" % "0.11.2", // 0.11.3
       //
       // General Java Dependencies
