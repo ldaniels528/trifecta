@@ -69,14 +69,7 @@ lazy val coreDeps = Seq(
   //
   // General Java Dependencies
   "joda-time" % "joda-time" % "2.9.1",
-  "org.joda" % "joda-convert" % "1.8.1",
-  "org.slf4j" % "slf4j-api" % "1.7.12",
-  "net.liftweb" %% "lift-json" % "3.0-M7",
-  //
-  // Testing dependencies
-  "junit" % "junit" % "4.12" % "test",
-  "org.mockito" % "mockito-all" % "1.10.19" % "test",
-  "org.scalatest" %% "scalatest" % "2.2.3" % "test"
+  "org.joda" % "joda-convert" % "1.8.1"
 )
 
 lazy val trifecta_cli = (project in file("app-cli"))
@@ -95,8 +88,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
     assemblyMergeStrategy in assembly <<= (assemblyMergeStrategy in assembly) { (old) => {
       case PathList("stax", "stax-api", xs@_*) => MergeStrategy.first
       case PathList("log4j-over-slf4j", xs@_*) => MergeStrategy.discard
-      case PathList("META-INF", "MANIFEST.MF", xs@_*) => MergeStrategy.discard
-      case PathList("META-INF", "LICENSE", xs@_*) => MergeStrategy.discard
+      case PathList("META-INF", xs@_*) => MergeStrategy.discard
       case x => MergeStrategy.first
     }
     },
@@ -110,8 +102,17 @@ lazy val trifecta_cli = (project in file("app-cli"))
       //
       // General Java Dependencies
       "commons-io" % "commons-io" % "2.4",
-      "org.scala-lang" % "jline" % "2.10.6",
-      "org.fusesource.jansi" % "jansi" % "1.11"
+      "log4j" % "log4j" % "1.2.17",
+      "net.liftweb" %% "lift-json" % "3.0-M7",
+      "org.fusesource.jansi" % "jansi" % "1.11",
+      "org.scala-lang" % "jline" % "2.11.0-M3",
+      "org.slf4j" % "slf4j-api" % "1.7.21",
+      "org.slf4j" % "slf4j-log4j12" % "1.7.21",
+      //
+      // Testing dependencies
+      "junit" % "junit" % "4.12" % "test",
+      "org.mockito" % "mockito-all" % "1.10.19" % "test",
+      "org.scalatest" %% "scalatest" % "2.2.3" % "test"
     )
   )
 

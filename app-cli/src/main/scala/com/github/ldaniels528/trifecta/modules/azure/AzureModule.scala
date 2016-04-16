@@ -1,27 +1,27 @@
 package com.github.ldaniels528.trifecta.modules.azure
 
-import java.io.{File, FileInputStream, FileOutputStream}
+import java.io.File
 import java.util.Date
 
 import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
-import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.trifecta.TxResultHandler.Ok
 import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
-import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.modules.Module
-import com.github.ldaniels528.trifecta.modules.azure.AzureModule.{AzureBlobDirectory, AzureBlobItem}
+import com.github.ldaniels528.trifecta.modules.azure.AzureModule.{AzureBlobContainer, AzureBlobItem}
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.microsoft.azure.storage.CloudStorageAccount
 import com.microsoft.azure.storage.blob._
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
-import scala.language.postfixOps
+import scala.language.{postfixOps, reflectiveCalls}
 
 /**
   * Azure Module
   * @author lawrence.daniels@gmail.com
   */
 class AzureModule(config: TxConfig) extends Module {
+  private val logger = LoggerFactory.getLogger(getClass)
   private var storageAccount: Option[CloudStorageAccount] = None
   private var blobClient: Option[CloudBlobClient] = None
   private var blobContainer: Option[CloudBlobContainer] = None
@@ -32,11 +32,11 @@ class AzureModule(config: TxConfig) extends Module {
     */
   override def getCommands(implicit rt: TxRuntimeContext) = Seq(
     Command(this, "blobconnect", connect, UnixLikeParams(Seq("connectionString" -> false)), help = "Establishes a connection to a Blob storage account"),
-    Command(this, "blobcontainer", selectContainer, UnixLikeParams(Seq("container" -> true)), help = "Selects a Blob storage container"),
-    Command(this, "blobls", listBlobs, UnixLikeParams(Nil, Nil), help = "Retrieves a list of files in the current container"),
-    Command(this, "blobdl", downloadBlob, UnixLikeParams(Seq("prefix" -> true, "targetPath" -> true)), help = "Downloads a file to the current container"),
-    Command(this, "blobdlr", downloadBlobs, UnixLikeParams(Seq("prefix" -> true), Nil), help = "Downloads all files to the current container"),
-    Command(this, "blobup", uploadBlob, UnixLikeParams(Seq("sourcePath" -> true, "targetName" -> true)), help = "Uploads a file to the current container")
+    Command(this, "blobcontainer", selectBlobContainer, UnixLikeParams(Seq("container" -> true)), help = "Selects a Blob storage container"),
+    Command(this, "blobcount", countBlobs, UnixLikeParams(Seq("path" -> false), flags = Seq("-r" -> "recursive")), help = "Retrieves a list of files in the current container"),
+    Command(this, "blobls", listBlobs, UnixLikeParams(Seq("path" -> false), flags = Seq("-r" -> "recursive")), help = "Retrieves a list of files in the current container"),
+    Command(this, "blobget", downloadBlobs, UnixLikeParams(Seq("prefix" -> false, "targetPath" -> true), flags = Seq("-r" -> "recursive")), help = "Downloads a file to the current container"),
+    Command(this, "blobput", uploadBlobs, UnixLikeParams(Seq("sourcePath" -> true), flags = Seq("-r" -> "recursive")), help = "Recursively uploads files or directories to the current container")
   )
 
   /**
@@ -49,14 +49,14 @@ class AzureModule(config: TxConfig) extends Module {
     * @param url the given output URL
     * @return the option of an output source
     */
-  override def getOutputSource(url: String): Option[MessageOutputSource] = None
+  override def getOutputSource(url: String) = None
 
   /**
     * Attempts to retrieve an input source for the given URL
     * @param url the given input URL
     * @return the option of an input source
     */
-  override def getInputSource(url: String): Option[MessageInputSource] = None
+  override def getInputSource(url: String) = None
 
   /**
     * Returns the label of the module (e.g. "kafka")
@@ -71,10 +71,16 @@ class AzureModule(config: TxConfig) extends Module {
   override def moduleName = "azure"
 
   /**
+    * Returns the the information that is to be displayed while the module is active
+    * @return the the information that is to be displayed while the module is active
+    */
+  override def prompt = s"/${blobContainer.map(_.getName) getOrElse ""}"
+
+  /**
     * Returns the name of the prefix (e.g. Seq("file"))
     * @return the name of the prefix
     */
-  override def supportedPrefixes: Seq[String] = Nil
+  override def supportedPrefixes = Nil
 
   /**
     * Establishes a connection to a remote DocumentDB cluster
@@ -96,92 +102,68 @@ class AzureModule(config: TxConfig) extends Module {
     blobClient map (_ => Ok)
   }
 
-  /**
-    * Download a file to the current container
-    * @example blobdownload /path/to/file targetname
-    */
-  def downloadBlob(params: UnixLikeArgs) = {
-    blobContainer map { container =>
-      // determine the source and target file paths
-      val (prefix, targetFileName) = params.args match {
-        case aSrcFilePath :: aTargetFileName :: Nil => (aSrcFilePath, aTargetFileName)
-        case _ => dieSyntax(params)
-      }
-
-      blobContainer.map { container =>
-        container.listBlobs(prefix) foreach { item =>
-          download(item, new File(targetFileName))
-        }
-        Ok
-      }
-    }
-  }
-
-  /**
-    * Downloads all files to the current container
-    * @example blobdownloadall /download/path
-    */
-  def downloadBlobs(params: UnixLikeArgs) = {
-    // determine the target directory path
-    val targetDirectoryPath = params.args match {
-      case aPath :: Nil => aPath
+  def countBlobs(params: UnixLikeArgs) = {
+    // determine the prefix
+    val prefix = params.args match {
+      case Nil => None
+      case aPath :: Nil => Some(aPath)
       case _ => dieSyntax(params)
     }
 
-    // recursively download all files
-    blobContainer.map { container =>
-      download(container, new File(targetDirectoryPath))
+    // capture the recursive flag
+    val recursive = params.flags.contains("-r")
+
+    // count the files
+    blobContainer flatMap (count(_, prefix, recursive))
+  }
+
+  /**
+    * Downloads file(s) to the current container
+    * @example blobget [-r] [prefix] target
+    */
+  def downloadBlobs(params: UnixLikeArgs) = {
+    // determine the prefix and target path
+    val (prefix, targetPath) = params.args match {
+      case aTargetFileName :: Nil => (None, aTargetFileName)
+      case aPrefix :: aTargetPath :: Nil => (Some(aPrefix), aTargetPath)
+      case _ => dieSyntax(params)
+    }
+
+    // capture the recursive flag
+    val recursive = params.flags.contains("-r")
+
+    // download the files
+    blobContainer map { container =>
+      val count = download(container, prefix, new File(targetPath), recursive)
+      logger.info(s"$count file(s) downloaded")
       Ok
-    }
-  }
-
-  private def download(container: CloudBlobContainer, targetDirectory: File): Unit = {
-    container.listBlobs() foreach { item =>
-      download(item, targetDirectory)
-    }
-  }
-
-  private def download(item: ListBlobItem, targetDirectory: File): Unit = {
-    item match {
-      case blob: CloudBlob =>
-        new FileOutputStream(new File(targetDirectory, blob.getName)) use blob.download
-      case directory: CloudBlobDirectory =>
-        val subContainer = directory.getContainer
-        download(subContainer, new File(targetDirectory, subContainer.getName))
-      case blob =>
-        throw new IllegalArgumentException(s"Unexpected blob type - ${blob.getClass.getName}")
     }
   }
 
   /**
     * Lists all the blobs in the current container
-    * @example bloblist
+    * @example blobls
     */
   def listBlobs(params: UnixLikeArgs) = {
-    blobContainer flatMap { container =>
-      container.listBlobs().toList map {
-        case blob: CloudBlob =>
-          val props = blob.getProperties
-          AzureBlobItem(
-            name = blob.getName,
-            contentType = props.getContentType,
-            lastModified = props.getLastModified,
-            length = props.getLength
-          )
-        case directory: CloudBlobDirectory =>
-          val subContainer = directory.getContainer
-          AzureBlobDirectory(subContainer.getName)
-        case blob =>
-          throw new IllegalArgumentException(s"Unexpected blob type - ${blob.getClass.getName}")
-      }
+    // determine the prefix
+    val prefix = params.args match {
+      case Nil => None
+      case aPath :: Nil => Some(aPath)
+      case _ => dieSyntax(params)
     }
+
+    // capture the recursive flag
+    val recursive = params.flags.contains("-r")
+
+    // return the list of files
+    blobContainer flatMap (list(_, prefix, recursive))
   }
 
   /**
     * Selects a Blob storage container
     * @example blobcontainer test
     */
-  def selectContainer(params: UnixLikeArgs) = {
+  def selectBlobContainer(params: UnixLikeArgs) = {
     // determine the container name
     val containerName = params.args match {
       case aContainerName :: Nil => aContainerName
@@ -194,21 +176,77 @@ class AzureModule(config: TxConfig) extends Module {
   }
 
   /**
-    * Uploads a file to the current container
-    * @example blobupload /path/to/file targetname
+    * Recursively uploads files or directories to the current container
+    * @example blobput /path/to/file targetname
     */
-  def uploadBlob(params: UnixLikeArgs) = {
-    blobContainer map { container =>
-      // determine the source and target file paths
-      val (srcFilePath, targetFileName) = params.args match {
-        case aSrcFilePath :: aTargetFileName :: Nil => (aSrcFilePath, aTargetFileName)
-        case _ => dieSyntax(params)
-      }
+  def uploadBlobs(params: UnixLikeArgs) = {
+    // determine the source file path
+    val srcFilePath = params.args match {
+      case aSrcFilePath :: Nil => aSrcFilePath
+      case _ => dieSyntax(params)
+    }
 
-      val srcFile = new File(srcFilePath)
-      val blob = container.getBlockBlobReference(targetFileName)
-      blob.upload(new FileInputStream(srcFile), srcFile.length())
+    // capture the recursive flag
+    val recursive = params.flags.contains("-r")
+
+    // upload the files
+    blobContainer map { container =>
+      val count = upload(container, new File(srcFilePath), parentFile = None, recursive)
+      logger.info(s"$count file(s) uploaded")
       Ok
+    }
+  }
+
+  private def count(container: AzureBlobContainer, prefix: Option[String], recursive: Boolean): Int = {
+    (prefix.map(container.listBlobs) getOrElse container.listBlobs()).foldLeft[Int](0) {
+      case (total, directory: CloudBlobDirectory) if recursive => total + count(directory, prefix, recursive)
+      case (total, blob) => total + 1
+    }
+  }
+
+  private def download(container: AzureBlobContainer, prefix: Option[String], targetDirectory: File, recursive: Boolean): Int = {
+    (prefix.map(container.listBlobs) getOrElse container.listBlobs()) map {
+      case blob: CloudBlob =>
+        val path = new File(targetDirectory, blob.getName).getAbsolutePath
+        logger.info(s"Downloading '$path' (${blob.getProperties.getLength} bytes)...")
+        blob.downloadToFile(path)
+        1
+      case directory: CloudBlobDirectory =>
+        if (!recursive) 0
+        else download(directory, prefix, new File(targetDirectory, directory.getContainer.getName), recursive)
+      case blob =>
+        throw new IllegalArgumentException(s"Unexpected blob type - ${blob.getClass.getName}")
+    } sum
+  }
+
+  private def list(container: AzureBlobContainer, prefix: Option[String], recursive: Boolean): List[AzureBlobItem] = {
+    (prefix.map(container.listBlobs) getOrElse container.listBlobs()).toList flatMap {
+      case blob: CloudBlob =>
+        val props = blob.getProperties
+        AzureBlobItem(
+          name = blob.getName,
+          blobType = props.getBlobType.name(),
+          contentType = props.getContentType,
+          lastModified = props.getLastModified,
+          length = props.getLength) :: Nil
+      case directory: CloudBlobDirectory =>
+        if (recursive) list(directory, prefix, recursive)
+        else AzureBlobItem(name = directory.getUri.getPath.split("[/]").last, blobType = "FOLDER") :: Nil
+      case blob =>
+        AzureBlobItem(name = blob.getUri.getPath.split("[/]").last, blobType = "UNKNOWN") :: Nil
+    }
+  }
+
+  private def upload(container: CloudBlobContainer, file: File, parentFile: Option[File], recursive: Boolean): Int = {
+    file match {
+      case f if f.isDirectory && recursive => f.listFiles() map (upload(container, _, f, recursive)) sum
+      case f if f.isDirectory => 0
+      case f =>
+        logger.info(s"Uploading '${f.getAbsolutePath}' (${f.length()} bytes)...")
+        val path = s"${parentFile.map(_.getName + "/") getOrElse ""}${f.getName}"
+        val blob = container.getBlockBlobReference(path)
+        blob.uploadFromFile(f.getAbsolutePath)
+        1
     }
   }
 
@@ -220,8 +258,18 @@ class AzureModule(config: TxConfig) extends Module {
   */
 object AzureModule {
 
-  case class AzureBlobItem(name: String, contentType: String, lastModified: Date, length: Long)
+  /**
+    * Acts as a base class for blob containers
+    */
+  type AzureBlobContainer = {
+    def listBlobs(): java.lang.Iterable[ListBlobItem]
+    def listBlobs(prefix: String): java.lang.Iterable[ListBlobItem]
+  }
 
-  case class AzureBlobDirectory(name: String)
+  case class AzureBlobItem(name: String,
+                           blobType: String,
+                           contentType: Option[String] = None,
+                           lastModified: Option[Date] = None,
+                           length: Option[Long] = None)
 
 }

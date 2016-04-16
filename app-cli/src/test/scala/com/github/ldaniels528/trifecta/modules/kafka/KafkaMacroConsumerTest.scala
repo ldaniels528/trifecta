@@ -70,7 +70,7 @@ class KafkaMacroConsumerTest {
     val brokers = brokerDetails map (b => Broker(b.host, b.port))
 
     // reset each partitions
-    (0 to (partitions - 1)) foreach { partition =>
+    0 until partitions foreach { partition =>
       new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.commitOffsets(groupId, 0L, "Development offset"))
     }
   }

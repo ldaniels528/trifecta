@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.modules.elasticsearch
 
 import java.net.URLEncoder.encode
-import java.util.concurrent.Executors
 
+import com.github.ldaniels528.trifecta.util.ExecutionContextExecutorServiceBridge
 import com.ning.http.client.Response
 import dispatch._
 
@@ -13,7 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * @author lawrence.daniels@gmail.com
   */
 class TxElasticSearchClient(host: String, port: Int) {
-  private val pool = Executors.newFixedThreadPool(8)
+  private lazy val pool = ExecutionContextExecutorServiceBridge(ExecutionContext.global)
   private val http$ = createHttpClient()
   private val http = s"http://$host:$port"
 
@@ -203,6 +203,11 @@ class TxElasticSearchClient(host: String, port: Int) {
     * @example GET /_status
     */
   def serverStatus(implicit ec: ExecutionContext): Future[Response] = GET("/_status")
+
+  /**
+    * Releases all resources
+    */
+  def shutdown(): Unit = pool.shutdown()
 
   /**
     * Returns the status of the given index

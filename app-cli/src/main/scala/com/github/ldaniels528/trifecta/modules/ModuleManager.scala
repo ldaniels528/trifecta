@@ -3,12 +3,14 @@ package com.github.ldaniels528.trifecta.modules
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.trifecta.TxRuntimeContext
 import com.github.ldaniels528.trifecta.command.Command
+import org.slf4j.LoggerFactory
 
 /**
   * Module Manager
   * @author lawrence.daniels@gmail.com
   */
 class ModuleManager()(implicit rt: TxRuntimeContext) {
+  private val logger = LoggerFactory.getLogger(getClass)
   private var moduleSet = Set[Module]()
   private var currentModule: Option[Module] = None
 
@@ -80,6 +82,10 @@ class ModuleManager()(implicit rt: TxRuntimeContext) {
   /**
     * Shuts down all modules
     */
-  def shutdown(): Unit = moduleSet.foreach(_.shutdown())
+  def shutdown() = moduleSet.foreach { module =>
+    logger.info(s"Module '${module.moduleName}' is shutting down...")
+    module.shutdown()
+    logger.info(s"Module '${module.moduleName}' shutdown complete")
+  }
 
 }

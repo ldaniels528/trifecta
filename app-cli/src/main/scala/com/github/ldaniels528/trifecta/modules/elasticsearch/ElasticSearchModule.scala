@@ -96,7 +96,7 @@ class ElasticSearchModule(config: TxConfig) extends Module {
   /**
     * Called when the application is shutting down
     */
-  override def shutdown(): Unit = ()
+  override def shutdown() = client_?.foreach(_.shutdown())
 
   override def supportedPrefixes: Seq[String] = Seq("es")
 

@@ -1,6 +1,7 @@
 package com.github.ldaniels528.trifecta
 
 import java.io.PrintStream
+import java.lang.Thread.UncaughtExceptionHandler
 
 import com.github.ldaniels528.trifecta.TxConsole._
 import com.github.ldaniels528.trifecta.io.AsyncIO
@@ -31,47 +32,57 @@ object TrifectaShell {
   def main(args: Array[String]) {
     import org.fusesource.jansi.Ansi.Color._
 
-    // use the ANSI console plugin to display the title line
-    vxAnsi {
-      System.out.println(a"${RED}Tri${GREEN}fect${CYAN}a ${YELLOW}v$VERSION")
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler {
+      override def uncaughtException(t: Thread, e: Throwable): Unit = {
+        logger.error("Uncaught exception", e)
+      }
+    })
+
+    try {
+      // use the ANSI console plugin to display the title line
+      vxAnsi {
+        System.out.println(a"${RED}Tri${GREEN}fect${CYAN}a ${YELLOW}v$VERSION")
+      }
+
+      // load the configuration
+      logger.info(s"Loading configuration file '${TxConfig.configFile}'...")
+      val config = Try(TxConfig.load(TxConfig.configFile)) match {
+        case Success(cfg) => cfg
+        case Failure(e) =>
+          val cfg = TxConfig.defaultConfig
+          if (!TxConfig.configFile.exists()) {
+            logger.info(s"Creating default configuration file (${TxConfig.configFile.getAbsolutePath})...")
+            cfg.save(TxConfig.configFile)
+          }
+          cfg
+      }
+
+      // startup the Kafka Sandbox?
+      if (args.contains("--kafka-sandbox")) {
+        logger.info("Starting Kafka Sandbox...")
+        val kafkaSandbox = KafkaSandbox()
+        config.zooKeeperConnect = kafkaSandbox.getConnectString
+        Thread.sleep(3000)
+      }
+
+
+      // initialize the shell
+      val console = new TrifectaConsole(new TxRuntimeContext(config))
+
+      // if arguments were not passed, stop.
+      args.filterNot(_.startsWith("--")).toList match {
+        case Nil =>
+          console.shell()
+        case params =>
+          val line = params mkString " "
+          console.execute(line)
+      }
+    } catch {
+      case cause: Throwable =>
+        cause.printStackTrace()
     }
 
-    // load the configuration
-    logger.info(s"Loading configuration file '${TxConfig.configFile}'...")
-    val config = Try(TxConfig.load(TxConfig.configFile)) match {
-      case Success(cfg) => cfg
-      case Failure(e) =>
-        val cfg = TxConfig.defaultConfig
-        if (!TxConfig.configFile.exists()) {
-          logger.info(s"Creating default configuration file (${TxConfig.configFile.getAbsolutePath})...")
-          cfg.save(TxConfig.configFile)
-        }
-        cfg
-    }
-
-    // startup the Kafka Sandbox?
-    if (args.contains("--kafka-sandbox")) {
-      logger.info("Starting Kafka Sandbox...")
-      val kafkaSandbox = KafkaSandbox()
-      config.zooKeeperConnect = kafkaSandbox.getConnectString
-      Thread.sleep(3000)
-    }
-
-
-    // initialize the shell
-    val console = new TrifectaConsole(new TxRuntimeContext(config))
-
-    // if arguments were not passed, stop.
-    args.filterNot(_.startsWith("--")).toList match {
-      case Nil =>
-        console.shell()
-      case params =>
-        val line = params mkString " "
-        console.execute(line)
-    }
-
-    // make sure all threads die
-    sys.exit(0)
+    logger.info("Application stopped.")
   }
 
   /**
@@ -89,11 +100,6 @@ object TrifectaShell {
     val history: History = SessionManagement.history
     history.load(TxConfig.historyFile)
     SessionManagement.setupHistoryUpdates(TxConfig.historyFile, 60 seconds)
-
-    // make sure we shutdown the ZooKeeper connection
-    Runtime.getRuntime.addShutdownHook(new Thread {
-      override def run() = rt.shutdown()
-    })
 
     /**
       * Executes the given command line expression
@@ -165,9 +171,15 @@ object TrifectaShell {
             }
           }
         }
-      } while (config.alive)
+      } while (config.isAlive)
 
-      sys.exit(0)
+      // save the history file
+      SessionManagement.history.store(TxConfig.historyFile)
+
+      // shutdown the modules
+      rt.shutdown()
+
+      logger.info("Exiting shell()")
     }
 
     private def showDebug(result: Any): Unit = {
