@@ -94,7 +94,7 @@ class KafkaCliFacade(config: TxConfig) {
   def getConsumers(consumerPrefix: Option[String], topicPrefix: Option[String], includePartitionManager: Boolean)(implicit zk: ZKProxy, ec: ExecutionContext): Future[List[ConsumerDelta]] = {
     // get the Kafka consumer groups
     val consumersCG = Future {
-      KafkaMicroConsumer.getConsumerDetails(topicPrefix) map { c =>
+      KafkaMicroConsumer.getConsumerFromZookeeper(topicPrefix) map { c =>
         val topicOffset = getLastOffset(c.topic, c.partition)
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
         ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta, c.lastModified.map(new Date(_)))
@@ -104,7 +104,7 @@ class KafkaCliFacade(config: TxConfig) {
     // get the Kafka Spout consumers (Partition Manager)
     val consumersPM = if (!includePartitionManager) Future.successful(Nil)
     else Future {
-      KafkaMicroConsumer.getStormConsumerList() map { c =>
+      KafkaMicroConsumer.getConsumersForStorm() map { c =>
         val topicOffset = getLastOffset(c.topic, c.partition)
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
         ConsumerDelta(c.topologyName, c.topic, c.partition, c.offset, topicOffset, delta, c.lastModified.map(new Date(_)))

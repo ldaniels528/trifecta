@@ -364,7 +364,7 @@ object KafkaMicroConsumer {
   /**
    * Retrieves the list of consumers from Zookeeper
    */
-  def getConsumerDetails(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
+  def getConsumerFromZookeeper(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
     val basePath = getPrefixedPath("/consumers")
 
     // start with the list of consumer IDs
@@ -393,22 +393,10 @@ object KafkaMicroConsumer {
     }
   }
 
-  def getReplicas(topic: String, brokers: Seq[Broker])(implicit zk: ZKProxy): Seq[ReplicaBroker] = {
-    val results = for {
-      partition <- getTopicPartitions(topic)
-      (leader, pmd, replicas) <- getLeaderPartitionMetaDataAndReplicas(TopicAndPartition(topic, partition), brokers)
-      inSyncReplicas = pmd.isr map (r => Broker(r.host, r.port, r.id))
-    } yield (partition, replicas, inSyncReplicas)
-
-    results flatMap { case (partition, replicas, insSyncReplicas) => replicas map (r =>
-      ReplicaBroker(partition, r.host, r.port, r.brokerId, insSyncReplicas.contains(r)))
-    }
-  }
-
   /**
-   * Retrieves the list of consumers from Zookeeper (Kafka-Storm Partition Manager Version)
-   */
-  def getStormConsumerList()(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
+    * Retrieves the list of consumers from Zookeeper (Kafka-Storm Partition Manager Version)
+    */
+  def getConsumersForStorm()(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
     zk.getFamily(path = getPrefixedPath("/")).distinct filter (_.matches( """\S+[/]partition_\d+""")) flatMap { path =>
       zk.readString(path) flatMap { jsonString =>
         val lastModified = zk.getModificationTime(path)
@@ -424,6 +412,18 @@ object KafkaMicroConsumer {
           ConsumerDetailsPM(id, name, topic, partition, offset, lastModified, s"$brokerHost:$brokerPort")
         }.toOption
       }
+    }
+  }
+
+  def getReplicas(topic: String, brokers: Seq[Broker])(implicit zk: ZKProxy): Seq[ReplicaBroker] = {
+    val results = for {
+      partition <- getTopicPartitions(topic)
+      (leader, pmd, replicas) <- getLeaderPartitionMetaDataAndReplicas(TopicAndPartition(topic, partition), brokers)
+      inSyncReplicas = pmd.isr map (r => Broker(r.host, r.port, r.id))
+    } yield (partition, replicas, inSyncReplicas)
+
+    results flatMap { case (partition, replicas, insSyncReplicas) => replicas map (r =>
+      ReplicaBroker(partition, r.host, r.port, r.brokerId, insSyncReplicas.contains(r)))
     }
   }
 
