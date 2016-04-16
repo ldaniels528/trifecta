@@ -19,7 +19,7 @@ import scala.concurrent.duration._
  */
 class KafkaMacroConsumerTest {
   // setup our Zookeeper connection
-  private val zkConnect = "dev501:2181"
+  private val zkConnect = "localhost:2181"
   private implicit val zk = ZKProxy(zkConnect)
   private val consumerId = "dev"
   private val parallelism = 4
@@ -70,7 +70,7 @@ class KafkaMacroConsumerTest {
     val brokers = brokerDetails map (b => Broker(b.host, b.port))
 
     // reset each partitions
-    (0 to (partitions - 1)) foreach { partition =>
+    0 until partitions foreach { partition =>
       new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.commitOffsets(groupId, 0L, "Development offset"))
     }
   }

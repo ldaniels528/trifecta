@@ -12,7 +12,10 @@ class SSEClientHandlingActor(sessionId: String, outChannel: Concurrent.Channel[J
 
   override def preStart() = SSE.link(SSESession(sessionId, self))
 
-  override def postStop() = SSE.unlink(sessionId)
+  override def postStop() = {
+    SSE.unlink(sessionId)
+    ()
+  }
 
   override def receive = {
     case message: JsValue =>

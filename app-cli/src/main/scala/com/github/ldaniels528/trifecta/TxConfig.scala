@@ -3,12 +3,12 @@ package com.github.ldaniels528.trifecta
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
 
-import com.github.ldaniels528.trifecta.TxConfig._
-import com.github.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.PropertiesHelper._
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.trifecta.TxConfig._
+import com.github.ldaniels528.trifecta.io.avro.AvroDecoder
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
@@ -75,10 +75,10 @@ class TxConfig(val configProps: Properties) {
     ()
   }
 
-  def consumersPartitionManager: Boolean = configProps.getOrElse("trifecta.storm.kafka.consumers.partitionManager", "false").toBoolean
+  def consumersPartitionManager: Boolean = configProps.getOrElse("trifecta.kafka.consumers.storm", "false").toBoolean
 
   def consumersPartitionManager_=(enabled: Boolean): Unit = {
-    configProps.setProperty("trifecta.storm.kafka.consumers.partitionManager", enabled.toString)
+    configProps.setProperty("trifecta.kafka.consumers.storm", enabled.toString)
     ()
   }
 
@@ -102,6 +102,18 @@ class TxConfig(val configProps: Properties) {
   def kafkaRootPath_=(path: String): Unit = {
     configProps.setProperty("trifecta.zookeeper.kafka.root.path", path)
     ()
+  }
+
+  /**
+    * Returns any configured consumer groups to retrieve directly from Kafka
+    * @return the consumer groups to retrieve directly from Kafka
+    */
+  def getConsumerGroupList: Seq[String] = {
+    Option(configProps.getProperty("trifecta.kafka.consumers.native")).map(_.split("[,]").toSeq) getOrElse Nil
+  }
+
+  def isZookeeperConsumers: Boolean = {
+    java.lang.Boolean.parseBoolean(configProps.getProperty("trifecta.kafka.consumers.zookeeper", "true"))
   }
 
   /**
@@ -144,11 +156,11 @@ class TxConfig(val configProps: Properties) {
     })
   }
 
-  def getQueries: Option[Seq[TxQuery]]  = {
+  def getQueries: Option[Seq[TxQuery]] = {
     Option(queriesDirectory.listFiles) map (_.toSeq.filter(_.isDirectory)) map (_ flatMap { topicDirectory =>
       val topic = topicDirectory.getName
       Option(topicDirectory.listFiles) map (_ map (getQueryFromFile(topic, _)))
-    }) map(_.flatten)
+    }) map (_.flatten)
   }
 
   def getQueriesByTopic(topic: String): Option[Seq[TxQuery]] = {
@@ -178,7 +190,7 @@ class TxConfig(val configProps: Properties) {
 
   /**
     * Retrieves the value of the key or the default value
-    * @param key the given key
+    * @param key     the given key
     * @param default the given value
     * @return the value of the key or the default value
     */
@@ -186,7 +198,7 @@ class TxConfig(val configProps: Properties) {
 
   /**
     * Retrieves either the value of the key or the default value
-    * @param key the given key
+    * @param key     the given key
     * @param default the given value
     * @return either the value of the key or the default value
     */
@@ -199,7 +211,7 @@ class TxConfig(val configProps: Properties) {
 
   /**
     * Sets the value for the given key
-    * @param key the given key
+    * @param key   the given key
     * @param value the given value
     * @return an option of the previous value for the key
     */

@@ -15,27 +15,27 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.postfixOps
 
 /**
- * Casserole Session
- * @author lawrence.daniels@gmail.com
- */
+  * Casserole Session
+  * @author lawrence.daniels@gmail.com
+  */
 case class CasseroleSession(session: Session, threadPool: ExecutorService) {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val psCache = new TrieMap[String, PreparedStatement]()
 
   /**
-   * Closes the session
-   */
+    * Closes the session
+    */
   def close(): Unit = session.close()
 
   /**
-   * Exports the query results to the given file
-   * @param file the given [[File]]
-   * @param cql the given CQL query
-   * @param values the given query parameters
-   * @param cl the given [[ConsistencyLevel]]
-   * @param ec the given [[ExecutionContext]]
-   * @return the promise of the number of records written
-   */
+    * Exports the query results to the given file
+    * @param file the given [[File]]
+    * @param cql the given CQL query
+    * @param values the given query parameters
+    * @param cl the given [[ConsistencyLevel]]
+    * @param ec the given [[ExecutionContext]]
+    * @return the promise of the number of records written
+    */
   def export(file: File, cql: String, values: Any*)(implicit cl: ConsistencyLevel, ec: ExecutionContext): AsyncIO = {
     val ps = getPreparedStatement(cql)
 
@@ -48,8 +48,8 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
       // write the query results to disk
       new PrintWriter(new FileOutputStream(file)) use { out =>
         val rs = session.execute(bs)
-        val columns = rs.getColumnDefinitions.asList() map (cf => (cf.getName, cf)) toSeq
-        val labels = columns.map(_._1).toSeq
+        val columns = rs.getColumnDefinitions.asList() map (cf => (cf.getName, cf))
+        val labels = columns.map(_._1)
 
         // write the header row
         out.println(labels map (s => s""""$s"""") mkString ",")
@@ -57,7 +57,7 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
         // write each row of data
         rs.iterator() foreach { row =>
           counter.updateReadCount(1)
-          val values = (columns map { case (label, column) =>
+          val values = columns map { case (label, column) =>
             column.getType.getName.toString match {
               case "boolean" => row.getBool(label)
               case "bigint" => row.getLong(label)
@@ -70,7 +70,7 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
                 logger.warn(s"No mapping found for column ${column.getName} (type $unhandledType, class ${column.getType.asJavaClass.getName})")
                 null
             }
-          }).toSeq
+          }
           out.println(values mkString ",")
           counter.updateWriteCount(1)
         }
@@ -79,12 +79,12 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
   }
 
   /**
-   * Asynchronously executes the given CQL query
-   * @param cql the given CQL query
-   * @param values the given bound values
-   * @param cl the given [[ConsistencyLevel]]
-   * @return a promise of a [[ResultSet]]
-   */
+    * Asynchronously executes the given CQL query
+    * @param cql the given CQL query
+    * @param values the given bound values
+    * @param cl the given [[ConsistencyLevel]]
+    * @return a promise of a [[ResultSet]]
+    */
   def executeQuery(cql: String, values: Any*)(implicit cl: ConsistencyLevel): Future[ResultSet] = {
     val ps = getPreparedStatement(cql)
 
@@ -97,12 +97,12 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
   }
 
   /**
-   * Inserts values into the given column family
-   * @param columnFamily the given column family
-   * @param keyValues the given key-value pairs to insert
-   * @param cl the given [[ConsistencyLevel]]
-   * @return
-   */
+    * Inserts values into the given column family
+    * @param columnFamily the given column family
+    * @param keyValues the given key-value pairs to insert
+    * @param cl the given [[ConsistencyLevel]]
+    * @return
+    */
   def insert[T](columnFamily: String, keyValues: (String, T)*)(implicit cl: ConsistencyLevel): Future[ResultSet] = {
     //props foreach { case (k,v) => System.out.println(s"$k = $v (${if(v != null) v.getClass.getName else "<null>"})") }
     //System.out.println("*"*40)
@@ -117,7 +117,7 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
 
     // create & populate the bound statement
     val bs = new BoundStatement(ps)
-    val values = fields map (f => props.getOrElse(f, null).asInstanceOf[Object])
+    val values = fields map (f => props.get(f).map(_.asInstanceOf[Object]).orNull)
     bs.bind(values: _*)
 
     // execute the statement

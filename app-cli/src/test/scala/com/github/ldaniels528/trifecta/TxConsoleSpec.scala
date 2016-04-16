@@ -8,9 +8,9 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
 
 /**
- * Trifecta Console Specification
- * @author lawrence.daniels@gmail.com
- */
+  * Trifecta Console Specification
+  * @author lawrence.daniels@gmail.com
+  */
 class TxConsoleSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWhenThen with MockitoSugar {
 
   info("As a TxConsole instance")
