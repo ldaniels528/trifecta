@@ -22,6 +22,11 @@ object SessionManagement {
   // create the history collection
   val history = new History(100)
 
+  // make sure we shutdown the actor system
+  Runtime.getRuntime.addShutdownHook(new Thread {
+    override def run() = shutdown()
+  })
+
   def setupHistoryUpdates(file: File, frequency: FiniteDuration): Cancellable = {
     system.scheduler.schedule(frequency, frequency, historyActor, SaveHistory(file))
   }

@@ -259,7 +259,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
    */
   def getConsumerDetails: Future[Seq[ConsumerDetailJs]] = {
     val taskA = getConsumerGroupsNative()
-    val taskB = if (config.consumersPartitionManager) getConsumerGroupsPM else Future.successful(Nil)
+    val taskB = if (config.isStormConsumers) getConsumerGroupsPM else Future.successful(Nil)
 
     for {
       kafka <- taskA

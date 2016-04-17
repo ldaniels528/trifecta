@@ -8,6 +8,7 @@ import com.github.ldaniels528.trifecta.actors.ReactiveEventsActor
 import com.github.ldaniels528.trifecta.actors.ReactiveEventsActor.SamplingSession
 import com.github.ldaniels528.trifecta.controllers.KafkaController.{reactiveActor, sessions}
 import com.github.ldaniels528.trifecta.models._
+import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
@@ -48,7 +49,9 @@ class KafkaController() extends Controller {
   def getConsumerDetails = Action {
     Try(WebConfig.facade.getConsumerDetails) match {
       case Success(details) => Ok(Json.toJson(details))
-      case Failure(e) => InternalServerError(e.getMessage)
+      case Failure(e) =>
+        Logger.error("Internal server error", e)
+        InternalServerError(e.getMessage)
     }
   }
 

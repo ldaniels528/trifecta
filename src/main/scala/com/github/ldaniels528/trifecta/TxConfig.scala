@@ -75,9 +75,9 @@ class TxConfig(val configProps: Properties) {
     ()
   }
 
-  def consumersPartitionManager: Boolean = configProps.getOrElse("trifecta.kafka.consumers.storm", "false").toBoolean
+  def isStormConsumers: Boolean = configProps.getOrElse("trifecta.kafka.consumers.storm", "false").toBoolean
 
-  def consumersPartitionManager_=(enabled: Boolean): Unit = {
+  def isStormConsumers_=(enabled: Boolean): Unit = {
     configProps.setProperty("trifecta.kafka.consumers.storm", enabled.toString)
     ()
   }

@@ -6,6 +6,7 @@ import com.github.ldaniels528.trifecta.TxConsole._
 import com.github.ldaniels528.trifecta.io.AsyncIO
 import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.modules.CoreModule
 import com.github.ldaniels528.trifecta.rest.EmbeddedWebServer
 import com.github.ldaniels528.trifecta.rest.TxWebConfig._
 import org.apache.zookeeper.KeeperException.ConnectionLossException
@@ -25,7 +26,7 @@ import scala.util.{Failure, Success, Try}
   */
 object TrifectaShell {
   private val logger = LoggerFactory.getLogger(getClass)
-  val VERSION = "0.19.3"
+  val VERSION = CoreModule.VERSION
 
   /**
     * Application entry point

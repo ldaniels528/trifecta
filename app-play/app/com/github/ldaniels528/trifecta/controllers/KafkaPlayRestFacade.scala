@@ -3,9 +3,14 @@ package com.github.ldaniels528.trifecta.controllers
 import java.io.{File, FileOutputStream}
 import java.util.UUID
 
+import com.github.ldaniels528.commons.helpers.EitherHelper._
+import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
+import com.github.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.github.ldaniels528.trifecta.command.parser.CommandParser
-import com.github.ldaniels528.trifecta.controllers.KafkaRestFacade._
+import com.github.ldaniels528.trifecta.controllers.KafkaPlayRestFacade._
 import com.github.ldaniels528.trifecta.io.ByteBufferUtils
 import com.github.ldaniels528.trifecta.io.avro.AvroConversion
 import com.github.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
@@ -24,11 +29,6 @@ import com.github.ldaniels528.trifecta.models.QueryDetailsJs._
 import com.github.ldaniels528.trifecta.models.TopicDetailsJs._
 import com.github.ldaniels528.trifecta.models._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
-import com.github.ldaniels528.commons.helpers.EitherHelper._
-import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
-import com.github.ldaniels528.commons.helpers.OptionHelper._
-import com.github.ldaniels528.commons.helpers.ResourceHelper._
-import com.github.ldaniels528.commons.helpers.StringHelper._
 import kafka.common.TopicAndPartition
 import play.api.Logger
 import play.api.libs.json.{JsString, Json}
@@ -38,10 +38,10 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /**
-  * Kafka REST Facade
+  * Kafka Play REST Facade
   * @author lawrence.daniels@gmail.com
   */
-case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
+case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
   private implicit val formats = net.liftweb.json.DefaultFormats
   private implicit val zkProxy: ZKProxy = zk
 
@@ -139,7 +139,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
   /**
     * Parses a condition statement
     * @param expression the given expression
-    * @param decoder the optional [[MessageDecoder]]
+    * @param decoder    the optional [[MessageDecoder]]
     * @example lastTrade < 1 and volume > 1000000
     * @return a collection of [[Condition]] objects
     */
@@ -222,7 +222,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     * @return a list of consumers
     */
   def getConsumerDetails(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
-    getConsumerGroupsNative() ++  getConsumerGroupsZookeeper() ++ (if (config.consumersPartitionManager) getConsumerGroupsPM else Nil)
+    getConsumerGroupsNative() ++
+      (if (config.isZookeeperConsumers) getConsumerGroupsZookeeper() else Nil) ++
+      (if (config.isStormConsumers) getConsumerGroupsPM else Nil)
   }
 
   def getConsumersByTopic(topic: String)(implicit ec: ExecutionContext) = {
@@ -236,7 +238,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns the Kafka-native consumer groups
     * @return the Kafka-native consumer groups
     */
-  private def getConsumerGroupsNative(autoOffsetReset: String = "none")(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
+  private def getConsumerGroupsNative(autoOffsetReset: String = "earliest")(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
     KafkaMicroConsumer.getConsumersFromKafka(config.getConsumerGroupList, autoOffsetReset) map { c =>
       val topicOffset = Try(getLastOffset(c.topic, c.partition)) getOrElse None
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
@@ -322,9 +324,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Retrieves the message data for given topic, partition and offset
-    * @param topic the given topic
+    * @param topic     the given topic
     * @param partition the given partition
-    * @param offset the given offset
+    * @param offset    the given offset
     * @return the JSON representation of the message
     */
   def getMessageData(topic: String, partition: Int, offset: Long)(implicit ec: ExecutionContext) = {
@@ -339,9 +341,9 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Retrieves the message key for given topic, partition and offset
-    * @param topic the given topic
+    * @param topic     the given topic
     * @param partition the given partition
-    * @param offset the given offset
+    * @param offset    the given offset
     * @return the JSON representation of the message key
     */
   def getMessageKey(topic: String, partition: Int, offset: Long)(implicit ec: ExecutionContext) = {
@@ -366,7 +368,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Sequentially tests each decoder for the given topic until one is found that will decode the given message
-    * @param topic the given Kafka topic
+    * @param topic     the given Kafka topic
     * @param message_? an option of a [[MessageData]]
     * @return an option of a decoded message
     */
@@ -381,7 +383,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Attempts to decode the given message with the given decoder
-    * @param md the given [[MessageData]]
+    * @param md        the given [[MessageData]]
     * @param txDecoder the given [[TxDecoder]]
     * @return an option of a decoded message
     */
@@ -556,7 +558,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Converts the given value to the specified format
-    * @param value the given value
+    * @param value  the given value
     * @param format the specified format
     * @return the binary result
     */
@@ -575,7 +577,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Transcodes the given JSON document into an Avro-compatible byte array
-    * @param topic the given topic (e.g. "shocktrade.keystats.avro")
+    * @param topic   the given topic (e.g. "shocktrade.keystats.avro")
     * @param jsonDoc the given JSON document
     * @return an option of an Avro-compatible byte array
     */
@@ -701,7 +703,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
   * Kafka Web Facade Singleton
   * @author lawrence.daniels@gmail.com
   */
-object KafkaRestFacade {
+object KafkaPlayRestFacade {
   // Formatting Constants
   val AUTO = "auto"
   val BINARY = "binary"

@@ -12,8 +12,8 @@
         <p>Trifecta supports <u>three types</u> of consumers:</p>
         <ul>
             <li>Kafka-native Consumer Groups</li>
-            <li>Zookeeper Consumer Groups</li>
             <li>Storm Partition Manager Consumers</li>
+            <li>Zookeeper Consumer Groups</li>
         </ul>
 
         <p>These consumer groups require one of more of the following properties to be added to the configuration file
@@ -22,11 +22,11 @@
         <p><i>Kafka-native Consumer Groups</i> require the setting of a property (<i>trifecta.kafka.consumers.native</i>)
             that indicates which consumers to retrieve to be set to <i>true</i></p>
 
-        <p><i>Zookeeper-based Consumer Groups</i> are retrieved by default. But can be disabled by setting the
-            <i>trifecta.kafka.consumers.zookeeper</i> property to <i>false</i></p>
-
         <p><i>Storm Partition Manager Consumers</i> require a property (<i>trifecta.kafka.consumers.storm</i>) to be
             set to <i>true</i></p>
+
+        <p><i>Zookeeper-based Consumer Groups</i> are retrieved by default. But can be disabled by setting the
+            <i>trifecta.kafka.consumers.zookeeper</i> property to <i>false</i></p>
 
         <p>Examples:</p>
         <blockquote>

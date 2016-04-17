@@ -35,7 +35,7 @@ object WebConfig {
   lazy val zk = ZKProxy(config.zooKeeperConnect)
 
   // create the REST API facade
-  lazy val facade = new KafkaRestFacade(config, zk)
+  lazy val facade = new KafkaPlayRestFacade(config, zk)
 
   /**
     * Initializes the config

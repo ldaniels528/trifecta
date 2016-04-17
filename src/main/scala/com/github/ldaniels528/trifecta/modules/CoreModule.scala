@@ -571,7 +571,7 @@ class CoreModule(config: TxConfig) extends Module {
    * "version" - Returns the application version
    * @return the application version
    */
-  def version(args: UnixLikeArgs): String = TrifectaShell.VERSION
+  def version(args: UnixLikeArgs): String = CoreModule.VERSION
 
   private def parseJobId(id: String): Int = parseInt("job number", id)
 
@@ -622,5 +622,14 @@ class CoreModule(config: TxConfig) extends Module {
   case class ModuleItem(name: String, className: String, loaded: Boolean, active: Boolean)
 
   case class ScopeItem(name: String, module: String, `type`: String, value: Option[_] = None)
+
+}
+
+/**
+  * Core Module Companion
+  * @author lawrence.daniels@gmail.com
+  */
+object CoreModule {
+  val VERSION = "0.19.3"
 
 }

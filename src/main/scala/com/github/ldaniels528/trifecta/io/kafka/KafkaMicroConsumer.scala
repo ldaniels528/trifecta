@@ -373,25 +373,37 @@ object KafkaMicroConsumer {
     }
   }
 
+  def getBrokers(implicit zk: ZKProxy) = getBrokerList map (b => Broker(b.host, b.port))
+
   /**
     * Retrieves the list of internal consumers from Kafka
     */
   def getConsumersFromKafka(consumerIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy) = {
+    val topicList = getTopicList(getBrokers)
+    val topics = topicList map (_.topic) distinct
+    val brokers = getBrokers
+    val bootstrapServers = brokers map (b => s"${b.host}:${b.port}") mkString ","
+    System.out.println(s"topics = $topics, bootstrapServers = $bootstrapServers")
+
+    // (new Tabular).transform(topicList) foreach System.out.println
+
     consumerIds flatMap { consumerId =>
       val props = new Properties()
-      props.put("bootstrap.servers", getBootstrapServers)
+      props.put("bootstrap.servers", bootstrapServers)
       props.put("group.id", consumerId)
       props.put("auto.offset.reset", autoOffsetReset)
       props.put("key.deserializer", classOf[StringDeserializer].getName)
       props.put("value.deserializer", classOf[StringDeserializer].getName)
 
       new KafkaConsumer[Array[Byte], Array[Byte]](props) use { consumer =>
-        for {
-          (_, details) <- consumer.listTopics()
-          p <- details if p.topic() != "__consumer_offsets"
-          offset = consumer.position(new TopicPartition(p.topic, p.partition))
-        } yield ConsumerDetails(consumerId, p.topic, p.partition(), offset, lastModified = None)
-      } toSeq
+        consumer.subscribe(topics)
+        consumer.poll(0)
+        topicList flatMap { t =>
+          Try(consumer.position(new TopicPartition(t.topic, t.partitionId))).toOption map { offset =>
+            ConsumerDetails(consumerId, t.topic, t.partitionId, offset, lastModified = None)
+          }
+        }
+      }
     }
   }
 
@@ -483,7 +495,7 @@ object KafkaMicroConsumer {
     */
   def getTopicList(brokers: Seq[Broker])(implicit zk: ZKProxy): Seq[TopicDetails] = {
     // get the list of topics
-    val topics = zk.getChildren(path = getPrefixedPath("/brokers/topics"))
+    val topics = zk.getChildren(path = getPrefixedPath("/brokers/topics")) filterNot (_ == "__consumer_offsets")
 
     // capture the meta data for all topics
     brokers.headOption map { broker =>
