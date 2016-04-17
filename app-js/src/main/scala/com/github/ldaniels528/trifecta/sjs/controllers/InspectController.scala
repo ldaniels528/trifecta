@@ -12,7 +12,7 @@ import org.scalajs.dom
 import org.scalajs.dom.console
 
 import scala.concurrent.duration._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.util.{Failure, Success}
 
@@ -139,6 +139,7 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
             consumer.update(detail)
           case None =>
             $scope.consumers.push(detail)
+            $scope.consumerGroupCache.clear()
         }
       }
     }

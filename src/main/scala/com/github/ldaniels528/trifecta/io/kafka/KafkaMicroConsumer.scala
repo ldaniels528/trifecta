@@ -383,9 +383,6 @@ object KafkaMicroConsumer {
     val topics = topicList map (_.topic) distinct
     val brokers = getBrokers
     val bootstrapServers = brokers map (b => s"${b.host}:${b.port}") mkString ","
-    System.out.println(s"topics = $topics, bootstrapServers = $bootstrapServers")
-
-    // (new Tabular).transform(topicList) foreach System.out.println
 
     consumerIds flatMap { consumerId =>
       val props = new Properties()

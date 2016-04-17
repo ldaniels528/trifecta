@@ -39,6 +39,15 @@ class KafkaController() extends Controller {
     }
   }
 
+  def getConsumers = Action {
+    Try(WebConfig.facade.getConsumersGroupedByID) match {
+      case Success(details) => Ok(Json.toJson(details))
+      case Failure(e) =>
+        Logger.error("Internal server error", e)
+        InternalServerError(e.getMessage)
+    }
+  }
+
   def getConsumerDeltas = Action {
     Try(WebConfig.facade.getConsumerDeltas) match {
       case Success(deltas) => Ok(Json.toJson(deltas))

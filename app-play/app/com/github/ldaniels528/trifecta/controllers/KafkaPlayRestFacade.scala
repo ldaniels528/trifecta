@@ -171,7 +171,9 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns the list of brokers
     * @return the JSON list of brokers
     */
-  def getBrokerDetails = KafkaMicroConsumer.getBrokerList.groupBy(_.host) map { case (host, details) => BrokerDetailsGroupJs(host, details.map(_.asJson)) }
+  def getBrokerDetails = {
+    KafkaMicroConsumer.getBrokerList.groupBy(_.host) map { case (host, details) => BrokerDetailsGroupJs(host, details.map(_.asJson)) }
+  }
 
   /**
     * Returns a collection of consumers that have changed since the last call
@@ -227,6 +229,16 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
       (if (config.isStormConsumers) getConsumerGroupsPM else Nil)
   }
 
+  def getConsumersGroupedByID(implicit ec: ExecutionContext) = {
+    getConsumerDetails groupBy (_.consumerId)
+  }
+
+  /**
+    * (new Tabular()).transform(consumers) foreach System.out.println
+    * @param topic
+    * @param ec
+    * @return
+    */
   def getConsumersByTopic(topic: String)(implicit ec: ExecutionContext) = {
     getConsumerDetails
       .filter(_.topic == topic)

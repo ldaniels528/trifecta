@@ -14,7 +14,8 @@ import org.scalajs.dom
 import org.scalajs.dom.console
 
 import scala.concurrent.duration._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.language.postfixOps
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.util.{Failure, Success}
@@ -33,6 +34,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
   // reference data
   $scope.brokers = emptyArray
   $scope.consumers = emptyArray
+  $scope.consumerGroupCache = js.Dictionary[js.Array[ConsumerGroup]]()
   $scope.replicas = emptyArray
   $scope.topics = emptyArray
   $scope.hideEmptyTopics = true
@@ -175,7 +177,12 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
 
   $scope.getConsumers = () => $scope.consumers
 
-  $scope.getConsumersForTopic = (aTopic: js.UndefOr[String]) => $scope.consumers.filter(c => aTopic.contains(c.topic))
+  $scope.getConsumersForTopic = (aTopic: js.UndefOr[String]) => aTopic map { topic =>
+    $scope.consumerGroupCache.getOrElseUpdate(topic,
+      js.Array($scope.consumers
+        .filter(c => aTopic.contains(c.topic))
+        .groupBy(_.consumerId) map { case (consumerId, details) => ConsumerGroup(consumerId, details) } toSeq: _*))
+  }
 
   $scope.getConsumersForIdAndTopic = (aConsumerId: js.UndefOr[String], aTopic: js.UndefOr[String]) => {
     for {
@@ -246,6 +253,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
       case None =>
         console.log(s"Adding new consumer => ${angular.toJson(delta)}")
         $scope.consumers.push(Consumer(delta))
+        $scope.consumerGroupCache.clear()
     }
   }
 
@@ -279,7 +287,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
   /**
     * Pre-load the reference data
     */
-  private def init() {
+  $scope.init = () => {
     val outcome = for {
       topics <- topicSvc.getDetailedTopics
       brokers <- topicSvc.getBrokerGroups
@@ -289,11 +297,12 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
     outcome onComplete {
       case Success((topics, brokers, consumers)) =>
         console.info(s"Loaded ${topics.length} topic(s)")
-       val sortedTopics = enrichTopics(topics.sortBy(_.topic))
+        val sortedTopics = enrichTopics(topics.sortBy(_.topic))
         $scope.topic = sortedTopics.find(_.totalMessages > 0).orUndefined
         $scope.topics = sortedTopics
         $scope.brokers = brokers
         $scope.consumers = consumers
+        $scope.consumerGroupCache.clear()
 
         // broadcast the events
         console.log(s"Broadcasting '$REFERENCE_DATA_LOADED' event...")
@@ -317,9 +326,6 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
     topics
   }
 
-  // initialize the controller
-  init()
-
 }
 
 /**
@@ -329,6 +335,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
 @js.native
 trait MainControllerScope extends RootScope with GlobalDataAware with GlobalLoading with GlobalErrorHandling with MainTabManagement with ReferenceDataAware {
   // functions
+  var init: js.Function0[Unit] = js.native
   var getDateFormat: js.Function1[js.UndefOr[Int], js.UndefOr[String]] = js.native
   var isActiveTab: js.Function1[js.UndefOr[MainTab], Boolean] = js.native
   var toPrettyJSON: js.Function2[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[String]] = js.native

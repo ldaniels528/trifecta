@@ -23,8 +23,9 @@ GET           /api/brokers/grouped                               @com.github.lda
 GET           /api/replicas/:topic                               @com.github.ldaniels528.trifecta.controllers.KafkaController.getReplicas(topic: String)
 
 # Consumers
+GET           /api/consumers                                     @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumers
 GET           /api/consumers/deltas                              @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumerDeltas
-GET           /api/consumers                                     @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumerDetails
+GET           /api/consumers/details                             @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumerDetails
 GET           /api/consumers/topic/:topic                        @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumersByTopic(topic: String)
 
 # Decoders & Schemas

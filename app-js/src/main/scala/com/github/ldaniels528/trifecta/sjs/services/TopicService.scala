@@ -60,7 +60,7 @@ class TopicService($http: Http) extends Service {
     * @return a promise of an array of [[Consumer consumer]]
     */
   def getConsumers = {
-    $http.get[js.Array[Consumer]]("/api/consumers")
+    $http.get[js.Array[Consumer]]("/api/consumers/details")
   }
 
   /////////////////////////////////////////////////////////////////////////////////

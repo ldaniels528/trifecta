@@ -4,7 +4,7 @@ import com.github.ldaniels528.scalascript.Service
 import com.github.ldaniels528.scalascript.core.Http
 import com.github.ldaniels528.trifecta.sjs.models.{Message, Query, QueryResultSet, QueryRow}
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.{global => g}
 
