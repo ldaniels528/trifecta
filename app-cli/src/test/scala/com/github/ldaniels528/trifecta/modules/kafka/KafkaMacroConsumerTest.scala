@@ -19,7 +19,7 @@ import scala.concurrent.duration._
  */
 class KafkaMacroConsumerTest {
   // setup our Zookeeper connection
-  private val zkConnect = "dev501:2181"
+  private val zkConnect = "localhost:2181"
   private implicit val zk = ZKProxy(zkConnect)
   private val consumerId = "dev"
   private val parallelism = 4

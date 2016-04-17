@@ -78,10 +78,10 @@ class TxConfig(val configProps: Properties) {
     ()
   }
 
-  def consumersPartitionManager: Boolean = configProps.getOrElse("trifecta.storm.kafka.consumers.partitionManager", "false").toBoolean
+  def consumersPartitionManager: Boolean = configProps.getOrElse("trifecta.kafka.consumers.storm", "false").toBoolean
 
   def consumersPartitionManager_=(enabled: Boolean): Unit = {
-    configProps.setProperty("trifecta.storm.kafka.consumers.partitionManager", enabled.toString)
+    configProps.setProperty("trifecta.kafka.consumers.storm", enabled.toString)
     ()
   }
 
@@ -105,6 +105,18 @@ class TxConfig(val configProps: Properties) {
   def kafkaRootPath_=(path: String): Unit = {
     configProps.setProperty("trifecta.zookeeper.kafka.root.path", path)
     ()
+  }
+
+  /**
+    * Returns any configured consumer groups to retrieve directly from Kafka
+    * @return the consumer groups to retrieve directly from Kafka
+    */
+  def getConsumerGroupList: Seq[String] = {
+    Option(configProps.getProperty("trifecta.kafka.consumers.native")).map(_.split("[,]").toSeq) getOrElse Nil
+  }
+
+  def isZookeeperConsumers: Boolean = {
+    java.lang.Boolean.parseBoolean(configProps.getProperty("trifecta.kafka.consumers.zookeeper", "true"))
   }
 
   /**

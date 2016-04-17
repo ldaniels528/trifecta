@@ -18,7 +18,7 @@ class KafkaSubscriberSpec() extends FeatureSpec with GivenWhenThen {
   feature("The ability to decode Kafka broker details") {
     scenario("Decode a Kafka brokers to a case class") {
       Given("a JSON string containing the broker details")
-      val jsonString = """{"jmx_port":9999,"timestamp":"1405818758964","host":"dev501","version":1,"port":9092}"""
+      val jsonString = """{"jmx_port":9999,"timestamp":"1405818758964","host":"localhost","version":1,"port":9092}"""
 
       When("parsing the JSON string")
       val json = parse(jsonString)
@@ -27,7 +27,7 @@ class KafkaSubscriberSpec() extends FeatureSpec with GivenWhenThen {
       val obj = json.extract[BrokerDetails]
 
       And(s"the case class instance contains the expected results")
-      obj shouldBe BrokerDetails(jmx_port = 9999, timestamp = "1405818758964", host = "dev501", version = 1, port = 9092)
+      obj shouldBe BrokerDetails(jmx_port = 9999, timestamp = "1405818758964", host = "localhost", version = 1, port = 9092)
     }
   }
 
@@ -66,7 +66,7 @@ class KafkaSubscriberSpec() extends FeatureSpec with GivenWhenThen {
       //val obj = json.extract[BrokerDetails]
 
       And(s"the case class instance contains the expected results")
-      //obj shouldBe BrokerDetails(jmx_port = 9999, timestamp = "1405818758964", host = "dev501", version = 1, port = 9092)
+      //obj shouldBe BrokerDetails(jmx_port = 9999, timestamp = "1405818758964", host = "localhost", version = 1, port = 9092)
     }
   }
 

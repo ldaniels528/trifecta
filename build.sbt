@@ -1,6 +1,8 @@
 import sbt.Keys._
 import sbt._
 
+val appVersion = "0.20.0"
+
 val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"
 val apacheCurator = "3.1.0"
@@ -10,25 +12,6 @@ val playVersion = "2.4.6"
 val twitterBijection = "0.9.2"
 
 lazy val scalajsOutputDir = Def.settingKey[File]("Directory for Javascript files output by ScalaJS")
-
-lazy val trifecta_js = (project in file("app-js"))
-  .settings(
-    name := "trifecta_js",
-    organization := "com.github.ldaniels528",
-    version := "0.20.0",
-    scalaVersion := _scalaVersion,
-    relativeSourceMaps := true,
-    persistLauncher := true,
-    persistLauncher in Test := false,
-    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
-    libraryDependencies ++= Seq(
-      "com.github.ldaniels528" %%% "scalascript" % "0.2.20",
-      "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11"),
-      "org.scala-js" %%% "scalajs-dom" % "0.9.0",
-      "be.doeraene" %%% "scalajs-jquery" % "0.9.0"
-    ))
-  .enablePlugins(ScalaJSPlugin)
 
 lazy val coreDeps = Seq(
   //
@@ -76,13 +59,12 @@ lazy val trifecta_cli = (project in file("app-cli"))
   .settings(
     name := "trifecta_cli",
     organization := "com.github.ldaniels528",
-    version := "0.20.0",
+    version := appVersion,
     scalaVersion := _scalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.8", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
-    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.7", "-g:vars"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.8", "-g:vars"),
     mainClass in assembly := Some("com.github.ldaniels528.trifecta.TrifectaShell"),
-    //aggregate in assembly := false,
     test in assembly := {},
     assemblyJarName in assembly := "trifecta_cli_" + version.value + ".bin.jar",
     assemblyMergeStrategy in assembly <<= (assemblyMergeStrategy in assembly) { (old) => {
@@ -103,7 +85,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
       // General Java Dependencies
       "commons-io" % "commons-io" % "2.4",
       "log4j" % "log4j" % "1.2.17",
-      "net.liftweb" %% "lift-json" % "3.0-M7",
+      "net.liftweb" %% "lift-json" % "3.0-M8",
       "org.fusesource.jansi" % "jansi" % "1.11",
       "org.scala-lang" % "jline" % "2.11.0-M3",
       "org.slf4j" % "slf4j-api" % "1.7.21",
@@ -116,12 +98,33 @@ lazy val trifecta_cli = (project in file("app-cli"))
     )
   )
 
+lazy val trifecta_js = (project in file("app-js"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "trifecta_js",
+    organization := "com.github.ldaniels528",
+    version := appVersion,
+    scalaVersion := _scalaVersion,
+    relativeSourceMaps := true,
+    persistLauncher := true,
+    persistLauncher in Test := false,
+    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    libraryDependencies ++= Seq(
+      "com.github.ldaniels528" %%% "scalascript" % "0.2.20",
+      "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11"),
+      "org.scala-js" %%% "scalajs-dom" % "0.9.0",
+      "be.doeraene" %%% "scalajs-jquery" % "0.9.0"
+    ))
+
 lazy val trifecta_ui = (project in file("app-play"))
+  .aggregate(trifecta_js)
   .dependsOn(trifecta_cli)
+  .enablePlugins(PlayScala, play.twirl.sbt.SbtTwirl, SbtWeb)
   .settings(
     name := "trifecta_ui",
     organization := "com.github.ldaniels528",
-    version := "0.20.0",
+    version := appVersion,
     scalaVersion := _scalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.8", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
@@ -152,8 +155,6 @@ lazy val trifecta_ui = (project in file("app-play"))
       "org.webjars" % "nervgh-angular-file-upload" % "2.1.1",
       "org.webjars" %% "webjars-play" % "2.4.0-2"
     ))
-  .enablePlugins(PlayScala, play.twirl.sbt.SbtTwirl, SbtWeb)
-  .aggregate(trifecta_js)
 
 // loads the jvm project at sbt startup
 onLoad in Global := (Command.process("project trifecta_ui", _: State)) compose (onLoad in Global).value

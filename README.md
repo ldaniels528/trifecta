@@ -130,7 +130,7 @@ contains the configuration properties and connection strings for all supported s
     #trifecta.zookeeper.kafka.root.path = /kafka
 
     # indicates whether Storm Partition Manager-style consumers should be read from Zookeeper
-    trifecta.storm.kafka.consumers.partitionManager = false
+    trifecta.kafka.consumers.storm = false
     
     # Cassandra properties
     trifecta.cassandra.hosts = localhost

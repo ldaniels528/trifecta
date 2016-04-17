@@ -89,13 +89,13 @@
 
                             <p><i>Kafka-native Consumer Groups</i> are retrieved by default. However, the
                             <i>Kafka-Storm Partition Manager Consumers</i> require a property
-                                (<i>trifecta.storm.kafka.consumers.partitionManager</i>) to be set to <i>true</i> in
+                                (<i>trifecta.kafka.consumers.storm</i>) to be set to <i>true</i> in
                                 <span style="color: blue">$HOME/.trifecta/config.properties</span>.</p>
 
                             <p>Example:</p>
                             <blockquote>
                                 <div style="color: #aaaaaa"># indicates whether Storm Partition Manager-style consumers should be read from Zookeeper</div>
-                                <div><span style="color: magenta">trifecta.storm.kafka.consumers.partitionManager</span> = <span style="color: blue">true</span></div>
+                                <div><span style="color: magenta">trifecta.kafka.consumers.storm</span> = <span style="color: blue">true</span></div>
                             </blockquote>
 
                             <p>If you're using Apache Storm, and you have not yet set the above property to true, please do

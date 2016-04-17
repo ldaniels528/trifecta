@@ -227,7 +227,7 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     * @return a list of consumers
     */
   def getConsumerDetails(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
-    getConsumerGroupsNative() ++ (if (config.consumersPartitionManager) getConsumerGroupsPM else Nil)
+    getConsumerGroupsNative() ++  getConsumerGroupsZookeeper() ++ (if (config.consumersPartitionManager) getConsumerGroupsPM else Nil)
   }
 
   def getConsumersByTopic(topic: String)(implicit ec: ExecutionContext) = {
@@ -241,7 +241,19 @@ case class KafkaRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns the Kafka-native consumer groups
     * @return the Kafka-native consumer groups
     */
-  private def getConsumerGroupsNative(topicPrefix: Option[String] = None)(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
+  private def getConsumerGroupsNative(autoOffsetReset: String = "none")(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
+    KafkaMicroConsumer.getConsumersFromKafka(config.getConsumerGroupList, autoOffsetReset) map { c =>
+      val topicOffset = Try(getLastOffset(c.topic, c.partition)) getOrElse None
+      val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
+      ConsumerDetailJs(c.consumerId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
+    }
+  }
+
+  /**
+    * Returns the Kafka-Zookeeper consumer groups
+    * @return the Kafka-Zookeeper consumer groups
+    */
+  private def getConsumerGroupsZookeeper(topicPrefix: Option[String] = None)(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
     KafkaMicroConsumer.getConsumerFromZookeeper() map { c =>
       val topicOffset = Try(getLastOffset(c.topic, c.partition)) getOrElse None
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
