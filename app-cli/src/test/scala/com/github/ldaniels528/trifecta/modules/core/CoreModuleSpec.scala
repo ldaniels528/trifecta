@@ -1,12 +1,11 @@
-package com.github.ldaniels528.trifecta.modules
+package com.github.ldaniels528.trifecta.modules.core
 
-import com.github.ldaniels528.trifecta.modules.core.CoreModule
-
-import scala.concurrent.ExecutionContext.Implicits.global
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Core Module Specification

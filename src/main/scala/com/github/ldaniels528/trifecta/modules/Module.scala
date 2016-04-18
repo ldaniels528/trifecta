@@ -15,7 +15,7 @@ import net.liftweb.json._
  * Represents a dynamically loadable module
  * @author lawrence.daniels@gmail.com
  */
-trait Module {
+trait Module extends ModuleCommandAgent {
 
   /**
    * Returns the commands that are bound to the module
@@ -66,20 +66,6 @@ trait Module {
    */
   def supportedPrefixes: Seq[String]
 
-  protected def die[S](message: String): S = throw new IllegalArgumentException(message)
-
-  protected def dieConfigKey[S](key: String): S = die(s"Configuration key '$key' not defined")
-
-  protected def dieInvalidOutputURL[S](url: String, example: String): S = die(s"Invalid output URL '$url' - Example usage: $example")
-
-  protected def dieNoInputHandler[S](device: MessageInputSource): S = die(s"Unhandled input source $device")
-
-  protected def dieNoOutputHandler[S](device: MessageOutputSource): S = die(s"Unhandled output source $device")
-
-  protected def dieSyntax[S](unixArgs: UnixLikeArgs): S = {
-    die( s"""Invalid arguments - use "syntax ${unixArgs.commandName.get}" to see usage""")
-  }
-
   protected def decodeValue(bytes: Array[Byte], valueType: String): Any = {
     valueType match {
       case "bytes" => bytes
@@ -127,7 +113,7 @@ trait Module {
     params("-i") flatMap rt.getInputHandler
   }
 
-  protected def getOutputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[MessageOutputSource] = {
+  def getOutputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[MessageOutputSource] = {
     params("-o") flatMap rt.getOutputHandler
   }
 

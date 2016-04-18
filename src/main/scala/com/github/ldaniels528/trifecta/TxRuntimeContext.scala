@@ -11,7 +11,6 @@ import com.github.ldaniels528.trifecta.modules._
 import com.github.ldaniels528.trifecta.modules.azure.AzureModule
 import com.github.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.github.ldaniels528.trifecta.modules.core.CoreModule
-import com.github.ldaniels528.trifecta.modules.documentdb.DocumentDbModule
 import com.github.ldaniels528.trifecta.modules.elasticsearch.ElasticSearchModule
 import com.github.ldaniels528.trifecta.modules.etl.ETLModule
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaModule
@@ -52,7 +51,6 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     new AzureModule(config),
     new CassandraModule(config),
     new CoreModule(config),
-    new DocumentDbModule(config),
     new ElasticSearchModule(config),
     new ETLModule(config),
     new KafkaModule(config),

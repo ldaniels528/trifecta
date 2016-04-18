@@ -1,4 +1,4 @@
-package com.github.ldaniels528.trifecta.modules.documentdb
+package com.github.ldaniels528.trifecta.modules.azure
 
 import com.github.ldaniels528.trifecta.io.{KeyAndMessage, MessageOutputSource}
 import com.github.ldaniels528.trifecta.messages.MessageDecoder

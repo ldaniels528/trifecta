@@ -69,9 +69,6 @@ object TrifectaShell {
         val line = params mkString " "
         console.execute(line)
     }
-
-    // make sure all threads die
-    sys.exit(0)
   }
 
   /**

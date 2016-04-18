@@ -1,4 +1,4 @@
-package com.github.ldaniels528.trifecta.modules
+package com.github.ldaniels528.trifecta.modules.zookeeper
 
 import org.apache.curator.test.TestingServer
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}

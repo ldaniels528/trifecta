@@ -1,4 +1,4 @@
-package com.github.ldaniels528.trifecta.modules.documentdb
+package com.github.ldaniels528.trifecta.modules.azure
 
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.microsoft.azure.documentdb._

@@ -1,4 +1,4 @@
-package com.github.ldaniels528.trifecta.modules
+package com.github.ldaniels528.trifecta.modules.kafka
 
 import org.mockito.Mockito.{when => when$}
 import org.scalatest.mock.MockitoSugar
