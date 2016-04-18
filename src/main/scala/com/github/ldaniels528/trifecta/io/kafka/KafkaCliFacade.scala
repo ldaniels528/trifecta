@@ -94,6 +94,15 @@ class KafkaCliFacade(config: TxConfig) {
   def getConsumers(consumerPrefix: Option[String], topicPrefix: Option[String], includePartitionManager: Boolean)(implicit zk: ZKProxy, ec: ExecutionContext): Future[List[ConsumerDelta]] = {
     // get the Kafka consumer groups
     val consumersCG = Future {
+      KafkaMicroConsumer.getConsumersFromKafka(config.getConsumerGroupList, autoOffsetReset = "earliest") map { c =>
+        val topicOffset = getLastOffset(c.topic, c.partition)
+        val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
+        ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta, c.lastModified.map(new Date(_)))
+      }
+    }
+
+    // get the Zookeeper consumer groups
+    val consumersZK = Future {
       KafkaMicroConsumer.getConsumerFromZookeeper(topicPrefix) map { c =>
         val topicOffset = getLastOffset(c.topic, c.partition)
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
@@ -114,13 +123,14 @@ class KafkaCliFacade(config: TxConfig) {
     // combine the futures for the two lists
     (for {
       consumersA <- consumersCG
-      consumersB <- consumersPM
-    } yield consumersA.toList ::: consumersB.toList)
+      consumersB <- consumersZK
+      consumersC <- consumersPM
+    } yield consumersA.toList ::: consumersB.toList ::: consumersC.toList)
       .map {
-      _.filter(c => contentFilter(consumerPrefix, c.consumerId))
-        .filter(c => contentFilter(topicPrefix, c.topic))
-        .sortBy(c => (c.consumerId, c.topic, c.partition))
-    }
+        _.filter(c => contentFilter(consumerPrefix, c.consumerId))
+          .filter(c => contentFilter(topicPrefix, c.topic))
+          .sortBy(c => (c.consumerId, c.topic, c.partition))
+      }
   }
 
   /**

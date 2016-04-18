@@ -184,6 +184,9 @@ object TrifectaShell {
           }
         }
       } while (config.alive)
+
+      // flush the console
+      consoleReader.flush()
     }
 
     private def showDebug(result: Any): Unit = {

@@ -630,6 +630,6 @@ class CoreModule(config: TxConfig) extends Module {
   * @author lawrence.daniels@gmail.com
   */
 object CoreModule {
-  val VERSION = "0.19.3"
+  val VERSION = "0.19.4"
 
 }
