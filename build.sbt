@@ -85,6 +85,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
       case PathList("stax", "stax-api", xs@_*) => MergeStrategy.first
       case PathList("log4j-over-slf4j", xs@_*) => MergeStrategy.discard
       case PathList("META-INF", xs@_*) => MergeStrategy.discard
+      case PathList("log4j.properties", xs@_*) => MergeStrategy.discard
       case x => MergeStrategy.first
     }
     },

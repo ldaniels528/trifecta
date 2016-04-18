@@ -14,7 +14,7 @@ trait ZkItem extends js.Object {
   var path: String = js.native
   var children: js.Array[ZkItem] = js.native
   var data: js.UndefOr[ZkData] = js.native
-  var expanded: Boolean = js.native
+  var expanded: js.UndefOr[Boolean] = js.native
 
   // ui-specific properties
   var loading: js.UndefOr[Boolean] = js.native

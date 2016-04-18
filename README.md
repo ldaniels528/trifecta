@@ -96,15 +96,11 @@ the Web-based user interface (trifecta_ui)
 
 #### Building Trifecta CLI (Command-line interface)
 
-    $ sbt 
-    > project trifecta_cli
-    > assembly
+    $ sbt "project trifecta_cli" assembly
     
-#### Building Trifecta UI (Web-based interface)
+#### Building Trifecta UI (Typesafe Play application)
 
-    $ sbt 
-    > project trifecta_ui
-    > dist
+    $ sbt "project trifecta_ui" dist
         
 <a name="testing-the-code"></a>    
 ### Running the tests
