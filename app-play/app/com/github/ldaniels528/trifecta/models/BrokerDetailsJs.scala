@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.models
 
-import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.BrokerDetails
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.BrokerDetails
 import play.api.libs.json.Json
 
 /**

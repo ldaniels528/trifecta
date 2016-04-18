@@ -5,8 +5,8 @@ import com.github.ldaniels528.tabular.Tabular
 import com.github.ldaniels528.trifecta.io.AsyncIO
 import com.github.ldaniels528.trifecta.io.avro.AvroTables
 import com.github.ldaniels528.trifecta.io.json.JsonHelper
-import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.MessageData
-import com.github.ldaniels528.trifecta.io.kafka.StreamedMessage
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.MessageData
+import com.github.ldaniels528.trifecta.modules.kafka.StreamedMessage
 import com.github.ldaniels528.trifecta.messages.BinaryMessaging
 import com.github.ldaniels528.trifecta.messages.query.KQLResult
 import net.liftweb.json._

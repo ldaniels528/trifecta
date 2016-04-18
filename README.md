@@ -180,11 +180,11 @@ by setting the *trifecta.kafka.consumers.storm* property be set to *true*.
 
 To start the _Trifecta_ REPL:
 
-	$ java -jar trifecta_cli_0.19.4.bin.jar
+	$ java -jar trifecta_cli_0.19.5.bin.jar
 	
 Optionally, you can execute _Trifecta_ instructions (commands) right from the command line:
 	
-	$ java -jar trifecta_cli_0.19.4.bin.jar kls -l
+	$ java -jar trifecta_cli_0.19.5.bin.jar kls -l
 
 <a name="downloads"></a>
 ### Downloads
@@ -251,7 +251,7 @@ which offers a comprehensive and powerful set of features for inspecting Kafka t
 
 To start the embedded web server, issue the following from the command line:
 
-    $ java -jar trifecta_cli_0.19.4.bin.jar --http-start
+    $ java -jar trifecta_cli_0.19.5.bin.jar --http-start
 
 You'll see a few seconds of log messages, then a prompt indicating the web interface is ready for use.
 
@@ -363,16 +363,16 @@ and optionally Elastic Search documents and MongoDB documents via simple UNIX-li
 _Trifecta_ exposes its commands through modules. At any time to see which modules are available one could issue the `modules` command.
 
     core:/home/ldaniels> modules
-    + -------------------------------------------------------------------------------------------- +
-    | name           className                                             loaded  active          |
-    + -------------------------------------------------------------------------------------------- +
-    | cassandra      com.github.ldaniels528.trifecta.modules.CassandraModule      true    false    |
-    | core           com.github.ldaniels528.trifecta.modules.CoreModule           true    true     |
-    | elasticSearch  com.github.ldaniels528.trifecta.modules.ElasticSearchModule  true    false    |
-    | kafka          com.github.ldaniels528.trifecta.modules.KafkaModule          true    false    |
-    | mongodb        com.github.ldaniels528.trifecta.modules.MongoModule          true    false    |
-    | zookeeper      com.github.ldaniels528.trifecta.modules.ZookeeperModule      true    false    |
-    + -------------------------------------------------------------------------------------------- +
+    + ------------------------------------------------------------------------------------------------------ +
+    | name           className                                                              loaded  active   |
+    + ------------------------------------------------------------------------------------------------------ +
+    | cassandra      com.github.ldaniels528.trifecta.modules.CassandraModule                true    false    |
+    | core           com.github.ldaniels528.trifecta.modules.CoreModule                     true    true     |
+    | elasticSearch  com.github.ldaniels528.trifecta.modules.ElasticSearchModule            true    false    |
+    | kafka          com.github.ldaniels528.trifecta.modules.kafka.KafkaModule              true    false    |
+    | mongodb        com.github.ldaniels528.trifecta.modules.mongodb.MongoModule            true    false    |
+    | zookeeper      com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule      true    false    |
+    + ------------------------------------------------------------------------------------------------------ +
 
 To execute local system commands, enclose the command you'd like to execute using the back-ticks (`) symbol:
     

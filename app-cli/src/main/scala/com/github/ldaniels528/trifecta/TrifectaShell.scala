@@ -4,9 +4,9 @@ import java.io.PrintStream
 
 import com.github.ldaniels528.trifecta.TxConsole._
 import com.github.ldaniels528.trifecta.io.AsyncIO
-import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
-import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
-import com.github.ldaniels528.trifecta.modules.CoreModule
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaSandbox
+import com.github.ldaniels528.trifecta.modules.core.CoreModule
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.rest.EmbeddedWebServer
 import com.github.ldaniels528.trifecta.rest.TxWebConfig._
 import org.apache.zookeeper.KeeperException.ConnectionLossException

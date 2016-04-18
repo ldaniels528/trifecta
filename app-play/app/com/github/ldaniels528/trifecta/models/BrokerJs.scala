@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.models
 
-import com.github.ldaniels528.trifecta.io.kafka.Broker
+import com.github.ldaniels528.trifecta.modules.kafka.Broker
 import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
 import play.api.libs.json.Json
 

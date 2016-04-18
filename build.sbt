@@ -3,7 +3,7 @@ import sbt._
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin._
 
-val appVersion = "0.19.4"
+val appVersion = "0.19.5"
 
 val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"

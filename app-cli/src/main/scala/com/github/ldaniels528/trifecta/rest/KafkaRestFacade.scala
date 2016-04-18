@@ -9,9 +9,9 @@ import com.github.ldaniels528.trifecta.command.parser.CommandParser
 import com.github.ldaniels528.trifecta.io.ByteBufferUtils
 import com.github.ldaniels528.trifecta.io.avro.AvroConversion
 import com.github.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
-import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{BrokerDetails, DEFAULT_FETCH_SIZE, MessageData}
-import com.github.ldaniels528.trifecta.io.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
-import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.{BrokerDetails, DEFAULT_FETCH_SIZE, MessageData}
+import com.github.ldaniels528.trifecta.modules.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}

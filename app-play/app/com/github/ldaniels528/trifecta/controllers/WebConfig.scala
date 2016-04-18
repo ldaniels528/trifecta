@@ -3,7 +3,7 @@ package com.github.ldaniels528.trifecta.controllers
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.github.ldaniels528.trifecta.TxConfig
-import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import play.api.Logger
 
 import scala.concurrent.ExecutionContext

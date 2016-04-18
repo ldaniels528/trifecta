@@ -1,12 +1,18 @@
 package com.github.ldaniels528.trifecta
 
 import com.github.ldaniels528.trifecta.command.parser.CommandParser
-import com.github.ldaniels528.trifecta.io.{InputSource, OutputSource}
+import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser
 import com.github.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageCodecs, MessageDecoder}
 import com.github.ldaniels528.trifecta.modules._
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.trifecta.modules.cassandra.CassandraModule
+import com.github.ldaniels528.trifecta.modules.core.CoreModule
+import com.github.ldaniels528.trifecta.modules.elasticsearch.ElasticSearchModule
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaModule
+import com.github.ldaniels528.trifecta.modules.mongodb.MongoModule
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
@@ -67,9 +73,9 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   /**
    * Returns the input handler for the given output URL
    * @param url the given input URL (e.g. "es:/quotes/quote/GDF")
-   * @return an option of an [[InputSource]]
+   * @return an option of an [[MessageInputSource]]
    */
-  def getInputHandler(url: String): Option[InputSource] = {
+  def getInputHandler(url: String): Option[MessageInputSource] = {
     // get just the prefix
     val (prefix, _) = parseSourceURL(url).orDie(s"Malformed input source URL: $url")
 
@@ -80,9 +86,9 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   /**
    * Returns the output handler for the given output URL
    * @param url the given output URL (e.g. "es:/quotes/$exchange/$symbol")
-   * @return an option of an [[OutputSource]]
+   * @return an option of an [[MessageOutputSource]]
    */
-  def getOutputHandler(url: String): Option[OutputSource] = {
+  def getOutputHandler(url: String): Option[MessageOutputSource] = {
     // get just the prefix
     val (prefix, _) = parseSourceURL(url).orDie(s"Malformed output source URL: $url")
 
