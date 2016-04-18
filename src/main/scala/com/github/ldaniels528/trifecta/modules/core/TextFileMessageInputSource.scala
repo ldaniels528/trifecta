@@ -3,7 +3,7 @@ package com.github.ldaniels528.trifecta.modules.core
 import java.io._
 import java.net.URL
 
-import com.github.ldaniels528.trifecta.io.{ByteBufferUtils, MessageInputSource, KeyAndMessage}
+import com.github.ldaniels528.trifecta.io.{ByteBufferUtils, KeyAndMessage, MessageInputSource}
 
 /**
  * Text File Input Source

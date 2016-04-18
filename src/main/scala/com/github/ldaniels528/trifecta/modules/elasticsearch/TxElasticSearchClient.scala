@@ -7,6 +7,7 @@ import com.ning.http.client.Response
 import dispatch._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 /**
  * Elastic Search Client
@@ -203,6 +204,8 @@ class TxElasticSearchClient(host: String, port: Int) {
    * @example GET /_status
    */
   def serverStatus(implicit ec: ExecutionContext): Future[Response] = GET("/_status")
+
+  def shutdown() = Try(http$.client.close())
 
   /**
    * Returns the status of the given index

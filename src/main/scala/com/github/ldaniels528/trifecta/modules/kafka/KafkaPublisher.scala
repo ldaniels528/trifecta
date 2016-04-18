@@ -3,36 +3,37 @@ package com.github.ldaniels528.trifecta.modules.kafka
 import java.util.Properties
 
 import com.github.ldaniels528.commons.helpers.PropertiesHelper._
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 
 /**
- * Kafka Publisher
- * @author lawrence.daniels@gmail.com
- */
+  * Kafka Publisher
+  * @author lawrence.daniels@gmail.com
+  */
 class KafkaPublisher(config: Properties) {
   private var producer: Option[KafkaProducer[Array[Byte], Array[Byte]]] = None
 
   /**
-   * Opens the connection to the message publisher
-   */
+    * Opens the connection to the message publisher
+    */
   def open() {
     producer = Option(new KafkaProducer(config))
   }
 
   /**
-   * Shuts down the connection to the message publisher
-   */
+    * Shuts down the connection to the message publisher
+    */
   def close() {
     producer.foreach(_.close)
     producer = None
   }
 
   /**
-   * Transports a message to the messaging server
-   * @param topic the given topic name (e.g. "greetings")
-   * @param key the given message key
-   * @param message the given message payload
-   */
+    * Transports a message to the messaging server
+    * @param topic   the given topic name (e.g. "greetings")
+    * @param key     the given message key
+    * @param message the given message payload
+    */
   def publish(topic: String, key: Array[Byte], message: Array[Byte]) = {
     producer match {
       case Some(kp) => kp.send(new ProducerRecord(topic, key, message))
@@ -42,9 +43,9 @@ class KafkaPublisher(config: Properties) {
   }
 
   /**
-   * Transports a message to the messaging server
-   * @param rec the given [[ProducerRecord producer record]]
-   */
+    * Transports a message to the messaging server
+    * @param rec the given [[ProducerRecord producer record]]
+    */
   def publish(rec: ProducerRecord[Array[Byte], Array[Byte]]) = {
     producer match {
       case Some(kp) => kp.send(rec)
@@ -56,9 +57,9 @@ class KafkaPublisher(config: Properties) {
 }
 
 /**
- * Verify Kafka Publisher
- * @author lawrence.daniels@gmail.com
- */
+  * Verify Kafka Publisher
+  * @author lawrence.daniels@gmail.com
+  */
 object KafkaPublisher {
 
   def apply(brokers: Seq[Broker]): KafkaPublisher = {
@@ -75,6 +76,11 @@ object KafkaPublisher {
   }
 
   def apply(brokers: Seq[Broker], p: Properties): KafkaPublisher = new KafkaPublisher(p)
+
+  def apply(zk: ZKProxy): KafkaPublisher = {
+    val brokers = KafkaMicroConsumer.getBrokerList(zk) map (b => Broker(b.host, b.port))
+    KafkaPublisher(brokers)
+  }
 
   private def mkBrokerList(brokers: Seq[Broker]): String = {
     brokers map (b => s"${b.host}:${b.port}") mkString ","

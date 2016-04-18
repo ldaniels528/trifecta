@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<story id="eod-history-fixed">
+
+    <import path="./app-cli/src/test/resources/etl/global_settings.xml" />
+
+    <triggers>
+        <FileTrigger id="trading_history_trigger">
+            <directory path="/usr/local/java/broadway/incoming/tradingHistory" archive="DataStore">
+                <feed pattern="AMEX_(.*)[.]txt">
+                    <SimpleFlow id="amex_flow" input-source="input_file" output-source="output_src" />
+                </feed>
+                <feed pattern="NASDAQ_(.*)[.]txt">
+                    <SimpleFlow id="nasdaq_flow" input-source="input_file" output-source="output_src" />
+                </feed>
+                <feed pattern="NYSE_(.*)[.]txt">
+                    <SimpleFlow id="nyse_flow" input-source="input_file" output-source="output_src" />
+                </feed>
+                <feed pattern="OTCBB_(.*)[.]txt">
+                    <SimpleFlow id="otcbb_flow" input-source="input_file" output-source="output_src" />
+                </feed>
+            </directory>
+        </FileTrigger>
+    </triggers>
+
+    <data-sources>
+        <TextFileInputSource id="input_file" path="{{ flow.input.path }}" layout="eod_history_input_layout" />
+        <ConcurrentOutputSource id="output_src" concurrency="1">
+            <data-sources>
+                <KafkaOutputSource id="kafka_output" topic="shocktrade.history.json" connectionString="vault114:2181" layout="json_output" />
+            </data-sources>
+        </ConcurrentOutputSource>
+    </data-sources>
+
+    <layouts>
+        <MultiPartLayout id="json_output">
+            <body>
+                <record id="output_body" format="json">
+                    <field name="ticker" type="string">{{ ticker }}</field>
+                    <field name="date" type="date">{{ date | date:parse:"yyyyMMdd" }}</field>
+                    <field name="open" type="string">{{ open }}</field>
+                    <field name="high" type="string">{{ high }}</field>
+                    <field name="low" type="string">{{ low }}</field>
+                    <field name="close" type="string">{{ close }}</field>
+                    <field name="volume" type="string">{{ volume }}</field>
+                </record>
+            </body>
+        </MultiPartLayout>
+    </layouts>
+</story>

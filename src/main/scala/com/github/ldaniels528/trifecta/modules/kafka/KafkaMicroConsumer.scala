@@ -193,7 +193,7 @@ object KafkaMicroConsumer {
     */
   def count(topic: String, brokers: Seq[Broker], conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Long] = {
     val tasks = getTopicPartitions(topic) map { partition =>
-      Future {
+      Future.successful {
         var counter = 0L
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
@@ -232,7 +232,7 @@ object KafkaMicroConsumer {
     val count = new AtomicLong(0L)
     val partitions = getTopicPartitions(topic)
     val tasks = (1 to partitions.size) zip partitions map { case (threadId, partition) =>
-      Future {
+      Future.successful {
         var messages: List[MessageData] = Nil
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
@@ -272,7 +272,7 @@ object KafkaMicroConsumer {
     val promise = Promise[Option[(Int, MessageData)]]()
     val message = new AtomicReference[Option[(Int, MessageData)]](None)
     val tasks = getTopicPartitions(topic) map { partition =>
-      Future {
+      Future.successful {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           if (forward)
             findOneForward(subs, partition, message, conditions: _*)
@@ -331,7 +331,7 @@ object KafkaMicroConsumer {
     */
   def findNext(tap: TopicAndPartition, brokers: Seq[Broker], conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[MessageData]] = {
     val message = new AtomicReference[Option[MessageData]](None)
-    Future {
+    Future.successful {
       new KafkaMicroConsumer(tap, brokers) use { subs =>
         var offset: Option[Long] = subs.getFirstOffset
         val lastOffset: Option[Long] = subs.getLastOffset
@@ -542,7 +542,7 @@ object KafkaMicroConsumer {
     */
   def observe(topic: String, brokers: Seq[Broker])(observer: MessageData => Unit)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[Unit]] = {
     Future.sequence(getTopicPartitions(topic) map { partition =>
-      Future {
+      Future.successful {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
@@ -567,7 +567,7 @@ object KafkaMicroConsumer {
     */
   def observe(topic: String, brokers: Seq[Broker], groupId: String, commitFrequencyMills: Long)(observer: MessageData => Unit)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[Unit]] = {
     Future.sequence(KafkaMicroConsumer.getTopicPartitions(topic) map { partition =>
-      Future {
+      Future.successful {
         var lastUpdate = System.currentTimeMillis()
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset

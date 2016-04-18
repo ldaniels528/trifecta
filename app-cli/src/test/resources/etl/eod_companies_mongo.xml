@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<story id="eod-companies">
+
+    <import path="./app-cli/src/test/resources/etl/global_settings.xml" />
+
+    <triggers>
+        <StartUpTrigger id="Files_Combiner">
+            <Compositelow id="combiner">
+                <input-sources>
+                    <include source="AMEX.txt" />
+                    <include source="NASDAQ.txt" />
+                    <include source="NYSE.txt" />
+                    <include source="OTCBB.txt" />
+                </input-sources>
+                <output-sources>
+                    <include source="mongodb" />
+                </output-sources>
+            </Compositelow>
+        </StartUpTrigger>
+    </triggers>
+
+    <data-sources>
+        <TextFileInputSource id="AMEX.txt" path="./app-cli/src/test/resources/etl/files/AMEX.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="NASDAQ.txt" path="./app-cli/src/test/resources/etl/files/NASDAQ.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="NYSE.txt" path="./app-cli/src/test/resources/etl/files/NYSE.txt" layout="eod_company_input_layout" />
+        <TextFileInputSource id="OTCBB.txt" path="./app-cli/src/test/resources/etl/files/OTCBB.txt" layout="eod_company_input_layout" />
+
+        <ConcurrentOutputSource id="mongodb" concurrency="10">
+            <data-sources>
+                <MongoOutputSource id="mongo1" servers="localhost" database="shocktrade" collection="test_companies" layout="mongo-output"/>
+            </data-sources>
+        </ConcurrentOutputSource>
+    </data-sources>
+
+    <layouts>
+        <TextLayout id="eod_company_input_layout">
+            <header>
+                <record format="delimited" delimiter="\t">
+                    <field name="symbol" value="Symbol" type="string"/>
+                    <field name="description" value="Description" type="string"/>
+                </record>
+            </header>
+            <body>
+                <record format="delimited" delimiter="\t">
+                    <field name="symbol" type="string"/>
+                    <field name="description" type="string"/>
+                </record>
+            </body>
+        </TextLayout>
+
+        <MongoLayout id="mongo-output">
+            <record format="json">
+                <field name="symbol" type="string"/>
+                <field name="description" type="string"/>
+            </record>
+        </MongoLayout>
+    </layouts>
+</story>

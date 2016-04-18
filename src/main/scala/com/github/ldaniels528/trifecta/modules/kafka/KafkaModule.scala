@@ -13,7 +13,8 @@ import com.github.ldaniels528.trifecta.TxResultHandler.Ok
 import com.github.ldaniels528.trifecta.command._
 import com.github.ldaniels528.trifecta.io.avro.AvroConversion._
 import com.github.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder, AvroMessageDecoding}
-import com.github.ldaniels528.trifecta.io.{AsyncIO, MessageInputSource, KeyAndMessage, MessageOutputSource}
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.io.{AsyncIO, KeyAndMessage, MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
@@ -21,7 +22,6 @@ import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.modules.ModuleHelper._
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaCliFacade._
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.{MessageData, contentFilter}
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JValue

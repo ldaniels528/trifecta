@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<story id="global_settings">
+
+    <properties file="{{ user.home }}/connection.properties" />
+
+    <archives>
+        <FileArchive id="DataStore" base="{{ user.home }}/broadway/archive" compression="gzip" />
+    </archives>
+
+    <layouts>
+        <MultiPartLayout id="eod_company_input_layout">
+            <header>
+                <record id="delimited_header" format="delimited" delimiter="\t">
+                    <field name="symbol" type="string"/>
+                    <field name="description" type="string"/>
+                </record>
+            </header>
+            <body>
+                <record id="delimited_data" format="delimited" delimiter="\t">
+                    <field name="symbol" type="string"/>
+                    <field name="description" type="string"/>
+                </record>
+            </body>
+        </MultiPartLayout>
+
+        <MultiPartLayout id="eod_history_input_layout">
+            <header>
+                <record id="input_header" format="csv">
+                    <field name="ticker" type="string">&lt;ticker&gt;</field>
+                    <field name="date" type="string">&lt;date&gt;</field>
+                    <field name="open" type="string">&lt;open&gt;</field>
+                    <field name="high" type="string">&lt;high&gt;</field>
+                    <field name="low" type="string">&lt;low&gt;</field>
+                    <field name="close" type="string">&lt;close&gt;</field>
+                    <field name="volume" type="string">&lt;vol&gt;</field>
+                </record>
+            </header>
+            <body>
+                <record id="input_body" format="csv">
+                    <field name="ticker" type="string" />
+                    <field name="date" type="string" />
+                    <field name="open" type="string" />
+                    <field name="high" type="string" />
+                    <field name="low" type="string" />
+                    <field name="close" type="string" />
+                    <field name="volume" type="string" />
+                </record>
+            </body>
+        </MultiPartLayout>
+    </layouts>
+</story>

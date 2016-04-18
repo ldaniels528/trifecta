@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<story id="eod-history-sqldb">
+
+    <import path="./app-cli/src/test/resources/etl/global_settings.xml" />
+
+    <triggers>
+        <FileTrigger id="Repo1">
+            <directory path="{{ user.home }}/broadway/incoming/tradingHistory" archive="DataStore">
+                <feed pattern="AMEX_(.*)[.]txt">
+                    <SimpleFlow id="amex_flow" input-source="input_file" output-source="sql_output" />
+                </feed>
+                <feed pattern="NASDAQ_(.*)[.]txt">
+                    <SimpleFlow id="nasdaq_flow" input-source="input_file" output-source="sql_output" />
+                </feed>
+                <feed pattern="NYSE_(.*)[.]txt">
+                    <SimpleFlow id="nyse_flow" input-source="input_file" output-source="sql_output" />
+                </feed>
+                <feed pattern="OTCBB_(.*)[.]txt">
+                    <SimpleFlow id="otcbb_flow" input-source="input_file" output-source="sql_output" />
+                </feed>
+            </directory>
+        </FileTrigger>
+    </triggers>
+
+    <data-sources>
+        <TextFileInputSource id="input_file" path="{{ flow.input.path }}" layout="eod_history_input_layout" />
+
+        <SQLOutputSource id="sql_output"
+                         table="dbo.tradingHistory"
+                         layout="sql_layout"
+                         driver="com.microsoft.sqlserver.jdbc.SQLServerDriver"
+                         url="jdbc:sqlserver://ladaniel.database.windows.net:1433;database=ladaniel_sql"
+                         user="{{ sqlserver.secret.user }}" password="{{ sqlserver.secret.password }}" />
+    </data-sources>
+
+    <layouts>
+        <MultiPartLayout id="sql_layout">
+            <body>
+                <record id="sql_body" format="none">
+                    <field name="symbol" type="string" value="{{ ticker }}"/>
+                    <field name="tradeDate" type="date" value="{{ date | date:parse:yyyyMMdd }}"/>
+                    <field name="daysOpen" type="double" value="{{ open }}"/>
+                    <field name="daysHigh" type="double" value="{{ high }}"/>
+                    <field name="daysLow" type="double" value="{{ low }}"/>
+                    <field name="daysClose" type="string" value="{{ close }}"/>
+                    <field name="volume" type="long" value="{{ volume }}"/>
+                </record>
+            </body>
+        </MultiPartLayout>
+    </layouts>
+</story>

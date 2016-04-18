@@ -5,8 +5,8 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.ExecutorService
 
 import com.datastax.driver.core._
-import com.github.ldaniels528.trifecta.io.AsyncIO
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.trifecta.io.AsyncIO
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
@@ -29,11 +29,11 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
 
   /**
     * Exports the query results to the given file
-    * @param file the given [[File]]
-    * @param cql the given CQL query
+    * @param file   the given [[File]]
+    * @param cql    the given CQL query
     * @param values the given query parameters
-    * @param cl the given [[ConsistencyLevel]]
-    * @param ec the given [[ExecutionContext]]
+    * @param cl     the given [[ConsistencyLevel]]
+    * @param ec     the given [[ExecutionContext]]
     * @return the promise of the number of records written
     */
   def export(file: File, cql: String, values: Any*)(implicit cl: ConsistencyLevel, ec: ExecutionContext): AsyncIO = {
@@ -67,7 +67,7 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
               case "int" => row.getInt(label)
               case "uuid" | "timeuuid" => row.getUUID(label)
               case unhandledType =>
-                logger.warn(s"No mapping found for column ${column.getName} (type $unhandledType, class ${column.getType.asJavaClass.getName})")
+                logger.warn(s"No mapping found for column ${column.getName} (type $unhandledType, class ${column.getType.getName})")
                 null
             }
           }
@@ -80,9 +80,9 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
 
   /**
     * Asynchronously executes the given CQL query
-    * @param cql the given CQL query
+    * @param cql    the given CQL query
     * @param values the given bound values
-    * @param cl the given [[ConsistencyLevel]]
+    * @param cl     the given [[ConsistencyLevel]]
     * @return a promise of a [[ResultSet]]
     */
   def executeQuery(cql: String, values: Any*)(implicit cl: ConsistencyLevel): Future[ResultSet] = {
@@ -99,8 +99,8 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
   /**
     * Inserts values into the given column family
     * @param columnFamily the given column family
-    * @param keyValues the given key-value pairs to insert
-    * @param cl the given [[ConsistencyLevel]]
+    * @param keyValues    the given key-value pairs to insert
+    * @param cl           the given [[ConsistencyLevel]]
     * @return
     */
   def insert[T](columnFamily: String, keyValues: (String, T)*)(implicit cl: ConsistencyLevel): Future[ResultSet] = {
@@ -144,7 +144,10 @@ case class CasseroleSession(session: Session, threadPool: ExecutorService) {
     val promise = Promise[ResultSet]()
     rsf.addListener(new Runnable {
       override def run(): Unit = {
-        promise.success(rsf.getUninterruptibly)
+        try { promise.success(rsf.getUninterruptibly) } catch {
+          case cause: Throwable =>
+            promise.failure(cause)
+        }
         ()
       }
     }, threadPool)

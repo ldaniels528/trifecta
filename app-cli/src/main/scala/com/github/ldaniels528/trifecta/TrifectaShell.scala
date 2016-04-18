@@ -4,11 +4,8 @@ import java.io.PrintStream
 
 import com.github.ldaniels528.trifecta.TxConsole._
 import com.github.ldaniels528.trifecta.io.AsyncIO
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaSandbox
 import com.github.ldaniels528.trifecta.modules.core.CoreModule
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
-import com.github.ldaniels528.trifecta.rest.EmbeddedWebServer
-import com.github.ldaniels528.trifecta.rest.TxWebConfig._
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaSandbox
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 import org.fusesource.jansi.Ansi.Color._
 import org.slf4j.LoggerFactory
@@ -61,29 +58,20 @@ object TrifectaShell {
       Thread.sleep(3000)
     }
 
-    // startup in HTTP listener mode?
-    if (args.contains("--http-start")) {
-      val zk = ZKProxy(config.zooKeeperConnect)
-      new EmbeddedWebServer(config, zk).startServer()
+    // initialize the shell
+    val console = new TrifectaConsole(new TxRuntimeContext(config))
 
-      logger.info(s"Open your browser and navigate to http://${config.webHost}:${config.webPort}")
+    // if arguments were not passed, stop.
+    args.filterNot(_.startsWith("--")).toList match {
+      case Nil =>
+        console.shell()
+      case params =>
+        val line = params mkString " "
+        console.execute(line)
     }
-    else {
-      // initialize the shell
-      val console = new TrifectaConsole(new TxRuntimeContext(config))
 
-      // if arguments were not passed, stop.
-      args.filterNot(_.startsWith("--")).toList match {
-        case Nil =>
-          console.shell()
-        case params =>
-          val line = params mkString " "
-          console.execute(line)
-      }
-
-      // make sure all threads die
-      sys.exit(0)
-    }
+    // make sure all threads die
+    sys.exit(0)
   }
 
   /**
@@ -183,7 +171,7 @@ object TrifectaShell {
             }
           }
         }
-      } while (config.alive)
+      } while (config.isAlive)
 
       // flush the console
       consoleReader.flush()

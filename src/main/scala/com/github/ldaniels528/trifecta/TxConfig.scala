@@ -2,6 +2,7 @@ package com.github.ldaniels528.trifecta
 
 import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
+import java.util.concurrent.atomic.AtomicBoolean
 
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.PropertiesHelper._
@@ -23,6 +24,7 @@ import scala.util.{Failure, Success, Try}
 class TxConfig(val configProps: Properties) {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val cachedDecoders = TrieMap[File, TxDecoder]()
+  private val alive = new AtomicBoolean(true)
 
   // Initializes the configuration
   Try {
@@ -35,8 +37,9 @@ class TxConfig(val configProps: Properties) {
   // set the current working directory
   configProps.setProperty("trifecta.core.cwd", new File(".").getCanonicalPath)
 
-  // the default state of the application is "alive"
-  var alive = true
+  def isAlive = alive.get()
+
+  def isAlive_=(state: Boolean) = alive.compareAndSet(!state, state)
 
   // capture standard output
   val out = System.out

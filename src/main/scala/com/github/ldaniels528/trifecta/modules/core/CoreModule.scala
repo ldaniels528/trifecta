@@ -103,7 +103,7 @@ class CoreModule(config: TxConfig) extends Module {
    */
   override def moduleLabel = "core"
 
-  override def prompt: String = config.cwd
+  override def prompt = config.cwd
 
   override def shutdown() = ()
 
@@ -218,10 +218,7 @@ class CoreModule(config: TxConfig) extends Module {
    * Exits the shell
    * @example exit
    */
-  def exit(params: UnixLikeArgs) {
-    config.alive = false
-    SessionManagement.history.store(TxConfig.historyFile)
-  }
+  def exit(params: UnixLikeArgs) = config.isAlive = false
 
   /**
    * Provides the list of available commands
@@ -631,6 +628,6 @@ class CoreModule(config: TxConfig) extends Module {
   * @author lawrence.daniels@gmail.com
   */
 object CoreModule {
-  val VERSION = "0.19.5"
+  val VERSION = "0.20.0"
 
 }

@@ -19,7 +19,6 @@ import scala.util.{Failure, Success}
 
 /**
   * Decoder Controller
-  *
   * @author lawrence.daniels@gmail.com
   */
 class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Timeout, toaster: Toaster,
@@ -117,7 +116,6 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   /**
     * Returns the icon for the given schema
     * @@param schema the given schema
-    *
     * @return {string}
     */
   $scope.getSchemaIcon = (aSchema: js.UndefOr[DecoderSchema]) => aSchema map { schema =>
@@ -199,6 +197,10 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
 
 }
 
+/**
+  * Decoder Controller Scope
+  * @author lawrence.daniels@gmail.com
+  */
 @js.native
 trait DecoderControllerScope extends Scope with GlobalLoading with GlobalErrorHandling with GlobalDataAware with ReferenceDataAware {
   // properties

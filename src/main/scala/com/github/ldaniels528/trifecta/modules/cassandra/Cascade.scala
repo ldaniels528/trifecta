@@ -63,7 +63,8 @@ object Cascade extends ScalaBeanUtil {
   private def decodeRow(row: Row, cds: Seq[ColumnDefinitions.Definition]): Map[String, Any] = {
     Map(cds map { cd =>
       val name = cd.getName
-      val value = cd.getType.asJavaClass() match {
+      val javaType = CodecRegistry.DEFAULT_INSTANCE.codecFor(cd.getType).getJavaType.getRawType
+      val value = javaType match {
         case c if c == classOf[Array[Byte]] => row.getBytes(name)
         case c if c == classOf[java.math.BigDecimal] => row.getDecimal(name)
         case c if c == classOf[java.math.BigInteger] => row.getVarint(name)

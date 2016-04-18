@@ -28,7 +28,7 @@ class CassandraModule(config: TxConfig) extends Module {
    * Returns the commands that are bound to the module
    * @return the commands that are bound to the module
    */
-  override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
+  override def getCommands(implicit rt: TxRuntimeContext) = Seq(
     Command(this, "clusterinfo", clusterInfo, UnixLikeParams(), help = "Retrieves the cluster information"),
     Command(this, "cqconnect", connect, UnixLikeParams(Seq("host" -> false, "port" -> false), Seq("-k" -> "keySpace")), help = "Establishes a connection to Cassandra"),
     Command(this, "cql", cql, UnixLikeParams(Seq("query" -> false), Seq("-cl" -> "consistencyLevel")), help = "Executes a CQL query"),
@@ -61,25 +61,25 @@ class CassandraModule(config: TxConfig) extends Module {
    * Returns the name of the prefix (e.g. Seq("file"))
    * @return the name of the prefix
    */
-  override def supportedPrefixes: Seq[String] = Nil
+  override def supportedPrefixes = Nil
 
   /**
    * Returns the label of the module (e.g. "kafka")
    * @return the label of the module
    */
-  override def moduleLabel: String = "cql"
+  override def moduleLabel = "cql"
 
   /**
    * Returns the name of the module (e.g. "kafka")
    * @return the name of the module
    */
-  override def moduleName: String = "cassandra"
+  override def moduleName = "cassandra"
 
   /**
    * Returns the the information that is to be displayed while the module is active
    * @return the the information that is to be displayed while the module is active
    */
-  override def prompt: String = {
+  override def prompt = {
     val myCluster = conn_? map (_.cluster.getClusterName) getOrElse "$"
     val mySession = getKeySpaceName getOrElse "/"
     s"$myCluster:$mySession"
@@ -246,7 +246,7 @@ class CassandraModule(config: TxConfig) extends Module {
   private def connection: Casserole = conn_? getOrElse die(s"No Cassandra connection. Use: cqconnect <host>")
 
   private def getConsistencyLevelByName(name: String): ConsistencyLevel = {
-    consistencyLevels.getOrElse(name, die(s"Invalid consistency level (valid values are: ${consistencyLevels.map(_._2).mkString(", ")})"))
+    consistencyLevels.getOrElse(name, die(s"Invalid consistency level (valid values are: ${consistencyLevels.values.mkString(", ")})"))
   }
 
   private def getDefaultConsistencyLevel: ConsistencyLevel = {

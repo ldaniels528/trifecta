@@ -4,7 +4,7 @@ import java.io.{BufferedReader, InputStreamReader}
 import java.net.{HttpURLConnection, URL}
 import java.nio.ByteBuffer
 
-import com.github.ldaniels528.trifecta.io.{MessageInputSource, KeyAndMessage}
+import com.github.ldaniels528.trifecta.io.{KeyAndMessage, MessageInputSource}
 
 /**
  * HTTP Input Source

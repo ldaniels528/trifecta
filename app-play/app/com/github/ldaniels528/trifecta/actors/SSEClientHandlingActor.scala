@@ -1,6 +1,7 @@
 package com.github.ldaniels528.trifecta.actors
 
 import akka.actor.{Actor, ActorLogging, Props}
+import play.api.Logger
 import play.api.libs.iteratee.Concurrent
 import play.api.libs.json.JsValue
 
@@ -9,6 +10,7 @@ import play.api.libs.json.JsValue
   * @author lawrence.daniels@gmail.com
   */
 class SSEClientHandlingActor(sessionId: String, outChannel: Concurrent.Channel[JsValue]) extends Actor with ActorLogging {
+  Logger.info(s"created actor ${getClass.getName}")
 
   override def preStart() = SSE.link(SSESession(sessionId, self))
 

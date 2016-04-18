@@ -1,0 +1,10 @@
+{
+    "type": "record",
+    "name": "EodCompanyInfo",
+    "namespace": "com.shocktrade.avro",
+    "fields":[
+        { "name": "symbol", "type":"string", "doc":"stock symbol" },
+        { "name": "description", "type":"string", "doc":"company description" }
+    ],
+    "doc": "A schema for EodData quotes"
+}
