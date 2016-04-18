@@ -180,11 +180,11 @@ by setting the *trifecta.kafka.consumers.storm* property be set to *true*.
 
 To start the _Trifecta_ REPL:
 
-	$ java -jar trifecta.jar
+	$ java -jar trifecta_cli_0.19.4.bin.jar
 	
 Optionally, you can execute _Trifecta_ instructions (commands) right from the command line:
 	
-	$ java -jar trifecta.jar kls -l
+	$ java -jar trifecta_cli_0.19.4.bin.jar kls -l
 
 <a name="downloads"></a>
 ### Downloads
@@ -194,6 +194,14 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.19.4
+* Trifecta CLI 
+    * Added support for Kafka-native (topic based) consumers
+    
+#### v0.19.3
+* Trifecta UI (TypeSafe version)
+    * Added support for Kafka-native (topic based) consumers
+
 #### v0.19.2
 * Trifecta UI (TypeSafe version)
     * Fixed issue with out of memory errors while streaming messages
@@ -202,33 +210,16 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 * Trifecta UI (CLI version)
     * Fixed issue with missing web resources
 
-#### v0.19.0
-* Trifecta UI
-    * Now a TypeSafe Play Application
-    * Updated the user interface
-    * Bug fixes
-
-#### v0.18.20
-* Trifecta
-    * Added support for Kafka ~~v0.8.2.0~~ v9.0.0 consumers
-
-#### v0.18.19
-* Trifecta Core
-    * Fixed potential bug related to retrieving the list of available brokers
-
-#### v0.18.18
-* Trifecta UI
-    * Reworked the Brokers view (Inspect module)
-    * Fixed sort ordering of partitions in the Replicas view (Inspect module)
-
-#### v0.18.1 to v0.18.17
+#### v0.18.1 to v0.18.20
 * Trifecta Core
     * Fixed issue with the application failing if the configuration file is not found
     * Upgraded to Kafka 0.8.2-beta
     * Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
         * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
     * Upgraded to Kafka 0.8.2.0
-    * Added configuration key to support multi-tenant Zookeeper setups    
+    * Added configuration key to support multi-tenant Zookeeper setups   
+    * Added support for Kafka ~~v0.8.2.0~~ v9.0.0 consumers
+         
 * Trifecta UI
     * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
     * _Decoder_ tab user interface improvements
@@ -242,7 +233,11 @@ Trifecta binaries are available for immediate download in the "<a href='https://
     * Added real-time message streaming capability to the _Inspect_ tab
     * Swapped the Inspect and Observe modules
     * Added a new Brokers view to the Observe module
-
+    * Reworked the Brokers view (Inspect module)
+    * Fixed sort ordering of partitions in the Replicas view (Inspect module)
+    * Fixed potential bug related to retrieving the list of available brokers
+    * Now a TypeSafe Play Application w/updated the user interface
+        
 <a name="trifecta-ui"></a>
 ### Trifecta UI
 
@@ -256,7 +251,7 @@ which offers a comprehensive and powerful set of features for inspecting Kafka t
 
 To start the embedded web server, issue the following from the command line:
 
-    $ java -jar trifecta.jar --http-start
+    $ java -jar trifecta_cli_0.19.4.bin.jar --http-start
 
 You'll see a few seconds of log messages, then a prompt indicating the web interface is ready for use.
 
