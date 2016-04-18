@@ -15,6 +15,7 @@ Table of Contents
 	* <a href="#building-the-code">Building the applications</a>
 	* <a href="#testing-the-code">Running the tests</a>	
 	* <a href="#configuring-the-app">Configuring the application</a>
+	* <a href="#configuring-kafka-consumers">Configuring Kafka Consumers</a>
 	* <a href="#running-the-app">Running the application</a>
 * <a href="#downloads">Downloads</a>
 * <a href="#whats-new">What's New</a>
@@ -136,6 +137,43 @@ contains the configuration properties and connection strings for all supported s
     
     # MongoDB properties
     trifecta.mongodb.hosts = localhost
+
+<a name="configuring-kafka-consumers"></a>
+### Configuring Kafka Consumers
+
+Trifecta currently supports 3 types of consumers:
+* Zookeeper Consumer Groups (Kafka 0.8.x)
+* Kafka-native Consumer Groups (Kafka 0.9.x)
+* Storm Partition Manager Consumers (Apache Storm-specific)
+
+The most common type in use today are the Kafka-native consumers. 
+
+### Kafka-native Consumer Groups
+
+Kafka-native consumers require the consumer IDs that you want to monitor to be register via the 
+*trifecta.kafka.consumers.native* property. Only registered consumer IDs (and their respective offsets will be visible).
+
+```
+    trifecta.kafka.consumers.native = dev,test,qa
+```
+
+### Zookeeper Consumer Groups 
+
+Zookeeper-based consumers are enabled by default; however, they can be disabled (which will improve performance) by
+setting the *trifecta.kafka.consumers.zookeeper* property to *false*.
+
+```
+    trifecta.kafka.consumers.zookeeper = false
+```
+
+### Apache Storm Partition Manager Consumer Groups
+
+Storm Partition Manager consumers are disabled by default; however, they can be enabled (which will impact performance) 
+by setting the *trifecta.kafka.consumers.storm* property be set to *true*.
+
+```
+    trifecta.kafka.consumers.storm = true
+```
 
 <a name="running-the-app"></a>
 ### Run the application
