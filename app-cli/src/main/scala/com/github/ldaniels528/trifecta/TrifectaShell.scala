@@ -18,7 +18,7 @@ import scala.tools.jline.console.history.FileHistory
 import scala.util.{Failure, Success, Try}
 
 /**
-  * Trifecta Console Shell Companion Object
+  * Trifecta Shell (REPL)
   * @author lawrence.daniels@gmail.com
   */
 object TrifectaShell {
