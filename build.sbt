@@ -7,13 +7,51 @@ val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"
 val apacheCurator = "3.1.0"
 val casbahVersion = "3.1.1"
-val kafkaversion = "0.9.0.1"
+val kafkaVersion = "0.9.0.1"
+val paradiseVersion = "2.1.0"
 val playVersion = "2.4.6"
 val twitterBijection = "0.9.2"
 
 lazy val scalajsOutputDir = Def.settingKey[File]("Directory for Javascript files output by ScalaJS")
 
+lazy val libDependencies = Seq(
+  "log4j" % "log4j" % "1.2.17" % "test",
+  "org.slf4j" % "slf4j-api" % "1.7.7",
+  "org.slf4j" % "slf4j-log4j12" % "1.7.7" % "test"
+)
+
+lazy val testDependencies = Seq(
+  "junit" % "junit" % "4.12" % "test",
+  "org.mockito" % "mockito-all" % "1.10.19" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.3" % "test"
+)
+
+lazy val tabular = (project in file("lib-tabular"))
+  .settings(
+    name := "tabular",
+    organization := "com.github.ldaniels528",
+    version := "0.1.3",
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.8", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.8", "-g:vars"),
+    libraryDependencies ++= libDependencies ++ testDependencies
+  )
+
+lazy val commons_helpers = (project in file("lib-commons-helpers"))
+  .settings(
+    name := "commons-helpers",
+    organization := "com.github.ldaniels528",
+    version := "0.1.2",
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.8", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.8", "-g:vars"),
+    libraryDependencies ++= libDependencies ++ testDependencies
+  )
+
 lazy val trifecta_core = (project in file("."))
+  .dependsOn(tabular, commons_helpers)
   .settings(
     name := "trifecta_core",
     organization := "com.github.ldaniels528",
@@ -23,10 +61,6 @@ lazy val trifecta_core = (project in file("."))
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.8", "-g:vars"),
     libraryDependencies ++= Seq(
-      //
-      // ldaniels528 Dependencies
-      "com.github.ldaniels528" %% "commons-helpers" % "0.1.2",
-      "com.github.ldaniels528" %% "tabular" % "0.1.3" exclude("org.slf4j", "slf4j-log4j12"),
       //
       // General Scala Dependencies
       "net.databinder.dispatch" %% "dispatch-core" % "0.11.2", // 0.11.3
@@ -38,24 +72,22 @@ lazy val trifecta_core = (project in file("."))
       "org.joda" % "joda-convert" % "1.8.1",
       "org.slf4j" % "slf4j-api" % "1.7.21",
       //
-      // Akka dependencies
+      // Typesafe dependencies
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
+      "com.typesafe.play" %% "play-json" % playVersion,
       //
       // Avro Dependencies
       "com.twitter" %% "bijection-core" % twitterBijection,
       "com.twitter" %% "bijection-avro" % twitterBijection,
       "org.apache.avro" % "avro" % "1.8.0",
       //
-      // JSON dependencies
-      "com.typesafe.play" %% "play-json" % playVersion,
-      //
       // Kafka and Zookeeper Dependencies
       "org.apache.curator" % "curator-framework" % apacheCurator exclude("org.slf4j", "slf4j-log4j12"),
       "org.apache.curator" % "curator-test" % apacheCurator exclude("org.slf4j", "slf4j-log4j12"),
-      "org.apache.kafka" %% "kafka" % kafkaversion exclude("org.slf4j", "slf4j-log4j12"),
-      "org.apache.kafka" % "kafka-clients" % kafkaversion,
+      "org.apache.kafka" %% "kafka" % kafkaVersion exclude("org.slf4j", "slf4j-log4j12"),
+      "org.apache.kafka" % "kafka-clients" % kafkaVersion,
       //
       // Microsoft/Azure Dependencies
       "com.microsoft.azure" % "azure-documentdb" % "1.5.1",
@@ -69,7 +101,7 @@ lazy val trifecta_core = (project in file("."))
     ))
 
 lazy val trifecta_cli = (project in file("app-cli"))
-  .dependsOn(trifecta_core)
+  .dependsOn(commons_helpers, tabular, trifecta_core)
   .settings(
     name := "trifecta_cli",
     organization := "com.github.ldaniels528",
@@ -92,7 +124,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
     resolvers += "google-sedis-fix" at "http://pk11-scratch.googlecode.com/svn/trunk",
     resolvers += "clojars" at "https://clojars.org/repo",
     resolvers += "conjars" at "http://conjars.org/repo",
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= testDependencies ++ Seq(
       //
       // General Scala Dependencies
       "net.databinder.dispatch" %% "dispatch-core" % "0.11.2", // 0.11.3
@@ -101,12 +133,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
       "log4j" % "log4j" % "1.2.17",
       "org.fusesource.jansi" % "jansi" % "1.11",
       "org.scala-lang" % "jline" % "2.11.0-M3",
-      "org.slf4j" % "slf4j-log4j12" % "1.7.21",
-      //
-      // Testing dependencies
-      "junit" % "junit" % "4.12" % "test",
-      "org.mockito" % "mockito-all" % "1.10.19" % "test",
-      "org.scalatest" %% "scalatest" % "2.2.3" % "test"
+      "org.slf4j" % "slf4j-log4j12" % "1.7.21"
     )
   )
 
@@ -121,7 +148,7 @@ lazy val trifecta_js = (project in file("app-js"))
     persistLauncher := true,
     persistLauncher in Test := false,
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
     libraryDependencies ++= Seq(
       "com.github.ldaniels528" %%% "scalascript" % "0.2.20",
       "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11"),
@@ -131,7 +158,7 @@ lazy val trifecta_js = (project in file("app-js"))
 
 lazy val trifecta_ui = (project in file("app-play"))
   .aggregate(trifecta_js)
-  .dependsOn(trifecta_core)
+  .dependsOn(commons_helpers, trifecta_core)
   .enablePlugins(PlayScala, play.twirl.sbt.SbtTwirl, SbtWeb)
   .settings(
     name := "trifecta_ui",
