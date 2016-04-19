@@ -129,7 +129,10 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   /**
     * Releases all resources
     */
-  def shutdown(): Unit = moduleManager.shutdown()
+  def shutdown(): Unit = {
+    logger.info("Shutting down...")
+    moduleManager.shutdown()
+  }
 
   /**
     * Executes a local system command

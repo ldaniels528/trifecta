@@ -69,7 +69,7 @@ class ETLModule(config: TxConfig) extends Module {
   /**
     * Called when the application is shutting down
     */
-  override def shutdown() = {}
+  override def shutdown(): Unit = {}
 
   /**
     * Displays the currently-loaded ETL configuration

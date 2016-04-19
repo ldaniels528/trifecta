@@ -14,6 +14,7 @@ import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 /**
  * Apache Cassandra Module
@@ -89,8 +90,9 @@ class CassandraModule(config: TxConfig) extends Module {
    * Called when the application is shutting down
    */
   override def shutdown(): Unit = {
-    session_?.foreach(_.close())
-    conn_?.foreach(_.close())
+    Try(session_?.foreach(_.close()))
+    Try(conn_?.foreach(_.close()))
+    ()
   }
 
   /**

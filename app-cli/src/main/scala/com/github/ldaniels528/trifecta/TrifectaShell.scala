@@ -87,17 +87,6 @@ object TrifectaShell {
     history.load(TxConfig.historyFile)
     SessionManagement.setupHistoryUpdates(TxConfig.historyFile, 60 seconds)
 
-    // make sure we shutdown the ZooKeeper connection
-    Runtime.getRuntime.addShutdownHook(new Thread {
-      override def run() {
-        // shutdown the ZooKeeper instance
-        rt.shutdown()
-
-        // close each module
-        rt.moduleManager.shutdown()
-      }
-    })
-
     /**
       * Executes the given command line expression
       * @param line the given command line expression
@@ -172,6 +161,10 @@ object TrifectaShell {
 
       // flush the console
       consoleReader.flush()
+
+      // shutdown all resources
+      rt.shutdown()
+      SessionManagement.shutdown()
     }
 
     private def showDebug(result: Any): Unit = {

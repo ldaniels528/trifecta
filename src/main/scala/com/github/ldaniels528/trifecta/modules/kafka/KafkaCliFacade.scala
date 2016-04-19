@@ -16,7 +16,7 @@ import kafka.common.TopicAndPartition
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 /**
  * Kafka CLI Facade
@@ -297,6 +297,10 @@ class KafkaCliFacade(config: TxConfig) {
         }
       }
     }
+  }
+
+  def shutdown(): Unit = {
+    Try(publisher_?.foreach(_.close()))
   }
 
 }

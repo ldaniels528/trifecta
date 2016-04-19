@@ -56,7 +56,10 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   override def prompt: String = zkProxy_? map (zk => s"$zkCwd") getOrElse zkCwd
 
-  override def shutdown() = zkProxy_?.foreach(_.close())
+  override def shutdown(): Unit = {
+    Try(zkProxy_?.foreach(_.close()))
+    ()
+  }
 
   override def supportedPrefixes: Seq[String] = Seq("zk")
 

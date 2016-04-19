@@ -11,6 +11,7 @@ import com.microsoft.azure.documentdb.ConsistencyLevel
 import com.microsoft.azure.storage.CloudStorageAccount
 
 import scala.language.{postfixOps, reflectiveCalls}
+import scala.util.Try
 
 /**
   * Azure Module
@@ -90,9 +91,10 @@ class AzureModule(config: TxConfig) extends Module {
     * Called when the application is shutting down
     */
   override def shutdown() {
-    blobStorage.foreach(_.close())
-    documentDB.foreach(_.close())
-    tableStorage.foreach(_.close())
+    Try(blobStorage.foreach(_.close()))
+    Try(documentDB.foreach(_.close()))
+    Try(tableStorage.foreach(_.close()))
+    ()
   }
 
   /**

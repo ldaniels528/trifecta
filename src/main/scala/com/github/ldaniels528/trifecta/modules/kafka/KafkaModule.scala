@@ -143,7 +143,11 @@ class KafkaModule(config: TxConfig) extends Module {
 
   private def promptForWatchCursor: Option[String] = watchCursor map (g => s"[w]${g.topic}/${g.partition}:${g.offset}")
 
-  override def shutdown() = zkProxy_?.foreach(_.close())
+  override def shutdown() = {
+    Try(facade.shutdown())
+    Try(zkProxy_?.foreach(_.close()))
+    ()
+  }
 
   override def supportedPrefixes: Seq[String] = Seq("topic")
 

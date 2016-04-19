@@ -59,12 +59,6 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
   }
 
   /**
-    * Returns the name of the prefix (e.g. Seq("file"))
-    * @return the name of the prefix
-    */
-  override def supportedPrefixes = Seq("mongo")
-
-  /**
     * Returns the label of the module (e.g. "kafka")
     * @return the label of the module
     */
@@ -85,7 +79,17 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
   /**
     * Called when the application is shutting down
     */
-  override def shutdown(): Unit = ()
+  override def shutdown(): Unit = {
+    Try(database_?.foreach(_.close()))
+    Try(cluster_?.foreach(_.close()))
+    ()
+  }
+
+  /**
+    * Returns the name of the prefix (e.g. Seq("file"))
+    * @return the name of the prefix
+    */
+  override def supportedPrefixes = Seq("mongo")
 
   /**
     * Establishes a connection to a remote MongoDB cluster

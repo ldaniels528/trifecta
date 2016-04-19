@@ -32,6 +32,7 @@ object SessionManagement {
   }
 
   def shutdown() {
+    logger.info("Shutting down...")
     system.shutdown()
   }
 
