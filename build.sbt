@@ -92,7 +92,7 @@ lazy val trifecta_core = (project in file("."))
       // Microsoft/Azure Dependencies
       "com.microsoft.azure" % "azure-documentdb" % "1.5.1",
       "com.microsoft.azure" % "azure-storage" % "4.0.0",
-      "com.microsoft.sqlserver" % "sqljdbc4" % "4.0",
+      //"com.microsoft.sqlserver" % "sqljdbc4" % "4.0",
       //
       // SQL/NOSQL Dependencies
       "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0",
