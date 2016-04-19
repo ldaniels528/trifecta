@@ -254,12 +254,25 @@ which offers a comprehensive and powerful set of features for inspecting Kafka t
 
 To start the Play web application, issue the following from the command line:
 
+```
     $ unzip trifecta_ui-0.20.0.zip
     $ cd trifecta_ui-0.20.0/bin
     $ ./trifecta_ui &
+```
 
-You'll see a few seconds of log messages, then a prompt indicating the web interface is ready for use. Next, open your 
-browser and navigate to http://localhost:9000 (if you're running locally or the hostname/IP address of the remote host)
+You'll see a few seconds of log messages, then a prompt indicating the web interface is ready for use. 
+
+```
+    [warn] application - Logger configuration in conf files is deprecated and has no effect. Use a logback configuration file instead.
+    [info] p.a.l.c.ActorSystemProvider - Starting application default Akka system: application
+    [info] application - Application has started
+    [info] play.api.Play$ - Application started (Prod)
+    [info] p.c.s.NettyServer$ - Listening for HTTP on /0:0:0:0:0:0:0:0:9000
+
+```
+
+Next, open your browser and navigate to http://localhost:9000 (if you're running locally or the hostname/IP address 
+of the remote host where the web application is running).
 
 <a name="trifecta-ui-configure"></a>
 #### Configuring Trifecta UI
