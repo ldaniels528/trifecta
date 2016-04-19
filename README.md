@@ -19,7 +19,7 @@ Table of Contents
 * <a href="#downloads">Downloads</a>
 * <a href="#whats-new">What's New</a>
 * <a href="#trifecta-ui">Trifecta UI</a>
-    * <a href="#trifecta-ui-start">Starting the embedded web server</a>
+    * <a href="#trifecta-ui-start">Starting Trifecta UI</a>
     * <a href="#trifecta-ui-configure">Configuring Trifecta UI</a>
     * <a href="#trifecta-ui-decoders">Default Decoders</a>
     * <a href="#trifecta-ui-inspect">Inspecting Kafka Messages</a>
@@ -96,15 +96,11 @@ the Web-based user interface (trifecta_ui)
 
 #### Building Trifecta CLI (Command-line interface)
 
-    $ sbt 
-    > project trifecta_cli
-    > assembly
+    $ sbt "project trifecta_cli" assembly
     
-#### Building Trifecta UI (Web-based interface)
+#### Building Trifecta UI (Typesafe Play application)
 
-    $ sbt 
-    > project trifecta_ui
-    > dist
+    $ sbt "project trifecta_ui" dist
         
 <a name="testing-the-code"></a>    
 ### Running the tests
@@ -141,16 +137,53 @@ contains the configuration properties and connection strings for all supported s
     # MongoDB properties
     trifecta.mongodb.hosts = localhost
 
+<a name="configuring-kafka-consumers"></a>
+### Configuring Kafka Consumers
+
+Trifecta currently supports 3 types of consumers:
+* Zookeeper Consumer Groups (Kafka 0.8.x)
+* Kafka-native Consumer Groups (Kafka 0.9.x)
+* Storm Partition Manager Consumers (Apache Storm-specific)
+
+The most common type in use today are the Kafka-native consumers. 
+
+### Kafka-native Consumer Groups
+
+Kafka-native consumers require the consumer IDs that you want to monitor to be register via the 
+*trifecta.kafka.consumers.native* property. Only registered consumer IDs (and their respective offsets will be visible).
+
+```
+    trifecta.kafka.consumers.native = dev,test,qa
+```
+
+### Zookeeper Consumer Groups 
+
+Zookeeper-based consumers are enabled by default; however, they can be disabled (which will improve performance) by
+setting the *trifecta.kafka.consumers.zookeeper* property to *false*.
+
+```
+    trifecta.kafka.consumers.zookeeper = false
+```
+
+### Apache Storm Partition Manager Consumer Groups
+
+Storm Partition Manager consumers are disabled by default; however, they can be enabled (which will impact performance) 
+by setting the *trifecta.kafka.consumers.storm* property be set to *true*.
+
+```
+    trifecta.kafka.consumers.storm = true
+```
+
 <a name="running-the-app"></a>
 ### Run the application
 
 To start the _Trifecta_ REPL:
 
-	$ java -jar trifecta.jar
+	$ java -jar trifecta_cli_0.20.0.bin.jar
 	
 Optionally, you can execute _Trifecta_ instructions (commands) right from the command line:
 	
-	$ java -jar trifecta.jar kls -l
+	$ java -jar trifecta_cli_0.20.0.bin.jar kls -l
 
 <a name="downloads"></a>
 ### Downloads
@@ -183,12 +216,13 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 #### v0.18.1 to v0.18.20
 * Trifecta Core
     * Fixed issue with the application failing if the configuration file is not found
+    * Upgraded to Kafka 0.8.2-beta
     * Kafka Query language (KQL) (formerly Big-Data Query Language/BDQL) has grammar simplification
         * The "<a href="#trifecta-ui-query">with default</a>" clause is no longer necessary
     * Upgraded to Kafka 0.8.2.0
-    * Added configuration key to support multi-tenant Zookeeper setups  
-    * Fixed potential bug related to retrieving the list of available brokers 
-    * Added support for Kafka v9.0.0 consumers
+    * Added configuration key to support multi-tenant Zookeeper setups   
+    * Added support for Kafka ~~v0.8.2.0~~ v9.0.0 consumers
+         
 * Trifecta UI
     * Added capability to navigate directly from a message (in the Inspect tab) to its decoder (in the Decoders tab)
     * _Decoder_ tab user interface improvements
@@ -204,7 +238,9 @@ Trifecta binaries are available for immediate download in the "<a href='https://
     * Added a new Brokers view to the Observe module
     * Reworked the Brokers view (Inspect module)
     * Fixed sort ordering of partitions in the Replicas view (Inspect module)
-    
+    * Fixed potential bug related to retrieving the list of available brokers
+    * Now a TypeSafe Play Application w/updated the user interface
+        
 <a name="trifecta-ui"></a>
 ### Trifecta UI
 
@@ -214,15 +250,16 @@ which offers a comprehensive and powerful set of features for inspecting Kafka t
 ![](http://ldaniels528.github.io/trifecta/images/screenshots/trifecta_ui-observe.png)
 
 <a name="trifecta-ui-start"></a>
-#### Starting the embedded web server
+#### Starting Trifecta UI (Play web application)
 
-To start the embedded web server, issue the following from the command line:
+To start the Play web application, issue the following from the command line:
 
-    $ java -jar trifecta.jar --http-start
+    $ unzip trifecta_ui-0.20.0.zip
+    $ cd trifecta_ui-0.20.0/bin
+    $ ./trifecta_ui &
 
-You'll see a few seconds of log messages, then a prompt indicating the web interface is ready for use.
-
-    Open your browser and navigate to http://localhost:8888
+You'll see a few seconds of log messages, then a prompt indicating the web interface is ready for use. Next, open your 
+browser and navigate to http://localhost:9000 (if you're running locally or the hostname/IP address of the remote host)
 
 <a name="trifecta-ui-configure"></a>
 #### Configuring Trifecta UI
