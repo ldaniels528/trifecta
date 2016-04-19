@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.tools.jline.console.ConsoleReader
+import scala.tools.jline.console.history.FileHistory
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -82,11 +82,6 @@ object TrifectaShell {
     val out: PrintStream = config.out
     val err: PrintStream = config.err
 
-    // load the history, then schedule session history file updates
-    val history: History = SessionManagement.history
-    history.load(TxConfig.historyFile)
-    SessionManagement.setupHistoryUpdates(TxConfig.historyFile, 60 seconds)
-
     /**
       * Executes the given command line expression
       * @param line the given command line expression
@@ -99,7 +94,6 @@ object TrifectaShell {
 
           // handle the result
           rt.handleResult(result, line)
-          if (!ineligibleHistory(line)) SessionManagement.history += line
         case Failure(e: ConnectionLossException) =>
           err.println("Zookeeper connect loss error - use 'zconnect' to re-establish a connection")
         case Failure(e: IllegalArgumentException) =>
@@ -128,6 +122,8 @@ object TrifectaShell {
       // define the console reader
       val consoleReader = new ConsoleReader()
       consoleReader.setExpandEvents(false)
+      val history = new FileHistory(TxConfig.historyFile)
+      consoleReader.setHistory(history)
 
       do {
         // display the prompt, and get the next line of input
@@ -144,7 +140,6 @@ object TrifectaShell {
 
                   // handle the result
                   rt.handleResult(result, line)
-                  if (!ineligibleHistory(line)) SessionManagement.history += line
                 case Failure(e: ConnectionLossException) =>
                   err.println("Zookeeper connect loss error - use 'zconnect' to re-establish a connection")
                 case Failure(e: IllegalArgumentException) =>
@@ -161,10 +156,10 @@ object TrifectaShell {
 
       // flush the console
       consoleReader.flush()
+      consoleReader.setExpandEvents(false)
 
       // shutdown all resources
       rt.shutdown()
-      SessionManagement.shutdown()
     }
 
     private def showDebug(result: Any): Unit = {
@@ -176,15 +171,6 @@ object TrifectaShell {
         case Success(v) => showDebug(v)
         case v => out.println(s"result: $result ${Option(result) map (_.getClass.getName) getOrElse ""}")
       }
-    }
-
-    /**
-      * Indicates whether the given line is ineligible for addition into the session history
-      * @param line the given line of execution
-      * @return true, if the line of execution is ineligible for addition into the session history
-      */
-    private def ineligibleHistory(line: String): Boolean = {
-      line.startsWith("history") || line.startsWith("!") || SessionManagement.history.last.contains(line)
     }
 
     private def getErrorMessage(t: Throwable): String = {

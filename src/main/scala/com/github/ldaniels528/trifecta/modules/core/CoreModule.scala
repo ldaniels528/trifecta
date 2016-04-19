@@ -37,7 +37,6 @@ class CoreModule(config: TxConfig) extends Module {
   private val NET_STAT_r = "^\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*(.*)".r
 
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
-    Command(this, "!", executeHistory, UnixLikeParams(Seq("!" -> false, "?" -> false, "index|count" -> false), Nil), help = "Executes a previously issued command"),
     Command(this, "?", help, UnixLikeParams(Seq("search-term" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
     Command(this, "autoswitch", autoSwitch, UnixLikeParams(Seq("state" -> false)), help = "Automatically switches to the module of the most recently executed command"),
     Command(this, "cat", cat, UnixLikeParams(Seq("file" -> true), Nil), help = "Dumps the contents of the given file", promptAware = true),
@@ -47,7 +46,6 @@ class CoreModule(config: TxConfig) extends Module {
     Command(this, "debug", debug, UnixLikeParams(Seq("enabled" -> false)), help = "Switches debugging on/off", undocumented = true),
     Command(this, "exit", exit, UnixLikeParams(), help = "Exits the shell"),
     Command(this, "help", help, UnixLikeParams(Seq("searchTerm" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
-    Command(this, "history", listHistory, UnixLikeParams(Seq("count" -> false)), help = "Returns a list of previously issued commands"),
     Command(this, "jobs", manageJob, UnixLikeParams(Seq("jobNumber" -> false), Seq("-c" -> "clear jobs", "-d" -> "delete job", "-l" -> "list jobs", "-v" -> "result")), help = "Returns the list of currently running jobs"),
     Command(this, "ls", listFiles, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "module", useModule, UnixLikeParams(Seq("module" -> true)), help = "Switches the active module"),
@@ -190,31 +188,6 @@ class CoreModule(config: TxConfig) extends Module {
   }
 
   /**
-   * History execution command. This command can either executed a
-   * previously executed command by its unique identifier, or list (!?) all previously
-   * executed commands.
-   * @example !123
-   * @example !?10
-   * @example !?
-   */
-  def executeHistory(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
-    for {
-      command <- params.args match {
-        case Nil => SessionManagement.history.last
-        case "!" :: Nil => SessionManagement.history.last
-        case "?" :: Nil => Some("history")
-        case "?" :: count :: Nil => Some(s"history $count")
-        case index :: Nil if index.matches("\\d+") => SessionManagement.history(parseInt("history ID", index) - 1)
-        case _ => dieSyntax(params)
-      }
-    } {
-      out.println(s">> $command")
-      val result = rt.interpret(command)
-      rt.handleResult(result, command)
-    }
-  }
-
-  /**
    * Exits the shell
    * @example exit
    */
@@ -285,18 +258,6 @@ class CoreModule(config: TxConfig) extends Module {
       files map { file =>
         if (file.startsWith(path)) file.substring(path.length) else file
       }
-    }
-  }
-
-  /**
-   * Retrieves previously executed commands
-   * @example history
-   */
-  def listHistory(params: UnixLikeArgs): Seq[HistoryItem] = {
-    val count = params.args.headOption map (parseInt("count", _))
-    val lines = SessionManagement.history.getLines(count.getOrElse(-1))
-    ((1 to lines.size) zip lines) map {
-      case (itemNo, command) => HistoryItem(itemNo, command)
     }
   }
 
