@@ -79,9 +79,7 @@ make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like 
 <a name="external-dependencies"></a>
 ### External Dependencies
 
-* [Commons-Helpers 0.1.2] (https://github.com/ldaniels528/commons-helpers)
 * [ScalaScript 0.2.20] (https://github.com/ldaniels528/scalascript)
-* [Tabular 0.1.3] (https://github.com/ldaniels528/tabular)
 
 In order to build from the source, you'll need to download the above dependencies and issue
 the following command for each of them:
