@@ -37,6 +37,7 @@ class AzureModule(config: TxConfig) extends Module {
     Command(this, "blobls", listBlobs, UnixLikeParams(Seq("path" -> false), flags = Seq("-r" -> "recursive")), help = "Retrieves a list of files in the current container"),
     Command(this, "blobget", downloadBlobs, UnixLikeParams(Seq("prefix" -> false, "targetPath" -> true), flags = Seq("-r" -> "recursive")), help = "Downloads a file to the current container"),
     Command(this, "blobput", uploadBlobs, UnixLikeParams(Seq("sourcePath" -> true), flags = Seq("-r" -> "recursive")), help = "Recursively uploads files or directories to the current container"),
+    Command(this, "blobpwd", currentBlobDirectory, UnixLikeParams(Nil), help = "Prints the current Azure Blob storage container"),
 
     // DocumentDB
     Command(this, "dbconnect", databaseConnect, UnixLikeParams(Seq("host" -> false, "masterKey" -> false, "database" -> true, "collection" -> true, "consistencyLevel" -> false)), help = "Establishes a connection to a DocumentDB instance"),
@@ -135,6 +136,12 @@ class AzureModule(config: TxConfig) extends Module {
     * @example blobcount
     */
   def countBlobs(params: UnixLikeArgs) = blobStorage.flatMap(_.countBlobs(params))
+
+  /**
+    * Displays the current blob directory
+    * @example blobpwd
+    */
+  def currentBlobDirectory(params: UnixLikeArgs) = blobStorage.flatMap(_.pwd)
 
   /**
     * Downloads file(s) to the current container

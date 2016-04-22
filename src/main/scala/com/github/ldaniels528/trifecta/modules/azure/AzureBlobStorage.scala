@@ -7,7 +7,7 @@ import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
 import com.github.ldaniels528.trifecta.TxResultHandler.Ok
 import com.github.ldaniels528.trifecta.command.UnixLikeArgs
 import com.github.ldaniels528.trifecta.modules.ModuleCommandAgent
-import com.github.ldaniels528.trifecta.modules.azure.AzureBlobStorage.{AzureBlobContainer, AzureBlobItem}
+import com.github.ldaniels528.trifecta.modules.azure.AzureBlobStorage.{AzureBlobContainer, AzureBlobItem, AzureContainer}
 import com.microsoft.azure.storage.CloudStorageAccount
 import com.microsoft.azure.storage.blob.{CloudBlob, CloudBlobContainer, CloudBlobDirectory, ListBlobItem}
 import org.slf4j.LoggerFactory
@@ -108,7 +108,7 @@ class AzureBlobStorage(storageAccount: CloudStorageAccount) extends ModuleComman
     }
 
     // connect to the remote peer
-    blobContainer = blobClient.getContainerReference(containerName.toLowerCase)
+    blobContainer = blobClient.getContainerReference(containerName)
     blobContainer map (_ => Ok)
   }
 
@@ -125,6 +125,7 @@ class AzureBlobStorage(storageAccount: CloudStorageAccount) extends ModuleComman
 
     // capture the recursive flag
     val recursive = params.flags.contains("-r")
+    if(recursive) logger.info("Recursive copy enabled")
 
     // upload the files
     blobContainer map { container =>
@@ -132,6 +133,12 @@ class AzureBlobStorage(storageAccount: CloudStorageAccount) extends ModuleComman
       logger.info(s"$count file(s) uploaded")
       Ok
     }
+  }
+
+  def pwd = {
+    blobContainer.map { container =>
+      AzureContainer(name = container.getName, uri = container.getUri.toASCIIString)
+    } toList
   }
 
   private def count(container: AzureBlobContainer, prefix: Option[String], recursive: Boolean): Int = {
@@ -208,5 +215,7 @@ object AzureBlobStorage {
                            contentType: Option[String] = None,
                            lastModified: Option[Date] = None,
                            length: Option[Long] = None)
+
+  case class AzureContainer(name: String, uri: String)
 
 }
