@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import com.github.ldaniels528.scalascript.Service
-import com.github.ldaniels528.scalascript.core._
+import com.github.ldaniels528.meansjs.angularjs.Service
+import com.github.ldaniels528.meansjs.angularjs.http._
 import com.github.ldaniels528.trifecta.sjs.models._
 
 import scala.scalajs.js

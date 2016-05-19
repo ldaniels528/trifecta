@@ -2,12 +2,10 @@ package com.github.ldaniels528.trifecta
 
 import java.io.PrintStream
 
-import com.github.ldaniels528.trifecta.TxConsole._
 import com.github.ldaniels528.trifecta.io.AsyncIO
 import com.github.ldaniels528.trifecta.modules.core.CoreModule
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaSandbox
 import org.apache.zookeeper.KeeperException.ConnectionLossException
-import org.fusesource.jansi.Ansi.Color._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -30,12 +28,8 @@ object TrifectaShell {
     * @param args the given command line arguments
     */
   def main(args: Array[String]) {
-    import org.fusesource.jansi.Ansi.Color._
-
     // use the ANSI console plugin to display the title line
-    vxAnsi {
-      System.out.println(a"${RED}Tri${GREEN}fect${CYAN}a ${YELLOW}v$VERSION")
-    }
+    System.out.println(s"Trifecta v$VERSION")
 
     // load the configuration
     logger.info(s"Loading configuration file '${TxConfig.configFile}'...")
@@ -110,10 +104,7 @@ object TrifectaShell {
       */
     def shell() {
       // use the ANSI console plugin to display the title line
-      vxAnsi {
-        // display the welcome message
-        out.println(a"${WHITE}Type '${CYAN}help$WHITE' (or '$CYAN?$WHITE') to see the list of available commands")
-      }
+      out.println("Type 'help' (or ?) to see the list of available commands")
 
       if (rt.config.autoSwitching) {
         out.println("Module Auto-Switching is On")

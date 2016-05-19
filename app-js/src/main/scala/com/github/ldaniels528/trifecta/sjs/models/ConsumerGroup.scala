@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -21,7 +21,7 @@ trait ConsumerGroup extends js.Object {
 object ConsumerGroup {
 
   def apply(consumerId: String, details: js.Array[Consumer] = emptyArray) = {
-    val group = makeNew[ConsumerGroup]
+    val group = New[ConsumerGroup]
     group.consumerId = consumerId
     group.details = details
     group

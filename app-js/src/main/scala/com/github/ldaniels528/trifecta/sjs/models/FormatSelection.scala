@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -20,7 +20,7 @@ trait FormatSelection extends js.Object {
 object FormatSelection {
 
   def apply(format: String) = {
-    val selection = makeNew[FormatSelection]
+    val selection = New[FormatSelection]
     selection.format = format
     selection
   }

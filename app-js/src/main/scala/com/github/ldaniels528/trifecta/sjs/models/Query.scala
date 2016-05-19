@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -36,7 +36,7 @@ object Query {
             topic: js.UndefOr[String],
             newFile: js.UndefOr[Boolean] = true,
             modified: js.UndefOr[Boolean] = true) = {
-    val query = makeNew[Query]
+    val query = New[Query]
     query.name = name
     query.topic = topic
     query.newFile = newFile

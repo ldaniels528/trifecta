@@ -1,9 +1,9 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.scalascript._
-import com.github.ldaniels528.scalascript.core.TimerConversions._
-import com.github.ldaniels528.scalascript.core.{Interval, Location, Log, Timeout}
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
+import com.github.ldaniels528.meansjs.angularjs._
+import com.github.ldaniels528.meansjs.util.PromiseHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
 import com.github.ldaniels528.trifecta.sjs.models._

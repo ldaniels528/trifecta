@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -27,7 +27,7 @@ trait ZkItem extends js.Object {
 object ZkItem {
 
   def apply(name: String, path: String, expanded: Boolean) = {
-    val item = makeNew[ZkItem]
+    val item = New[ZkItem]
     item.name = name
     item.path = path
     item.children = emptyArray

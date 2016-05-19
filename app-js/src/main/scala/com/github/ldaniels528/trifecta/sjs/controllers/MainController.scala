@@ -1,10 +1,11 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.scalascript.core.TimerConversions._
-import com.github.ldaniels528.scalascript.core.{Location, Timeout}
-import com.github.ldaniels528.scalascript.extensions.Toaster
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
-import com.github.ldaniels528.scalascript.{CancellablePromise, Controller, angular, injected}
+import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
+import com.github.ldaniels528.meansjs.angularjs._
+import com.github.ldaniels528.meansjs.angularjs.{Location, Timeout}
+import com.github.ldaniels528.meansjs.angularjs.toaster.Toaster
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.angularjs.{AngularPromise, Controller, angular, injected}
 import com.github.ldaniels528.trifecta.sjs.RootScope
 import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware.REFERENCE_DATA_LOADED
 import com.github.ldaniels528.trifecta.sjs.models._
@@ -114,7 +115,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
     $timeout(() => (), 30.second) // TODO force the loading to end
   }
 
-  $scope.loadingStop = (promise: CancellablePromise) => {
+  $scope.loadingStop = (promise: js.Promise[js.Any]) => {
     $timeout(() => loading -= 1, 0.5.second)
     ()
   }

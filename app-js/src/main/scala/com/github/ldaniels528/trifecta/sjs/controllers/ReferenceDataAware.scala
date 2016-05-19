@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.scalascript.Scope
+import com.github.ldaniels528.meansjs.angularjs.Scope
 import com.github.ldaniels528.trifecta.sjs.models._
 
 import scala.scalajs.js

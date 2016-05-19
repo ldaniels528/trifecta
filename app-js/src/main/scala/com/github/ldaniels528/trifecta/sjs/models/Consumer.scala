@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.core.TimerConversions._
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.angularjs._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.concurrent.duration._
 import scala.scalajs.js
@@ -24,7 +24,7 @@ trait Consumer extends ConsumerDelta {
 object Consumer {
 
   def apply(delta: ConsumerDelta) = {
-    val consumer = makeNew[Consumer]
+    val consumer = New[Consumer]
     consumer.consumerId = delta.consumerId
     consumer.topic = delta.topic
     consumer.partition = delta.partition

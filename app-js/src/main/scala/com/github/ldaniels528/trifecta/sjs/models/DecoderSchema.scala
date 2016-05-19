@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -30,7 +30,7 @@ object DecoderSchema {
             topic: js.UndefOr[String],
             name: js.UndefOr[String],
             schemaString: js.UndefOr[String] = js.undefined) = {
-    val schema = makeNew[DecoderSchema]
+    val schema = New[DecoderSchema]
     schema.decoder = decoder
     schema.topic = topic
     schema.name = name

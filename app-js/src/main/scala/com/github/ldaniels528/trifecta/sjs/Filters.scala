@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs
 
-import com.github.ldaniels528.scalascript._
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.angularjs._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 

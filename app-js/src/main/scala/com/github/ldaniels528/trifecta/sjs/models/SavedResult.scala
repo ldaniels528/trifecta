@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -28,7 +28,7 @@ object SavedResult {
             mappings: js.UndefOr[js.Dictionary[String]] = js.undefined,
             ascending: js.UndefOr[Boolean] = false,
             sortField: js.UndefOr[String] = js.undefined) = {
-    val result = makeNew[SavedResult]
+    val result = New[SavedResult]
     result.name = name
     result.results = results
     result.mappings = mappings

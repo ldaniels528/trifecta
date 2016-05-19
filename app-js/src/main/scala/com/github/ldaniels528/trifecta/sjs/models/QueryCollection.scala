@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import scala.scalajs.js
 
 /**
@@ -19,7 +19,7 @@ trait QueryCollection extends js.Object  {
 object QueryCollection {
 
   def apply() = {
-    val qc = makeNew[QueryCollection]
+    val qc = New[QueryCollection]
     qc
   }
 

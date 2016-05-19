@@ -1,10 +1,10 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.scalascript.core.TimerConversions._
-import com.github.ldaniels528.scalascript.core._
-import com.github.ldaniels528.scalascript.extensions.Toaster
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
-import com.github.ldaniels528.scalascript.{Controller, Scope, injected}
+import com.github.ldaniels528.meansjs.angularjs._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
+import com.github.ldaniels528.meansjs.angularjs.toaster.Toaster
+import com.github.ldaniels528.meansjs.angularjs.{Controller, Log, Scope, Timeout, injected}
 import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.DecoderService
@@ -119,7 +119,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
     * @return {string}
     */
   $scope.getSchemaIcon = (aSchema: js.UndefOr[DecoderSchema]) => aSchema map { schema =>
-    if (schema.error.exists(_.nonBlank)) "/assets/images/tabs/decoders/failed-16.png"
+    if (schema.error.exists(!_.isEmpty)) "/assets/images/tabs/decoders/failed-16.png"
     else if (schema.processing.contains(true)) "/assets/images/status/processing.gif"
     else "/assets/images/tabs/decoders/js-16.png"
   }

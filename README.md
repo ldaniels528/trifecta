@@ -79,7 +79,7 @@ make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like 
 <a name="external-dependencies"></a>
 ### External Dependencies
 
-* [ScalaScript 0.2.20] (https://github.com/ldaniels528/scalascript)
+* [MEANS.js 0.1.8] (https://github.com/ldaniels528/MEANS.js)
 
 In order to build from the source, you'll need to download the above dependencies and issue
 the following command for each of them:

@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import com.github.ldaniels528.scalascript._
-import com.github.ldaniels528.scalascript.core.Http
+import com.github.ldaniels528.meansjs.angularjs._
+import com.github.ldaniels528.meansjs.angularjs.http.Http
 import com.github.ldaniels528.trifecta.sjs.RootScope
 import com.github.ldaniels528.trifecta.sjs.models.{OperationResult, SamplingRequest, SubmittedResult}
 import org.scalajs.dom._

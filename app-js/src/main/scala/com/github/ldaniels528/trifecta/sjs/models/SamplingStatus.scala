@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -23,7 +23,7 @@ object SamplingStatus {
   val SAMPLING_STATUS_STOPPED = "stopped"
 
   def apply(status: String) = {
-    val samplingStatus = makeNew[SamplingStatus]
+    val samplingStatus = New[SamplingStatus]
     samplingStatus.status = status
     samplingStatus
   }

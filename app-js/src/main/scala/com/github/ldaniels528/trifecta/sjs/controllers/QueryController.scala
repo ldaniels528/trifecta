@@ -1,10 +1,10 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.scalascript.core.TimerConversions._
-import com.github.ldaniels528.scalascript.core._
-import com.github.ldaniels528.scalascript.extensions.Toaster
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
-import com.github.ldaniels528.scalascript.{Controller, Scope, angular, injected}
+import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
+import com.github.ldaniels528.meansjs.angularjs._
+import com.github.ldaniels528.meansjs.angularjs.toaster.Toaster
+import com.github.ldaniels528.meansjs.util.PromiseHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
 import com.github.ldaniels528.trifecta.sjs.models._
@@ -270,7 +270,7 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
   /**
     * Indicates whether the given saved query (name) exists
     * @param topic the parent topic
-    * @param name the saved query name
+    * @param name  the saved query name
     * @return {boolean}
     */
   private def nameExists(topic: TopicDetails, name: String) = {
@@ -279,7 +279,7 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
 
   /**
     * Returns a new query object
-    * @return  a new [[Query query object]]
+    * @return a new [[Query query object]]
     */
   private def newQuery = Query(name = "UntitledName", topic = "default")
 

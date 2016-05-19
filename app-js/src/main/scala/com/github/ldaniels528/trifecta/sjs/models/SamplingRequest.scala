@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -21,7 +21,7 @@ trait SamplingRequest extends js.Object {
 object SamplingRequest {
 
   def apply(topic: String, partitionOffsets: js.Array[Int]) = {
-    val request = makeNew[SamplingRequest]
+    val request = New[SamplingRequest]
     request.topic = topic
     request.partitionOffsets = partitionOffsets
     request

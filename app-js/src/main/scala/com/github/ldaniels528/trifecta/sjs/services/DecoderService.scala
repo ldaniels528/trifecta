@@ -1,12 +1,12 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import com.github.ldaniels528.scalascript.Service
-import com.github.ldaniels528.scalascript.core.Http
+import com.github.ldaniels528.meansjs.angularjs.Service
+import com.github.ldaniels528.meansjs.angularjs.http.Http
 import com.github.ldaniels528.trifecta.sjs.models.{Decoder, DecoderSchema}
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
-import scala.scalajs.js.Dynamic.{global => g, literal}
+import scala.scalajs.js.Dynamic.{literal, global => g}
 
 /**
   * Decoder Service

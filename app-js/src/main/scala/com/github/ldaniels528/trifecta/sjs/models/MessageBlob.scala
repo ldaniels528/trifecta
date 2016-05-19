@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -29,7 +29,7 @@ object MessageBlob {
             keyAuto: js.UndefOr[Boolean] = js.undefined,
             message: js.UndefOr[String] = js.undefined,
             messageFormat: js.UndefOr[String] = js.undefined) = {
-    val blob = makeNew[MessageBlob]
+    val blob = New[MessageBlob]
     blob.topic = topic
     blob.key = key
     blob.keyFormat = keyFormat

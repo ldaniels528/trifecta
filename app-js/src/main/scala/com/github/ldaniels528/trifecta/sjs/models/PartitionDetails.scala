@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -28,7 +28,7 @@ trait PartitionDetails extends js.Object {
 object PartitionDetails {
 
   def apply(delta: PartitionDelta) = {
-    val partition = makeNew[PartitionDetails]
+    val partition = New[PartitionDetails]
     partition.partition = delta.partition
     partition.offset = delta.startOffset
     partition.startOffset = delta.startOffset
@@ -52,7 +52,7 @@ object PartitionDetails {
              totalMessages: js.UndefOr[Int] = js.undefined,
              offset: js.UndefOr[Int] = js.undefined,
              delta: js.UndefOr[Int] = js.undefined) = {
-      val newPartition = makeNew[PartitionDetails]
+      val newPartition = New[PartitionDetails]
       newPartition.partition = partition ?? aPartition.partition
       newPartition.offset = offset ?? aPartition.offset
       newPartition.startOffset = startOffset ?? aPartition.startOffset

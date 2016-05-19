@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -27,7 +27,7 @@ object ReferenceData {
             consumers: js.Array[Consumer],
             topics: js.Array[TopicDetails],
             topic: js.UndefOr[TopicDetails]) = {
-    val data = makeNew[ReferenceData]
+    val data = New[ReferenceData]
     data.brokers = brokers
     data.consumers = consumers
     data.topics = topics

@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.scalascript.core.HttpPromise
-import com.github.ldaniels528.scalascript.{CancellablePromise, Scope}
+import com.github.ldaniels528.meansjs.angularjs.Scope
+import com.github.ldaniels528.meansjs.angularjs.http.HttpPromise
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -16,8 +16,8 @@ trait GlobalLoading extends js.Object {
   self: Scope =>
 
   var isLoading: js.Function0[Boolean]
-  var loadingStart: js.Function0[CancellablePromise]
-  var loadingStop: js.Function1[CancellablePromise, Unit]
+  var loadingStart: js.Function0[js.Promise[js.Any]]
+  var loadingStop: js.Function1[js.Promise[js.Any], Unit]
 
 }
 

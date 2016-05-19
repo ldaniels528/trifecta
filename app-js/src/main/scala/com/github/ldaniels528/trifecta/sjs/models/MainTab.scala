@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -23,7 +23,7 @@ trait MainTab extends js.Object {
 object MainTab {
 
   def apply(name: String, contentURL: String, imageURL: String, active: Boolean = false) = {
-    val tab = makeNew[MainTab]
+    val tab = New[MainTab]
     tab.name = name
     tab.contentURL = contentURL
     tab.imageURL = imageURL

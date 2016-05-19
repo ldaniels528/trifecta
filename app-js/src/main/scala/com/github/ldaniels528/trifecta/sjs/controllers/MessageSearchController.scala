@@ -1,8 +1,9 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.scalascript.extensions.ModalInstance
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
-import com.github.ldaniels528.scalascript.{Controller, Scope, injected}
+import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
+import com.github.ldaniels528.meansjs.angularjs.uibootstrap.ModalInstance
+import com.github.ldaniels528.meansjs.angularjs.{Controller, Scope, injected}
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.models.TopicDetails
 import com.github.ldaniels528.trifecta.sjs.services.TopicService
@@ -74,7 +75,7 @@ trait MessageSearchForm extends js.Object {
   */
 object MessageSearchForm {
   def apply() = {
-    val form = makeNew[MessageSearchForm]
+    val form = New[MessageSearchForm]
     form
   }
 }

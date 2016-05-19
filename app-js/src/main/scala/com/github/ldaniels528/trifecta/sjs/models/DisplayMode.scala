@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -20,7 +20,7 @@ trait DisplayMode extends js.Object {
   */
 object DisplayMode {
   def apply(state: String, avro: String) = {
-    val mode = makeNew[DisplayMode]
+    val mode = New[DisplayMode]
     mode.state = state
     mode.avro = avro
     mode

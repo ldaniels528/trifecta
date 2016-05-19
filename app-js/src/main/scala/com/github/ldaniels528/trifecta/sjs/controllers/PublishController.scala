@@ -1,9 +1,10 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.scalascript.core._
-import com.github.ldaniels528.scalascript.extensions.Toaster
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
-import com.github.ldaniels528.scalascript.{Controller, Scope, angular, injected}
+import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
+import com.github.ldaniels528.meansjs.angularjs._
+import com.github.ldaniels528.meansjs.angularjs.toaster.Toaster
+import com.github.ldaniels528.meansjs.util.PromiseHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.models.MessageBlob
 import com.github.ldaniels528.trifecta.sjs.services.{MessageDataService, TopicService}
@@ -75,19 +76,19 @@ class PublishController($scope: PublishControllerScope, $log: Log, $timeout: Tim
     * @return {boolean}
     */
   private def validatePublishMessage(blob: MessageBlob) = {
-    if (!blob.topic.exists(_.topic.nonBlank)) {
+    if (!blob.topic.exists(!_.topic.isEmpty)) {
       $scope.addErrorMessage("No topic specified")
       false
     }
-    else if (!blob.keyFormat.exists(_.nonBlank)) {
+    else if (!blob.keyFormat.exists(!_.isEmpty)) {
       $scope.addErrorMessage("No message key format specified")
       false
     }
-    else if (!blob.message.exists(_.nonBlank)) {
+    else if (!blob.message.exists(!_.isEmpty)) {
       $scope.addErrorMessage("No message body specified")
       false
     }
-    else if (!blob.messageFormat.exists(_.nonBlank)) {
+    else if (!blob.messageFormat.exists(!_.isEmpty)) {
       $scope.addErrorMessage("No message body format specified")
       false
     }

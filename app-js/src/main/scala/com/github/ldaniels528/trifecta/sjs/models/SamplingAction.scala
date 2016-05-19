@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -22,7 +22,7 @@ trait SamplingAction extends js.Object {
   */
 object SamplingAction {
   def apply(action: String, topic: String, partitions: js.Array[Int]) = {
-    val samplingAction = makeNew[SamplingAction]
+    val samplingAction = New[SamplingAction]
     samplingAction.action = action
     samplingAction.topic = topic
     samplingAction.partitions = partitions

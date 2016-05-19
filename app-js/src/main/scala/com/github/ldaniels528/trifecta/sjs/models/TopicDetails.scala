@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import org.scalajs.dom.console
 
 import scala.scalajs.js
@@ -54,7 +54,7 @@ object TopicDetails {
              replicaExpanded: js.UndefOr[Boolean] = js.undefined,
              savedQueries: js.UndefOr[js.Array[Query]] = js.undefined,
              updatingTopics: js.UndefOr[Int] = js.undefined) = {
-      val cloned = makeNew[TopicDetails]
+      val cloned = New[TopicDetails]
       cloned.topic = topic getOrElse details.topic
       cloned.partitions = partitions getOrElse details.partitions
       cloned.leader = leader getOrElse details.leader

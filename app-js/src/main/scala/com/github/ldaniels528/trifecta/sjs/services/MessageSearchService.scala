@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import com.github.ldaniels528.scalascript.Service
-import com.github.ldaniels528.scalascript.extensions.{Modal, ModalOptions}
+import com.github.ldaniels528.meansjs.angularjs.Service
+import com.github.ldaniels528.meansjs.angularjs.uibootstrap.{Modal, ModalOptions}
 import com.github.ldaniels528.trifecta.sjs.controllers.MessageSearchForm
 
 /**

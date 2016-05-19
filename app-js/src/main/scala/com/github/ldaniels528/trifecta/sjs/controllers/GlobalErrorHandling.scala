@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.scalascript.Scope
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.angularjs.Scope
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -32,7 +32,7 @@ trait GlobalMessage extends js.Object {
 
 object GlobalMessage {
   def apply(text: String, `type`: String) = {
-    val message = makeNew[GlobalMessage]
+    val message = New[GlobalMessage]
     message.text = text
     message.`type` = `type`
     message

@@ -1,7 +1,8 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.20.1"
+val appVersion = "0.21.0"
+val meanjsVersion = "0.1.9"
 
 val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"
@@ -26,7 +27,7 @@ lazy val testDependencies = Seq(
   "org.scalatest" %% "scalatest" % "2.2.3" % "test"
 )
 
-lazy val tabular = (project in file("lib-tabular"))
+lazy val tabular = (project in file("libs/tabular"))
   .settings(
     name := "tabular",
     organization := "com.github.ldaniels528",
@@ -38,7 +39,7 @@ lazy val tabular = (project in file("lib-tabular"))
     libraryDependencies ++= libDependencies ++ testDependencies
   )
 
-lazy val commons_helpers = (project in file("lib-commons-helpers"))
+lazy val commons_helpers = (project in file("libs/commons-helpers"))
   .settings(
     name := "commons-helpers",
     organization := "com.github.ldaniels528",
@@ -131,7 +132,6 @@ lazy val trifecta_cli = (project in file("app-cli"))
       //
       // General Java Dependencies
       "log4j" % "log4j" % "1.2.17",
-      "org.fusesource.jansi" % "jansi" % "1.11",
       "org.scala-lang" % "jline" % "2.11.0-M3",
       "org.slf4j" % "slf4j-log4j12" % "1.7.21"
     )
@@ -150,7 +150,19 @@ lazy val trifecta_js = (project in file("app-js"))
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
     libraryDependencies ++= Seq(
-      "com.github.ldaniels528" %%% "scalascript" % "0.2.20",
+      "com.github.ldaniels528" %%% "means-angularjs-core" % meanjsVersion,
+      "com.github.ldaniels528" %%% "means-angularjs-animate" % meanjsVersion,
+      "com.github.ldaniels528" %%% "means-angularjs-cookies" % meanjsVersion,
+      "com.github.ldaniels528" %%% "means-angularjs-facebook" % meanjsVersion,
+      "com.github.ldaniels528" %%% "means-angularjs-nervgh-fileupload" % meanjsVersion,
+      "com.github.ldaniels528" %%% "means-angularjs-sanitize" % meanjsVersion,
+      "com.github.ldaniels528" %%% "means-angularjs-toaster" % meanjsVersion,
+      "com.github.ldaniels528" %%% "means-angularjs-ui-bootstrap" % meanjsVersion,
+      "com.github.ldaniels528" %%% "means-angularjs-ui-router" % meanjsVersion,
+      "com.github.ldaniels528" %%% "means-social-facebook" % meanjsVersion,
+      "com.github.ldaniels528" %%% "means-social-linkedin" % meanjsVersion,
+      //
+      // ScalaJS
       "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11"),
       "org.scala-js" %%% "scalajs-dom" % "0.9.0",
       "be.doeraene" %%% "scalajs-jquery" % "0.9.0"

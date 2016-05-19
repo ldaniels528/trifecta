@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.scalascript.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -21,7 +21,7 @@ trait QueryResultSet extends js.Object {
 object QueryResultSet {
 
   def apply(labels: js.Array[String], values: js.Array[QueryRow]) = {
-    val rs = makeNew[QueryResultSet]
+    val rs = New[QueryResultSet]
     rs.labels = labels
     rs.values = values
     rs
