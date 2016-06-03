@@ -9,7 +9,7 @@ import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.{TopicService, ZookeeperService}
 import org.scalajs.dom
-import org.scalajs.dom.console
+import com.github.ldaniels528.meansjs.core.browser.console
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

@@ -3,9 +3,9 @@ package com.github.ldaniels528.trifecta.sjs
 import com.github.ldaniels528.meansjs.angularjs.http.HttpProvider
 import com.github.ldaniels528.meansjs.angularjs.uirouter.{RouteProvider, RouteTo}
 import com.github.ldaniels528.meansjs.angularjs.{Scope, angular}
+import com.github.ldaniels528.meansjs.core.browser.console
 import com.github.ldaniels528.trifecta.sjs.controllers._
 import com.github.ldaniels528.trifecta.sjs.services._
-import org.scalajs.dom.console
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport

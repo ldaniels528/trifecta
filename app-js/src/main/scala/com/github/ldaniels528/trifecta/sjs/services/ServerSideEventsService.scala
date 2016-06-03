@@ -1,12 +1,15 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.meansjs.angularjs._
 import com.github.ldaniels528.meansjs.angularjs.http.Http
+import com.github.ldaniels528.meansjs.core.browser.console
 import com.github.ldaniels528.trifecta.sjs.RootScope
-import com.github.ldaniels528.trifecta.sjs.models.{OperationResult, SamplingRequest, SubmittedResult}
-import org.scalajs.dom._
+import com.github.ldaniels528.trifecta.sjs.models._
+import org.scalajs.dom.Event
 import org.scalajs.dom.raw.EventSource
 
+import scala.concurrent.ExecutionContext
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 
@@ -33,22 +36,22 @@ class ServerSideEventsService($rootScope: RootScope, $http: Http) extends Servic
   /**
     * Retrieves the current message sampling session
     */
-  def getSamplingSession = {
-    $http.get[SubmittedResult](url = "/api/sse/sampling")
+  def getSamplingSession(implicit ec: ExecutionContext) = {
+    $http.get[SubmittedResult](url = "/api/sse/sampling")map (_.data)
   }
 
   /**
     * Starts message sampling
     */
-  def startSampling(topic: String, partitionOffsets: js.Array[Int]) = {
-    $http.put[SubmittedResult](url = "/api/sse/sampling", data = SamplingRequest(topic, partitionOffsets))
+  def startSampling(topic: String, partitionOffsets: js.Array[Int])(implicit ec: ExecutionContext) = {
+    $http.put[SubmittedResult](url = "/api/sse/sampling", data = SamplingRequest(topic, partitionOffsets))map (_.data)
   }
 
   /**
     * Stops message sampling
     */
-  def stopSampling(sessionId: String) = {
-    $http.delete[OperationResult](url = s"/api/sse/sampling/$sessionId")
+  def stopSampling(sessionId: String)(implicit ec: ExecutionContext) = {
+    $http.delete[OperationResult](url = s"/api/sse/sampling/$sessionId") map(_.data)
   }
 
   /**

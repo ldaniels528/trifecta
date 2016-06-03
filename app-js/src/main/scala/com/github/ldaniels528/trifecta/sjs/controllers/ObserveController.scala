@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
+import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.meansjs.util.PromiseHelper._
 import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
 import com.github.ldaniels528.meansjs.angularjs._
@@ -12,7 +13,7 @@ import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.ServerSideEventsService._
 import com.github.ldaniels528.trifecta.sjs.services._
 import org.scalajs.dom
-import org.scalajs.dom.console
+import com.github.ldaniels528.meansjs.core.browser.console
 import org.scalajs.jquery.jQuery
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

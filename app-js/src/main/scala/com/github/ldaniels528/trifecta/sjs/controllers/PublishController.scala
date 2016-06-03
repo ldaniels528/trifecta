@@ -8,7 +8,7 @@ import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.models.MessageBlob
 import com.github.ldaniels528.trifecta.sjs.services.{MessageDataService, TopicService}
-import org.scalajs.dom.console
+import com.github.ldaniels528.meansjs.core.browser.console
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js

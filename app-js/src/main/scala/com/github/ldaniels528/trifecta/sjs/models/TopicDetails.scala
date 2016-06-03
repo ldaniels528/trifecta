@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
 import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
-import org.scalajs.dom.console
+import com.github.ldaniels528.meansjs.core.browser.console
 
 import scala.scalajs.js
 
