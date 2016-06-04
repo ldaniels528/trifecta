@@ -2,7 +2,7 @@ import sbt.Keys._
 import sbt._
 
 val appVersion = "0.21.0"
-val meanjsVersion = "0.1.11"
+val meanjsVersion = "0.1.12"
 
 val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"
