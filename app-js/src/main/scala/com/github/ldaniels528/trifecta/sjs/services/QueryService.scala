@@ -6,7 +6,6 @@ import com.github.ldaniels528.meansjs.core.browser.encodeURI
 import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.models.{Message, Query, QueryResultSet, QueryRow}
 
-import scala.concurrent.ExecutionContext
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.{global => g}
@@ -17,33 +16,33 @@ import scala.scalajs.js.Dynamic.{global => g}
   */
 class QueryService($http: Http) extends Service {
 
-  def executeQuery(name: String, topic: String, queryString: String)(implicit ec: ExecutionContext) = {
+  def executeQuery(name: String, topic: String, queryString: String) = {
     $http.post[QueryResultSet](
       url = "/api/query/all",
       data = js.Dictionary("name" -> name, "topic" -> topic, "queryString" -> queryString),
-      headers = js.Dictionary("Content-Type" -> "application/json")) map (_.data)
+      headers = js.Dictionary("Content-Type" -> "application/json"))
   }
 
-  def findOne(topic: String, criteria: String)(implicit ec: ExecutionContext) = {
-    $http.get[Message](s"/api/query/one/$topic/${encodeURI(criteria)}") map (_.data)
+  def findOne(topic: String, criteria: String) = {
+    $http.get[Message](s"/api/query/one/$topic/${encodeURI(criteria)}")
   }
 
-  def getQueries(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[Query]]("/api/queries") map (_.data)
+  def getQueries = {
+    $http.get[js.Array[Query]]("/api/queries")
   }
 
-  def getQueriesByTopic(topic: String)(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[Query]](s"/api/query/${encodeURI(topic)}") map (_.data)
+  def getQueriesByTopic(topic: String) = {
+    $http.get[js.Array[Query]](s"/api/query/${encodeURI(topic)}")
   }
 
-  def saveQuery(name: String, topic: String, queryString: String)(implicit ec: ExecutionContext) = {
+  def saveQuery(name: String, topic: String, queryString: String) = {
     $http.post[Message](
       url = "/api/query",
       data = js.Dictionary("name" -> name, "topic" -> topic, "queryString" -> queryString),
-      headers = js.Dictionary("Content-Type" -> "application/json")) map (_.data)
+      headers = js.Dictionary("Content-Type" -> "application/json"))
   }
 
-  def transformResultsToCSV(queryResults: js.Array[QueryRow])(implicit ec: ExecutionContext) = {
+  def transformResultsToCSV(queryResults: js.Array[QueryRow]) = {
     $http.post[js.Array[String]](
       url = "/api/results/csv",
       data = queryResults,

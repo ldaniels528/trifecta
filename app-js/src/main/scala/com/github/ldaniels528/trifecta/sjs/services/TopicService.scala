@@ -3,10 +3,8 @@ package com.github.ldaniels528.trifecta.sjs.services
 import com.github.ldaniels528.meansjs.angularjs.Service
 import com.github.ldaniels528.meansjs.angularjs.http._
 import com.github.ldaniels528.meansjs.core.browser.encodeURI
-import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.models._
 
-import scala.concurrent.ExecutionContext
 import scala.scalajs.js
 
 /**
@@ -23,16 +21,16 @@ class TopicService($http: Http) extends Service {
     * Retrieves the array of Kafka brokers
     * @return a promise of an array of [[BrokerGroup grouped brokers]]
     */
-  def getBrokerGroups(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[BrokerGroup]]("/api/brokers/grouped") map (_.data)
+  def getBrokerGroups = {
+    $http.get[js.Array[BrokerGroup]]("/api/brokers/grouped")
   }
 
   /**
     * Retrieves the array of Kafka brokers
     * @return a promise of an array of [[Broker brokers]]
     */
-  def getBrokers(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[Broker]]("/api/brokers") map (_.data)
+  def getBrokers = {
+    $http.get[js.Array[Broker]]("/api/brokers")
   }
 
   /**
@@ -40,8 +38,8 @@ class TopicService($http: Http) extends Service {
     * @param topic a given topic (e.g. "stocks.nyse")
     * @return a promise of an array of [[ReplicaBroker replica brokers]]
     */
-  def getReplicas(topic: String)(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[ReplicaGroup]](s"/api/replicas/$topic") map (_.data)
+  def getReplicas(topic: String) = {
+    $http.get[js.Array[ReplicaGroup]](s"/api/replicas/$topic")
   }
 
   /////////////////////////////////////////////////////////////////////////////////
@@ -53,36 +51,36 @@ class TopicService($http: Http) extends Service {
     * @param topic the given topic
     * @return a promise of an array of [[ConsumerGroup consumer groups]]
     */
-  def getConsumerGroups(topic: String)(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[ConsumerGroup]](s"/api/consumers/topic/${encodeURI(topic)}") map (_.data)
+  def getConsumerGroups(topic: String) = {
+    $http.get[js.Array[ConsumerGroup]](s"/api/consumers/topic/${encodeURI(topic)}")
   }
 
   /**
     * Retrieves all consumers
     * @return a promise of an array of [[Consumer consumer]]
     */
-  def getConsumers(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[Consumer]]("/api/consumers/details") map (_.data)
+  def getConsumers = {
+    $http.get[js.Array[Consumer]]("/api/consumers/details")
   }
 
   /////////////////////////////////////////////////////////////////////////////////
   //        Topics
   /////////////////////////////////////////////////////////////////////////////////
 
-  def getDetailedTopic(topic: String)(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[TopicDetails]](s"/api/topics/details/$topic") map (_.data)
+  def getDetailedTopic(topic: String) = {
+    $http.get[js.Array[TopicDetails]](s"/api/topics/details/$topic")
   }
 
-  def getDetailedTopics(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[TopicDetails]]("/api/topics/details") map (_.data)
+  def getDetailedTopics = {
+    $http.get[js.Array[TopicDetails]]("/api/topics/details")
   }
 
-  def getTopic(topic: String)(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[TopicDetails]](s"/api/topic/$topic") map (_.data)
+  def getTopic(topic: String) = {
+    $http.get[js.Array[TopicDetails]](s"/api/topic/$topic")
   }
 
-  def getTopics(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[TopicDetails]]("/api/topics") map (_.data)
+  def getTopics = {
+    $http.get[js.Array[TopicDetails]]("/api/topics")
   }
 
 }

@@ -1,8 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
 import com.github.ldaniels528.meansjs.angularjs.Scope
-import com.github.ldaniels528.meansjs.angularjs.http.HttpPromise
-import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
+import com.github.ldaniels528.meansjs.angularjs.http.HttpResponse
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -46,15 +45,16 @@ object GlobalLoading {
 
   /**
     * Automatic global loading feature
-    * @param httpPromise the given [[HttpPromise HTTP Promise]]
+    * @param response the given [[HttpResponse HTTP response]]
     * @tparam T the type of promised result
     */
-  implicit class LoadingEnrichmentB[T <: js.Any](val httpPromise: HttpPromise[T]) extends AnyVal {
+  implicit class LoadingEnrichmentB[T <: js.Any](val response: HttpResponse[T]) extends AnyVal {
 
     def withGlobalLoading(implicit scope: GlobalLoading) = {
-      val task = scope.loadingStart()
+      val promise = scope.loadingStart()
+      val task = response.toFuture
       task onComplete { _ =>
-        scope.loadingStop(task)
+        scope.loadingStop(promise)
       }
       task
     }

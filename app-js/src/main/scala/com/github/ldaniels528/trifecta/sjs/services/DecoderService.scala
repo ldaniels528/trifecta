@@ -6,7 +6,6 @@ import com.github.ldaniels528.meansjs.core.browser.encodeURI
 import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.models.{Decoder, DecoderSchema}
 
-import scala.concurrent.ExecutionContext
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.{literal, global => g}
@@ -22,8 +21,8 @@ class DecoderService($http: Http) extends Service {
     * @param topic      the given topic
     * @param schemaName the given schema name
     */
-  def downloadDecoderSchema(topic: String, schemaName: String)(implicit ec: ExecutionContext) = {
-    val outcome = $http.get[js.Object](s"/api/schema/${encodeURI(topic)}/${encodeURI(schemaName)}").map(_.data)
+  def downloadDecoderSchema(topic: String, schemaName: String) = {
+    val outcome = $http.get[js.Object](s"/api/schema/${encodeURI(topic)}/${encodeURI(schemaName)}")
     outcome foreach { data =>
       val blob = js.Dynamic.newInstance(g.Blob)(js.Array(data), literal(`type` = "application/json"))
       val objectUrl = g.URL.createObjectURL(blob)
@@ -37,16 +36,16 @@ class DecoderService($http: Http) extends Service {
     * @param topic the specified topic
     * @return the requested [[Decoder decoder]]
     */
-  def getDecoderByTopic(topic: String)(implicit ec: ExecutionContext) = {
-    $http.get[Decoder](s"/api/decoders/topic/${encodeURI(topic)}") map (_.data)
+  def getDecoderByTopic(topic: String) = {
+    $http.get[Decoder](s"/api/decoders/topic/${encodeURI(topic)}")
   }
 
   /**
     * Retrieves all decoders (regardless of topic)
     * @return an array of [[Decoder decoders]]
     */
-  def getDecoders(implicit ec: ExecutionContext) = {
-    $http.get[js.Array[Decoder]]("/api/decoders") map (_.data)
+  def getDecoders = {
+    $http.get[js.Array[Decoder]]("/api/decoders")
   }
 
   /**
@@ -55,8 +54,8 @@ class DecoderService($http: Http) extends Service {
     * @param schemaName the specified schema
     * @return the decoder schema
     */
-  def getDecoderSchema(topic: String, schemaName: String)(implicit ec: ExecutionContext) = {
-    $http.get[DecoderSchema](s"/api/schema/${encodeURI(topic)}/${encodeURI(schemaName)}") map (_.data)
+  def getDecoderSchema(topic: String, schemaName: String) = {
+    $http.get[DecoderSchema](s"/api/schema/${encodeURI(topic)}/${encodeURI(schemaName)}")
   }
 
   /**
@@ -64,7 +63,7 @@ class DecoderService($http: Http) extends Service {
     * @param schema the given schema
     * @return the response code
     */
-  def saveDecoderSchema(schema: DecoderSchema)(implicit ec: ExecutionContext) = {
+  def saveDecoderSchema(schema: DecoderSchema) = {
     $http.post[DecoderSchema](
       url = "/api/schema",
       headers = js.Dictionary("Content-Type" -> "application/json"),
@@ -72,7 +71,7 @@ class DecoderService($http: Http) extends Service {
         topic = schema.topic,
         name = schema.name,
         schemaString = schema.schemaString
-      )) map (_.data)
+      ))
   }
 
 }
