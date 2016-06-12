@@ -110,10 +110,10 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
 
   $scope.loadingStart = () => {
     loading += 1
-    $timeout(() => (), 30.second) // TODO force the loading to end
+    $timeout(() => {}, 30.second) // TODO force the loading to end
   }
 
-  $scope.loadingStop = (promise: js.Promise[js.Any]) => {
+  $scope.loadingStop = (promise: CancellablePromise) => {
     $timeout(() => loading -= 1, 0.5.second)
     ()
   }
@@ -296,12 +296,14 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
     outcome onComplete {
       case Success((topics, brokers, consumers)) =>
         console.info(s"Loaded ${topics.length} topic(s)")
-        val sortedTopics = enrichTopics(topics.sortBy(_.topic))
-        $scope.topic = sortedTopics.find(_.totalMessages > 0).orUndefined
-        $scope.topics = sortedTopics
-        $scope.brokers = brokers
-        $scope.consumers = consumers
-        $scope.consumerGroupCache.clear()
+        $scope.$apply { () =>
+          val sortedTopics = enrichTopics(topics.sortBy(_.topic))
+          $scope.topic = sortedTopics.find(_.totalMessages > 0).orUndefined
+          $scope.topics = sortedTopics
+          $scope.brokers = brokers
+          $scope.consumers = consumers
+          $scope.consumerGroupCache.clear()
+        }
 
         // broadcast the events
         console.log(s"Broadcasting '$REFERENCE_DATA_LOADED' event...")

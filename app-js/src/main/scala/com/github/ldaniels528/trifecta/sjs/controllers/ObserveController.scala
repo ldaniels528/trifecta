@@ -1,10 +1,10 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
-import com.github.ldaniels528.meansjs.util.PromiseHelper._
 import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
 import com.github.ldaniels528.meansjs.angularjs._
 import com.github.ldaniels528.meansjs.angularjs.toaster.Toaster
+import com.github.ldaniels528.meansjs.core.browser.console
+import com.github.ldaniels528.meansjs.util.PromiseHelper._
 import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
@@ -13,7 +13,6 @@ import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.ServerSideEventsService._
 import com.github.ldaniels528.trifecta.sjs.services._
 import org.scalajs.dom
-import com.github.ldaniels528.meansjs.core.browser.console
 import org.scalajs.jquery.jQuery
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -154,6 +153,8 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
   $scope.messageFinderPopup = () => {
     messageSearchSvc.finderDialog() onComplete {
       case Success(form) =>
+        console.log(s"form = ${angular.toJson(form)}")
+
         // perform the validation of the form
         if (form.topic.isEmpty) $scope.addErrorMessage("No topic selected")
         else if (form.criteria.isEmpty) $scope.addErrorMessage("No criteria specified")
@@ -169,7 +170,7 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
             querySvc.findOne(topic, criteria) onComplete {
               case Success(message) =>
                 //loadingDialog.close(new js.Object())
-                $scope.message = message
+                $scope.$apply(() => $scope.message = message)
 
                 // find the topic and partition
                 for {

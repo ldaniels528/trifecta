@@ -3,6 +3,7 @@ package com.github.ldaniels528.trifecta.sjs.controllers
 import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
 import com.github.ldaniels528.meansjs.angularjs._
 import com.github.ldaniels528.meansjs.angularjs.toaster.Toaster
+import com.github.ldaniels528.meansjs.core.browser.console
 import com.github.ldaniels528.meansjs.util.PromiseHelper._
 import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
@@ -11,7 +12,6 @@ import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.QueryService
 import com.github.ldaniels528.trifecta.sjs.util.NamingUtil
 import org.scalajs.dom
-import com.github.ldaniels528.meansjs.core.browser.console
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -121,10 +121,12 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
           if (mySavedQuery.results.isEmpty) mySavedQuery.results = emptyArray[QueryRow]
           // TODO what's going on with this?
           //mySavedQuery.results.foreach(_.push(mySavedResult))
-          mySavedQuery.savedResult = mySavedResult
+          $scope.$apply(() => mySavedQuery.savedResult = mySavedResult)
         case Failure(e) =>
-          mySavedQuery.running = false
-          $scope.addErrorMessage(e.displayMessage)
+          $scope.$apply { () =>
+            mySavedQuery.running = false
+            $scope.addErrorMessage(e.displayMessage)
+          }
       }
     }
   }
@@ -135,7 +137,7 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
       loadQueriesByTopic(collection) onComplete {
         case Success(_) =>
         case Failure(e) =>
-          $scope.addErrorMessage(e.displayMessage)
+          $scope.$apply(() => $scope.addErrorMessage(e.displayMessage))
       }
     }
   }

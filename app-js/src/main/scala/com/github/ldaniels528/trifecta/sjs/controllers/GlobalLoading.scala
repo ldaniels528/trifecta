@@ -15,9 +15,9 @@ import scala.scalajs.js
 trait GlobalLoading extends js.Object {
   self: Scope =>
 
-  var isLoading: js.Function0[Boolean]
-  var loadingStart: js.Function0[js.Promise[js.Any]]
-  var loadingStop: js.Function1[js.Promise[js.Any], Unit]
+  var isLoading: js.Function0[Boolean] = js.native
+  var loadingStart: js.Function0[CancellablePromise] = js.native
+  var loadingStop: js.Function1[CancellablePromise, Unit] = js.native
 
 }
 
@@ -34,6 +34,7 @@ object GlobalLoading {
     */
   implicit class LoadingEnrichmentA[T](val task: Future[T]) extends AnyVal {
 
+    @inline
     def withGlobalLoading(implicit scope: GlobalLoading) = {
       val promise = scope.loadingStart()
       task onComplete { _ =>
@@ -50,6 +51,7 @@ object GlobalLoading {
     */
   implicit class LoadingEnrichmentB[T <: js.Any](val response: HttpResponse[T]) extends AnyVal {
 
+    @inline
     def withGlobalLoading(implicit scope: GlobalLoading) = {
       val promise = scope.loadingStart()
       val task = response.toFuture

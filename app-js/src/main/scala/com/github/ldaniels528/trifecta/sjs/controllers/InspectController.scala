@@ -2,6 +2,7 @@ package com.github.ldaniels528.trifecta.sjs.controllers
 
 import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
 import com.github.ldaniels528.meansjs.angularjs._
+import com.github.ldaniels528.meansjs.core.browser.console
 import com.github.ldaniels528.meansjs.util.PromiseHelper._
 import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
@@ -9,7 +10,6 @@ import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.{TopicService, ZookeeperService}
 import org.scalajs.dom
-import com.github.ldaniels528.meansjs.core.browser.console
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -122,8 +122,10 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
       topic.loadingConsumers = true
       topicSvc.getConsumerGroups(topic.topic).withGlobalLoading.withTimer("Retrieving consumers by topic") onComplete {
         case Success(consumerGroups) =>
-          topic.loadingConsumers = false
-          updateConsumerGroups(consumerGroups)
+          $scope.$apply { () =>
+            topic.loadingConsumers = false
+            updateConsumerGroups(consumerGroups)
+          }
         case Failure(e) =>
           topic.loadingConsumers = false
           $scope.addErrorMessage(e.displayMessage)
@@ -166,11 +168,15 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
       item.loading = true
       zookeeperSvc.getZkPath(item.path).withGlobalLoading.withTimer("Retrieving Zookeeper path") onComplete {
         case Success(zkItems) =>
-          item.loading = false
-          item.children = zkItems
+          $scope.$apply { () =>
+            item.loading = false
+            item.children = zkItems
+          }
         case Failure(e) =>
-          item.loading = false
-          errorHandler(e.displayMessage)
+          $scope.$apply { () =>
+            item.loading = false
+            errorHandler(e.displayMessage)
+          }
       }
     }
   }
@@ -182,12 +188,14 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
     } {
       zookeeperSvc.getZkData(path, format).withGlobalLoading.withTimer("Retrieving Zookeeper data") onComplete {
         case Success(data) =>
-          $scope.zkItem.foreach(_.data = data)
-          if (format == "auto") {
-            $scope.selected.format = data.`type`
+          $scope.$apply { () =>
+            $scope.zkItem.foreach(_.data = data)
+            if (format == "auto") {
+              $scope.selected.format = data.`type`
+            }
           }
         case Failure(e) =>
-          errorHandler(e.displayMessage)
+          $scope.$apply(() => errorHandler(e.displayMessage))
       }
     }
   }
@@ -196,12 +204,16 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
     item.loading = true
     zookeeperSvc.getZkInfo(item.path).withGlobalLoading.withTimer("Retrieving Zookeeper item") onComplete {
       case Success(itemInfo) =>
-        item.loading = false
-        //$scope.selected.format = $scope.formats[0]
-        $scope.zkItem = itemInfo
+        $scope.$apply { () =>
+          item.loading = false
+          //$scope.selected.format = $scope.formats[0]
+          $scope.zkItem = itemInfo
+        }
       case Failure(e) =>
-        item.loading = false
-        errorHandler(e.displayMessage)
+        $scope.$apply { () =>
+          item.loading = false
+          errorHandler(e.displayMessage)
+        }
     }
   }
 
@@ -212,11 +224,15 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
       topicSvc.getReplicas(topic.topic).withGlobalLoading.withTimer("Retrieving replicas") onComplete {
         case Success(replicas) =>
           $timeout(() => topic.loading = false, 0.5.seconds)
-          topic.replicas = replicas
-          replicas.foreach(r => r.inSyncPct = computeInSyncPct(r))
+          $scope.$apply { () =>
+            topic.replicas = replicas
+            replicas.foreach(r => r.inSyncPct = computeInSyncPct(r))
+          }
         case Failure(e) =>
-          topic.loading = false
-          $scope.addErrorMessage(e.displayMessage)
+          $scope.$apply { () =>
+            topic.loading = false
+            $scope.addErrorMessage(e.displayMessage)
+          }
       }
     }
   }
