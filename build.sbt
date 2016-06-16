@@ -149,18 +149,16 @@ lazy val trifecta_js = (project in file("app-js"))
     persistLauncher in Test := false,
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
+    resolvers += "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2",
     libraryDependencies ++= Seq(
       "com.github.ldaniels528" %%% "scalajs-angularjs-core" % meanjsVersion,
       "com.github.ldaniels528" %%% "scalajs-angularjs-animate" % meanjsVersion,
       "com.github.ldaniels528" %%% "scalajs-angularjs-cookies" % meanjsVersion,
-      "com.github.ldaniels528" %%% "scalajs-angularjs-facebook" % meanjsVersion,
       "com.github.ldaniels528" %%% "scalajs-angularjs-nervgh-fileupload" % meanjsVersion,
       "com.github.ldaniels528" %%% "scalajs-angularjs-sanitize" % meanjsVersion,
       "com.github.ldaniels528" %%% "scalajs-angularjs-toaster" % meanjsVersion,
       "com.github.ldaniels528" %%% "scalajs-angularjs-ui-bootstrap" % meanjsVersion,
       "com.github.ldaniels528" %%% "scalajs-angularjs-ui-router" % meanjsVersion,
-      "com.github.ldaniels528" %%% "scalajs-social-facebook" % meanjsVersion,
-      "com.github.ldaniels528" %%% "scalajs-social-linkedin" % meanjsVersion,
       //
       // ScalaJS
       "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11"),
