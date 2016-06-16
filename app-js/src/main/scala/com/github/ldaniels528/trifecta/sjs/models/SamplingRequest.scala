@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
+import org.scalajs.nodejs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 

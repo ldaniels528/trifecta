@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import com.github.ldaniels528.meansjs.angularjs.Service
-import com.github.ldaniels528.meansjs.angularjs.uibootstrap.{Modal, ModalOptions}
-import com.github.ldaniels528.meansjs.core.browser.console
+import org.scalajs.angularjs.Service
+import org.scalajs.angularjs.uibootstrap.{Modal, ModalOptions}
+import org.scalajs.dom.browser.console
 import com.github.ldaniels528.trifecta.sjs.controllers.MessageSearchForm
 
 /**

@@ -1,16 +1,16 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
-import com.github.ldaniels528.meansjs.angularjs._
-import com.github.ldaniels528.meansjs.angularjs.toaster.Toaster
-import com.github.ldaniels528.meansjs.core.browser.console
-import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.RootScope
 import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware.REFERENCE_DATA_LOADED
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.ServerSideEventsService._
 import com.github.ldaniels528.trifecta.sjs.services.TopicService
+import org.scalajs.angularjs.AngularJsHelper._
+import org.scalajs.angularjs._
+import org.scalajs.angularjs.toaster.Toaster
 import org.scalajs.dom
+import org.scalajs.dom.browser.console
+import org.scalajs.nodejs.util.ScalaJsHelper._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps

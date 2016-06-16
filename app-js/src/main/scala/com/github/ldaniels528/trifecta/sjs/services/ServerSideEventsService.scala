@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import com.github.ldaniels528.meansjs.angularjs._
-import com.github.ldaniels528.meansjs.angularjs.http.Http
-import com.github.ldaniels528.meansjs.core.browser.console
+import org.scalajs.angularjs._
+import org.scalajs.angularjs.http.Http
+import org.scalajs.dom.browser.console
 import com.github.ldaniels528.trifecta.sjs.RootScope
 import com.github.ldaniels528.trifecta.sjs.models._
 import org.scalajs.dom.Event

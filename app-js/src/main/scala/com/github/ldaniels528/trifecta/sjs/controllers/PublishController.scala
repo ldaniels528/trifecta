@@ -1,14 +1,14 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
-import com.github.ldaniels528.meansjs.angularjs._
-import com.github.ldaniels528.meansjs.angularjs.toaster.Toaster
-import com.github.ldaniels528.meansjs.util.PromiseHelper._
-import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.models.MessageBlob
 import com.github.ldaniels528.trifecta.sjs.services.{MessageDataService, TopicService}
-import com.github.ldaniels528.meansjs.core.browser.console
+import org.scalajs.angularjs.AngularJsHelper._
+import org.scalajs.angularjs._
+import org.scalajs.angularjs.toaster.Toaster
+import org.scalajs.dom.browser.console
+import org.scalajs.nodejs.util.PromiseHelper._
+import org.scalajs.nodejs.util.ScalaJsHelper._
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js

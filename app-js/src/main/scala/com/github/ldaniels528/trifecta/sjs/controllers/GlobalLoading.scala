@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.meansjs.angularjs.Scope
-import com.github.ldaniels528.meansjs.angularjs.http.HttpResponse
+import org.scalajs.angularjs.Scope
+import org.scalajs.angularjs.http.HttpResponse
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

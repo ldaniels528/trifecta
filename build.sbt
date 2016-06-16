@@ -2,7 +2,7 @@ import sbt.Keys._
 import sbt._
 
 val appVersion = "0.21.1"
-val meanjsVersion = "0.1.15"
+val meanjsVersion = "0.2.0"
 
 val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"
@@ -150,17 +150,17 @@ lazy val trifecta_js = (project in file("app-js"))
     resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
     libraryDependencies ++= Seq(
-      "com.github.ldaniels528" %%% "means-angularjs-core" % meanjsVersion,
-      "com.github.ldaniels528" %%% "means-angularjs-animate" % meanjsVersion,
-      "com.github.ldaniels528" %%% "means-angularjs-cookies" % meanjsVersion,
-      "com.github.ldaniels528" %%% "means-angularjs-facebook" % meanjsVersion,
-      "com.github.ldaniels528" %%% "means-angularjs-nervgh-fileupload" % meanjsVersion,
-      "com.github.ldaniels528" %%% "means-angularjs-sanitize" % meanjsVersion,
-      "com.github.ldaniels528" %%% "means-angularjs-toaster" % meanjsVersion,
-      "com.github.ldaniels528" %%% "means-angularjs-ui-bootstrap" % meanjsVersion,
-      "com.github.ldaniels528" %%% "means-angularjs-ui-router" % meanjsVersion,
-      "com.github.ldaniels528" %%% "means-social-facebook" % meanjsVersion,
-      "com.github.ldaniels528" %%% "means-social-linkedin" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-angularjs-core" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-angularjs-animate" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-angularjs-cookies" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-angularjs-facebook" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-angularjs-nervgh-fileupload" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-angularjs-sanitize" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-angularjs-toaster" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-angularjs-ui-bootstrap" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-angularjs-ui-router" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-social-facebook" % meanjsVersion,
+      "com.github.ldaniels528" %%% "scalajs-social-linkedin" % meanjsVersion,
       //
       // ScalaJS
       "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11"),

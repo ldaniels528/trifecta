@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import com.github.ldaniels528.meansjs.angularjs.Service
-import com.github.ldaniels528.meansjs.angularjs.http._
-import com.github.ldaniels528.meansjs.core.browser.encodeURI
+import org.scalajs.angularjs.Service
+import org.scalajs.angularjs.http._
+import org.scalajs.dom.browser.encodeURI
 import com.github.ldaniels528.trifecta.sjs.models._
 
 import scala.scalajs.js

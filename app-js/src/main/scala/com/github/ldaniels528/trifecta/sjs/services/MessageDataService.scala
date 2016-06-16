@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import com.github.ldaniels528.meansjs.angularjs.Service
-import com.github.ldaniels528.meansjs.angularjs.http.Http
-import com.github.ldaniels528.meansjs.core.browser.encodeURI
+import org.scalajs.angularjs.Service
+import org.scalajs.angularjs.http.Http
+import org.scalajs.dom.browser.encodeURI
 import com.github.ldaniels528.trifecta.sjs.models.{Message, PublishMessageResponse}
 
 import scala.scalajs.js

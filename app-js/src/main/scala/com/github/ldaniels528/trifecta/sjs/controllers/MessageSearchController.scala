@@ -1,12 +1,12 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.meansjs.angularjs.AngularJsHelper._
-import com.github.ldaniels528.meansjs.angularjs.uibootstrap.ModalInstance
-import com.github.ldaniels528.meansjs.angularjs.{Controller, Scope, injected}
-import com.github.ldaniels528.meansjs.core.browser.console
-import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.models.TopicDetails
 import com.github.ldaniels528.trifecta.sjs.services.TopicService
+import org.scalajs.angularjs.AngularJsHelper._
+import org.scalajs.angularjs.uibootstrap.ModalInstance
+import org.scalajs.angularjs.{Controller, Scope, injected}
+import org.scalajs.dom.browser.console
+import org.scalajs.nodejs.util.ScalaJsHelper._
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js

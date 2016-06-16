@@ -1,9 +1,9 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import com.github.ldaniels528.meansjs.angularjs.Service
-import com.github.ldaniels528.meansjs.angularjs.http.Http
-import com.github.ldaniels528.meansjs.core.browser.encodeURI
-import com.github.ldaniels528.meansjs.util.ScalaJsHelper._
+import org.scalajs.angularjs.Service
+import org.scalajs.angularjs.http.Http
+import org.scalajs.dom.browser.encodeURI
+import org.scalajs.nodejs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.models.{Decoder, DecoderSchema}
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
