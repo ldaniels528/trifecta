@@ -82,7 +82,7 @@ lazy val trifecta_core = (project in file("."))
       // Avro Dependencies
       "com.twitter" %% "bijection-core" % twitterBijection,
       "com.twitter" %% "bijection-avro" % twitterBijection,
-      "org.apache.avro" % "avro" % "1.8.0",
+      "org.apache.avro" % "avro-compiler" % "1.8.1",
       //
       // Kafka and Zookeeper Dependencies
       "org.apache.curator" % "curator-framework" % apacheCurator exclude("org.slf4j", "slf4j-log4j12"),
