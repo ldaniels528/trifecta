@@ -149,7 +149,7 @@ class TxConfig(val configProps: Properties) {
 
   private def getDecoderFromFile(topic: String, decoderFile: File): TxDecoder = {
     cachedDecoders.getOrElseUpdate(decoderFile, {
-      val schema = Source.fromFile(decoderFile).getLines().mkString
+      val schema = Source.fromFile(decoderFile).getLines().mkString("\n")
       Try {
         TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Left(AvroDecoder(decoderFile.getName, schema)))
       } match {
