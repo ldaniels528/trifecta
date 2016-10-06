@@ -1,5 +1,7 @@
 package com.github.ldaniels528.trifecta.io.avro
 
+import java.io.StringReader
+
 import com.github.ldaniels528.trifecta.io.avro.AvroCodec._
 import com.github.ldaniels528.trifecta.io.json.JsonTranscoding
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
@@ -9,6 +11,7 @@ import com.twitter.bijection.avro.GenericAvroCodecs
 import net.liftweb.json._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.compiler.idl.Idl
 
 import scala.util.Try
 
@@ -59,6 +62,25 @@ with JsonTranscoding with MessageEvaluation {
  */
 object AvroDecoder {
 
-  def apply(label: String, schemaString: String) = new AvroDecoder(label, new Schema.Parser().parse(schemaString))
+  def apply(label: String, schemaString: String) = {
+    val suffix = label.split("\\.").last
+    suffix match {
+      case "avsc" =>
+        new AvroDecoder(label, new Schema.Parser().parse(schemaString))
+      case "avdl" =>
+        val name = label.split("\\.").init.mkString("").trim
+        val rdr = new StringReader(schemaString)
+        val idlParser = new Idl(rdr)
+        val protocol = idlParser.CompilationUnit()
+        import collection.JavaConverters._
+        val schemas = protocol.getTypes.asScala.toSeq
+        rdr.close()
+        val mainSchema = schemas.find(_.getName == name).getOrElse(
+          throw new IllegalArgumentException(s"File $label does not contain a schema called $name"))
+        new AvroDecoder(label, mainSchema)
+      case _ =>
+        throw new IllegalArgumentException(s"Suffix $suffix is not supported - only .avsc and .avdl are recognized")
+    }
+  }
 
 }

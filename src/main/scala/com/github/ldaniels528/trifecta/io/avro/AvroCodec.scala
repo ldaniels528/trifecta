@@ -36,7 +36,7 @@ object AvroCodec {
   def loadDecoder(url: URL): AvroDecoder = url.openStream() use (loadDecoder(url.toURI.toString, _))
 
   def loadDecoder(name: String, in: InputStream): AvroDecoder = {
-    val decoder = AvroDecoder(name, schemaString = Source.fromInputStream(in).getLines().mkString)
+    val decoder = AvroDecoder(name, schemaString = Source.fromInputStream(in).getLines().mkString("\n"))
     decoders(name) = decoder
     decoder
   }
