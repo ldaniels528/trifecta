@@ -191,6 +191,11 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.21.2
+* Added support for Kafka 0.10.0.0
+* Added support for AVDL
+* Updated to use MEANS.js 0.2.3.0 (Scalajs-Nodejs)
+
 #### v0.20.0
 * Trifecta UI (CLI version)
     * Miscellaneous bug fixes
