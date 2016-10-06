@@ -1,14 +1,14 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.21.1"
-val meanjsVersion = "0.2.0"
+val appVersion = "0.21.2"
+val meanjsVersion = "0.2.3.0"
 
 val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"
 val apacheCurator = "3.1.0"
 val casbahVersion = "3.1.1"
-val kafkaVersion = "0.9.0.1"
+val kafkaVersion = "0.10.0.0"
 val paradiseVersion = "2.1.0"
 val playVersion = "2.4.6"
 val twitterBijection = "0.9.2"
@@ -147,9 +147,8 @@ lazy val trifecta_js = (project in file("app-js"))
     relativeSourceMaps := true,
     persistLauncher := true,
     persistLauncher in Test := false,
-    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
-    resolvers += "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2",
+    resolvers += Resolver.sonatypeRepo("releases"),
     libraryDependencies ++= Seq(
       "com.github.ldaniels528" %%% "scalajs-angularjs-core" % meanjsVersion,
       "com.github.ldaniels528" %%% "scalajs-angularjs-animate" % meanjsVersion,

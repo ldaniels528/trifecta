@@ -8,8 +8,9 @@ import org.scalajs.angularjs.AngularJsHelper._
 import org.scalajs.angularjs._
 import org.scalajs.dom
 import org.scalajs.dom.browser.console
-import org.scalajs.nodejs.util.PromiseHelper._
 import org.scalajs.nodejs.util.ScalaJsHelper._
+import org.scalajs.sjs.JsUnderOrHelper._
+import org.scalajs.sjs.PromiseHelper._
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

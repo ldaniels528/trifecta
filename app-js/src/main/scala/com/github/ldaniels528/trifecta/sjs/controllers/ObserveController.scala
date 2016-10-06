@@ -1,19 +1,19 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import org.scalajs.angularjs.AngularJsHelper._
-import org.scalajs.angularjs._
-import org.scalajs.angularjs.toaster.Toaster
-import org.scalajs.dom.browser.console
-import org.scalajs.nodejs.util.PromiseHelper._
-import org.scalajs.nodejs.util.ScalaJsHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
 import com.github.ldaniels528.trifecta.sjs.models.SamplingStatus._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.ServerSideEventsService._
 import com.github.ldaniels528.trifecta.sjs.services._
+import org.scalajs.angularjs.AngularJsHelper._
+import org.scalajs.angularjs._
+import org.scalajs.angularjs.toaster.Toaster
 import org.scalajs.dom
+import org.scalajs.dom.browser.console
 import org.scalajs.jquery.jQuery
+import org.scalajs.sjs.JsUnderOrHelper._
+import org.scalajs.sjs.PromiseHelper._
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
