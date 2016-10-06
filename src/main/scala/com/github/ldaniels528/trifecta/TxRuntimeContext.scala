@@ -90,8 +90,9 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
 
   /**
     * Returns the output handler for the given output URL
-    * @param url the given output URL (e.g. "es:/quotes/$exchange/$symbol")
+    * @param url the given output URL
     * @return an option of an [[MessageOutputSource]]
+    * @example {{{ getOutputHandler("es:/quotes/$exchange/$symbol") }}}
     */
   def getOutputHandler(url: String): Option[MessageOutputSource] = {
     // get just the prefix

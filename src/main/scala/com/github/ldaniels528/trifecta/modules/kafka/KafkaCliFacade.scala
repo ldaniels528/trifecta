@@ -301,6 +301,7 @@ class KafkaCliFacade(config: TxConfig) {
 
   def shutdown(): Unit = {
     Try(publisher_?.foreach(_.close()))
+    ()
   }
 
 }
