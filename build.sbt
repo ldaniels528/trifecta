@@ -1,8 +1,8 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.21.2"
-val meanjsVersion = "0.2.3.0"
+val appVersion = "0.21.3"
+val meanjsVersion = "0.2.3.1"
 
 val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"
@@ -126,9 +126,6 @@ lazy val trifecta_cli = (project in file("app-cli"))
       case x => MergeStrategy.first
     }
     },
-    resolvers += "google-sedis-fix" at "http://pk11-scratch.googlecode.com/svn/trunk",
-    resolvers += "clojars" at "https://clojars.org/repo",
-    resolvers += "conjars" at "http://conjars.org/repo",
     libraryDependencies ++= testDependencies ++ Seq(
       //
       // General Scala Dependencies
@@ -191,7 +188,6 @@ lazy val trifecta_ui = (project in file("app-play"))
     compile in Compile <<=
       (compile in Compile) dependsOn (fastOptJS in(trifecta_js, Compile)),
     ivyScala := ivyScala.value map (_.copy(overrideScalaVersion = true)),
-    resolvers += "google-sedis-fix" at "http://pk11-scratch.googlecode.com/svn/trunk",
     libraryDependencies ++= Seq(cache, filters, json, ws,
       //
       // Web Jar dependencies
