@@ -1,14 +1,14 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.21.3"
+val appVersion = "0.22.0"
 val meanjsVersion = "0.2.3.1"
 
 val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"
 val apacheCurator = "3.1.0"
 val casbahVersion = "3.1.1"
-val kafkaVersion = "0.10.0.0"
+val kafkaVersion = "0.8.2.0"
 val paradiseVersion = "2.1.0"
 val playVersion = "2.4.6"
 val twitterBijection = "0.9.2"
@@ -148,7 +148,7 @@ lazy val trifecta_js = (project in file("app-js"))
     relativeSourceMaps := true,
     persistLauncher := true,
     persistLauncher in Test := false,
-    addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
+    //addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
     resolvers += Resolver.sonatypeRepo("releases"),
     libraryDependencies ++= Seq(
       "com.github.ldaniels528" %%% "scalajs-angularjs-core" % meanjsVersion,

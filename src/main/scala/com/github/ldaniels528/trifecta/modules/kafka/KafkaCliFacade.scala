@@ -19,9 +19,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /**
- * Kafka CLI Facade
- * @author lawrence.daniels@gmail.com
- */
+  * Kafka CLI Facade
+  * @author lawrence.daniels@gmail.com
+  */
 class KafkaCliFacade(config: TxConfig) {
   private var publisher_? : Option[KafkaPublisher] = None
 
@@ -29,40 +29,40 @@ class KafkaCliFacade(config: TxConfig) {
   KafkaMicroConsumer.rootKafkaPath = config.kafkaRootPath
 
   /**
-   * Returns a collection of brokers
-   * @param zk the given [[ZKProxy]] instance
-   * @return a collection of brokers
-   */
+    * Returns a collection of brokers
+    * @param zk the given [[ZKProxy]] instance
+    * @return a collection of brokers
+    */
   def brokers(implicit zk: ZKProxy): Seq[Broker] = {
     KafkaMicroConsumer.getBrokerList map (b => Broker(b.host, b.port))
   }
 
   /**
-   * Commits the offset for a given topic and group ID
-   */
+    * Commits the offset for a given topic and group ID
+    */
   def commitOffset(topic: String, partition: Int, groupId: String, offset: Long, metadata: Option[String] = None)(implicit zk: ZKProxy) {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (
       _.commitOffsets(groupId, offset, metadata getOrElse "N/A"))
   }
 
   /**
-   * Counts the messages matching a given condition [references cursor]
-   */
+    * Counts the messages matching a given condition [references cursor]
+    */
   def countMessages(topic: String, conditions: Seq[Condition], decoder: Option[MessageDecoder[_]])(implicit zk: ZKProxy, ec: ExecutionContext): Future[Long] = {
     KafkaMicroConsumer.count(topic, brokers, conditions: _*)
   }
 
   /**
-   * Returns the offsets for a given topic and group ID
-   */
+    * Returns the offsets for a given topic and group ID
+    */
   def fetchOffsets(topic: String, partition: Int, groupId: String)(implicit zk: ZKProxy): Option[Long] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetchOffsets(groupId))
   }
 
   /**
-   * Finds messages that corresponds to the given criteria and exports them to a topic
-   * @example kfind frequency > 5000 -o topic:highFrequency.quotes
-   */
+    * Finds messages that corresponds to the given criteria and exports them to a topic
+    * @example kfind frequency > 5000 -o topic:highFrequency.quotes
+    */
   def findMessages(topic: String, decoder: Option[MessageDecoder[_]], conditions: Seq[Condition], outputHandler: MessageOutputSource)(implicit zk: ZKProxy, ec: ExecutionContext): AsyncIO = {
     // define the counter
     val counter = IOCounter(System.currentTimeMillis())
@@ -89,8 +89,8 @@ class KafkaCliFacade(config: TxConfig) {
   }
 
   /**
-   * Retrieves the list of Kafka consumers
-   */
+    * Retrieves the list of Kafka consumers
+    */
   def getConsumers(consumerPrefix: Option[String], topicPrefix: Option[String], includePartitionManager: Boolean)(implicit zk: ZKProxy, ec: ExecutionContext): Future[List[ConsumerDelta]] = {
     // get the Kafka consumer groups
     val consumersCG = Future {
@@ -99,7 +99,7 @@ class KafkaCliFacade(config: TxConfig) {
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
         ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta, c.lastModified.map(new Date(_)))
       }
-    }
+    } recover { case e => Nil }
 
     // get the Zookeeper consumer groups
     val consumersZK = Future {
@@ -108,7 +108,7 @@ class KafkaCliFacade(config: TxConfig) {
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
         ConsumerDelta(c.consumerId, c.topic, c.partition, c.offset, topicOffset, delta, c.lastModified.map(new Date(_)))
       }
-    }
+    } recover { case e => Nil }
 
     // get the Kafka Spout consumers (Partition Manager)
     val consumersPM = if (!includePartitionManager) Future.successful(Nil)
@@ -118,7 +118,7 @@ class KafkaCliFacade(config: TxConfig) {
         val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
         ConsumerDelta(c.topologyName, c.topic, c.partition, c.offset, topicOffset, delta, c.lastModified.map(new Date(_)))
       }
-    }
+    } recover { case e => Nil }
 
     // combine the futures for the two lists
     (for {
@@ -134,25 +134,25 @@ class KafkaCliFacade(config: TxConfig) {
   }
 
   /**
-   * Returns the first offset for a given topic
-   */
+    * Returns the first offset for a given topic
+    */
   def getFirstOffset(topic: String, partition: Int)(implicit zk: ZKProxy): Option[Long] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.getFirstOffset)
   }
 
   /**
-   * Returns the last offset for a given topic
-   */
+    * Returns the last offset for a given topic
+    */
   def getLastOffset(topic: String, partition: Int)(implicit zk: ZKProxy): Option[Long] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.getLastOffset)
   }
 
   /**
-   * Decodes the given message
-   * @param messageData the given option of a message
-   * @param aDecoder the given message decoder
-   * @return the decoded message
-   */
+    * Decodes the given message
+    * @param messageData the given option of a message
+    * @param aDecoder    the given message decoder
+    * @return the decoded message
+    */
   private def decodeMessage(messageData: Option[BinaryMessage], aDecoder: MessageDecoder[_]): Option[Seq[AvroRecord]] = {
     // only Avro decoders are supported
     val decoder: AvroDecoder = aDecoder match {
@@ -177,8 +177,8 @@ class KafkaCliFacade(config: TxConfig) {
   }
 
   /**
-   * Returns the message key for a given topic partition and offset
-   */
+    * Returns the message key for a given topic partition and offset
+    */
   def getMessageKey(topic: String, partition: Int, offset: Long, fetchSize: Int)(implicit zk: ZKProxy): Option[Array[Byte]] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
       consumer.fetch(offset)(fetchSize).headOption map (_.key)
@@ -186,8 +186,8 @@ class KafkaCliFacade(config: TxConfig) {
   }
 
   /**
-   * Returns the size of the message for a given topic partition and offset
-   */
+    * Returns the size of the message for a given topic partition and offset
+    */
   def getMessageSize(topic: String, partition: Int, offset: Long, fetchSize: Int)(implicit zk: ZKProxy): Option[Int] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use {
       _.fetch(offset.toLong)(fetchSize).headOption map (_.message.length)
@@ -195,8 +195,8 @@ class KafkaCliFacade(config: TxConfig) {
   }
 
   /**
-   * Returns the minimum and maximum message size for a given topic partition and offset range
-   */
+    * Returns the minimum and maximum message size for a given topic partition and offset range
+    */
   def getMessageMinMaxSize(topic: String, partition: Int, startOffset: Long, endOffset: Long, fetchSize: Int)(implicit zk: ZKProxy): Seq[MessageMaxMin] = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
       val offsets = startOffset.toLong to endOffset.toLong
@@ -206,12 +206,12 @@ class KafkaCliFacade(config: TxConfig) {
   }
 
   /**
-   * Generates statistics for the partition range of a given topic
-   * @param topic the given topic (e.g. com.shocktrade.quotes.realtime)
-   * @param partition0 the starting partition
-   * @param partition1 the ending partition
-   * @return an iteration of statistics
-   */
+    * Generates statistics for the partition range of a given topic
+    * @param topic      the given topic (e.g. com.shocktrade.quotes.realtime)
+    * @param partition0 the starting partition
+    * @param partition1 the ending partition
+    * @return an iteration of statistics
+    */
   def getStatisticsData(topic: String, partition0: Int, partition1: Int)(implicit zk: ZKProxy): Iterable[TopicOffsets] = {
     for {
       partition <- partition0 to partition1
@@ -221,8 +221,8 @@ class KafkaCliFacade(config: TxConfig) {
   }
 
   /**
-   * Returns a list of topics
-   */
+    * Returns a list of topics
+    */
   def getTopics(prefix: Option[String], detailed: Boolean)(implicit zk: ZKProxy): Either[Seq[TopicItem], Seq[TopicItemCompact]] = {
     // get the raw topic data
     val topicData = KafkaMicroConsumer.getTopicList(brokers)
@@ -255,18 +255,18 @@ class KafkaCliFacade(config: TxConfig) {
   }
 
   /**
-   * Returns a tuple containing the minimum and maximum partition indices respectively for the given topic
-   * @param topic the given topic name
-   * @return a tuple containing the minimum and maximum partition indices
-   */
+    * Returns a tuple containing the minimum and maximum partition indices respectively for the given topic
+    * @param topic the given topic name
+    * @return a tuple containing the minimum and maximum partition indices
+    */
   def getTopicPartitionRange(topic: String)(implicit zk: ZKProxy): Option[(Int, Int)] = {
     val partitions = KafkaMicroConsumer.getTopicPartitions(topic)
     if (partitions.isEmpty) None else Option((partitions.min, partitions.max))
   }
 
   /**
-   * Publishes the given message to the given topic
-   */
+    * Publishes the given message to the given topic
+    */
   def publishMessage(topic: String, key: Array[Byte], message: Array[Byte])(implicit zk: ZKProxy): Unit = {
     // if the publisher has not been created ...
     if (publisher_?.isEmpty) publisher_? = Option {
@@ -280,8 +280,8 @@ class KafkaCliFacade(config: TxConfig) {
   }
 
   /**
-   * Sets the offset of a consumer group ID to zero for all partitions
-   */
+    * Sets the offset of a consumer group ID to zero for all partitions
+    */
   def resetConsumerGroup(topic: String, groupId: String)(implicit zk: ZKProxy): Unit = {
     // get the partition range
     val partitions = KafkaMicroConsumer.getTopicPartitions(topic)
@@ -307,9 +307,9 @@ class KafkaCliFacade(config: TxConfig) {
 }
 
 /**
- * Kafka Facade Singleton
- * @author lawrence.daniels@gmail.com
- */
+  * Kafka Facade Singleton
+  * @author lawrence.daniels@gmail.com
+  */
 object KafkaCliFacade {
 
   case class AvroRecord(field: String, value: Any, `type`: String)

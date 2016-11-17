@@ -35,7 +35,9 @@ class KafkaController() extends Controller {
   def getBrokerDetails = Action {
     Try(WebConfig.facade.getBrokerDetails) match {
       case Success(details) => Ok(Json.toJson(details))
-      case Failure(e) => InternalServerError(e.getMessage)
+      case Failure(e) =>
+        e.printStackTrace()
+        InternalServerError(e.getMessage)
     }
   }
 
@@ -103,7 +105,9 @@ class KafkaController() extends Controller {
   def getTopicDeltas = Action {
     Try(WebConfig.facade.getTopicDeltas) match {
       case Success(deltas) => Ok(Json.toJson(deltas))
-      case Failure(e) => InternalServerError(e.getMessage)
+      case Failure(e) =>
+        e.printStackTrace()
+        InternalServerError(e.getMessage)
     }
   }
 
@@ -118,6 +122,7 @@ class KafkaController() extends Controller {
     WebConfig.facade.getTopicSummaries map { summaries =>
       Ok(Json.toJson(summaries))
     } recover { case e: Throwable =>
+      e.printStackTrace()
       InternalServerError(e.getMessage)
     }
   }

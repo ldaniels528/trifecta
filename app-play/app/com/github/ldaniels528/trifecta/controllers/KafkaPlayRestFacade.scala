@@ -263,10 +263,10 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * @return the Kafka-Zookeeper consumer groups
     */
   private def getConsumerGroupsZookeeper(topicPrefix: Option[String] = None)(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
-    KafkaMicroConsumer.getConsumerFromZookeeper() map { c =>
-      val topicOffset = Try(getLastOffset(c.topic, c.partition)) getOrElse None
-      val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-      ConsumerDetailJs(c.consumerId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
+    KafkaMicroConsumer.getConsumerFromZookeeper() map { cd =>
+      val topicOffset = Try(getLastOffset(cd.topic, cd.partition)) getOrElse None
+      val delta = topicOffset map (offset => Math.max(0L, offset - cd.offset))
+      ConsumerDetailJs(cd.consumerId, cd.topic, cd.partition, cd.offset, topicOffset, cd.lastModified, delta, rate = None)
     }
   }
 

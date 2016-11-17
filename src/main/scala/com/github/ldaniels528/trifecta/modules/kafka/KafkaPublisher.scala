@@ -69,7 +69,7 @@ object KafkaPublisher {
       ProducerConfig.ACKS_CONFIG -> "all",
       ProducerConfig.COMPRESSION_TYPE_CONFIG -> "none",
       ProducerConfig.BATCH_SIZE_CONFIG -> (200: Integer),
-      ProducerConfig.MAX_BLOCK_MS_CONFIG -> (15000: Integer),
+      // TODO ProducerConfig.MAX_BLOCK_MS_CONFIG -> (15000: Integer),
       ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG -> "org.apache.kafka.common.serialization.ByteArraySerializer",
       ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG -> "org.apache.kafka.common.serialization.ByteArraySerializer")
     new KafkaPublisher(m.toProps)

@@ -187,12 +187,14 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
       path <- aPath
       format <- aFormat
     } {
+      console.log("path => %s, format = %s", path, format)
       zookeeperSvc.getZkData(path, format).withGlobalLoading.withTimer("Retrieving Zookeeper data") onComplete {
         case Success(data) =>
           $scope.$apply { () =>
             $scope.zkItem.foreach(_.data = data)
             if (format == "auto") {
-              $scope.selected.format = data.`type`
+              console.log("data => %s", angular.toJson(data))
+              data.`type`.foreach($scope.selected.format = _)
             }
           }
         case Failure(e) =>

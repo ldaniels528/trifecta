@@ -11,6 +11,7 @@ import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer._
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.messages.BinaryMessage
 import com.github.ldaniels528.trifecta.messages.logic.Condition
+import com.github.ldaniels528.trifecta.util.TryHelper
 import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
@@ -352,7 +353,7 @@ object KafkaMicroConsumer {
   }
 
   /**
-    * Retrieves the list of boostrap servers as a comma separated string
+    * Retrieves the list of bootstrap servers as a comma separated string
     */
   def getBootstrapServers(implicit zk: ZKProxy) = {
     getBrokerList map (b => s"${b.host}:${b.port}") mkString ","
@@ -393,11 +394,15 @@ object KafkaMicroConsumer {
       props.put("value.deserializer", classOf[StringDeserializer].getName)
 
       new KafkaConsumer[Array[Byte], Array[Byte]](props) use { consumer =>
-        consumer.subscribe(topics)
+        consumer.subscribe(topics: _*)
         consumer.poll(0)
         topicList flatMap { t =>
-          Try(consumer.position(new TopicPartition(t.topic, t.partitionId))).toOption map { offset =>
-            ConsumerDetails(consumerId, t.topic, t.partitionId, offset, lastModified = None)
+          Try(consumer.position(Seq(new TopicPartition(t.topic, t.partitionId)))).toOption match {
+            case Some(mapping) =>
+              mapping map { case (tp, offset) =>
+                ConsumerDetails(consumerId, tp.topic(), tp.partition(), offset, lastModified = None)
+              } toSeq
+            case None => Nil
           }
         }
       }
@@ -410,29 +415,42 @@ object KafkaMicroConsumer {
   def getConsumerFromZookeeper(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
     val basePath = getPrefixedPath("/consumers")
 
-    // start with the list of consumer IDs
-    zk.getChildren(basePath) flatMap { consumerId =>
-      // get the list of topics
-      val offsetPath = s"$basePath/$consumerId/offsets"
-      try {
-        val topics = zk.getChildren(offsetPath).distinct filter (contentFilter(topicPrefix, _))
+    def getConsumerDetailsSet(consumerId: String, topic: String, topicPath: String) = {
+      for {
+        partitionIds <- Try(zk.getChildren(topicPath))
+        consumerDetails <- TryHelper.sequence(partitionIds map { partitionId =>
+          getConsumerDetails(consumerId, topic, partitionId, partitionPath = s"$topicPath/$partitionId")
+        }) map (_.flatten)
+      } yield consumerDetails
+    }
 
-        // get the list of partitions
-        topics flatMap { topic =>
-          val topicPath = s"$offsetPath/$topic"
-          zk.getChildren(topicPath) flatMap { partitionId =>
-            val partitionPath = s"$topicPath/$partitionId"
-            zk.readString(partitionPath) flatMap { offset =>
-              val lastModified = zk.getModificationTime(partitionPath)
-              Try(ConsumerDetails(consumerId, topic, partitionId.toInt, offset.toLong, lastModified)).toOption
-            }
-          }
-        }
-      } catch {
-        case e: Exception =>
-          logger.warn("Failed to retrieve consumers", e)
-          None
-      }
+    def getConsumerDetails(consumerId: String, topic: String, partitionId: String, partitionPath: String) = {
+      for {
+        lastModified <- Try(zk.getModificationTime(partitionPath))
+        offsets <- Try(zk.readString(partitionPath))
+        details = offsets.toSeq.map(offset => ConsumerDetails(consumerId, topic, partitionId.toInt, offset.toLong, lastModified))
+      } yield details
+    }
+
+    // start with the list of consumer IDs
+    val results = for {
+      consumerIds <- Try(zk.getChildren(basePath))
+      outcomes <- TryHelper.sequence(consumerIds map { consumerId =>
+        val offsetPath = s"$basePath/$consumerId/offsets"
+        for {
+          topics <- Try(zk.getChildren(offsetPath).distinct filter (contentFilter(topicPrefix, _)))
+          results <- TryHelper.sequence(topics map { topic =>
+            getConsumerDetailsSet(consumerId, topic, topicPath = s"$offsetPath/$topic")
+          }) map (_.flatten)
+        } yield results
+      }) map (_.flatten)
+    } yield outcomes
+
+    results match {
+      case Success(details) => details
+      case Failure(e) =>
+        logger.error("Error retrieving consumer details", e)
+        Nil
     }
   }
 
@@ -504,20 +522,18 @@ object KafkaMicroConsumer {
           None
         } else {
           // translate the partition meta data into topic information instances
-          tmd.partitionsMetadata flatMap { pmd =>
-            // check for errors
-            if (pmd.errorCode != 0) {
+          tmd.partitionsMetadata flatMap {
+            case pmd if pmd.errorCode != 0 =>
               logger.warn(s"Could not read partition ${tmd.topic}/${pmd.partitionId}, error: ${pmd.errorCode}")
               None
-            } else Some(
-              TopicDetails(
+            case pmd =>
+              Some(TopicDetails(
                 tmd.topic,
                 pmd.partitionId,
                 pmd.leader map (b => Broker(b.host, b.port, b.id)),
                 pmd.replicas map (b => Broker(b.host, b.port, b.id)),
                 pmd.isr map (b => Broker(b.host, b.port, b.id)),
-                tmd.sizeInBytes)
-            )
+                tmd.sizeInBytes))
           }
         }
       }

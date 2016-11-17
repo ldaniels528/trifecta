@@ -8,5 +8,5 @@ import scala.scalajs.js
   */
 @js.native
 trait ZkData extends js.Object {
-  var `type`: String = js.native
+  var `type`: js.UndefOr[String] = js.native
 }
