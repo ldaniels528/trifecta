@@ -1,0 +1,27 @@
+<!-- Message Search: Find Dialog -->
+<script type="text/ng-template" id="message_search_finder.htm">
+    <div class="modal-header">
+        <h4>Find Message</h4>
+    </div>
+    <div class="modal-body">
+        <div class="full_block" style="margin: 10px">
+            <div class="full_block">
+                <span class="header_label">Topic</span>
+                <select ng-model="form.topic" ng-options="t.topic for t in getTopics(false)">
+                </select> <span ng-show="form.topic != null"> &#8212; <span ng-class="form.topic.totalMessages == 0 ? 'negative' : 'positive'">{{ form.topic.totalMessages | number }} message(s)</span></span>
+            </div>
+
+            <div class="full_block" style="margin-top: 10px">
+                <span class="header_item">Criteria</span> <span>(e.g. symbol == "AAPL")</span>
+                <div>
+                    <textarea ng-model="form.criteria" rows="4" cols="80" title="Enter query criteria here"></textarea>
+                </div>
+            </div>
+
+            <div class="full_block">
+                <button style="margin-top: 10px" ng-click="ok()">Search</button>
+                <button style="float: right; margin-top: 10px" ng-click="cancel()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</script>

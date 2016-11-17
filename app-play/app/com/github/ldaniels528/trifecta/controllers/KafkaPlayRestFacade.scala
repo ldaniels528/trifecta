@@ -34,7 +34,7 @@ import play.api.Logger
 import play.api.libs.json.{JsString, Json}
 
 import scala.collection.concurrent.TrieMap
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, blocking}
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -553,10 +553,10 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
 
     // publish the message
     val publisher = cachedPublisher.getOrElseUpdate((), createPublisher(brokers))
-    publisher.publish(
+    Future(blocking(publisher.publish(
       topic,
       key = blob.key map (key => toBinary(topic, key, blob.keyFormat)) getOrElse toDefaultBinary(blob.keyFormat),
-      message = toBinary(topic, blob.message, blob.messageFormat))
+      message = toBinary(topic, blob.message, blob.messageFormat)).get()))
   }
 
   /**

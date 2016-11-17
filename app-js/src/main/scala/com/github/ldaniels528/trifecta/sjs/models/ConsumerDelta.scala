@@ -8,12 +8,12 @@ import scala.scalajs.js
   */
 @js.native
 trait ConsumerDelta extends js.Object {
-  var consumerId: String = js.native
-  var topic: String = js.native
-  var partition: Int = js.native
-  var offset: Int = js.native
-  var topicOffset: Int = js.native
+  var consumerId: js.UndefOr[String] = js.native
+  var topic: js.UndefOr[String] = js.native
+  var partition: js.UndefOr[Int] = js.native
+  var offset: js.UndefOr[Int] = js.native
+  var topicOffset: js.UndefOr[Int] = js.native
   var lastModified: js.UndefOr[js.Date] = js.native
-  var messagesLeft: Int = js.native
+  var messagesLeft: js.UndefOr[Int] = js.native
 
 }

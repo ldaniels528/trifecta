@@ -47,8 +47,8 @@ object Consumer {
     }
 
     def update(delta: ConsumerDelta) {
-      consumer.deltaC = Math.abs(delta.offset - consumer.offset)
-      consumer.deltaT = Math.abs(delta.topicOffset - consumer.topicOffset)
+      consumer.deltaC = for(dOffset <- delta.offset; cOffset <- consumer.offset) yield Math.abs(dOffset - cOffset)
+      consumer.deltaT = for(dOffset <- delta.topicOffset; cOffset <- consumer.topicOffset) yield Math.abs(dOffset - cOffset)
       consumer.lastModified = delta.lastModified
       consumer.messagesLeft = delta.messagesLeft
       consumer.offset = delta.offset

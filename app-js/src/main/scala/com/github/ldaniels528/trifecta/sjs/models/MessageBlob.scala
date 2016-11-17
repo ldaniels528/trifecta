@@ -23,6 +23,7 @@ trait MessageBlob extends js.Object {
   * @author lawrence.daniels@gmail.com
   */
 object MessageBlob {
+
   def apply(topic: js.UndefOr[TopicDetails] = js.undefined,
             key: js.UndefOr[String] = js.undefined,
             keyFormat: js.UndefOr[String] = js.undefined,
@@ -38,4 +39,31 @@ object MessageBlob {
     blob.messageFormat = messageFormat
     blob
   }
+
+  /**
+    * MessageBlob validation
+    * @param blob the given [[MessageBlob blob]]
+    */
+  implicit class MessageBlobValidation(val blob: MessageBlob) extends AnyVal {
+
+    @inline
+    def validate = {
+      val messages = new js.Array[String]()
+      if (!blob.topic.exists(!_.topic.isEmpty)) {
+        messages.push("No topic specified")
+      }
+      if (!blob.keyFormat.exists(!_.isEmpty)) {
+        messages.push("No message key format specified")
+      }
+      if (!blob.message.exists(!_.isEmpty)) {
+        messages.push("No message body specified")
+      }
+      if (!blob.messageFormat.exists(!_.isEmpty)) {
+        messages.push("No message body format specified")
+      }
+      messages
+    }
+
+  }
+
 }

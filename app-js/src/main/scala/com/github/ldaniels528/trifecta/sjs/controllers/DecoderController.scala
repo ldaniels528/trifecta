@@ -1,12 +1,11 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
+import com.github.ldaniels528.trifecta.sjs.controllers.DecoderController._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.DecoderService
 import org.scalajs.angularjs.AngularJsHelper._
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.toaster.Toaster
-import org.scalajs.dom
 import org.scalajs.dom.browser.console
 import org.scalajs.nodejs.util.ScalaJsHelper._
 import org.scalajs.sjs.JsUnderOrHelper._
@@ -21,8 +20,8 @@ import scala.util.{Failure, Success}
   * Decoder Controller
   * @author lawrence.daniels@gmail.com
   */
-class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Timeout, toaster: Toaster,
-                        @injected("DecoderSvc") decoderSvc: DecoderService)
+class DecoderController($scope: DecoderScope, $log: Log, $timeout: Timeout, toaster: Toaster,
+                        @injected("DecoderService") decoderService: DecoderService)
   extends Controller {
 
   implicit val scope = $scope
@@ -37,14 +36,16 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
 
   $scope.init = () => {
     console.log("Initializing Decoder Controller...")
-    decoderSvc.getDecoders onComplete {
+    decoderService.getDecoders onComplete {
       case Success(decoders) =>
-        $scope.decoders = decoders map enrichDecoder
-        $scope.decoder = decoders.headOption.orUndefined
-        $scope.schema = $scope.decoder.flatMap(_.schemas).flatMap(_.headOption.orUndefined)
-        $scope.decoder.foreach { decoder =>
-          enrichDecoder(decoder)
-          decoder.decoderExpanded = $scope.schema.isDefined
+        $scope.$apply { () =>
+          $scope.decoders = decoders map enrichDecoder
+          $scope.decoder = decoders.headOption.orUndefined
+          $scope.schema = $scope.decoder.flatMap(_.schemas).flatMap(_.headOption.orUndefined)
+          $scope.decoder.foreach { decoder =>
+            enrichDecoder(decoder)
+            decoder.decoderExpanded = $scope.schema.isDefined
+          }
         }
       case Failure(e) =>
         toaster.error("Failed to read decoders", e.displayMessage)
@@ -67,7 +68,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
       schema <- aSchema
       schemaName <- schema.name
     } {
-      decoderSvc.downloadDecoderSchema(topic, schemaName) onComplete {
+      decoderService.downloadDecoderSchema(topic, schemaName) onComplete {
         case Success(response) =>
         //$log.info("response = " + angular.toJson(response))
         case Failure(e) =>
@@ -86,10 +87,10 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
       decoder <- aDecoder
       topic <- decoder.topic
     } {
-      decoder.decoderExpanded = !decoder.decoderExpanded.contains(true)
-      if (decoder.decoderExpanded.contains(true)) {
+      decoder.decoderExpanded = !decoder.decoderExpanded.isTrue
+      if (decoder.decoderExpanded.isTrue) {
         decoder.loading = true
-        decoderSvc.getDecoderByTopic(topic) onComplete {
+        decoderService.getDecoderByTopic(topic) onComplete {
           case Success(theDecoder) =>
             // stop the loading sequence after 1 second
             $timeout(() => decoder.loading = false, 1.second)
@@ -118,10 +119,10 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
     * @@param schema the given schema
     * @return {string}
     */
-  $scope.getSchemaIcon = (aSchema: js.UndefOr[DecoderSchema]) => aSchema map { schema =>
-    if (schema.error.exists(!_.isEmpty)) "/assets/images/tabs/decoders/failed-16.png"
-    else if (schema.processing.contains(true)) "/assets/images/status/processing.gif"
-    else "/assets/images/tabs/decoders/js-16.png"
+  $scope.getSchemaIcon = (aSchema: js.UndefOr[DecoderSchema]) => aSchema map {
+    case schema if schema.error.exists(!_.isEmpty) => "/assets/images/tabs/decoders/failed-16.png"
+    case schema if schema.processing.isTrue => "/assets/images/status/processing.gif"
+    case _ => "/assets/images/tabs/decoders/js-16.png"
   }
 
   /**
@@ -134,7 +135,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
       topic <- decoder.topic
     } {
       decoder.loading = true
-      decoderSvc.getDecoderByTopic(topic) onComplete {
+      decoderService.getDecoderByTopic(topic) onComplete {
         case Success(loadedDecoder) =>
           // stop the loading sequence after 1 second
           $timeout(() => decoder.loading = false, 1.second)
@@ -158,7 +159,7 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
 
     aDecoder foreach { decoder =>
       // ensure the topic is expanded
-      if (!decoder.decoderExpanded.contains(true)) {
+      if (!decoder.decoderExpanded.isTrue) {
         $scope.expandCollapseDecoder(decoder)
       }
       else {
@@ -193,30 +194,40 @@ class DecoderController($scope: DecoderControllerScope, $log: Log, $timeout: Tim
   /**
     * Initialize the controller once the reference data has completed loading
     */
-  $scope.$on(REFERENCE_DATA_LOADED, (event: dom.Event, data: ReferenceData) => $scope.init())
+  $scope.onReferenceDataLoaded { _ => $scope.init() }
 
 }
 
 /**
-  * Decoder Controller Scope
+  * Decoder Controller Companion
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait DecoderControllerScope extends Scope with GlobalLoading with GlobalErrorHandling with GlobalDataAware with ReferenceDataAware {
-  // properties
-  var decoder: js.UndefOr[Decoder] = js.native
-  var decoders: js.Array[Decoder] = js.native
-  var schema: js.UndefOr[DecoderSchema] = js.native
+object DecoderController {
 
-  // functions
-  var init: js.Function0[Unit] = js.native
-  var downloadSchema: js.Function2[js.UndefOr[Decoder], js.UndefOr[DecoderSchema], Unit] = js.native
-  var expandCollapseDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
-  var getDecoders: js.Function0[js.Array[Decoder]] = js.native
-  var getSchemaIcon: js.Function1[js.UndefOr[DecoderSchema], js.UndefOr[String]] = js.native
-  var reloadDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
-  var selectDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
-  var selectSchema: js.Function1[js.UndefOr[DecoderSchema], Unit] = js.native
-  var switchToDecoderByTopic: js.Function1[js.UndefOr[Decoder], Boolean] = js.native
+  /**
+    * Decoder Controller Scope
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait DecoderScope extends Scope
+    with GlobalLoading with GlobalErrorHandling with GlobalDataAware
+    with ReferenceDataAware {
+    // properties
+    var decoder: js.UndefOr[Decoder] = js.native
+    var decoders: js.Array[Decoder] = js.native
+    var schema: js.UndefOr[DecoderSchema] = js.native
+
+    // functions
+    var init: js.Function0[Unit] = js.native
+    var downloadSchema: js.Function2[js.UndefOr[Decoder], js.UndefOr[DecoderSchema], Unit] = js.native
+    var expandCollapseDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
+    var getDecoders: js.Function0[js.Array[Decoder]] = js.native
+    var getSchemaIcon: js.Function1[js.UndefOr[DecoderSchema], js.UndefOr[String]] = js.native
+    var reloadDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
+    var selectDecoder: js.Function1[js.UndefOr[Decoder], Unit] = js.native
+    var selectSchema: js.Function1[js.UndefOr[DecoderSchema], Unit] = js.native
+    var switchToDecoderByTopic: js.Function1[js.UndefOr[Decoder], Boolean] = js.native
+
+  }
 
 }

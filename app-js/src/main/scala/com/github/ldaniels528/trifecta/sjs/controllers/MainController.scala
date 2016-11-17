@@ -1,9 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
+import MainController._
 import com.github.ldaniels528.trifecta.sjs.RootScope
-import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware.REFERENCE_DATA_LOADED
 import com.github.ldaniels528.trifecta.sjs.models._
-import com.github.ldaniels528.trifecta.sjs.services.ServerSideEventsService._
 import com.github.ldaniels528.trifecta.sjs.services.TopicService
 import org.scalajs.angularjs.AngularJsHelper._
 import org.scalajs.angularjs._
@@ -24,8 +23,8 @@ import scala.util.{Failure, Success}
   * Main Controller
   * @author lawrence.daniels@gmail.com
   */
-class MainController($scope: MainControllerScope, $location: Location, $timeout: Timeout, toaster: Toaster,
-                     @injected("TopicSvc") topicSvc: TopicService)
+class MainController($scope: MainScope, $location: Location, $timeout: Timeout, toaster: Toaster,
+                     @injected("TopicService") topicService: TopicService)
   extends Controller {
 
   implicit val scope = $scope
@@ -35,6 +34,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
   $scope.brokers = emptyArray
   $scope.consumers = emptyArray
   $scope.consumerGroupCache = js.Dictionary[js.Array[ConsumerGroup]]()
+  $scope.messageBlob = MessageBlob(keyFormat = "UUID", keyAuto = true)
   $scope.replicas = emptyArray
   $scope.topics = emptyArray
   $scope.hideEmptyTopics = true
@@ -52,7 +52,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
       name = "Observe",
       contentURL = "/observe",
       imageURL = "/assets/images/tabs/main/observe-24.png"
-    ), /*MainTab(
+    ), MainTab(
       name = "Publish",
       contentURL = "/publish",
       imageURL = "/assets/images/tabs/main/publish-24.png"
@@ -60,7 +60,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
       name = "Query",
       contentURL = "/query",
       imageURL = "/assets/images/tabs/main/query-24.png"
-    ),*/ MainTab(
+    ), MainTab(
       name = "Decoders",
       contentURL = "/decoders",
       imageURL = "/assets/images/tabs/main/decoders-24.png"
@@ -180,15 +180,15 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
   $scope.getConsumersForTopic = (aTopic: js.UndefOr[String]) => aTopic map { topic =>
     $scope.consumerGroupCache.getOrElseUpdate(topic,
       js.Array($scope.consumers
-        .filter(c => aTopic.contains(c.topic))
-        .groupBy(_.consumerId) map { case (consumerId, details) => ConsumerGroup(consumerId, details) } toSeq: _*))
+        .filter(c => aTopic ?== c.topic)
+        .groupBy(_.consumerId.orNull) map { case (consumerId, details) => ConsumerGroup(consumerId, details) } toSeq: _*))
   }
 
   $scope.getConsumersForIdAndTopic = (aConsumerId: js.UndefOr[String], aTopic: js.UndefOr[String]) => {
     for {
       consumerId <- aConsumerId
       topic <- aTopic
-    } yield $scope.consumers.filter(c => c.consumerId == consumerId && c.topic == topic)
+    } yield $scope.consumers.filter(c => c.consumerId.contains(consumerId) && c.topic.contains(topic))
   }
 
   /////////////////////////////////////////////////////////////////////////////////
@@ -216,7 +216,7 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
   }
 
   $scope.getTopicIconSelection = (isSelected: js.UndefOr[Boolean]) => {
-    if (isSelected.contains(true)) "/assets/images/common/topic_selected-16.png" else "/assets/images/common/topic-16.png"
+    if (isSelected.isTrue) "/assets/images/common/topic_selected-16.png" else "/assets/images/common/topic-16.png"
   }
 
   $scope.getTopicNames = () => $scope.getTopics().map(_.topic)
@@ -273,12 +273,12 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
   /**
     * React to incoming consumer deltas
     */
-  $scope.$on(CONSUMER_DELTA, (event: dom.Event, deltas: js.Array[ConsumerDelta]) => $scope.$apply(() => updateConsumerDeltas(deltas)))
+  $scope.onConsumerDeltas { deltas => $scope.$apply(() => updateConsumerDeltas(deltas)) }
 
   /**
     * React to incoming topic deltas
     */
-  $scope.$on(TOPIC_DELTA, (event: dom.Event, deltas: js.Array[PartitionDelta]) => $scope.$apply(() => updateTopicDeltas(deltas)))
+  $scope.onTopicDeltas { deltas => $scope.$apply(() => updateTopicDeltas(deltas)) }
 
   /////////////////////////////////////////////////////////////////////////////////
   //        Initialization
@@ -289,34 +289,73 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
     */
   $scope.init = () => {
     val outcome = for {
-      topics <- topicSvc.getDetailedTopics
-      brokers <- topicSvc.getBrokerGroups
-      consumers <- topicSvc.getConsumers
+      topics <- loadTopics()
+      brokers <- loadBrokers()
+      consumers <- loadConsumers()
     } yield (topics, brokers, consumers)
 
     outcome onComplete {
       case Success((topics, brokers, consumers)) =>
-        console.info(s"Loaded ${topics.length} topic(s)")
-        $scope.$apply { () =>
-          val sortedTopics = enrichTopics(topics.sortBy(_.topic))
-          $scope.topic = sortedTopics.find(_.totalMessages > 0).orUndefined
-          $scope.topics = sortedTopics
-          $scope.brokers = brokers
-          $scope.consumers = consumers
-          $scope.consumerGroupCache.clear()
-        }
-
+        console.info(s"Reference data loaded: ${topics.length} topics, ${consumers.length} consumers, ${brokers.length} brokers")
         // broadcast the events
-        console.log(s"Broadcasting '$REFERENCE_DATA_LOADED' event...")
-        $scope.$broadcast(REFERENCE_DATA_LOADED, ReferenceData(
+        $scope.broadcastReferenceDataLoaded(ReferenceData(
           brokers = brokers,
           consumers = consumers,
           topics = $scope.topics,
           topic = $scope.topic
         ))
       case Failure(e) =>
-        toaster.error("Error loading topic and consumer information", e.displayMessage)
+        toaster.error("Error loading topic, broker and consumer information")
+        console.error(s"Error loading reference data: ${e.displayMessage}")
     }
+  }
+
+  private def loadBrokers() = {
+    val promisedBrokers = topicService.getBrokerGroups
+    promisedBrokers onComplete {
+      case Success(brokers) =>
+        console.info(s"Loaded ${brokers.length} brokers(s)")
+        $scope.$apply { () =>
+          $scope.brokers = brokers
+        }
+      case Failure(e) =>
+        toaster.error("Error loading Kafka topics")
+        console.error(s"Error loading Kafka topics: ${e.displayMessage}")
+    }
+    promisedBrokers
+  }
+
+  private def loadConsumers() = {
+    val promisedConsumers = topicService.getConsumers
+    promisedConsumers onComplete {
+      case Success(consumers) =>
+        console.info(s"Loaded ${consumers.length} consumer(s)")
+        $scope.$apply { () =>
+          $scope.consumers = consumers
+          $scope.consumerGroupCache.clear()
+        }
+      case Failure(e) =>
+        toaster.error("Error loading Kafka topics")
+        console.error(s"Error loading Kafka topics: ${e.displayMessage}")
+    }
+    promisedConsumers
+  }
+
+  private def loadTopics() = {
+    val promisedTopics = topicService.getDetailedTopics
+    promisedTopics onComplete {
+      case Success(topics) =>
+        console.info(s"Loaded ${topics.length} topic(s)")
+        val sortedTopics = enrichTopics(topics.sortBy(_.topic))
+        $scope.$apply { () =>
+          $scope.topic = sortedTopics.find(_.totalMessages > 0).orUndefined
+          $scope.topics = sortedTopics
+        }
+      case Failure(e) =>
+        toaster.error("Error loading Kafka topics")
+        console.error(s"Error loading Kafka topics: ${e.displayMessage}")
+    }
+    promisedTopics
   }
 
   private def enrichTopics(topics: js.Array[TopicDetails]) = {
@@ -324,22 +363,32 @@ class MainController($scope: MainControllerScope, $location: Location, $timeout:
     for {
       t <- topics
       p <- t.partitions
-    } p.offset = p.endOffset
+    } p.offset = p.startOffset
     topics
   }
 
 }
 
 /**
-  * Main Controller
+  * Main Controller Companion
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait MainControllerScope extends RootScope with GlobalDataAware with GlobalLoading with GlobalErrorHandling with MainTabManagement with ReferenceDataAware {
-  // functions
-  var init: js.Function0[Unit] = js.native
-  var getDateFormat: js.Function1[js.UndefOr[Int], js.UndefOr[String]] = js.native
-  var isActiveTab: js.Function1[js.UndefOr[MainTab], Boolean] = js.native
-  var toPrettyJSON: js.Function2[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[String]] = js.native
+object MainController {
+
+  /**
+    * Main Controller
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait MainScope extends RootScope
+    with GlobalDataAware with GlobalLoading with GlobalErrorHandling
+    with MainTabManagement with ReferenceDataAware {
+    // functions
+    var init: js.Function0[Unit] = js.native
+    var getDateFormat: js.Function1[js.UndefOr[Int], js.UndefOr[String]] = js.native
+    var isActiveTab: js.Function1[js.UndefOr[MainTab], Boolean] = js.native
+    var toPrettyJSON: js.Function2[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[String]] = js.native
+
+  }
 
 }

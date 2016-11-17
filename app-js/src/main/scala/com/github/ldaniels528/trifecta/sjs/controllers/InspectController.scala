@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
-import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
+import com.github.ldaniels528.trifecta.sjs.controllers.InspectController._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.{TopicService, ZookeeperService}
 import org.scalajs.angularjs.AngularJsHelper._
@@ -21,9 +21,10 @@ import scala.util.{Failure, Success}
   * Inspect Controller
   * @author lawrence.daniels@gmail.com
   */
-class InspectController($scope: InspectControllerScope, $location: Location, $log: Log, $routeParams: InspectRouteParams, $timeout: Timeout, $interval: Interval,
-                        @injected("TopicSvc") topicSvc: TopicService,
-                        @injected("ZookeeperSvc") zookeeperSvc: ZookeeperService)
+class InspectController($scope: InspectScope, $location: Location, $log: Log,
+                        $routeParams: InspectRouteParams, $timeout: Timeout, $interval: Interval,
+                        @injected("TopicService") topicService: TopicService,
+                        @injected("ZookeeperService") zookeeperService: ZookeeperService)
   extends Controller {
 
   implicit val scope = $scope
@@ -110,7 +111,7 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
     * Expands a broker
     */
   $scope.expandBroker = (aBroker: js.UndefOr[TopicDetails]) => aBroker foreach { broker =>
-    broker.expanded = !broker.expanded.contains(true)
+    broker.expanded = !broker.expanded.isTrue
   }
 
   /**
@@ -118,10 +119,10 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
     * @@param topic the given topic
     */
   $scope.expandTopicConsumers = (aTopic: js.UndefOr[TopicDetails]) => aTopic foreach { topic =>
-    topic.expanded = !topic.expanded.contains(true)
-    if (topic.expanded.contains(true)) {
+    topic.expanded = !topic.expanded.isTrue
+    if (topic.expanded.isTrue) {
       topic.loadingConsumers = true
-      topicSvc.getConsumerGroups(topic.topic).withGlobalLoading.withTimer("Retrieving consumers by topic") onComplete {
+      topicService.getConsumerGroups(topic.topic).withGlobalLoading.withTimer("Retrieving consumers by topic") onComplete {
         case Success(consumerGroups) =>
           $scope.$apply { () =>
             topic.loadingConsumers = false
@@ -137,7 +138,10 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
   private def updateConsumerGroups(consumerGroups: js.Array[ConsumerGroup]) {
     consumerGroups foreach { group =>
       group.details foreach { detail =>
-        $scope.consumers.find(c => c.consumerId == group.consumerId && c.topic == detail.topic && c.partition == detail.partition) match {
+        $scope.consumers.find(c =>
+          (c.consumerId ?== group.consumerId) &&
+            (c.topic ?== detail.topic) &&
+            (c.partition ?== detail.partition)) match {
           case Some(consumer) =>
             consumer.update(detail)
           case None =>
@@ -164,10 +168,10 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
     * @@param item the given Zookeeper item
     */
   $scope.expandItem = (anItem: js.UndefOr[ZkItem]) => anItem foreach { item =>
-    item.expanded = !item.expanded.contains(true)
-    if (item.expanded.contains(true)) {
+    item.expanded = !item.expanded.isTrue
+    if (item.expanded.isTrue) {
       item.loading = true
-      zookeeperSvc.getZkPath(item.path).withGlobalLoading.withTimer("Retrieving Zookeeper path") onComplete {
+      zookeeperService.getZkPath(item.path).withGlobalLoading.withTimer("Retrieving Zookeeper path") onComplete {
         case Success(zkItems) =>
           $scope.$apply { () =>
             item.loading = false
@@ -188,7 +192,7 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
       format <- aFormat
     } {
       console.log("path => %s, format = %s", path, format)
-      zookeeperSvc.getZkData(path, format).withGlobalLoading.withTimer("Retrieving Zookeeper data") onComplete {
+      zookeeperService.getZkData(path, format).withGlobalLoading.withTimer("Retrieving Zookeeper data") onComplete {
         case Success(data) =>
           $scope.$apply { () =>
             $scope.zkItem.foreach(_.data = data)
@@ -205,7 +209,7 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
 
   $scope.getItemInfo = (anItem: js.UndefOr[ZkItem]) => anItem foreach { item =>
     item.loading = true
-    zookeeperSvc.getZkInfo(item.path).withGlobalLoading.withTimer("Retrieving Zookeeper item") onComplete {
+    zookeeperService.getZkInfo(item.path).withGlobalLoading.withTimer("Retrieving Zookeeper item") onComplete {
       case Success(itemInfo) =>
         $scope.$apply { () =>
           item.loading = false
@@ -221,10 +225,10 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
   }
 
   $scope.expandReplicas = (aTopic: js.UndefOr[TopicDetails]) => aTopic foreach { topic =>
-    topic.replicaExpanded = !topic.replicaExpanded.contains(true)
-    if (topic.replicaExpanded.contains(true)) {
+    topic.replicaExpanded = !topic.replicaExpanded.isTrue
+    if (topic.replicaExpanded.isTrue) {
       topic.loading = true
-      topicSvc.getReplicas(topic.topic).withGlobalLoading.withTimer("Retrieving replicas") onComplete {
+      topicService.getReplicas(topic.topic).withGlobalLoading.withTimer("Retrieving replicas") onComplete {
         case Success(replicas) =>
           $timeout(() => topic.loading = false, 0.5.seconds)
           $scope.$apply { () =>
@@ -256,9 +260,20 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
     aConsumer.exists(_.isUpdatedSince(5.minutes))
   }
 
+  $scope.switchToMessage = (aTopic: js.UndefOr[String], aPartition: js.UndefOr[Int], anOffset: js.UndefOr[Int]) => {
+    console.info(s"aTopic = ${aTopic.orNull}, aPartition = ${aPartition.orNull}, anOffset = ${anOffset.orNull}")
+    for {
+      topic <- aTopic
+      partition <- aPartition
+      offset <- anOffset
+    } {
+      $location.url(s"/observe?topic=$topic&partition=$partition&offset=$offset")
+    }
+  }
+
   private def computeInSyncPct(replicaPartition: ReplicaGroup) = {
     val replicas = replicaPartition.replicas getOrElse emptyArray
-    val syncCount = replicas.count(_.inSync.contains(true))
+    val syncCount = replicas.count(_.inSync.isTrue)
     Math.round(100 * syncCount / replicas.length)
   }
 
@@ -271,48 +286,58 @@ class InspectController($scope: InspectControllerScope, $location: Location, $lo
   /**
     * Initialize the controller once the reference data has completed loading
     */
-  $scope.$on(REFERENCE_DATA_LOADED, (event: dom.Event, data: ReferenceData) => $scope.init())
+  $scope.onReferenceDataLoaded { _ => $scope.init() }
 
 }
 
 /**
-  * Inspect Controller Scope
+  * Inspect Controller
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait InspectControllerScope extends Scope with GlobalDataAware with GlobalLoading with GlobalErrorHandling with ReferenceDataAware {
-  // properties
-  var formats: js.Array[String] = js.native
-  var inspectTab: MainTab = js.native
-  var inspectTabs: js.Array[MainTab] = js.native
-  var selected: FormatSelection = js.native
-  var zkItem: js.UndefOr[ZkItem] = js.native
-  var zkItems: js.Array[ZkItem] = js.native
+object InspectController {
 
-  // functions
-  var init: js.Function0[Unit] = js.native
-  var changeInspectTab: js.Function2[js.UndefOr[MainTab], js.UndefOr[dom.Event], Unit] = js.native
-  var changeMainTab: js.Function2[js.UndefOr[Int], js.UndefOr[dom.Event], Unit] = js.native
-  var expandBroker: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-  var expandFirstItem: js.Function0[Unit] = js.native
-  var expandItem: js.Function1[js.UndefOr[ZkItem], Unit] = js.native
-  var expandReplicas: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-  var expandTopicConsumers: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-  var formatData: js.Function2[js.UndefOr[String], js.UndefOr[String], Unit] = js.native
-  var getInSyncBulbImage: js.Function1[js.UndefOr[Int], Unit] = js.native
-  var getInSyncClass: js.Function1[js.UndefOr[Double], js.UndefOr[String]] = js.native
-  var getItemInfo: js.Function1[js.UndefOr[ZkItem], Unit] = js.native
-  var isActiveInspectTab: js.Function1[js.UndefOr[MainTab], Boolean] = js.native
-  var isConsumerUpToDate: js.Function1[js.UndefOr[Consumer], Boolean] = js.native
+  /**
+    * Inspect Route Parameters
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait InspectRouteParams extends js.Object {
+    var mode: js.UndefOr[String] = js.native
 
-}
+  }
 
-/**
-  * Inspect Route Parameters
-  * @author lawrence.daniels@gmail.com
-  */
-@js.native
-trait InspectRouteParams extends js.Object {
-  var mode: js.UndefOr[String] = js.native
+  /**
+    * Inspect Controller Scope
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait InspectScope extends Scope
+    with GlobalDataAware with GlobalLoading with GlobalErrorHandling with ReferenceDataAware {
+    // properties
+    var formats: js.Array[String] = js.native
+    var inspectTab: MainTab = js.native
+    var inspectTabs: js.Array[MainTab] = js.native
+    var selected: FormatSelection = js.native
+    var zkItem: js.UndefOr[ZkItem] = js.native
+    var zkItems: js.Array[ZkItem] = js.native
+
+    // functions
+    var init: js.Function0[Unit] = js.native
+    var changeInspectTab: js.Function2[js.UndefOr[MainTab], js.UndefOr[dom.Event], Unit] = js.native
+    var changeMainTab: js.Function2[js.UndefOr[Int], js.UndefOr[dom.Event], Unit] = js.native
+    var expandBroker: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var expandFirstItem: js.Function0[Unit] = js.native
+    var expandItem: js.Function1[js.UndefOr[ZkItem], Unit] = js.native
+    var expandReplicas: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var expandTopicConsumers: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var formatData: js.Function2[js.UndefOr[String], js.UndefOr[String], Unit] = js.native
+    var getInSyncBulbImage: js.Function1[js.UndefOr[Int], Unit] = js.native
+    var getInSyncClass: js.Function1[js.UndefOr[Double], js.UndefOr[String]] = js.native
+    var getItemInfo: js.Function1[js.UndefOr[ZkItem], Unit] = js.native
+    var isActiveInspectTab: js.Function1[js.UndefOr[MainTab], Boolean] = js.native
+    var isConsumerUpToDate: js.Function1[js.UndefOr[Consumer], Boolean] = js.native
+    var switchToMessage: js.Function3[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
+
+  }
 
 }

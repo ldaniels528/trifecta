@@ -16,6 +16,7 @@ import scala.scalajs.js.annotation.JSExport
   */
 object TrifectaJsApp extends js.JSApp {
   val appName = "trifecta"
+  val appVersion = "0.22.0"
 
   @JSExport
   override def main() {
@@ -25,20 +26,20 @@ object TrifectaJsApp extends js.JSApp {
     ))
 
     // configure the controllers
-    module.controllerOf[DecoderController]("DecoderCtrl")
-    module.controllerOf[InspectController]("InspectCtrl")
-    module.controllerOf[MainController]("MainCtrl")
-    module.controllerOf[ObserveController]("ObserveCtrl")
-    module.controllerOf[PublishController]("PublishCtrl")
-    module.controllerOf[QueryController]("QueryCtrl")
+    module.controllerOf[DecoderController]("DecoderController")
+    module.controllerOf[InspectController]("InspectController")
+    module.controllerOf[MainController]("MainController")
+    module.controllerOf[ObserveController]("ObserveController")
+    module.controllerOf[PublishController]("PublishController")
+    module.controllerOf[QueryController]("QueryController")
 
     // configure the services
-    module.serviceOf[DecoderService]("DecoderSvc")
-    module.serviceOf[MessageDataService]("MessageSvc")
-    module.serviceOf[QueryService]("QuerySvc")
-    module.serviceOf[ServerSideEventsService]("ServerSideEventsSvc")
-    module.serviceOf[TopicService]("TopicSvc")
-    module.serviceOf[ZookeeperService]("ZookeeperSvc")
+    module.serviceOf[DecoderService]("DecoderService")
+    module.serviceOf[MessageDataService]("MessageDataService")
+    module.serviceOf[QueryService]("QueryService")
+    module.serviceOf[ServerSideEventsService]("ServerSideEventsService")
+    module.serviceOf[TopicService]("TopicService")
+    module.serviceOf[ZookeeperService]("ZookeeperService")
 
     // configure the filters
     module.filter("capitalize", Filters.capitalize)
@@ -46,15 +47,15 @@ object TrifectaJsApp extends js.JSApp {
     module.filter("yesno", Filters.yesNo)
 
     // configure the dialogs
-    module.controllerOf[MessageSearchController]("MessageSearchCtrl")
-    module.serviceOf[MessageSearchService]("MessageSearchSvc")
+    module.controllerOf[MessageSearchController]("MessageSearchController")
+    module.serviceOf[MessageSearchService]("MessageSearchService")
 
     // configure the application
     module.config({ ($httpProvider: HttpProvider, $routeProvider: RouteProvider) =>
       $routeProvider
         .when("/decoders", RouteTo(templateUrl = "/assets/views/decoders.html"))
         .when("/inspect", RouteTo(templateUrl = "/assets/views/inspect/index.html", reloadOnSearch = false))
-        .when("/observe", RouteTo(templateUrl = "/assets/views/observe.html"))
+        .when("/observe", RouteTo(templateUrl = "/assets/views/observe.html", controller = classOf[ObserveController].getSimpleName))
         .when("/publish", RouteTo(templateUrl = "/assets/views/publish.html"))
         .when("/query", RouteTo(templateUrl = "/assets/views/query.html"))
         .otherwise(RouteTo(redirectTo = "/inspect/brokers"))
@@ -62,22 +63,14 @@ object TrifectaJsApp extends js.JSApp {
     })
 
     // start the application
-    module.run({ ($rootScope: RootScope, ServerSideEventsSvc: ServerSideEventsService) =>
-      $rootScope.version = "0.21.2"
+    module.run({ ($rootScope: RootScope, ServerSideEventsService: ServerSideEventsService) =>
+      $rootScope.version = appVersion
 
       console.log("Initializing application...")
-      ServerSideEventsSvc.connect()
+      ServerSideEventsService.connect()
       ()
     })
   }
 
 }
 
-/**
-  * Trifecta Application Root Scope
-  * @author lawrence.daniels@gmail.com
-  */
-@js.native
-trait RootScope extends Scope {
-  var version: js.UndefOr[String] = js.native
-}

@@ -13,6 +13,6 @@ trait PartitionDelta extends js.Object {
   var partition: js.UndefOr[Int] = js.native
   var startOffset: js.UndefOr[Int] = js.native
   var endOffset: js.UndefOr[Int] = js.native
-  var messages: Int = js.native
-  var totalMessages: Int = js.native
+  var messages: js.UndefOr[Int] = js.native
+  var totalMessages: js.UndefOr[Int] = js.native
 }

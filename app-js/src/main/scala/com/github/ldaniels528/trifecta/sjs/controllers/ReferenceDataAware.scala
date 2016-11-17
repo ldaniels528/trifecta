@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import org.scalajs.angularjs.Scope
 import com.github.ldaniels528.trifecta.sjs.models._
+import org.scalajs.angularjs.Scope
 
 import scala.scalajs.js
 
@@ -17,6 +17,7 @@ trait ReferenceDataAware extends js.Object {
   var brokers: js.Array[BrokerGroup] = js.native
   var consumers: js.Array[Consumer] = js.native
   var consumerGroupCache: js.Dictionary[js.Array[ConsumerGroup]] = js.native
+  var messageBlob: MessageBlob = js.native
   var replicas: js.Array[ReplicaGroup] = js.native
   var topic: js.UndefOr[TopicDetails] = js.native
   var topics: js.Array[TopicDetails] = js.native
@@ -33,14 +34,5 @@ trait ReferenceDataAware extends js.Object {
   var getTopicIconSelection: js.Function1[js.UndefOr[Boolean], String] = js.native
   var getTopicNames: js.Function0[js.Array[String]] = js.native
   var getTopics: js.Function0[js.Array[TopicDetails]] = js.native
-
-}
-
-/**
-  * Reference Data Aware Companion Object
-  * @author lawrence.daniels@gmail.com
-  */
-object ReferenceDataAware {
-  val REFERENCE_DATA_LOADED = "reference_data_loaded"
 
 }

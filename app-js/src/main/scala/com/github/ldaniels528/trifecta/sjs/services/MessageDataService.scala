@@ -1,11 +1,13 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
+import com.github.ldaniels528.trifecta.sjs.models.Message
+import com.github.ldaniels528.trifecta.sjs.services.MessageDataService.{PublishMessageRequest, PublishMessageResponse}
 import org.scalajs.angularjs.Service
 import org.scalajs.angularjs.http.Http
 import org.scalajs.dom.browser.encodeURI
-import com.github.ldaniels528.trifecta.sjs.models.{Message, PublishMessageResponse}
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Message Data Service
@@ -13,23 +15,44 @@ import scala.scalajs.js
   */
 class MessageDataService($http: Http) extends Service {
 
-  def getMessage(topic: String, partition: Int, offset: Int) = {
-    $http.get[Message](s"/api/message_data/$topic/$partition/$offset")
+  def getMessage(topic: String, partition: Int, offset: Long) = {
+    $http.get[Message](s"/api/message/data/${encodeURI(topic)}/$partition/$offset")
   }
 
-  def getMessageKey(topic: String, partition: Int, offset: Int) = {
-    $http.get[Message](s"/api/message_key/$topic/$partition/$offset")
+  def getMessageKey(topic: String, partition: Int, offset: Long) = {
+    $http.get[Message](s"/api/message/key/${encodeURI(topic)}/$partition/$offset")
   }
 
   def publishMessage(topic: String, key: String, message: String, keyFormat: String, messageFormat: String) = {
     $http.post[PublishMessageResponse](
-      url = s"/api/message/${encodeURI(topic)}",
-      headers = js.Dictionary("Content-Type" -> "application/json"),
-      data = js.Dictionary(
-        "key" -> key,
-        "message" -> message,
-        "keyFormat" -> keyFormat,
-        "messageFormat" -> messageFormat))
+      url = s"/api/message/data/${encodeURI(topic)}", 
+      data = new PublishMessageRequest(key, message, keyFormat, messageFormat))
+  }
+
+}
+
+/**
+  * Message Data Service Companion
+  * @author lawrence.daniels@gmail.com
+  */
+object MessageDataService {
+
+  /**
+    * Publish Message Request
+    * @author lawrence.daniels@gmail.com
+    */
+  @ScalaJSDefined
+  class PublishMessageRequest(val key: String, val message: String, val keyFormat: String, val messageFormat: String) extends js.Object
+
+  /**
+    * Publish Message Response
+    * @author lawrence.daniels@gmail.com
+    */
+  @ScalaJSDefined
+  trait PublishMessageResponse extends js.Object {
+    var topic: js.UndefOr[String]
+    var offset: js.UndefOr[Long]
+    var partition: js.UndefOr[Int]
   }
 
 }

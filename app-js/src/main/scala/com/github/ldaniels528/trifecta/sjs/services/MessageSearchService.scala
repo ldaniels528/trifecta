@@ -1,9 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
+import com.github.ldaniels528.trifecta.sjs.controllers.MessageSearchController.MessageSearchForm
 import org.scalajs.angularjs.Service
 import org.scalajs.angularjs.uibootstrap.{Modal, ModalOptions}
-import org.scalajs.dom.browser.console
-import com.github.ldaniels528.trifecta.sjs.controllers.MessageSearchForm
 
 /**
   * Message Search Service
@@ -16,7 +15,7 @@ class MessageSearchService($modal: Modal) extends Service {
     */
   def finderDialog() = {
     val $modalInstance = $modal.open[MessageSearchForm](new ModalOptions(
-      controller = "MessageSearchCtrl",
+      controller = "MessageSearchController",
       templateUrl = "message_search_finder.htm"
     ))
     $modalInstance.result.toFuture
@@ -27,7 +26,7 @@ class MessageSearchService($modal: Modal) extends Service {
     */
   def loadingDialog() = {
     val $modalInstance = $modal.open[MessageSearchForm](new ModalOptions(
-      controller = "MessageSearchCtrl",
+      controller = "MessageSearchController",
       templateUrl = "message_search_loading.htm"
     ))
     $modalInstance.result.toFuture

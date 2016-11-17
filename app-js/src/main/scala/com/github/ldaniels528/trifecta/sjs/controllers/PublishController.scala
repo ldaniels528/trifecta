@@ -1,5 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
+import PublishController._
+import java.util.UUID
+
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.models.MessageBlob
 import com.github.ldaniels528.trifecta.sjs.services.{MessageDataService, TopicService}
@@ -7,7 +10,6 @@ import org.scalajs.angularjs.AngularJsHelper._
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.toaster.Toaster
 import org.scalajs.dom.browser.console
-import org.scalajs.sjs.JsUnderOrHelper._
 import org.scalajs.sjs.PromiseHelper._
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -18,16 +20,15 @@ import scala.util.{Failure, Success}
   * Publish Controller
   * @author lawrence.daniels@gmail.com
   */
-class PublishController($scope: PublishControllerScope, $log: Log, $timeout: Timeout, toaster: Toaster,
-                        @injected("MessageSvc") messageSvc: MessageDataService,
-                        @injected("TopicSvc") topicSvc: TopicService)
+class PublishController($scope: PublishScope, $log: Log, $timeout: Timeout, toaster: Toaster,
+                        @injected("MessageDataService") messageDataService: MessageDataService,
+                        @injected("TopicService") topicService: TopicService)
   extends Controller {
 
   implicit val scope = $scope
 
   $scope.keyFormats = js.Array("ASCII", "Hex-Notation", "EPOC", "UUID")
   $scope.messageFormats = js.Array("ASCII", "Avro", "JSON", "Hex-Notation")
-  $scope.messageBlob = MessageBlob(keyFormat = "UUID", keyAuto = true)
 
   ///////////////////////////////////////////////////////////////////////////
   //    Initialization Functions
@@ -45,26 +46,26 @@ class PublishController($scope: PublishControllerScope, $log: Log, $timeout: Tim
     * Publishes the message to the topic
     * @@param blob the message object
     */
-  $scope.publishMessage = (blob: MessageBlob) => {
-    if (validatePublishMessage(blob)) {
+  $scope.publishMessage = (aBlob: js.UndefOr[MessageBlob]) => aBlob foreach { blob =>
+    if (validated(blob)) {
+      console.log(s"topic <- ${blob.topic.map(_.topic).orNull}, key <- ${blob.key.orNull}, messageFormat <- ${blob.messageFormat.orNull}")
       for {
         topic <- blob.topic.map(_.topic)
-        key <- blob.key
+        key = blob.key getOrElse UUID.randomUUID().toString
         message <- blob.message
         keyFormat <- blob.keyFormat
         messageFormat <- blob.messageFormat
       } {
-        messageSvc.publishMessage(topic, key, message, keyFormat, messageFormat).withGlobalLoading.withTimer("Retrieving Zookeeper data") onComplete {
+        messageDataService.publishMessage(topic, key, message, keyFormat, messageFormat).withGlobalLoading.withTimer("Publishing message...") onComplete {
           case Success(response) =>
-            //$scope.messageBlob.message = null
-            $log.info(s"response = ${angular.toJson(response)}")
-            if (response.`type`.contains("error"))
-              $scope.addErrorMessage(response.message)
-            else
+            $scope.$apply { () =>
+              $log.info(s"response = ${angular.toJson(response)}")
               toaster.success("Message published")
-
+            }
           case Failure(e) =>
-            $scope.addErrorMessage(e.displayMessage)
+            $scope.$apply { () =>
+              $scope.addErrorMessage(e.displayMessage)
+            }
         }
       }
     }
@@ -75,40 +76,34 @@ class PublishController($scope: PublishControllerScope, $log: Log, $timeout: Tim
     * @param blob the given message blob
     * @return {boolean}
     */
-  private def validatePublishMessage(blob: MessageBlob) = {
-    if (!blob.topic.exists(!_.topic.isEmpty)) {
-      $scope.addErrorMessage("No topic specified")
-      false
-    }
-    else if (!blob.keyFormat.exists(!_.isEmpty)) {
-      $scope.addErrorMessage("No message key format specified")
-      false
-    }
-    else if (!blob.message.exists(!_.isEmpty)) {
-      $scope.addErrorMessage("No message body specified")
-      false
-    }
-    else if (!blob.messageFormat.exists(!_.isEmpty)) {
-      $scope.addErrorMessage("No message body format specified")
-      false
-    }
-    else true
+  private def validated(blob: MessageBlob) = {
+    val messages = blob.validate
+    messages foreach ($scope.addErrorMessage(_))
+    messages.isEmpty
   }
 
 }
 
 /**
-  * Publish Controller Scope
+  * Publish Controller Companion
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait PublishControllerScope extends Scope with GlobalErrorHandling with GlobalLoading {
-  // properties
-  var keyFormats: js.Array[String] = js.native
-  var messageBlob: MessageBlob = js.native
-  var messageFormats: js.Array[String] = js.native
+object PublishController {
 
-  // functions
-  var init: js.Function0[Unit] = js.native
-  var publishMessage: js.Function1[MessageBlob, Unit] = js.native
+  /**
+    * Publish Controller Scope
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait PublishScope extends Scope
+    with GlobalErrorHandling with GlobalLoading with ReferenceDataAware {
+    // properties
+    var keyFormats: js.Array[String] = js.native
+    var messageFormats: js.Array[String] = js.native
+
+    // functions
+    var init: js.Function0[Unit] = js.native
+    var publishMessage: js.Function1[js.UndefOr[MessageBlob], Unit] = js.native
+  }
+
 }

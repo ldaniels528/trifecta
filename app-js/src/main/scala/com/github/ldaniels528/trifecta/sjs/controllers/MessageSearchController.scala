@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
+import com.github.ldaniels528.trifecta.sjs.controllers.MessageSearchController._
 import com.github.ldaniels528.trifecta.sjs.models.TopicDetails
 import com.github.ldaniels528.trifecta.sjs.services.TopicService
 import org.scalajs.angularjs.AngularJsHelper._
@@ -17,9 +18,9 @@ import scala.util.{Failure, Success}
   * Message Search Controller
   * @author lawrence.daniels@gmail.com
   */
-class MessageSearchController($scope: MessageSearchControllerScope,
+class MessageSearchController($scope: MessageSearchScope,
                               $modalInstance: ModalInstance[MessageSearchForm],
-                              @injected("TopicSvc") topicSvc: TopicService)
+                              @injected("TopicService") topicService: TopicService)
   extends Controller {
 
   implicit val scope = $scope
@@ -34,7 +35,7 @@ class MessageSearchController($scope: MessageSearchControllerScope,
   $scope.cancel = () => $modalInstance.dismiss("cancel")
 
   // load the topics
-  topicSvc.getDetailedTopics /*.withGlobalLoading*/ onComplete {
+  topicService.getDetailedTopics /*.withGlobalLoading*/ onComplete {
     case Success(loadedTopics) =>
       if (loadedTopics.nonEmpty) console.warn("No topic summaries found")
       $scope.$apply(() => $scope.topics = loadedTopics)
@@ -45,25 +46,33 @@ class MessageSearchController($scope: MessageSearchControllerScope,
 }
 
 /**
-  * Message Search Controller Scope
+  * Message Search Controller Companion
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait MessageSearchControllerScope extends Scope with GlobalLoading {
-  // properties
-  var form: MessageSearchForm = js.native
-  var topics: js.Array[TopicDetails] = js.native
+object MessageSearchController {
 
-  // functions
-  var ok: js.Function0[Unit] = js.native
-  var cancel: js.Function0[Unit] = js.native
-  var getTopics: js.Function1[js.UndefOr[Boolean], js.Array[TopicDetails]] = js.native
+  /**
+    * Message Search Form
+    * @author lawrence.daniels@gmail.com
+    */
+  @ScalaJSDefined
+  class MessageSearchForm(var topic: js.UndefOr[TopicDetails] = js.undefined,
+                          var criteria: js.UndefOr[String] = js.undefined) extends js.Object
+
+  /**
+    * Message Search Controller Scope
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait MessageSearchScope extends Scope with GlobalLoading {
+    // properties
+    var form: MessageSearchForm = js.native
+    var topics: js.Array[TopicDetails] = js.native
+
+    // functions
+    var ok: js.Function0[Unit] = js.native
+    var cancel: js.Function0[Unit] = js.native
+    var getTopics: js.Function1[js.UndefOr[Boolean], js.Array[TopicDetails]] = js.native
+  }
+
 }
-
-/**
-  * Message Search Form
-  * @author lawrence.daniels@gmail.com
-  */
-@ScalaJSDefined
-class MessageSearchForm(var topic: js.UndefOr[TopicDetails] = js.undefined,
-                        var criteria: js.UndefOr[String] = js.undefined) extends js.Object

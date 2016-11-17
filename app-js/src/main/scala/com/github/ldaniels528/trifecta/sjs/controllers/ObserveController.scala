@@ -1,15 +1,13 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
-import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
+import com.github.ldaniels528.trifecta.sjs.controllers.ObserveController._
 import com.github.ldaniels528.trifecta.sjs.models.SamplingStatus._
 import com.github.ldaniels528.trifecta.sjs.models._
-import com.github.ldaniels528.trifecta.sjs.services.ServerSideEventsService._
 import com.github.ldaniels528.trifecta.sjs.services._
 import org.scalajs.angularjs.AngularJsHelper._
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.toaster.Toaster
-import org.scalajs.dom
 import org.scalajs.dom.browser.console
 import org.scalajs.jquery.jQuery
 import org.scalajs.sjs.JsUnderOrHelper._
@@ -24,12 +22,13 @@ import scala.util.{Failure, Success}
   * Observe Controller
   * @author lawrence.daniels@gmail.com
   */
-class ObserveController($scope: ObserveControllerScope, $interval: Interval, $parse: Parse, $timeout: Timeout, toaster: Toaster,
-                        @injected("MessageSvc") messageSvc: MessageDataService,
-                        @injected("MessageSearchSvc") messageSearchSvc: MessageSearchService,
-                        @injected("QuerySvc") querySvc: QueryService,
-                        @injected("TopicSvc") topicSvc: TopicService,
-                        @injected("ServerSideEventsSvc") sseSvc: ServerSideEventsService)
+class ObserveController($scope: ObserveScope, $interval: Interval, $log: Log, $parse: Parse,
+                        $routeParams: ObserveRouteParams, $timeout: Timeout, toaster: Toaster,
+                        @injected("MessageDataService") messageDataService: MessageDataService,
+                        @injected("MessageSearchService") messageSearchService: MessageSearchService,
+                        @injected("QueryService") queryService: QueryService,
+                        @injected("TopicService") topicService: TopicService,
+                        @injected("ServerSideEventsService") sseSvc: ServerSideEventsService)
   extends Controller {
 
   implicit val scope = $scope
@@ -48,7 +47,25 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
 
   $scope.init = () => {
     console.log("Initializing Observe Controller...")
-    $scope.updatePartition($scope.topic.flatMap(_.partitions.sortBy(_.partition.getOrElse(0)).find(_.messages.exists(_ > 0)).orUndefined))
+    val params = for {
+      topic <- $routeParams.topic.flat
+      partition <- $routeParams.partition.flat.map(_.toInt)
+      offset <- $routeParams.offset.flat.map(_.toInt)
+    } yield (topic, partition, offset)
+
+    params.toOption match {
+      case Some((topicId, partitionId, offset)) =>
+        $log.info(s"topic = $topicId, partition = $partitionId, offset = $offset")
+        for {
+          topic <- $scope.topics.find(t => t.topic == topicId)
+        } {
+
+        }
+
+      //$scope.updatePartition()
+      case None =>
+        $scope.updatePartition($scope.topic.flatMap(_.partitions.sortBy(_.partition.getOrElse(0)).find(_.messages.exists(_ > 0)).orUndefined))
+    }
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -96,7 +113,7 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
       offset <- anOffset
     } {
       $scope.clearMessage()
-      messageSvc.getMessage(topic, partition, offset).withGlobalLoading.withTimer("Retrieving message data") onComplete {
+      messageDataService.getMessage(topic, partition, offset).withGlobalLoading.withTimer("Retrieving message data") onComplete {
         case Success(message) =>
           $scope.message = message
         case Failure(e) =>
@@ -133,7 +150,7 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
       partition <- aPartition
       offset <- anOffset
     } {
-      messageSvc.getMessageKey(topic, partition, offset) onComplete {
+      messageDataService.getMessageKey(topic, partition, offset) onComplete {
         case Success(message) =>
           $scope.message = message
         case Failure(e) =>
@@ -151,7 +168,7 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
   }
 
   $scope.messageFinderPopup = () => {
-    messageSearchSvc.finderDialog() onComplete {
+    messageSearchService.finderDialog() onComplete {
       case Success(form) =>
         console.log(s"form = ${angular.toJson(form)}")
 
@@ -160,14 +177,14 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
         else if (form.criteria.isEmpty) $scope.addErrorMessage("No criteria specified")
         else {
           // display the loading dialog
-          val loadingDialog = messageSearchSvc.loadingDialog()
+          val loadingDialog = messageSearchService.loadingDialog()
 
           for {
             topic <- form.topic.map(_.topic)
             criteria <- form.criteria
           } {
             // perform the search
-            querySvc.findOne(topic, criteria) onComplete {
+            queryService.findOne(topic, criteria) onComplete {
               case Success(message) =>
                 //loadingDialog.close(new js.Object())
                 $scope.$apply(() => $scope.message = message)
@@ -332,11 +349,11 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
   }
 
   $scope.switchToMessage = (aTopic: js.UndefOr[String], aPartition: js.UndefOr[Int], anOffset: js.UndefOr[Int]) => {
+    console.info(s"switchToMessage: aTopic = ${aTopic.orNull}, aPartition = ${aPartition.orNull}, anOffset = ${anOffset.orNull}")
     for {
       topicID <- aTopic
       partitionID <- aPartition
       offset <- anOffset
-      _ = console.info(s"switchToMessage: topicID = $topicID, partitionID = $partitionID, offset = $offset")
       topic <- $scope.findTopicByName(topicID)
       partition <- topic(partitionID).orUndefined
     } {
@@ -396,7 +413,7 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
   }
 
   private def ensureOffset(aPartition: js.UndefOr[PartitionDetails]) = aPartition foreach { partition =>
-    if (partition.offset.isEmpty) partition.offset = partition.endOffset
+    if (partition.offset.isEmpty) partition.offset = partition.startOffset
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -406,27 +423,27 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
   /**
     * React to incoming message samples
     */
-  $scope.$on(MESSAGE_SAMPLE, (event: dom.Event, message: Message) => $scope.$apply(() => {
+  $scope.onMessageSample { message =>
     // is sampling already running?
     if (!$scope.sampling.status.contains(SAMPLING_STATUS_STARTED)) {
       console.info("Sampling was already running...")
-      $scope.sampling.status = SAMPLING_STATUS_STARTED
+      $scope.$apply(() => $scope.sampling.status = SAMPLING_STATUS_STARTED)
       sseSvc.getSamplingSession onComplete {
         case Success(response) =>
           console.log(s"response => ${angular.toJson(response)}")
-          $scope.sampling.sessionId = response.sessionId
+          $scope.$apply(() => $scope.sampling.sessionId = response.sessionId)
         case Failure(e) =>
           console.error(s"Failed to read the sampling session: ${e.displayMessage}")
       }
     }
 
-    $scope.setMessageData(message)
-  }))
+    $scope.$apply(() => $scope.setMessageData(message))
+  }
 
   /**
     * Initialize the controller once the reference data has completed loading
     */
-  $scope.$on(REFERENCE_DATA_LOADED, (event: dom.Event, data: ReferenceData) => $scope.init())
+  $scope.onReferenceDataLoaded { _ => $scope.init() }
 
   /**
     * Watch for topic changes, and select the first non-empty topic
@@ -440,44 +457,65 @@ class ObserveController($scope: ObserveControllerScope, $interval: Interval, $pa
 }
 
 /**
-  * Observe Controller Scope
+  * Observe Controller Companion
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait ObserveControllerScope extends Scope with GlobalDataAware with GlobalErrorHandling with GlobalLoading with MainTabManagement with ReferenceDataAware {
-  // properties
-  var displayMode: DisplayMode = js.native
-  var message: js.UndefOr[Message] = js.native
-  var sampling: SamplingStatus = js.native
-  var partition: js.UndefOr[PartitionDetails] = js.native
+object ObserveController {
 
-  // functions
-  var init: js.Function0[Unit] = js.native
-  var convertOffsetToInt: js.Function2[js.UndefOr[PartitionDetails], js.UndefOr[Int], Unit] = js.native
-  var gotoDecoder: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-  var isLimitedControls: js.Function0[Boolean] = js.native
-  var isSelected: js.Function1[js.UndefOr[PartitionDetails], Boolean] = js.native
-  var messageAsJSON: js.Function2[js.UndefOr[Message], js.UndefOr[Int], js.UndefOr[String]] = js.native
-  var toggleAvroOutput: js.Function0[Unit] = js.native
-  var updatePartition: js.Function1[js.UndefOr[PartitionDetails], Unit] = js.native
-  var updateTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+  /**
+    * Observe Controller Scope
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait ObserveRouteParams extends js.Object {
+    var topic: js.UndefOr[String] = js.native
+    var partition: js.UndefOr[String] = js.native
+    var offset: js.UndefOr[String] = js.native
+  }
 
-  // Kafka message functions
-  var clearMessage: js.Function0[Unit] = js.native
-  var exportMessage: js.Function3[js.UndefOr[TopicDetails], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
-  var firstMessage: js.Function0[Unit] = js.native
-  var getMessageData: js.Function3[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
-  var getMessageKey: js.Function3[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
-  var getRemainingCount: js.Function1[js.UndefOr[PartitionDetails], js.UndefOr[Int]] = js.native
-  var lastMessage: js.Function0[Unit] = js.native
-  var loadMessage: js.Function0[Unit] = js.native
-  var medianMessage: js.Function0[Unit] = js.native
-  var messageFinderPopup: js.Function0[Unit] = js.native
-  var messageSamplingStart: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-  var messageSamplingStop: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-  var nextMessage: js.Function0[Unit] = js.native
-  var previousMessage: js.Function0[Unit] = js.native
-  var resetMessageState: js.Function4[js.UndefOr[String], js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
-  var setMessageData: js.Function1[js.UndefOr[Message], Unit] = js.native
-  var switchToMessage: js.Function3[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
+  /**
+    * Observe Controller Scope
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait ObserveScope extends Scope
+    with GlobalDataAware with GlobalErrorHandling with GlobalLoading
+    with MainTabManagement with ReferenceDataAware {
+    // properties
+    var displayMode: DisplayMode = js.native
+    var message: js.UndefOr[Message] = js.native
+    var sampling: SamplingStatus = js.native
+    var partition: js.UndefOr[PartitionDetails] = js.native
+
+    // functions
+    var init: js.Function0[Unit] = js.native
+    var convertOffsetToInt: js.Function2[js.UndefOr[PartitionDetails], js.UndefOr[Int], Unit] = js.native
+    var gotoDecoder: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var isLimitedControls: js.Function0[Boolean] = js.native
+    var isSelected: js.Function1[js.UndefOr[PartitionDetails], Boolean] = js.native
+    var messageAsJSON: js.Function2[js.UndefOr[Message], js.UndefOr[Int], js.UndefOr[String]] = js.native
+    var toggleAvroOutput: js.Function0[Unit] = js.native
+    var updatePartition: js.Function1[js.UndefOr[PartitionDetails], Unit] = js.native
+    var updateTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+
+    // Kafka message functions
+    var clearMessage: js.Function0[Unit] = js.native
+    var exportMessage: js.Function3[js.UndefOr[TopicDetails], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
+    var firstMessage: js.Function0[Unit] = js.native
+    var getMessageData: js.Function3[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
+    var getMessageKey: js.Function3[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
+    var getRemainingCount: js.Function1[js.UndefOr[PartitionDetails], js.UndefOr[Int]] = js.native
+    var lastMessage: js.Function0[Unit] = js.native
+    var loadMessage: js.Function0[Unit] = js.native
+    var medianMessage: js.Function0[Unit] = js.native
+    var messageFinderPopup: js.Function0[Unit] = js.native
+    var messageSamplingStart: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var messageSamplingStop: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var nextMessage: js.Function0[Unit] = js.native
+    var previousMessage: js.Function0[Unit] = js.native
+    var resetMessageState: js.Function4[js.UndefOr[String], js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
+    var setMessageData: js.Function1[js.UndefOr[Message], Unit] = js.native
+    var switchToMessage: js.Function3[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
+  }
+
 }

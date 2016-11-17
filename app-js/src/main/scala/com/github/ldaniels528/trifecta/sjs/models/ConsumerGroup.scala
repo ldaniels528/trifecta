@@ -10,7 +10,7 @@ import scala.scalajs.js
   */
 @js.native
 trait ConsumerGroup extends js.Object {
-  var consumerId: String = js.native
+  var consumerId: js.UndefOr[String] = js.native
   var details: js.Array[Consumer] = js.native
 }
 

@@ -1,0 +1,15 @@
+<!-- Zookeeper Item Tree -->
+<script type="text/ng-template" id="zk_item_tree.htm">
+    <img ng-src="/assets/images/{{ item.loading ? 'status/loading.gif' : (item.expanded ? 'buttons/collapse.png' : 'buttons/expand.png') }}"
+         ng-click="expandItem(item)"
+         class="clickable">
+    <img ng-show="item.path == '/'" class="middle" src="/assets/images/common/root-16.png">
+    <a ng-click="getItemInfo(item)">
+        <span ng-show="zkItem.path == item.path" class="highlighted">{{ item.name }}</span>
+        <span ng-show="zkItem.path != item.path">{{ item.name }}</span>
+    </a>
+
+    <div style="margin-left: 20px" ng-show="item.expanded">
+        <div ng-repeat="item in item.children" ng-include="'zk_item_tree.htm'"></div>
+    </div>
+</script>

@@ -135,15 +135,18 @@ class KafkaController() extends Controller {
     }
   }
 
-  def publishMessage(topic: String) = Action { implicit request =>
+  def publishMessage(topic: String) = Action.async { implicit request =>
     request.body.asJson match {
       case Some(jsonBody) =>
-        Try(WebConfig.facade.publishMessage(topic, jsonBody.toString())) match {
-          case Success(response) => Ok(Json.obj("success" -> true))
-          case Failure(e) => InternalServerError(e.getMessage)
+        Logger.info(s"jsonBody => $jsonBody")
+        WebConfig.facade.publishMessage(topic, jsonBody.toString()) map { resp =>
+          Ok(Json.obj("topic" -> resp.topic(), "partition" -> resp.partition(), "offset" -> resp.offset()))
+        } recover {
+          case e: Throwable =>
+            InternalServerError(e.getMessage)
         }
       case None =>
-        BadRequest("Message object expected")
+        Future.successful(BadRequest("Publish message request object expected"))
     }
   }
 

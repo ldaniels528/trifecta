@@ -1,11 +1,12 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import org.scalajs.angularjs._
-import org.scalajs.angularjs.http.Http
-import org.scalajs.dom.browser.console
 import com.github.ldaniels528.trifecta.sjs.RootScope
 import com.github.ldaniels528.trifecta.sjs.models._
+import com.github.ldaniels528.trifecta.sjs.services.ServerSideEventsService._
+import org.scalajs.angularjs._
+import org.scalajs.angularjs.http.Http
 import org.scalajs.dom.Event
+import org.scalajs.dom.browser.console
 import org.scalajs.dom.raw.EventSource
 
 import scala.scalajs.js
@@ -80,33 +81,30 @@ class ServerSideEventsService($rootScope: RootScope, $http: Http) extends Servic
 }
 
 /**
-  * Server Side Events Service Companion Object
+  * Server Side Events Service Companion
   * @author lawrence.daniels@gmail.com
   */
 object ServerSideEventsService {
-  val CONSUMER_DELTA = "consumer_deltas"
-  val MESSAGE_SAMPLE = "sample"
-  val TOPIC_DELTA = "topic_deltas"
 
-}
+  /**
+    * Represents a SSE Message Event
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait SSEMessageEvent extends js.Object {
+    var data: js.UndefOr[String] = js.native
 
-/**
-  * Represents a SSE Message Event
-  * @author lawrence.daniels@gmail.com
-  */
-@js.native
-trait SSEMessageEvent extends js.Object {
-  var data: js.UndefOr[String] = js.native
+  }
 
-}
+  /**
+    * Represents a Reactive Message
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait ReactiveMessage extends js.Object {
+    var `type`: js.UndefOr[String] = js.native
+    var message: js.UndefOr[js.Object] = js.native
 
-/**
-  * Represents a Reactive Message
-  * @author lawrence.daniels@gmail.com
-  */
-@js.native
-trait ReactiveMessage extends js.Object {
-  var `type`: js.UndefOr[String] = js.native
-  var message: js.UndefOr[js.Object] = js.native
+  }
 
 }

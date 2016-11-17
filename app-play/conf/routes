@@ -35,9 +35,9 @@ POST          /api/schema                                        @com.github.lda
 GET           /api/schema/:topic/:name                           @com.github.ldaniels528.trifecta.controllers.DecoderController.getDecoderSchemaByName(topic: String, name: String)
 
 # Messages
-GET           /api/message_key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.controllers.KafkaController.getMessageKey(topic: String, partition: Int, offset: Long)
-GET           /api/message_data/:topic/:partition/:offset        @com.github.ldaniels528.trifecta.controllers.KafkaController.getMessageData(topic: String, partition: Int, offset: Long)
-POST          /api/message/:topic                                @com.github.ldaniels528.trifecta.controllers.KafkaController.publishMessage(topic: String)
+GET           /api/message/data/:topic/:partition/:offset        @com.github.ldaniels528.trifecta.controllers.KafkaController.getMessageData(topic: String, partition: Int, offset: Long)
+POST          /api/message/data/:topic                           @com.github.ldaniels528.trifecta.controllers.KafkaController.publishMessage(topic: String)
+GET           /api/message/key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.controllers.KafkaController.getMessageKey(topic: String, partition: Int, offset: Long)
 
 # Queries
 POST          /api/query                                         @com.github.ldaniels528.trifecta.controllers.QueryController.saveQuery

@@ -1,14 +1,13 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
-import com.github.ldaniels528.trifecta.sjs.controllers.ReferenceDataAware._
+import com.github.ldaniels528.trifecta.sjs.controllers.QueryController._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.QueryService
 import com.github.ldaniels528.trifecta.sjs.util.NamingUtil
 import org.scalajs.angularjs.AngularJsHelper._
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.toaster.Toaster
-import org.scalajs.dom
 import org.scalajs.dom.browser.console
 import org.scalajs.nodejs.util.ScalaJsHelper._
 import org.scalajs.sjs.JsUnderOrHelper._
@@ -24,8 +23,8 @@ import scala.util.{Failure, Success}
   * Query Controller
   * @author lawrence.daniels@gmail.com
   */
-class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout, toaster: Toaster,
-                      @injected("QuerySvc") querySvc: QueryService)
+class QueryController($scope: QueryScope, $log: Log, $timeout: Timeout, toaster: Toaster,
+                      @injected("QueryService") queryService: QueryService)
   extends Controller {
 
   implicit val scope = $scope
@@ -56,7 +55,7 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
   ///////////////////////////////////////////////////////////////////////////
 
   $scope.cancelNewQuery = (aSavedQuery: js.UndefOr[Query]) => aSavedQuery foreach { savedQuery =>
-    if (savedQuery.newFile.contains(true)) {
+    if (savedQuery.newFile.isTrue) {
       for {
         topicName <- savedQuery.topic
         topic <- $scope.findTopicByName(topicName)
@@ -86,7 +85,7 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
     * Downloads the query results as CSV
     */
   $scope.downloadResults = (aResults: js.UndefOr[js.Array[QueryRow]]) => aResults foreach { results =>
-    querySvc.transformResultsToCSV(results).withGlobalLoading.withTimer("Transforming results") onComplete {
+    queryService.transformResultsToCSV(results).withGlobalLoading.withTimer("Transforming results") onComplete {
       case Success(response) =>
         $log.info(s"response = ${angular.toJson(response)}")
       case Failure(e) =>
@@ -112,7 +111,7 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
       queryString <- mySavedQuery.queryString
     } {
       // execute the query
-      querySvc.executeQuery(name, topic, queryString).withGlobalLoading.withTimer("Executing query") onComplete {
+      queryService.executeQuery(name, topic, queryString).withGlobalLoading.withTimer("Executing query") onComplete {
         case Success(results) =>
           mySavedQuery.running = false
           val mappings = generateDataArray(results.labels, results.values)
@@ -133,8 +132,8 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
   }
 
   $scope.expandQueryCollection = (aCollection: js.UndefOr[TopicDetails]) => aCollection foreach { collection =>
-    collection.queriesExpanded = !collection.queriesExpanded.contains(true)
-    if (collection.queriesExpanded.contains(true)) {
+    collection.queriesExpanded = !collection.queriesExpanded.isTrue
+    if (collection.queriesExpanded.isTrue) {
       loadQueriesByTopic(collection) onComplete {
         case Success(_) =>
         case Failure(e) =>
@@ -157,12 +156,12 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
       topic == resultsTopic &&
         $scope.partitionAt(index) == partition.partition &&
         partition.offset.exists(o => $scope.offsetAt(index).exists(_ == o))
-    }).contains(true)
+    }).isTrue
   }
 
   private def loadQueriesByTopic(topic: TopicDetails) = {
     topic.loading = true
-    val outcome = querySvc.getQueriesByTopic(topic.topic).withGlobalLoading.withTimer("Loading queries by topic")
+    val outcome = queryService.getQueriesByTopic(topic.topic).withGlobalLoading.withTimer("Loading queries by topic")
     outcome onComplete {
       case Success(queries) =>
         topic.loading = false
@@ -199,7 +198,7 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
     } {
       query.syncing = true
       $log.info(s"Uploading query '$name' (topic $topic)...")
-      querySvc.saveQuery(name, topic, queryString).withGlobalLoading.withTimer("Saving query") onComplete {
+      queryService.saveQuery(name, topic, queryString).withGlobalLoading.withTimer("Saving query") onComplete {
         case Success(response) =>
           query.modified = false
           query.newFile = false
@@ -220,7 +219,7 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
     $scope.collection = collection
 
     // is the collection expanded?
-    if (!collection.queriesExpanded.contains(true)) {
+    if (!collection.queriesExpanded.isTrue) {
       $scope.expandQueryCollection(collection)
     }
     else {
@@ -299,7 +298,7 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
     */
   private def updatesQueryClock(mySavedQuery: Query) {
     mySavedQuery.queryElaspedTime = mySavedQuery.queryStartTime.map(t => (new js.Date().getTime().toInt - t) / 1000)
-    if (mySavedQuery.running.contains(true)) {
+    if (mySavedQuery.running.isTrue) {
       $timeout(() => updatesQueryClock(mySavedQuery), 1.second)
     }
   }
@@ -311,37 +310,47 @@ class QueryController($scope: QueryControllerScope, $log: Log, $timeout: Timeout
   /**
     * Initialize the controller once the reference data has completed loading
     */
-  $scope.$on(REFERENCE_DATA_LOADED, (event: dom.Event, data: ReferenceData) => $scope.init())
+  $scope.onReferenceDataLoaded { _ => $scope.init() }
 
 }
 
 /**
-  * Query Controller Scope
+  * Query Controller Companion
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait QueryControllerScope extends Scope with GlobalDataAware with GlobalLoading with GlobalErrorHandling with ReferenceDataAware {
-  // properties
-  var collection: js.UndefOr[js.Object] = js.native
-  var savedQuery: Query = js.native
-  var savedQueries: js.Array[Query] = js.native
+object QueryController {
 
-  // functions
-  var init: js.Function0[Unit] = js.native
-  var cancelNewQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
-  var deleteQuery: js.Function1[js.UndefOr[Int], Unit] = js.native
-  var downloadResults: js.Function1[js.UndefOr[js.Array[QueryRow]], Unit] = js.native
-  var executeQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
-  var filterLabels: js.Function1[js.UndefOr[js.Array[String]], js.UndefOr[js.Array[String]]] = js.native
-  var expandQueryCollection: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-  var isSelected: js.Function4[js.UndefOr[TopicDetails], js.UndefOr[PartitionDetails], js.UndefOr[QueryRow], js.UndefOr[Int], Boolean] = js.native
-  var offsetAt: js.Function1[js.UndefOr[Int], js.UndefOr[Int]] = js.native
-  var partitionAt: js.Function1[js.UndefOr[Int], js.UndefOr[Int]] = js.native
-  var saveQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
-  var selectQueryCollection: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-  var selectQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
-  var selectQueryResults: js.Function2[js.UndefOr[Query], js.UndefOr[Int], Unit] = js.native
-  var setUpNewQueryDocument: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-  var toggleSortField: js.Function2[js.UndefOr[Query], js.UndefOr[String], Unit] = js.native
+  /**
+    * Query Controller Scope
+    * @author lawrence.daniels@gmail.com
+    */
+  @js.native
+  trait QueryScope extends Scope
+    with GlobalDataAware with GlobalLoading with GlobalErrorHandling
+    with ReferenceDataAware {
+    // properties
+    var collection: js.UndefOr[js.Object] = js.native
+    var savedQuery: Query = js.native
+    var savedQueries: js.Array[Query] = js.native
+
+    // functions
+    var init: js.Function0[Unit] = js.native
+    var cancelNewQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
+    var deleteQuery: js.Function1[js.UndefOr[Int], Unit] = js.native
+    var downloadResults: js.Function1[js.UndefOr[js.Array[QueryRow]], Unit] = js.native
+    var executeQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
+    var filterLabels: js.Function1[js.UndefOr[js.Array[String]], js.UndefOr[js.Array[String]]] = js.native
+    var expandQueryCollection: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var isSelected: js.Function4[js.UndefOr[TopicDetails], js.UndefOr[PartitionDetails], js.UndefOr[QueryRow], js.UndefOr[Int], Boolean] = js.native
+    var offsetAt: js.Function1[js.UndefOr[Int], js.UndefOr[Int]] = js.native
+    var partitionAt: js.Function1[js.UndefOr[Int], js.UndefOr[Int]] = js.native
+    var saveQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
+    var selectQueryCollection: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var selectQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
+    var selectQueryResults: js.Function2[js.UndefOr[Query], js.UndefOr[Int], Unit] = js.native
+    var setUpNewQueryDocument: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var toggleSortField: js.Function2[js.UndefOr[Query], js.UndefOr[String], Unit] = js.native
+
+  }
 
 }
