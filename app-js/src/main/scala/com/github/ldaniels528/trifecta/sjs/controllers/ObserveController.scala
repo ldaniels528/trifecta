@@ -45,7 +45,7 @@ class ObserveController($scope: ObserveScope, $interval: Interval, $log: Log, $p
   //    Initialization Functions
   ///////////////////////////////////////////////////////////////////////////
 
-  $scope.init = () => {
+ def init() = {
     console.log("Initializing Observe Controller...")
     val params = for {
       topic <- $routeParams.topic.flat
@@ -58,8 +58,9 @@ class ObserveController($scope: ObserveScope, $interval: Interval, $log: Log, $p
         $log.info(s"topic = $topicId, partition = $partitionId, offset = $offset")
         for {
           topic <- $scope.topics.find(t => t.topic == topicId)
+          partition <- topic.partitions.find(_.partition.contains(partitionId))
         } {
-
+          $scope.updatePartition(partition)
         }
 
       //$scope.updatePartition()
@@ -441,9 +442,9 @@ class ObserveController($scope: ObserveScope, $interval: Interval, $log: Log, $p
   }
 
   /**
-    * Initialize the controller once the reference data has completed loading
+    * Initialize the controller once the topics have been loaded
     */
-  $scope.onReferenceDataLoaded { _ => $scope.init() }
+  $scope.onTopicsLoaded { _ => init() }
 
   /**
     * Watch for topic changes, and select the first non-empty topic
@@ -488,7 +489,6 @@ object ObserveController {
     var partition: js.UndefOr[PartitionDetails] = js.native
 
     // functions
-    var init: js.Function0[Unit] = js.native
     var convertOffsetToInt: js.Function2[js.UndefOr[PartitionDetails], js.UndefOr[Int], Unit] = js.native
     var gotoDecoder: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
     var isLimitedControls: js.Function0[Boolean] = js.native

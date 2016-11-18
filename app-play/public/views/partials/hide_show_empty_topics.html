@@ -1,4 +1,4 @@
-<div class="full_block hide_show_topics">
+<div ng-hide="topicsLoading" class="full_block hide_show_topics">
     <span>
         {{ getTopics().length | number }} of {{ topics.length }} Topic(s) shown
     </span>
@@ -8,6 +8,6 @@
     </span>
     <br style="clear: both">
 </div>
-<div ng-show="!topics.length" class="warning bold">
+<div ng-hide="topicsLoading || topics.length" class="warning bold">
     <img src="/assets/images/status/yellowlight.gif"> No topics found
 </div>

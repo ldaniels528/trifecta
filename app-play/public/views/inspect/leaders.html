@@ -2,9 +2,8 @@
     <div ng-include="'/assets/views/partials/hide_show_empty_topics.html'"></div>
 
     <!-- No Topics -->
-    <div ng-hide="getTopics().length">
-        <img src="/assets/images/status/yellowlight.gif">
-        <span class="warning">No topic with messages found.</span>
+    <div ng-show="topicsLoading" style="margin-top: 15px">
+        <img src="/assets/images/status/loading.gif"> Retrieving topic information from Kafka...
     </div>
 
     <!-- Topics -->
@@ -55,6 +54,7 @@
         </div>
     </div>
 </div>
+
 <div class="col-md-4">
     <div ng-include="'/assets/views/partials/hints_and_tips.html'"></div>
     <p><img class="bulb" src="/assets/images/common/bulb-16.png"> This view provides the user

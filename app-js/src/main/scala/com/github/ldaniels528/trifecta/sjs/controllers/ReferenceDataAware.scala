@@ -22,6 +22,12 @@ trait ReferenceDataAware extends js.Object {
   var topic: js.UndefOr[TopicDetails] = js.native
   var topics: js.Array[TopicDetails] = js.native
 
+  // reference data properties
+  var referenceDataLoading: js.UndefOr[Boolean] = js.native
+  var brokersLoading: js.UndefOr[Boolean] = js.native
+  var consumersLoading: js.UndefOr[Boolean] = js.native
+  var topicsLoading: js.UndefOr[Boolean] = js.native
+
   // consumer functions
   var getConsumers: js.Function0[js.Array[Consumer]] = js.native
   var getConsumersForTopic: js.Function1[js.UndefOr[String], js.UndefOr[js.Array[ConsumerGroup]]] = js.native

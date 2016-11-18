@@ -1,8 +1,11 @@
 <div class="col-md-8" style="height: 525px; border-right: 1px solid #cccccc">
-    <div ng-show="consumers.length" ng-include="'/assets/views/partials/hide_show_empty_topics.html'"></div>
+    <div ng-hide="topicsLoading || consumersLoading" ng-include="'/assets/views/partials/hide_show_empty_topics.html'"></div>
 
     <!-- No Consumers -->
-    <div ng-hide="consumers.length">
+    <div ng-show="consumersLoading" style="margin-top: 15px">
+        <img src="/assets/images/status/loading.gif"> Retrieving consumer groups... This could take a while.
+    </div>
+    <div ng-hide="consumersLoading || consumers.length">
         <div>
             <img src="/assets/images/status/yellowlight.gif">
             <span class="warning">No consumers were found.</span>

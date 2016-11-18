@@ -1,7 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import MainController._
 import com.github.ldaniels528.trifecta.sjs.RootScope
+import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
+import com.github.ldaniels528.trifecta.sjs.controllers.MainController._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.TopicService
 import org.scalajs.angularjs.AngularJsHelper._
@@ -11,6 +12,7 @@ import org.scalajs.dom
 import org.scalajs.dom.browser.console
 import org.scalajs.nodejs.util.ScalaJsHelper._
 import org.scalajs.sjs.JsUnderOrHelper._
+import org.scalajs.sjs.PromiseHelper._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -38,6 +40,12 @@ class MainController($scope: MainScope, $location: Location, $timeout: Timeout, 
   $scope.replicas = emptyArray
   $scope.topics = emptyArray
   $scope.hideEmptyTopics = true
+
+  // reference data flags
+  $scope.referenceDataLoading = false
+  $scope.brokersLoading = false
+  $scope.consumersLoading = false
+  $scope.topicsLoading = false
 
   ////////////////////////////////////////////////////////////////
   //    Main Tab Functions
@@ -288,15 +296,23 @@ class MainController($scope: MainScope, $location: Location, $timeout: Timeout, 
     * Pre-load the reference data
     */
   $scope.init = () => {
+    $scope.referenceDataLoading = true
+
+    val promisedBrokers = loadBrokers()
+    val promisedTopics = loadTopics()
+    val promisedConsumers =  loadConsumers()
+
     val outcome = for {
-      topics <- loadTopics()
-      brokers <- loadBrokers()
-      consumers <- loadConsumers()
-    } yield (topics, brokers, consumers)
+      brokers <- promisedBrokers
+      topics <- promisedTopics
+      consumers <- promisedConsumers
+    } yield (brokers, topics, consumers)
 
     outcome onComplete {
-      case Success((topics, brokers, consumers)) =>
+      case Success((brokers, topics, consumers)) =>
         console.info(s"Reference data loaded: ${topics.length} topics, ${consumers.length} consumers, ${brokers.length} brokers")
+        $scope.$apply(() => $scope.referenceDataLoading = false)
+
         // broadcast the events
         $scope.broadcastReferenceDataLoaded(ReferenceData(
           brokers = brokers,
@@ -305,53 +321,65 @@ class MainController($scope: MainScope, $location: Location, $timeout: Timeout, 
           topic = $scope.topic
         ))
       case Failure(e) =>
+        $scope.$apply(() => $scope.referenceDataLoading = false)
         toaster.error("Error loading topic, broker and consumer information")
         console.error(s"Error loading reference data: ${e.displayMessage}")
     }
   }
 
   private def loadBrokers() = {
-    val promisedBrokers = topicService.getBrokerGroups
+    $scope.brokersLoading = true
+    val promisedBrokers = topicService.getBrokerGroups.withGlobalLoading.withTimer("Retrieving brokers")
     promisedBrokers onComplete {
       case Success(brokers) =>
-        console.info(s"Loaded ${brokers.length} brokers(s)")
+        console.info(s"Loaded ${brokers.length} broker(s)")
         $scope.$apply { () =>
+          $scope.brokersLoading = false
           $scope.brokers = brokers
         }
       case Failure(e) =>
-        toaster.error("Error loading Kafka topics")
-        console.error(s"Error loading Kafka topics: ${e.displayMessage}")
+        $scope.$apply(() => $scope.brokersLoading = false)
+        toaster.error("Error loading Kafka brokers")
+        console.error(s"Error loading Kafka brokers: ${e.displayMessage}")
     }
     promisedBrokers
   }
 
   private def loadConsumers() = {
-    val promisedConsumers = topicService.getConsumers
+    $scope.consumersLoading = true
+    val promisedConsumers = topicService.getConsumers.withGlobalLoading.withTimer("Retrieving consumers")
     promisedConsumers onComplete {
       case Success(consumers) =>
         console.info(s"Loaded ${consumers.length} consumer(s)")
         $scope.$apply { () =>
+          $scope.consumersLoading = false
           $scope.consumers = consumers
           $scope.consumerGroupCache.clear()
         }
+        $scope.broadcastConsumersLoaded(consumers)
       case Failure(e) =>
-        toaster.error("Error loading Kafka topics")
-        console.error(s"Error loading Kafka topics: ${e.displayMessage}")
+        $scope.$apply(() => $scope.consumersLoading = false)
+        toaster.error("Error loading consumer groups")
+        console.error(s"Error loading consumer groups: ${e.displayMessage}")
     }
     promisedConsumers
   }
 
   private def loadTopics() = {
-    val promisedTopics = topicService.getDetailedTopics
+    $scope.topicsLoading = true
+    val promisedTopics = topicService.getDetailedTopics.withGlobalLoading.withTimer("Retrieving topics")
     promisedTopics onComplete {
       case Success(topics) =>
         console.info(s"Loaded ${topics.length} topic(s)")
         val sortedTopics = enrichTopics(topics.sortBy(_.topic))
         $scope.$apply { () =>
+          $scope.topicsLoading = false
           $scope.topic = sortedTopics.find(_.totalMessages > 0).orUndefined
           $scope.topics = sortedTopics
         }
+        $scope.broadcastTopicsLoaded(topics)
       case Failure(e) =>
+        $scope.$apply(() => $scope.topicsLoading = false)
         toaster.error("Error loading Kafka topics")
         console.error(s"Error loading Kafka topics: ${e.displayMessage}")
     }

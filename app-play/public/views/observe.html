@@ -4,6 +4,9 @@
             <legend style="margin-bottom: 0">Message Topics</legend>
             <div ng-show="topics.length" ng-include="'/assets/views/partials/hide_show_empty_topics.html'"></div>
             <div class="topics_container">
+                <div ng-show="topicsLoading" style="margin-top: 15px">
+                    <img src="/assets/images/status/loading.gif"> Retrieving topic information from Kafka...
+                </div>
                 <div ng-repeat="t in getTopics() | orderBy:'topic'" ng-class="t == topic ? 'highlighted' : ''">
                     <img ng-src="{{ getTopicIcon(t, topic == t) }}">
                     <span ng-click="updateTopic(t)" ng-class="t == topic ? 'highlighted' : ''" class="clickable">{{t.topic}}</span>
