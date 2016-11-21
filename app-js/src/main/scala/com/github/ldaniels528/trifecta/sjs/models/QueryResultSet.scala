@@ -1,30 +1,15 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import org.scalajs.nodejs.util.ScalaJsHelper._
-
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Query Result Set
   * @author lawrence.daniels@gmail.com
   */
-@js.native
+@ScalaJSDefined
 trait QueryResultSet extends js.Object {
-  var labels: js.Array[String] = js.native
-  var values: js.Array[QueryRow] = js.native
-}
-
-/**
-  * Query Result Set
-  * @author lawrence.daniels@gmail.com
-  */
-object QueryResultSet {
-
-  def apply(labels: js.Array[String], values: js.Array[QueryRow]) = {
-    val rs = New[QueryResultSet]
-    rs.labels = labels
-    rs.values = values
-    rs
-  }
-
+  var topic: js.UndefOr[String]
+  var columns: js.UndefOr[js.Array[String]]
+  var rows: js.UndefOr[js.Array[QueryRow]]
 }

@@ -1,9 +1,10 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
+import org.scalajs.sjs.PromiseHelper._
+import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.DecoderController._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.DecoderService
-import org.scalajs.angularjs.AngularJsHelper._
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.toaster.Toaster
 import org.scalajs.dom.browser.console
@@ -20,11 +21,11 @@ import scala.util.{Failure, Success}
   * Decoder Controller
   * @author lawrence.daniels@gmail.com
   */
-class DecoderController($scope: DecoderScope, $log: Log, $timeout: Timeout, toaster: Toaster,
-                        @injected("DecoderService") decoderService: DecoderService)
-  extends Controller {
+case class DecoderController($scope: DecoderScope, $log: Log, $timeout: Timeout, toaster: Toaster,
+                             @injected("DecoderService") decoderService: DecoderService)
+  extends Controller with PopupMessages {
 
-  implicit val scope = $scope
+  implicit val scope: Scope with GlobalLoading = $scope
 
   $scope.decoder = js.undefined
   $scope.decoders = emptyArray
@@ -36,9 +37,11 @@ class DecoderController($scope: DecoderScope, $log: Log, $timeout: Timeout, toas
 
   $scope.init = () => {
     console.log("Initializing Decoder Controller...")
-    decoderService.getDecoders onComplete {
+    $scope.decodersLoading = true
+    decoderService.getDecoders.withGlobalLoading.withTimer("Loading decoders") onComplete {
       case Success(decoders) =>
         $scope.$apply { () =>
+          $scope.decodersLoading = false
           $scope.decoders = decoders map enrichDecoder
           $scope.decoder = decoders.headOption.orUndefined
           $scope.schema = $scope.decoder.flatMap(_.schemas).flatMap(_.headOption.orUndefined)
@@ -48,7 +51,10 @@ class DecoderController($scope: DecoderScope, $log: Log, $timeout: Timeout, toas
           }
         }
       case Failure(e) =>
-        toaster.error("Failed to read decoders", e.displayMessage)
+        $scope.$apply { () =>
+          $scope.decodersLoading = false
+        }
+        errorPopup("Failed to read decoders", e)
     }
   }
 
@@ -68,11 +74,11 @@ class DecoderController($scope: DecoderScope, $log: Log, $timeout: Timeout, toas
       schema <- aSchema
       schemaName <- schema.name
     } {
-      decoderService.downloadDecoderSchema(topic, schemaName) onComplete {
+      decoderService.downloadDecoderSchema(topic, schemaName).toFuture withTimer "Downloading schema" onComplete {
         case Success(response) =>
         //$log.info("response = " + angular.toJson(response))
         case Failure(e) =>
-          toaster.error("Schema download failed")
+          errorPopup("Schema download failed", e)
       }
     }
   }
@@ -90,21 +96,22 @@ class DecoderController($scope: DecoderScope, $log: Log, $timeout: Timeout, toas
       decoder.decoderExpanded = !decoder.decoderExpanded.isTrue
       if (decoder.decoderExpanded.isTrue) {
         decoder.loading = true
-        decoderService.getDecoderByTopic(topic) onComplete {
+        decoderService.getDecoderByTopic(topic).toFuture withTimer "Loading decoders" onComplete {
           case Success(theDecoder) =>
             // stop the loading sequence after 1 second
             $timeout(() => decoder.loading = false, 1.second)
 
-            // store the schemas
-            decoder.schemas = theDecoder.schemas
-            enrichDecoder(decoder)
+            $scope.$apply { () =>
+              // store the schemas
+              decoder.schemas = theDecoder.schemas
+              enrichDecoder(decoder)
 
-            // perform the callback with the schemas
-            $scope.schema = decoder.schemas.toOption.flatMap(_.headOption).orUndefined
-
+              // perform the callback with the schemas
+              $scope.schema = decoder.schemas.toOption.flatMap(_.headOption).orUndefined
+            }
           case Failure(e) =>
-            decoder.loading = false
-            toaster.error(e.displayMessage)
+            $scope.$apply(() => decoder.loading = false)
+            errorPopup("Error loading decoder", e)
         }
       }
     }
@@ -140,12 +147,13 @@ class DecoderController($scope: DecoderScope, $log: Log, $timeout: Timeout, toas
           // stop the loading sequence after 1 second
           $timeout(() => decoder.loading = false, 1.second)
 
-          decoder.schemas = loadedDecoder.schemas
-          enrichDecoder(decoder)
-
+          $scope.$apply { () =>
+            decoder.schemas = loadedDecoder.schemas
+            enrichDecoder(decoder)
+          }
         case Failure(e) =>
-          decoder.loading = false
-          $scope.addErrorMessage(e.displayMessage)
+          $scope.$apply(() => decoder.loading = false)
+          errorPopup("Error loading decoder", e)
       }
     }
   }
@@ -187,15 +195,6 @@ class DecoderController($scope: DecoderScope, $log: Log, $timeout: Timeout, toas
     decoder
   }
 
-  ///////////////////////////////////////////////////////////////////////////
-  //    Event Handler Functions
-  ///////////////////////////////////////////////////////////////////////////
-
-  /**
-    * Initialize the controller once the reference data has completed loading
-    */
-  $scope.onReferenceDataLoaded { _ => $scope.init() }
-
 }
 
 /**
@@ -215,6 +214,7 @@ object DecoderController {
     // properties
     var decoder: js.UndefOr[Decoder] = js.native
     var decoders: js.Array[Decoder] = js.native
+    var decodersLoading: js.UndefOr[Boolean] = js.native
     var schema: js.UndefOr[DecoderSchema] = js.native
 
     // functions

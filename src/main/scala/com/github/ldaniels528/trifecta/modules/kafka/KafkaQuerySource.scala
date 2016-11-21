@@ -2,12 +2,13 @@ package com.github.ldaniels528.trifecta.modules.kafka
 
 import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.github.ldaniels528.trifecta.io.avro.AvroMessageDecoding
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaQuerySource._
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.io.json.JsonDecoder
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 import com.github.ldaniels528.trifecta.messages.query.{KQLResult, KQLSource}
 import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
-import org.apache.avro.generic.GenericRecord
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaQuerySource._
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
+import net.liftweb.json.JsonAST._
 import org.apache.avro.util.Utf8
 import org.slf4j.LoggerFactory
 
@@ -15,9 +16,9 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 /**
- * Kafka Query Source
- * @author lawrence.daniels@gmail.com
- */
+  * Kafka Query Source
+  * @author lawrence.daniels@gmail.com
+  */
 case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: Int = 0)(implicit zk: ZKProxy)
   extends KQLSource {
   private lazy val logger = LoggerFactory.getLogger(getClass)
@@ -32,8 +33,9 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
     KafkaMicroConsumer.findAll(topic, brokers, correlationId, conditions, limit, counter) map {
       _ map { md =>
         counter.updateWriteCount(1)
-        val record = decodeMessage(md, decoder)
-        Map(fields map (field => (field, unwrapValue(record.get(field)))): _*) ++ Map(Partition -> md.partition, Offset -> md.offset)
+        val mapping = decodeMessage(md, decoder, fields)
+        logger.info(s"mapping = $mapping")
+        mapping ++ Map(Partition -> md.partition, Offset -> md.offset)
       }
     } map { values =>
       val elapsedTimeMillis = (System.nanoTime() - startTime).toDouble / 1e9
@@ -42,25 +44,45 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
   }
 
   /**
-   * Decodes the given message
-   * @param msg the given [[BinaryMessage]]
-   * @param decoder the given message decoder
-   * @return the decoded message
-   */
-  private def decodeMessage(msg: BinaryMessage, decoder: MessageDecoder[_]): GenericRecord = {
-    // only Avro decoders are supported
-    val avDecoder: AvroMessageDecoding = decoder match {
-      case av: AvroMessageDecoding => av
+    * Decodes the given message
+    * @param msg     the given [[BinaryMessage binary message]]
+    * @param decoder the given message decoder
+    * @return the decoded message
+    */
+  private def decodeMessage(msg: BinaryMessage, decoder: MessageDecoder[_], fields: Seq[String]) = {
+    decoder match {
+      case av: AvroMessageDecoding =>
+        av.decode(msg.message) match {
+          case Success(record) =>
+            Map(fields map (field => (field, unwrapValue(record.get(field)))): _*)
+          case Failure(e) =>
+            throw new IllegalStateException(e.getMessage, e)
+        }
+      case JsonDecoder =>
+        JsonDecoder.decode(msg.message) match {
+          case Success(JObject(mapping)) =>
+            Map(mapping.map(f => f.name -> unwrap(f.value)): _*) filter { case (k, v) => fields.contains(k) }
+          case Success(js) => Map.empty
+          case Failure(e) =>
+            throw new IllegalStateException(e.getMessage, e)
+        }
       case dec =>
-        logger.error(s"Wanted ${classOf[AvroMessageDecoding].getName} but found ${dec.getClass.getName}")
-        throw new IllegalStateException("Only Avro decoding is supported")
+        logger.error(s"Incompatible decoder type ${dec.getClass.getName}")
+        throw new IllegalStateException(s"Incompatible decoder type ${dec.getClass.getName}")
     }
+  }
 
-    // decode the message
-    avDecoder.decode(msg.message) match {
-      case Success(record) => record
-      case Failure(e) =>
-        throw new IllegalStateException(e.getMessage, e)
+  private def unwrap(jv: JValue): Any = {
+    jv match {
+      case JArray(values) => values map unwrap
+      case JBool(value) => value
+      case JDouble(num) => num
+      case JObject(fields) => Map(fields.map(f => f.name -> unwrap(f.value)): _*)
+      case JNull => null
+      case JString(s) => s
+      case unknown =>
+        logger.warn(s"Unrecognized typed '$unknown' (${unknown.getClass.getName})")
+        null
     }
   }
 

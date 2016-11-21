@@ -1,12 +1,11 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import PublishController._
 import java.util.UUID
 
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
+import com.github.ldaniels528.trifecta.sjs.controllers.PublishController._
 import com.github.ldaniels528.trifecta.sjs.models.MessageBlob
 import com.github.ldaniels528.trifecta.sjs.services.{MessageDataService, TopicService}
-import org.scalajs.angularjs.AngularJsHelper._
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.toaster.Toaster
 import org.scalajs.dom.browser.console
@@ -20,12 +19,12 @@ import scala.util.{Failure, Success}
   * Publish Controller
   * @author lawrence.daniels@gmail.com
   */
-class PublishController($scope: PublishScope, $log: Log, $timeout: Timeout, toaster: Toaster,
-                        @injected("MessageDataService") messageDataService: MessageDataService,
-                        @injected("TopicService") topicService: TopicService)
-  extends Controller {
+case class PublishController($scope: PublishScope, $log: Log, $timeout: Timeout, toaster: Toaster,
+                             @injected("MessageDataService") messageDataService: MessageDataService,
+                             @injected("TopicService") topicService: TopicService)
+  extends Controller with PopupMessages {
 
-  implicit val scope = $scope
+  implicit val scope: Scope with GlobalLoading = $scope
 
   $scope.keyFormats = js.Array("ASCII", "Hex-Notation", "EPOC", "UUID")
   $scope.messageFormats = js.Array("ASCII", "Avro", "JSON", "Hex-Notation")
@@ -48,7 +47,6 @@ class PublishController($scope: PublishScope, $log: Log, $timeout: Timeout, toas
     */
   $scope.publishMessage = (aBlob: js.UndefOr[MessageBlob]) => aBlob foreach { blob =>
     if (validated(blob)) {
-      console.log(s"topic <- ${blob.topic.map(_.topic).orNull}, key <- ${blob.key.orNull}, messageFormat <- ${blob.messageFormat.orNull}")
       for {
         topic <- blob.topic.map(_.topic)
         key = blob.key getOrElse UUID.randomUUID().toString
@@ -58,14 +56,10 @@ class PublishController($scope: PublishScope, $log: Log, $timeout: Timeout, toas
       } {
         messageDataService.publishMessage(topic, key, message, keyFormat, messageFormat).withGlobalLoading.withTimer("Publishing message...") onComplete {
           case Success(response) =>
-            $scope.$apply { () =>
-              $log.info(s"response = ${angular.toJson(response)}")
-              toaster.success("Message published")
-            }
+            $log.info(s"response = ${angular.toJson(response)}")
+            toaster.success("Message published")
           case Failure(e) =>
-            $scope.$apply { () =>
-              $scope.addErrorMessage(e.displayMessage)
-            }
+            errorPopup("Error publishing message", e)
         }
       }
     }

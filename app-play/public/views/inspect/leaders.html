@@ -10,7 +10,7 @@
     <div class="block" ng-repeat="t in getTopics() | orderBy:'topic'">
         <a ng-click="t.expanded = !t.expanded">
             <img ng-src="/assets/images/buttons/{{t.expanded ? 'collapse.png' : 'expand.png'}}">
-            <img ng-src="{{ getTopicIcon(t, topic == t) }}"> {{ t.topic }}
+            <img ng-src="{{ getTopicIcon(t, isSelectedTopic(t)) }}"> {{ t.topic }}
             <span ng-show="t.totalMessages > 0">
                 (<span ng-show="t.totalMessages > 0" class="messages">{{t.totalMessages | number}}</span>)
             </span>

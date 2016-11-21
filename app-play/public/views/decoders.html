@@ -3,7 +3,22 @@
         <fieldset>
             <legend style="margin-bottom: 0">Decoders</legend>
             <div ng-show="decoders.length" ng-include="'/assets/views/partials/hide_show_empty_decoders.html'"></div>
+
             <div class="d_topics_container">
+                <div ng-show="decodersLoading" style="margin-top: 15px">
+                    <img src="/assets/images/status/loading.gif"> Retrieving decoder information...
+                </div>
+
+                <div ng-show="!decodersLoading && !decoders.length">
+                    <p>No decoders found.</p>
+
+                    <p class="bold">Why are there no decoders?</p>
+                    <p>Decoders are defined in <span><span style="color: #ff00ff">$HOME</span>/.trifecta/decoders</span>,
+                        and are are currently limited to Avro schemas. This messages indicates that no suitable decoder
+                        files were found in the aforementioned location.
+                    </p>
+                </div>
+
                 <div ng-repeat="myDecoder in getDecoders() | orderBy:'topic'">
                     <div ng-class="myDecoder == decoder ? 'highlighted' : ''">
                         <img class="clickable"

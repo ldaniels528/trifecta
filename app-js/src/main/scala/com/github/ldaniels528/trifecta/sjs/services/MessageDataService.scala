@@ -15,17 +15,17 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   */
 class MessageDataService($http: Http) extends Service {
 
-  def getMessage(topic: String, partition: Int, offset: Long) = {
-    $http.get[Message](s"/api/message/data/${encodeURI(topic)}/$partition/$offset")
+  def getMessageData(topic: String, partition: Int, offset: Long) = {
+    $http.get[Message](s"/api/message/data/${topic.encode}/$partition/$offset")
   }
 
   def getMessageKey(topic: String, partition: Int, offset: Long) = {
-    $http.get[Message](s"/api/message/key/${encodeURI(topic)}/$partition/$offset")
+    $http.get[Message](s"/api/message/key/${topic.encode}/$partition/$offset")
   }
 
   def publishMessage(topic: String, key: String, message: String, keyFormat: String, messageFormat: String) = {
     $http.post[PublishMessageResponse](
-      url = s"/api/message/data/${encodeURI(topic)}", 
+      url = s"/api/message/data/${topic.encode}",
       data = new PublishMessageRequest(key, message, keyFormat, messageFormat))
   }
 

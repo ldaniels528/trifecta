@@ -21,6 +21,8 @@ trait ReferenceDataAware extends js.Object {
   var replicas: js.Array[ReplicaGroup] = js.native
   var topic: js.UndefOr[TopicDetails] = js.native
   var topics: js.Array[TopicDetails] = js.native
+  var storedQueries: js.Array[Query] = js.native
+  var query: Query = js.native
 
   // reference data properties
   var referenceDataLoading: js.UndefOr[Boolean] = js.native
@@ -40,5 +42,7 @@ trait ReferenceDataAware extends js.Object {
   var getTopicIconSelection: js.Function1[js.UndefOr[Boolean], String] = js.native
   var getTopicNames: js.Function0[js.Array[String]] = js.native
   var getTopics: js.Function0[js.Array[TopicDetails]] = js.native
+  var isSelectedTopic: js.Function1[js.UndefOr[TopicDetails], Boolean] = js.native
+  var selectTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
 
 }

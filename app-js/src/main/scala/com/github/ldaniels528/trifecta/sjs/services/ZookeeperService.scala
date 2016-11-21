@@ -13,15 +13,15 @@ import scala.scalajs.js
 class ZookeeperService($http: Http) extends Service {
 
   def getZkData(path: String, format: String) = {
-    $http.get[ZkData](s"/api/zookeeper/data?path=$path&format=$format")
+    $http.get[ZkData](s"/api/zookeeper/data?path=${path.encode}&format=$format")
   }
 
   def getZkInfo(path: String) = {
-    $http.get[ZkItem](s"/api/zookeeper/info?path=$path")
+    $http.get[ZkItem](s"/api/zookeeper/info?path=${path.encode}")
   }
 
   def getZkPath(path: String) = {
-    $http.get[js.Array[ZkItem]](s"/api/zookeeper/path?path=$path")
+    $http.get[js.Array[ZkItem]](s"/api/zookeeper/path?path=${path.encode}")
   }
 
 }

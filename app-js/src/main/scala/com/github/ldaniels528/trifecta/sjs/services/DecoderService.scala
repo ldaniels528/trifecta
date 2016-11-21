@@ -1,10 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
+import com.github.ldaniels528.trifecta.sjs.models.{Decoder, DecoderSchema}
 import org.scalajs.angularjs.Service
 import org.scalajs.angularjs.http.Http
-import org.scalajs.dom.browser.encodeURI
-import org.scalajs.nodejs.util.ScalaJsHelper._
-import com.github.ldaniels528.trifecta.sjs.models.{Decoder, DecoderSchema}
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
@@ -22,7 +20,7 @@ class DecoderService($http: Http) extends Service {
     * @param schemaName the given schema name
     */
   def downloadDecoderSchema(topic: String, schemaName: String) = {
-    val outcome = $http.get[js.Object](s"/api/schema/${encodeURI(topic)}/${encodeURI(schemaName)}")
+    val outcome = $http.get[js.Object](s"/api/schema/${topic.encode}/${schemaName.encode}")
     outcome foreach { data =>
       val blob = js.Dynamic.newInstance(g.Blob)(js.Array(data), literal(`type` = "application/json"))
       val objectUrl = g.URL.createObjectURL(blob)
@@ -37,7 +35,7 @@ class DecoderService($http: Http) extends Service {
     * @return the requested [[Decoder decoder]]
     */
   def getDecoderByTopic(topic: String) = {
-    $http.get[Decoder](s"/api/decoders/topic/${encodeURI(topic)}")
+    $http.get[Decoder](s"/api/decoders/topic/${topic.encode}")
   }
 
   /**
@@ -55,7 +53,7 @@ class DecoderService($http: Http) extends Service {
     * @return the decoder schema
     */
   def getDecoderSchema(topic: String, schemaName: String) = {
-    $http.get[DecoderSchema](s"/api/schema/${encodeURI(topic)}/${encodeURI(schemaName)}")
+    $http.get[DecoderSchema](s"/api/schema/${topic.encode}/${schemaName.encode}")
   }
 
   /**

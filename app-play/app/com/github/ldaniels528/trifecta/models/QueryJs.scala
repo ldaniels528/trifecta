@@ -6,7 +6,7 @@ import play.api.libs.json.Json
   * Query JSON model
   * @author lawrence.daniels@gmail.com
   */
-case class QueryJs(name: String, topic: String, queryString: String)
+case class QueryJs(name: String, queryString: String)
 
 /**
   * Query JSON Companion Object

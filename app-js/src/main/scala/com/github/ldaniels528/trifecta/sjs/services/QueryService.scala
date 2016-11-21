@@ -1,13 +1,15 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
+import com.github.ldaniels528.trifecta.sjs.controllers.QueryController.SavedResult
 import com.github.ldaniels528.trifecta.sjs.models.{Message, Query, QueryResultSet, QueryRow}
+import com.github.ldaniels528.trifecta.sjs.services.QueryService._
 import org.scalajs.angularjs.Service
 import org.scalajs.angularjs.http.Http
-import org.scalajs.dom.browser.encodeURI
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.{global => g}
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Query Service
@@ -15,15 +17,15 @@ import scala.scalajs.js.Dynamic.{global => g}
   */
 class QueryService($http: Http) extends Service {
 
-  def executeQuery(name: String, topic: String, queryString: String) = {
+  def executeQuery(name: String, queryString: String) = {
     $http.post[QueryResultSet](
-      url = "/api/query/all",
-      data = js.Dictionary("name" -> name, "topic" -> topic, "queryString" -> queryString),
+      url = "/api/query/many",
+      data = new QueryRequest(name, queryString),
       headers = js.Dictionary("Content-Type" -> "application/json"))
   }
 
   def findOne(topic: String, criteria: String) = {
-    $http.get[Message](s"/api/query/one/$topic/${encodeURI(criteria)}")
+    $http.get[Message](s"/api/query/one/${topic.encode}/${criteria.encode}")
   }
 
   def getQueries = {
@@ -31,27 +33,28 @@ class QueryService($http: Http) extends Service {
   }
 
   def getQueriesByTopic(topic: String) = {
-    $http.get[js.Array[Query]](s"/api/query/${encodeURI(topic)}")
+    $http.get[js.Array[Query]](s"/api/query/${topic.encode}")
   }
 
   def saveQuery(name: String, topic: String, queryString: String) = {
     $http.post[Message](
       url = "/api/query",
-      data = js.Dictionary("name" -> name, "topic" -> topic, "queryString" -> queryString),
+      data = new SaveQueryRequest(name, topic, queryString),
       headers = js.Dictionary("Content-Type" -> "application/json"))
   }
 
-  def transformResultsToCSV(queryResults: js.Array[QueryRow]) = {
-    $http.post[js.Array[String]](
-      url = "/api/results/csv",
-      data = queryResults,
-      headers = js.Dictionary("Content-Type" -> "application/json"),
-      responseType = "arraybuffer"
-    ) map { data =>
-      val blob = js.Dynamic.newInstance(g.Blob)(js.Array(data), js.Dictionary("type" -> "text/csv"))
-      val objectUrl = g.URL.createObjectURL(blob)
-      g.window.open(objectUrl)
-    }
-  }
+}
+
+/**
+  * Query Service Companion
+  * @author lawrence.daniels@gmail.com
+  */
+object QueryService {
+
+  @ScalaJSDefined
+  class QueryRequest(val name: String, val queryString: String) extends js.Object
+
+  @ScalaJSDefined
+  class SaveQueryRequest(val name: String, val topic: String, val queryString: String) extends js.Object
 
 }

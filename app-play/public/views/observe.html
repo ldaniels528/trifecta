@@ -7,9 +7,9 @@
                 <div ng-show="topicsLoading" style="margin-top: 15px">
                     <img src="/assets/images/status/loading.gif"> Retrieving topic information from Kafka...
                 </div>
-                <div ng-repeat="t in getTopics() | orderBy:'topic'" ng-class="t == topic ? 'highlighted' : ''">
-                    <img ng-src="{{ getTopicIcon(t, topic == t) }}">
-                    <span ng-click="updateTopic(t)" ng-class="t == topic ? 'highlighted' : ''" class="clickable">{{t.topic}}</span>
+                <div ng-repeat="t in getTopics() | orderBy:'topic'" ng-class="isSelectedTopic(t) ? 'highlighted' : ''">
+                    <img ng-src="{{ getTopicIcon(t, isSelectedTopic(t)) }}">
+                    <span ng-click="updateTopic(t)" ng-class="isSelectedTopic(t) ? 'highlighted' : ''" class="clickable">{{t.topic}}</span>
                     <span ng-show="t.totalMessages">
                         (<span class="messages">{{t.totalMessages | number}}</span>)
                     </span>
@@ -36,13 +36,13 @@
                             </td>
                             <td>
                                 <span ng-show="p.startOffset < p.endOffset">
-                                    <a ng-click="switchToMessage(topic.topic, p.partition, p.offset)">{{p.offset}}</a>
+                                    <a ng-click="moveToMessage(topic.topic, p.partition, p.offset)">{{p.offset}}</a>
                                 </span>
                                 <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                             </td>
                             <td>
                                 <span ng-show="p.startOffset < p.endOffset">
-                                    <a ng-click="switchToMessage(topic.topic, p.partition, p.endOffset)">{{p.endOffset}}</a>
+                                    <a ng-click="moveToMessage(topic.topic, p.partition, p.endOffset)">{{p.endOffset}}</a>
                                 </span>
                                 <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                             </td>

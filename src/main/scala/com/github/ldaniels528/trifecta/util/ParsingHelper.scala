@@ -37,6 +37,13 @@ object ParsingHelper {
   }
 
   /**
+    * Converts a binary string to a byte array
+    * @param dottedHex the given binary string (e.g. "de.ad.be.ef.00")
+    * @return a byte array
+    */
+  def parseDottedHex(dottedHex: String): Array[Byte] = dottedHex.split("[.]") map (Integer.parseInt(_, 16)) map (_.toByte)
+
+  /**
    * Parses the given integer value
    * @param label the label of the value being parsed
    * @param value the given input value

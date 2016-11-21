@@ -14,6 +14,11 @@
     -webkit-box-sizing: border-box; /* For Safari                           */
 }
 
+.q_query_string {
+    background-color: #ddffff;
+    color: #337ab7;
+}
+
 .q_even {
     background-color: #ffffff;
 }

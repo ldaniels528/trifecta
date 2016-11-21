@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
+import com.github.ldaniels528.trifecta.sjs.controllers.QueryController.SavedResult
 import org.scalajs.dom.browser.console
 import org.scalajs.nodejs.util.ScalaJsHelper._
 import org.scalajs.sjs.JsUnderOrHelper._
@@ -23,8 +24,8 @@ trait TopicDetails extends js.Object {
   var loading: js.UndefOr[Boolean] = js.native
   var loadingConsumers: js.UndefOr[Boolean] = js.native
   var queriesExpanded: js.UndefOr[Boolean] = js.native
+  var queryResults: js.UndefOr[js.Array[SavedResult]] = js.native
   var replicaExpanded: js.UndefOr[Boolean] = js.native
-  var savedQueries: js.UndefOr[js.Array[Query]] = js.native
   var updatingTopics: js.UndefOr[Int] = js.native
 
 }
@@ -39,9 +40,11 @@ object TopicDetails {
     * Topic Details Enrichment
     * @author lawrence.daniels@gmail.com
     */
-  implicit class TopicDetailsEnrichment(val details: TopicDetails) extends AnyVal {
+  final implicit class TopicDetailsEnrichment(val details: TopicDetails) extends AnyVal {
 
-    def apply(partitionId: Int) = details.partitions.find(_.partition == partitionId)
+    def apply(partitionId: Int): Option[PartitionDetails] = {
+      details.partitions.find(_.partition == partitionId)
+    }
 
     def copy(topic: js.UndefOr[String] = js.undefined,
              partitions: js.UndefOr[js.Array[PartitionDetails]] = js.undefined,
@@ -53,8 +56,8 @@ object TopicDetails {
              loadingConsumers: js.UndefOr[Boolean] = js.undefined,
              queriesExpanded: js.UndefOr[Boolean] = js.undefined,
              replicaExpanded: js.UndefOr[Boolean] = js.undefined,
-             savedQueries: js.UndefOr[js.Array[Query]] = js.undefined,
-             updatingTopics: js.UndefOr[Int] = js.undefined) = {
+             queryResults: js.UndefOr[js.Array[SavedResult]] = js.undefined,
+             updatingTopics: js.UndefOr[Int] = js.undefined): TopicDetails = {
       val cloned = New[TopicDetails]
       cloned.topic = topic getOrElse details.topic
       cloned.partitions = partitions getOrElse details.partitions
@@ -65,8 +68,8 @@ object TopicDetails {
       cloned.loading = loading ?? details.loading
       cloned.loadingConsumers = loadingConsumers ?? details.loadingConsumers
       cloned.queriesExpanded = queriesExpanded ?? details.queriesExpanded
+      cloned.queryResults = queryResults ?? details.queryResults
       cloned.replicaExpanded = replicaExpanded ?? details.replicaExpanded
-      cloned.savedQueries = savedQueries ?? details.savedQueries
       cloned.updatingTopics = updatingTopics ?? details.updatingTopics
       cloned
     }

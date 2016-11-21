@@ -3,11 +3,12 @@ package com.github.ldaniels528.trifecta.messages.logic
 import com.github.ldaniels528.trifecta.command.parser.CommandParser
 import com.github.ldaniels528.trifecta.messages.MessageDecoder
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
+import com.github.ldaniels528.trifecta.util.ParsingHelper._
 
 /**
- * Condition Compiler
- * @author lawrence.daniels@gmail.com
- */
+  * Condition Compiler
+  * @author lawrence.daniels@gmail.com
+  */
 object ConditionCompiler {
 
   def compile(expression: Expression, decoder: Option[MessageDecoder[_]]): Condition = {

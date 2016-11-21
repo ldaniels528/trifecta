@@ -28,6 +28,7 @@ import com.github.ldaniels528.trifecta.models.ConsumerDetailJs.ConsumerDeltaKey
 import com.github.ldaniels528.trifecta.models.QueryDetailsJs._
 import com.github.ldaniels528.trifecta.models.TopicDetailsJs._
 import com.github.ldaniels528.trifecta.models._
+import com.github.ldaniels528.trifecta.util.ParsingHelper
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
 import play.api.Logger
@@ -579,7 +580,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
       case "ASCII" => value.getBytes(config.encoding)
       case "Avro" => toAvroBinary(topic, value).orDie(s"No suitable decoder found for topic $topic")
       case "JSON" => JsonHelper.compressJson(value).getBytes(config.encoding)
-      case "Hex-Notation" => CommandParser.parseDottedHex(value)
+      case "Hex-Notation" => ParsingHelper.parseDottedHex(value)
       case "EPOC" => ByteBufferUtils.longToBytes(value.toLong)
       case "UUID" => ByteBufferUtils.uuidToBytes(UUID.fromString(value))
       case _ =>

@@ -2,9 +2,9 @@ package com.github.ldaniels528.trifecta.sjs
 
 import com.github.ldaniels528.trifecta.sjs.controllers._
 import com.github.ldaniels528.trifecta.sjs.services._
+import org.scalajs.angularjs.angular
 import org.scalajs.angularjs.http.HttpProvider
 import org.scalajs.angularjs.uirouter.{RouteProvider, RouteTo}
-import org.scalajs.angularjs.{Scope, angular}
 import org.scalajs.dom.browser.console
 
 import scala.scalajs.js
@@ -55,7 +55,7 @@ object TrifectaJsApp extends js.JSApp {
       $routeProvider
         .when("/decoders", RouteTo(templateUrl = "/assets/views/decoders.html"))
         .when("/inspect", RouteTo(templateUrl = "/assets/views/inspect/index.html", reloadOnSearch = false))
-        .when("/observe", RouteTo(templateUrl = "/assets/views/observe.html", controller = classOf[ObserveController].getSimpleName))
+        .when("/observe", RouteTo(templateUrl = "/assets/views/observe.html", reloadOnSearch = false, controller = classOf[ObserveController].getSimpleName))
         .when("/publish", RouteTo(templateUrl = "/assets/views/publish.html"))
         .when("/query", RouteTo(templateUrl = "/assets/views/query.html"))
         .otherwise(RouteTo(redirectTo = "/inspect/brokers"))

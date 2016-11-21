@@ -56,7 +56,7 @@
     <div ng-show="consumers.length" class="block" ng-repeat="t in getTopics() | orderBy:'topic'">
         <a ng-click="expandTopicConsumers(t)">
             <img ng-src="/assets/images/{{t.loadingConsumers ? 'status/loading.gif' : t.expanded ? 'buttons/collapse.png' : 'buttons/expand.png'}}">
-            <img ng-src="{{ getTopicIcon(t, t == topic) }}"> {{ t.topic }}
+            <img ng-src="{{ getTopicIcon(t, isSelectedTopic(t)) }}"> {{ t.topic }}
             <span ng-show="t.totalMessages > 0">
                 (<span class="messages">{{t.totalMessages | number}}</span>)
             </span>

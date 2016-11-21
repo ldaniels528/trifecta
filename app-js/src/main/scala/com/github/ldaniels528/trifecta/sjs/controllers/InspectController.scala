@@ -4,8 +4,8 @@ import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.InspectController._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.{TopicService, ZookeeperService}
-import org.scalajs.angularjs.AngularJsHelper._
 import org.scalajs.angularjs._
+import org.scalajs.angularjs.toaster.Toaster
 import org.scalajs.dom
 import org.scalajs.dom.browser.console
 import org.scalajs.nodejs.util.ScalaJsHelper._
@@ -21,13 +21,13 @@ import scala.util.{Failure, Success}
   * Inspect Controller
   * @author lawrence.daniels@gmail.com
   */
-class InspectController($scope: InspectScope, $location: Location, $log: Log,
-                        $routeParams: InspectRouteParams, $timeout: Timeout, $interval: Interval,
-                        @injected("TopicService") topicService: TopicService,
-                        @injected("ZookeeperService") zookeeperService: ZookeeperService)
-  extends Controller {
+case class InspectController($scope: InspectScope, $location: Location, $log: Log, $routeParams: InspectRouteParams,
+                             $timeout: Timeout, $interval: Interval, toaster: Toaster,
+                             @injected("TopicService") topicService: TopicService,
+                             @injected("ZookeeperService") zookeeperService: ZookeeperService)
+  extends Controller with PopupMessages {
 
-  implicit val scope = $scope
+  implicit val scope: Scope with GlobalLoading = $scope
 
   $scope.formats = js.Array("auto", "binary", "json", "plain-text")
   $scope.selected = FormatSelection(format = $scope.formats.head)
@@ -130,7 +130,7 @@ class InspectController($scope: InspectScope, $location: Location, $log: Log,
           }
         case Failure(e) =>
           topic.loadingConsumers = false
-          $scope.addErrorMessage(e.displayMessage)
+          errorPopup("Failed to retrieve consumers", e)
       }
     }
   }
@@ -178,10 +178,8 @@ class InspectController($scope: InspectScope, $location: Location, $log: Log,
             item.children = zkItems
           }
         case Failure(e) =>
-          $scope.$apply { () =>
-            item.loading = false
-            errorHandler(e.displayMessage)
-          }
+          $scope.$apply(() => item.loading = false)
+          errorPopup("Error retrieving Zookeeper data", e)
       }
     }
   }
@@ -202,7 +200,7 @@ class InspectController($scope: InspectScope, $location: Location, $log: Log,
             }
           }
         case Failure(e) =>
-          $scope.$apply(() => errorHandler(e.displayMessage))
+          errorPopup("Error formatting data", e)
       }
     }
   }
@@ -217,10 +215,8 @@ class InspectController($scope: InspectScope, $location: Location, $log: Log,
           $scope.zkItem = itemInfo
         }
       case Failure(e) =>
-        $scope.$apply { () =>
-          item.loading = false
-          errorHandler(e.displayMessage)
-        }
+        $scope.$apply { () => item.loading = false }
+        errorPopup("Error loading Zookeeper data", e)
     }
   }
 
@@ -236,10 +232,8 @@ class InspectController($scope: InspectScope, $location: Location, $log: Log,
             replicas.foreach(r => r.inSyncPct = computeInSyncPct(r))
           }
         case Failure(e) =>
-          $scope.$apply { () =>
-            topic.loading = false
-            $scope.addErrorMessage(e.displayMessage)
-          }
+          $scope.$apply { () => topic.loading = false }
+          errorPopup("Error loading replica data", e)
       }
     }
   }
@@ -260,24 +254,11 @@ class InspectController($scope: InspectScope, $location: Location, $log: Log,
     aConsumer.exists(_.isUpdatedSince(5.minutes))
   }
 
-  $scope.switchToMessage = (aTopic: js.UndefOr[String], aPartition: js.UndefOr[Int], anOffset: js.UndefOr[Int]) => {
-    console.info(s"aTopic = ${aTopic.orNull}, aPartition = ${aPartition.orNull}, anOffset = ${anOffset.orNull}")
-    for {
-      topic <- aTopic
-      partition <- aPartition
-      offset <- anOffset
-    } {
-      $location.url(s"/observe?topic=$topic&partition=$partition&offset=$offset")
-    }
-  }
-
   private def computeInSyncPct(replicaPartition: ReplicaGroup) = {
     val replicas = replicaPartition.replicas getOrElse emptyArray
     val syncCount = replicas.count(_.inSync.isTrue)
     Math.round(100 * syncCount / replicas.length)
   }
-
-  private def errorHandler(err: String) = $scope.addErrorMessage(err)
 
   ///////////////////////////////////////////////////////////////////////////
   //    Event Handler Functions
@@ -312,7 +293,9 @@ object InspectController {
     */
   @js.native
   trait InspectScope extends Scope
-    with GlobalDataAware with GlobalLoading with GlobalErrorHandling with ReferenceDataAware {
+    with GlobalDataAware with GlobalLoading with GlobalErrorHandling with GlobalNavigation
+    with ReferenceDataAware {
+
     // properties
     var formats: js.Array[String] = js.native
     var inspectTab: MainTab = js.native
@@ -336,7 +319,6 @@ object InspectController {
     var getItemInfo: js.Function1[js.UndefOr[ZkItem], Unit] = js.native
     var isActiveInspectTab: js.Function1[js.UndefOr[MainTab], Boolean] = js.native
     var isConsumerUpToDate: js.Function1[js.UndefOr[Consumer], Boolean] = js.native
-    var switchToMessage: js.Function3[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
 
   }
 

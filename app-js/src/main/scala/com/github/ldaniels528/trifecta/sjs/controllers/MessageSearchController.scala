@@ -4,6 +4,7 @@ import com.github.ldaniels528.trifecta.sjs.controllers.MessageSearchController._
 import com.github.ldaniels528.trifecta.sjs.models.TopicDetails
 import com.github.ldaniels528.trifecta.sjs.services.TopicService
 import org.scalajs.angularjs.AngularJsHelper._
+import org.scalajs.angularjs.toaster.Toaster
 import org.scalajs.angularjs.uibootstrap.ModalInstance
 import org.scalajs.angularjs.{Controller, Scope, injected}
 import org.scalajs.dom.browser.console
@@ -18,12 +19,12 @@ import scala.util.{Failure, Success}
   * Message Search Controller
   * @author lawrence.daniels@gmail.com
   */
-class MessageSearchController($scope: MessageSearchScope,
-                              $modalInstance: ModalInstance[MessageSearchForm],
-                              @injected("TopicService") topicService: TopicService)
-  extends Controller {
+case class MessageSearchController($scope: MessageSearchScope, $modalInstance: ModalInstance[MessageSearchForm],
+                                   toaster: Toaster,
+                                   @injected("TopicService") topicService: TopicService)
+  extends Controller with PopupMessages {
 
-  implicit val scope = $scope
+  implicit val scope: Scope with GlobalLoading = $scope
 
   $scope.form = new MessageSearchForm()
   $scope.topics = emptyArray
@@ -40,7 +41,7 @@ class MessageSearchController($scope: MessageSearchScope,
       if (loadedTopics.nonEmpty) console.warn("No topic summaries found")
       $scope.$apply(() => $scope.topics = loadedTopics)
     case Failure(e) =>
-      console.error(e.displayMessage)
+      errorPopup(e.displayMessage, e)
   }
 
 }

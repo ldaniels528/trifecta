@@ -52,7 +52,7 @@ class TopicService($http: Http) extends Service {
     * @return a promise of an array of [[ConsumerGroup consumer groups]]
     */
   def getConsumerGroups(topic: String) = {
-    $http.get[js.Array[ConsumerGroup]](s"/api/consumers/topic/${encodeURI(topic)}")
+    $http.get[js.Array[ConsumerGroup]](s"/api/consumers/topic/${topic.encode}")
   }
 
   /**

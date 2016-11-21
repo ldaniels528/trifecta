@@ -25,11 +25,11 @@ import scala.util.{Failure, Success}
   * Main Controller
   * @author lawrence.daniels@gmail.com
   */
-class MainController($scope: MainScope, $location: Location, $timeout: Timeout, toaster: Toaster,
-                     @injected("TopicService") topicService: TopicService)
-  extends Controller {
+case class MainController($scope: MainScope, $location: Location, $timeout: Timeout, toaster: Toaster,
+                          @injected("TopicService") topicService: TopicService)
+  extends Controller with PopupMessages {
 
-  implicit val scope = $scope
+  implicit val scope: Scope with GlobalLoading = $scope
   private var loading: Int = 0
 
   // reference data
@@ -40,6 +40,10 @@ class MainController($scope: MainScope, $location: Location, $timeout: Timeout, 
   $scope.replicas = emptyArray
   $scope.topics = emptyArray
   $scope.hideEmptyTopics = true
+
+  // queries
+  $scope.query = Query(name = "UntitledName")
+  $scope.storedQueries = emptyArray
 
   // reference data flags
   $scope.referenceDataLoading = false
@@ -125,6 +129,25 @@ class MainController($scope: MainScope, $location: Location, $timeout: Timeout, 
   $scope.loadingStop = (promise: CancellablePromise) => {
     $timeout(() => loading -= 1, 0.5.second)
     ()
+  }
+
+  ////////////////////////////////////////////////////////////////
+  //    Global Navigation Functions
+  ///////////////////////////////////////////////////////////////
+
+  $scope.switchToMessage = (aTopic: js.UndefOr[String], aPartition: js.UndefOr[Int], anOffset: js.UndefOr[Int]) => {
+    console.info(s"aTopic = ${aTopic.orNull}, aPartition = ${aPartition.orNull}, anOffset = ${anOffset.orNull}")
+    for {
+      topic <- aTopic
+      partition <- aPartition
+      offset <- anOffset
+    } {
+      // select the appropriate tab
+      $scope.tabs.find(_.name == "Observe") foreach { tab =>
+        $scope.tabs.foreach(t => t.active = t == tab)
+      }
+      $location.url(s"/observe?topic=$topic&partition=$partition&offset=$offset")
+    }
   }
 
   /////////////////////////////////////////////////////////////////////////////////
@@ -233,6 +256,14 @@ class MainController($scope: MainScope, $location: Location, $timeout: Timeout, 
     if ($scope.hideEmptyTopics) $scope.topics.filter(_.totalMessages > 0) else $scope.topics
   }
 
+  $scope.isSelectedTopic = (aTopic: js.UndefOr[TopicDetails]) => {
+    aTopic.exists(t => $scope.topic.exists(_.topic == t.topic))
+  }
+
+  $scope.selectTopic = (aTopic: js.UndefOr[TopicDetails]) => aTopic foreach { topic =>
+    $scope.topic = topic
+  }
+
   /**
     * Toggles the empty topic hide/show flag
     */
@@ -300,7 +331,7 @@ class MainController($scope: MainScope, $location: Location, $timeout: Timeout, 
 
     val promisedBrokers = loadBrokers()
     val promisedTopics = loadTopics()
-    val promisedConsumers =  loadConsumers()
+    val promisedConsumers = loadConsumers()
 
     val outcome = for {
       brokers <- promisedBrokers
@@ -409,7 +440,7 @@ object MainController {
     */
   @js.native
   trait MainScope extends RootScope
-    with GlobalDataAware with GlobalLoading with GlobalErrorHandling
+    with GlobalDataAware with GlobalLoading with GlobalErrorHandling with GlobalNavigation
     with MainTabManagement with ReferenceDataAware {
     // functions
     var init: js.Function0[Unit] = js.native

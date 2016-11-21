@@ -11,17 +11,22 @@ import scala.scalajs.js
 @js.native
 trait Query extends js.Object {
   var name: js.UndefOr[String] = js.native
-  var topic: js.UndefOr[String] = js.native
-  var modified: js.UndefOr[Boolean] = js.native
   var queryString: js.UndefOr[String] = js.native
-  var collection: js.UndefOr[TopicDetails] = js.native
-  var results: js.UndefOr[js.Array[QueryRow]] = js.native
-  var savedResult: js.UndefOr[SavedResult] = js.native
+
+  // query results
+  var topic: js.UndefOr[String] = js.native
+  var columns: js.UndefOr[js.Array[String]] = js.native
+  var rows: js.UndefOr[js.Array[QueryRow]] = js.native
+
+  // ui-specific sorting
+  var ascending: js.UndefOr[Boolean] = js.native
+  var sortField: js.UndefOr[String] = js.native
 
   // ui-specific properties
-  var newFile: js.UndefOr[Boolean] = js.native
-  var queryElaspedTime: js.UndefOr[Int] = js.native
-  var queryStartTime: js.UndefOr[Int] = js.native
+  var elapsedTime: js.UndefOr[Double] = js.native
+  var modified: js.UndefOr[Boolean] = js.native
+  var startTime: js.UndefOr[Double] = js.native
+  var runTimeMillis: js.UndefOr[Double] = js.native
   var running: js.UndefOr[Boolean] = js.native
   var syncing: js.UndefOr[Boolean] = js.native
 }
@@ -32,16 +37,24 @@ trait Query extends js.Object {
   */
 object Query {
 
-  def apply(name: js.UndefOr[String],
-            topic: js.UndefOr[String],
-            newFile: js.UndefOr[Boolean] = true,
-            modified: js.UndefOr[Boolean] = true) = {
+  def apply(name: js.UndefOr[String]) = {
     val query = New[Query]
     query.name = name
-    query.topic = topic
-    query.newFile = newFile
-    query.modified = modified
     query
+  }
+
+  /**
+    * Query Enrichment
+    * @param query the given [[Query query]]
+    */
+  final implicit class QueryEnrichment(val query: Query) extends AnyVal {
+
+    @inline
+    def computeRunTime = query.startTime.map(t => (js.Date.now() - t) / 1000.0)
+
+    @inline
+    def computeElapsedRunTime = query.startTime.map(t => (js.Date.now() - t) / 1000.0)
+
   }
 
 }

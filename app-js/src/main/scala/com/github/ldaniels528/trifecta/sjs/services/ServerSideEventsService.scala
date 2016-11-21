@@ -6,7 +6,6 @@ import com.github.ldaniels528.trifecta.sjs.services.ServerSideEventsService._
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.http.Http
 import org.scalajs.dom.Event
-import org.scalajs.dom.browser.console
 import org.scalajs.dom.raw.EventSource
 
 import scala.scalajs.js
@@ -16,13 +15,13 @@ import scala.scalajs.js.JSON
   * Server Side Events Service
   * @author lawrence.daniels@gmail.com
   */
-class ServerSideEventsService($rootScope: RootScope, $http: Http) extends Service {
+class ServerSideEventsService($rootScope: RootScope, $http: Http, $log: Log) extends Service {
 
   /**
     * Establishes a SSE connection
     */
   def connect() {
-    console.info(s"User is connecting to the SSE channel...")
+    $log.info("User is connecting to the SSE channel...")
     val eventSource = new EventSource("/api/sse/connect")
 
     // define the message event handler
@@ -65,8 +64,8 @@ class ServerSideEventsService($rootScope: RootScope, $http: Http) extends Servic
 
         // unrecognized message
         case message =>
-          console.error("Message does not contain a 'type' key")
-          console.info(s"Event message => ${angular.toJson(message, pretty = true)}")
+          $log.error("Message does not contain a 'type' key")
+          $log.info(s"Event message => ${angular.toJson(message, pretty = true)}")
       }
     }
   }
@@ -75,7 +74,7 @@ class ServerSideEventsService($rootScope: RootScope, $http: Http) extends Servic
     * Handles failures
     */
   private def handleError: js.Function1[Event, Unit] = (event: Event) => {
-    console.error(s"SSE error: ${angular.toJson(event)}")
+    $log.error(s"SSE error: ${angular.toJson(event)}")
   }
 
 }

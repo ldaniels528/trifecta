@@ -18,7 +18,7 @@ object ModuleHelper {
 
   def dieNoOutputSource[S](): S = die("No output source specified")
 
-  def dieNoOutputHandler(device: MessageOutputSource) = die(s"Unhandled output device $device")
+  def dieNoOutputHandler[S](device: MessageOutputSource): S = die(s"Unhandled output device $device")
 
   def dieNotMessageComparator[S](): S = die("Decoder does not support logical operations")
 

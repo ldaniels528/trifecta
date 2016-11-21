@@ -35,7 +35,7 @@ object GlobalLoading {
   implicit class LoadingEnrichmentA[T](val task: Future[T]) extends AnyVal {
 
     @inline
-    def withGlobalLoading(implicit scope: GlobalLoading) = {
+    def withGlobalLoading(implicit scope: GlobalLoading): Future[T] = {
       val promise = scope.loadingStart()
       task onComplete { _ =>
         scope.loadingStop(promise)
@@ -52,7 +52,7 @@ object GlobalLoading {
   implicit class LoadingEnrichmentB[T <: js.Any](val response: HttpResponse[T]) extends AnyVal {
 
     @inline
-    def withGlobalLoading(implicit scope: GlobalLoading) = {
+    def withGlobalLoading(implicit scope: Scope with GlobalLoading): Future[T] = {
       val promise = scope.loadingStart()
       val task = response.toFuture
       task onComplete { _ =>
