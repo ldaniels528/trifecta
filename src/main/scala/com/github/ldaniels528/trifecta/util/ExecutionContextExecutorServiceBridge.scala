@@ -13,6 +13,7 @@ Copyright 2013 Viktor Klang
    limitations under the License.
 */
 
+import java.util
 import java.util.Collections
 import java.util.concurrent.{AbstractExecutorService, TimeUnit}
 
@@ -21,7 +22,7 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService}
 object ExecutionContextExecutorServiceBridge {
   def apply(ec: ExecutionContext): ExecutionContextExecutorService = ec match {
     case null => throw null
-    case eces: ExecutionContextExecutorService => eces
+    case svc: ExecutionContextExecutorService => svc
     case other => new AbstractExecutorService with ExecutionContextExecutorService {
       override def prepare(): ExecutionContext = other
 
@@ -29,9 +30,9 @@ object ExecutionContextExecutorServiceBridge {
 
       override def isTerminated = false
 
-      override def shutdown() = ()
+      override def shutdown(): Unit = ()
 
-      override def shutdownNow() = Collections.emptyList[Runnable]
+      override def shutdownNow(): util.List[Runnable] = Collections.emptyList[Runnable]
 
       override def execute(runnable: Runnable): Unit = other execute runnable
 

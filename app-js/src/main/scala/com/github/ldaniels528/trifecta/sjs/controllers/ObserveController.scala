@@ -71,7 +71,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   //    Public Functions
   ///////////////////////////////////////////////////////////////////////////
 
-  $scope.clearMessage = () => $scope.message = js.undefined
+  private def clearMessage() = $scope.message = js.undefined
 
   /**
     * Converts the given offset from a string value to an integer
@@ -111,7 +111,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
       partition <- aPartition
       offset <- anOffset
     } {
-      $scope.clearMessage()
+      clearMessage()
       messageDataService.getMessageData(topic, partition, offset).withGlobalLoading.withTimer("Retrieving message data") onComplete {
         case Success(message) =>
           $scope.$apply { () =>
@@ -131,7 +131,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
     * @@param offset the given offset
     */
   $scope.getMessageKey = (aTopic: js.UndefOr[String], aPartition: js.UndefOr[Int], anOffset: js.UndefOr[Int]) => {
-    $scope.clearMessage()
+    clearMessage()
     for {
       topic <- aTopic
       partition <- aPartition
@@ -417,6 +417,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
 
     aTopic.map(_.partitions).toOption match {
       case Some(partitions) =>
+        console.log(s"partitions = ${angular.toJson(partitions, pretty = true)}")
         val partition = partitions.find(_.messages.exists(_ > 0)) ?? partitions.headOption
         $scope.updatePartition(partition.orUndefined)
 
@@ -424,7 +425,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
       case None =>
         warningPopup("No partitions found")
         $scope.partition = js.undefined
-        $scope.clearMessage()
+        clearMessage()
     }
   }
 
@@ -522,7 +523,6 @@ object ObserveController {
     var updateTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
 
     // Kafka message functions
-    var clearMessage: js.Function0[Unit] = js.native
     var exportMessage: js.Function3[js.UndefOr[TopicDetails], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
     var firstMessage: js.Function0[Unit] = js.native
     var getMessageData: js.Function3[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
