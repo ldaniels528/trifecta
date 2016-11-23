@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta
 
-import java.io.{File, FileInputStream, FileOutputStream}
+import java.io.{File, FileInputStream, FileOutputStream, PrintStream}
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -37,16 +37,13 @@ class TxConfig(val configProps: Properties) {
   // set the current working directory
   configProps.setProperty("trifecta.core.cwd", new File(".").getCanonicalPath)
 
-  def isAlive = alive.get()
+  def isAlive: Boolean = alive.get()
 
-  def isAlive_=(state: Boolean) = alive.compareAndSet(!state, state)
+  def isAlive_=(state: Boolean): Boolean = alive.compareAndSet(!state, state)
 
   // capture standard output
-  val out = System.out
-  val err = System.err
-
-  // define the job manager
-  val jobManager = new JobManager()
+  val out: PrintStream = System.out
+  val err: PrintStream = System.err
 
   // various shared state variables
   def autoSwitching: Boolean = configProps.getOrElse("trifecta.common.autoSwitching", "true").toBoolean
@@ -80,9 +77,8 @@ class TxConfig(val configProps: Properties) {
 
   def isStormConsumers: Boolean = configProps.getOrElse("trifecta.kafka.consumers.storm", "false").toBoolean
 
-  def isStormConsumers_=(enabled: Boolean): Unit = {
+  def isStormConsumers_=(enabled: Boolean): AnyRef = {
     configProps.setProperty("trifecta.kafka.consumers.storm", enabled.toString)
-    ()
   }
 
   def encoding: String = configProps.getOrElse("trifecta.common.encoding", "UTF-8")

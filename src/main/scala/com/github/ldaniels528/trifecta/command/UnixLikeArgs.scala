@@ -10,10 +10,10 @@ case class UnixLikeArgs(commandName: Option[String], args: List[String], flags: 
 
   def apply(index: Int): String = args(index)
 
-  def apply(flag: String) = flags.get(flag).flatten
+  def apply(flag: String): Option[String] = flags.get(flag).flatten
 
-  def apply(flag: String, defaultValue: String) = flags.get(flag).flatten getOrElse defaultValue
+  def apply(flag: String, defaultValue: String): String = flags.get(flag).flatten getOrElse defaultValue
 
-  def contains(flag: String) = flags.get(flag).isDefined
+  def contains(flag: String): Boolean = flags.get(flag).isDefined
 
 }

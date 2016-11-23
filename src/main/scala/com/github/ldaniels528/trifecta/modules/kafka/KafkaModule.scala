@@ -9,7 +9,6 @@ import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.commons.helpers.TimeHelper.Implicits._
-import com.github.ldaniels528.trifecta.TxResultHandler.Ok
 import com.github.ldaniels528.trifecta.command._
 import com.github.ldaniels528.trifecta.io.avro.AvroConversion._
 import com.github.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder, AvroMessageDecoding}
@@ -926,12 +925,12 @@ class KafkaModule(config: TxConfig) extends Module {
     * @example kwatchstop ld_group
     * @example kwatchstop com.shocktrade.quotes.avro ld_group
     */
-  def watchStop(params: UnixLikeArgs): Try[Option[Ok]] = {
+  def watchStop(params: UnixLikeArgs): Try[Option[Any]] = {
     // get the arguments
     val key = getTopicAndGroup(params)
 
     // if there's already a registered topic & group, close it
-    Try(watchCursors.remove(key) map (_.consumer.close()) map (t => Ok()))
+    Try(watchCursors.remove(key) map  (_.consumer.close()))
   }
 
   private def getAvroDecoder(params: UnixLikeArgs)(implicit config: TxConfig): Option[AvroDecoder] = {

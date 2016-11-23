@@ -78,8 +78,6 @@ lazy val trifecta_core = (project in file("."))
       //
       // Typesafe dependencies
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
       "com.typesafe.play" %% "play-json" % playVersion,
       //
       // Avro Dependencies
@@ -91,17 +89,7 @@ lazy val trifecta_core = (project in file("."))
       "org.apache.curator" % "curator-framework" % apacheCurator exclude("org.slf4j", "slf4j-log4j12"),
       "org.apache.curator" % "curator-test" % apacheCurator exclude("org.slf4j", "slf4j-log4j12"),
       "org.apache.kafka" %% "kafka" % kafkaVersion exclude("org.slf4j", "slf4j-log4j12"),
-      "org.apache.kafka" % "kafka-clients" % kafkaVersion,
-      //
-      // Microsoft/Azure Dependencies
-      "com.microsoft.azure" % "azure-documentdb" % "1.5.1",
-      "com.microsoft.azure" % "azure-storage" % "4.0.0",
-      //"com.microsoft.sqlserver" % "sqljdbc4" % "4.0",
-      //
-      // SQL/NOSQL Dependencies
-      "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0",
-      "org.mongodb" %% "casbah-commons" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
-      "org.mongodb" %% "casbah-core" % casbahVersion exclude("org.slf4j", "slf4j-log4j12")
+      "org.apache.kafka" % "kafka-clients" % kafkaVersion
     ))
 
 lazy val trifecta_cli = (project in file("app-cli"))
@@ -130,6 +118,16 @@ lazy val trifecta_cli = (project in file("app-cli"))
       //
       // General Scala Dependencies
       "net.databinder.dispatch" %% "dispatch-core" % "0.11.2", // 0.11.3
+      //
+      // Microsoft/Azure Dependencies
+      "com.microsoft.azure" % "azure-documentdb" % "1.5.1",
+      "com.microsoft.azure" % "azure-storage" % "4.0.0",
+      //"com.microsoft.sqlserver" % "sqljdbc4" % "4.0",
+      //
+      // SQL/NOSQL Dependencies
+      "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0",
+      "org.mongodb" %% "casbah-commons" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
+      "org.mongodb" %% "casbah-core" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
       //
       // General Java Dependencies
       "log4j" % "log4j" % "1.2.17",
@@ -160,7 +158,11 @@ lazy val trifecta_js = (project in file("app-js"))
       "com.github.ldaniels528" %%% "scalajs-angularjs-ui-bootstrap" % meanjsVersion,
       "com.github.ldaniels528" %%% "scalajs-angularjs-ui-router" % meanjsVersion,
       //
-      // ScalaJS
+      // Typesafe dependencies
+      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
+      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
+      //
+      // ScalaJS dependencies
       "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11"),
       "org.scala-js" %%% "scalajs-dom" % "0.9.0",
       "be.doeraene" %%% "scalajs-jquery" % "0.9.0"

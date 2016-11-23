@@ -28,7 +28,7 @@ import scala.util.{Properties, Try}
  * Core Module
  * @author lawrence.daniels@gmail.com
  */
-class CoreModule(config: TxConfig) extends Module {
+class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   private val out: PrintStream = config.out
 
   // define the process parsing regular expression
@@ -269,19 +269,17 @@ class CoreModule(config: TxConfig) extends Module {
    * @example jobs -v 1234
    */
   def manageJob(params: UnixLikeArgs): Any = {
-    val jobMgr = config.jobManager
-
     // list a specific job?
     params.args.headOption map parseJobId map { myJobId =>
-      jobMgr.getJobs filter (_.jobId == myJobId) map toJobDetail
+      jobManager.getJobs filter (_.jobId == myJobId) map toJobDetail
     } getOrElse {
       // delete a job by ID?
-      if ((params("-d") map parseJobId map jobMgr.killJobById).isDefined) "Ok"
+      if ((params("-d") map parseJobId map jobManager.killJobById).isDefined) "Ok"
 
       // retrieve the job's value?
       else if (params.contains("-v")) {
         val jobId = params("-v") map parseJobId getOrElse die(s"${params.commandName.get} -v jobId")
-        jobMgr.getJobById(jobId) match {
+        jobManager.getJobById(jobId) match {
           case Some(aio@AsyncIOJob(_, asyncIO, _)) =>
             val task = asyncIO.task
             if (task.isCompleted) asyncIO.getCount else toJobDetail(aio)
@@ -295,12 +293,12 @@ class CoreModule(config: TxConfig) extends Module {
 
       // clear all jobs?
       else if (params.contains("-w")) {
-        jobMgr.clear()
+        jobManager.clear()
         "Ok"
       }
 
       // return all jobs
-      else config.jobManager.getJobs map toJobDetail
+      else jobManager.getJobs map toJobDetail
     }
   }
 

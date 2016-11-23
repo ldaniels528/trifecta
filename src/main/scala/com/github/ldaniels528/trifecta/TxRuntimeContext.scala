@@ -2,25 +2,15 @@ package com.github.ldaniels528.trifecta
 
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
-import com.github.ldaniels528.trifecta.command.parser.CommandParser
 import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource}
-import com.github.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser
 import com.github.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageCodecs, MessageDecoder}
-import com.github.ldaniels528.trifecta.modules.ModuleHelper._
 import com.github.ldaniels528.trifecta.modules._
-import com.github.ldaniels528.trifecta.modules.azure.AzureModule
-import com.github.ldaniels528.trifecta.modules.cassandra.CassandraModule
-import com.github.ldaniels528.trifecta.modules.core.CoreModule
-import com.github.ldaniels528.trifecta.modules.elasticsearch.ElasticSearchModule
-import com.github.ldaniels528.trifecta.modules.etl.ETLModule
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaModule
-import com.github.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.ExecutionContext
-import scala.util.Try
 
 /**
   * Trifecta Runtime Context
@@ -29,9 +19,6 @@ import scala.util.Try
 case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   private[trifecta] val logger = LoggerFactory.getLogger(getClass)
   private implicit val cfg = config
-
-  // create the result handler
-  private val resultHandler = new TxResultHandler(config)
 
   // support registering decoders
   private val decoders = TrieMap[String, MessageDecoder[_]]()
@@ -48,13 +35,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   // create the module manager and load the built-in modules
   val moduleManager = new ModuleManager()(this)
   moduleManager ++= Seq(
-    new AzureModule(config),
-    new CassandraModule(config),
-    new CoreModule(config),
-    new ElasticSearchModule(config),
-    new ETLModule(config),
     new KafkaModule(config),
-    new MongoModule(config),
     new ZookeeperModule(config))
 
   // set the "active" module
@@ -102,17 +83,6 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     moduleManager.findModuleByPrefix(prefix) flatMap (_.getOutputSource(url))
   }
 
-  def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) = {
-    resultHandler.handleResult(result, input)
-  }
-
-  def interpret(input: String): Try[Any] = {
-    input.trim match {
-      case s if s.startsWith("`") && s.endsWith("`") => executeCommand(s.drop(1).dropRight(1))
-      case s => interpretCommandLine(s)
-    }
-  }
-
   /**
     * Attempts to retrieve a message decoder by name
     * @param name the name of the desired [[MessageDecoder]]
@@ -135,54 +105,8 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     moduleManager.shutdown()
   }
 
-  /**
-    * Executes a local system command
-    * @example `ps -ef`
-    */
-  private def executeCommand(command: String): Try[String] = {
-    import scala.sys.process._
-
-    Try(command.!!)
-  }
-
   def getDeviceURLWithDefault(prefix: String, deviceURL: String): String = {
     if (deviceURL.contains(':')) deviceURL else s"$prefix:$deviceURL"
-  }
-
-  /**
-    * Interprets command line input
-    * @param input the given line of input
-    * @return a try-monad wrapped result
-    */
-  private def interpretCommandLine(input: String) = Try {
-    // is the input a query?
-    if (input.startsWith("select")) KafkaQueryParser(input).executeQuery(this)
-    else {
-      // parse the input into tokens
-      val tokens = CommandParser.parseTokens(input)
-
-      // convert the tokens into Unix-style arguments
-      val unixArgs = CommandParser.parseUnixLikeArgs(tokens)
-
-      // match the command
-      val commandSet = moduleManager.commandSet
-
-      for {
-        commandName <- unixArgs.commandName
-        command = commandSet.getOrElse(commandName, die(s"command '$commandName' not found"))
-
-      } yield {
-        // verify and execute the command
-        command.params.checkArgs(command, tokens)
-        val result = command.fx(unixArgs)
-
-        // auto-switch modules?
-        if (config.autoSwitching && (command.promptAware || command.module.moduleName != "core")) {
-          moduleManager.setActiveModule(command.module)
-        }
-        result
-      }
-    }
   }
 
   /**

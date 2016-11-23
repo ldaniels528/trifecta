@@ -1,6 +1,7 @@
 package com.github.ldaniels528.trifecta
 
-import com.datastax.driver.core.{CodecRegistry, ColumnDefinitions, ResultSet, Row}
+import java.io.PrintStream
+
 import com.github.ldaniels528.tabular.Tabular
 import com.github.ldaniels528.trifecta.io.AsyncIO
 import com.github.ldaniels528.trifecta.io.avro.AvroTables
@@ -14,7 +15,6 @@ import org.apache.avro.generic.GenericRecord
 import play.api.libs.json.{JsValue, Json}
 
 import scala.collection.GenTraversableOnce
-import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -23,17 +23,17 @@ import scala.util.{Failure, Success, Try}
   * Trifecta Result Handler
   * @author lawrence.daniels@gmail.com
   */
-class TxResultHandler(config: TxConfig) extends BinaryMessaging {
+class TxResultHandler(config: TxConfig, jobManager: JobManager) extends BinaryMessaging {
   // define the tabular instance
   val tabular = new Tabular() with AvroTables
-  val out = config.out
+  val out: PrintStream = config.out
 
   /**
     * Handles the processing and/or display of the given result of a command execution
     * @param result the given result
     * @param ec     the given execution context
     */
-  def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) {
+  def handleResult(result: Any, input: String)(implicit ec: ExecutionContext): Unit = {
     result match {
       // handle the asynchronous I/O cases
       case a: AsyncIO => handleAsyncResult(a, input)
@@ -77,8 +77,6 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
           tabular.transform(fields, values) foreach out.println
         }
 
-      case r: ResultSet => handleCassandraResultSet(r)
-
       // handle Try cases
       case t: Try[_] => t match {
         case Success(v) => handleResult(v, input)
@@ -112,7 +110,7 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
       case Success(value) => handleResult(value, input)
       case Failure(e1) =>
         out.println("Task is now running in the background (use 'jobs' to view)")
-        val job = config.jobManager.createJob(startTime, task, input)
+        val job = jobManager.createJob(startTime, task, input)
         task.onComplete {
           case Success(value) =>
             out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
@@ -132,9 +130,9 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
     val task = asyncIO.task
 
     out.println("Task is now running in the background (use 'jobs' to view)")
-    val job = config.jobManager.createJob(asyncIO, input)
+    val job = jobManager.createJob(asyncIO, input)
     task.onComplete {
-      case Success(value) =>
+      case Success(_) =>
         out.println()
         out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
         handleResult(asyncIO.getCount, input)
@@ -142,41 +140,6 @@ class TxResultHandler(config: TxConfig) extends BinaryMessaging {
         out.println()
         out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
     }
-  }
-
-  /**
-    * Handles a Cassandra Result Set
-    * @param rs the given [[ResultSet]]
-    */
-  private def handleCassandraResultSet(rs: ResultSet): Unit = {
-    val cds = rs.getColumnDefinitions.asList().toSeq
-    val records = rs.all() map (decodeRow(_, cds))
-    tabular.transformMaps(records) foreach out.println
-  }
-
-  private def decodeRow(row: Row, cds: Seq[ColumnDefinitions.Definition]): Map[String, Any] = {
-    Map(cds map { cd =>
-      val name = cd.getName
-      val javaType = CodecRegistry.DEFAULT_INSTANCE.codecFor(cd.getType).getJavaType.getRawType
-      val value = javaType match {
-        case c if c == classOf[Array[Byte]] => row.getBytes(name)
-        case c if c == classOf[java.math.BigDecimal] => row.getDecimal(name)
-        case c if c == classOf[java.math.BigInteger] => row.getVarint(name)
-        case c if c == classOf[java.lang.Boolean] => row.getBool(name)
-        case c if c == classOf[java.util.Date] => row.getDate(name)
-        case c if c == classOf[java.lang.Double] => row.getDouble(name)
-        case c if c == classOf[java.lang.Float] => row.getFloat(name)
-        case c if c == classOf[java.lang.Integer] => row.getInt(name)
-        case c if c == classOf[java.lang.Long] => row.getLong(name)
-        case c if c == classOf[java.util.Map[_, _]] => row.getMap(name, classOf[String], classOf[Object])
-        case c if c == classOf[java.util.Set[_]] => row.getSet(name, classOf[Object])
-        case c if c == classOf[String] => row.getString(name)
-        case c if c == classOf[java.util.UUID] => row.getUUID(name)
-        case c =>
-          throw new IllegalStateException(s"Unsupported class type ${javaType.getName} for column ${cd.getTable}.$name")
-      }
-      (name, value)
-    }: _*)
   }
 
 }

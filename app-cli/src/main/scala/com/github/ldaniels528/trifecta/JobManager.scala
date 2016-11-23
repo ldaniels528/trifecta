@@ -21,7 +21,7 @@ class JobManager() {
   /**
    * Removes all jobs
    */
-  def clear() = jobs.clear()
+  def clear(): Unit = jobs.clear()
 
   /**
    * Creates a new asynchronous job
