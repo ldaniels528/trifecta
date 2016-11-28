@@ -40,7 +40,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   //////////////////////////////////////////////////////////////////////////
 
   $scope.message = js.undefined
-  $scope.displayMode = DisplayMode(state = "message", avro = "json")
+  $scope.displayMode = new DisplayMode(state = "message", format = "json")
   $scope.sampling = SamplingStatus(status = SAMPLING_STATUS_STOPPED)
 
   ///////////////////////////////////////////////////////////////////////////
@@ -63,7 +63,10 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
       case Some((topicId, partitionId, offset)) =>
         $scope.moveToMessage(topicId, partitionId, offset)
       case None =>
-        $scope.updatePartition($scope.topic.flatMap(_.partitions.sortBy(_.partition.getOrElse(0)).find(_.messages.exists(_ > 0)).orUndefined))
+        $scope.updatePartition(
+          $scope.topic.flatMap(_.partitions.sortBy(_.partition.getOrElse(0)).find(_.messages.exists(_ > 0)).orUndefined),
+          js.undefined
+        )
     }
   }
 
@@ -319,25 +322,12 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
     }
   }
 
-  $scope.moveToMessage = (aTopic: js.UndefOr[String], aPartition: js.UndefOr[Int], anOffset: js.UndefOr[Int]) => {
+  $scope.moveToMessage = (aTopicID: js.UndefOr[String], aPartitionID: js.UndefOr[Int], anOffset: js.UndefOr[Int]) => {
     for {
-      topicID <- aTopic
-      partitionID <- aPartition
-      offset <- anOffset
-    } {
-      moveToMessage(topicID, partitionID, offset)
-    }
-  }
-
-  private def moveToMessage(topicID: String, partitionID: Int, offset: Int) = {
-    for {
+      topicID <- aTopicID
       topic <- $scope.findTopicByName(topicID)
-      partition <- topic(partitionID).orUndefined
     } {
-      $scope.topic = topic
-      $scope.partition = partition
-      $scope.partition.foreach(_.offset = offset)
-      loadMessage()
+      $scope.updateTopic(topic, aPartitionID, anOffset)
     }
   }
 
@@ -386,7 +376,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
     * Toggles the Avro/JSON output flag
     */
   $scope.toggleAvroOutput = () => {
-    $scope.displayMode.avro = if ($scope.displayMode.avro == "json") "avro" else "json"
+    $scope.displayMode.format = if ($scope.displayMode.format == "json") "avro" else "json"
   }
 
   /**
@@ -402,8 +392,11 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
     } yield angular.toJson(payload, pretty = true)
   }
 
-  $scope.updatePartition = (partition: js.UndefOr[PartitionDetails]) => {
+  $scope.updatePartition = (partition: js.UndefOr[PartitionDetails], anOffset: js.UndefOr[Int]) => {
     $scope.partition = partition
+
+    // optionally, set the offset
+    partition.foreach(p => p.offset = anOffset ?? p.offset)
 
     // if the current offset is not set, set it at the starting offset.
     ensureOffset(partition)
@@ -412,14 +405,15 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
     loadMessage()
   }
 
-  $scope.updateTopic = (aTopic: js.UndefOr[TopicDetails]) => {
+  $scope.updateTopic = (aTopic: js.UndefOr[TopicDetails], aPartitionID: js.UndefOr[Int], anOffset: js.UndefOr[Int]) => {
     $scope.selectTopic(aTopic)
 
     aTopic.map(_.partitions).toOption match {
       case Some(partitions) =>
-        console.log(s"partitions = ${angular.toJson(partitions, pretty = true)}")
-        val partition = partitions.find(_.messages.exists(_ > 0)) ?? partitions.headOption
-        $scope.updatePartition(partition.orUndefined)
+        //console.log(s"partitions = ${angular.toJson(partitions, pretty = true)}")
+        val partition = aPartitionID.toOption.flatMap(id => partitions.find(_.partition == id)) ?? partitions.find(_.messages.exists(_ > 0)) ?? partitions.headOption
+        $scope.updatePartition(partition.orUndefined, anOffset)
+      // TODO     partition.offset = offset
 
       // load the message
       case None =>
@@ -464,7 +458,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   $scope.$watchCollection($scope.topics, (theNewTopics: js.UndefOr[js.Array[TopicDetails]], theOldTopics: js.UndefOr[js.Array[TopicDetails]]) => theNewTopics foreach { newTopics =>
     console.info(s"Loaded new topics (${newTopics.length})")
     if ($scope.topics.forall(_.totalMessages == 0)) $scope.hideEmptyTopics = false
-    $scope.updateTopic($scope.findNonEmptyTopic())
+    $scope.updateTopic($scope.findNonEmptyTopic(), js.undefined, js.undefined)
   })
 
   // did we receive parameters?
@@ -477,6 +471,13 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   * @author lawrence.daniels@gmail.com
   */
 object ObserveController {
+
+  /**
+    * Display Mode
+    * @author lawrence.daniels@gmail.com
+    */
+  @ScalaJSDefined
+  class DisplayMode(var state: String, var format: String) extends js.Object
 
   /**
     * Observe Route Parameters
@@ -519,8 +520,8 @@ object ObserveController {
     var isSelected: js.Function1[js.UndefOr[PartitionDetails], Boolean] = js.native
     var messageAsJSON: js.Function2[js.UndefOr[Message], js.UndefOr[Int], js.UndefOr[String]] = js.native
     var toggleAvroOutput: js.Function0[Unit] = js.native
-    var updatePartition: js.Function1[js.UndefOr[PartitionDetails], Unit] = js.native
-    var updateTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var updatePartition: js.Function2[js.UndefOr[PartitionDetails], js.UndefOr[Int], Unit] = js.native
+    var updateTopic: js.Function3[js.UndefOr[TopicDetails], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
 
     // Kafka message functions
     var exportMessage: js.Function3[js.UndefOr[TopicDetails], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
