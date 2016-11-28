@@ -1,4 +1,4 @@
-<div ng-controller="PublishController" ng-init="init()" class="full_block" style="margin-top: 5px">
+<div ng-controller="PublishController" class="full_block" style="margin-top: 5px">
     <div class="col-md-8">
         <div class="pub_bold_label">
             <div class="col-md-6">
@@ -21,7 +21,7 @@
             </div>
             <div class="col-md-6">
                 <span class="pub_bold_label bold">Output Topic</span>
-                <select ng-model="messageBlob.topic" ng-options="t.topic for t in getTopics(false)"></select>
+                <select ng-model="messageBlob.topic" ng-options="t.topic for t in topics"></select>
                 <button class="publish_button" ng-click="publishMessage(messageBlob)" ng-disabled="isLoading()">Publish</button>
                 <img ng-show="isLoading()" src="/assets/images/status/loading.gif">
             </div>

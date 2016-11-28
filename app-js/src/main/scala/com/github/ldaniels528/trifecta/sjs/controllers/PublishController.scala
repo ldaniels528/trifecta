@@ -33,8 +33,9 @@ case class PublishController($scope: PublishScope, $log: Log, $timeout: Timeout,
   //    Initialization Functions
   ///////////////////////////////////////////////////////////////////////////
 
-  $scope.init = () => {
+  def init() {
     console.log("Initializing Publish Controller...")
+    $scope.$apply(() => {})
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -72,9 +73,18 @@ case class PublishController($scope: PublishScope, $log: Log, $timeout: Timeout,
     */
   private def validated(blob: MessageBlob) = {
     val messages = blob.validate
-    messages foreach ($scope.addErrorMessage(_))
+    messages.headOption foreach (errorPopup(_))
     messages.isEmpty
   }
+
+  ///////////////////////////////////////////////////////////////////////////
+  //    Event Handler Functions
+  ///////////////////////////////////////////////////////////////////////////
+
+  /**
+    * Initialize the controller once the topics have been loaded
+    */
+  $scope.onTopicsLoaded { _ => init() }
 
 }
 
@@ -89,8 +99,7 @@ object PublishController {
     * @author lawrence.daniels@gmail.com
     */
   @js.native
-  trait PublishScope extends Scope
-    with GlobalErrorHandling with GlobalLoading with ReferenceDataAware {
+  trait PublishScope extends Scope with GlobalLoading with ReferenceDataAware {
     // properties
     var keyFormats: js.Array[String] = js.native
     var messageFormats: js.Array[String] = js.native
