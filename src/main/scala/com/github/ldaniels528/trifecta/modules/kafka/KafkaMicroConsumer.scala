@@ -136,7 +136,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
     * Returns the last available offset
     * @return an option of an offset
     */
-  def getLastOffset: Option[Long] = getOffsetsBefore(OffsetRequest.LatestTime).headOption map (offset => Math.max(0, offset - 1))
+  def getLastOffset: Option[Long] = getOffsetsBefore(OffsetRequest.LatestTime).headOption
 
   /**
     * Returns the offset for an instance in time
@@ -145,18 +145,17 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
     */
   def getOffsetsBefore(time: Long): Seq[Long] = {
     // create the topic/partition and request information
-    val requestInfo = Map(topicAndPartition -> new PartitionOffsetRequestInfo(time, 1))
+    val requestInfo = Map(topicAndPartition -> PartitionOffsetRequestInfo(time, 1))
     val replicaId = replicas.indexOf(leader)
 
     // submit the request, and retrieve the response
     val request = new OffsetRequest(requestInfo, correlationId, replicaId)
     val response = consumer.getOffsetsBefore(request)
-    //logger.info(s"response = $response, offsetsGroupedByTopic = ${response.offsetsGroupedByTopic.get(topic.name)}")
 
     // handle the response
     if (response.hasError) {
       response.partitionErrorAndOffsets map {
-        case (tap, por) => throw new VxKafkaCodeException(por.error)
+        case (_, por) => throw new VxKafkaCodeException(por.error)
       }
       Nil
     } else (for {
@@ -232,7 +231,7 @@ object KafkaMicroConsumer {
               counter: IOCounter)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[MessageData]] = {
     val count = new AtomicLong(0L)
     val partitions = getTopicPartitions(topic)
-    val tasks = (1 to partitions.size) zip partitions map { case (threadId, partition) =>
+    val tasks = partitions map { partition =>
       Future.successful {
         var messages: List[MessageData] = Nil
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
@@ -355,7 +354,7 @@ object KafkaMicroConsumer {
   /**
     * Retrieves the list of bootstrap servers as a comma separated string
     */
-  def getBootstrapServers(implicit zk: ZKProxy) = {
+  def getBootstrapServers(implicit zk: ZKProxy): String = {
     getBrokerList map (b => s"${b.host}:${b.port}") mkString ","
   }
 
@@ -374,12 +373,12 @@ object KafkaMicroConsumer {
     }
   }
 
-  def getBrokers(implicit zk: ZKProxy) = getBrokerList map (b => Broker(b.host, b.port))
+  def getBrokers(implicit zk: ZKProxy): Seq[Broker] = getBrokerList map (b => Broker(b.host, b.port))
 
   /**
     * Retrieves the list of internal consumers from Kafka
     */
-  def getConsumersFromKafka(consumerIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy) = {
+  def getConsumersFromKafka(consumerIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
     val topicList = getTopicList(getBrokers)
     val topics = topicList map (_.topic) distinct
     val brokers = getBrokers
@@ -471,7 +470,7 @@ object KafkaMicroConsumer {
           val brokerHost = (json \ "broker" \ "host").extract[String]
           val brokerPort = (json \ "broker" \ "port").extract[Int]
           ConsumerDetailsPM(id, name, topic, partition, offset, lastModified, s"$brokerHost:$brokerPort")
-        }.toOption
+        } toOption
       }
     }
   }

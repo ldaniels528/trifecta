@@ -31,6 +31,7 @@ import com.github.ldaniels528.trifecta.models._
 import com.github.ldaniels528.trifecta.util.ParsingHelper
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
+import org.apache.kafka.clients.producer.RecordMetadata
 import play.api.Logger
 import play.api.libs.json.{JsString, Json}
 
@@ -507,11 +508,11 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     }).toSeq
   }
 
-  def getTopicByName(topic: String)(implicit ec: ExecutionContext) = {
+  def getTopicByName(topic: String)(implicit ec: ExecutionContext): Option[TopicDetailsJs] = {
     KafkaMicroConsumer.getTopicList(brokers).find(_.topic == topic).map(_.asJson)
   }
 
-  def getTopicDetailsByName(topic: String)(implicit ec: ExecutionContext) = {
+  def getTopicDetailsByName(topic: String)(implicit ec: ExecutionContext): Seq[TopicDetailsJs] = {
     KafkaMicroConsumer.getTopicPartitions(topic) map { partition =>
       new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
         val startOffset = consumer.getFirstOffset
@@ -522,7 +523,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     }
   }
 
-  def getZkData(path: String, format: String)(implicit ec: ExecutionContext) = {
+  def getZkData(path: String, format: String)(implicit ec: ExecutionContext): Option[FormattedDataJs] = {
     val decoder = codecs.get(format).orDie(s"No decoder of type '$format' was found")
     zk.read(path) map decoder.decode match {
       case Some(Success(bytes: Array[Byte])) => Option(FormattedDataJs(`type` = BINARY, toByteArray(bytes)))
@@ -533,7 +534,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     }
   }
 
-  def getZkInfo(path: String)(implicit ec: ExecutionContext) = {
+  def getZkInfo(path: String)(implicit ec: ExecutionContext): ZkItemInfoJs = {
     val creationTime = zk.getCreationTime(path)
     val lastModified = zk.getModificationTime(path)
     val data_? = zk.read(path)
@@ -542,13 +543,13 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     ZkItemInfoJs(path, creationTime, lastModified, size_?, formattedData_?)
   }
 
-  def getZkPath(parentPath: String)(implicit ec: ExecutionContext) = {
+  def getZkPath(parentPath: String)(implicit ec: ExecutionContext): Seq[ZkItemJs] = {
     zk.getChildren(parentPath) map { name =>
       ZkItemJs(name, path = if (parentPath == "/") s"/$name" else s"$parentPath/$name")
     }
   }
 
-  def publishMessage(topic: String, jsonString: String)(implicit ec: ExecutionContext) = {
+  def publishMessage(topic: String, jsonString: String)(implicit ec: ExecutionContext): Future[RecordMetadata] = {
     // deserialize the JSON
     val blob = JsonHelper.transform[MessageBlobJs](jsonString)
 

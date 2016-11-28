@@ -86,7 +86,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   }
 
   private def ensureOffset(aPartition: js.UndefOr[PartitionDetails]) = aPartition foreach { partition =>
-    if (partition.offset.isEmpty) partition.offset = partition.endOffset
+    if (partition.offset.isEmpty) partition.offset = partition.endOffset.map(_ - 1)
   }
 
   /**

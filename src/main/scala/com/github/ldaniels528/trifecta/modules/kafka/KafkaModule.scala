@@ -479,10 +479,10 @@ class KafkaModule(config: TxConfig) extends Module {
     val (topic, partition0) = extractTopicAndPartition(params.args)
 
     // check for a partition override flag
-    val partition: Int = params("-p") map parsePartition getOrElse partition0
+    val partition = params("-p") map parsePartition getOrElse partition0
 
     // return the last message for the topic partition
-    facade.getLastOffset(topic, partition) map (getMessage(topic, partition, _, params))
+    facade.getLastOffset(topic, partition) map (offset => getMessage(topic, partition, Math.max(0L, offset - 1), params))
   }
 
   /**
@@ -504,10 +504,10 @@ class KafkaModule(config: TxConfig) extends Module {
 
   /**
     * Retrieves either a binary or decoded message
-    * @param topic the given topic
+    * @param topic     the given topic
     * @param partition the given partition
-    * @param offset the given offset
-    * @param params the given Unix-style argument
+    * @param offset    the given offset
+    * @param params    the given Unix-style argument
     * @return either a binary or decoded message
     */
   def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Either[Option[GenericRecord], Option[JValue]]] = {
@@ -553,9 +553,9 @@ class KafkaModule(config: TxConfig) extends Module {
   /**
     * Resolves the optional decoder URL (e.g. "-a" (Avro)) for the given topic. Note, if the url is "default"
     * then the default decoder (configured in $HOME/.trifecta/decoders) will be used
-    * @param topic the given Kafka topic (e.g. "shocktrade.quotes.avro")
+    * @param topic  the given Kafka topic (e.g. "shocktrade.quotes.avro")
     * @param params the given [[UnixLikeArgs]]
-    * @param rt the implicit [[TxRuntimeContext]]
+    * @param rt     the implicit [[TxRuntimeContext]]
     * @return an option of the [[MessageDecoder]]
     */
   private def resolveDecoder(topic: String, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[MessageDecoder[_]] = {
@@ -569,7 +569,7 @@ class KafkaModule(config: TxConfig) extends Module {
   /**
     * Decodes the given message
     * @param messageData the given option of a message
-    * @param aDecoder the given message decoder
+    * @param aDecoder    the given message decoder
     * @return the decoded message
     */
   private def decodeMessage(messageData: Option[BinaryMessage], aDecoder: MessageDecoder[_]): Option[GenericRecord] = {
@@ -930,7 +930,7 @@ class KafkaModule(config: TxConfig) extends Module {
     val key = getTopicAndGroup(params)
 
     // if there's already a registered topic & group, close it
-    Try(watchCursors.remove(key) map  (_.consumer.close()))
+    Try(watchCursors.remove(key) map (_.consumer.close()))
   }
 
   private def getAvroDecoder(params: UnixLikeArgs)(implicit config: TxConfig): Option[AvroDecoder] = {
@@ -993,7 +993,7 @@ class KafkaModule(config: TxConfig) extends Module {
 
   /**
     * Parses a condition statement
-    * @param params the given [[UnixLikeArgs]]
+    * @param params  the given [[UnixLikeArgs]]
     * @param decoder the optional [[MessageDecoder]]
     * @example lastTrade < 1 and volume > 1000000
     * @return a collection of [[Condition]] objects
