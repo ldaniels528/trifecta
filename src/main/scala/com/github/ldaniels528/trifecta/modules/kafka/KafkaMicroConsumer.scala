@@ -21,6 +21,7 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 
+import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.postfixOps
@@ -389,8 +390,9 @@ object KafkaMicroConsumer {
     * Retrieves the list of internal consumers from Kafka
     */
   def getConsumersFromKafka(consumerIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
-    val topicPartitions = getTopicList(getBrokers) map (t => new TopicPartition(t.topic, t.partitionId))
-    val topics = (topicPartitions map (_.topic) distinct).asJavaCollection
+    val topicList = getTopicList(getBrokers)
+    val topicPartitions = topicList.map(t => new TopicPartition(t.topic, t.partitionId)).asJavaCollection
+    val topics = topicList map (_.topic) distinct
     val brokers = getBrokers
     val bootstrapServers = brokers map (b => s"${b.host}:${b.port}") mkString ","
 
@@ -403,16 +405,16 @@ object KafkaMicroConsumer {
       props.put("value.deserializer", classOf[StringDeserializer].getName)
 
       new KafkaConsumer[Array[Byte], Array[Byte]](props) use { consumer =>
-        consumer.subscribe(topics)
+        consumer.subscribe(topics: _*)
         consumer.poll(0)
-        topicPartitions flatMap { tp =>
-          Try(consumer.position(tp)) match {
-            case Success(offset) =>
-              Some(ConsumerDetails(consumerId, tp.topic(), tp.partition(), offset, lastModified = None))
-            case Failure(e) =>
-              logger.error("Failed to retrieve Kafka consumers", e)
-              None
-          }
+        Try(consumer.position(topicPartitions)) match {
+          case Success(mapping) =>
+            mapping.toSeq map { case (tp, offset) =>
+              ConsumerDetails(consumerId, tp.topic(), tp.partition(), offset, lastModified = None)
+            }
+          case Failure(e) =>
+            logger.error("Failed to retrieve Kafka consumers", e)
+            Nil
         }
       }
     }
