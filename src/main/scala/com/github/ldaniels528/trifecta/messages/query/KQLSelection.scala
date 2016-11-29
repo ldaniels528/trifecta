@@ -1,12 +1,12 @@
 package com.github.ldaniels528.trifecta.messages.query
 
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.trifecta.TxRuntimeContext
 import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
-import com.github.ldaniels528.trifecta.io.{AsyncIO, MessageInputSource, MessageOutputSource}
+import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.Expression
 import com.github.ldaniels528.trifecta.messages.{MessageCodecs, MessageDecoder}
-import com.github.ldaniels528.commons.helpers.OptionHelper._
 
 import scala.concurrent.ExecutionContext
 
@@ -25,9 +25,7 @@ case class KQLSelection(source: IOSource,
     * Executes the given query
     * @param rt the given [[TxRuntimeContext]]
     */
-  override def executeQuery(rt: TxRuntimeContext)(implicit ec: ExecutionContext): AsyncIO = {
-    val counter = IOCounter(System.currentTimeMillis())
-
+  override def executeQuery(rt: TxRuntimeContext, counter: IOCounter)(implicit ec: ExecutionContext) = {
     // get the input source and its decoder
     val inputSource: Option[MessageInputSource] = rt.getInputHandler(rt.getDeviceURLWithDefault("topic", source.deviceURL))
     val inputDecoder: Option[MessageDecoder[_]] = source.decoderURL match {
@@ -50,14 +48,12 @@ case class KQLSelection(source: IOSource,
     val maximum = limit ?? Some(25)
 
     // perform the query/copy operation
-    val task = if (outputSource.nonEmpty) throw new IllegalStateException("Insert is not yet supported")
+    if (outputSource.nonEmpty) throw new IllegalStateException("Insert is not yet supported")
     else {
       val querySource = inputSource.flatMap(_.getQuerySource).orDie(s"No query compatible source found for URL '${source.deviceURL}'")
       val decoder = inputDecoder.orDie(s"No decoder found for URL ${source.decoderURL}")
       querySource.findAll(fields, decoder, conditions, maximum, counter)
     }
-
-    AsyncIO(task, counter)
   }
 
   /**
@@ -67,7 +63,7 @@ case class KQLSelection(source: IOSource,
     * @example select strategy, groupedBy, vip, site, qName, srcIP, frequency from "dns.query.topHitters" with "avro:file:avro/topTalkers.avsc" where strategy == "IPv4-CMS"
     * @return the string representation
     */
-  override def toString = {
+  override def toString: String = {
     val sb = new StringBuilder(s"select ${fields.mkString(", ")} from $source")
     destination.foreach(dest => sb.append(s" into $dest"))
     if (criteria.nonEmpty) {

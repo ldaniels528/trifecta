@@ -18,7 +18,7 @@ class KafkaQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
       val queryString =
         """
           |select symbol, exchange, lastTrade, volume
-          |from "topic:shocktrade.quotes.avro" with "avro:file:~/avro/quotes.avsc"
+          |from shocktrade.quotes.avro with "avro:file:~/avro/quotes.avsc"
           |into elastic_search_quotes
           |where exchange = 'OTCBB'
           |and lastTrade <= 1.0
@@ -33,7 +33,7 @@ class KafkaQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
       info(s"results: ${tokens map (s => s""""$s"""") mkString " "}")
       tokens shouldBe Seq(
         "select", "symbol", ",", "exchange", ",", "lastTrade", ",", "volume", "from",
-        "\"topic:shocktrade.quotes.avro\"", "with", "\"avro:file:~/avro/quotes.avsc\"",
+        "shocktrade.quotes.avro", "with", "\"avro:file:~/avro/quotes.avsc\"",
         "into", "elastic_search_quotes", "where", "exchange", "=", "'OTCBB'", "and", "lastTrade", "<=",
         "1.0", "and", "volume", ">=", "1,000,000", "limit", "10")
     }

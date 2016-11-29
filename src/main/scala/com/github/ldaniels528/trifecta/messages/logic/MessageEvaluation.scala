@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta.messages.logic
 
+import com.github.ldaniels528.trifecta.messages.BinaryMessage
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
 
 /**
@@ -14,5 +15,13 @@ trait MessageEvaluation {
    * @return a condition
    */
   def compile(operation: Expression): Condition
+
+  /**
+    * Evaluates the message; returning the resulting field and values
+    * @param msg the given [[BinaryMessage binary message]]
+    * @param fields the given subset of fields to return
+    * @return the mapping of fields and values
+    */
+  def evaluate(msg: BinaryMessage, fields: Seq[String]): Map[String, Any]
 
 }

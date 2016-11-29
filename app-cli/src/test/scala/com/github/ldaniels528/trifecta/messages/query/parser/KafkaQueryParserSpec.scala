@@ -15,12 +15,55 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
   info("I want to be able to parse Kafka queries")
 
   feature("Ability to parse KQL queries with implicit decoders") {
-    scenario("A string containing a KQL selection query using 'with default'") {
+
+    scenario("A string containing a KQL selection with all fields and without a where clause") {
+      Given("a KQL selection query")
+      val queryString =
+        """
+          |Select *
+          |From "shocktrade.quotes.avro" With default
+          |Limit 50
+          |""".stripMargin
+
+      When("The queries is parsed into a KQL object")
+      val query = KafkaQueryParser(queryString)
+
+      Then("The arguments should be successfully verified")
+      query shouldBe KQLSelection(
+        source = IOSource(deviceURL = "shocktrade.quotes.avro", decoderURL = Some("default")),
+        destination = None,
+        fields = List("*"),
+        criteria = None,
+        limit = Some(50))
+    }
+
+    scenario("A string containing a KQL selection query using 'with default' without a where clause") {
       Given("a KQL selection query")
       val queryString =
         """
           |Select symbol, exchange, lastTrade, open, prevClose, high, low, volume
-          |From "topic:shocktrade.quotes.avro" With default
+          |From "shocktrade.quotes.avro" With default
+          |Limit 50
+          |""".stripMargin
+
+      When("The queries is parsed into a KQL object")
+      val query = KafkaQueryParser(queryString)
+
+      Then("The arguments should be successfully verified")
+      query shouldBe KQLSelection(
+        source = IOSource(deviceURL = "shocktrade.quotes.avro", decoderURL = Some("default")),
+        destination = None,
+        fields = List("symbol", "exchange", "lastTrade", "open", "prevClose", "high", "low", "volume"),
+        criteria = None,
+        limit = Some(50))
+    }
+
+    scenario("A string containing a KQL selection query using 'with default' with a where clause") {
+      Given("a KQL selection query")
+      val queryString =
+        """
+          |Select symbol, exchange, lastTrade, open, prevClose, high, low, volume
+          |From "shocktrade.quotes.avro" With default
           |Where volume >= 1,000,000 And lastTrade <= 1
           |Limit 50
           |""".stripMargin
@@ -30,7 +73,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
 
       Then("The arguments should be successfully verified")
       query shouldBe KQLSelection(
-        source = IOSource(deviceURL = "topic:shocktrade.quotes.avro", decoderURL = Some("default")),
+        source = IOSource(deviceURL = "shocktrade.quotes.avro", decoderURL = Some("default")),
         destination = None,
         fields = List("symbol", "exchange", "lastTrade", "open", "prevClose", "high", "low", "volume"),
         criteria = Some(AND(GE("volume", "1000000"), LE("lastTrade", "1"))),
@@ -44,7 +87,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
       val queryString =
         """
           |select symbol, exchange, lastTrade, open, prevClose, high, low, volume
-          |from "topic:shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
+          |from "shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc"
           |where volume >= 1,000,000 and lastTrade <= 1
           |""".stripMargin
 
@@ -53,7 +96,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
 
       Then("The arguments should be successfully verified")
       query shouldBe KQLSelection(
-        source = IOSource(deviceURL = "topic:shocktrade.quotes.avro", decoderURL = Some("avro:file:avro/quotes.avsc")),
+        source = IOSource(deviceURL = "shocktrade.quotes.avro", decoderURL = Some("avro:file:avro/quotes.avsc")),
         destination = None,
         fields = List("symbol", "exchange", "lastTrade", "open", "prevClose", "high", "low", "volume"),
         criteria = Some(AND(GE("volume", "1000000"), LE("lastTrade", "1"))),
@@ -67,7 +110,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
       val queryString =
         """
           |select symbol, exchange, lastTrade, volume
-          |from "topic:quotes" with "avro:file:avro/quotes.avsc"
+          |from quotes with "avro:file:avro/quotes.avsc"
           |into "es:/quotes/quote/AAPL" with json
           |where exchange == "OTCBB"
           |and lastTrade <= 1.0
@@ -80,7 +123,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
 
       Then("The arguments should be successfully verified")
       query shouldBe KQLSelection(
-        source = IOSource(deviceURL = "topic:quotes", decoderURL = Some("avro:file:avro/quotes.avsc")),
+        source = IOSource(deviceURL = "quotes", decoderURL = Some("avro:file:avro/quotes.avsc")),
         destination = Some(IOSource(deviceURL = "es:/quotes/quote/AAPL", decoderURL = Some("json"))),
         fields = List("symbol", "exchange", "lastTrade", "volume"),
         criteria = Some(AND(AND(EQ("exchange", "OTCBB"), LE("lastTrade", "1.0")), GE("volume", "1000000"))),

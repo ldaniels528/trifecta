@@ -19,6 +19,6 @@ trait MessageDecoder[T] {
    * Returns the string representation of the message decoder
    * @return the string representation of the message decoder
    */
-  override def toString = getClass.getSimpleName
+  override def toString: String = getClass.getSimpleName
 
 }

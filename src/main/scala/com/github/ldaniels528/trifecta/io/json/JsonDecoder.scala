@@ -1,9 +1,11 @@
 package com.github.ldaniels528.trifecta.io.json
 
-import com.github.ldaniels528.trifecta.messages.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
 import com.github.ldaniels528.trifecta.messages.logic.{Condition, MessageEvaluation}
+import net.liftweb.json.JsonAST.{JNull, JValue}
 import net.liftweb.json._
+import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
 
@@ -12,13 +14,14 @@ import scala.util.{Failure, Success, Try}
   * @author lawrence.daniels@gmail.com
   */
 object JsonDecoder extends MessageDecoder[JValue] with JsonTranscoding with MessageEvaluation {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
 
   /**
     * Compiles the given operation into a condition
     * @param operation the given operation
     * @return a condition
     */
-  override def compile(operation: Expression) = {
+  override def compile(operation: Expression): Condition = {
     operation match {
       case EQ(field, value) => JsonEQ(this, field, value)
       case GE(field, value) => JsonGE(this, field, value)
@@ -36,6 +39,38 @@ object JsonDecoder extends MessageDecoder[JValue] with JsonTranscoding with Mess
     * @return a decoded message wrapped in a Try-monad
     */
   override def decode(message: Array[Byte]): Try[JValue] = Try(parse(new String(message)))
+
+  /**
+    * Evaluates the message; returning the resulting field and values
+    * @param msg    the given [[BinaryMessage binary message]]
+    * @param fields the given subset of fields to return
+    * @return the mapping of fields and values
+    */
+  override def evaluate(msg: BinaryMessage, fields: Seq[String]): Map[String, Any] = {
+    decode(msg.message) match {
+      case Success(JObject(mapping)) =>
+        Map(mapping.map(f => f.name -> unwrap(f.value)): _*) filter {
+          case (k, v) => fields.contains("*") || fields.contains(k)
+        }
+      case Success(_) => Map.empty
+      case Failure(e) =>
+        throw new IllegalStateException(e.getMessage, e)
+    }
+  }
+
+  private def unwrap(jv: JValue): Any = {
+    jv match {
+      case JArray(values) => values map unwrap
+      case JBool(value) => value
+      case JDouble(num) => num
+      case JObject(fields) => Map(fields.map(f => f.name -> unwrap(f.value)): _*)
+      case JNull => null
+      case JString(s) => s
+      case unknown =>
+        logger.warn(s"Unrecognized typed '$unknown' (${unknown.getClass.getName})")
+        null
+    }
+  }
 
   /**
     * Transcodes the given bytes into JSON

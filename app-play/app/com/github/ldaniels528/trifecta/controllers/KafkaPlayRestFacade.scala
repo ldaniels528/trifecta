@@ -9,14 +9,11 @@ import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.TxConfig.TxDecoder
-import com.github.ldaniels528.trifecta.command.parser.CommandParser
 import com.github.ldaniels528.trifecta.controllers.KafkaPlayRestFacade._
+import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.github.ldaniels528.trifecta.io.ByteBufferUtils
 import com.github.ldaniels528.trifecta.io.avro.AvroConversion
 import com.github.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.{DEFAULT_FETCH_SIZE, MessageData}
-import com.github.ldaniels528.trifecta.modules.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
@@ -28,6 +25,9 @@ import com.github.ldaniels528.trifecta.models.ConsumerDetailJs.ConsumerDeltaKey
 import com.github.ldaniels528.trifecta.models.QueryDetailsJs._
 import com.github.ldaniels528.trifecta.models.TopicDetailsJs._
 import com.github.ldaniels528.trifecta.models._
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.{DEFAULT_FETCH_SIZE, MessageData}
+import com.github.ldaniels528.trifecta.modules.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.util.ParsingHelper
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import kafka.common.TopicAndPartition
@@ -85,8 +85,8 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * @return the query results
     */
   def executeQuery(query: QueryJs)(implicit ec: ExecutionContext) = {
-    val asyncIO = KafkaQueryParser(query.queryString).executeQuery(rt)
-    asyncIO.task
+    val counter = IOCounter(System.currentTimeMillis())
+    KafkaQueryParser(query.queryString).executeQuery(rt, counter)
   }
 
   def findOne(topic: String, criteria: String)(implicit ec: ExecutionContext) = {
@@ -388,6 +388,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     */
   private def decodeMessageData(topic: String, message_? : Option[MessageData]): Option[MessageJs] = {
     def decoders = config.getDecodersByTopic(topic)
+
     message_? flatMap { md =>
       decoders.foldLeft[Option[MessageJs]](None) { (result, d) =>
         result ?? attemptDecode(md, d)
@@ -680,6 +681,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     */
   def transformResultsToCSV(queryResults: String)(implicit ec: ExecutionContext) = {
     def toCSV(values: List[String]): String = values.map(s => s""""$s"""").mkString(",")
+
     Future {
       val js = JsonHelper.toJson(queryResults)
       for {
@@ -701,6 +703,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
 
   private def toByteArray(bytes: Array[Byte], columns: Int = 20) = {
     def toHex(b: Byte): String = f"$b%02x"
+
     def toAscii(b: Byte): String = if (b >= 32 && b <= 127) b.toChar.toString else "."
 
     val data = bytes.sliding(columns, columns).toSeq map { chunk =>

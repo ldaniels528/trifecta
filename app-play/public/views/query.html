@@ -14,7 +14,7 @@
                              ng-click="expandQueryTopic(t)"
                              ng-src="/assets/images/{{ t.loading ? 'status/loading.gif' : t.queriesExpanded ? 'buttons/collapse.png' : 'buttons/expand.png' }}">
                         <img ng-src="{{ getTopicIcon(t, isSelectedTopic(t)) }}">
-                        <span ng-click="selectTopic(t)" class="clickable">{{ t.topic }}</span>
+                        <span ng-click="selectQueryTopic(t)" class="clickable">{{ t.topic }}</span>
                         <span ng-show="t.totalMessages">(<span class="messages">{{t.totalMessages | number}}</span>)</span>
                     </div>
 
@@ -85,7 +85,7 @@
             <!-- Query Results -->
             <div style="width: 100%; min-height: 298px; background: #eeeeee; border: 1px solid #cccccc">
                 <div class="q_results_container">
-                    <table class="full_width" ng-show="query.rows">
+                    <table border="1" class="full_width" ng-show="query.rows">
                         <thead>
                         <tr style="border-bottom: 1px solid #aaaaaa">
                             <th ng-repeat="column in query.columns">

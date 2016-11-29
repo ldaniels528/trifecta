@@ -5,6 +5,7 @@ import java.io.PrintStream
 import com.datastax.driver.core.{CodecRegistry, ColumnDefinitions, ResultSet, Row}
 import com.github.ldaniels528.trifecta.command.parser.CommandParser
 import com.github.ldaniels528.trifecta.io.AsyncIO
+import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.github.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser
 import com.github.ldaniels528.trifecta.modules.ModuleHelper.die
 import com.github.ldaniels528.trifecta.modules.azure.AzureModule
@@ -209,7 +210,11 @@ object TrifectaShell {
       */
     private def interpretCommandLine(input: String) = Try {
       // is the input a query?
-      if (input.startsWith("select")) KafkaQueryParser(input).executeQuery(rt)
+      if (input.startsWith("select")) {
+        val counter = IOCounter(System.currentTimeMillis())
+        val task = KafkaQueryParser(input).executeQuery(rt, counter)
+        AsyncIO(task, counter)
+      }
       else {
         // parse the input into tokens
         val tokens = CommandParser.parseTokens(input)

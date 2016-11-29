@@ -26,7 +26,7 @@ class KafkaQueryTokenizer(queryString: String) {
       // did we find a match?
       if (!parsers.exists(_(tokens))) {
         logger.info(f"hasNext = $hasNext, char($pos) = ${if (ca.length < pos) ca(pos).toByte else 0.toByte}%02x")
-        throw new IllegalArgumentException( s"""Illegal argument at "${nextSpan(Math.max(pos - 5, 0)).word.take(8)}" near "${nextSpan(Math.max(pos - 20, 0)).word.take(25)}" (position $pos)""")
+        throw new IllegalArgumentException( s"""Illegal argument at "${nextSpan(Math.max(pos - 15, 0)).word.trim}" near "${nextSpan(Math.max(pos - 20, 0)).word.trim}" (position $pos)""")
       }
 
       // skip over any trailing whitespace
@@ -118,7 +118,7 @@ class KafkaQueryTokenizer(queryString: String) {
  * @author lawrence.daniels@gmail.com
  */
 object KafkaQueryTokenizer {
-  private val Symbols = "!,=<>"
+  private val Symbols = "*!,=<>"
   private val Operators = Seq(">=", "<=", "!=", "==")
   private val WhiteSpace = " \t\r\n".toCharArray
 

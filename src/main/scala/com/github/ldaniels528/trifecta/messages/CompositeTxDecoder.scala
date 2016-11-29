@@ -13,16 +13,16 @@ import org.apache.avro.generic.GenericRecord
 import scala.util.{Failure, Success, Try}
 
 /**
- * Composite Trifecta Decoder
- * @author lawrence.daniels@gmail.com
- */
+  * Composite Trifecta Decoder
+  * @author lawrence.daniels@gmail.com
+  */
 class CompositeTxDecoder(decoders: Seq[TxDecoder]) extends AvroMessageDecoding with JsonTranscoding with MessageEvaluation {
 
   /**
-   * Compiles the given operation into a condition
-   * @param operation the given operation
-   * @return a condition
-   */
+    * Compiles the given operation into a condition
+    * @param operation the given operation
+    * @return a condition
+    */
   override def compile(operation: Expression): Condition = {
     operation match {
       case EQ(field, value) => AvroEQ(this, field, value)
@@ -36,10 +36,10 @@ class CompositeTxDecoder(decoders: Seq[TxDecoder]) extends AvroMessageDecoding w
   }
 
   /**
-   * Decodes the binary message into a typed object
-   * @param message the given binary message
-   * @return a decoded message wrapped in a Try-monad
-   */
+    * Decodes the binary message into a typed object
+    * @param message the given binary message
+    * @return a decoded message wrapped in a Try-monad
+    */
   override def decode(message: Array[Byte]): Try[GenericRecord] = {
     val decodedMessage = decoders.foldLeft[Option[GenericRecord]](None) { (result, d) =>
       result ?? attemptDecode(message, d)
@@ -49,18 +49,33 @@ class CompositeTxDecoder(decoders: Seq[TxDecoder]) extends AvroMessageDecoding w
   }
 
   /**
-   * Transcodes the given bytes into JSON
-   * @param bytes the given byte array
-   * @return a JSON value
-   */
+    * Evaluates the message; returning the resulting field and values
+    * @param msg    the given [[BinaryMessage binary message]]
+    * @param fields the given subset of fields to return
+    * @return the mapping of fields and values
+    */
+  override def evaluate(msg: BinaryMessage, fields: Seq[String]): Map[String, Any] = {
+    decoders.foldLeft[Map[String, Any]](Map.empty) { (mappings, decoder) =>
+      decoder match {
+        case me: MessageEvaluation => me.evaluate(msg, fields) ++ mappings
+        case _ => mappings
+      }
+    }
+  }
+
+  /**
+    * Transcodes the given bytes into JSON
+    * @param bytes the given byte array
+    * @return a JSON value
+    */
   override def toJSON(bytes: Array[Byte]): Try[JValue] = decode(bytes) map (_.toString) map parse
 
   /**
-   * Attempts to decode the given message with the given decoder
-   * @param message the given binary message
-   * @param txDecoder the given [[TxDecoder]]
-   * @return an option of a decoded message
-   */
+    * Attempts to decode the given message with the given decoder
+    * @param message   the given binary message
+    * @param txDecoder the given [[TxDecoder]]
+    * @return an option of a decoded message
+    */
   private def attemptDecode(message: Array[Byte], txDecoder: TxDecoder): Option[GenericRecord] = {
     txDecoder.decoder match {
       case Left(av) =>

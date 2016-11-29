@@ -203,9 +203,7 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
       $log.info(s"Uploading query '$name' (topic $topic)...")
       queryService.saveQuery(name, topic, queryString).withGlobalLoading.withTimer("Saving query") onComplete {
         case Success(response) =>
-          $scope.$apply { () =>
-            query.syncing = false
-          }
+          $scope.$apply { () => query.syncing = false }
           toaster.success(s"Query '$name' saved.")
         case Failure(e) =>
           $scope.$apply { () => query.syncing = false }
@@ -220,6 +218,15 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
     */
   $scope.selectQuery = (aQuery: js.UndefOr[Query]) => aQuery foreach { query =>
     $scope.query = query
+  }
+
+  $scope.selectQueryTopic = (aTopic: js.UndefOr[TopicDetails]) => {
+    $scope.selectTopic(aTopic)
+    if($scope.query.queryString.nonAssigned || $scope.query.queryString.exists(_.trim.isEmpty)) {
+      aTopic foreach { topic =>
+        $scope.query.queryString = s"select * from ${topic.topic} with json"
+      }
+    }
   }
 
   $scope.toggleSortField = (aQuery: js.UndefOr[Query], sortField: js.UndefOr[String]) => aQuery foreach { query =>
@@ -278,6 +285,7 @@ object QueryController {
     var removeResult: js.Function2[js.UndefOr[TopicDetails], js.UndefOr[SavedResult], Unit] = js.native
     var saveQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
     var selectQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
+    var selectQueryTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
     var toggleSortField: js.Function2[js.UndefOr[Query], js.UndefOr[String], Unit] = js.native
   }
 
