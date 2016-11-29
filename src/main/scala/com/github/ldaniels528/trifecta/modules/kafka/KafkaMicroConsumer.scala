@@ -21,6 +21,7 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 
+import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.postfixOps
@@ -390,7 +391,7 @@ object KafkaMicroConsumer {
     */
   def getConsumersFromKafka(consumerIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
     val topicPartitions = getTopicList(getBrokers) map (t => new TopicPartition(t.topic, t.partitionId))
-    val topics = (topicPartitions map (_.topic) distinct).asJavaCollection
+    val topics: java.util.List[String] = topicPartitions map (_.topic) distinct
     val brokers = getBrokers
     val bootstrapServers = brokers map (b => s"${b.host}:${b.port}") mkString ","
 
