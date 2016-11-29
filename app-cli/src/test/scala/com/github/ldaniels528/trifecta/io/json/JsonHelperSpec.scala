@@ -31,7 +31,7 @@ class JsonHelperSpec() extends FeatureSpec with GivenWhenThen {
           |    }""".stripMargin
 
       When("the JSON string is parsed")
-      val doc = toDocument(toJson(jsonString))
+      val doc = toJson(jsonString)
 
       Then("the result matches the expected result")
       doc shouldBe Q("partition" -> 1, "broker" -> Q("host" -> "vsccrtc204-brn1.rtc.vrsn.com", "port" -> 9092),

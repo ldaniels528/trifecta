@@ -9,6 +9,10 @@ import play.api.libs.json.{JsObject, _}
   */
 object QueryJsonUtils {
 
+  /**
+    * JSON Conversions
+    * @param mapping the given mapping
+    */
   implicit class JsonConversions[T](val mapping: Map[String, T]) extends AnyVal {
 
     def toJson = JsObject(mapping.toSeq map { case (name, value) => (name, wrap(value)) })
@@ -17,8 +21,12 @@ object QueryJsonUtils {
 
   private def wrap(value: Any): JsValue = {
     value match {
+      case a if a == null => JsNull
+      case a: JsValue => a
       case b: Boolean => JsBoolean(b)
-      case m: Map[String, _] => JsObject(m.toSeq map { case (k, v) => (k, wrap(v)) })
+      case m: Map[_, _] => JsObject(m.toSeq map { case (k, v) => (k.toString, wrap(v)) })
+      case n: BigDecimal => JsNumber(n)
+      case n: Double => JsNumber(n)
       case n: Int => JsNumber(n)
       case n: Long => JsNumber(n)
       case s: Seq[_] => JsArray(s map wrap)

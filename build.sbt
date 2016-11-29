@@ -8,7 +8,7 @@ val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"
 val apacheCurator = "3.1.0"
 val casbahVersion = "3.1.1"
-val kafkaVersion = "0.8.2.0"
+val kafkaVersion = "0.10.1.0"
 val paradiseVersion = "2.1.0"
 val playVersion = "2.4.6"
 val twitterBijection = "0.9.2"
@@ -136,17 +136,16 @@ lazy val trifecta_cli = (project in file("app-cli"))
     )
   )
 
-lazy val trifecta_js = (project in file("app-js"))
+lazy val trifecta_ui_angularjs = (project in file("app-js"))
   .enablePlugins(ScalaJSPlugin)
   .settings(
-    name := "trifecta_js",
+    name := "trifecta_ui_angularjs",
     organization := "com.github.ldaniels528",
     version := appVersion,
     scalaVersion := _scalaVersion,
     relativeSourceMaps := true,
     persistLauncher := true,
     persistLauncher in Test := false,
-    //addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full),
     resolvers += Resolver.sonatypeRepo("releases"),
     libraryDependencies ++= Seq(
       "com.github.ldaniels528" %%% "scalajs-angularjs-core" % meanjsVersion,
@@ -158,10 +157,6 @@ lazy val trifecta_js = (project in file("app-js"))
       "com.github.ldaniels528" %%% "scalajs-angularjs-ui-bootstrap" % meanjsVersion,
       "com.github.ldaniels528" %%% "scalajs-angularjs-ui-router" % meanjsVersion,
       //
-      // Typesafe dependencies
-      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
-      //
       // ScalaJS dependencies
       "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11"),
       "org.scala-js" %%% "scalajs-dom" % "0.9.0",
@@ -169,7 +164,7 @@ lazy val trifecta_js = (project in file("app-js"))
     ))
 
 lazy val trifecta_ui = (project in file("app-play"))
-  .aggregate(trifecta_js)
+  .aggregate(trifecta_ui_angularjs)
   .dependsOn(commons_helpers, trifecta_core)
   .enablePlugins(PlayScala, play.twirl.sbt.SbtTwirl, SbtWeb)
   .settings(
@@ -185,10 +180,10 @@ lazy val trifecta_ui = (project in file("app-play"))
     scalajsOutputDir := (crossTarget in Compile).value / "classes" / "public" / "javascripts",
     pipelineStages := Seq(gzip, uglify),
     Seq(packageScalaJSLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
-      crossTarget in(trifecta_js, Compile, packageJSKey) := scalajsOutputDir.value
+      crossTarget in(trifecta_ui_angularjs, Compile, packageJSKey) := scalajsOutputDir.value
     },
     compile in Compile <<=
-      (compile in Compile) dependsOn (fastOptJS in(trifecta_js, Compile)),
+      (compile in Compile) dependsOn (fastOptJS in(trifecta_ui_angularjs, Compile)),
     ivyScala := ivyScala.value map (_.copy(overrideScalaVersion = true)),
     libraryDependencies ++= Seq(cache, filters, json, ws,
       //

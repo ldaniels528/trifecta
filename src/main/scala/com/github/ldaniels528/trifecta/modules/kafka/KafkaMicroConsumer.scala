@@ -7,10 +7,10 @@ import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
 import com.github.ldaniels528.trifecta.io.ByteBufferUtils._
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer._
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.messages.BinaryMessage
 import com.github.ldaniels528.trifecta.messages.logic.Condition
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer._
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.util.TryHelper
 import kafka.api._
 import kafka.common._
@@ -21,7 +21,7 @@ import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
@@ -198,7 +198,9 @@ object KafkaMicroConsumer {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
+
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
+
           while (!eof) {
             for {
               ofs <- offset
@@ -237,7 +239,9 @@ object KafkaMicroConsumer {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
+
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || limit.exists(count.get >= _)
+
           while (!eof) {
             for {
               ofs <- offset
@@ -293,7 +297,9 @@ object KafkaMicroConsumer {
   private def findOneForward(subs: KafkaMicroConsumer, partition: Int, message: AtomicReference[Option[(Int, MessageData)]], conditions: Condition*) = {
     var offset: Option[Long] = subs.getFirstOffset
     val lastOffset: Option[Long] = subs.getLastOffset
+
     def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || message.get.isDefined
+
     while (!eof) {
       for {
         ofs <- offset
@@ -309,7 +315,9 @@ object KafkaMicroConsumer {
   private def findOneBackward(subs: KafkaMicroConsumer, partition: Int, message: AtomicReference[Option[(Int, MessageData)]], conditions: Condition*) = {
     var offset: Option[Long] = subs.getLastOffset
     val firstOffset: Option[Long] = subs.getFirstOffset
+
     def eof: Boolean = offset.exists(o => firstOffset.exists(o < _)) || message.get.isDefined
+
     while (!eof) {
       for {
         ofs <- offset
@@ -335,7 +343,9 @@ object KafkaMicroConsumer {
       new KafkaMicroConsumer(tap, brokers) use { subs =>
         var offset: Option[Long] = subs.getFirstOffset
         val lastOffset: Option[Long] = subs.getLastOffset
+
         def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || message.get.isDefined
+
         while (!eof) {
           for {
             ofs <- offset
@@ -379,8 +389,8 @@ object KafkaMicroConsumer {
     * Retrieves the list of internal consumers from Kafka
     */
   def getConsumersFromKafka(consumerIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
-    val topicList = getTopicList(getBrokers)
-    val topics = topicList map (_.topic) distinct
+    val topicPartitions = getTopicList(getBrokers) map (t => new TopicPartition(t.topic, t.partitionId))
+    val topics = (topicPartitions map (_.topic) distinct).asJavaCollection
     val brokers = getBrokers
     val bootstrapServers = brokers map (b => s"${b.host}:${b.port}") mkString ","
 
@@ -393,15 +403,15 @@ object KafkaMicroConsumer {
       props.put("value.deserializer", classOf[StringDeserializer].getName)
 
       new KafkaConsumer[Array[Byte], Array[Byte]](props) use { consumer =>
-        consumer.subscribe(topics: _*)
+        consumer.subscribe(topics)
         consumer.poll(0)
-        topicList flatMap { t =>
-          Try(consumer.position(Seq(new TopicPartition(t.topic, t.partitionId)))).toOption match {
-            case Some(mapping) =>
-              mapping map { case (tp, offset) =>
-                ConsumerDetails(consumerId, tp.topic(), tp.partition(), offset, lastModified = None)
-              } toSeq
-            case None => Nil
+        topicPartitions flatMap { tp =>
+          Try(consumer.position(tp)) match {
+            case Success(offset) =>
+              Some(ConsumerDetails(consumerId, tp.topic(), tp.partition(), offset, lastModified = None))
+            case Failure(e) =>
+              logger.error("Failed to retrieve Kafka consumers", e)
+              None
           }
         }
       }
@@ -561,7 +571,9 @@ object KafkaMicroConsumer {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
+
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
+
           while (!eof) {
             for (ofs <- offset; msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE).headOption) observer(msg)
             offset = offset map (_ + 1)
@@ -587,7 +599,9 @@ object KafkaMicroConsumer {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
+
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
+
           while (!eof) {
             // allow the observer to process the messages
             for (ofs <- offset; msg <- subs.fetch(ofs)(fetchSize = 65535).headOption) observer(msg)
