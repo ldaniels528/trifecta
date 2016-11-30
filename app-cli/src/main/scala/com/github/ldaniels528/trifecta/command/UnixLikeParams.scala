@@ -1,7 +1,6 @@
 package com.github.ldaniels528.trifecta.command
 
-import com.github.ldaniels528.trifecta.command.parser.CommandParser
-import CommandParser.parseUnixLikeArgs
+import com.github.ldaniels528.trifecta.command.CommandParser.parseUnixLikeArgs
 
 /**
  * Unix-Style Command Parameters
@@ -11,7 +10,7 @@ import CommandParser.parseUnixLikeArgs
 case class UnixLikeParams(defaults: Seq[(String, Boolean)] = Nil, flags: Seq[(String, String)] = Nil)
   extends CommandParameters[UnixLikeArgs] {
 
-  override def checkArgs(command: Command, args: Seq[String]) = {
+  override def checkArgs(command: Command, args: Seq[String]): Unit = {
     // transform the input into Unix-style arguments
     val unixArgs = transform(args)
 

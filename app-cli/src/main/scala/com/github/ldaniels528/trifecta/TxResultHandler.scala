@@ -132,10 +132,10 @@ class TxResultHandler(config: TxConfig, jobManager: JobManager) extends BinaryMe
     out.println("Task is now running in the background (use 'jobs' to view)")
     val job = jobManager.createJob(asyncIO, input)
     task.onComplete {
-      case Success(_) =>
+      case Success(value) =>
         out.println()
         out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
-        handleResult(asyncIO.getCount, input)
+        handleResult(value, input)
       case Failure(e2) =>
         out.println()
         out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")

@@ -25,3 +25,22 @@ trait MessageEvaluation {
   def evaluate(msg: BinaryMessage, fields: Seq[String]): Map[String, Any]
 
 }
+
+/**
+  * Message Evaluation Companion
+  * @author lawrence.daniels@gmail.com
+  */
+object MessageEvaluation {
+
+  /**
+    * Field name selection extension
+    * @param fields the given collection of field names
+    */
+  implicit class FieldNameSelectionExtension(val fields: Seq[String]) extends AnyVal {
+
+    @inline
+    def isAllFields: Boolean = fields.contains("*")
+
+  }
+
+}

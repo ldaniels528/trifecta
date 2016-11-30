@@ -10,15 +10,16 @@ import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.github.ldaniels528.trifecta.controllers.KafkaPlayRestFacade._
-import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
-import com.github.ldaniels528.trifecta.io.ByteBufferUtils
+import com.github.ldaniels528.trifecta.io.IOCounter
+import com.github.ldaniels528.trifecta.io._
 import com.github.ldaniels528.trifecta.io.avro.AvroConversion
 import com.github.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
-import com.github.ldaniels528.trifecta.messages.MessageCodecs.{LoopBackCodec, PlainTextCodec}
+import com.github.ldaniels528.trifecta.messages.MessageCodecFactory.{LoopBackCodec, PlainTextCodec}
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
+import com.github.ldaniels528.trifecta.messages.query.KQLResult
 import com.github.ldaniels528.trifecta.messages.query.parser.{KafkaQueryParser, KafkaQueryTokenizer}
-import com.github.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageDecoder}
+import com.github.ldaniels528.trifecta.messages.{CompositeMessageDecoder, MessageDecoder}
 import com.github.ldaniels528.trifecta.models.BrokerDetailsJs._
 import com.github.ldaniels528.trifecta.models.BrokerJs._
 import com.github.ldaniels528.trifecta.models.ConsumerDetailJs.ConsumerDeltaKey
@@ -26,7 +27,7 @@ import com.github.ldaniels528.trifecta.models.QueryDetailsJs._
 import com.github.ldaniels528.trifecta.models.TopicDetailsJs._
 import com.github.ldaniels528.trifecta.models._
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.{DEFAULT_FETCH_SIZE, MessageData}
-import com.github.ldaniels528.trifecta.modules.kafka.{Broker, KafkaMicroConsumer, KafkaPublisher}
+import com.github.ldaniels528.trifecta.modules.kafka._
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.util.ParsingHelper
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
@@ -36,6 +37,7 @@ import play.api.Logger
 import play.api.libs.json.{JsString, Json}
 
 import scala.collection.concurrent.TrieMap
+import scala.collection.immutable.Iterable
 import scala.concurrent.{ExecutionContext, Future, blocking}
 import scala.util.{Failure, Success, Try}
 
@@ -58,7 +60,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
   KafkaMicroConsumer.rootKafkaPath = config.kafkaRootPath
 
   // load & register all decoders to their respective topics
-  def init(implicit ec: ExecutionContext) = registerDecoders()
+  def init(implicit ec: ExecutionContext): Unit = registerDecoders()
 
   /**
     * Registers all default decoders (found in $HOME/.trifecta/decoders) to their respective topics
@@ -66,7 +68,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
   private def registerDecoders()(implicit ec: ExecutionContext) {
     // register the decoders
     config.getDecoders.filter(_.decoder.isLeft).groupBy(_.topic) foreach { case (topic, decoders) =>
-      rt.registerDecoder(topic, new CompositeTxDecoder(decoders))
+      rt.registerDecoder(topic, new CompositeMessageDecoder(decoders))
     }
 
     // report all failed decoders
@@ -84,12 +86,12 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * @param query the [[QueryJs query]]
     * @return the query results
     */
-  def executeQuery(query: QueryJs)(implicit ec: ExecutionContext) = {
+  def executeQuery(query: QueryJs)(implicit ec: ExecutionContext): Future[KQLResult] = {
     val counter = IOCounter(System.currentTimeMillis())
     KafkaQueryParser(query.queryString).executeQuery(rt, counter)
   }
 
-  def findOne(topic: String, criteria: String)(implicit ec: ExecutionContext) = {
+  def findOne(topic: String, criteria: String)(implicit ec: ExecutionContext): Future[MessageJs] = {
     val decoder_? = rt.lookupDecoderByName(topic)
     val conditions = parseCondition(criteria, decoder_?)
 
@@ -126,7 +128,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     }
   }
 
-  def createSamplingCursor(request: MessageSamplingStartRequest)(implicit ec: ExecutionContext) = {
+  def createSamplingCursor(request: MessageSamplingStartRequest)(implicit ec: ExecutionContext): SamplingCursor = {
     val cursorOffsets = request.partitionOffsets.indices zip request.partitionOffsets map { case (partition, offset) =>
       new KafkaMicroConsumer(TopicAndPartition(request.topic, partition), brokers) use { consumer =>
         SamplingCursorOffsets(
@@ -167,13 +169,13 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns the list of brokers
     * @return the JSON list of brokers
     */
-  def getBrokers(implicit ec: ExecutionContext) = brokers.map(_.asJson)
+  def getBrokers(implicit ec: ExecutionContext): Seq[BrokerJs] = brokers.map(_.asJson)
 
   /**
     * Returns the list of brokers
     * @return the JSON list of brokers
     */
-  def getBrokerDetails = {
+  def getBrokerDetails: Iterable[BrokerDetailsGroupJs] = {
     KafkaMicroConsumer.getBrokerList.groupBy(_.host) map { case (host, details) => BrokerDetailsGroupJs(host, details.map(_.asJson)) }
   }
 
@@ -231,17 +233,11 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
       (if (config.isStormConsumers) getConsumerGroupsPM else Nil)
   }
 
-  def getConsumersGroupedByID(implicit ec: ExecutionContext) = {
+  def getConsumersGroupedByID(implicit ec: ExecutionContext): Map[String, Seq[ConsumerDetailJs]] = {
     getConsumerDetails groupBy (_.consumerId)
   }
 
-  /**
-    * (new Tabular()).transform(consumers) foreach System.out.println
-    * @param topic
-    * @param ec
-    * @return
-    */
-  def getConsumersByTopic(topic: String)(implicit ec: ExecutionContext) = {
+  def getConsumersByTopic(topic: String)(implicit ec: ExecutionContext): Iterable[ConsumerByTopicJs] = {
     getConsumerDetails
       .filter(_.topic == topic)
       .groupBy(_.consumerId)
@@ -288,13 +284,13 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns a decoder by topic
     * @return the collection of decoders
     */
-  def getDecoderByTopic(topic: String) = toDecoderJs(topic, config.getDecodersByTopic(topic))
+  def getDecoderByTopic(topic: String): DecoderJs = toDecoderJs(topic, config.getDecodersByTopic(topic))
 
   /**
     * Returns a decoder by topic and schema name
     * @return the option of a decoder
     */
-  def getDecoderSchemaByName(topic: String, schemaName: String) = {
+  def getDecoderSchemaByName(topic: String, schemaName: String): String = {
     val decoders = config.getDecoders.filter(_.topic == topic)
     decoders.filter(_.name == schemaName).map(_.decoder match {
       case Left(v) => v.schema.toString(true)
@@ -306,7 +302,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns all available decoders
     * @return the collection of decoders
     */
-  def getDecoders = {
+  def getDecoders: Seq[DecoderJs] = {
     (config.getDecoders.groupBy(_.topic) map { case (topic, myDecoders) =>
       toDecoderJs(topic, myDecoders.sortBy(-_.lastModified))
     }).toSeq
@@ -343,7 +339,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * @param offset    the given offset
     * @return the JSON representation of the message
     */
-  def getMessageData(topic: String, partition: Int, offset: Long)(implicit ec: ExecutionContext) = {
+  def getMessageData(topic: String, partition: Int, offset: Long)(implicit ec: ExecutionContext): MessageJs = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
       getDefinedOffset(cons, offset) flatMap { theOffset =>
         decodeMessageData(topic, cons.fetch(theOffset)(fetchSize = DEFAULT_FETCH_SIZE).headOption)
@@ -360,7 +356,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * @param offset    the given offset
     * @return the JSON representation of the message key
     */
-  def getMessageKey(topic: String, partition: Int, offset: Long)(implicit ec: ExecutionContext) = {
+  def getMessageKey(topic: String, partition: Int, offset: Long)(implicit ec: ExecutionContext): MessageJs = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { cons =>
       getDefinedOffset(cons, offset) flatMap { o =>
         cons.fetch(o)(fetchSize = DEFAULT_FETCH_SIZE).headOption map (md => toMessage(md.key))
@@ -430,21 +426,21 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * Retrieves the list of available queries for the any topic
     * @return the list of available queries
     */
-  def getQueries = config.getQueries.map(_.map(_.asJson)) getOrElse Nil
+  def getQueries: Seq[QueryDetailsJs] = config.getQueries.map(_.map(_.asJson)) getOrElse Nil
 
   /**
     * Retrieves the list of available queries for the given topic
     * @param topic the given topic (e.g. "shocktrade.quotes.avro")
     * @return the list of available queries
     */
-  def getQueriesByTopic(topic: String) = {
+  def getQueriesByTopic(topic: String): Seq[QueryDetailsJs] = {
     config.getQueriesByTopic(topic).map(_.map(_.asJson)) getOrElse Nil
   }
 
   /**
     * Retrieves the list of Kafka replicas for a given topic
     */
-  def getReplicas(topic: String)(implicit ec: ExecutionContext) = {
+  def getReplicas(topic: String)(implicit ec: ExecutionContext): Iterable[ReplicaJs] = {
     KafkaMicroConsumer.getReplicas(topic, brokers)
       .map(r => (r.partition, ReplicaHostJs(s"${r.host}:${r.port}", r.inSync)))
       .groupBy(_._1)
@@ -455,7 +451,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns a collection of topics that have changed since the last call
     * @return a collection of [[TopicDeltaWithTotalsJs deltas]]
     */
-  def getTopicDeltas(implicit ec: ExecutionContext) = {
+  def getTopicDeltas(implicit ec: ExecutionContext): Seq[TopicDeltaWithTotalsJs] = {
     // retrieve all topic/partitions for analysis
     val topics = KafkaMicroConsumer.getTopicList(brokers) flatMap { t =>
       for {
@@ -627,7 +623,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     }
   }
 
-  def saveDecoderSchema(schema: SchemaJs) = {
+  def saveDecoderSchema(schema: SchemaJs): MessageJs = {
     val schemaFile = new File(new File(TxConfig.decoderDirectory, schema.topic), getNameWithExtension(schema.name, ".avsc"))
     // TODO should I add a check for new vs. replace?
 
@@ -679,7 +675,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * @param queryResults the given query results (as a JSON string)
     * @return a collection of comma separated values
     */
-  def transformResultsToCSV(queryResults: String)(implicit ec: ExecutionContext) = {
+  def transformResultsToCSV(queryResults: String)(implicit ec: ExecutionContext): Future[Option[List[String]]] = {
     def toCSV(values: List[String]): String = values.map(s => s""""$s"""").mkString(",")
 
     Future {
@@ -698,7 +694,11 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
   }
 
   private def rt(implicit ec: ExecutionContext) = {
-    cachedRuntime.getOrElseUpdate((), TxRuntimeContext(config))
+    cachedRuntime.getOrElseUpdate((), {
+      TxRuntimeContext(config, new MessageSourceFactory()
+        .addReader("topic", new KafkaMessageReader(brokers))
+        .addWriter("topic", new KafkaMessageWriter(brokers)))
+    })
   }
 
   private def toByteArray(bytes: Array[Byte], columns: Int = 20) = {
@@ -732,5 +732,21 @@ object KafkaPlayRestFacade {
     BINARY -> LoopBackCodec,
     PLAIN_TEXT -> PlainTextCodec,
     JSON -> JsonDecoder)
+
+  class KafkaMessageReader(brokers: Seq[Broker])(implicit zk: ZKProxy) extends MessageReader {
+    override def getInputSource(url: String): Option[MessageInputSource] = {
+      MessageSourceFactory.parseSourceURL(url) map { case (_, topic) =>
+        new KafkaTopicMessageInputSource(brokers, topic)
+      }
+    }
+  }
+
+  class KafkaMessageWriter(brokers: Seq[Broker])(implicit zk: ZKProxy) extends MessageWriter {
+    override def getOutputSource(url: String): Option[MessageOutputSource] = {
+      MessageSourceFactory.parseSourceURL(url) map { case (_, topic) =>
+        new KafkaTopicMessageOutputSource(brokers, topic)
+      }
+    }
+  }
 
 }

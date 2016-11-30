@@ -12,58 +12,44 @@ import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import net.liftweb.json._
 
 /**
- * Represents a dynamically loadable module
- * @author lawrence.daniels@gmail.com
- */
-trait Module extends ModuleCommandAgent {
+  * Represents a dynamically loadable module
+  * @author lawrence.daniels@gmail.com
+  */
+trait Module extends ModuleCommandAgent with MessageReader with MessageWriter {
 
   /**
-   * Returns the commands that are bound to the module
-   * @return the commands that are bound to the module
-   */
+    * Returns the commands that are bound to the module
+    * @return the commands that are bound to the module
+    */
   def getCommands(implicit rt: TxRuntimeContext): Seq[Command]
 
   /**
-   * Attempts to retrieve an input source for the given URL
-   * @param url the given input URL
-   * @return the option of an input source
-   */
-  def getInputSource(url: String): Option[MessageInputSource]
-
-  /**
-   * Attempts to retrieve an output source for the given URL
-   * @param url the given output URL
-   * @return the option of an output source
-   */
-  def getOutputSource(url: String): Option[MessageOutputSource]
-
-  /**
-   * Returns the name of the module (e.g. "kafka")
-   * @return the name of the module
-   */
+    * Returns the name of the module (e.g. "kafka")
+    * @return the name of the module
+    */
   def moduleName: String
 
   /**
-   * Returns the label of the module (e.g. "kafka")
-   * @return the label of the module
-   */
+    * Returns the label of the module (e.g. "kafka")
+    * @return the label of the module
+    */
   def moduleLabel: String
 
   /**
-   * Returns the the information that is to be displayed while the module is active
-   * @return the the information that is to be displayed while the module is active
-   */
+    * Returns the the information that is to be displayed while the module is active
+    * @return the the information that is to be displayed while the module is active
+    */
   def prompt: String = s"$moduleName$$"
 
   /**
-   * Called when the application is shutting down
-   */
+    * Called when the application is shutting down
+    */
   def shutdown(): Unit
 
   /**
-   * Returns the name of the prefix (e.g. Seq("file"))
-   * @return the name of the prefix
-   */
+    * Returns the name of the prefix (e.g. Seq("file"))
+    * @return the name of the prefix
+    */
   def supportedPrefixes: Seq[String]
 
   protected def decodeValue(bytes: Array[Byte], valueType: String): Any = {
@@ -98,11 +84,11 @@ trait Module extends ModuleCommandAgent {
   }
 
   /**
-   * Attempts to extract the value from the sequence at the given index
-   * @param values the given sequence of values
-   * @param index the given index
-   * @return the option of the value
-   */
+    * Attempts to extract the value from the sequence at the given index
+    * @param values the given sequence of values
+    * @param index  the given index
+    * @return the option of the value
+    */
   protected def extract[T](values: Seq[T], index: Int): Option[T] = {
     if (values.length > index) Some(values(index)) else None
   }
@@ -118,10 +104,10 @@ trait Module extends ModuleCommandAgent {
   }
 
   /**
-   * Executes a Java application via its "main" method
-   * @param className the name of the class to invoke
-   * @param args the arguments to pass to the application
-   */
+    * Executes a Java application via its "main" method
+    * @param className the name of the class to invoke
+    * @param args      the arguments to pass to the application
+    */
   protected def runJava(jarPath: String, className: String, args: String*): Iterator[String] = {
     import scala.io.Source
 
@@ -143,17 +129,17 @@ trait Module extends ModuleCommandAgent {
 }
 
 /**
- * Module Companion Object
- * @author lawrence.daniels@gmail.com
- */
+  * Module Companion Object
+  * @author lawrence.daniels@gmail.com
+  */
 object Module {
   val formatTypes = Seq("bytes", "char", "double", "float", "int", "json", "long", "short", "string")
 
   /**
-   * A simple name-value pair
-   * @param name the name of the property
-   * @param value the value of the property
-   */
+    * A simple name-value pair
+    * @param name  the name of the property
+    * @param value the value of the property
+    */
   case class NameValuePair(name: String, value: Any)
 
 }

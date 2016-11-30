@@ -1,6 +1,7 @@
 package com.github.ldaniels528.trifecta.modules.kafka
 
-import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
+import com.github.ldaniels528.trifecta.io.IOCounter
+import com.github.ldaniels528.trifecta.messages.logic.MessageEvaluation._
 import com.github.ldaniels528.trifecta.messages.logic.{Condition, MessageEvaluation}
 import com.github.ldaniels528.trifecta.messages.query.{KQLResult, KQLSource}
 import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
@@ -31,8 +32,8 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
         mapping ++ Map(Partition -> md.partition, Offset -> md.offset)
       }
     } map { values =>
-      val elapsedTimeMillis = (System.nanoTime() - startTime).toDouble / 1e9
-      val theFields = if (fields.contains("*")) values.flatMap(_.keys).distinct else fields.toList ::: List(Partition, Offset)
+      val elapsedTimeMillis = (System.nanoTime() - startTime).toDouble / 1e+9
+      val theFields = if (fields.isAllFields) values.flatMap(_.keys).distinct else fields.toList ::: List(Partition, Offset)
       KQLResult(topic, theFields, values, elapsedTimeMillis)
     }
   }

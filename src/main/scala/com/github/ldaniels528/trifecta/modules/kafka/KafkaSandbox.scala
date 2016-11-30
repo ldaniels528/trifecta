@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory
 import scala.util.Try
 
 /**
- * Kafka Sandbox Server
- * @author lawrence.daniels@gmail.com
- */
+  * Kafka Sandbox Server
+  * @author lawrence.daniels@gmail.com
+  */
 class KafkaSandbox() {
   // start the local Zookeeper instance
-  val testServer = new TestingServer(true)
-  val cli = CuratorFrameworkFactory.newClient(testServer.getConnectString, new RetryOneTime(2000))
+  private val testServer = new TestingServer(true)
+  private val cli = CuratorFrameworkFactory.newClient(testServer.getConnectString, new RetryOneTime(2000))
   cli.blockUntilConnected(5, TimeUnit.SECONDS)
   logger.info(s"Zookeeper state: ${cli.getState}")
 
@@ -53,17 +53,17 @@ class KafkaSandbox() {
 }
 
 /**
- * Kafka Sandbox Server Singleton
- * @author lawrence.daniels@gmail.com
- */
+  * Kafka Sandbox Server Singleton
+  * @author lawrence.daniels@gmail.com
+  */
 object KafkaSandbox {
   private val logger = LoggerFactory.getLogger(getClass)
   private var instance: Option[KafkaSandbox] = None
 
   /**
-   * Creates or retrieves a local Kafka server instance
-   * @return a local Kafka server instance
-   */
+    * Creates or retrieves a local Kafka server instance
+    * @return a local Kafka server instance
+    */
   def apply(): KafkaSandbox = {
     instance.getOrElse {
       val KafkaSandbox = new KafkaSandbox()
@@ -73,9 +73,9 @@ object KafkaSandbox {
   }
 
   /**
-   * Optionally returns an instance of the local Kafka instance
-   * @return the option of a local Kafka instance
-   */
+    * Optionally returns an instance of the local Kafka instance
+    * @return the option of a local Kafka instance
+    */
   def getInstance: Option[KafkaSandbox] = instance
 
 }

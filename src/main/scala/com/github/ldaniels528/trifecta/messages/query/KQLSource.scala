@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.messages.query
 
-import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
+import com.github.ldaniels528.trifecta.io.IOCounter
 import com.github.ldaniels528.trifecta.messages.MessageDecoder
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 

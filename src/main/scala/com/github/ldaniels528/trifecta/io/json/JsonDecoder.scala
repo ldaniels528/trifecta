@@ -1,8 +1,9 @@
 package com.github.ldaniels528.trifecta.io.json
 
-import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
+import com.github.ldaniels528.trifecta.messages.logic.MessageEvaluation._
 import com.github.ldaniels528.trifecta.messages.logic.{Condition, MessageEvaluation}
+import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import net.liftweb.json.JsonAST.{JNull, JValue}
 import net.liftweb.json._
 import org.slf4j.LoggerFactory
@@ -13,7 +14,7 @@ import scala.util.{Failure, Success, Try}
   * JSON Message Decoder
   * @author lawrence.daniels@gmail.com
   */
-object JsonDecoder extends MessageDecoder[JValue] with JsonTranscoding with MessageEvaluation {
+object JsonDecoder extends MessageDecoder[JValue] with MessageEvaluation {
   private lazy val logger = LoggerFactory.getLogger(getClass)
 
   /**
@@ -50,7 +51,7 @@ object JsonDecoder extends MessageDecoder[JValue] with JsonTranscoding with Mess
     decode(msg.message) match {
       case Success(JObject(mapping)) =>
         Map(mapping.map(f => f.name -> unwrap(f.value)): _*) filter {
-          case (k, v) => fields.contains("*") || fields.contains(k)
+          case (k, v) => fields.isAllFields || fields.contains(k)
         }
       case Success(_) => Map.empty
       case Failure(e) =>
@@ -71,13 +72,6 @@ object JsonDecoder extends MessageDecoder[JValue] with JsonTranscoding with Mess
         null
     }
   }
-
-  /**
-    * Transcodes the given bytes into JSON
-    * @param bytes the given byte array
-    * @return a JSON value
-    */
-  override def toJSON(bytes: Array[Byte]): Try[JValue] = decode(bytes)
 
   /**
     * Json Field-Value Equality Condition

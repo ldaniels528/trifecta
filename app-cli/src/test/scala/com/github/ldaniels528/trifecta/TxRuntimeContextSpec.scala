@@ -1,7 +1,6 @@
 package com.github.ldaniels528.trifecta
 
-import com.github.ldaniels528.trifecta.command.parser.CommandParser
-import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
+import com.github.ldaniels528.trifecta.command.{Command, CommandParser, UnixLikeArgs, UnixLikeParams}
 import org.scalatest.Matchers._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FeatureSpec, GivenWhenThen}

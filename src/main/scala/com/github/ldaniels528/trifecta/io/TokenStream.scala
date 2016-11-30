@@ -1,4 +1,4 @@
-package com.github.ldaniels528.trifecta.command.parser
+package com.github.ldaniels528.trifecta.io
 
 /**
  * Token Stream

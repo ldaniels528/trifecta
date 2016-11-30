@@ -18,7 +18,7 @@ class ModuleManager()(implicit rt: TxRuntimeContext) {
    * @param module the given module
    * @return the module manager instance
    */
-  def +=(module: Module) = {
+  def +=(module: Module): this.type = {
     moduleSet += module
 
     // reset the commands & variables collections
@@ -31,7 +31,7 @@ class ModuleManager()(implicit rt: TxRuntimeContext) {
    * @param modules the given collection of module
    * @return the module manager instance
    */
-  def ++=(modules: Seq[Module]) = {
+  def ++=(modules: Seq[Module]): this.type = {
     moduleSet ++= modules
 
     // reset the commands & variables collections
@@ -43,13 +43,13 @@ class ModuleManager()(implicit rt: TxRuntimeContext) {
     currentModule ?? moduleSet.find(_.moduleName == "zookeeper") ?? moduleSet.headOption
   }
 
-  def activeModule_=(module: Module) = currentModule = Option(module)
+  def activeModule_=(module: Module): Unit = currentModule = Option(module)
 
   /**
    * Returns a mapping of commands
    * @return a mapping of command name to command instance
    */
-  def commandSet = commands
+  def commandSet: Map[String, Command] = commands
 
   /**
    * Returns a collection of modules
@@ -89,9 +89,11 @@ class ModuleManager()(implicit rt: TxRuntimeContext) {
    */
   def shutdown(): Unit = moduleSet.foreach(_.shutdown())
 
+  /**
+    * Updates the available commands mapping
+    */
   private def updateCollections(): Unit = {
-    // update the command collection
-    commands = Map(moduleSet.toSeq flatMap (_.getCommands map (c => (c.name, c))): _*)
+    commands = Map(moduleSet.toSeq flatMap (_.getCommands map (c => c.name -> c)): _*)
   }
 
 }

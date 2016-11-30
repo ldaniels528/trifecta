@@ -10,10 +10,9 @@ import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.commons.helpers.TimeHelper.Implicits._
 import com.github.ldaniels528.trifecta.command._
+import com.github.ldaniels528.trifecta.io._
 import com.github.ldaniels528.trifecta.io.avro.AvroConversion._
 import com.github.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder, AvroMessageDecoding}
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
-import com.github.ldaniels528.trifecta.io.{AsyncIO, KeyAndMessage, MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
 import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
@@ -21,6 +20,7 @@ import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.modules.ModuleHelper._
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaCliFacade._
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.{MessageData, contentFilter}
+import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import net.liftweb.json.JValue
@@ -142,7 +142,7 @@ class KafkaModule(config: TxConfig) extends Module {
 
   private def promptForWatchCursor: Option[String] = watchCursor map (g => s"[w]${g.topic}/${g.partition}:${g.offset}")
 
-  override def shutdown() = {
+  override def shutdown(): Unit = {
     Try(facade.shutdown())
     Try(zkProxy_?.foreach(_.close()))
     ()
@@ -597,7 +597,7 @@ class KafkaModule(config: TxConfig) extends Module {
       record <- decodedMessage
       jsonMessage <- format match {
         case "json" => Option(parse(record.toString))
-        case "avro_json" => Option(parse(transcodeRecordToAvroJson(record, config.encoding)))
+        case "avro" | "avro_json" => Option(parse(transcodeRecordToAvroJson(record, config.encoding)))
         case _ => die( s"""Invalid format type "$format"""")
       }
     } yield jsonMessage
@@ -815,7 +815,6 @@ class KafkaModule(config: TxConfig) extends Module {
     * @example kput a0.00.11.22.33.44.ef.11 "Hello World" (references cursor)
     */
   def publishMessage(params: UnixLikeArgs): Unit = {
-    import com.github.ldaniels528.trifecta.command.parser.CommandParser._
 
     // get the topic, key and message
     val (topic, key, message) = params.args match {

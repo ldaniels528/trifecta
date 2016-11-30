@@ -1,6 +1,4 @@
-package com.github.ldaniels528.trifecta.command.parser
-
-import com.github.ldaniels528.trifecta.command.UnixLikeArgs
+package com.github.ldaniels528.trifecta.command
 
 /**
  * Command Parser
@@ -103,15 +101,6 @@ object CommandParser {
 
     // add the last token
     (if (sb.nonEmpty) sb.toString :: list else list).reverse
-  }
-
-  /**
-   * Indicates whether the given string is hexadecimal dot-notation
-   * @param value the given string value
-   * @return true, if the string is hexadecimal dot-notation (e.g. "de.ad.be.ef.ca.fe.ba.be")
-   */
-  def isDottedHex(value: String): Boolean = {
-    value.split("[.]").forall(_.matches( """[0-9a-fA-F]{2}"""))
   }
 
   /**

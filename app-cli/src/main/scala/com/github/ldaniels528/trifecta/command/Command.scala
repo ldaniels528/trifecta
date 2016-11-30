@@ -26,7 +26,7 @@ case class Command(module: Module,
    * Returns the string representation for this command
    * @return a usage prototype for this command (e.g. "zget [-t type] key")
    */
-  override def toString = prototype
+  override def toString: String = prototype
 
 }
 

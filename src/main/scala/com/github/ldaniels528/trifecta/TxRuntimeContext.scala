@@ -1,12 +1,8 @@
 package com.github.ldaniels528.trifecta
 
 import com.github.ldaniels528.commons.helpers.OptionHelper._
-import com.github.ldaniels528.commons.helpers.StringHelper._
-import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource}
-import com.github.ldaniels528.trifecta.messages.{CompositeTxDecoder, MessageCodecs, MessageDecoder}
-import com.github.ldaniels528.trifecta.modules._
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaModule
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
+import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource, MessageSourceFactory}
+import com.github.ldaniels528.trifecta.messages.{CompositeMessageDecoder, MessageCodecFactory, MessageDecoder}
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
@@ -16,7 +12,7 @@ import scala.concurrent.ExecutionContext
   * Trifecta Runtime Context
   * @author lawrence.daniels@gmail.com
   */
-case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
+case class TxRuntimeContext(config: TxConfig, messageSourceFactory: MessageSourceFactory)(implicit ec: ExecutionContext) {
   private[trifecta] val logger = LoggerFactory.getLogger(getClass)
   private implicit val cfg = config
 
@@ -32,15 +28,6 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     }
   }
 
-  // create the module manager and load the built-in modules
-  val moduleManager = new ModuleManager()(this)
-  moduleManager ++= Seq(
-    new KafkaModule(config),
-    new ZookeeperModule(config))
-
-  // set the "active" module
-  moduleManager.findModuleByName("core") foreach moduleManager.setActiveModule
-
   /**
     * Attempts to resolve the given topic or decoder URL into an actual message decoder
     * @param topicOrUrl the given topic or decoder URL
@@ -49,11 +36,11 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
   def resolveDecoder(topicOrUrl: String)(implicit rt: TxRuntimeContext): Option[MessageDecoder[_]] = {
     if (once) {
       config.getDecoders.filter(_.decoder.isLeft).groupBy(_.topic) foreach { case (topic, txDecoders) =>
-        rt.registerDecoder(topic, new CompositeTxDecoder(txDecoders))
+        rt.registerDecoder(topic, new CompositeMessageDecoder(txDecoders))
       }
       once = !once
     }
-    decoders.get(topicOrUrl) ?? MessageCodecs.getDecoder(config, topicOrUrl)
+    decoders.get(topicOrUrl) ?? MessageCodecFactory.getDecoder(config, topicOrUrl)
   }
 
   /**
@@ -62,11 +49,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     * @return an option of an [[MessageInputSource]]
     */
   def getInputHandler(url: String): Option[MessageInputSource] = {
-    // get just the prefix
-    val (prefix, _) = parseSourceURL(url).orDie(s"Malformed input source URL: $url")
-
-    // locate the module
-    moduleManager.findModuleByPrefix(prefix) flatMap (_.getInputSource(url))
+    messageSourceFactory.findInputSource(url)
   }
 
   /**
@@ -76,11 +59,7 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     * @example {{{ getOutputHandler("es:/quotes/$exchange/$symbol") }}}
     */
   def getOutputHandler(url: String): Option[MessageOutputSource] = {
-    // get just the prefix
-    val (prefix, _) = parseSourceURL(url).orDie(s"Malformed output source URL: $url")
-
-    // locate the module
-    moduleManager.findModuleByPrefix(prefix) flatMap (_.getOutputSource(url))
+    messageSourceFactory.findOutputSource(url)
   }
 
   /**
@@ -97,23 +76,8 @@ case class TxRuntimeContext(config: TxConfig)(implicit ec: ExecutionContext) {
     */
   def registerDecoder(name: String, decoder: MessageDecoder[_]): Unit = decoders(name) = decoder
 
-  /**
-    * Releases all resources
-    */
-  def shutdown(): Unit = {
-    logger.info("Shutting down...")
-    moduleManager.shutdown()
-  }
-
   def getDeviceURLWithDefault(prefix: String, deviceURL: String): String = {
     if (deviceURL.contains(':')) deviceURL else s"$prefix:$deviceURL"
   }
-
-  /**
-    * Parses the the prefix and path from the I/O source URL
-    * @param url the I/O source URL
-    * @return the tuple represents the prefix and path
-    */
-  private def parseSourceURL(url: String) = url.indexOptionOf(":") map url.splitAt
 
 }

@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.messages.query.parser
 
-import com.github.ldaniels528.trifecta.command.parser.TokenStream
-import com.github.ldaniels528.trifecta.messages.query.{KQLQuery, KQLSelection, IOSource}
+import com.github.ldaniels528.trifecta.io.TokenStream
+import com.github.ldaniels528.trifecta.messages.query.{IOSource, KQLQuery, KQLSelection}
 import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
 

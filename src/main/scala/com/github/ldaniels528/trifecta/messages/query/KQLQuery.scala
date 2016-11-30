@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.messages.query
 
 import com.github.ldaniels528.trifecta.TxRuntimeContext
-import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
+import com.github.ldaniels528.trifecta.io.IOCounter
 
 import scala.concurrent.{ExecutionContext, Future}
 

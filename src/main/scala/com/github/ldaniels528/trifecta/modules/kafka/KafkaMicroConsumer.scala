@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
 
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
-import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
+import com.github.ldaniels528.trifecta.io.IOCounter
 import com.github.ldaniels528.trifecta.io.ByteBufferUtils._
 import com.github.ldaniels528.trifecta.messages.BinaryMessage
 import com.github.ldaniels528.trifecta.messages.logic.Condition

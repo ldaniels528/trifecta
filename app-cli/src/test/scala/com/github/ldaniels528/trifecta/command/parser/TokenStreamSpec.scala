@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta.command.parser
 
+import com.github.ldaniels528.trifecta.io.TokenStream
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 import com.github.ldaniels528.trifecta.messages.query.parser.KafkaQueryTokenizer
 import org.scalatest.Matchers._

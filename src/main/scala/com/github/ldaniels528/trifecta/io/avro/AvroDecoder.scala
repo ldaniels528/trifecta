@@ -2,15 +2,15 @@ package com.github.ldaniels528.trifecta.io.avro
 
 import java.io.StringReader
 
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.trifecta.io.avro.AvroCodec._
-import com.github.ldaniels528.trifecta.io.json.JsonTranscoding
 import com.github.ldaniels528.trifecta.messages.BinaryMessage
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
+import com.github.ldaniels528.trifecta.messages.logic.MessageEvaluation._
 import com.github.ldaniels528.trifecta.messages.logic.{Condition, MessageEvaluation}
 import com.twitter.bijection.Injection
 import com.twitter.bijection.avro.GenericAvroCodecs
-import net.liftweb.json._
 import org.apache.avro.Schema
 import org.apache.avro.compiler.idl.Idl
 import org.apache.avro.generic.GenericRecord
@@ -23,8 +23,7 @@ import scala.util.{Failure, Success, Try}
   * Avro Message Decoder
   * @author lawrence.daniels@gmail.com
   */
-case class AvroDecoder(label: String, schema: Schema) extends AvroMessageDecoding
-  with JsonTranscoding with MessageEvaluation {
+case class AvroDecoder(label: String, schema: Schema) extends AvroMessageDecoding with MessageEvaluation {
   private val converter: Injection[GenericRecord, Array[Byte]] = GenericAvroCodecs.toBinary(schema)
 
   /**
@@ -58,7 +57,7 @@ case class AvroDecoder(label: String, schema: Schema) extends AvroMessageDecodin
   override def evaluate(msg: BinaryMessage, fields: Seq[String]): Map[String, Any] = {
     decode(msg.message) match {
       case Success(record) =>
-        if (fields.contains("*")) {
+        if (fields.isAllFields) {
           val allFields = record.getSchema.getFields.map(_.name())
           Map(allFields map (field => field -> unwrapValue(record.get(field))): _*)
         } else
@@ -74,13 +73,6 @@ case class AvroDecoder(label: String, schema: Schema) extends AvroMessageDecodin
       case x => x
     }
   }
-
-  /**
-    * Transcodes the given bytes into JSON
-    * @param bytes the given byte array
-    * @return a JSON value
-    */
-  override def toJSON(bytes: Array[Byte]): Try[JValue] = decode(bytes) map (_.toString) map parse
 
   override def toString = s"${super.toString}($label)"
 
@@ -107,13 +99,12 @@ object AvroDecoder {
   private def fromAvDL(label: String, schemaString: String) = {
     import collection.JavaConverters._
 
-    val name = label.split("\\.").init.mkString("").trim
+    val name = label.split("\\.").init.mkString.trim
     new StringReader(schemaString) use { rdr =>
       val idlParser = new Idl(rdr)
       val protocol = idlParser.CompilationUnit()
       val schemas = protocol.getTypes.asScala.toSeq
-      val mainSchema = schemas.find(_.getName == name).getOrElse(
-        throw new IllegalArgumentException(s"File $label does not contain a schema called $name"))
+      val mainSchema = schemas.find(_.getName == name) orDie s"File $label does not contain a schema called $name"
       new AvroDecoder(label, mainSchema)
     }
   }

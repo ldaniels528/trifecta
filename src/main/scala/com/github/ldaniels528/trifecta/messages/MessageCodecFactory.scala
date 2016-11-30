@@ -8,10 +8,10 @@ import com.github.ldaniels528.trifecta.io.json.JsonDecoder
 import scala.util.{Success, Try}
 
 /**
-  * Trifecta Message CODEC Factory
+  * Message CODEC Factory
   * @author lawrence.daniels@gmail.com
   */
-object MessageCodecs {
+object MessageCodecFactory {
 
   /**
     * Optionally returns a message decoder for the given URL

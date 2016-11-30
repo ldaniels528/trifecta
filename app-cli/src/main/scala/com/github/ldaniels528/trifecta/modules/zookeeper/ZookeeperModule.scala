@@ -4,11 +4,11 @@ import java.util.Date
 
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.command._
-import com.github.ldaniels528.trifecta.command.parser.CommandParser._
 import com.github.ldaniels528.trifecta.io.MessageInputSource
 import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaSandbox
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZkSupportHelper._
+import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 
 import scala.util.Try

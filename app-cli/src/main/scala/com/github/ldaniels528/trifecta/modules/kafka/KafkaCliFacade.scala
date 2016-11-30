@@ -3,7 +3,7 @@ package com.github.ldaniels528.trifecta.modules.kafka
 import java.util.Date
 
 import com.github.ldaniels528.trifecta.TxConfig
-import com.github.ldaniels528.trifecta.io.AsyncIO.IOCounter
+import com.github.ldaniels528.trifecta.io.IOCounter
 import com.github.ldaniels528.trifecta.io.avro.AvroDecoder
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaCliFacade._
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer._

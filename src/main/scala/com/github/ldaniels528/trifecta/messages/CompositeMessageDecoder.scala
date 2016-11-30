@@ -1,38 +1,33 @@
 package com.github.ldaniels528.trifecta.messages
 
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.trifecta.TxConfig.TxDecoder
-import com.github.ldaniels528.trifecta.io.avro.AvroCodec._
 import com.github.ldaniels528.trifecta.io.avro.AvroMessageDecoding
-import com.github.ldaniels528.trifecta.io.json.JsonTranscoding
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
 import com.github.ldaniels528.trifecta.messages.logic.{Condition, MessageEvaluation}
-import com.github.ldaniels528.commons.helpers.OptionHelper._
-import net.liftweb.json._
 import org.apache.avro.generic.GenericRecord
 
 import scala.util.{Failure, Success, Try}
 
 /**
-  * Composite Trifecta Decoder
+  * Composite Message Decoder
   * @author lawrence.daniels@gmail.com
   */
-class CompositeTxDecoder(decoders: Seq[TxDecoder]) extends AvroMessageDecoding with JsonTranscoding with MessageEvaluation {
+class CompositeMessageDecoder(decoders: Seq[TxDecoder]) extends MessageEvaluation with AvroMessageDecoding {
 
   /**
     * Compiles the given operation into a condition
-    * @param operation the given operation
+    * @param expression the given [[Expression expression]]
     * @return a condition
     */
-  override def compile(operation: Expression): Condition = {
-    operation match {
-      case EQ(field, value) => AvroEQ(this, field, value)
-      case GE(field, value) => AvroGE(this, field, value)
-      case GT(field, value) => AvroGT(this, field, value)
-      case LE(field, value) => AvroLE(this, field, value)
-      case LT(field, value) => AvroLT(this, field, value)
-      case NE(field, value) => AvroNE(this, field, value)
-      case _ => throw new IllegalArgumentException(s"Illegal operation '$operation'")
+  override def compile(expression: Expression): Condition = {
+    val result = decoders.foldLeft[Option[Condition]](None) { (condition, decoder) =>
+      decoder match {
+        case me: MessageEvaluation => condition ?? Option(me.compile(expression))
+        case _ => condition
+      }
     }
+    result orDie "No suitable message evaluating decoder found"
   }
 
   /**
@@ -45,7 +40,7 @@ class CompositeTxDecoder(decoders: Seq[TxDecoder]) extends AvroMessageDecoding w
       result ?? attemptDecode(message, d)
     }
 
-    Try(decodedMessage.orDie("Unable to deserialize the message"))
+    Try(decodedMessage orDie "Unable to deserialize the message")
   }
 
   /**
@@ -55,20 +50,14 @@ class CompositeTxDecoder(decoders: Seq[TxDecoder]) extends AvroMessageDecoding w
     * @return the mapping of fields and values
     */
   override def evaluate(msg: BinaryMessage, fields: Seq[String]): Map[String, Any] = {
-    decoders.foldLeft[Map[String, Any]](Map.empty) { (mappings, decoder) =>
+    val result = decoders.foldLeft[Option[Map[String, Any]]](None) { (mappings, decoder) =>
       decoder match {
-        case me: MessageEvaluation => me.evaluate(msg, fields) ++ mappings
+        case me: MessageEvaluation => mappings ?? Option(me.evaluate(msg, fields))
         case _ => mappings
       }
     }
+    result getOrElse Map.empty
   }
-
-  /**
-    * Transcodes the given bytes into JSON
-    * @param bytes the given byte array
-    * @return a JSON value
-    */
-  override def toJSON(bytes: Array[Byte]): Try[JValue] = decode(bytes) map (_.toString) map parse
 
   /**
     * Attempts to decode the given message with the given decoder
