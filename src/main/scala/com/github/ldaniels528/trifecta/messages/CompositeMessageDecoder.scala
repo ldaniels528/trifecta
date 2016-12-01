@@ -7,7 +7,7 @@ import com.github.ldaniels528.trifecta.messages.logic.Expressions._
 import com.github.ldaniels528.trifecta.messages.logic.{Condition, MessageEvaluation}
 import org.apache.avro.generic.GenericRecord
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /**
   * Composite Message Decoder
@@ -52,7 +52,7 @@ class CompositeMessageDecoder(decoders: Seq[TxDecoder]) extends MessageEvaluatio
   override def evaluate(msg: BinaryMessage, fields: Seq[String]): Map[String, Any] = {
     val result = decoders.foldLeft[Option[Map[String, Any]]](None) { (mappings, decoder) =>
       decoder match {
-        case me: MessageEvaluation => mappings ?? Option(me.evaluate(msg, fields))
+        case me: MessageEvaluation => mappings ?? Try(me.evaluate(msg, fields)).toOption
         case _ => mappings
       }
     }
@@ -67,11 +67,7 @@ class CompositeMessageDecoder(decoders: Seq[TxDecoder]) extends MessageEvaluatio
     */
   private def attemptDecode(message: Array[Byte], txDecoder: TxDecoder): Option[GenericRecord] = {
     txDecoder.decoder match {
-      case Left(av) =>
-        av.decode(message) match {
-          case Success(record) => Option(record)
-          case Failure(e) => None
-        }
+      case Left(av) => av.decode(message).toOption
       case _ => None
     }
   }

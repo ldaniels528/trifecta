@@ -1,8 +1,7 @@
 package com.github.ldaniels528.trifecta.controllers
 
-import com.github.ldaniels528.trifecta.models.{QueryDetailsJs, QueryJs, QueryResultSetJs}
+import com.github.ldaniels528.trifecta.models.{QueryRequestJs, QueryResultSetJs}
 import com.github.ldaniels528.trifecta.util.QueryJsonUtils._
-import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, Controller}
@@ -17,7 +16,7 @@ import scala.util.{Failure, Success, Try}
 class QueryController extends Controller {
 
   def executeQuery = Action.async { implicit request =>
-    request.body.asJson.flatMap(_.asOpt[QueryJs]) match {
+    request.body.asJson.flatMap(_.asOpt[QueryRequestJs]) match {
       case Some(query) =>
         WebConfig.facade.executeQuery(query) map { kqlResult =>
           Ok(Json.toJson(new QueryResultSetJs(topic = kqlResult.topic, columns = kqlResult.labels, rows = kqlResult.values.map(_.toJson))))
@@ -55,19 +54,6 @@ class QueryController extends Controller {
     Try(WebConfig.facade.getQueriesByTopic(topic)) match {
       case Success(queries) => Ok(Json.toJson(queries))
       case Failure(e) => InternalServerError(e.getMessage)
-    }
-  }
-
-  def saveQuery = Action.async { implicit request =>
-    request.body.asJson.flatMap(_.asOpt[QueryDetailsJs]) match {
-      case Some(query) =>
-        WebConfig.facade.saveQuery(query) map { message =>
-          Ok(Json.toJson(message))
-        } recover { case e: Throwable =>
-          InternalServerError(e.getMessage)
-        }
-      case None =>
-        Future.successful(BadRequest("Query object expected"))
     }
   }
 

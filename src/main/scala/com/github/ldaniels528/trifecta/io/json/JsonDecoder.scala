@@ -55,7 +55,7 @@ object JsonDecoder extends MessageDecoder[JValue] with MessageEvaluation {
         }
       case Success(_) => Map.empty
       case Failure(e) =>
-        throw new IllegalStateException(e.getMessage, e)
+        throw new IllegalStateException("Malformed JSON message", e)
     }
   }
 

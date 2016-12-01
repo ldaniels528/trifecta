@@ -83,10 +83,10 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
 
   /**
     * Executes the query represented by the JSON string
-    * @param query the [[QueryJs query]]
+    * @param query the [[QueryRequestJs query]]
     * @return the query results
     */
-  def executeQuery(query: QueryJs)(implicit ec: ExecutionContext): Future[KQLResult] = {
+  def executeQuery(query: QueryRequestJs)(implicit ec: ExecutionContext): Future[KQLResult] = {
     val counter = IOCounter(System.currentTimeMillis())
     KafkaQueryParser(query.queryString).executeQuery(rt, counter)
   }
@@ -633,21 +633,6 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     // save the schema file to disk
     new FileOutputStream(schemaFile) use { fos =>
       fos.write(schema.schemaString.getBytes(config.encoding))
-    }
-
-    MessageJs(message = "Saved", `type` = "success")
-  }
-
-  def saveQuery(query: QueryDetailsJs)(implicit ec: ExecutionContext) = Future {
-    val queryFile = new File(new File(TxConfig.queriesDirectory, query.topic), getNameWithExtension(query.name, ".kql"))
-    // TODO should I add a check for new vs. replace?
-
-    // ensure the parent directory exists
-    createParentDirectory(queryFile)
-
-    // save the query file to disk
-    new FileOutputStream(queryFile) use { fos =>
-      fos.write(query.queryString.getBytes(config.encoding))
     }
 
     MessageJs(message = "Saved", `type` = "success")

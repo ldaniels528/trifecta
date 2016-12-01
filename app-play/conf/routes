@@ -40,7 +40,6 @@ POST          /api/message/data/:topic                           @com.github.lda
 GET           /api/message/key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.controllers.KafkaController.getMessageKey(topic: String, partition: Int, offset: Long)
 
 # Queries
-POST          /api/query                                         @com.github.ldaniels528.trifecta.controllers.QueryController.saveQuery
 GET           /api/query/:topic                                  @com.github.ldaniels528.trifecta.controllers.QueryController.getQueriesByTopic(topic: String)
 POST          /api/query/many                                    @com.github.ldaniels528.trifecta.controllers.QueryController.executeQuery
 POST          /api/query/one/:topic                              @com.github.ldaniels528.trifecta.controllers.QueryController.findOne(topic: String)

@@ -63,7 +63,7 @@ case class AvroDecoder(label: String, schema: Schema) extends AvroMessageDecodin
         } else
           Map(fields map (field => field -> unwrapValue(record.get(field))): _*)
       case Failure(e) =>
-        throw new IllegalStateException(e.getMessage, e)
+        throw new IllegalStateException("Malformed Avro message", e)
     }
   }
 

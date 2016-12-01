@@ -1,14 +1,13 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import com.github.ldaniels528.trifecta.sjs.controllers.QueryController.SavedResult
-import com.github.ldaniels528.trifecta.sjs.models.{Message, Query, QueryResultSet, QueryRow}
+import com.github.ldaniels528.trifecta.sjs.models.Query.QueryResultSet
+import com.github.ldaniels528.trifecta.sjs.models.{Message, Query}
 import com.github.ldaniels528.trifecta.sjs.services.QueryService._
 import org.scalajs.angularjs.Service
-import org.scalajs.angularjs.http.Http
+import org.scalajs.angularjs.http.{Http, HttpResponse}
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
-import scala.scalajs.js.Dynamic.{global => g}
+import scala.scalajs.js.Array
 import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
@@ -17,30 +16,23 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   */
 class QueryService($http: Http) extends Service {
 
-  def executeQuery(name: String, queryString: String) = {
+  def executeQuery(queryString: String): HttpResponse[QueryResultSet] = {
     $http.post[QueryResultSet](
       url = "/api/query/many",
-      data = new QueryRequest(name, queryString),
+      data = new QueryRequest(queryString),
       headers = js.Dictionary("Content-Type" -> "application/json"))
   }
 
-  def findOne(topic: String, criteria: String) = {
+  def findOne(topic: String, criteria: String): HttpResponse[Message] = {
     $http.get[Message](s"/api/query/one/${topic.encode}/${criteria.encode}")
   }
 
-  def getQueries = {
+  def getQueries: HttpResponse[Array[Query]] = {
     $http.get[js.Array[Query]]("/api/queries")
   }
 
-  def getQueriesByTopic(topic: String) = {
+  def getQueriesByTopic(topic: String): HttpResponse[Array[Query]] = {
     $http.get[js.Array[Query]](s"/api/query/${topic.encode}")
-  }
-
-  def saveQuery(name: String, topic: String, queryString: String) = {
-    $http.post[Message](
-      url = "/api/query",
-      data = new SaveQueryRequest(name, topic, queryString),
-      headers = js.Dictionary("Content-Type" -> "application/json"))
   }
 
 }
@@ -52,7 +44,7 @@ class QueryService($http: Http) extends Service {
 object QueryService {
 
   @ScalaJSDefined
-  class QueryRequest(val name: String, val queryString: String) extends js.Object
+  class QueryRequest(val queryString: String) extends js.Object
 
   @ScalaJSDefined
   class SaveQueryRequest(val name: String, val topic: String, val queryString: String) extends js.Object

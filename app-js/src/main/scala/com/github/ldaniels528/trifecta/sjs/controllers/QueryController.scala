@@ -4,7 +4,8 @@ import java.util.UUID
 
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.QueryController._
-import com.github.ldaniels528.trifecta.sjs.models.{TopicDetails, _}
+import com.github.ldaniels528.trifecta.sjs.models.{PartitionDetails, Query, QueryRow, TopicDetails}
+import com.github.ldaniels528.trifecta.sjs.models.Query._
 import com.github.ldaniels528.trifecta.sjs.services.QueryService
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.cookies.Cookies
@@ -18,7 +19,6 @@ import org.scalajs.tjs.dom.{Blob, BlobOptions, Element, window}
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
 import scala.util.{Failure, Success}
 
 /**
@@ -30,24 +30,6 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
   extends Controller with PopupMessages {
 
   implicit val scope: Scope with GlobalLoading = $scope
-
-  ///////////////////////////////////////////////////////////////////////////
-  //    Initialization Functions
-  ///////////////////////////////////////////////////////////////////////////
-
-  // restore the most recent query object
-  $cookies.getObject[Query]("Query") foreach { query =>
-    $scope.query = query
-  }
-
-  private def init() = {
-    console.log("Initializing Query Controller...")
-  }
-
-  /**
-    * Initialize the controller once the reference data has completed loading
-    */
-  $scope.onReferenceDataLoaded { _ => init() }
 
   ///////////////////////////////////////////////////////////////////////////
   //    Query Functions
@@ -77,10 +59,9 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
   $scope.executeQuery = (aQuery: js.UndefOr[Query]) => {
     for {
       query <- aQuery
-      name <- query.name
       queryString <- query.queryString
     } {
-      executeQuery(query, name, queryString)
+      executeQuery(query, queryString)
     }
   }
 
@@ -88,7 +69,7 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
     * Executes the KQL query representing by the query string
     * (e.g. "select uid, pageid, uri, biData from birf_json_qa_picluster1 with json limit 150")
     */
-  private def executeQuery(query: Query, name: String, queryString: String) = {
+  private def executeQuery(query: Query, queryString: String) = {
     // save this Query object as a cookie
     $cookies.putObject("Query", query)
 
@@ -99,13 +80,13 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
     updateQueryClockEachSecond(query)
 
     // execute the query
-    queryService.executeQuery(name, queryString).withGlobalLoading.withTimer("Executing query") onComplete {
+    queryService.executeQuery(queryString).withGlobalLoading.withTimer("Executing query") onComplete {
       case Success(results) =>
         //console.log(s"results = ${angular.toJson(results)}")
         $scope.$apply { () =>
           query.running = false
           val savedResult = results.toSavedResult(queryString, query.computeRunTime)
-          importResults(savedResult)
+          importResults(query, savedResult)
 
           // add the query results to the topic
           $scope.topics.find(t => results.topic.contains(t.topic)) foreach { topic =>
@@ -133,43 +114,54 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
     case s => s
   }
 
-  $scope.importResults = (aResults: js.UndefOr[SavedResult]) => aResults foreach importResults
-
-  private def importResults(savedResult: SavedResult) = {
-    $scope.query.queryString = savedResult.queryString
-    $scope.query.topic = savedResult.topic
-    $scope.query.rows = savedResult.rows
-    $scope.query.columns = savedResult.columns.map { columns =>
-      js.Array("__partition", "__offset") ++ columns.filterNot(_.startsWith("__"))
+  $scope.importResults = (aQuery: js.UndefOr[Query], aResults: js.UndefOr[SavedResult]) => {
+    for {
+      query <- aQuery
+      results <- aResults
+    } {
+      importResults(query, results)
     }
-    $scope.query.runTimeMillis = savedResult.runTimeMillis
   }
 
-  $scope.isSelected = (aTopic: js.UndefOr[TopicDetails], aPartition: js.UndefOr[PartitionDetails], aResults: js.UndefOr[QueryRow], anIndex: js.UndefOr[Int]) => {
+  private def importResults(query: Query, savedResult: SavedResult) = {
+    query.queryString = savedResult.queryString
+    query.topic = savedResult.topic
+    query.rows = savedResult.rows
+    query.columns = savedResult.columns.map { columns =>
+      js.Array("__partition", "__offset") ++ columns.filterNot(_.startsWith("__"))
+    }
+    query.runTimeMillis = savedResult.runTimeMillis
+  }
+
+  $scope.isSelected = (aTopic: js.UndefOr[TopicDetails], aPartition: js.UndefOr[PartitionDetails], aQuery: js.UndefOr[Query], aRow: js.UndefOr[QueryRow], anIndex: js.UndefOr[Int]) => {
     (for {
       topic <- aTopic.flatMap(_.topic)
       partition <- aPartition
-      resultsTopic <- aResults.flatMap(_.topic)
+      query <- aQuery
+      results <- aRow
+      resultsTopic <- results.topic
       index <- anIndex
     } yield {
       topic == resultsTopic &&
-        $scope.partitionAt(index) == partition.partition &&
-        partition.offset.exists(o => $scope.offsetAt(index).exists(_ == o))
+        $scope.partitionAt(query, index) == partition.partition &&
+        partition.offset.exists(o => $scope.offsetAt(query, index).exists(_ == o))
     }).isTrue
   }
 
-  $scope.offsetAt = (anIndex: js.UndefOr[Int]) => {
+  $scope.offsetAt = (aQuery: js.UndefOr[Query], anIndex: js.UndefOr[Int]) => {
     for {
+      query <- aQuery
       index <- anIndex
-      results <- $scope.query.rows
+      results <- query.rows
       offset <- results(index).__offset
     } yield offset
   }
 
-  $scope.partitionAt = (anIndex: js.UndefOr[Int]) => {
+  $scope.partitionAt = (aQuery: js.UndefOr[Query], anIndex: js.UndefOr[Int]) => {
     for {
+      query <- aQuery
       index <- anIndex
-      results <- $scope.query.rows
+      results <- query.rows
       partition <- results(index).__partition
     } yield partition
   }
@@ -192,41 +184,14 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
     }
   }
 
-  $scope.saveQuery = (aQuery: js.UndefOr[Query]) => {
-    for {
-      query <- aQuery
-      name <- query.name
-      topic <- query.topic
-      queryString <- query.queryString
-    } {
-      query.syncing = true
-      $log.info(s"Uploading query '$name' (topic $topic)...")
-      queryService.saveQuery(name, topic, queryString).withGlobalLoading.withTimer("Saving query") onComplete {
-        case Success(response) =>
-          $scope.$apply { () => query.syncing = false }
-          toaster.success(s"Query '$name' saved.")
-        case Failure(e) =>
-          $scope.$apply { () => query.syncing = false }
-          errorPopup("Error saving query", e)
-      }
-    }
-  }
-
-  /**
-    * Selects a query query from the list
-    * @@param mySavedQuery the saved query object to select
-    */
-  $scope.selectQuery = (aQuery: js.UndefOr[Query]) => aQuery foreach { query =>
-    $scope.query = query
-  }
-
   $scope.selectQueryTopic = (aTopic: js.UndefOr[TopicDetails]) => {
     $scope.selectTopic(aTopic)
-    if($scope.query.queryString.nonAssigned || $scope.query.queryString.exists(_.trim.isEmpty)) {
-      aTopic foreach { topic =>
-        $scope.query.queryString = s"select * from ${topic.topic} with json"
+    aTopic foreach { topic =>
+      if (topic.query.nonAssigned) {
+        topic.query = new Query(s"select * from ${topic.topic} with default")
       }
     }
+    $scope.query = aTopic.flatMap(_.query)
   }
 
   $scope.toggleSortField = (aQuery: js.UndefOr[Query], sortField: js.UndefOr[String]) => aQuery foreach { query =>
@@ -244,6 +209,23 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
     }
   }
 
+  ///////////////////////////////////////////////////////////////////////////
+  //    Initialization Functions
+  ///////////////////////////////////////////////////////////////////////////
+
+  // restore the most recent query object
+  $scope.selectQueryTopic($scope.topic)
+
+  private def init(topics: js.Array[TopicDetails]) = {
+    console.log("Initializing Query Controller...")
+   $scope.$apply(() => $scope.selectQueryTopic($scope.topic))
+  }
+
+  /**
+    * Initialize the controller once the reference data has completed loading
+    */
+  $scope.onTopicsLoaded { topics => init(topics) }
+
 }
 
 /**
@@ -253,14 +235,6 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
 object QueryController {
   var fileId: Int = 0
 
-  @ScalaJSDefined
-  class SavedResult(var uid: js.UndefOr[String],
-                    var queryString: js.UndefOr[String],
-                    var topic: js.UndefOr[String],
-                    var columns: js.UndefOr[js.Array[String]],
-                    var rows: js.UndefOr[js.Array[QueryRow]],
-                    var runTimeMillis: js.UndefOr[Double]) extends QueryResultSet
-
   /**
     * Query Controller Scope
     * @author lawrence.daniels@gmail.com
@@ -269,8 +243,9 @@ object QueryController {
   trait QueryScope extends Scope
     with GlobalDataAware with GlobalLoading with GlobalErrorHandling
     with ReferenceDataAware {
+
     // properties
-    var collection: js.UndefOr[js.Object] = js.native
+    var query: js.UndefOr[Query] = js.native
 
     // functions
     var deleteQuery: js.Function1[js.UndefOr[Int], Unit] = js.native
@@ -278,13 +253,11 @@ object QueryController {
     var downloadResults: js.Function1[js.UndefOr[SavedResult], Unit] = js.native
     var executeQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
     var expandQueryTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-    var importResults: js.Function1[js.UndefOr[SavedResult], Unit] = js.native
-    var isSelected: js.Function4[js.UndefOr[TopicDetails], js.UndefOr[PartitionDetails], js.UndefOr[QueryRow], js.UndefOr[Int], Boolean] = js.native
-    var offsetAt: js.Function1[js.UndefOr[Int], js.UndefOr[Int]] = js.native
-    var partitionAt: js.Function1[js.UndefOr[Int], js.UndefOr[Int]] = js.native
+    var importResults: js.Function2[js.UndefOr[Query], js.UndefOr[SavedResult], Unit] = js.native
+    var isSelected: js.Function5[js.UndefOr[TopicDetails], js.UndefOr[PartitionDetails], js.UndefOr[Query], js.UndefOr[QueryRow], js.UndefOr[Int], Boolean] = js.native
+    var offsetAt: js.Function2[js.UndefOr[Query], js.UndefOr[Int], js.UndefOr[Int]] = js.native
+    var partitionAt: js.Function2[js.UndefOr[Query], js.UndefOr[Int], js.UndefOr[Int]] = js.native
     var removeResult: js.Function2[js.UndefOr[TopicDetails], js.UndefOr[SavedResult], Unit] = js.native
-    var saveQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
-    var selectQuery: js.Function1[js.UndefOr[Query], Unit] = js.native
     var selectQueryTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
     var toggleSortField: js.Function2[js.UndefOr[Query], js.UndefOr[String], Unit] = js.native
   }

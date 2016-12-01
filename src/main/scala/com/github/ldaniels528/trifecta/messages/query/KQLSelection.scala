@@ -3,12 +3,13 @@ package com.github.ldaniels528.trifecta.messages.query
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.trifecta.TxRuntimeContext
 import com.github.ldaniels528.trifecta.io.IOCounter
+import com.github.ldaniels528.trifecta.io.json.JsonDecoder
 import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.Expression
 import com.github.ldaniels528.trifecta.messages.{MessageCodecFactory, MessageDecoder}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * KQL Selection Query
@@ -25,13 +26,13 @@ case class KQLSelection(source: IOSource,
     * Executes the given query
     * @param rt the given [[TxRuntimeContext]]
     */
-  override def executeQuery(rt: TxRuntimeContext, counter: IOCounter)(implicit ec: ExecutionContext) = {
+  override def executeQuery(rt: TxRuntimeContext, counter: IOCounter)(implicit ec: ExecutionContext): Future[KQLResult] = {
     // get the input source and its decoder
     val inputSource: Option[MessageInputSource] = rt.getInputHandler(rt.getDeviceURLWithDefault("topic", source.deviceURL))
     val inputDecoder: Option[MessageDecoder[_]] = source.decoderURL match {
       case None | Some("default") =>
         val topic = source.deviceURL.split("[:]").last
-        rt.lookupDecoderByName(topic)
+        rt.lookupDecoderByName(topic) ?? Some(JsonDecoder)
       case Some(decoderURL) =>
         rt.lookupDecoderByName(decoderURL) ?? MessageCodecFactory.getDecoder(rt.config, decoderURL)
     }

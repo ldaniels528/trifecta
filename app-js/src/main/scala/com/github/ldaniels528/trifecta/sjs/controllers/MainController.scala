@@ -42,7 +42,6 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
   $scope.hideEmptyTopics = true
 
   // queries
-  $scope.query = Query(name = "UntitledName")
   $scope.storedQueries = emptyArray
 
   // reference data flags

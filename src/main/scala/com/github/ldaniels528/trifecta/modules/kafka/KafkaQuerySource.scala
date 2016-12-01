@@ -10,6 +10,7 @@ import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 /**
   * Kafka Query Source
@@ -28,7 +29,10 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
     KafkaMicroConsumer.findAll(topic, brokers, correlationId, conditions, limit, counter) map {
       _ map { md =>
         counter.updateWriteCount(1)
-        val mapping = decodeMessage(md, decoder, fields)
+        val mapping = evaluate(md, decoder, fields) match {
+          case Success(results) => results
+          case Failure(e) => Map("__error" -> e.getMessage)
+        }
         mapping ++ Map(Partition -> md.partition, Offset -> md.offset)
       }
     } map { values =>
@@ -44,12 +48,12 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
     * @param decoder the given message decoder
     * @return the decoded message
     */
-  private def decodeMessage(msg: BinaryMessage, decoder: MessageDecoder[_], fields: Seq[String]) = {
+  private def evaluate(msg: BinaryMessage, decoder: MessageDecoder[_], fields: Seq[String]) = {
     decoder match {
-      case me: MessageEvaluation => me.evaluate(msg, fields)
+      case me: MessageEvaluation => Try(me.evaluate(msg, fields))
       case dec =>
         logger.error(s"Incompatible decoder type ${dec.getClass.getName}")
-        throw new IllegalStateException(s"Incompatible decoder type ${dec.getClass.getName}")
+        Try(throw new IllegalStateException(s"Incompatible decoder type ${dec.getClass.getName}"))
     }
   }
 
