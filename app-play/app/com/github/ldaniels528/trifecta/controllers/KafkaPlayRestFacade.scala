@@ -10,8 +10,7 @@ import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.TxConfig.TxDecoder
 import com.github.ldaniels528.trifecta.controllers.KafkaPlayRestFacade._
-import com.github.ldaniels528.trifecta.io.IOCounter
-import com.github.ldaniels528.trifecta.io._
+import com.github.ldaniels528.trifecta.io.{IOCounter, _}
 import com.github.ldaniels528.trifecta.io.avro.AvroConversion
 import com.github.ldaniels528.trifecta.io.json.{JsonDecoder, JsonHelper}
 import com.github.ldaniels528.trifecta.messages.MessageCodecFactory.{LoopBackCodec, PlainTextCodec}
@@ -148,8 +147,8 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * @return a collection of [[Condition]] objects
     */
   private def parseCondition(expression: String, decoder: Option[MessageDecoder[_]]): Condition = {
+    import ParsingHelper.deQuote
     import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
-    import com.github.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser.deQuote
 
     val it = KafkaQueryTokenizer.parse(expression).iterator
     var criteria: Option[Expression] = None

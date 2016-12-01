@@ -6,13 +6,15 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable.ListBuffer
 
 /**
- * Kafka Query Language Tokenizer
- * @author lawrence.daniels@gmail.com
- */
+  * Kafka Query Language Tokenizer
+  * @author lawrence.daniels@gmail.com
+  */
 class KafkaQueryTokenizer(queryString: String) {
   private val logger = LoggerFactory.getLogger(getClass)
   private val parsers: Seq[ListBuffer[Token] => Boolean] = Seq(
-    parseDoubleQuotedSequence, parseSingleQuotedSequence, parseNumeric, parseAlphaNumeric, parseSymbols)
+    parseBracketedSequence, parseDoubleQuotedSequence, parseSingleQuotedSequence,
+    parseNumeric, parseAlphaNumeric, parseSymbols
+  )
   private val ca = queryString.toCharArray
   private var pos = 0
 
@@ -24,7 +26,7 @@ class KafkaQueryTokenizer(queryString: String) {
 
     while (hasNext) {
       // did we find a match?
-      if (!parsers.exists(_(tokens))) {
+      if (!parsers.exists(_ (tokens))) {
         logger.info(f"hasNext = $hasNext, char($pos) = ${if (ca.length < pos) ca(pos).toByte else 0.toByte}%02x")
         throw new IllegalArgumentException( s"""Illegal argument at "${nextSpan(Math.max(pos - 15, 0)).word.trim}" near "${nextSpan(Math.max(pos - 20, 0)).word.trim}" (position $pos)""")
       }
@@ -79,6 +81,8 @@ class KafkaQueryTokenizer(queryString: String) {
 
   private def parseDoubleQuotedSequence(tokens: ListBuffer[Token]): Boolean = parseSequence(tokens, '"', '"')
 
+  private def parseBracketedSequence(tokens: ListBuffer[Token]): Boolean = parseSequence(tokens, '[', ']')
+
   private def parseNumeric(tokens: ListBuffer[Token]): Boolean = {
     if (!hasNext) true
     else if (!currentChar.isDigit) false
@@ -94,7 +98,7 @@ class KafkaQueryTokenizer(queryString: String) {
   private def parseSingleQuotedSequence(tokens: ListBuffer[Token]): Boolean = parseSequence(tokens, '\'', '\'')
 
   private def parseSymbols(tokens: ListBuffer[Token]): Boolean = {
-    if(!hasNext) true
+    if (!hasNext) true
     else if (!Symbols.contains(currentChar)) false
     else {
       val firstCh = currentChar
@@ -114,11 +118,11 @@ class KafkaQueryTokenizer(queryString: String) {
 }
 
 /**
- * Kafka Query Language Tokenizer
- * @author lawrence.daniels@gmail.com
- */
+  * Kafka Query Language Tokenizer
+  * @author lawrence.daniels@gmail.com
+  */
 object KafkaQueryTokenizer {
-  private val Symbols = "*!,=<>"
+  private val Symbols = "*!,=<>[]"
   private val Operators = Seq(">=", "<=", "!=", "==")
   private val WhiteSpace = " \t\r\n".toCharArray
 

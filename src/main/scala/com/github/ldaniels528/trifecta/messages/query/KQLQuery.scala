@@ -17,10 +17,4 @@ trait KQLQuery {
     */
   def executeQuery(rt: TxRuntimeContext, counter: IOCounter)(implicit ec: ExecutionContext): Future[KQLResult]
 
-  /**
-    * The query source (e.g. Kafka topic)
-    * @return the query source
-    */
-  def source: IOSource
-
 }

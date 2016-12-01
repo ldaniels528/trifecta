@@ -56,7 +56,7 @@ class KafkaCliFacade(config: TxConfig) {
     * Returns the offsets for a given topic and group ID
     */
   def fetchOffsets(topic: String, partition: Int, groupId: String)(implicit zk: ZKProxy): Option[Long] = {
-    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetchOffsets(groupId))
+    new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use (_.fetchOffset(groupId))
   }
 
   /**

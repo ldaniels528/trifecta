@@ -3,7 +3,7 @@ package com.github.ldaniels528.trifecta.modules.kafka
 import com.github.ldaniels528.trifecta.io.IOCounter
 import com.github.ldaniels528.trifecta.messages.logic.MessageEvaluation._
 import com.github.ldaniels528.trifecta.messages.logic.{Condition, MessageEvaluation}
-import com.github.ldaniels528.trifecta.messages.query.{KQLResult, KQLSource}
+import com.github.ldaniels528.trifecta.messages.query.{KQLRestrictions, KQLResult, KQLSource}
 import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaQuerySource._
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
@@ -20,13 +20,25 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
   extends KQLSource {
   private lazy val logger = LoggerFactory.getLogger(getClass)
 
-  override def findAll(fields: Seq[String],
-                       decoder: MessageDecoder[_],
-                       conditions: Seq[Condition],
-                       limit: Option[Int],
-                       counter: IOCounter)(implicit ec: ExecutionContext): Future[KQLResult] = {
-    val startTime = System.nanoTime()
-    KafkaMicroConsumer.findAll(topic, brokers, correlationId, conditions, limit, counter) map {
+  /**
+    * Retrieves messages matching the given criteria up to the given limit.
+    * @param fields       the given subset of fields to retrieve
+    * @param decoder      the given [[MessageDecoder message decoder]]
+    * @param conditions   the given collection of [[Condition conditions]]
+    * @param restrictions the given [[KQLRestrictions restrictions]]
+    * @param limit        the maximum number of results to return
+    * @param counter      the given [[IOCounter I/O counter]]
+    * @param ec           the implicit [[ExecutionContext execution context]]
+    * @return a promise of a [[KQLResult set of results]]
+    */
+  override def findMany(fields: Seq[String],
+                        decoder: MessageDecoder[_],
+                        conditions: Seq[Condition],
+                        restrictions: KQLRestrictions,
+                        limit: Option[Int],
+                        counter: IOCounter)(implicit ec: ExecutionContext): Future[KQLResult] = {
+    val startTime = System.currentTimeMillis()
+    KafkaMicroConsumer.findMany(topic, brokers, correlationId, conditions, restrictions, limit, counter) map {
       _ map { md =>
         counter.updateWriteCount(1)
         val mapping = evaluate(md, decoder, fields) match {
@@ -36,7 +48,7 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
         mapping ++ Map(Partition -> md.partition, Offset -> md.offset)
       }
     } map { values =>
-      val elapsedTimeMillis = (System.nanoTime() - startTime).toDouble / 1e+9
+      val elapsedTimeMillis = (System.currentTimeMillis() - startTime).toDouble
       val theFields = if (fields.isAllFields) values.flatMap(_.keys).distinct else fields.toList ::: List(Partition, Offset)
       KQLResult(topic, theFields, values, elapsedTimeMillis)
     }

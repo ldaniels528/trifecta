@@ -1,6 +1,5 @@
 package com.github.ldaniels528.trifecta.command
 
-import CommandParser
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}
 

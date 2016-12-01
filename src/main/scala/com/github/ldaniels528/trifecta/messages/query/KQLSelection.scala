@@ -2,9 +2,8 @@ package com.github.ldaniels528.trifecta.messages.query
 
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.trifecta.TxRuntimeContext
-import com.github.ldaniels528.trifecta.io.IOCounter
+import com.github.ldaniels528.trifecta.io.{IOCounter, MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.io.json.JsonDecoder
-import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.Expression
 import com.github.ldaniels528.trifecta.messages.{MessageCodecFactory, MessageDecoder}
@@ -19,12 +18,14 @@ case class KQLSelection(source: IOSource,
                         destination: Option[IOSource] = None,
                         fields: Seq[String],
                         criteria: Option[Expression],
+                        restrictions: KQLRestrictions,
                         limit: Option[Int])
   extends KQLQuery {
 
   /**
     * Executes the given query
-    * @param rt the given [[TxRuntimeContext]]
+    * @param rt      the given [[TxRuntimeContext runtime context]]
+    * @param counter the given [[IOCounter I/O Counter]]
     */
   override def executeQuery(rt: TxRuntimeContext, counter: IOCounter)(implicit ec: ExecutionContext): Future[KQLResult] = {
     // get the input source and its decoder
@@ -53,15 +54,15 @@ case class KQLSelection(source: IOSource,
     else {
       val querySource = inputSource.flatMap(_.getQuerySource).orDie(s"No query compatible source found for URL '${source.deviceURL}'")
       val decoder = inputDecoder.orDie(s"No decoder found for URL ${source.decoderURL}")
-      querySource.findAll(fields, decoder, conditions, maximum, counter)
+      querySource.findMany(fields, decoder, conditions, restrictions, maximum, counter)
     }
   }
 
   /**
     * Returns the string representation of the query
-    * @example select symbol, exchange, lastTrade, open, close, high, low from "shocktrade.quotes.avro" with "avro:file:avro/quotes.avsc" where lastTrade <= 1 and volume >= 1,000,000
-    * @example select strategy, groupedBy, vip, site, qName, srcIP, frequency from "dns.query.topHitters" with "avro:file:avro/topTalkers.avsc" where strategy == "IPv4-CMS" and groupedBy == "vip,site" limit 35
-    * @example select strategy, groupedBy, vip, site, qName, srcIP, frequency from "dns.query.topHitters" with "avro:file:avro/topTalkers.avsc" where strategy == "IPv4-CMS"
+    * @example select symbol, exchange, lastTrade, open, close, high, low from "shocktrade.quotes.avro" via "avro:file:avro/quotes.avsc" where lastTrade <= 1 and volume >= 1,000,000
+    * @example select strategy, groupedBy, vip, site, qName, srcIP, frequency from "dns.query.topHitters" via "avro:file:avro/topTalkers.avsc" where strategy == "IPv4-CMS" and groupedBy == "vip,site" limit 35
+    * @example select strategy, groupedBy, vip, site, qName, srcIP, frequency from "dns.query.topHitters" via "avro:file:avro/topTalkers.avsc" where strategy == "IPv4-CMS"
     * @return the string representation
     */
   override def toString: String = {
@@ -71,6 +72,7 @@ case class KQLSelection(source: IOSource,
       sb.append(" where ")
       sb.append(criteria.map(_.toString) mkString " ")
     }
+    sb.append(" ").append(restrictions)
     limit.foreach(count => sb.append(s" limit $count"))
     sb.toString()
   }

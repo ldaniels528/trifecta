@@ -5,10 +5,11 @@ import java.util.concurrent.atomic.{AtomicInteger, AtomicLong, AtomicReference}
 
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
-import com.github.ldaniels528.trifecta.io.IOCounter
 import com.github.ldaniels528.trifecta.io.ByteBufferUtils._
+import com.github.ldaniels528.trifecta.io.IOCounter
 import com.github.ldaniels528.trifecta.messages.BinaryMessage
 import com.github.ldaniels528.trifecta.messages.logic.Condition
+import com.github.ldaniels528.trifecta.messages.query.KQLRestrictions
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer._
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.util.TryHelper
@@ -23,7 +24,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
@@ -112,7 +113,7 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
     * @param groupId the given consumer group ID (e.g. myConsumerGroup)
     * @return an option of an offset
     */
-  def fetchOffsets(groupId: String): Option[Long] = {
+  def fetchOffset(groupId: String): Option[Long] = {
     // create the topic/partition and request information
     val requestInfo = Seq(topicAndPartition)
 
@@ -223,22 +224,26 @@ object KafkaMicroConsumer {
     * @param topic         the given topic name
     * @param brokers       the given replica brokers
     * @param correlationId the given correlation ID
-    * @param conditions    the given search criteria
-    * @return the promise of a sequence of messages based on the given search criteria
+    * @param conditions    the given search [[Condition criteria]]
+    * @param restrictions  the given [[KQLRestrictions restrictions]]
+    * @param limit         the maximum number of results to return
+    * @param counter       the given [[IOCounter I/O counter]]
+    * @return the promise of a collection of [[MessageData messages]] based on the given search criteria
     */
-  def findAll(topic: String,
-              brokers: Seq[Broker],
-              correlationId: Int,
-              conditions: Seq[Condition],
-              limit: Option[Int],
-              counter: IOCounter)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[MessageData]] = {
+  def findMany(topic: String,
+               brokers: Seq[Broker],
+               correlationId: Int,
+               conditions: Seq[Condition],
+               restrictions: KQLRestrictions,
+               limit: Option[Int],
+               counter: IOCounter)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[MessageData]] = {
     val count = new AtomicLong(0L)
     val partitions = getTopicPartitions(topic)
     val tasks = partitions map { partition =>
-      Future.successful {
+      Future {
         var messages: List[MessageData] = Nil
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
-          var offset: Option[Long] = subs.getFirstOffset
+          var offset: Option[Long] = subs.getStartingOffset(restrictions)
           val lastOffset: Option[Long] = subs.getLastOffset
 
           def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || limit.exists(count.get >= _)
@@ -263,7 +268,7 @@ object KafkaMicroConsumer {
     }
 
     // return a promise of the messages
-    Future.sequence(tasks) map (_.flatten)
+    Future.sequence(tasks) map (_.flatten.sortBy(_.partition))
   }
 
   /**
@@ -274,10 +279,9 @@ object KafkaMicroConsumer {
     * @return the promise of the option of a message based on the given search criteria
     */
   def findOne(topic: String, brokers: Seq[Broker], forward: Boolean, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[(Int, MessageData)]] = {
-    val promise = Promise[Option[(Int, MessageData)]]()
     val message = new AtomicReference[Option[(Int, MessageData)]](None)
     val tasks = getTopicPartitions(topic) map { partition =>
-      Future.successful {
+      Future {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           if (forward)
             findOneForward(subs, partition, message, conditions: _*)
@@ -287,12 +291,8 @@ object KafkaMicroConsumer {
       }
     }
 
-    // check for the failure to find a message
-    Future.sequence(tasks).onComplete {
-      case Success(_) => promise.success(message.get)
-      case Failure(e) => promise.failure(e)
-    }
-    promise.future
+    // return the message
+    Future.sequence(tasks) map (_ => message.get)
   }
 
   private def findOneForward(subs: KafkaMicroConsumer, partition: Int, message: AtomicReference[Option[(Int, MessageData)]], conditions: Condition*) = {
@@ -773,5 +773,36 @@ object KafkaMicroConsumer {
     StaleLeaderEpochCode -> "Stale Leader Epoch",
     UnknownCode -> "Unknown Code",
     UnknownTopicOrPartitionCode -> "Unknown Topic-Or-Partition")
+
+  /**
+    * Kafka Micro-Consumer Enrichment
+    * @param subs the given [[KafkaMicroConsumer subscriber]]
+    */
+  implicit class KafkaMicroConsumerEnrichment(val subs: KafkaMicroConsumer) extends AnyVal {
+
+    def getStartingOffset(restrictions: KQLRestrictions): Option[Long] = {
+      val minimumOffset = subs.getFirstOffset.map(Math.max(0L, _))
+
+      // was a consumer group specified?
+      val consumerOffset = for {
+        groupId <- restrictions.groupId
+        offset <- subs.fetchOffset(groupId)
+        safeOffset <- if (offset == -1) minimumOffset else Some(offset)
+      } yield safeOffset
+
+      // get the base offset
+      val baseOffset = consumerOffset ?? minimumOffset
+
+      // was an offset delta specified?
+      val adjustedOffset = for {
+        minimum <- minimumOffset
+        offset <- baseOffset
+        delta <- restrictions.delta
+      } yield Math.max(minimum, offset - delta)
+
+      // use either the adjusted offset or the base offset
+      adjustedOffset ?? baseOffset
+    }
+  }
 
 }

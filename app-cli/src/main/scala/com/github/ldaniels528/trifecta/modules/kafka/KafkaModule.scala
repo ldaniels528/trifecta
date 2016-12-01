@@ -999,7 +999,7 @@ class KafkaModule(config: TxConfig) extends Module {
     */
   private def parseCondition(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]]): Condition = {
     import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
-    import com.github.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser.deQuote
+    import com.github.ldaniels528.trifecta.util.ParsingHelper.deQuote
 
     val it = params.args.iterator
     var criteria: Option[Expression] = None

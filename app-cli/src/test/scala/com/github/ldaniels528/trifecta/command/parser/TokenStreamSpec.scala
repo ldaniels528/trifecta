@@ -61,7 +61,7 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
 
       When("the conditions are extracted from the 'where' clause")
       val conditions = ts.ifNext("where") {
-        ts.getUntil("limit").foldLeft[Seq[Condition]](Nil) { (criteria, token) =>
+        _.getUntil("limit").foldLeft[Seq[Condition]](Nil) { (criteria, token) =>
           criteria
         }
       }
@@ -70,9 +70,7 @@ class TokenStreamSpec() extends FeatureSpec with GivenWhenThen {
       conditions shouldBe Some(List())
 
       When("the limit is extracted from the 'limit' clause")
-      val limit = ts.ifNext("limit") {
-        ts.getOrElse(throw new IllegalArgumentException("Limit value expected near 'limit'")).toInt
-      }
+      val limit = ts.ifNext("limit")(_.orFail("Limit value expected near 'limit'").toInt)
 
       Then("the limit should match the expected value")
       limit shouldBe Some(10)
