@@ -7,7 +7,7 @@ import java.util.Date
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.routing.RoundRobinPool
 import com.github.ldaniels528.trifecta.modules.etl.actors.FileManagementActor.{ArchiveFile, MoveFile}
-import com.github.ldaniels528.trifecta.io.gzip.GzipCompression
+import com.github.ldaniels528.trifecta.messages.codec.gzip.GzipCompression
 
 /**
   * File Management Actor

@@ -2,10 +2,9 @@ package com.github.ldaniels528.trifecta.modules.azure
 
 import com.github.ldaniels528.trifecta.TxResultHandler.Ok
 import com.github.ldaniels528.trifecta.command.UnixLikeArgs
-import com.github.ldaniels528.trifecta.io.KeyAndMessage
-import com.github.ldaniels528.trifecta.io.avro.AvroCodec
-import com.github.ldaniels528.trifecta.io.json.JsonHelper._
-import com.github.ldaniels528.trifecta.messages.BinaryMessaging
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroCodec
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper._
+import com.github.ldaniels528.trifecta.messages.{BinaryMessaging, KeyAndMessage}
 import com.github.ldaniels528.trifecta.modules.ModuleCommandAgent
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.microsoft.azure.documentdb.Document

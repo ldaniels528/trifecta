@@ -11,20 +11,19 @@ import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.commons.helpers.TimeHelper.Implicits._
 import com.github.ldaniels528.trifecta.command._
 import com.github.ldaniels528.trifecta.io._
-import com.github.ldaniels528.trifecta.io.avro.AvroConversion._
-import com.github.ldaniels528.trifecta.io.avro.{AvroCodec, AvroDecoder, AvroMessageDecoding}
+import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{MessageData, contentFilter}
+import com.github.ldaniels528.trifecta.io.kafka._
+import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.messages.codec.avro.{AvroCodec, AvroDecoder, JsonTransCoding}
+import com.github.ldaniels528.trifecta.messages.codec.{MessageCodecFactory, MessageDecoder}
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
-import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageDecoder}
+import com.github.ldaniels528.trifecta.messages.{BinaryMessage, KeyAndMessage, MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.modules.ModuleHelper._
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaCliFacade._
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.{MessageData, contentFilter}
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
-import net.liftweb.json.JValue
-import org.apache.avro.generic.GenericRecord
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -63,7 +62,7 @@ class KafkaModule(config: TxConfig) extends Module {
 
   def defaultFetchSize: Int = config.getOrElse("defaultFetchSize", "65536").toInt
 
-  def defaultFetchSize_=(sizeInBytes: Int) = config.set("defaultFetchSize", sizeInBytes.toString)
+  def defaultFetchSize_=(sizeInBytes: Int): Option[AnyRef] = config.set("defaultFetchSize", sizeInBytes.toString)
 
   // the bound commands
   override def getCommands(implicit rt: TxRuntimeContext): Seq[Command] = Seq(
@@ -301,7 +300,7 @@ class KafkaModule(config: TxConfig) extends Module {
     * @example kfetchsize
     * @example kfetchsize 65536
     */
-  def fetchSizeGetOrSet(params: UnixLikeArgs) = {
+  def fetchSizeGetOrSet(params: UnixLikeArgs): AnyVal = {
     params.args.headOption match {
       case Some(fetchSize) => defaultFetchSize = parseInt("fetchSize", fetchSize); ()
       case None => defaultFetchSize
@@ -491,7 +490,7 @@ class KafkaModule(config: TxConfig) extends Module {
     * @example kget com.shocktrade.alerts 0 3456
     * @example kget -o es:/quotes/quote/AAPL
     */
-  def getMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Either[Option[GenericRecord], Option[JValue]]] = {
+  def getMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Option[Any]] = {
     // get the arguments
     val (topic, partition0, offset) = extractTopicPartitionAndOffset(params.args)
 
@@ -510,7 +509,7 @@ class KafkaModule(config: TxConfig) extends Module {
     * @param params    the given Unix-style argument
     * @return either a binary or decoded message
     */
-  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Either[Option[GenericRecord], Option[JValue]]] = {
+  def getMessage(topic: String, partition: Int, offset: Long, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Either[Option[MessageData], Option[Any]] = {
     // requesting a message from an instance in time?
     val instant: Option[Long] = params("-ts") map {
       case s if s.matches("\\d+") => s.toLong
@@ -538,15 +537,11 @@ class KafkaModule(config: TxConfig) extends Module {
       out use (_.write(KeyAndMessage(md.key, md.message), decoder))
     }
 
-    // was a format parameter specified?
-    val jsonMessage = decodeMessageAsJson(decodedMessage, params)
-
     // capture the message's offset and decoder
     setNavigableCursor(topic, partition, messageData, decoder)
 
     // return either a binary message or a decoded message
-    if (jsonMessage.isDefined) Right(Right(jsonMessage))
-    else if (decodedMessage.isDefined) Right(Left(decodedMessage))
+    if (decodedMessage.nonEmpty) Right(decodedMessage)
     else Left(messageData)
   }
 
@@ -559,11 +554,13 @@ class KafkaModule(config: TxConfig) extends Module {
     * @return an option of the [[MessageDecoder]]
     */
   private def resolveDecoder(topic: String, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[MessageDecoder[_]] = {
-    params("-a") match {
-      case Some(url) if url == "default" => rt.resolveDecoder(topic)
-      case Some(url) => Option(AvroCodec.resolve(url)) // TODO no error should be thrown here!
-      case None => navigableCursors.get(topic) flatMap (_.decoder)
+   val avroDecoder = params("-a") flatMap  {
+      case "default" => rt.resolveDecoder(topic)
+      case url => Option(AvroCodec.resolve(url))
     }
+    val otherDecoder = params("-f") flatMap (MessageCodecFactory.getDecoder(config, _))
+    val cursorDecoder = navigableCursors.get(topic) flatMap (_.decoder)
+    avroDecoder ?? otherDecoder ?? cursorDecoder
   }
 
   /**
@@ -572,35 +569,22 @@ class KafkaModule(config: TxConfig) extends Module {
     * @param aDecoder    the given message decoder
     * @return the decoded message
     */
-  private def decodeMessage(messageData: Option[BinaryMessage], aDecoder: MessageDecoder[_]): Option[GenericRecord] = {
-    // only Avro decoders are supported
-    val decoder: AvroMessageDecoding = aDecoder match {
-      case avDecoder: AvroMessageDecoding => avDecoder
-      case _ => throw new IllegalStateException("Only Avro decoding is supported")
+  private def decodeMessage(messageData: Option[BinaryMessage], aDecoder: MessageDecoder[_]) = {
+    // only JSON/Avro decoders are supported
+    val decoder: MessageDecoder[_] = aDecoder match {
+      case jsTransCoder: JsonTransCoding => jsTransCoder
+      case _ => throw new IllegalStateException("Only JSON/Avro decoding is supported")
     }
 
     // decode the message
     for {
       md <- messageData
-      rec = decoder.decode(md.message) match {
-        case Success(record) => record
+      message = decoder.decode(md.message) match {
+        case Success(value) => value
         case Failure(e) =>
           throw new IllegalStateException(e.getMessage, e)
       }
-    } yield rec
-  }
-
-  private def decodeMessageAsJson(decodedMessage: Option[GenericRecord], params: UnixLikeArgs) = {
-    import net.liftweb.json.parse
-    for {
-      format <- params("-f")
-      record <- decodedMessage
-      jsonMessage <- format match {
-        case "json" => Option(parse(record.toString))
-        case "avro" | "avro_json" => Option(parse(transcodeRecordToAvroJson(record, config.encoding)))
-        case _ => die( s"""Invalid format type "$format"""")
-      }
-    } yield jsonMessage
+    } yield message
   }
 
   /**
@@ -893,12 +877,12 @@ class KafkaModule(config: TxConfig) extends Module {
     * @example kwatchnext com.shocktrade.quotes.avro ld_group
     * @example kwatchnext com.shocktrade.quotes.avro ld_group -a file:avro/quotes.avsc
     */
-  def watchNext(params: UnixLikeArgs): Future[Option[Object]] = {
+  def watchNext(params: UnixLikeArgs) = {
     // get the arguments
     val topicAndGroup = getTopicAndGroup(params)
 
     // was a decoder defined?
-    val decoder_? = params("-a") map AvroCodec.resolve
+    val decoder_? : Option[MessageDecoder[_]] = params("-a") map AvroCodec.resolve
 
     Future {
       watchCursors.get(topicAndGroup) flatMap { cursor =>
@@ -909,10 +893,10 @@ class KafkaModule(config: TxConfig) extends Module {
           updateWatchCursor(cursor, binaryMessage.map(_.partition).getOrElse(0), binaryMessage.map(_.offset).getOrElse(0L))
 
           // if a decoder is defined, use it to decode the message
-          val decodedMessage = (if (decoder_?.isDefined) decoder_? else cursor.decoder).flatMap(decodeMessage(binaryMessage, _))
+          val decodedMessage = (decoder_? ?? cursor.decoder).flatMap(decodeMessage(binaryMessage, _))
 
           // return either the decoded message or the binary message
-          if (decodedMessage.isDefined) decodedMessage else binaryMessage
+          if (decodedMessage.nonEmpty) decodedMessage else binaryMessage
         }
       }
     }

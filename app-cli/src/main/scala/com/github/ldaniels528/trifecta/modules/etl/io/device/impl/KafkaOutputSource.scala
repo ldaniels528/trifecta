@@ -5,7 +5,6 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.modules.etl.actors.BroadwayActorSystem
 import com.github.ldaniels528.trifecta.modules.etl.io.Scope
 import com.github.ldaniels528.trifecta.modules.etl.io.device.impl.KafkaOutputSource._
@@ -13,7 +12,8 @@ import com.github.ldaniels528.trifecta.modules.etl.io.device.{AsynchronousOutput
 import com.github.ldaniels528.trifecta.modules.etl.io.layout.Layout
 import com.github.ldaniels528.trifecta.modules.etl.io.record.Record
 import com.github.ldaniels528.trifecta.io.ByteBufferUtils
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaPublisher
+import com.github.ldaniels528.trifecta.io.kafka.KafkaPublisher
+import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap

@@ -3,7 +3,7 @@ package com.github.ldaniels528.trifecta.modules.etl
 import java.io.File
 
 import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
-import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource}
+import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.modules.etl.ETLModule.StoryInfo
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}

@@ -1,9 +1,9 @@
 package com.github.ldaniels528.trifecta.controllers
 
-import com.github.ldaniels528.trifecta.io.json.JsonDecoder
-import com.github.ldaniels528.trifecta.messages.MessageCodecFactory.{LoopBackCodec, PlainTextCodec}
-import com.github.ldaniels528.trifecta.messages.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonMessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.MessageCodecFactory.{LoopBackCodec, PlainTextCodec}
 import com.github.ldaniels528.commons.helpers.StringHelper._
+import com.github.ldaniels528.trifecta.messages.codec.MessageDecoder
 
 import scala.util.Try
 
@@ -19,7 +19,7 @@ object AutoDecoder extends MessageDecoder[AnyRef] {
     */
   override def decode(message: Array[Byte]): Try[AnyRef] = {
     if (message.isPrintable) {
-      val jsonDecoding = JsonDecoder.decode(message)
+      val jsonDecoding = JsonMessageDecoder.decode(message)
       if (jsonDecoding.isSuccess) jsonDecoding else PlainTextCodec.decode(message)
     }
     else LoopBackCodec.decode(message)

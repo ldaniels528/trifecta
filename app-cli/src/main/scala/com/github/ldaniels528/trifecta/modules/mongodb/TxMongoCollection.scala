@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.modules.mongodb
 
-import com.github.ldaniels528.trifecta.io.json.JsonHelper
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper
 import com.mongodb.casbah.Imports.{DBObject, _}
 import com.mongodb.casbah.MongoCollection
 import net.liftweb.json.JsonAST.JValue

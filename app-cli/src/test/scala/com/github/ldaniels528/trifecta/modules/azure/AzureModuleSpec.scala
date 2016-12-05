@@ -4,8 +4,8 @@ import java.io.{File, FileInputStream}
 import java.util.Properties
 
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
-import com.github.ldaniels528.trifecta.io.MessageSourceFactory
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.messages.MessageSourceFactory
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}

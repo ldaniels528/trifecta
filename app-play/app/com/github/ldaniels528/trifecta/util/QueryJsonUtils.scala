@@ -26,6 +26,7 @@ object QueryJsonUtils {
       case b: Boolean => JsBoolean(b)
       case m: Map[_, _] => JsObject(m.toSeq map { case (k, v) => (k.toString, wrap(v)) })
       case n: BigDecimal => JsNumber(n)
+      case n: BigInt => JsNumber(n.doubleValue())
       case n: Double => JsNumber(n)
       case n: Int => JsNumber(n)
       case n: Long => JsNumber(n)

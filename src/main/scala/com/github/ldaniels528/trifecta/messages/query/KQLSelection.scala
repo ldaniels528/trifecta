@@ -2,11 +2,12 @@ package com.github.ldaniels528.trifecta.messages.query
 
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.trifecta.TxRuntimeContext
-import com.github.ldaniels528.trifecta.io.{IOCounter, MessageInputSource, MessageOutputSource}
-import com.github.ldaniels528.trifecta.io.json.JsonDecoder
+import com.github.ldaniels528.trifecta.io.IOCounter
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonMessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.{MessageCodecFactory, MessageDecoder}
 import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
 import com.github.ldaniels528.trifecta.messages.logic.Expressions.Expression
-import com.github.ldaniels528.trifecta.messages.{MessageCodecFactory, MessageDecoder}
+import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,7 +34,7 @@ case class KQLSelection(source: IOSource,
     val inputDecoder: Option[MessageDecoder[_]] = source.decoderURL match {
       case None | Some("default") =>
         val topic = source.deviceURL.split("[:]").last
-        rt.lookupDecoderByName(topic) ?? Some(JsonDecoder)
+        rt.lookupDecoderByName(topic) ?? Some(JsonMessageDecoder)
       case Some(decoderURL) =>
         rt.lookupDecoderByName(decoderURL) ?? MessageCodecFactory.getDecoder(rt.config, decoderURL)
     }

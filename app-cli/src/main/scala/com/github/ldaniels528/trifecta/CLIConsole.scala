@@ -4,7 +4,8 @@ import java.io.PrintStream
 
 import com.datastax.driver.core.{CodecRegistry, ColumnDefinitions, ResultSet, Row}
 import com.github.ldaniels528.trifecta.command.CommandParser
-import com.github.ldaniels528.trifecta.io.{AsyncIO, IOCounter, MessageSourceFactory}
+import com.github.ldaniels528.trifecta.io.{AsyncIO, IOCounter}
+import com.github.ldaniels528.trifecta.messages.MessageSourceFactory
 import com.github.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser
 import com.github.ldaniels528.trifecta.modules.ModuleHelper.die
 import com.github.ldaniels528.trifecta.modules.ModuleManager
@@ -25,15 +26,13 @@ import scala.util.{Failure, Success, Try}
 class CLIConsole(rt: TxRuntimeContext,
                  jobManager: JobManager,
                  messageSourceFactory: MessageSourceFactory,
-                 moduleManager: ModuleManager) {
+                 moduleManager: ModuleManager,
+                 resultHandler: TxResultHandler) {
   private val config = rt.config
 
   // redirect standard output
   val out: PrintStream = config.out
   val err: PrintStream = config.err
-
-  // create the result handler
-  private val resultHandler = new TxResultHandler(config, jobManager)
 
   /**
     * Executes the given command line expression
@@ -48,7 +47,7 @@ class CLIConsole(rt: TxRuntimeContext,
         // handle the result
         handleResult(result, line)
       case Failure(e: ConnectionLossException) =>
-        err.println("Zookeeper connect loss error - use 'zconnect' to re-establish a connection")
+        err.println("Zookeeper connection loss error - use 'zconnect' to re-establish a connection")
       case Failure(e: IllegalArgumentException) =>
         if (rt.config.debugOn) e.printStackTrace()
         err.println(s"Syntax error: ${getErrorMessage(e)}")

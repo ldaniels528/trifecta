@@ -3,10 +3,10 @@ package com.github.ldaniels528.trifecta.modules.mongodb
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
-import com.github.ldaniels528.trifecta.io.KeyAndMessage
-import com.github.ldaniels528.trifecta.io.avro.AvroCodec
-import com.github.ldaniels528.trifecta.io.json.JsonHelper._
-import com.github.ldaniels528.trifecta.messages.{BinaryMessaging, MessageDecoder}
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroCodec
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper._
+import com.github.ldaniels528.trifecta.messages.{BinaryMessaging, KeyAndMessage}
+import com.github.ldaniels528.trifecta.messages.codec.MessageDecoder
 import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}

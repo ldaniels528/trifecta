@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.messages.logic
 
-import com.github.ldaniels528.trifecta.messages.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.MessageDecoder
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 

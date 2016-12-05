@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.modules
 
-import com.github.ldaniels528.trifecta.io.MessageOutputSource
+import com.github.ldaniels528.trifecta.messages.MessageOutputSource
 
 /**
  * Module Helper

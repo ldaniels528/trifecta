@@ -21,7 +21,7 @@
                     <div ng-show="t.queriesExpanded" class="indent">
                         <div ng-repeat="r in t.queryResults">
                             <img ng-click="removeResult(t, r)" class="clickable" src="/assets/images/tabs/query/remove-16.gif">
-                            <span ng-click="importResults(r)" class="clickable q_query_string">"{{ r.queryString }}"</span> (<span class="positive">{{ r.rows.length }}</span>)
+                            <span ng-click="importResults(t.query, r)" class="clickable q_query_string">"{{ r.queryString }}"</span> (<span class="positive">{{ r.rows.length }}</span>)
                             <a ng-click="downloadResults(r)" title="Click to download result as JSON">
                                 <img src="/assets/images/tabs/query/download-16.png">
                             </a>

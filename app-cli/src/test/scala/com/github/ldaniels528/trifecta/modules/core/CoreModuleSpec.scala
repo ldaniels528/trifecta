@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.modules.core
 
-import com.github.ldaniels528.trifecta.io.MessageSourceFactory
+import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.messages.MessageSourceFactory
 import com.github.ldaniels528.trifecta.modules.ModuleManager
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.{JobManager, TxConfig, TxRuntimeContext}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}

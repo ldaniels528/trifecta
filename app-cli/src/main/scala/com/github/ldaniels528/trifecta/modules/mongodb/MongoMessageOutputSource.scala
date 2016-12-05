@@ -1,9 +1,9 @@
 package com.github.ldaniels528.trifecta.modules.mongodb
 
-import com.github.ldaniels528.trifecta.io.avro.AvroDecoder
-import com.github.ldaniels528.trifecta.io.json.JsonHelper
-import com.github.ldaniels528.trifecta.io.{KeyAndMessage, MessageOutputSource}
-import com.github.ldaniels528.trifecta.messages.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroDecoder
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper
+import com.github.ldaniels528.trifecta.messages.{KeyAndMessage, MessageOutputSource}
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
@@ -14,7 +14,7 @@ import scala.util.{Failure, Success}
  */
 class MongoMessageOutputSource(mc: TxMongoCollection) extends MessageOutputSource {
 
-  override def open() = ()
+  override def open(): Unit = ()
   
   override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) {
     decoder match {
@@ -33,6 +33,6 @@ class MongoMessageOutputSource(mc: TxMongoCollection) extends MessageOutputSourc
     }
   }
 
-  override def close() = ()
+  override def close(): Unit = ()
 
 }

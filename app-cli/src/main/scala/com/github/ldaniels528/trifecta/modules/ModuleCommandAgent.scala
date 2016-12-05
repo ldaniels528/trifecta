@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.modules
 
 import com.github.ldaniels528.trifecta.command.UnixLikeArgs
-import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource}
+import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource}
 
 /**
   * Module Command

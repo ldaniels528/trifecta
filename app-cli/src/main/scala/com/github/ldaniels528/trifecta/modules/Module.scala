@@ -7,6 +7,7 @@ import com.github.ldaniels528.commons.helpers.ProcessHelper._
 import com.github.ldaniels528.trifecta.TxRuntimeContext
 import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
 import com.github.ldaniels528.trifecta.io._
+import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource, MessageReader, MessageWriter}
 import com.github.ldaniels528.trifecta.modules.Module.formatTypes
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import net.liftweb.json._

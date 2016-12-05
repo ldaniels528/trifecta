@@ -1,8 +1,9 @@
 package com.github.ldaniels528.trifecta
 
 import com.github.ldaniels528.commons.helpers.OptionHelper._
-import com.github.ldaniels528.trifecta.io.{MessageInputSource, MessageOutputSource, MessageSourceFactory}
-import com.github.ldaniels528.trifecta.messages.{CompositeMessageDecoder, MessageCodecFactory, MessageDecoder}
+import com.github.ldaniels528.trifecta.TxConfig.TxSuccessSchema
+import com.github.ldaniels528.trifecta.messages.codec.{CompositeMessageDecoder, MessageCodecFactory, MessageDecoder}
+import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource, MessageSourceFactory}
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
@@ -23,7 +24,7 @@ case class TxRuntimeContext(config: TxConfig, messageSourceFactory: MessageSourc
   // load the default decoders
   config.getDecoders foreach { txDecoder =>
     txDecoder.decoder match {
-      case Left(decoder) => decoders += txDecoder.topic -> decoder
+      case TxSuccessSchema(_, decoder, _) => decoders += txDecoder.topic -> decoder
       case _ =>
     }
   }
@@ -35,7 +36,7 @@ case class TxRuntimeContext(config: TxConfig, messageSourceFactory: MessageSourc
     */
   def resolveDecoder(topicOrUrl: String)(implicit rt: TxRuntimeContext): Option[MessageDecoder[_]] = {
     if (once) {
-      config.getDecoders.filter(_.decoder.isLeft).groupBy(_.topic) foreach { case (topic, txDecoders) =>
+      config.getDecoders.filter(_.decoder.isSuccess).groupBy(_.topic) foreach { case (topic, txDecoders) =>
         rt.registerDecoder(topic, new CompositeMessageDecoder(txDecoders))
       }
       once = !once

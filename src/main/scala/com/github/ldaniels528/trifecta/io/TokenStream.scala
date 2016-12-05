@@ -98,7 +98,7 @@ case class TokenStream(tokenSeq: Seq[String]) {
     */
   def getUntilAny(tokens: String*): Seq[String] = {
     val start = pos
-    while (pos < tokenSeq.size && tokens.contains(tokenSeq(pos))) {
+    while (pos < tokenSeq.size && !tokens.contains(tokenSeq(pos))) {
       pos += 1
     }
     tokenSeq.slice(start, pos)

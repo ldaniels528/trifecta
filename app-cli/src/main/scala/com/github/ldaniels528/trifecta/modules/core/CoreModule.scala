@@ -13,8 +13,9 @@ import com.github.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.github.ldaniels528.trifecta._
 import com.github.ldaniels528.trifecta.command._
 import com.github.ldaniels528.trifecta.io._
-import com.github.ldaniels528.trifecta.io.avro.{AvroFileMessageInputSource, AvroFileMessageOutputSource}
-import com.github.ldaniels528.trifecta.io.json.{JSONFileMessageInputSource, JSONFileMessageOutputSource}
+import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource}
+import com.github.ldaniels528.trifecta.messages.codec.avro.{AvroFileMessageInputSource, AvroFileMessageOutputSource}
+import com.github.ldaniels528.trifecta.messages.codec.json.{JSONFileMessageInputSource, JSONFileMessageOutputSource}
 import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import org.apache.commons.io.IOUtils

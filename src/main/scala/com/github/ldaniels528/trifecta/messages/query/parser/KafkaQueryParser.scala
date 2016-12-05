@@ -124,7 +124,7 @@ object KafkaQueryParser {
           case unknown =>
             throw new IllegalArgumentException(s"Expected consumer or delta modifier in with clause near $unknown")
         }
-      }.isDefined
+      }.nonEmpty
     } while (found)
     restrictions
   }

@@ -2,10 +2,11 @@ package com.github.ldaniels528.trifecta.modules.kafka
 
 import akka.actor.{Actor, ActorSystem, Props}
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaMacroConsumerTest._
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.TimeHelper.Implicits._
 import com.github.ldaniels528.tabular.Tabular
+import com.github.ldaniels528.trifecta.io.kafka.{Broker, KafkaMacroConsumer, KafkaMicroConsumer, StreamedMessage}
+import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import kafka.common.TopicAndPartition
 import org.junit.{After, Before, Test}
 import org.slf4j.LoggerFactory

@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.messages.query
 
 import com.github.ldaniels528.trifecta.io.IOCounter
-import com.github.ldaniels528.trifecta.messages.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.MessageDecoder
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 
 import scala.concurrent.{ExecutionContext, Future}

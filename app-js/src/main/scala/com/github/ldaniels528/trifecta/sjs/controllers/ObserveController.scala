@@ -1,6 +1,5 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import org.scalajs.sjs.OptionHelper._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.ObserveController._
 import com.github.ldaniels528.trifecta.sjs.models.SamplingStatus._
@@ -12,6 +11,7 @@ import org.scalajs.angularjs.toaster.Toaster
 import org.scalajs.dom.browser.console
 import org.scalajs.jquery.jQuery
 import org.scalajs.sjs.JsUnderOrHelper._
+import org.scalajs.sjs.OptionHelper._
 import org.scalajs.sjs.PromiseHelper._
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -269,7 +269,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
     for {
       partition <- $scope.partition
       offset <- partition.offset
-      endOffset <- partition.endOffset
+      endOffset <- partition.endOffset.map(offset => Math.max(0, offset - 1))
     } {
       if (offset != endOffset) {
         partition.offset = endOffset
@@ -319,6 +319,30 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
         }
       case None =>
         toaster.warning("No streaming session found")
+    }
+  }
+
+  $scope.moveToFirstMessage = (aTopicID: js.UndefOr[String], aPartitionID: js.UndefOr[Int]) => {
+    for {
+      topicID <- aTopicID
+      topic <- $scope.findTopicByName(topicID)
+      partitionID <- aPartitionID
+      partition <- topic.partitions.find(_.partition == partitionID).orUndefined
+      firstOffset <- partition.startOffset
+    } {
+      $scope.updateTopic(topic, aPartitionID, firstOffset)
+    }
+  }
+
+  $scope.moveToLastMessage = (aTopicID: js.UndefOr[String], aPartitionID: js.UndefOr[Int]) => {
+    for {
+      topicID <- aTopicID
+      topic <- $scope.findTopicByName(topicID)
+      partitionID <- aPartitionID
+      partition <- topic.partitions.find(_.partition == partitionID).orUndefined
+      lastOffset <- partition.endOffset.map(offset => Math.max(0, offset - 1))
+    } {
+      $scope.updateTopic(topic, aPartitionID, lastOffset)
     }
   }
 
@@ -377,6 +401,13 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
     */
   $scope.toggleAvroOutput = () => {
     $scope.displayMode.format = if ($scope.displayMode.format == "json") "avro" else "json"
+  }
+
+  $scope.messageAsASCII = (aMessage: js.UndefOr[Message]) => {
+    for {
+      message <- aMessage
+      payload <- message.payload
+    } yield payload.toString
   }
 
   /**
@@ -518,6 +549,7 @@ object ObserveController {
     var gotoDecoder: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
     var isLimitedControls: js.Function0[Boolean] = js.native
     var isSelected: js.Function1[js.UndefOr[PartitionDetails], Boolean] = js.native
+    var messageAsASCII: js.Function1[js.UndefOr[Message], js.UndefOr[String]] = js.native
     var messageAsJSON: js.Function2[js.UndefOr[Message], js.UndefOr[Int], js.UndefOr[String]] = js.native
     var toggleAvroOutput: js.Function0[Unit] = js.native
     var updatePartition: js.Function2[js.UndefOr[PartitionDetails], js.UndefOr[Int], Unit] = js.native
@@ -534,6 +566,8 @@ object ObserveController {
     var messageFinderPopup: js.Function0[Unit] = js.native
     var messageSamplingStart: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
     var messageSamplingStop: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var moveToFirstMessage: js.Function2[js.UndefOr[String], js.UndefOr[Int], Unit] = js.native
+    var moveToLastMessage: js.Function2[js.UndefOr[String], js.UndefOr[Int], Unit] = js.native
     var moveToMessage: js.Function3[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
     var nextMessage: js.Function0[Unit] = js.native
     var previousMessage: js.Function0[Unit] = js.native

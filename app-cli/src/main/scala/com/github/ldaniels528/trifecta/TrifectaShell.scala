@@ -1,15 +1,16 @@
 package com.github.ldaniels528.trifecta
 
-import com.github.ldaniels528.trifecta.io.{MessageReader, MessageSourceFactory, MessageWriter}
-import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
+import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
+import com.github.ldaniels528.trifecta.messages.{MessageReader, MessageSourceFactory, MessageWriter}
 import com.github.ldaniels528.trifecta.modules.azure.AzureModule
 import com.github.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.github.ldaniels528.trifecta.modules.core.CoreModule
 import com.github.ldaniels528.trifecta.modules.elasticsearch.ElasticSearchModule
 import com.github.ldaniels528.trifecta.modules.etl.ETLModule
-import com.github.ldaniels528.trifecta.modules.kafka.{KafkaModule, KafkaSandbox}
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.github.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
+import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -30,13 +31,44 @@ object TrifectaShell {
     */
   def main(args: Array[String]) {
     // use the ANSI console plugin to display the title line
-    System.out.println(s"Trifecta v$VERSION")
+    println(s"Trifecta v$VERSION")
 
     // load the configuration
+    val config = loadConfiguration()
+
+    // startup the Kafka Sandbox?
+    if (args.contains("--kafka-sandbox")) {
+      initKafkaSandbox(config)
+    }
+
+    // create the dependencies
+    val jobManager = new JobManager()
+    val messageSourceFactory = new MessageSourceFactory()
+    val rt = TxRuntimeContext(config, messageSourceFactory)
+    val moduleManager = initModules(config, jobManager, messageSourceFactory, rt)
+
+    // interactive mode?
+    val nonInteractiveMode = args.exists(!_.startsWith("--"))
+    val resultHandler = new TxResultHandler(config, jobManager, nonInteractiveMode)
+
+    // initialize the console
+    val console = new CLIConsole(rt, jobManager, messageSourceFactory, moduleManager, resultHandler)
+
+    // if arguments were not passed, stop.
+    args.filterNot(_.startsWith("--")).toList match {
+      case Nil =>
+        console.shell()
+      case params =>
+        val line = params mkString " "
+        console.execute(line)
+    }
+  }
+
+  private def loadConfiguration() = {
     logger.info(s"Loading configuration file '${TxConfig.configFile}'...")
-    val config = Try(TxConfig.load(TxConfig.configFile)) match {
+    Try(TxConfig.load(TxConfig.configFile)) match {
       case Success(cfg) => cfg
-      case Failure(e) =>
+      case Failure(_) =>
         val cfg = TxConfig.defaultConfig
         if (!TxConfig.configFile.exists()) {
           logger.info(s"Creating default configuration file (${TxConfig.configFile.getAbsolutePath})...")
@@ -44,21 +76,28 @@ object TrifectaShell {
         }
         cfg
     }
+  }
 
-    // startup the Kafka Sandbox?
-    if (args.contains("--kafka-sandbox")) {
-      logger.info("Starting Kafka Sandbox...")
-      val kafkaSandbox = KafkaSandbox()
-      config.zooKeeperConnect = kafkaSandbox.getConnectString
-      Thread.sleep(3000)
-    }
+  private def initKafkaSandbox(config: TxConfig) = {
+    logger.info("Starting Kafka Sandbox...")
+    val kafkaSandbox = KafkaSandbox()
+    config.zooKeeperConnect = kafkaSandbox.getConnectString
+    Thread.sleep(3000)
+  }
 
-    // create the dependencies
-    val jobManager = new JobManager()
-    val messageSourceFactory = new MessageSourceFactory()
-    val rt = TxRuntimeContext(config, messageSourceFactory)
-
-    // create the module manager and load the built-in modules
+  /**
+    *
+    * Create the module manager and loads the built-in modules
+    * @param config the given [[TxConfig configuration]]
+    * @param jobManager the given [[JobManager job manager]]
+    * @param messageSourceFactory the given [[MessageSourceFactory message source factory]]
+    * @param rt the given [[TxRuntimeContext runtime context]]
+    * @return a new [[ModuleManager module manager]] instance
+    */
+  private def initModules(config: TxConfig,
+                          jobManager: JobManager,
+                          messageSourceFactory: MessageSourceFactory,
+                          rt: TxRuntimeContext) = {
     val moduleManager = new ModuleManager()(rt)
     moduleManager ++= Seq(
       new CoreModule(config, jobManager, moduleManager),
@@ -89,18 +128,7 @@ object TrifectaShell {
         case _ =>
       }
     }
-
-    // initialize the console
-    val console = new CLIConsole(rt, jobManager, messageSourceFactory, moduleManager)
-
-    // if arguments were not passed, stop.
-    args.filterNot(_.startsWith("--")).toList match {
-      case Nil =>
-        console.shell()
-      case params =>
-        val line = params mkString " "
-        console.execute(line)
-    }
+    moduleManager
   }
 
 }

@@ -24,8 +24,9 @@
                     <table class="full_width">
                         <tr>
                             <th>Partition</th>
-                            <th>Current Offset</th>
-                            <th>Last Offset</th>
+                            <th>First</th>
+                            <th>Current</th>
+                            <th>Last</th>
                             <th>{{ isLimitedControls() ? "Remaining" : "Messages" }}</th>
                         </tr>
                         <tr ng-repeat="p in topic.partitions | orderBy:'partition'" ng-class="isSelected(p) ? 'highlighted' : ''">
@@ -36,13 +37,19 @@
                             </td>
                             <td>
                                 <span ng-show="p.startOffset < p.endOffset">
+                                    <a ng-click="moveToFirstMessage(topic.topic, p.partition, p.startOffset)">{{p.startOffset}}</a>
+                                </span>
+                                <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
+                            </td>
+                            <td>
+                                <span ng-show="p.startOffset < p.endOffset">
                                     <a ng-click="moveToMessage(topic.topic, p.partition, p.offset)">{{p.offset}}</a>
                                 </span>
                                 <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                             </td>
                             <td>
                                 <span ng-show="p.startOffset < p.endOffset">
-                                    <a ng-click="moveToMessage(topic.topic, p.partition, p.endOffset)">{{p.endOffset}}</a>
+                                    <a ng-click="moveToLastMessage(topic.topic, p.partition)">{{p.endOffset}}</a>
                                 </span>
                                 <span class="inactive" ng-hide="p.startOffset < p.endOffset">&#8212;</span>
                             </td>
@@ -99,6 +106,7 @@
         <fieldset style="border-radius: 5px 5px 5px 5px">
             <div class="message_panel">
                 <div ng-show="message.type == 'json'" hljs source="messageAsJSON(message, 4)"></div>
+                <div ng-show="message.type == 'ascii'" hljs source="messageAsASCII(message)"></div>
                 <div ng-show="message.type == 'bytes'" class="full_block">
                     <div class="binary_message_left">
                         <div ng-repeat="tuple in message.payload track by $index">{{ tuple[0] }}</div>

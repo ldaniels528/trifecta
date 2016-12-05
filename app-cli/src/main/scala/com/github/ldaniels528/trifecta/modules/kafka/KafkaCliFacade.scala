@@ -2,16 +2,17 @@ package com.github.ldaniels528.trifecta.modules.kafka
 
 import java.util.Date
 
-import com.github.ldaniels528.trifecta.TxConfig
-import com.github.ldaniels528.trifecta.io.IOCounter
-import com.github.ldaniels528.trifecta.io.avro.AvroDecoder
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaCliFacade._
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer._
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
-import com.github.ldaniels528.trifecta.io.{AsyncIO, KeyAndMessage, MessageOutputSource}
-import com.github.ldaniels528.trifecta.messages.logic.Condition
-import com.github.ldaniels528.trifecta.messages.{BinaryMessage, MessageCursor, MessageDecoder}
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
+import com.github.ldaniels528.trifecta.TxConfig
+import com.github.ldaniels528.trifecta.io.{AsyncIO, IOCounter}
+import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer._
+import com.github.ldaniels528.trifecta.io.kafka._
+import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.messages.codec.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroDecoder
+import com.github.ldaniels528.trifecta.messages.logic.Condition
+import com.github.ldaniels528.trifecta.messages.{BinaryMessage, KeyAndMessage, MessageCursor, MessageOutputSource}
+import com.github.ldaniels528.trifecta.modules.kafka.KafkaCliFacade._
 import kafka.common.TopicAndPartition
 
 import scala.collection.JavaConverters._

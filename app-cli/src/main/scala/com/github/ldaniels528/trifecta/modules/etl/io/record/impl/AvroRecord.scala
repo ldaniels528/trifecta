@@ -3,7 +3,7 @@ package com.github.ldaniels528.trifecta.modules.etl.io.record.impl
 import com.github.ldaniels528.trifecta.modules.etl.io.Scope
 import com.github.ldaniels528.trifecta.modules.etl.io.device.DataSet
 import com.github.ldaniels528.trifecta.modules.etl.io.record._
-import com.github.ldaniels528.trifecta.io.avro.AvroConversion._
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroConversion._
 import org.apache.avro.Schema
 import play.api.libs.json.{JsArray, JsObject, JsString, Json}
 

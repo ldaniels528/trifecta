@@ -5,8 +5,7 @@ import java.io.PrintStream
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
-import com.github.ldaniels528.trifecta.io.{KeyAndMessage, MessageInputSource}
-import com.github.ldaniels528.trifecta.messages.MessageCursor
+import com.github.ldaniels528.trifecta.messages.{KeyAndMessage, MessageCursor, MessageInputSource}
 import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.github.ldaniels528.trifecta.modules.elasticsearch.ElasticSearchModule._
