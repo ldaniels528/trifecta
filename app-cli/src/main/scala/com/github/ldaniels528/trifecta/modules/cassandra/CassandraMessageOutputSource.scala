@@ -1,10 +1,10 @@
 package com.github.ldaniels528.trifecta.modules.cassandra
 
-import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
 import com.datastax.driver.core.ConsistencyLevel
-import com.github.ldaniels528.trifecta.io.avro.AvroDecoder
-import com.github.ldaniels528.trifecta.io.{KeyAndMessage, MessageOutputSource}
-import com.github.ldaniels528.trifecta.messages.MessageDecoder
+import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
+import com.github.ldaniels528.trifecta.messages.codec.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroDecoder
+import com.github.ldaniels528.trifecta.messages.{KeyAndMessage, MessageOutputSource}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext

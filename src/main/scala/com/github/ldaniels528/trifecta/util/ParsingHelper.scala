@@ -8,6 +8,24 @@ import scala.util.{Failure, Success, Try}
  */
 object ParsingHelper {
 
+  def deQuote(quotedString: String): String = {
+    quotedString match {
+      case s if s.startsWith("\"") && s.endsWith("\"") => s.drop(1).dropRight(1)
+      case s if s.startsWith("'") && s.endsWith("'") => s.drop(1).dropRight(1)
+      case s if s.contains(",") && s.replaceAll(",", "").matches("\\d+") => s.replaceAll(",", "")
+      case s => s
+    }
+  }
+
+  /**
+    * Indicates whether the given string is hexadecimal dot-notation
+    * @param value the given string value
+    * @return true, if the string is hexadecimal dot-notation (e.g. "de.ad.be.ef.ca.fe.ba.be")
+    */
+  def isDottedHex(value: String): Boolean = {
+    value.split("[.]").forall(_.matches( """[0-9a-fA-F]{2}"""))
+  }
+
   /**
    * Parses the given input value and return its boolean equivalent
    * @param label the label of the value being parsed

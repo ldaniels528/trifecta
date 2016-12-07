@@ -33,10 +33,10 @@ lazy val tabular = (project in file("libs/tabular"))
     organization := "com.github.ldaniels528",
     version := "0.1.3",
     scalaVersion := _scalaVersion,
-    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.8", "-unchecked",
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
-    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.8", "-g:vars"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     libraryDependencies ++= libDependencies ++ testDependencies
   )
 
@@ -46,10 +46,10 @@ lazy val commons_helpers = (project in file("libs/commons-helpers"))
     organization := "com.github.ldaniels528",
     version := "0.1.2",
     scalaVersion := _scalaVersion,
-    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.8", "-unchecked",
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
-    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.8", "-g:vars"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     libraryDependencies ++= libDependencies ++ testDependencies
   )
 
@@ -60,11 +60,11 @@ lazy val trifecta_core = (project in file("."))
     organization := "com.github.ldaniels528",
     version := appVersion,
     scalaVersion := _scalaVersion,
-    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.8", "-unchecked",
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
-    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.8", "-g:vars"),
-    libraryDependencies ++= Seq(
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    libraryDependencies ++= testDependencies ++ Seq(
       //
       // General Scala Dependencies
       "net.databinder.dispatch" %% "dispatch-core" % "0.11.2", // 0.11.3
@@ -99,10 +99,10 @@ lazy val trifecta_cli = (project in file("app-cli"))
     organization := "com.github.ldaniels528",
     version := appVersion,
     scalaVersion := _scalaVersion,
-    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.8", "-unchecked",
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
-    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.8", "-g:vars"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     mainClass in assembly := Some("com.github.ldaniels528.trifecta.TrifectaShell"),
     test in assembly := {},
     assemblyJarName in assembly := "trifecta_cli_" + version.value + ".bin.jar",
@@ -172,10 +172,10 @@ lazy val trifecta_ui = (project in file("app-play"))
     organization := "com.github.ldaniels528",
     version := appVersion,
     scalaVersion := _scalaVersion,
-    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.8", "-unchecked",
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
-    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.8", "-g:vars"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     relativeSourceMaps := true,
     scalajsOutputDir := (crossTarget in Compile).value / "classes" / "public" / "javascripts",
     pipelineStages := Seq(gzip, uglify),

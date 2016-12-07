@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.modules.elasticsearch
 
-import com.github.ldaniels528.trifecta.io.avro.AvroDecoder
-import com.github.ldaniels528.trifecta.io.{KeyAndMessage, MessageOutputSource}
-import com.github.ldaniels528.trifecta.messages.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroDecoder
+import com.github.ldaniels528.trifecta.messages.{KeyAndMessage, MessageOutputSource}
 import org.apache.avro.generic.GenericRecord
 
 import scala.concurrent.duration._
@@ -15,7 +15,7 @@ import scala.util.{Failure, Success}
  */
 class DocumentMessageOutputSource(client: TxElasticSearchClient, index: String, objType: String, id: String) extends MessageOutputSource {
 
-  override def open() = ()
+  override def open(): Unit = ()
 
   override def write(data: KeyAndMessage, decoder: Option[MessageDecoder[_]])(implicit ec: ExecutionContext) {
     decoder match {
@@ -39,7 +39,7 @@ class DocumentMessageOutputSource(client: TxElasticSearchClient, index: String, 
     }
   }
 
-  override def close() = ()
+  override def close(): Unit = ()
 
   /**
    * Replaces the given identifier with with the value found in the given mapping

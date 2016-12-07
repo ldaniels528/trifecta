@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.models
 
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsValue, Json, Reads, Writes}
 
 /**
   * Message JSON model
@@ -19,8 +19,8 @@ case class MessageJs(`type`: String,
   */
 object MessageJs {
 
-  implicit val MessageReads = Json.reads[MessageJs]
+  implicit val MessageReads: Reads[MessageJs] = Json.reads[MessageJs]
 
-  implicit val MessageWrites = Json.writes[MessageJs]
+  implicit val MessageWrites: Writes[MessageJs] = Json.writes[MessageJs]
 
 }

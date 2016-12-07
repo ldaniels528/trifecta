@@ -14,14 +14,14 @@
                              ng-click="expandQueryTopic(t)"
                              ng-src="/assets/images/{{ t.loading ? 'status/loading.gif' : t.queriesExpanded ? 'buttons/collapse.png' : 'buttons/expand.png' }}">
                         <img ng-src="{{ getTopicIcon(t, isSelectedTopic(t)) }}">
-                        <span ng-click="selectTopic(t)" class="clickable">{{ t.topic }}</span>
+                        <span ng-click="selectQueryTopic(t)" class="clickable">{{ t.topic }}</span>
                         <span ng-show="t.totalMessages">(<span class="messages">{{t.totalMessages | number}}</span>)</span>
                     </div>
 
                     <div ng-show="t.queriesExpanded" class="indent">
                         <div ng-repeat="r in t.queryResults">
                             <img ng-click="removeResult(t, r)" class="clickable" src="/assets/images/tabs/query/remove-16.gif">
-                            <span ng-click="importResults(r)" class="clickable q_query_string">"{{ r.queryString }}"</span> (<span class="positive">{{ r.rows.length }}</span>)
+                            <span ng-click="importResults(t.query, r)" class="clickable q_query_string">"{{ r.queryString }}"</span> (<span class="positive">{{ r.rows.length }}</span>)
                             <a ng-click="downloadResults(r)" title="Click to download result as JSON">
                                 <img src="/assets/images/tabs/query/download-16.png">
                             </a>
@@ -56,7 +56,7 @@
         <div style="width: 100%; height: 30%; padding: 2px 2px 2px 2px;">
             <textarea class="q_editor" placeholder="Enter query here"
                       ng-model="query.queryString"
-                      ng-disabled="query.running">
+                      ng-disabled="!query || query.running">
             </textarea>
         </div>
 
@@ -85,7 +85,7 @@
             <!-- Query Results -->
             <div style="width: 100%; min-height: 298px; background: #eeeeee; border: 1px solid #cccccc">
                 <div class="q_results_container">
-                    <table class="full_width" ng-show="query.rows">
+                    <table border="1" class="full_width" ng-show="query.rows">
                         <thead>
                         <tr style="border-bottom: 1px solid #aaaaaa">
                             <th ng-repeat="column in query.columns">
@@ -98,14 +98,15 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat="row in query.rows" ng-class="isSelected(topic, partition, query.rows, $index) ? 'highlighted' : $index % 2 == 0 ? '' : 'q_odd'">
+                        <tr ng-repeat="row in query.rows" ng-class="isSelected(topic, partition, query, row, $index) ? 'highlighted' : $index % 2 == 0 ? '' : 'q_odd'">
                             <td ng-repeat="column in query.columns">
                                 <span ng-show="column == '__offset'">
-                                    <a ng-click="switchToMessage(query.topic, partitionAt($parent.$index), offsetAt($parent.$index))">
+                                    <a ng-click="switchToMessage(query.topic, partitionAt(query, $parent.$index), offsetAt(query, $parent.$index))">
                                         <span class="q_key_field">{{ row[column] }}</span>
                                     </a>
                                 </span>
-                                <span ng-hide="column == '__offset'">{{ row[column] }}</span>
+                                <span ng-show="column == '__error'" class="error">{{ row[column] }}</span>
+                                <span ng-hide="column == '__error' || column == '__offset'">{{ row[column] }}</span>
                             </td>
                         </tr>
                         </tbody>

@@ -9,11 +9,15 @@ import com.github.ldaniels528.commons.helpers.PropertiesHelper._
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.TxConfig._
-import com.github.ldaniels528.trifecta.io.avro.AvroDecoder
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroDecoder
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper
+import com.github.ldaniels528.trifecta.messages.codec.{MessageCodecFactory, MessageDecoder}
+import com.github.ldaniels528.trifecta.util.FileHelper._
 import org.slf4j.LoggerFactory
 
 import scala.collection.concurrent.TrieMap
 import scala.io.Source
+import scala.language.existentials
 import scala.util.Properties._
 import scala.util.{Failure, Success, Try}
 
@@ -143,16 +147,28 @@ class TxConfig(val configProps: Properties) {
     } getOrElse Nil
   }
 
-  private def getDecoderFromFile(topic: String, decoderFile: File): TxDecoder = {
-    cachedDecoders.getOrElseUpdate(decoderFile, {
-      val schema = Source.fromFile(decoderFile).getLines().mkString("\n")
-      Try {
-        TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Left(AvroDecoder(decoderFile.getName, schema)))
-      } match {
-        case Success(decoder) => decoder
-        case Failure(e) => TxDecoder(topic, decoderFile.getName, decoderFile.lastModified, Right(TxFailedSchema(schema, e)))
+  private def getDecoderFromFile(topic: String, file: File): TxDecoder = {
+    cachedDecoders.getOrElseUpdate(file,
+      Try(determineDecoder(topic, file)) match {
+        case Success(Some(decoder)) =>
+          TxDecoder(topic, file.getName, file.lastModified, TxSuccessSchema(file.getName, decoder, file.getTextContents))
+        case Success(None) =>
+          TxDecoder(topic, file.getName, file.lastModified, TxFailedSchema(file.getName, new Exception(s"File ${file.getName} is not supported"), file.getTextContents))
+        case Failure(e) =>
+          TxDecoder(topic, file.getName, file.lastModified, TxFailedSchema(file.getName, e, file.getTextContents))
       }
-    })
+    )
+  }
+
+  private def determineDecoder(topic: String, file: File) = {
+    file.extension.orDie(s"File '${file.getName}' has no extension (e.g. '.avsc')") match {
+      case ".avsc" | ".avdl" => AvroDecoder(file)
+      case ".js" =>
+        JsonHelper.transform[BuiltinDecoder](file.getTextContents) match {
+          case BuiltinDecoder(_, typeName) => MessageCodecFactory.getDecoder(this, typeName)
+        }
+      case _ => None
+    }
   }
 
   def getQueries: Option[Seq[TxQuery]] = {
@@ -302,9 +318,31 @@ object TxConfig {
       "trifecta.common.encoding" -> "UTF-8").toProps
   }
 
-  case class TxDecoder(topic: String, name: String, lastModified: Long, decoder: Either[AvroDecoder, TxFailedSchema])
+  case class BuiltinDecoder(name: String, `type`: String)
 
-  case class TxFailedSchema(schemaString: String, error: Throwable)
+  case class TxDecoder(topic: String, name: String, lastModified: Long, decoder: TxSchema)
+
+  sealed trait TxSchema {
+    def label: String
+
+    def schemaString: String
+
+    def isSuccess: Boolean
+
+    def successOption: Option[TxSuccessSchema]
+  }
+
+  case class TxSuccessSchema(label: String, decoder: MessageDecoder[_], schemaString: String) extends TxSchema {
+    override def isSuccess = true
+
+    override def successOption: Option[TxSuccessSchema] = Some(this)
+  }
+
+  case class TxFailedSchema(label: String, error: Throwable, schemaString: String) extends TxSchema {
+    override def isSuccess = false
+
+    override def successOption: Option[TxSuccessSchema] = None
+  }
 
   case class TxQuery(name: String, topic: String, queryString: String, exists: Boolean, lastModified: Long)
 

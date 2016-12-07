@@ -1,6 +1,8 @@
 package com.github.ldaniels528.trifecta.modules.core
 
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.messages.MessageSourceFactory
+import com.github.ldaniels528.trifecta.modules.ModuleManager
 import com.github.ldaniels528.trifecta.{JobManager, TxConfig, TxRuntimeContext}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FeatureSpec, GivenWhenThen}
@@ -13,10 +15,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
  */
 class CoreModuleSpec() extends FeatureSpec with BeforeAndAfterEach with GivenWhenThen with MockitoSugar {
   private val config = TxConfig.defaultConfig
+  private val messageSourceFactory = new MessageSourceFactory()
   private implicit val zk = mock[ZKProxy]
-  private implicit val rt = new TxRuntimeContext(config)(global)
+  private implicit val rt = TxRuntimeContext(config, messageSourceFactory)(global)
   private val jobManager = new JobManager()
-  private val module = new CoreModule(config, jobManager)
+  private val moduleManager = new ModuleManager()
+  private val module = new CoreModule(config, jobManager, moduleManager)
 
   info("As a Core Module")
   info("I want to be able to execute commands bound to the Core Module")

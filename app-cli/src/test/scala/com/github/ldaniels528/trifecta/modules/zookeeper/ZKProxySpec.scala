@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta.modules.zookeeper
 
+import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import org.apache.curator.framework.CuratorFramework
 import org.apache.curator.test.TestingServer
 import org.scalatest.Matchers._

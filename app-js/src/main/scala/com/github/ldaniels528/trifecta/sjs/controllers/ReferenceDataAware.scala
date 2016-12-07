@@ -22,7 +22,6 @@ trait ReferenceDataAware extends js.Object {
   var topic: js.UndefOr[TopicDetails] = js.native
   var topics: js.Array[TopicDetails] = js.native
   var storedQueries: js.Array[Query] = js.native
-  var query: Query = js.native
 
   // reference data properties
   var referenceDataLoading: js.UndefOr[Boolean] = js.native

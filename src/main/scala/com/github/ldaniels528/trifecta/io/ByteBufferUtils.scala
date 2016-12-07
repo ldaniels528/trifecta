@@ -28,7 +28,7 @@ object ByteBufferUtils {
     ByteBuffer.allocate(8).putLong(value).array()
   }
 
-  def uuidToBytes(uuid: UUID) = {
+  def uuidToBytes(uuid: UUID): Array[Byte] = {
     ByteBuffer.allocate(16)
       .putLong(uuid.getMostSignificantBits)
       .putLong(uuid.getLeastSignificantBits)

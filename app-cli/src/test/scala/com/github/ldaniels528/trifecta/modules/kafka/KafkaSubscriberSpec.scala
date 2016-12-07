@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.modules.kafka
 
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.BrokerDetails
+import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.BrokerDetails
 import net.liftweb.json._
 import org.scalatest.Matchers._
 import org.scalatest.{FeatureSpec, GivenWhenThen}

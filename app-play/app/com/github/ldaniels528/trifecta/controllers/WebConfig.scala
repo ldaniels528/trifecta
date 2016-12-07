@@ -3,7 +3,7 @@ package com.github.ldaniels528.trifecta.controllers
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.github.ldaniels528.trifecta.TxConfig
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
+import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import play.api.Logger
 
 import scala.concurrent.ExecutionContext
@@ -19,7 +19,7 @@ object WebConfig {
 
   // load the configuration
   Logger.info("Loading Trifecta configuration...")
-  lazy val config = Try(TxConfig.load(TxConfig.configFile)) match {
+  lazy val config: TxConfig = Try(TxConfig.load(TxConfig.configFile)) match {
     case Success(cfg) => cfg
     case Failure(e) =>
       val cfg = TxConfig.defaultConfig
@@ -40,7 +40,7 @@ object WebConfig {
   /**
     * Initializes the config
     */
-  def init(implicit ec: ExecutionContext) = {
+  def init(implicit ec: ExecutionContext): Unit = {
     Logger.info("Initializing Trifecta REST facade...")
     if(once.compareAndSet(true, false)) facade.init
   }

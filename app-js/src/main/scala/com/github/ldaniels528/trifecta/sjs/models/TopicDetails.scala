@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import com.github.ldaniels528.trifecta.sjs.controllers.QueryController.SavedResult
+import com.github.ldaniels528.trifecta.sjs.models.Query.SavedResult
 import org.scalajs.dom.browser.console
 import org.scalajs.nodejs.util.ScalaJsHelper._
 import org.scalajs.sjs.JsUnderOrHelper._
@@ -24,6 +24,7 @@ trait TopicDetails extends js.Object {
   var loading: js.UndefOr[Boolean] = js.native
   var loadingConsumers: js.UndefOr[Boolean] = js.native
   var queriesExpanded: js.UndefOr[Boolean] = js.native
+  var query: js.UndefOr[Query] = js.native
   var queryResults: js.UndefOr[js.Array[SavedResult]] = js.native
   var replicaExpanded: js.UndefOr[Boolean] = js.native
   var updatingTopics: js.UndefOr[Int] = js.native

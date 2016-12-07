@@ -11,6 +11,16 @@ trait QueryRow extends js.Object {
   var topic: js.UndefOr[String] = js.native
   var __offset: js.UndefOr[Int] = js.native
   var __partition: js.UndefOr[Int] = js.native
-  var values: js.Dictionary[Any] = js.native
+  var __error: js.UndefOr[String] = js.native
+  // and other columns ...
+}
+
+/**
+  * Query Row Companion
+  * @author lawrence.daniels@gmail.com
+  */
+object QueryRow {
+  val ColumnsWithError = js.Array("__partition", "__offset", "__error")
+  val ColumnsWithoutError = js.Array("__partition", "__offset")
 
 }

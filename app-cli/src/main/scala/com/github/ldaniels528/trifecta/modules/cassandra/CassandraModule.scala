@@ -6,7 +6,7 @@ import com.datastax.driver.core.{ConsistencyLevel, ResultSet}
 import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
-import com.github.ldaniels528.trifecta.io.MessageInputSource
+import com.github.ldaniels528.trifecta.messages.MessageInputSource
 import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.modules.Module.NameValuePair
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}

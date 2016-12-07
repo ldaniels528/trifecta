@@ -3,6 +3,7 @@ package com.github.ldaniels528.trifecta.modules.etl
 import java.io.File
 
 import com.github.ldaniels528.commons.helpers.OptionHelper._
+import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.modules.etl.StoryConfig.StoryPropertiesFile
 import com.github.ldaniels528.trifecta.modules.etl.io.archive.Archive
 import com.github.ldaniels528.trifecta.modules.etl.io.archive.impl.FileArchive
@@ -20,7 +21,6 @@ import com.github.ldaniels528.trifecta.modules.etl.io.layout.impl.MultiPartLayou
 import com.github.ldaniels528.trifecta.modules.etl.io.record.impl._
 import com.github.ldaniels528.trifecta.modules.etl.io.record.{DataTypes, Field}
 import com.github.ldaniels528.trifecta.modules.etl.io.trigger.impl._
-import com.github.ldaniels528.trifecta.modules.zookeeper.ZKProxy
 import com.mongodb.casbah.Imports._
 
 import scala.reflect.ClassTag

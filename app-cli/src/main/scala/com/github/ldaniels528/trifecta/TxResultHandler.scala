@@ -4,12 +4,12 @@ import java.io.PrintStream
 
 import com.github.ldaniels528.tabular.Tabular
 import com.github.ldaniels528.trifecta.io.AsyncIO
-import com.github.ldaniels528.trifecta.io.avro.AvroTables
-import com.github.ldaniels528.trifecta.io.json.JsonHelper
+import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.MessageData
+import com.github.ldaniels528.trifecta.io.kafka.StreamedMessage
 import com.github.ldaniels528.trifecta.messages.BinaryMessaging
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroTables
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper
 import com.github.ldaniels528.trifecta.messages.query.KQLResult
-import com.github.ldaniels528.trifecta.modules.kafka.KafkaMicroConsumer.MessageData
-import com.github.ldaniels528.trifecta.modules.kafka.StreamedMessage
 import net.liftweb.json._
 import org.apache.avro.generic.GenericRecord
 import play.api.libs.json.{JsValue, Json}
@@ -23,7 +23,7 @@ import scala.util.{Failure, Success, Try}
   * Trifecta Result Handler
   * @author lawrence.daniels@gmail.com
   */
-class TxResultHandler(config: TxConfig, jobManager: JobManager) extends BinaryMessaging {
+class TxResultHandler(config: TxConfig, jobManager: JobManager, nonInteractiveMode: Boolean) extends BinaryMessaging {
   // define the tabular instance
   val tabular = new Tabular() with AvroTables
   val out: PrintStream = config.out
@@ -100,7 +100,19 @@ class TxResultHandler(config: TxConfig, jobManager: JobManager) extends BinaryMe
     * @param task  the given asynchronous task
     * @param input the executing command
     */
-  private def handleAsyncResult(task: Future[_], input: String)(implicit ec: ExecutionContext) {
+  private def handleAsyncResult(task: Future[_], input: String)(implicit ec: ExecutionContext): Unit = {
+    if (nonInteractiveMode)
+      handleNonInteractiveAsyncResult(task, input)
+    else
+      handleInteractiveAsyncResult(task, input)
+  }
+
+  /**
+    * Handles an asynchronous result
+    * @param task  the given asynchronous task
+    * @param input the executing command
+    */
+  private def handleInteractiveAsyncResult(task: Future[_], input: String)(implicit ec: ExecutionContext) {
     // capture the start time
     val startTime = System.currentTimeMillis()
 
@@ -122,23 +134,39 @@ class TxResultHandler(config: TxConfig, jobManager: JobManager) extends BinaryMe
   }
 
   /**
+    * Handles an asynchronous result (blocks)
+    * @param task  the given asynchronous task
+    * @param input the executing command
+    */
+  private def handleNonInteractiveAsyncResult(task: Future[_], input: String)(implicit ec: ExecutionContext) {
+    Try(Await.result(task, 1.hour)) match {
+      case Success(value) =>
+        handleResult(value, input)
+      case Failure(e) =>
+        out.println(s"Expected error: ${e.getMessage}")
+    }
+  }
+
+  /**
     * Handles an asynchronous I/O result
     * @param asyncIO the given asynchronous I/O task
     * @param input   the executing command
     */
   private def handleAsyncResult(asyncIO: AsyncIO, input: String)(implicit ec: ExecutionContext) {
     val task = asyncIO.task
-
-    out.println("Task is now running in the background (use 'jobs' to view)")
-    val job = jobManager.createJob(asyncIO, input)
-    task.onComplete {
-      case Success(_) =>
-        out.println()
-        out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
-        handleResult(asyncIO.getCount, input)
-      case Failure(e2) =>
-        out.println()
-        out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
+    if (nonInteractiveMode) handleNonInteractiveAsyncResult(task, input)
+    else {
+      out.println("Task is now running in the background (use 'jobs' to view)")
+      val job = jobManager.createJob(asyncIO, input)
+      task.onComplete {
+        case Success(value) =>
+          out.println()
+          out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
+          handleResult(value, input)
+        case Failure(e2) =>
+          out.println()
+          out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
+      }
     }
   }
 

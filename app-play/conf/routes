@@ -13,9 +13,9 @@ GET           /webjars/*file                                     controllers.Web
 
 # Server Side Events
 GET           /api/sse/connect                                   com.github.ldaniels528.trifecta.controllers.Application.sseConnect
-GET           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.controllers.KafkaController.getSamplingSession
-PUT           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.controllers.KafkaController.startSampling
-DELETE        /api/sse/sampling/:sessionId                       @com.github.ldaniels528.trifecta.controllers.KafkaController.stopSampling(sessionId)
+GET           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.controllers.MessageController.getSamplingSession
+PUT           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.controllers.MessageController.startSampling
+DELETE        /api/sse/sampling/:sessionId                       @com.github.ldaniels528.trifecta.controllers.MessageController.stopSampling(sessionId)
 
 # Brokers & Replicas
 GET           /api/brokers                                       @com.github.ldaniels528.trifecta.controllers.KafkaController.getBrokers
@@ -35,12 +35,11 @@ POST          /api/schema                                        @com.github.lda
 GET           /api/schema/:topic/:name                           @com.github.ldaniels528.trifecta.controllers.DecoderController.getDecoderSchemaByName(topic: String, name: String)
 
 # Messages
-GET           /api/message/data/:topic/:partition/:offset        @com.github.ldaniels528.trifecta.controllers.KafkaController.getMessageData(topic: String, partition: Int, offset: Long)
-POST          /api/message/data/:topic                           @com.github.ldaniels528.trifecta.controllers.KafkaController.publishMessage(topic: String)
-GET           /api/message/key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.controllers.KafkaController.getMessageKey(topic: String, partition: Int, offset: Long)
+GET           /api/message/data/:topic/:partition/:offset        @com.github.ldaniels528.trifecta.controllers.MessageController.getMessageData(topic: String, partition: Int, offset: Long)
+POST          /api/message/data/:topic                           @com.github.ldaniels528.trifecta.controllers.MessageController.publishMessage(topic: String)
+GET           /api/message/key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.controllers.MessageController.getMessageKey(topic: String, partition: Int, offset: Long)
 
 # Queries
-POST          /api/query                                         @com.github.ldaniels528.trifecta.controllers.QueryController.saveQuery
 GET           /api/query/:topic                                  @com.github.ldaniels528.trifecta.controllers.QueryController.getQueriesByTopic(topic: String)
 POST          /api/query/many                                    @com.github.ldaniels528.trifecta.controllers.QueryController.executeQuery
 POST          /api/query/one/:topic                              @com.github.ldaniels528.trifecta.controllers.QueryController.findOne(topic: String)

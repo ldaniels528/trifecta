@@ -1,34 +1,31 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import org.scalajs.nodejs.util.ScalaJsHelper._
-
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Represents a Query Model
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait Query extends js.Object {
-  var name: js.UndefOr[String] = js.native
-  var queryString: js.UndefOr[String] = js.native
-
+@ScalaJSDefined
+class Query(var queryString: js.UndefOr[String] = js.undefined) extends js.Object {
   // query results
-  var topic: js.UndefOr[String] = js.native
-  var columns: js.UndefOr[js.Array[String]] = js.native
-  var rows: js.UndefOr[js.Array[QueryRow]] = js.native
+  var topic: js.UndefOr[String] = js.undefined
+  var columns: js.UndefOr[js.Array[String]] = js.undefined
+  var rows: js.UndefOr[js.Array[QueryRow]] = js.undefined
 
   // ui-specific sorting
-  var ascending: js.UndefOr[Boolean] = js.native
-  var sortField: js.UndefOr[String] = js.native
+  var ascending: js.UndefOr[Boolean] = js.undefined
+  var sortField: js.UndefOr[String] = js.undefined
 
   // ui-specific properties
-  var elapsedTime: js.UndefOr[Double] = js.native
-  var modified: js.UndefOr[Boolean] = js.native
-  var startTime: js.UndefOr[Double] = js.native
-  var runTimeMillis: js.UndefOr[Double] = js.native
-  var running: js.UndefOr[Boolean] = js.native
-  var syncing: js.UndefOr[Boolean] = js.native
+  var elapsedTime: js.UndefOr[Double] = js.undefined
+  var modified: js.UndefOr[Boolean] = js.undefined
+  var startTime: js.UndefOr[Double] = js.undefined
+  var runTimeMillis: js.UndefOr[Double] = js.undefined
+  var running: js.UndefOr[Boolean] = js.undefined
+  var syncing: js.UndefOr[Boolean] = js.undefined
 }
 
 /**
@@ -37,11 +34,24 @@ trait Query extends js.Object {
   */
 object Query {
 
-  def apply(name: js.UndefOr[String]) = {
-    val query = New[Query]
-    query.name = name
-    query
+  /**
+    * Query Result Set
+    * @author lawrence.daniels@gmail.com
+    */
+  @ScalaJSDefined
+  trait QueryResultSet extends js.Object {
+    var topic: js.UndefOr[String]
+    var columns: js.UndefOr[js.Array[String]]
+    var rows: js.UndefOr[js.Array[QueryRow]]
   }
+
+  @ScalaJSDefined
+  class SavedResult(var uid: js.UndefOr[String],
+                    var queryString: js.UndefOr[String],
+                    var topic: js.UndefOr[String],
+                    var columns: js.UndefOr[js.Array[String]],
+                    var rows: js.UndefOr[js.Array[QueryRow]],
+                    var runTimeMillis: js.UndefOr[Double]) extends QueryResultSet
 
   /**
     * Query Enrichment
@@ -50,10 +60,10 @@ object Query {
   final implicit class QueryEnrichment(val query: Query) extends AnyVal {
 
     @inline
-    def computeRunTime = query.startTime.map(t => (js.Date.now() - t) / 1000.0)
+    def computeRunTime: UndefOr[Double] = query.startTime.map(t => (js.Date.now() - t) / 1000.0)
 
     @inline
-    def computeElapsedRunTime = query.startTime.map(t => (js.Date.now() - t) / 1000.0)
+    def computeElapsedRunTime: UndefOr[Double] = query.startTime.map(t => (js.Date.now() - t) / 1000.0)
 
   }
 

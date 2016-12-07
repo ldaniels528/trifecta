@@ -1,7 +1,6 @@
 package com.github.ldaniels528.trifecta.messages.logic
 
-import com.github.ldaniels528.trifecta.command.parser.CommandParser
-import com.github.ldaniels528.trifecta.messages.MessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.MessageDecoder
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 
@@ -19,7 +18,7 @@ object ConditionCompiler {
       case op =>
         decoder match {
           case Some(compiler: MessageEvaluation) => compiler.compile(op)
-          case Some(aDecoder) => throw new IllegalStateException(s"The selected decoder is not a message compiler")
+          case Some(_) => throw new IllegalStateException(s"The selected decoder is not a message compiler")
           case None => throw new IllegalStateException(s"No message decoder found to support `$op`")
         }
     }
@@ -41,7 +40,6 @@ object ConditionCompiler {
   }
 
   private def translateValue(value: String, encoding: String = "UTF-8"): Array[Byte] = {
-    import CommandParser._
     if (isDottedHex(value)) parseDottedHex(value) else value.getBytes(encoding)
   }
 

@@ -191,6 +191,10 @@ Trifecta binaries are available for immediate download in the "<a href='https://
 <a name="whats-new"></a>
 ### What's New
 
+#### v0.22.0
+* Reimplemented Publish and Query views (ported from v0.20.0)
+* Now offering simultaneous support for Kafka 0.8.x, 0.9.x and 0.10.x
+
 #### v0.21.2
 * Added support for Kafka 0.10.0.0
 * Added support for AVDL
@@ -1056,10 +1060,14 @@ differences. Here's the basic syntax:
     where <searchCriteria>
     limit <maximumNumberOfResultsToReturn>
 
+Where _decoder_ may be:
+* json
+* avro:file:_path_
+
 Consider the following example:
 
     kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, open, close, high, low
-                                          from "topic:shocktrade.quotes.avro"
+                                          from shocktrade.quotes.avro
                                           with "avro:file:avro/quotes.avsc"
                                           where symbol == "AAPL"
 
@@ -1082,7 +1090,7 @@ the query results.
 Let's look at another example:
 
     kafka:shocktrade.quotes.avro/0:32050> select symbol, exchange, lastTrade, open, close, high, low
-                                          from "topic:shocktrade.quotes.avro"
+                                          from shocktrade.quotes.avro
                                           with "avro:file:avro/quotes.avsc"
                                           where lastTrade <= 1 and volume >= 1,000,000
                                           limit 25

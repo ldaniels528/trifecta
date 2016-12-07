@@ -1,7 +1,6 @@
 package com.github.ldaniels528.trifecta.controllers
 
-import com.github.ldaniels528.trifecta.messages.query.KQLResult
-import com.github.ldaniels528.trifecta.models.{QueryDetailsJs, QueryJs, QueryResultSetJs}
+import com.github.ldaniels528.trifecta.models.{QueryRequestJs, QueryResultSetJs}
 import com.github.ldaniels528.trifecta.util.QueryJsonUtils._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.{JsValue, Json}
@@ -17,15 +16,16 @@ import scala.util.{Failure, Success, Try}
 class QueryController extends Controller {
 
   def executeQuery = Action.async { implicit request =>
-    request.body.asJson.flatMap(_.asOpt[QueryJs]) match {
+    request.body.asJson.flatMap(_.asOpt[QueryRequestJs]) match {
       case Some(query) =>
-        WebConfig.facade.executeQuery(query).mapTo[KQLResult] map { kqlResult =>
+        WebConfig.facade.executeQuery(query) map { kqlResult =>
           Ok(Json.toJson(new QueryResultSetJs(topic = kqlResult.topic, columns = kqlResult.labels, rows = kqlResult.values.map(_.toJson))))
         } recover { case e: Throwable =>
+          e.printStackTrace()
           InternalServerError(e.getMessage)
         }
       case None =>
-        Future.successful(BadRequest("Query object expected"))
+        Future.successful(BadRequest("Query(name, queryString) object expected in body"))
     }
   }
 
@@ -35,10 +35,11 @@ class QueryController extends Controller {
         WebConfig.facade.findOne(topic, criteria).mapTo[JsValue] map { message =>
           Ok(Json.toJson(message))
         } recover { case e: Throwable =>
+          e.printStackTrace()
           InternalServerError(e.getMessage)
         }
       case None =>
-        Future.successful(BadRequest("Query object expected"))
+        Future.successful(BadRequest("Query string expected in body"))
     }
   }
 
@@ -53,19 +54,6 @@ class QueryController extends Controller {
     Try(WebConfig.facade.getQueriesByTopic(topic)) match {
       case Success(queries) => Ok(Json.toJson(queries))
       case Failure(e) => InternalServerError(e.getMessage)
-    }
-  }
-
-  def saveQuery = Action.async { implicit request =>
-    request.body.asJson.flatMap(_.asOpt[QueryDetailsJs]) match {
-      case Some(query) =>
-        WebConfig.facade.saveQuery(query) map { message =>
-          Ok(Json.toJson(message))
-        } recover { case e: Throwable =>
-          InternalServerError(e.getMessage)
-        }
-      case None =>
-        Future.successful(BadRequest("Query object expected"))
     }
   }
 

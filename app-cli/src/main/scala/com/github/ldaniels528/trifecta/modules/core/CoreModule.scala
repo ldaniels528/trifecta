@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta.modules.core
 
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 import java.io.{File, PrintStream}
 import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicLong
@@ -12,9 +13,10 @@ import com.github.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.github.ldaniels528.trifecta._
 import com.github.ldaniels528.trifecta.command._
 import com.github.ldaniels528.trifecta.io._
-import com.github.ldaniels528.trifecta.io.avro.{AvroFileMessageInputSource, AvroFileMessageOutputSource}
-import com.github.ldaniels528.trifecta.io.json.{JSONFileMessageInputSource, JSONFileMessageOutputSource}
-import com.github.ldaniels528.trifecta.modules.Module
+import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource}
+import com.github.ldaniels528.trifecta.messages.codec.avro.{AvroFileMessageInputSource, AvroFileMessageOutputSource}
+import com.github.ldaniels528.trifecta.messages.codec.json.{JSONFileMessageInputSource, JSONFileMessageOutputSource}
+import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import org.apache.commons.io.IOUtils
 
@@ -25,10 +27,10 @@ import scala.language.postfixOps
 import scala.util.{Properties, Try}
 
 /**
- * Core Module
- * @author lawrence.daniels@gmail.com
- */
-class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
+  * Core Module
+  * @author lawrence.daniels@gmail.com
+  */
+class CoreModule(config: TxConfig, jobManager: JobManager, moduleManager: ModuleManager) extends Module {
   private val out: PrintStream = config.out
 
   // define the process parsing regular expression
@@ -46,7 +48,7 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
     Command(this, "debug", debug, UnixLikeParams(Seq("enabled" -> false)), help = "Switches debugging on/off", undocumented = true),
     Command(this, "exit", exit, UnixLikeParams(), help = "Exits the shell"),
     Command(this, "help", help, UnixLikeParams(Seq("searchTerm" -> false), Seq("-m" -> "moduleName")), help = "Provides the list of available commands"),
-    Command(this, "jobs", manageJob, UnixLikeParams(Seq("jobNumber" -> false), Seq("-c" -> "clear jobs", "-d" -> "delete job", "-l" -> "list jobs", "-v" -> "result")), help = "Returns the list of currently running jobs"),
+    Command(this, "jobs", manageJob, UnixLikeParams(Seq("jobNumber" -> false), Seq("-d" -> "delete job", "-l" -> "list jobs", "-s" -> "job statistics", "-v" -> "result", "-w" -> "wipe/clear jobs")), help = "Returns the list of currently running jobs"),
     Command(this, "ls", listFiles, UnixLikeParams(Seq("path" -> false)), help = "Retrieves the files from the current directory", promptAware = true),
     Command(this, "module", useModule, UnixLikeParams(Seq("module" -> true)), help = "Switches the active module"),
     Command(this, "modules", listModules, UnixLikeParams(), help = "Returns a list of configured modules"),
@@ -61,10 +63,10 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
     Command(this, "wget", httpGet, UnixLikeParams(Seq("url" -> true)), help = "Retrieves remote content via HTTP"))
 
   /**
-   * Returns an input source
-   * @param url the given input URL (e.g. "file:avro:/tmp/messages.avro")
-   * @return the option of an input source
-   */
+    * Returns an input source
+    * @param url the given input URL (e.g. "file:avro:/tmp/messages.avro")
+    * @return the option of an input source
+    */
   override def getInputSource(url: String): Option[MessageInputSource] = {
     url match {
       case s if s.startsWith("file:avro:") => url.extractProperty("file:avro:") map (AvroFileMessageInputSource(_))
@@ -76,10 +78,10 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Returns an output source
-   * @param url the given output URL (e.g. "file:avro:/tmp/messages.avro")
-   * @return the option of an output source
-   */
+    * Returns an output source
+    * @param url the given output URL (e.g. "file:avro:/tmp/messages.avro")
+    * @return the option of an output source
+    */
   override def getOutputSource(url: String): Option[MessageOutputSource] = {
     url match {
       case s if s.startsWith("file:avro:") => url.extractProperty("file:avro:") map (AvroFileMessageOutputSource(_))
@@ -90,39 +92,39 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Returns the name of the module (e.g. "kafka")
-   * @return the name of the module
-   */
+    * Returns the name of the module (e.g. "kafka")
+    * @return the name of the module
+    */
   override def moduleName = "core"
 
   /**
-   * Returns the label of the module (e.g. "kafka")
-   * @return the label of the module
-   */
+    * Returns the label of the module (e.g. "kafka")
+    * @return the label of the module
+    */
   override def moduleLabel = "core"
 
-  override def prompt = config.cwd
+  override def prompt: String = config.cwd
 
-  override def shutdown() = ()
+  override def shutdown(): Unit = ()
 
   override def supportedPrefixes: Seq[String] = Seq("file", "http")
 
   // load the commands from the modules
-  private def commandSet(implicit rt: TxRuntimeContext): Map[String, Command] = rt.moduleManager.commandSet
+  private def commandSet(implicit rt: TxRuntimeContext): Map[String, Command] = moduleManager.commandSet
 
   /**
-   * Automatically switches to the module of the most recently executed command
-   * @example autoswitch true
-   */
+    * Automatically switches to the module of the most recently executed command
+    * @example autoswitch true
+    */
   def autoSwitch(params: UnixLikeArgs): String = {
     params.args.headOption map (_.toBoolean) foreach (config.autoSwitching = _)
     s"auto switching is ${if (config.autoSwitching) "On" else "Off"}"
   }
 
   /**
-   * Displays the contents of the given file
-   * @example cat "avro/schema1.avsc"
-   */
+    * Displays the contents of the given file
+    * @example cat "avro/schema1.avsc"
+    */
   def cat(params: UnixLikeArgs): Seq[String] = {
     import scala.io.Source
 
@@ -134,9 +136,9 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Changes the local file system path/directory
-   * @example cd "/home/ldaniels/examples"
-   */
+    * Changes the local file system path/directory
+    * @example cd "/home/ldaniels/examples"
+    */
   def changeDir(params: UnixLikeArgs): Option[String] = {
     val cwd = params.args.headOption map {
       case path if path == ".." =>
@@ -156,9 +158,9 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Retrieves or sets the character encoding
-   * @example charset "UTF-8"
-   */
+    * Retrieves or sets the character encoding
+    * @example charset "UTF-8"
+    */
   def charSet(params: UnixLikeArgs): Either[Unit, String] = {
     params.args.headOption match {
       case Some(newEncoding) => Left(config.encoding = newEncoding)
@@ -167,9 +169,9 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Retrieves or sets the column width for message output
-   * @example columns 30
-   */
+    * Retrieves or sets the column width for message output
+    * @example columns 30
+    */
   def columnWidthGetOrSet(params: UnixLikeArgs): Either[Unit, Int] = {
     params.args.headOption match {
       case Some(arg) => Left(config.columns = parseInt("columnWidth", arg))
@@ -178,34 +180,34 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Toggles the current debug state
-   * @param params the given command line arguments
-   * @return the current state ("On" or "Off")
-   */
+    * Toggles the current debug state
+    * @param params the given command line arguments
+    * @return the current state ("On" or "Off")
+    */
   def debug(params: UnixLikeArgs): String = {
     if (params.args.isEmpty) config.debugOn = !config.debugOn else config.debugOn = params.args.head.toBoolean
     s"debugging is ${if (config.debugOn) "On" else "Off"}"
   }
 
   /**
-   * Exits the shell
-   * @example exit
-   */
+    * Exits the shell
+    * @example exit
+    */
   def exit(params: UnixLikeArgs) = config.isAlive = false
 
   /**
-   * Provides the list of available commands
-   * @example ?
-   * @example ?k
-   * @example help
-   */
+    * Provides the list of available commands
+    * @example ?
+    * @example ?k
+    * @example help
+    */
   def help(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[CommandItem] = {
     // get the prefix
     val prefix = params.args.headOption
 
     // was the module switch used?
     val commands = params("-m") match {
-      case Some(moduleName) => commandSet.toSeq filter { case (name, cmd) => cmd.module.moduleName == moduleName}
+      case Some(moduleName) => commandSet.toSeq filter { case (name, cmd) => cmd.module.moduleName == moduleName }
       case None => commandSet.toSeq
     }
 
@@ -218,10 +220,10 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Retrieves remote content via HTTP
-   * @example wget "http://www.example.com/"
-   * @example wget -f json "http://localhost:9000/api/tasks"
-   */
+    * Retrieves remote content via HTTP
+    * @example wget "http://www.example.com/"
+    * @example wget -f json "http://localhost:9000/api/tasks"
+    */
   def httpGet(params: UnixLikeArgs): Option[Any] = {
     import java.io.ByteArrayOutputStream
     import java.net._
@@ -245,10 +247,10 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Retrieves the files from the current directory
-   * @example ls
-   * @example ls avro
-   */
+    * Retrieves the files from the current directory
+    * @example ls
+    * @example ls avro
+    */
   def listFiles(params: UnixLikeArgs): Option[Seq[String]] = {
     // get the optional path argument
     val path: String = params.args.headOption map expandPath map setupPath getOrElse config.cwd
@@ -262,62 +264,71 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Job management: view, list or remove jobs
-   * @example jobs 1234
-   * @example jobs -c
-   * @example jobs -d 1234
-   * @example jobs -v 1234
-   */
+    * Job management: view, list or remove jobs
+    * @example jobs 1234
+    * @example jobs -d 1234
+    * @example jobs -v 1234
+    * @example jobs -w
+    */
   def manageJob(params: UnixLikeArgs): Any = {
     // list a specific job?
     params.args.headOption map parseJobId map { myJobId =>
       jobManager.getJobs filter (_.jobId == myJobId) map toJobDetail
     } getOrElse {
-      // delete a job by ID?
-      if ((params("-d") map parseJobId map jobManager.killJobById).isDefined) "Ok"
-
-      // retrieve the job's value?
-      else if (params.contains("-v")) {
-        val jobId = params("-v") map parseJobId getOrElse die(s"${params.commandName.get} -v jobId")
-        jobManager.getJobById(jobId) match {
-          case Some(aio@AsyncIOJob(_, asyncIO, _)) =>
-            val task = asyncIO.task
-            if (task.isCompleted) asyncIO.getCount else toJobDetail(aio)
-          case Some(job) =>
-            val task = job.task
-            if (task.isCompleted) task.value else toJobDetail(job)
-          case None =>
-            die(s"Job #$jobId not found")
-        }
+      params match {
+        // delete a job by ID?
+        case p if p.contains("-d") =>
+          val jobId = params("-d") map parseJobId orDie s"${params.commandName.get} -d jobId"
+          jobManager.killJobById(jobId)
+          "Ok"
+        // job statistics?
+        case p if p.contains("-s") =>
+          val jobId = params("-s") map parseJobId orDie s"${params.commandName.get} -s jobId"
+          jobManager.getJobById(jobId) match {
+            case Some(AsyncIOJob(_, asyncIO, _)) => asyncIO.getCount
+            case Some(job) => toJobDetail(job)
+            case None =>
+              die(s"Job #$jobId not found")
+          }
+        // job's value?
+        case p if p.contains("-v") =>
+          val jobId = params("-v") map parseJobId orDie s"${params.commandName.get} -v jobId"
+          jobManager.getJobById(jobId) match {
+            case Some(aio@AsyncIOJob(_, asyncIO, _)) =>
+              val task = asyncIO.task
+              if (task.isCompleted) task.value else toJobDetail(aio)
+            case Some(job) =>
+              val task = job.task
+              if (task.isCompleted) task.value else toJobDetail(job)
+            case None =>
+              die(s"Job #$jobId not found")
+          }
+        // wipe/delete all jobs?
+        case p if p.contains("-w") =>
+          jobManager.clear()
+          "Ok"
+        // return all jobs
+        case _ => jobManager.getJobs map toJobDetail
       }
-
-      // clear all jobs?
-      else if (params.contains("-w")) {
-        jobManager.clear()
-        "Ok"
-      }
-
-      // return all jobs
-      else jobManager.getJobs map toJobDetail
     }
   }
 
   /**
-   * Returns the list of modules
-   * @example modules
-   */
+    * Returns the list of modules
+    * @example modules
+    */
   def listModules(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[ModuleItem] = {
-    val activeModule = rt.moduleManager.activeModule
-    rt.moduleManager.modules.map(m =>
+    val activeModule = moduleManager.activeModule
+    moduleManager.modules.map(m =>
       ModuleItem(m.moduleName, m.getClass.getName, loaded = true, activeModule.exists(_.moduleName == m.moduleName)))
       .sortBy(_.name)
   }
 
   /**
-   * List undocumented commands
-   * @example undoc
-   * @example undoc sdeploy
-   */
+    * List undocumented commands
+    * @example undoc
+    * @example undoc sdeploy
+    */
   def listUndocumented(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[CommandItem] = {
     val args = params.args
     commandSet.toSeq filter {
@@ -328,11 +339,11 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Display a list of "configured" running processes
-   * @example ps
-   * @example ps -u ldaniels dev528
-   * @example ps -i /home/ubuntu/aws.pem -u ubuntu dev528
-   */
+    * Display a list of "configured" running processes
+    * @example ps
+    * @example ps -u ldaniels dev528
+    * @example ps -i /home/ubuntu/aws.pem -u ubuntu dev528
+    */
   def processList(params: UnixLikeArgs): Future[Seq[String]] = {
     import scala.util.Properties
 
@@ -358,8 +369,8 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Parses process data produced by the UNIX "ps" command
-   */
+    * Parses process data produced by the UNIX "ps" command
+    */
   private def parsePSData(pid: String, cmd: String, args: String, portCmd: Option[String]): String = {
     val command = cmd match {
       case s if s.contains("mysqld") => "MySQL Server"
@@ -393,10 +404,10 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Retrieves "netstat -ptln" and "ps -ef" data from a remote node
-   * @param node the given remote node (e.g. "Verify")
-   * @return a future containing the data
-   */
+    * Retrieves "netstat -ptln" and "ps -ef" data from a remote node
+    * @param node the given remote node (e.g. "Verify")
+    * @return a future containing the data
+    */
   private def parseNetStatData(node: String, params: UnixLikeArgs): Future[(Seq[String], Map[String, String])] = {
     import scala.sys.process._
 
@@ -447,29 +458,29 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Print the current working directory
-   * @example pwd
-   */
-  def printWorkingDirectory(args: UnixLikeArgs) = new File(config.cwd).getCanonicalPath
+    * Print the current working directory
+    * @example pwd
+    */
+  def printWorkingDirectory(args: UnixLikeArgs): String = new File(config.cwd).getCanonicalPath
 
   /**
-   * Returns the usage for a command
-   * @example syntax time
-   */
+    * Returns the usage for a command
+    * @example syntax time
+    */
   def syntax(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Seq[String] = {
     val commandName = params.args.head
 
-    rt.moduleManager.findCommandByName(commandName) match {
+    moduleManager.findCommandByName(commandName) match {
       case Some(command) => Seq(s"Description: ${command.help}", s"Usage: ${command.prototype}")
       case None => die(s"Command '$commandName' not found")
     }
   }
 
   /**
-   * Returns the system time as an EPOC in milliseconds
-   * @example systime                     => 1411439360907
-   * @example systime 2014-04-15T12:00:00 => 1397545920000
-   */
+    * Returns the system time as an EPOC in milliseconds
+    * @example systime                     => 1411439360907
+    * @example systime 2014-04-15T12:00:00 => 1397545920000
+    */
   def systemTime(params: UnixLikeArgs): Long = {
     params.args match {
       case date :: Nil =>
@@ -481,10 +492,10 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Returns the time in the local time zone
-   * @example time               => "Mon Sep 22 18:11:07 PDT 2014"
-   * @example time 1410937200000 => "Wed Sep 17 00:00:00 PDT 2014"
-   */
+    * Returns the time in the local time zone
+    * @example time               => "Mon Sep 22 18:11:07 PDT 2014"
+    * @example time 1410937200000 => "Wed Sep 17 00:00:00 PDT 2014"
+    */
   def time(params: UnixLikeArgs): Date = {
     params.args match {
       case sysTime :: Nil if sysTime.matches("\\d+") => new Date(sysTime.toLong)
@@ -494,10 +505,10 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Returns the time in the GMT time zone
-   * @example timeutc               => Tue Sep 23 02:27:40 GMT 2014
-   * @example timeutc 1410937200000 => Wed Sep 17 07:00:00 GMT 2014
-   */
+    * Returns the time in the GMT time zone
+    * @example timeutc               => Tue Sep 23 02:27:40 GMT 2014
+    * @example timeutc 1410937200000 => Wed Sep 17 07:00:00 GMT 2014
+    */
   def timeUTC(params: UnixLikeArgs): String = {
     // get the date
     val date = params.args match {
@@ -513,21 +524,21 @@ class CoreModule(config: TxConfig, jobManager: JobManager) extends Module {
   }
 
   /**
-   * Switches the active module
-   * @example use kafka
-   */
+    * Switches the active module
+    * @example use kafka
+    */
   def useModule(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) {
     val moduleName = params.args.head
-    rt.moduleManager.findModuleByName(moduleName) match {
-      case Some(module) => rt.moduleManager.activeModule = module
+    moduleManager.findModuleByName(moduleName) match {
+      case Some(module) => moduleManager.activeModule = module
       case None => die(s"Module '$moduleName' not found")
     }
   }
 
   /**
-   * "version" - Returns the application version
-   * @return the application version
-   */
+    * "version" - Returns the application version
+    * @return the application version
+    */
   def version(args: UnixLikeArgs): String = CoreModule.VERSION
 
   private def parseJobId(id: String): Int = parseInt("job number", id)
