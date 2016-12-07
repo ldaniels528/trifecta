@@ -1,21 +1,21 @@
 package com.github.ldaniels528.trifecta.modules.core
 
-import com.github.ldaniels528.commons.helpers.OptionHelper._
 import java.io.{File, PrintStream}
 import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicLong
 import java.util.{Date, TimeZone}
 
+import com.github.ldaniels528.trifecta.AppConstants.VERSION
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.commons.helpers.PathHelper._
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.JobManager.{AsyncIOJob, JobItem}
 import com.github.ldaniels528.trifecta._
 import com.github.ldaniels528.trifecta.command._
-import com.github.ldaniels528.trifecta.io._
-import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.messages.codec.avro.{AvroFileMessageInputSource, AvroFileMessageOutputSource}
 import com.github.ldaniels528.trifecta.messages.codec.json.{JSONFileMessageInputSource, JSONFileMessageOutputSource}
+import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
 import org.apache.commons.io.IOUtils
@@ -539,7 +539,7 @@ class CoreModule(config: TxConfig, jobManager: JobManager, moduleManager: Module
     * "version" - Returns the application version
     * @return the application version
     */
-  def version(args: UnixLikeArgs): String = CoreModule.VERSION
+  def version(args: UnixLikeArgs): String = VERSION
 
   private def parseJobId(id: String): Int = parseInt("job number", id)
 
@@ -590,14 +590,5 @@ class CoreModule(config: TxConfig, jobManager: JobManager, moduleManager: Module
   case class ModuleItem(name: String, className: String, loaded: Boolean, active: Boolean)
 
   case class ScopeItem(name: String, module: String, `type`: String, value: Option[_] = None)
-
-}
-
-/**
-  * Core Module Companion
-  * @author lawrence.daniels@gmail.com
-  */
-object CoreModule {
-  val VERSION = "0.22.0"
 
 }
