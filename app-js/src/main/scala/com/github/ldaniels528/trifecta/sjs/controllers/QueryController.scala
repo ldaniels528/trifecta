@@ -4,8 +4,9 @@ import java.util.UUID
 
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.QueryController._
-import com.github.ldaniels528.trifecta.sjs.models.{PartitionDetails, Query, QueryRow, TopicDetails}
 import com.github.ldaniels528.trifecta.sjs.models.Query._
+import com.github.ldaniels528.trifecta.sjs.models.QueryRow._
+import com.github.ldaniels528.trifecta.sjs.models.{PartitionDetails, Query, QueryRow, TopicDetails}
 import com.github.ldaniels528.trifecta.sjs.services.QueryService
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.cookies.Cookies
@@ -82,7 +83,7 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
     // execute the query
     queryService.executeQuery(queryString).withGlobalLoading.withTimer("Executing query") onComplete {
       case Success(results) =>
-        //console.log(s"results = ${angular.toJson(results)}")
+        //console.log(s"results = ${angular.toJson(results, pretty = true)}")
         $scope.$apply { () =>
           query.running = false
           val savedResult = results.toSavedResult(queryString, query.computeRunTime)
@@ -127,10 +128,14 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
     query.queryString = savedResult.queryString
     query.topic = savedResult.topic
     query.rows = savedResult.rows
-    query.columns = savedResult.columns.map { columns =>
-      js.Array("__partition", "__offset") ++ columns.filterNot(_.startsWith("__"))
-    }
     query.runTimeMillis = savedResult.runTimeMillis
+
+    // handle special columns (e.g. "__partition", "__offset" and "__error")
+    val hasErrors = savedResult.rows.exists(_.exists(_.__error.isAssigned))
+    val specialColumns = if(hasErrors) ColumnsWithError else ColumnsWithoutError
+    query.columns = savedResult.columns.map { columns =>
+      specialColumns ++ columns.filterNot(_.startsWith("__"))
+    }
   }
 
   $scope.isSelected = (aTopic: js.UndefOr[TopicDetails], aPartition: js.UndefOr[PartitionDetails], aQuery: js.UndefOr[Query], aRow: js.UndefOr[QueryRow], anIndex: js.UndefOr[Int]) => {
@@ -218,7 +223,7 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
 
   private def init(topics: js.Array[TopicDetails]) = {
     console.log("Initializing Query Controller...")
-   $scope.$apply(() => $scope.selectQueryTopic($scope.topic))
+    $scope.$apply(() => $scope.selectQueryTopic($scope.topic))
   }
 
   /**

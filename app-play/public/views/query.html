@@ -105,7 +105,8 @@
                                         <span class="q_key_field">{{ row[column] }}</span>
                                     </a>
                                 </span>
-                                <span ng-hide="column == '__offset'">{{ row[column] }}</span>
+                                <span ng-show="column == '__error'" class="error">{{ row[column] }}</span>
+                                <span ng-hide="column == '__error' || column == '__offset'">{{ row[column] }}</span>
                             </td>
                         </tr>
                         </tbody>
