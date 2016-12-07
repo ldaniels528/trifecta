@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.22.0"
+val appVersion = "0.22.0rc1"
 val meanjsVersion = "0.2.3.1"
 
 val _scalaVersion = "2.11.8"
@@ -53,6 +53,18 @@ lazy val commons_helpers = (project in file("libs/commons-helpers"))
     libraryDependencies ++= libDependencies ++ testDependencies
   )
 
+lazy val trifecta_common = (project in file("app-common"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "trifecta_common",
+    organization := "com.github.ldaniels528",
+    version := appVersion,
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
+    scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings")
+  )
+
 lazy val trifecta_core = (project in file("."))
   .dependsOn(tabular, commons_helpers)
   .settings(
@@ -93,11 +105,11 @@ lazy val trifecta_core = (project in file("."))
     ))
 
 lazy val trifecta_cli = (project in file("app-cli"))
-  .dependsOn(commons_helpers, tabular, trifecta_core)
+  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_common)
   .settings(
     name := "trifecta_cli",
     organization := "com.github.ldaniels528",
-    version := appVersion,
+    version := appVersion + "-" + kafkaVersion,
     scalaVersion := _scalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
@@ -137,6 +149,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
   )
 
 lazy val trifecta_ui_angularjs = (project in file("app-js"))
+  .dependsOn(trifecta_common)
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "trifecta_ui_angularjs",
@@ -165,12 +178,12 @@ lazy val trifecta_ui_angularjs = (project in file("app-js"))
 
 lazy val trifecta_ui = (project in file("app-play"))
   .aggregate(trifecta_ui_angularjs)
-  .dependsOn(commons_helpers, trifecta_core)
+  .dependsOn(commons_helpers, trifecta_core, trifecta_common)
   .enablePlugins(PlayScala, play.twirl.sbt.SbtTwirl, SbtWeb)
   .settings(
     name := "trifecta_ui",
     organization := "com.github.ldaniels528",
-    version := appVersion,
+    version := appVersion + "-" + kafkaVersion,
     scalaVersion := _scalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),

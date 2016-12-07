@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs
 
+import com.github.ldaniels528.trifecta.AppConstants.VERSION
 import com.github.ldaniels528.trifecta.sjs.controllers._
 import com.github.ldaniels528.trifecta.sjs.services._
 import org.scalajs.angularjs.angular
@@ -16,7 +17,6 @@ import scala.scalajs.js.annotation.JSExport
   */
 object TrifectaJsApp extends js.JSApp {
   val appName = "trifecta"
-  val appVersion = "0.22.0"
 
   @JSExport
   override def main() {
@@ -64,7 +64,7 @@ object TrifectaJsApp extends js.JSApp {
 
     // start the application
     module.run({ ($rootScope: RootScope, ServerSideEventsService: ServerSideEventsService) =>
-      $rootScope.version = appVersion
+      $rootScope.version = VERSION
 
       console.log("Initializing application...")
       ServerSideEventsService.connect()

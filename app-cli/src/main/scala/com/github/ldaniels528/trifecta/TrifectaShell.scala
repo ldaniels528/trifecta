@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta
 
+import com.github.ldaniels528.trifecta.AppConstants.VERSION
 import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.github.ldaniels528.trifecta.messages.{MessageReader, MessageSourceFactory, MessageWriter}
 import com.github.ldaniels528.trifecta.modules.azure.AzureModule
@@ -23,7 +24,6 @@ import scala.util.{Failure, Success, Try}
   */
 object TrifectaShell {
   private val logger = LoggerFactory.getLogger(getClass)
-  val VERSION = CoreModule.VERSION
 
   /**
     * Application entry point
