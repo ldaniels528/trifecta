@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.22.0rc1"
+val appVersion = "0.22.0rc2"
 val meanjsVersion = "0.2.3.1"
 
 val _scalaVersion = "2.11.8"
@@ -56,7 +56,7 @@ lazy val commons_helpers = (project in file("libs/commons-helpers"))
 lazy val trifecta_common = (project in file("app-common"))
   .enablePlugins(ScalaJSPlugin)
   .settings(
-    name := "trifecta_common",
+    name := "trifecta-common",
     organization := "com.github.ldaniels528",
     version := appVersion,
     scalaVersion := _scalaVersion,
@@ -68,7 +68,7 @@ lazy val trifecta_common = (project in file("app-common"))
 lazy val trifecta_core = (project in file("."))
   .dependsOn(tabular, commons_helpers)
   .settings(
-    name := "trifecta_core",
+    name := "trifecta-core",
     organization := "com.github.ldaniels528",
     version := appVersion,
     scalaVersion := _scalaVersion,
@@ -117,12 +117,11 @@ lazy val trifecta_cli = (project in file("app-cli"))
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     mainClass in assembly := Some("com.github.ldaniels528.trifecta.TrifectaShell"),
     test in assembly := {},
-    assemblyJarName in assembly := "trifecta_cli_" + version.value + ".bin.jar",
+    assemblyJarName in assembly := "trifecta_cli-" + version.value + ".bin.jar",
     assemblyMergeStrategy in assembly <<= (assemblyMergeStrategy in assembly) { (old) => {
-      case PathList("stax", "stax-api", xs@_*) => MergeStrategy.first
       case PathList("log4j-over-slf4j", xs@_*) => MergeStrategy.discard
-      case PathList("META-INF", xs@_*) => MergeStrategy.discard
       case PathList("log4j.properties", xs@_*) => MergeStrategy.discard
+      case PathList("META-INF", xs@_*) => MergeStrategy.discard
       case x => MergeStrategy.first
     }
     },

@@ -5,6 +5,6 @@ package com.github.ldaniels528.trifecta
   * @author lawrence.daniels@gmail.com
   */
 object AppConstants {
-  val VERSION = "0.22.0rc1"
+  val VERSION = "0.22.0rc2"
 
 }
