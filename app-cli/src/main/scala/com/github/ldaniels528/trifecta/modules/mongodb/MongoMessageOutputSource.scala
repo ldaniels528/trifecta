@@ -21,7 +21,7 @@ class MongoMessageOutputSource(mc: TxMongoCollection) extends MessageOutputSourc
       case Some(av: AvroDecoder) =>
         av.decode(data.message) match {
           case Success(record) =>
-            mc.insert(JsonHelper.toJson(record.toString))
+            mc.insert(JsonHelper.transform(record.toString))
             ()
           case Failure(e) =>
             throw new IllegalStateException(e.getMessage, e)

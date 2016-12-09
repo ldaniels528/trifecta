@@ -169,7 +169,7 @@ class TxConfig(val configProps: Properties) {
     file.extension.orDie(s"File '${file.getName}' has no extension (e.g. '.avsc')") match {
       case ".avsc" | ".avdl" => AvroDecoder(file)
       case ".js" =>
-        JsonHelper.transform[BuiltinDecoder](file.getTextContents) match {
+        JsonHelper.transformTo[BuiltinDecoder](file.getTextContents) match {
           case BuiltinDecoder(_, typeName) => MessageCodecFactory.getDecoder(this, typeName)
         }
       case _ => None

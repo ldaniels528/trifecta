@@ -30,7 +30,7 @@ object ApacheAccessLogDecoder extends MessageDecoder[ApacheAccessLog]
     * @return a decoded message wrapped in a Try-monad
     */
   override def decodeAsJson(message: Array[Byte]): Try[JValue] = {
-    decode(message) map JsonHelper.toJson
+    decode(message) map JsonHelper.transformFrom
   }
 
 }

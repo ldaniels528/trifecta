@@ -1,5 +1,7 @@
 package com.github.ldaniels528.trifecta
 
+import java.io.File
+
 import com.github.ldaniels528.trifecta.AppConstants.VERSION
 import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.github.ldaniels528.trifecta.messages.{MessageReader, MessageSourceFactory, MessageWriter}
@@ -14,6 +16,7 @@ import com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
@@ -30,11 +33,19 @@ object TrifectaShell {
     * @param args the given command line arguments
     */
   def main(args: Array[String]) {
-    // use the ANSI console plugin to display the title line
-    println(s"Trifecta v$VERSION")
+    // interactive mode?
+    val nonInteractiveMode = args.exists(!_.startsWith("--"))
+
+    // announce the version
+    if(!nonInteractiveMode) {
+      println(s"Trifecta v$VERSION")
+    }
 
     // load the configuration
-    val config = loadConfiguration()
+    val config = loadConfiguration(nonInteractiveMode)
+
+    // use JSON pretty printing?
+    val prettyJson = args.contains("--pretty-json")
 
     // startup the Kafka Sandbox?
     if (args.contains("--kafka-sandbox")) {
@@ -46,26 +57,33 @@ object TrifectaShell {
     val messageSourceFactory = new MessageSourceFactory()
     val rt = TxRuntimeContext(config, messageSourceFactory)
     val moduleManager = initModules(config, jobManager, messageSourceFactory, rt)
-
-    // interactive mode?
-    val nonInteractiveMode = args.exists(!_.startsWith("--"))
-    val resultHandler = new TxResultHandler(config, jobManager, nonInteractiveMode)
+    val resultHandler = new TxResultHandler(config, jobManager, nonInteractiveMode, prettyJson)
 
     // initialize the console
     val console = new CLIConsole(rt, jobManager, messageSourceFactory, moduleManager, resultHandler)
 
     // if arguments were not passed, stop.
     args.filterNot(_.startsWith("--")).toList match {
-      case Nil =>
-        console.shell()
+      case Nil => console.shell()
       case params =>
-        val line = params mkString " "
-        console.execute(line)
+        checkForScriptFile(params) match {
+          case Some(scriptFile) => console.executeScript(scriptFile)
+          case None => console.execute(params mkString " ")
+        }
     }
   }
 
-  private def loadConfiguration() = {
-    logger.info(s"Loading configuration file '${TxConfig.configFile}'...")
+  private def checkForScriptFile(args: Seq[String]): Option[File] = {
+    args.indexOf("-script-file") match {
+      case index if index >= 0 && index + 1 < args.length => Some(new File(args(index + 1)))
+      case _ => None
+    }
+  }
+
+  private def loadConfiguration(nonInteractiveMode: Boolean) = {
+    if(!nonInteractiveMode) {
+      logger.info(s"Loading configuration file '${TxConfig.configFile}'...")
+    }
     Try(TxConfig.load(TxConfig.configFile)) match {
       case Success(cfg) => cfg
       case Failure(_) =>
@@ -82,16 +100,16 @@ object TrifectaShell {
     logger.info("Starting Kafka Sandbox...")
     val kafkaSandbox = KafkaSandbox()
     config.zooKeeperConnect = kafkaSandbox.getConnectString
-    Thread.sleep(3000)
+    Thread.sleep(3.seconds.toMillis)
   }
 
   /**
     *
     * Create the module manager and loads the built-in modules
-    * @param config the given [[TxConfig configuration]]
-    * @param jobManager the given [[JobManager job manager]]
+    * @param config               the given [[TxConfig configuration]]
+    * @param jobManager           the given [[JobManager job manager]]
     * @param messageSourceFactory the given [[MessageSourceFactory message source factory]]
-    * @param rt the given [[TxRuntimeContext runtime context]]
+    * @param rt                   the given [[TxRuntimeContext runtime context]]
     * @return a new [[ModuleManager module manager]] instance
     */
   private def initModules(config: TxConfig,

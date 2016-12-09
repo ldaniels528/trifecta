@@ -66,11 +66,11 @@ class ZookeeperModule(config: TxConfig) extends Module {
 
   def prevCwd: String = config.getOrElse("trifecta.zookeeper.prevCwd", "/")
 
-  def prevCwd_=(path: String) = config.set("trifecta.zookeeper.prevCwd", path)
+  def prevCwd_=(path: String): Option[AnyRef] = config.set("trifecta.zookeeper.prevCwd", path)
 
   def zkCwd: String = config.getOrElse("trifecta.zookeeper.cwd", "/")
 
-  def zkCwd_=(path: String) = config.set("trifecta.zookeeper.cwd", path)
+  def zkCwd_=(path: String): Option[AnyRef] = config.set("trifecta.zookeeper.cwd", path)
 
   /**
    * "zcd" - Changes the current path/directory in ZooKeeper

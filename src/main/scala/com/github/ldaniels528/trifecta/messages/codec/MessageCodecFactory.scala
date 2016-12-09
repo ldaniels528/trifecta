@@ -58,21 +58,20 @@ object MessageCodecFactory {
     * @return an option of a [[MessageEncoder]]
     */
   def getEncoder(config: TxConfig, url: String): Option[MessageEncoder[_]] = {
-    encoders.find { case (name, _) => name == url } map { case (_, encoder) => encoder }
+    encoders.find(_._1 == url).map(_._2)
   }
 
   def loadUserDefinedCodecs(classLoader: ClassLoader, file: File) {
     if (file.exists()) {
       Try {
-        logger.info("Loading user-defined message CODECs...")
         val jsonString = Source.fromFile(file).getLines() mkString "\n"
-        JsonHelper.transform[List[UserDecoder]](jsonString)
+        JsonHelper.transformTo[List[UserDecoder]](jsonString)
       } match {
         case Success(codecDefs) =>
           var count = 0
           for {
             codecDef <- codecDefs
-            codec <- Try(classLoader.loadClass(codecDef.`class`).newInstance()) match {
+            codec <- Try(Class.forName(codecDef.`class`, true, classLoader).newInstance()) match {
               case Success(potentialCodec) => List(potentialCodec)
               case Failure(e) =>
                 logger.warn(s"Failed to load message CODEC '${codecDef.name}' (${codecDef.`class`}): ${e.getMessage}")
@@ -95,7 +94,6 @@ object MessageCodecFactory {
                 0
             })
           }
-          logger.info(s"Loaded $count user-defined message CODECs")
         case Failure(e) =>
           logger.warn(s"Failed to load user-defined message CODECs: ${e.getMessage}")
       }

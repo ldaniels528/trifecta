@@ -143,7 +143,6 @@ class KafkaModule(config: TxConfig) extends Module {
 
   override def shutdown(): Unit = {
     Try(facade.shutdown())
-    Try(zkProxy_?.foreach(_.close()))
     ()
   }
 
