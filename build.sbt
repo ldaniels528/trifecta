@@ -85,6 +85,7 @@ lazy val trifecta_core = (project in file("."))
       "commons-io" % "commons-io" % "2.4",
       "joda-time" % "joda-time" % "2.9.1",
       "net.liftweb" %% "lift-json" % "3.0-M7",
+      "org.apache.httpcomponents" % "httpclient" % "4.5.2",
       "org.joda" % "joda-convert" % "1.8.1",
       "org.slf4j" % "slf4j-api" % "1.7.21",
       //

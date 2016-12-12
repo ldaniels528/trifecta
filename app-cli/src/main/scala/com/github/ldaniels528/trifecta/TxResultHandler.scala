@@ -14,6 +14,7 @@ import net.liftweb.json.JValue
 import org.apache.avro.generic.GenericRecord
 import play.api.libs.json.{JsValue, Json}
 
+import com.github.ldaniels528.trifecta.CommandLineHelper._
 import scala.collection.GenTraversableOnce
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -23,10 +24,14 @@ import scala.util.{Failure, Success, Try}
   * Trifecta Result Handler
   * @author lawrence.daniels@gmail.com
   */
-class TxResultHandler(config: TxConfig, jobManager: JobManager, nonInteractiveMode: Boolean, prettyJson: Boolean) extends BinaryMessaging {
+class TxResultHandler(config: TxConfig, jobManager: JobManager, args: Array[String]) extends BinaryMessaging {
   // define the tabular instance
   val tabular = new Tabular() with AvroTables
   val out: PrintStream = config.out
+
+  // check for the commandline argument we care about
+  private val nonInteractiveMode = args.isNonInteractive
+  private val prettyJson = args.isPrettyJson
 
   /**
     * Handles the processing and/or display of the given result of a command execution
@@ -35,14 +40,16 @@ class TxResultHandler(config: TxConfig, jobManager: JobManager, nonInteractiveMo
     */
   def handleResult(result: Any, input: String)(implicit ec: ExecutionContext): Unit = {
     result match {
+      case a if a == null || a.isInstanceOf[Unit] => out.println()
+
       // handle the asynchronous I/O cases
       case a: AsyncIO => handleAsyncResult(a, input)
 
       // handle binary data
-      case message: Array[Byte] if message.isEmpty => out.println("No data returned")
-      case message: Array[Byte] => dumpMessage(message)(config)
-      case MessageData(_, offset, _, _, _, message) => dumpMessage(offset, message)(config)
-      case StreamedMessage(_, _, offset, _, message) => dumpMessage(offset, message)(config)
+      case message: Array[Byte] if message.isEmpty => out.println()
+      case message: Array[Byte] => dumpData(message)
+      case MessageData(_, offset, _, _, _, message) =>  dumpData(message, Some(offset))
+      case StreamedMessage(_, _, offset, _, message) => dumpData(message, Some(offset))
 
       // handle Either cases
       case e: Either[_, _] => e match {
@@ -57,7 +64,7 @@ class TxResultHandler(config: TxConfig, jobManager: JobManager, nonInteractiveMo
       case g: GenericRecord =>
         Try(JsonHelper.transform(g)) match {
           case Success(js) => out.println(JsonHelper.renderJson(js, pretty = isPretty))
-          case Failure(e) => out.println(g)
+          case Failure(_) => out.println(g)
         }
 
       // handle JSON values
@@ -96,10 +103,24 @@ class TxResultHandler(config: TxConfig, jobManager: JobManager, nonInteractiveMo
       case g: GenTraversableOnce[_] => g foreach out.println
 
       // anything else ...
-      case x => if (x != null && !x.isInstanceOf[Unit]) out.println(x)
+      case x: AnyRef =>
+        out.println(Try(JsonHelper.renderJson(JsonHelper.transformFrom(x), pretty = isPretty)).getOrElse(x.toString))
+
+      case z => out.println(z)
     }
   }
-  
+
+  private def dumpData(message: Array[Byte], offset_? : Option[Long] = None) {
+    if(nonInteractiveMode)
+      out.println(new String(message))
+    else {
+      offset_? match {
+        case Some(offset) => dumpMessage(offset, message)(config)
+        case None => dumpMessage(message)(config)
+      }
+    }
+  }
+
   private def isPretty = prettyJson || !nonInteractiveMode
 
   /**
@@ -134,8 +155,8 @@ class TxResultHandler(config: TxConfig, jobManager: JobManager, nonInteractiveMo
           case Success(value) =>
             out.println(s"Job #${job.jobId} completed (use 'jobs -v ${job.jobId}' to view results)")
             handleResult(value, input)
-          case Failure(e2) =>
-            out.println(s"Job #${job.jobId} failed: ${e2.getMessage}")
+          case Failure(e) =>
+            out.println(s"Job #${job.jobId} failed: ${e.getMessage}")
         }
     }
   }

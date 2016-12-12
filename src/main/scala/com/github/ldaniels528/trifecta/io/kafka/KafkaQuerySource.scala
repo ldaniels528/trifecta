@@ -1,5 +1,6 @@
 package com.github.ldaniels528.trifecta.io.kafka
 
+import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.io.IOCounter
 import com.github.ldaniels528.trifecta.io.kafka.KafkaQuerySource._
 import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
@@ -46,7 +47,7 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
           case Success(results) => results
           case Failure(e) => Map("__error" -> e.getMessage)
         }
-        mapping ++ Map(Partition -> md.partition, Offset -> md.offset)
+        mapping ++ Map(Partition -> md.partition, Offset -> md.offset, Key -> decodeKey(md.key))
       }
     } map { values =>
       val elapsedTimeMillis = (System.currentTimeMillis() - startTime).toDouble
@@ -70,6 +71,14 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
     }
   }
 
+  private def decodeKey(key: Array[Byte]) = {
+    Option(key) match {
+      case Some(k) if k.isPrintable => new String(k)
+      case Some(k) => k map ("%02x".format(_)) mkString "."
+      case None => ""
+    }
+  }
+
 }
 
 /**
@@ -79,5 +88,5 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
 object KafkaQuerySource {
   val Partition = "__partition"
   val Offset = "__offset"
-
+  val Key = "__key"
 }

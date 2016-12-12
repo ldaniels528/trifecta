@@ -213,7 +213,7 @@ class KafkaModule(config: TxConfig) extends Module {
     val outputSource = getOutputSource(params) getOrElse die("No output source defined")
 
     // get an optional decoder
-    val decoder = getAvroDecoder(params)(rt.config)
+    val decoder = getMessageDecoder(params)(rt.config)
 
     // copy the messages from the input source to the output source
     copyOperation(inputSource, outputSource, decoder)
@@ -223,7 +223,7 @@ class KafkaModule(config: TxConfig) extends Module {
     * Copies messages from the input source to the output source
     * @return an asynchronous I/O result
     */
-  private def copyOperation(reader: MessageInputSource, writer: MessageOutputSource, decoder: Option[AvroDecoder]) = {
+  private def copyOperation(reader: MessageInputSource, writer: MessageOutputSource, decoder: Option[MessageDecoder[_]]) = {
     AsyncIO { counter =>
       var found: Boolean = true
 
@@ -259,15 +259,15 @@ class KafkaModule(config: TxConfig) extends Module {
     * Counts the messages matching a given condition [references cursor]
     * @example kcount frequency >= 1200
     */
-  def countMessages(params: UnixLikeArgs): Future[Long] = {
+  def countMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Long] = {
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
-    val avro_? = getAvroDecoder(params)(config)
 
     // get the input topic and decoder from the cursor
     val (topic, decoder) = {
-      if (topic_?.isDefined) (topic_?.get, avro_?)
-      else navigableCursor map (c => (c.topic, if (avro_?.isDefined) avro_? else c.decoder)) getOrElse dieNoCursor
+      val specifiedDecoder = topic_?.map(topic => topic -> resolveDecoder(topic, params))
+      val cursorDecoder = navigableCursor.map(c => c.topic -> getMessageDecoder(params)(config) ?? c.decoder)
+      (specifiedDecoder ?? cursorDecoder) getOrElse dieNoCursor
     }
 
     // get the criteria
@@ -316,13 +316,13 @@ class KafkaModule(config: TxConfig) extends Module {
   def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
-    val avro_? = getAvroDecoder(params)(config)
+    val avro_? = getMessageDecoder(params)(config)
     val forward = !params("-b").exists(parseBoolean("backward", _))
 
     // get the topic and partition from the cursor
     val (topic, decoder_?) = {
       if (topic_?.isDefined) (topic_?.get, avro_?)
-      else navigableCursor map (c => (c.topic, if (avro_?.isDefined) avro_? else c.decoder)) getOrElse dieNoCursor
+      else navigableCursor map (c => (c.topic, avro_? ?? c.decoder)) getOrElse dieNoCursor
     }
 
     // perform the search
@@ -344,7 +344,7 @@ class KafkaModule(config: TxConfig) extends Module {
     // was a topic, partition and/or Avro decoder specified?
     val topic_? = params("-t")
     val partition_? = params("-p") map parsePartition
-    val avro_? = getAvroDecoder(params)(config)
+    val avro_? = getMessageDecoder(params)(config)
 
     // get the topic and partition from the cursor
     val (topic, partition, decoder_?) = {
@@ -371,7 +371,7 @@ class KafkaModule(config: TxConfig) extends Module {
   def findMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): AsyncIO = {
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
-    val avro_? = getAvroDecoder(params)(config)
+    val avro_? = getMessageDecoder(params)(config)
 
     // get the input topic and decoder from the cursor
     val (topic, decoder_?) = {
@@ -553,13 +553,9 @@ class KafkaModule(config: TxConfig) extends Module {
     * @return an option of the [[MessageDecoder]]
     */
   private def resolveDecoder(topic: String, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[MessageDecoder[_]] = {
-   val avroDecoder = params("-a") flatMap  {
-      case "default" => rt.resolveDecoder(topic)
-      case url => Option(AvroCodec.resolve(url))
-    }
-    val otherDecoder = params("-f") flatMap (MessageCodecFactory.getDecoder(config, _))
+    val specifiedDecoder = getMessageDecoder(params)(config)
     val cursorDecoder = navigableCursors.get(topic) flatMap (_.decoder)
-    avroDecoder ?? otherDecoder ?? cursorDecoder
+   specifiedDecoder ?? cursorDecoder
   }
 
   /**
@@ -915,8 +911,8 @@ class KafkaModule(config: TxConfig) extends Module {
     Try(watchCursors.remove(key) map (_.consumer.close()))
   }
 
-  private def getAvroDecoder(params: UnixLikeArgs)(implicit config: TxConfig): Option[AvroDecoder] = {
-    params("-a") map AvroCodec.resolve
+  private def getMessageDecoder(params: UnixLikeArgs)(implicit config: TxConfig): Option[MessageDecoder[_]] = {
+    (params("-a") ?? params("-f")) flatMap (MessageCodecFactory.getDecoder(config, _))
   }
 
   private def getTopicAndGroup(params: UnixLikeArgs): TopicAndGroup = {

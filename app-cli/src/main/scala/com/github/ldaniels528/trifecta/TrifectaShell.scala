@@ -1,7 +1,5 @@
 package com.github.ldaniels528.trifecta
 
-import java.io.File
-
 import com.github.ldaniels528.trifecta.AppConstants.VERSION
 import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.github.ldaniels528.trifecta.messages.{MessageReader, MessageSourceFactory, MessageWriter}
@@ -14,6 +12,7 @@ import com.github.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.github.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
+import com.github.ldaniels528.trifecta.CommandLineHelper._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
@@ -34,9 +33,7 @@ object TrifectaShell {
     */
   def main(args: Array[String]) {
     // interactive mode?
-    val nonInteractiveMode = args.exists(!_.startsWith("--"))
-
-    // announce the version
+    val nonInteractiveMode = args.isNonInteractive
     if(!nonInteractiveMode) {
       println(s"Trifecta v$VERSION")
     }
@@ -44,11 +41,8 @@ object TrifectaShell {
     // load the configuration
     val config = loadConfiguration(nonInteractiveMode)
 
-    // use JSON pretty printing?
-    val prettyJson = args.contains("--pretty-json")
-
     // startup the Kafka Sandbox?
-    if (args.contains("--kafka-sandbox")) {
+    if (args.isKafkaSandbox) {
       initKafkaSandbox(config)
     }
 
@@ -57,26 +51,19 @@ object TrifectaShell {
     val messageSourceFactory = new MessageSourceFactory()
     val rt = TxRuntimeContext(config, messageSourceFactory)
     val moduleManager = initModules(config, jobManager, messageSourceFactory, rt)
-    val resultHandler = new TxResultHandler(config, jobManager, nonInteractiveMode, prettyJson)
+    val resultHandler = new TxResultHandler(config, jobManager, args)
 
     // initialize the console
     val console = new CLIConsole(rt, jobManager, messageSourceFactory, moduleManager, resultHandler)
 
     // if arguments were not passed, stop.
-    args.filterNot(_.startsWith("--")).toList match {
+    args.filterShellArgs.toList match {
       case Nil => console.shell()
       case params =>
-        checkForScriptFile(params) match {
+        args.scriptFile(params) match {
           case Some(scriptFile) => console.executeScript(scriptFile)
           case None => console.execute(params mkString " ")
         }
-    }
-  }
-
-  private def checkForScriptFile(args: Seq[String]): Option[File] = {
-    args.indexOf("-script-file") match {
-      case index if index >= 0 && index + 1 < args.length => Some(new File(args(index + 1)))
-      case _ => None
     }
   }
 
