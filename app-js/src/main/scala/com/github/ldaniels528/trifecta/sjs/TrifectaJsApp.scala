@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs
 
-import com.github.ldaniels528.trifecta.AppConstants.VERSION
+import com.github.ldaniels528.trifecta.AppConstants._
 import com.github.ldaniels528.trifecta.sjs.controllers._
 import com.github.ldaniels528.trifecta.sjs.services._
 import org.scalajs.angularjs.angular
@@ -65,6 +65,7 @@ object TrifectaJsApp extends js.JSApp {
     // start the application
     module.run({ ($rootScope: RootScope, ServerSideEventsService: ServerSideEventsService) =>
       $rootScope.version = VERSION
+      $rootScope.kafkaVersion = KAFKA_VERSION
 
       console.log("Initializing application...")
       ServerSideEventsService.connect()
