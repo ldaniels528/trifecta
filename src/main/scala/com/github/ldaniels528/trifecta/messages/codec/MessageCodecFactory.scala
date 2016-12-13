@@ -1,72 +1,111 @@
 package com.github.ldaniels528.trifecta.messages.codec
 
+import java.io.File
+
 import com.github.ldaniels528.trifecta.TxConfig
 import com.github.ldaniels528.trifecta.TxConfig.{TxFailedSchema, TxSuccessSchema}
-import com.github.ldaniels528.trifecta.messages.codec.avro.{AvroCodec, AvroDecoder}
-import com.github.ldaniels528.trifecta.messages.codec.json.JsonMessageDecoder
 import com.github.ldaniels528.trifecta.messages.codec.apache.ApacheAccessLogDecoder
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroCodec
 import com.github.ldaniels528.trifecta.messages.codec.gzip.GzipCodec
-import com.kbb.trifecta.decoders.LogRawMessageDecoder
+import com.github.ldaniels528.trifecta.messages.codec.json.{JsonHelper, JsonMessageDecoder}
+import org.slf4j.LoggerFactory
 
-import scala.util.{Success, Try}
+import scala.collection.concurrent.TrieMap
+import scala.io.Source
+import scala.util.{Failure, Success, Try}
 
 /**
   * Message CODEC Factory
   * @author lawrence.daniels@gmail.com
   */
 object MessageCodecFactory {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
+  private val decoders = TrieMap[String, MessageDecoder[_]](
+    "apachelog" -> ApacheAccessLogDecoder,
+    "bytes" -> LoopBackCodec,
+    "gzip" -> GzipCodec,
+    "json" -> JsonMessageDecoder,
+    "text" -> PlainTextCodec
+  )
+  private val encoders = TrieMap[String, MessageEncoder[_]](
+    "bytes" -> LoopBackCodec,
+    "gzip" -> GzipCodec,
+    "text" -> PlainTextCodec
+  )
 
   /**
     * Optionally returns a message decoder for the given URL
-    * @param url the given message decoder URL (e.g. "avro:file:avro/quotes.avsc")
+    * @param config the given [[TxConfig configuration]]
+    * @param url    the given message decoder URL (e.g. "avro:file:avro/quotes.avsc")
     * @return an option of a [[MessageDecoder]]
     */
   def getDecoder(config: TxConfig, url: String): Option[MessageDecoder[_]] = {
     url match {
-      case "apachelog" => Option(ApacheAccessLogDecoder)
       case s if s.startsWith("avro:") => Option(AvroCodec.resolve(s.drop(5)))
-      case "bytes" => Option(LoopBackCodec)
       case s if s.startsWith("decoder:") =>
         config.getDecoders.find(_.name == s.drop(8)) map (_.decoder match {
           case TxSuccessSchema(_, avroDecoder, _) => avroDecoder
           case TxFailedSchema(_, cause, _) => throw new IllegalStateException(cause.getMessage)
         })
-      case "gzip" => Option(GzipCodec)
-      case "json" => Option(JsonMessageDecoder)
-      case "lograw" => Option(LogRawMessageDecoder)
-      case "text" => Option(PlainTextCodec)
-      case _ => None
+      case name => decoders.get(name)
     }
   }
 
   /**
     * Optionally returns a message encoder for the given URL
-    * @param url the given message encoder URL (e.g. "bytes")
+    * @param config the given [[TxConfig configuration]]
+    * @param url    the given message encoder URL (e.g. "bytes")
     * @return an option of a [[MessageEncoder]]
     */
-  def getEncoder(url: String): Option[MessageEncoder[_]] = {
-    url match {
-      case "bytes" => Option(LoopBackCodec)
-      case "gzip" => Option(GzipCodec)
-      case "text" => Option(PlainTextCodec)
-      case _ => None
+  def getEncoder(config: TxConfig, url: String): Option[MessageEncoder[_]] = {
+    encoders.find(_._1 == url).map(_._2)
+  }
+
+  def loadUserDefinedCodecs(classLoader: ClassLoader, file: File) {
+    if (file.exists()) {
+      Try {
+        val jsonString = Source.fromFile(file).getLines() mkString "\n"
+        JsonHelper.transformTo[List[UserDecoder]](jsonString)
+      } match {
+        case Success(codecDefs) =>
+          var count = 0
+          for {
+            codecDef <- codecDefs
+            codec <- Try(Class.forName(codecDef.`class`, true, classLoader).newInstance()) match {
+              case Success(potentialCodec) => List(potentialCodec)
+              case Failure(e) =>
+                logger.warn(s"Failed to load message CODEC '${codecDef.name}' (${codecDef.`class`}): ${e.getMessage}")
+                Nil
+            }
+          } {
+            count += (codec match {
+              case de: MessageDecoder[_] with MessageEncoder[_] =>
+                decoders.put(codecDef.name, de)
+                encoders.put(codecDef.name, de)
+                2
+              case d: MessageDecoder[_] =>
+                decoders.put(codecDef.name, d)
+                1
+              case e: MessageEncoder[_] =>
+                encoders.put(codecDef.name, e)
+                1
+              case _ =>
+                logger.warn(s"${codecDef.name} (${codecDef.`class`}) was neither a message decoder or encoder")
+                0
+            })
+          }
+        case Failure(e) =>
+          logger.warn(s"Failed to load user-defined message CODECs: ${e.getMessage}")
+      }
     }
   }
 
   /**
-    * Returns the type name of the given message decoder
-    * @param decoder the given message decoder
-    * @return the type name (e.g. "json")
+    * Represents a user-defined decoder
+    * @param name    the name of the decoder
+    * @param `class` the class name of the decoder
     */
-  def getTypeName(decoder: MessageDecoder[_]): String = decoder match {
-    case ApacheAccessLogDecoder => "apachelog"
-    case av: AvroDecoder => "avro"
-    case JsonMessageDecoder => "json"
-    case GzipCodec => "gzip"
-    case LoopBackCodec => "bytes"
-    case PlainTextCodec => "text"
-    case _ => "unknown"
-  }
+  case class UserDecoder(name: String, `class`: String)
 
   /**
     * Loop-back CODEC

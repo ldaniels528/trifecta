@@ -81,7 +81,7 @@
                 <span class="inactive" ng-hide="message.offset != null">****</span>
             </div>
             <div class="input_block" ng-hide="isLimitedControls()">
-                <span class="header_label">View </span>
+                <span class="header_label">Mode </span>
                 <input ng-model="displayMode.state" type="radio" value="key" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Key</span>
                 <input ng-model="displayMode.state" type="radio" value="message" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Message</span>
             </div>

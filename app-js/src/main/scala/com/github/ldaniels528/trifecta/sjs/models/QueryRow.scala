@@ -20,7 +20,7 @@ trait QueryRow extends js.Object {
   * @author lawrence.daniels@gmail.com
   */
 object QueryRow {
-  val ColumnsWithError = js.Array("__partition", "__offset", "__error")
-  val ColumnsWithoutError = js.Array("__partition", "__offset")
+  val ColumnsWithoutError = js.Array("__partition", "__offset", "__key")
+  val ColumnsWithError =  js.Array("__partition", "__offset", "__key", "__error")
 
 }

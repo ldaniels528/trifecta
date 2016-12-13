@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta
 
-import java.io.PrintStream
+import java.io.{File, PrintStream}
 
 import com.datastax.driver.core.{CodecRegistry, ColumnDefinitions, ResultSet, Row}
 import com.github.ldaniels528.trifecta.command.CommandParser
@@ -14,6 +14,7 @@ import org.apache.zookeeper.KeeperException.ConnectionLossException
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
+import scala.io.Source
 import scala.language.postfixOps
 import scala.tools.jline.console.ConsoleReader
 import scala.tools.jline.console.history.FileHistory
@@ -54,6 +55,12 @@ class CLIConsole(rt: TxRuntimeContext,
       case Failure(e) =>
         if (rt.config.debugOn) e.printStackTrace()
         err.println(s"Runtime error: ${getErrorMessage(e)}")
+    }
+  }
+
+  def executeScript(scriptFile: File) {
+    Source.fromFile(scriptFile).getLines() foreach { line =>
+      execute(line)
     }
   }
 
@@ -115,7 +122,7 @@ class CLIConsole(rt: TxRuntimeContext,
     * Executes a local system command
     * @example `ps -ef`
     */
-  private def executeCommand(command: String): Try[String] = {
+  private def runLocalCommand(command: String): Try[String] = {
     import scala.sys.process._
 
     Try(command.!!)
@@ -130,7 +137,7 @@ class CLIConsole(rt: TxRuntimeContext,
 
   private def interpret(input: String): Try[Any] = {
     input.trim match {
-      case s if s.startsWith("`") && s.endsWith("`") => executeCommand(s.drop(1).dropRight(1))
+      case s if s.startsWith("`") && s.endsWith("`") => runLocalCommand(s.drop(1).dropRight(1))
       case s => interpretCommandLine(s)
     }
   }

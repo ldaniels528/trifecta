@@ -30,7 +30,7 @@ class JsonHelperSpec() extends FeatureSpec with GivenWhenThen {
           |    }""".stripMargin
 
       When("the JSON string is parsed")
-      val doc = toJson(jsonString)
+      val doc = transform(jsonString)
 
       Then("the result matches the expected result")
       /*

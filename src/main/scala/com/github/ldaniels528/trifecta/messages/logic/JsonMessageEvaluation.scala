@@ -68,10 +68,10 @@ object JsonMessageEvaluation {
       case JDouble(num) => num
       case JInt(num) => num
       case JObject(fields) => Map(fields.map(f => f.name -> unwrap(f.value)): _*)
-      case JNull => null
+      case JNull | JNothing => null
       case JString(s) => s
       case unknown =>
-        logger.warn(s"Unrecognized typed '$unknown' (${unknown.getClass.getName})")
+        logger.warn(s"Unrecognized type '$unknown' (${unknown.getClass.getName})")
         null
     }
   }

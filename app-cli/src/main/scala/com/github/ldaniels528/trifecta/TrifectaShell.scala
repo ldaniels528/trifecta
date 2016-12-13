@@ -12,8 +12,10 @@ import com.github.ldaniels528.trifecta.modules.kafka.KafkaModule
 import com.github.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
+import com.github.ldaniels528.trifecta.CommandLineHelper._
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
@@ -30,14 +32,17 @@ object TrifectaShell {
     * @param args the given command line arguments
     */
   def main(args: Array[String]) {
-    // use the ANSI console plugin to display the title line
-    println(s"Trifecta v$VERSION")
+    // interactive mode?
+    val nonInteractiveMode = args.isNonInteractive
+    if(!nonInteractiveMode) {
+      println(s"Trifecta v$VERSION")
+    }
 
     // load the configuration
-    val config = loadConfiguration()
+    val config = loadConfiguration(nonInteractiveMode)
 
     // startup the Kafka Sandbox?
-    if (args.contains("--kafka-sandbox")) {
+    if (args.isKafkaSandbox) {
       initKafkaSandbox(config)
     }
 
@@ -46,26 +51,26 @@ object TrifectaShell {
     val messageSourceFactory = new MessageSourceFactory()
     val rt = TxRuntimeContext(config, messageSourceFactory)
     val moduleManager = initModules(config, jobManager, messageSourceFactory, rt)
-
-    // interactive mode?
-    val nonInteractiveMode = args.exists(!_.startsWith("--"))
-    val resultHandler = new TxResultHandler(config, jobManager, nonInteractiveMode)
+    val resultHandler = new TxResultHandler(config, jobManager, args)
 
     // initialize the console
     val console = new CLIConsole(rt, jobManager, messageSourceFactory, moduleManager, resultHandler)
 
     // if arguments were not passed, stop.
-    args.filterNot(_.startsWith("--")).toList match {
-      case Nil =>
-        console.shell()
+    args.filterShellArgs.toList match {
+      case Nil => console.shell()
       case params =>
-        val line = params mkString " "
-        console.execute(line)
+        args.scriptFile(params) match {
+          case Some(scriptFile) => console.executeScript(scriptFile)
+          case None => console.execute(params mkString " ")
+        }
     }
   }
 
-  private def loadConfiguration() = {
-    logger.info(s"Loading configuration file '${TxConfig.configFile}'...")
+  private def loadConfiguration(nonInteractiveMode: Boolean) = {
+    if(!nonInteractiveMode) {
+      logger.info(s"Loading configuration file '${TxConfig.configFile}'...")
+    }
     Try(TxConfig.load(TxConfig.configFile)) match {
       case Success(cfg) => cfg
       case Failure(_) =>
@@ -82,16 +87,16 @@ object TrifectaShell {
     logger.info("Starting Kafka Sandbox...")
     val kafkaSandbox = KafkaSandbox()
     config.zooKeeperConnect = kafkaSandbox.getConnectString
-    Thread.sleep(3000)
+    Thread.sleep(3.seconds.toMillis)
   }
 
   /**
     *
     * Create the module manager and loads the built-in modules
-    * @param config the given [[TxConfig configuration]]
-    * @param jobManager the given [[JobManager job manager]]
+    * @param config               the given [[TxConfig configuration]]
+    * @param jobManager           the given [[JobManager job manager]]
     * @param messageSourceFactory the given [[MessageSourceFactory message source factory]]
-    * @param rt the given [[TxRuntimeContext runtime context]]
+    * @param rt                   the given [[TxRuntimeContext runtime context]]
     * @return a new [[ModuleManager module manager]] instance
     */
   private def initModules(config: TxConfig,
