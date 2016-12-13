@@ -7,6 +7,7 @@ import org.apache.zookeeper.CreateMode
 import org.apache.zookeeper.CreateMode._
 
 import scala.collection.JavaConversions._
+import scala.util.Try
 
 /**
  * ZooKeeper Proxy (Apache Curator client)
@@ -21,7 +22,10 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
   // create the connection
   connect()
 
-  override def close(): Unit = client.close()
+  override def close(): Unit = {
+    Try(client.close())
+    ()
+  }
 
   override def connect(): Unit = {
     client = CuratorFrameworkFactory.newClient(connectionString, retryPolicy)

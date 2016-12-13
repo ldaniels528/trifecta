@@ -74,9 +74,9 @@ case class AzureDocumentDB(module: AzureModule, config: TxConfig, connection: Tx
     * Inserts a document into the database
     * @param params the given [[UnixLikeArgs arguments]]
     */
-  def insertDocument(params: UnixLikeArgs) = {
+  def insertDocument(params: UnixLikeArgs): Ok = {
     val jsonString = params.args match {
-      case List(aJsonString) => compressJson(aJsonString)
+      case List(aJsonString) => renderJson(aJsonString, pretty = false)
       case _ => dieSyntax(params)
     }
 
@@ -96,7 +96,7 @@ case class AzureDocumentDB(module: AzureModule, config: TxConfig, connection: Tx
     * @return the next document from the cursor
     */
   private def nextMessage = cursor_? flatMap { it =>
-    if (it.hasNext) Option(toJson(it.next().toString)) else None
+    if (it.hasNext) Option(transform(it.next().toString)) else None
   }
 
 }

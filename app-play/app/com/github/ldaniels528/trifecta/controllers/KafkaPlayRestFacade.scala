@@ -309,7 +309,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
   private def toDecoderJs(topic: String, decoders: Seq[TxDecoder]) = {
     val schemas = decoders map { d =>
       d.decoder match {
-        case TxSuccessSchema(name, _, schemaString) => SchemaJs(topic, name, JsonHelper.makePretty(schemaString), error = None)
+        case TxSuccessSchema(name, _, schemaString) => SchemaJs(topic, name, JsonHelper.renderJson(schemaString, pretty = true), error = None)
         case TxFailedSchema(name, e, schemaString) => SchemaJs(topic, name, schemaString, error = Some(e.getMessage))
       }
     }
@@ -401,7 +401,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
           case jtc: JsonTransCoding =>
             jtc.decodeAsJson(md.message) match {
               case Success(jValue) =>
-                Option(MessageJs(`type` = "json", partition = md.partition, offset = md.offset, payload = Json.parse(JsonHelper.compressJson(jValue))))
+                Option(MessageJs(`type` = "json", partition = md.partition, offset = md.offset, payload = Json.parse(JsonHelper.renderJson(jValue, pretty = false))))
               case Failure(e) =>
                 Logger.warn(s"$name: Decoding failure", e)
                 None
@@ -550,7 +550,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
 
   def publishMessage(topic: String, payload: String)(implicit ec: ExecutionContext): Future[RecordMetadata] = {
     // deserialize the JSON
-    val blob = JsonHelper.transform[MessageBlobJs](payload)
+    val blob = JsonHelper.transformTo[MessageBlobJs](payload)
 
     // publish the message
     val publisher = cachedPublisher.getOrElseUpdate((), createPublisher(brokers))
@@ -579,7 +579,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     format match {
       case "ASCII" => value.getBytes(config.encoding)
       case "Avro" => toAvroBinary(topic, value).orDie(s"No suitable decoder found for topic $topic")
-      case "JSON" => JsonHelper.compressJson(value).getBytes(config.encoding)
+      case "JSON" => JsonHelper.renderJson(value, pretty = false).getBytes(config.encoding)
       case "Hex-Notation" => ParsingHelper.parseDottedHex(value)
       case "EPOC" => ByteBufferUtils.longToBytes(value.toLong)
       case "UUID" => ByteBufferUtils.uuidToBytes(UUID.fromString(value))
@@ -672,7 +672,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     def toCSV(values: List[String]): String = values.map(s => s""""$s"""").mkString(",")
 
     Future {
-      val js = JsonHelper.toJson(queryResults)
+      val js = JsonHelper.transform(queryResults)
       for {
         topic <- (js \ "topic").extractOpt[String]
         labels <- (js \ "labels").extractOpt[List[String]]

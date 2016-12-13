@@ -119,8 +119,8 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
     // retrieve the document from the collection
     val document = params.args match {
       case List(tableName) => database.getCollection(tableName).findOne()
-      case List(tableName, query) => database.getCollection(tableName).findOne(toJson(query))
-      case List(tableName, query, fields) => database.getCollection(tableName).findOne(toJson(query), toJson(fields))
+      case List(tableName, query) => database.getCollection(tableName).findOne(transform(query))
+      case List(tableName, query, fields) => database.getCollection(tableName).findOne(transform(query), transform(fields))
       case _ => dieSyntax(params)
     }
 
@@ -150,8 +150,8 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
     // retrieve the documents from the collection
     val documents = params.args match {
       case List(tableName) => database.getCollection(tableName).find()
-      case List(tableName, query) => database.getCollection(tableName).find(toJson(query))
-      case List(tableName, query, fields) => database.getCollection(tableName).find(toJson(query), toJson(fields))
+      case List(tableName, query) => database.getCollection(tableName).find(transform(query))
+      case List(tableName, query, fields) => database.getCollection(tableName).find(transform(query), transform(fields))
       case _ => dieSyntax(params)
     }
 
@@ -180,7 +180,7 @@ class MongoModule(config: TxConfig) extends Module with BinaryMessaging {
     */
   def insertDocument(params: UnixLikeArgs): WriteResult = {
     val (tableName, json) = params.args match {
-      case List(collectionName, jsonString) => (collectionName, toJson(jsonString))
+      case List(collectionName, jsonString) => (collectionName, transform(jsonString))
       case _ => dieSyntax(params)
     }
 

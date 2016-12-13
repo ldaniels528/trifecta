@@ -267,7 +267,8 @@ object KafkaMicroConsumer {
     }
 
     // return a promise of the messages
-    Future.sequence(tasks) map (_.flatten.sortBy(_.partition))
+    val outcome = Future.sequence(tasks) map (_.flatten.sortBy(_.partition))
+    limit.map(n => outcome.map(_.take(n))) getOrElse outcome
   }
 
   /**

@@ -89,7 +89,7 @@ case class TxMongoCollection(mc: MongoCollection) {
     * @param result the given  MongoDB document
     * @return the resultant [[JValue]]
     */
-  def toJson(result: DBObject): JValue = JsonHelper.toJson(result.toString)
+  def toJson(result: DBObject): JValue = JsonHelper.transform(result.toString)
 
   private def convertToMDB[T](input: T): Any = {
     input match {

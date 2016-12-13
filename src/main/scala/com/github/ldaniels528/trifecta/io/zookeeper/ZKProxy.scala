@@ -52,7 +52,7 @@ trait ZKProxy {
  */
 object ZKProxy {
 
-  def apply(connectionString: String) = new ZkProxyCurator(connectionString)
+  def apply(connectionString: String) = ZkProxyCurator(connectionString)
 
   /**
    * All implicit definitions are declared here

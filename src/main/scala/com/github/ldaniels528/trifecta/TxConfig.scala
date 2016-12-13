@@ -9,6 +9,7 @@ import com.github.ldaniels528.commons.helpers.PropertiesHelper._
 import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.TxConfig._
+import com.github.ldaniels528.trifecta.io.JarFileClassLoader
 import com.github.ldaniels528.trifecta.messages.codec.avro.AvroDecoder
 import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper
 import com.github.ldaniels528.trifecta.messages.codec.{MessageCodecFactory, MessageDecoder}
@@ -37,6 +38,10 @@ class TxConfig(val configProps: Properties) {
       if (!directory.exists()) directory.mkdirs()
     }
   }
+
+  // load any user-defined message CODECs
+  private val jarFileClassLoader = new JarFileClassLoader(new File(trifectaPrefs, "libs"))
+  MessageCodecFactory.loadUserDefinedCodecs(jarFileClassLoader, new File(trifectaPrefs, "codecs.js"))
 
   // set the current working directory
   configProps.setProperty("trifecta.core.cwd", new File(".").getCanonicalPath)
@@ -164,7 +169,7 @@ class TxConfig(val configProps: Properties) {
     file.extension.orDie(s"File '${file.getName}' has no extension (e.g. '.avsc')") match {
       case ".avsc" | ".avdl" => AvroDecoder(file)
       case ".js" =>
-        JsonHelper.transform[BuiltinDecoder](file.getTextContents) match {
+        JsonHelper.transformTo[BuiltinDecoder](file.getTextContents) match {
           case BuiltinDecoder(_, typeName) => MessageCodecFactory.getDecoder(this, typeName)
         }
       case _ => None
