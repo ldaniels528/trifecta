@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.22.0rc3"
+val appVersion = "0.22.0rc4"
 val meanjsVersion = "0.2.3.1"
 
 val _scalaVersion = "2.11.8"
@@ -118,7 +118,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     mainClass in assembly := Some("com.github.ldaniels528.trifecta.TrifectaShell"),
     test in assembly := {},
-    assemblyJarName in assembly := name.value + "-" + version.value + ".bin.jar",
+    assemblyJarName in assembly := s"${name.value}-${version.value}.bin.jar",
     assemblyMergeStrategy in assembly <<= (assemblyMergeStrategy in assembly) { (old) => {
       case PathList("log4j-over-slf4j", xs@_*) => MergeStrategy.discard
       case PathList("log4j.properties", xs@_*) => MergeStrategy.discard

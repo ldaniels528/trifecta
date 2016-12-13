@@ -70,7 +70,7 @@ object ParsingHelper {
   def parseDouble(label: String, value: String): Double = {
     Try(value.toDouble) match {
       case Success(v) => v
-      case Failure(e) =>
+      case Failure(_) =>
         throw new IllegalArgumentException(s"$label: Expected a decimal value, found '$value'")
     }
   }
@@ -84,7 +84,7 @@ object ParsingHelper {
   def parseInt(label: String, value: String): Int = {
     Try(value.toInt) match {
       case Success(v) => v
-      case Failure(e) =>
+      case Failure(_) =>
         throw new IllegalArgumentException(s"$label: Expected an integer value, found '$value'")
     }
   }
@@ -98,7 +98,7 @@ object ParsingHelper {
   def parseLong(label: String, value: String): Long = {
     Try(value.toLong) match {
       case Success(v) => v
-      case Failure(e) =>
+      case Failure(_) =>
         throw new IllegalArgumentException(s"$label: Expected a long integer value, found '$value'")
     }
   }
