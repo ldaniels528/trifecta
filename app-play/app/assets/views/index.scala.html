@@ -39,7 +39,11 @@
 </head>
 
 <body id="TrifectaMain" ng-controller="MainController" ng-init="init()">
-    <h2><span class="title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span> <span class="version">v{{ version }}</span></h2>
+    <h2>
+        <span class="title1">Tri</span><span class="title2">fec</span><span class="title3">ta</span>
+        <span class="version">v{{ version }}</span>
+        <span class="version"> ({{ kafkaVersion }})</span>
+    </h2>
 
     <!-- global error messages -->
     <div ng-repeat="message in globalMessages" class="full_width">
