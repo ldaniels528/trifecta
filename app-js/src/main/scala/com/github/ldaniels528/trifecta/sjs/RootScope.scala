@@ -11,4 +11,6 @@ import scala.scalajs.js
 @js.native
 trait RootScope extends Scope {
   var version: js.UndefOr[String] = js.native
+  var kafkaVersion: js.UndefOr[String] = js.native
+
 }
