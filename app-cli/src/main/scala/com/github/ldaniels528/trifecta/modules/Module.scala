@@ -19,6 +19,14 @@ import net.liftweb.json._
 trait Module extends ModuleCommandAgent with MessageReader with MessageWriter {
 
   /**
+    * Deciphers the given module-specific value into an object that can
+    * be represented at the console
+    * @param value the given [[AnyRef value]]
+    * @return the option of a deciphered value
+    */
+  def decipher(value: Any): Option[AnyRef] = None
+
+  /**
     * Returns the commands that are bound to the module
     * @return the commands that are bound to the module
     */

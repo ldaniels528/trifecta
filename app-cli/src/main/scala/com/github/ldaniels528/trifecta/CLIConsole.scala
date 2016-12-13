@@ -2,7 +2,7 @@ package com.github.ldaniels528.trifecta
 
 import java.io.{File, PrintStream}
 
-import com.datastax.driver.core.{CodecRegistry, ColumnDefinitions, ResultSet, Row}
+import com.github.ldaniels528.commons.helpers.OptionHelper._
 import com.github.ldaniels528.trifecta.command.CommandParser
 import com.github.ldaniels528.trifecta.io.{AsyncIO, IOCounter}
 import com.github.ldaniels528.trifecta.messages.MessageSourceFactory
@@ -128,11 +128,11 @@ class CLIConsole(rt: TxRuntimeContext,
     Try(command.!!)
   }
 
-  private def handleResult(result: Any, input: String)(implicit ec: ExecutionContext) = {
-    result match {
-      case r: ResultSet => handleCassandraResultSet(r)
-      case x => resultHandler.handleResult(x, input)
+  private def handleResult(value: Any, input: String)(implicit ec: ExecutionContext) {
+    val result = moduleManager.modules.foldLeft[Option[AnyRef]](None){ (result, module) =>
+      result ?? module.decipher(value)
     }
+    resultHandler.handleResult(result getOrElse value, input)
   }
 
   private def interpret(input: String): Try[Any] = {
@@ -196,38 +196,4 @@ class CLIConsole(rt: TxRuntimeContext,
     Option(t.getMessage) getOrElse t.toString
   }
 
-  /**
-    * Handles a Cassandra Result Set
-    * @param rs the given [[ResultSet]]
-    */
-  private def handleCassandraResultSet(rs: ResultSet): Unit = {
-    val cds = rs.getColumnDefinitions.asList().toSeq
-    val records = rs.all() map (decodeRow(_, cds))
-    resultHandler.tabular.transformMaps(records) foreach out.println
-  }
-
-  private def decodeRow(row: Row, cds: Seq[ColumnDefinitions.Definition]): Map[String, Any] = {
-    Map(cds map { cd =>
-      val name = cd.getName
-      val javaType = CodecRegistry.DEFAULT_INSTANCE.codecFor(cd.getType).getJavaType.getRawType
-      val value = javaType match {
-        case c if c == classOf[Array[Byte]] => row.getBytes(name)
-        case c if c == classOf[java.math.BigDecimal] => row.getDecimal(name)
-        case c if c == classOf[java.math.BigInteger] => row.getVarint(name)
-        case c if c == classOf[java.lang.Boolean] => row.getBool(name)
-        case c if c == classOf[java.util.Date] => row.getDate(name)
-        case c if c == classOf[java.lang.Double] => row.getDouble(name)
-        case c if c == classOf[java.lang.Float] => row.getFloat(name)
-        case c if c == classOf[java.lang.Integer] => row.getInt(name)
-        case c if c == classOf[java.lang.Long] => row.getLong(name)
-        case c if c == classOf[java.util.Map[_, _]] => row.getMap(name, classOf[String], classOf[Object])
-        case c if c == classOf[java.util.Set[_]] => row.getSet(name, classOf[Object])
-        case c if c == classOf[String] => row.getString(name)
-        case c if c == classOf[java.util.UUID] => row.getUUID(name)
-        case c =>
-          throw new IllegalStateException(s"Unsupported class type ${javaType.getName} for column ${cd.getTable}.$name")
-      }
-      (name, value)
-    }: _*)
-  }
 }

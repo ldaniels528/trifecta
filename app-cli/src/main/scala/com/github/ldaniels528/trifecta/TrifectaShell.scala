@@ -3,13 +3,8 @@ package com.github.ldaniels528.trifecta
 import com.github.ldaniels528.trifecta.AppConstants.VERSION
 import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.github.ldaniels528.trifecta.messages.{MessageReader, MessageSourceFactory, MessageWriter}
-import com.github.ldaniels528.trifecta.modules.azure.AzureModule
-import com.github.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.github.ldaniels528.trifecta.modules.core.CoreModule
-import com.github.ldaniels528.trifecta.modules.elasticsearch.ElasticSearchModule
-import com.github.ldaniels528.trifecta.modules.etl.ETLModule
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaModule
-import com.github.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
 import com.github.ldaniels528.trifecta.CommandLineHelper._
@@ -106,12 +101,7 @@ object TrifectaShell {
     val moduleManager = new ModuleManager()(rt)
     moduleManager ++= Seq(
       new CoreModule(config, jobManager, moduleManager),
-      new AzureModule(config),
-      new CassandraModule(config),
-      new ElasticSearchModule(config),
-      new ETLModule(config),
       new KafkaModule(config),
-      new MongoModule(config),
       new ZookeeperModule(config))
 
     // set the "active" module

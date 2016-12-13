@@ -118,7 +118,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     mainClass in assembly := Some("com.github.ldaniels528.trifecta.TrifectaShell"),
     test in assembly := {},
-    assemblyJarName in assembly := name.value + "-" + version.value + ".bin.jar",
+    assemblyJarName in assembly := s"${name.value}-${version.value}.bin.jar",
     assemblyMergeStrategy in assembly <<= (assemblyMergeStrategy in assembly) { (old) => {
       case PathList("log4j-over-slf4j", xs@_*) => MergeStrategy.discard
       case PathList("log4j.properties", xs@_*) => MergeStrategy.discard
@@ -128,23 +128,105 @@ lazy val trifecta_cli = (project in file("app-cli"))
     },
     libraryDependencies ++= testDependencies ++ Seq(
       //
-      // General Scala Dependencies
-      "net.databinder.dispatch" %% "dispatch-core" % "0.11.2", // 0.11.3
-      //
-      // Microsoft/Azure Dependencies
-      "com.microsoft.azure" % "azure-documentdb" % "1.5.1",
-      "com.microsoft.azure" % "azure-storage" % "4.0.0",
-      //"com.microsoft.sqlserver" % "sqljdbc4" % "4.0",
-      //
-      // SQL/NOSQL Dependencies
-      "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0",
-      "org.mongodb" %% "casbah-commons" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
-      "org.mongodb" %% "casbah-core" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
-      //
       // General Java Dependencies
       "log4j" % "log4j" % "1.2.17",
       "org.scala-lang" % "jline" % "2.11.0-M3",
+      "org.slf4j" % "slf4j-api" % "1.7.21",
       "org.slf4j" % "slf4j-log4j12" % "1.7.21"
+    )
+  )
+
+lazy val trifecta_modules_bundle = (project in file("app-modules/bundle"))
+  .dependsOn(trifecta_azure, trifecta_cassandra, trifecta_elasticsearch, trifecta_etl, trifecta_mongodb)
+  .settings(
+    name := "trifecta-modules-bundle",
+    organization := "com.github.ldaniels528",
+    version := appVersion,
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint")
+  )
+
+lazy val trifecta_azure = (project in file("app-modules/azure"))
+  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_cli)
+  .settings(
+    name := "trifecta-azure",
+    organization := "com.github.ldaniels528",
+    version := appVersion,
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
+    scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    libraryDependencies ++= testDependencies ++ Seq(
+      "com.microsoft.azure" % "azure-documentdb" % "1.5.1",
+      "com.microsoft.azure" % "azure-storage" % "4.0.0"
+      //"com.microsoft.sqlserver" % "sqljdbc4" % "4.0"
+    )
+  )
+
+lazy val trifecta_cassandra = (project in file("app-modules/cassandra"))
+  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_cli)
+  .settings(
+    name := "trifecta-cassandra",
+    organization := "com.github.ldaniels528",
+    version := appVersion,
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
+    scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    libraryDependencies ++= testDependencies ++ Seq(
+      "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0"
+    )
+  )
+
+lazy val trifecta_elasticsearch = (project in file("app-modules/elasticsearch"))
+  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_cli)
+  .settings(
+    name := "trifecta-elasticsearch",
+    organization := "com.github.ldaniels528",
+    version := appVersion,
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
+    scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    libraryDependencies ++= testDependencies ++ Seq(
+      "net.databinder.dispatch" %% "dispatch-core" % "0.11.2" // 0.11.3
+    )
+  )
+
+lazy val trifecta_etl = (project in file("app-modules/etl"))
+  .dependsOn(commons_helpers, trifecta_cli, trifecta_azure, trifecta_cassandra, trifecta_elasticsearch, trifecta_mongodb)
+  .settings(
+    name := "trifecta-etl",
+    organization := "com.github.ldaniels528",
+    version := appVersion,
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
+    scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    libraryDependencies ++= testDependencies ++ Seq(
+      "net.databinder.dispatch" %% "dispatch-core" % "0.11.2" // 0.11.3
+    )
+  )
+
+lazy val trifecta_mongodb = (project in file("app-modules/mongodb"))
+  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_cli)
+  .settings(
+    name := "trifecta-mongodb",
+    organization := "com.github.ldaniels528",
+    version := appVersion,
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
+    scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    libraryDependencies ++= testDependencies ++ Seq(
+      "org.mongodb" %% "casbah-commons" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
+      "org.mongodb" %% "casbah-core" % casbahVersion exclude("org.slf4j", "slf4j-log4j12")
     )
   )
 
@@ -172,8 +254,7 @@ lazy val trifecta_ui_js = (project in file("app-js"))
       //
       // ScalaJS dependencies
       "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11"),
-      "org.scala-js" %%% "scalajs-dom" % "0.9.0",
-      "be.doeraene" %%% "scalajs-jquery" % "0.9.0"
+      "org.scala-js" %%% "scalajs-dom" % "0.9.0"
     ))
 
 lazy val trifecta_ui = (project in file("app-play"))
