@@ -1,16 +1,20 @@
 package com.github.ldaniels528.trifecta.modules
 
+import java.io.File
 import java.net.{URL, URLClassLoader}
 import java.nio.ByteBuffer
 
 import com.github.ldaniels528.commons.helpers.ProcessHelper._
 import com.github.ldaniels528.trifecta.TxRuntimeContext
 import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
-import com.github.ldaniels528.trifecta.io._
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper
 import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource, MessageReader, MessageWriter}
 import com.github.ldaniels528.trifecta.modules.Module.formatTypes
 import com.github.ldaniels528.trifecta.util.ParsingHelper._
-import net.liftweb.json._
+import org.slf4j.LoggerFactory
+
+import scala.io.Source
+import scala.util.{Failure, Success, Try}
 
 /**
   * Represents a dynamically loadable module
@@ -68,7 +72,7 @@ trait Module extends ModuleCommandAgent with MessageReader with MessageWriter {
       case "double" => ByteBuffer.wrap(bytes).getDouble
       case "float" => ByteBuffer.wrap(bytes).getFloat
       case "int" | "integer" => ByteBuffer.wrap(bytes).getInt
-      case "json" => formatJson(new String(bytes))
+      case "json" => JsonHelper.renderJson(new String(bytes), pretty = true)
       case "long" => ByteBuffer.wrap(bytes).getLong
       case "short" => ByteBuffer.wrap(bytes).getShort
       case "string" | "text" => new String(bytes)
@@ -101,8 +105,6 @@ trait Module extends ModuleCommandAgent with MessageReader with MessageWriter {
   protected def extract[T](values: Seq[T], index: Int): Option[T] = {
     if (values.length > index) Some(values(index)) else None
   }
-
-  private def formatJson(value: String): String = prettyRender(parse(value))
 
   protected def getInputSource(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[MessageInputSource] = {
     params("-i") flatMap rt.getInputHandler
@@ -142,7 +144,28 @@ trait Module extends ModuleCommandAgent with MessageReader with MessageWriter {
   * @author lawrence.daniels@gmail.com
   */
 object Module {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   val formatTypes = Seq("bytes", "char", "double", "float", "int", "json", "long", "short", "string")
+
+  def loadUserDefinedModules(classLoader: ClassLoader, modulesFile: File): List[Module] = {
+    if (modulesFile.exists()) {
+      Try {
+        val jsonString = Source.fromFile(modulesFile).getLines() mkString "\n"
+        JsonHelper.transformTo[List[UserModule]](jsonString)
+      } match {
+        case Success(modules) => modules flatMap { umd =>
+          logger.info(s"Loading module '${umd.name}'...")
+          Try(classLoader.loadClass(umd.`class`).newInstance().asInstanceOf[Module]) match {
+            case Success(module) => Option(module)
+            case Failure(e) =>
+              logger.warn(s"Failed to load user-defined module '${umd.name}': ${e.getMessage}")
+              None
+          }
+        }
+        case Failure(e) => Nil
+      }
+    } else Nil
+  }
 
   /**
     * A simple name-value pair
@@ -150,5 +173,12 @@ object Module {
     * @param value the value of the property
     */
   case class NameValuePair(name: String, value: Any)
+
+  /**
+    * A user-defined module definition
+    * @param name    the name of the user-defined module
+    * @param `class` the class name of the user-defined module
+    */
+  case class UserModule(name: String, `class`: String)
 
 }
