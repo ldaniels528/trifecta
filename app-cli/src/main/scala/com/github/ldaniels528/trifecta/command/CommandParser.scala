@@ -1,41 +1,37 @@
 package com.github.ldaniels528.trifecta.command
 
 /**
- * Command Parser
- * @author lawrence.daniels@gmail.com
- */
+  * Command Parser
+  * @author lawrence.daniels@gmail.com
+  */
 object CommandParser {
   private val SYMBOLS = Set('!', '?', '&')
 
   /**
-   * Parses the given input string into tokens
-   * @param input the given user input to parse
-   */
-  def parseTokens(input: String): Seq[String] = {
+    * Parses the given input string into tokens
+    * @param input the given user input to parse
+    */
+  def parseTokens(input: String): List[String] = {
     val sb = new StringBuilder()
-    var inQuotes = false
+    var inDoubleQuotes = false
+    var inSingleQuotes = false
     var inBackTicks = false
     var jsonLevel = 0
+
+    def closeOut(done: => Boolean) = {
+      if (done) {
+        val text = sb.toString()
+        sb.clear()
+        Some(text)
+      }
+      else None
+    }
+
+    def inQuotes = inBackTicks || inDoubleQuotes || inSingleQuotes
 
     // extract the tokens
     val list = input.foldLeft[List[String]](Nil) { (list, ch) =>
       val result: Option[String] = ch match {
-        // back ticks (start)
-        case c if c == '`' && !inQuotes =>
-          inBackTicks = !inBackTicks
-          sb += c
-          if(!inBackTicks) {
-            val s = sb.toString()
-            sb.clear()
-            Option(s)
-          }
-          else None
-
-        // back ticks (inclusion)
-        case c if inBackTicks =>
-          sb += c
-          None
-
         // JSON open
         case c if c == '{' && !inQuotes =>
           sb += c
@@ -46,29 +42,36 @@ object CommandParser {
         case c if c == '}' && !inQuotes =>
           sb += c
           jsonLevel -= 1
-          if (jsonLevel > 0) None
-          else {
-            jsonLevel = 0
-            val s = sb.toString()
-            sb.clear()
-            Option(s)
-          }
+          closeOut(jsonLevel == 0)
 
-        // any character inside of JSON braces
+        // JSON character inclusion
         case c if jsonLevel > 0 =>
           sb += c
           None
 
-        // is it a label?
-        /*
-        case c if c == ':' && !inQuotes =>
+        // double-quoted text
+        case '"' if !inBackTicks && !inSingleQuotes =>
+          inDoubleQuotes = !inDoubleQuotes
+          closeOut(!inDoubleQuotes)
+
+        // single-quoted text
+        case '\'' if !inBackTicks && !inDoubleQuotes =>
+          inSingleQuotes = !inSingleQuotes
+          closeOut(!inSingleQuotes)
+
+        // back-tick quoted text
+        case c if c == '`' && !inDoubleQuotes && !inSingleQuotes =>
           sb += c
-          val s = sb.toString()
-          sb.clear()
-          Option(s)*/
+          inBackTicks = !inBackTicks
+          closeOut(!inBackTicks)
+
+        // quoted character inclusion
+        case c if inQuotes =>
+          sb += c
+          None
 
         // symbol (unquoted)?
-        case c if SYMBOLS.contains(c) && !inQuotes =>
+        case c if SYMBOLS.contains(c) =>
           val s = sb.toString()
           sb.clear()
           if (s.isEmpty) Option(String.valueOf(c))
@@ -77,18 +80,9 @@ object CommandParser {
             Option(s)
           }
 
-        // quoted text
-        case '"' =>
-          inQuotes = !inQuotes
-          None
-
         // space (unquoted)?
-        case c if c == ' ' && !inQuotes =>
-          if (sb.nonEmpty) {
-            val s = sb.toString()
-            sb.clear()
-            Option(s)
-          } else None
+        case c if c == ' ' =>
+          closeOut(sb.nonEmpty)
 
         // any other character
         case c =>
@@ -104,16 +98,16 @@ object CommandParser {
   }
 
   /**
-   * Parses the given input string into tokens
-   * @return the argument list
-   */
+    * Parses the given input string into tokens
+    * @return the argument list
+    */
   def parseUnixLikeArgs(input: String): UnixLikeArgs = parseUnixLikeArgs(parseTokens(input))
 
   /**
-   * Parses the given items (e.g. ["-c", "-f", "myfile"]) into an argument list (e.g. ["-c" -> None, "-f" -> Some("myfile")])
-   * @param items the given array of items
-   * @return the argument list
-   */
+    * Parses the given items (e.g. ["-c", "-f", "myfile"]) into an argument list (e.g. ["-c" -> None, "-f" -> Some("myfile")])
+    * @param items the given array of items
+    * @return the argument list
+    */
   def parseUnixLikeArgs(items: Seq[String]): UnixLikeArgs = {
     val args = if (items.nonEmpty) items.tail else Nil
     val result = args.foldLeft[Accumulator](Accumulator()) { case (acc: Accumulator, item) =>
