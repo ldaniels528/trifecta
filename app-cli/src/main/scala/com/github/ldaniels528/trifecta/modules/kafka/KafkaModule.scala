@@ -74,7 +74,7 @@ class KafkaModule(config: TxConfig) extends Module {
     Command(this, "kget", getMessage, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-ts" -> "YYYY-MM-DDTHH:MM:SS")), help = "Retrieves the message at the specified offset for a given topic partition"),
     Command(this, "kgetkey", getMessageKey, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-f" -> "format", "-s" -> "fetchSize")), help = "Retrieves the key of the message at the specified offset for a given topic partition"),
     Command(this, "kgetsize", getMessageSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "offset" -> false), Seq("-s" -> "fetchSize")), help = "Retrieves the size of the message at the specified offset for a given topic partition"),
-    Command(this, "kput", publishMessage, UnixLikeParams(Seq("topic" -> false, "key" -> true, "message" -> true)), help = "Publishes a message to a topic"),
+    Command(this, "kput", publishMessage, UnixLikeParams(Seq("topic" -> false, "key" -> false, "message" -> true)), help = "Publishes a message to a topic"),
 
     // consumer group-related commands
     Command(this, "kcommit", commitOffset, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "groupId" -> true, "offset" -> true), Seq("-m" -> "metadata")), help = "Commits the offset for a given topic and group"),
@@ -792,11 +792,12 @@ class KafkaModule(config: TxConfig) extends Module {
     * Publishes the given message to a given topic
     * @example kput greetings a0.00.11.22.33.44.ef.11 "Hello World"
     * @example kput a0.00.11.22.33.44.ef.11 "Hello World" (references cursor)
+    * @example kput "Hello World" (references cursor)
     */
   def publishMessage(params: UnixLikeArgs): Unit = {
-
     // get the topic, key and message
     val (topic, key, message) = params.args match {
+      case aMessage :: Nil => navigableCursor map (c => (c.topic, "", aMessage)) getOrElse dieNoCursor
       case aKey :: aMessage :: Nil => navigableCursor map (c => (c.topic, aKey, aMessage)) getOrElse dieNoCursor
       case aTopic :: aKey :: aMessage :: Nil => (aTopic, aKey, aMessage)
       case _ => dieSyntax(params)
