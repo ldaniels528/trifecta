@@ -40,6 +40,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   //////////////////////////////////////////////////////////////////////////
 
   $scope.message = js.undefined
+  $scope.decodingOn = true
   $scope.displayMode = new DisplayMode(state = "message", format = "json")
   $scope.sampling = SamplingStatus(status = SAMPLING_STATUS_STOPPED)
 
@@ -403,6 +404,10 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
     $scope.displayMode.format = if ($scope.displayMode.format == "json") "avro" else "json"
   }
 
+  $scope.toggleDecodingState = () => {
+    $scope.decodingOn = !$scope.decodingOn
+  }
+
   $scope.messageAsASCII = (aMessage: js.UndefOr[Message]) => {
     for {
       message <- aMessage
@@ -505,7 +510,8 @@ object ObserveController {
 
   /**
     * Display Mode
-    * @author lawrence.daniels@gmail.com
+    * @param state the current display mode (e.g. "key" or "message")
+    * @param format the current format
     */
   @ScalaJSDefined
   class DisplayMode(var state: String, var format: String) extends js.Object
@@ -539,6 +545,7 @@ object ObserveController {
     with MainTabManagement with ReferenceDataAware {
 
     // properties
+    var decodingOn: Boolean = js.native
     var displayMode: DisplayMode = js.native
     var message: js.UndefOr[Message] = js.native
     var sampling: SamplingStatus = js.native
@@ -573,6 +580,7 @@ object ObserveController {
     var previousMessage: js.Function0[Unit] = js.native
     var resetMessageState: js.Function4[js.UndefOr[String], js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
     var setMessageData: js.Function1[js.UndefOr[Message], Unit] = js.native
+    var toggleDecodingState: js.Function0[Unit] = js.native
   }
 
 }
