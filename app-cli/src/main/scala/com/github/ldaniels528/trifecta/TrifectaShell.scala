@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta
 
-import com.github.ldaniels528.trifecta.AppConstants.VERSION
+import com.github.ldaniels528.trifecta.AppConstants._
 import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.github.ldaniels528.trifecta.messages.{MessageReader, MessageSourceFactory, MessageWriter}
 import com.github.ldaniels528.trifecta.modules.core.CoreModule
@@ -30,7 +30,7 @@ object TrifectaShell {
     // interactive mode?
     val nonInteractiveMode = args.isNonInteractive
     if(!nonInteractiveMode) {
-      println(s"Trifecta v$VERSION")
+      println(s"Trifecta v$VERSION ($KAFKA_VERSION)")
     }
 
     // load the configuration

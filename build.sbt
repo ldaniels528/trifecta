@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.22.0rc5"
+val appVersion = "0.22.0rc6"
 val meanjsVersion = "0.2.3.1"
 
 val _scalaVersion = "2.11.8"
@@ -272,7 +272,7 @@ lazy val trifecta_ui = (project in file("app-play"))
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     relativeSourceMaps := true,
     scalajsOutputDir := (crossTarget in Compile).value / "classes" / "public" / "javascripts",
-    pipelineStages := Seq(gzip, uglify),
+    pipelineStages := Seq(gzip),
     Seq(packageScalaJSLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
       crossTarget in(trifecta_ui_js, Compile, packageJSKey) := scalajsOutputDir.value
     },
