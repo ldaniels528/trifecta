@@ -1,6 +1,5 @@
 package com.github.ldaniels528.trifecta.modules.azure
 
-import com.github.ldaniels528.trifecta.TxResultHandler.Ok
 import com.github.ldaniels528.trifecta.command.UnixLikeArgs
 import com.github.ldaniels528.trifecta.messages.codec.avro.AvroCodec
 import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper._
@@ -8,6 +7,7 @@ import com.github.ldaniels528.trifecta.messages.{BinaryMessaging, KeyAndMessage}
 import com.github.ldaniels528.trifecta.modules.ModuleCommandAgent
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.microsoft.azure.documentdb.Document
+import net.liftweb.json.JValue
 
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,13 +24,13 @@ case class AzureDocumentDB(module: AzureModule, config: TxConfig, connection: Tx
   /**
     * Closes the database connection
     */
-  def close() = connection.close()
+  def close(): Unit = connection.close()
 
   /**
     * Retrieves a list of DocumentDB documents
     * @param params the given [[UnixLikeArgs arguments]]
     */
-  def findDocuments(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
+  def findDocuments(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[JValue] = {
     // retrieve the documents from the collection
     val response = params.args match {
       case List(query) => connection.queryDocuments(query)
@@ -63,7 +63,7 @@ case class AzureDocumentDB(module: AzureModule, config: TxConfig, connection: Tx
     * Optionally returns the next message
     * @param params the given [[UnixLikeArgs arguments]]
     */
-  def getNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
+  def getNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[JValue] = {
     params.args match {
       case Nil => nextMessage
       case _ => dieSyntax(params)
@@ -74,7 +74,7 @@ case class AzureDocumentDB(module: AzureModule, config: TxConfig, connection: Tx
     * Inserts a document into the database
     * @param params the given [[UnixLikeArgs arguments]]
     */
-  def insertDocument(params: UnixLikeArgs): Ok = {
+  def insertDocument(params: UnixLikeArgs) {
     val jsonString = params.args match {
       case List(aJsonString) => renderJson(aJsonString, pretty = false)
       case _ => dieSyntax(params)
@@ -82,7 +82,6 @@ case class AzureDocumentDB(module: AzureModule, config: TxConfig, connection: Tx
 
     // insert the document into the collection
     connection.createDocument(jsonString)
-    Ok()
   }
 
   /**

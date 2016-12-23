@@ -4,7 +4,6 @@ import java.io.File
 import java.util.Date
 
 import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
-import com.github.ldaniels528.trifecta.TxResultHandler.Ok
 import com.github.ldaniels528.trifecta.command.UnixLikeArgs
 import com.github.ldaniels528.trifecta.modules.ModuleCommandAgent
 import com.github.ldaniels528.trifecta.modules.azure.AzureBlobStorage.{AzureBlobContainer, AzureBlobItem, AzureContainer}
@@ -73,7 +72,7 @@ class AzureBlobStorage(storageAccount: CloudStorageAccount) extends ModuleComman
     blobContainer map { container =>
       val count = download(container, prefix, new File(targetPath), recursive)
       logger.info(s"$count file(s) downloaded")
-      Ok
+      ()
     }
   }
 
@@ -109,14 +108,14 @@ class AzureBlobStorage(storageAccount: CloudStorageAccount) extends ModuleComman
 
     // connect to the remote peer
     blobContainer = blobClient.getContainerReference(containerName)
-    blobContainer map (_ => Ok)
+    blobContainer foreach (_ => ())
   }
 
   /**
     * Recursively uploads files or directories to the current container
     * @param params the given [[UnixLikeArgs arguments]]
     */
-  def uploadBlobs(params: UnixLikeArgs) = {
+  def uploadBlobs(params: UnixLikeArgs): Option[Any] = {
     // determine the source file path
     val srcFilePath = params.args match {
       case aSrcFilePath :: Nil => aSrcFilePath
@@ -131,11 +130,11 @@ class AzureBlobStorage(storageAccount: CloudStorageAccount) extends ModuleComman
     blobContainer map { container =>
       val count = upload(container, new File(srcFilePath), parentFile = None, recursive)
       logger.info(s"$count file(s) uploaded")
-      Ok
+      ()
     }
   }
 
-  def pwd = {
+  def pwd: List[AzureContainer] = {
     blobContainer.map { container =>
       AzureContainer(name = container.getName, uri = container.getUri.toASCIIString)
     } toList

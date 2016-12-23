@@ -5,7 +5,7 @@ import java.net.{URL, URLClassLoader}
 import java.nio.ByteBuffer
 
 import com.github.ldaniels528.commons.helpers.ProcessHelper._
-import com.github.ldaniels528.trifecta.TxRuntimeContext
+import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs}
 import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper
 import com.github.ldaniels528.trifecta.messages.{MessageInputSource, MessageOutputSource, MessageReader, MessageWriter}
@@ -147,7 +147,7 @@ object Module {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   val formatTypes = Seq("bytes", "char", "double", "float", "int", "json", "long", "short", "string")
 
-  def loadUserDefinedModules(classLoader: ClassLoader, modulesFile: File): List[Module] = {
+  def loadUserDefinedModules(config: TxConfig, modulesFile: File, classLoader: ClassLoader): List[Module] = {
     if (modulesFile.exists()) {
       Try {
         val jsonString = Source.fromFile(modulesFile).getLines() mkString "\n"
@@ -155,14 +155,20 @@ object Module {
       } match {
         case Success(modules) => modules flatMap { umd =>
           logger.info(s"Loading module '${umd.name}'...")
-          Try(classLoader.loadClass(umd.`class`).newInstance().asInstanceOf[Module]) match {
+          Try {
+            val `class` = classLoader.loadClass(umd.`class`)
+            val constructor = `class`.getConstructor(classOf[TxConfig])
+            constructor.newInstance(config).asInstanceOf[Module]
+          } match {
             case Success(module) => Option(module)
             case Failure(e) =>
               logger.warn(s"Failed to load user-defined module '${umd.name}': ${e.getMessage}")
               None
           }
         }
-        case Failure(e) => Nil
+        case Failure(e) =>
+          logger.warn(s"Unable to load modules from '${modulesFile.getName}': ${e.getMessage}")
+          Nil
       }
     } else Nil
   }

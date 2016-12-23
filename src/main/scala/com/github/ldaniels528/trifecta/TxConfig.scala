@@ -13,7 +13,6 @@ import com.github.ldaniels528.trifecta.TxConfig._
 import com.github.ldaniels528.trifecta.messages.codec.avro.AvroDecoder
 import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper
 import com.github.ldaniels528.trifecta.messages.codec.{MessageCodecFactory, MessageDecoder}
-import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.util.FileHelper._
 import org.slf4j.LoggerFactory
 
@@ -32,19 +31,16 @@ class TxConfig(val configProps: Properties) {
   private val cachedDecoders = TrieMap[File, TxDecoder]()
   private val alive = new AtomicBoolean(true)
 
-  // initialize the custom classes
+  val libsDirectory = new File(trifectaPrefs, "libs")
+
+  // initialize the custom CODECs
   Try {
-    val libsDirectory = new File(trifectaPrefs, "libs")
     if(libsDirectory.isDirectory) {
       // create our custom-class classloader
       val jfCL = createUrlClassLoader(getClass.getClassLoader, libsDirectory)
 
       // load any user-defined message CODECs
-      MessageCodecFactory.loadUserDefinedCodecs(jfCL, new File(trifectaPrefs, "codecs.js"))
-
-      // load the user defined modules
-      //val userDefinedModules = Module.loadUserDefinedModules()
-
+      MessageCodecFactory.loadUserDefinedCodecs(jfCL, new File(trifectaPrefs, "codecs.json"))
     }
   }
 
@@ -271,7 +267,7 @@ class TxConfig(val configProps: Properties) {
     ()
   }
 
-  private def createUrlClassLoader(parentClassLoader: ClassLoader, directory: File) = {
+  def createUrlClassLoader(parentClassLoader: ClassLoader, directory: File): URLClassLoader = {
     val jarUrls = getJarFiles(directory).map(_.toURI.toURL).toArray[URL]
     new URLClassLoader(jarUrls, parentClassLoader)
   }

@@ -8,10 +8,9 @@ import com.github.ldaniels528.trifecta.io.{AsyncIO, IOCounter}
 import com.github.ldaniels528.trifecta.messages.MessageSourceFactory
 import com.github.ldaniels528.trifecta.messages.query.parser.KafkaQueryParser
 import com.github.ldaniels528.trifecta.modules.ModuleHelper.die
-import com.github.ldaniels528.trifecta.modules.ModuleManager
+import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
 import org.apache.zookeeper.KeeperException.ConnectionLossException
 
-import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
@@ -34,6 +33,22 @@ class CLIConsole(rt: TxRuntimeContext,
   // redirect standard output
   val out: PrintStream = config.out
   val err: PrintStream = config.err
+
+  // initialize the custom modules
+  Try {
+    val libsDirectory = config.libsDirectory
+    if (libsDirectory.isDirectory) {
+      val modulesFile = new File(TxConfig.trifectaPrefs, "modules.json")
+      if (modulesFile.exists()) {
+        // create our custom-class classloader
+        val jfCL = config.createUrlClassLoader(getClass.getClassLoader, libsDirectory)
+
+        // load the user defined modules
+        val modules = Module.loadUserDefinedModules(config, modulesFile, jfCL)
+        moduleManager ++= modules
+      }
+    }
+  }
 
   /**
     * Executes the given command line expression
@@ -129,7 +144,7 @@ class CLIConsole(rt: TxRuntimeContext,
   }
 
   private def handleResult(value: Any, input: String)(implicit ec: ExecutionContext) {
-    val result = moduleManager.modules.foldLeft[Option[AnyRef]](None){ (result, module) =>
+    val result = moduleManager.modules.foldLeft[Option[AnyRef]](None) { (result, module) =>
       result ?? module.decipher(value)
     }
     resultHandler.handleResult(result getOrElse value, input)

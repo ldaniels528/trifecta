@@ -11,27 +11,30 @@ val casbahVersion = "3.1.1"
 val kafkaVersion = "0.8.2.0"
 val paradiseVersion = "2.1.0"
 val playVersion = "2.4.6"
+val slf4jVersion = "1.7.21"
 val twitterBijection = "0.9.2"
 
 lazy val scalajsOutputDir = Def.settingKey[File]("Directory for Javascript files output by ScalaJS")
 
 lazy val libDependencies = Seq(
   "log4j" % "log4j" % "1.2.17" % "test",
-  "org.slf4j" % "slf4j-api" % "1.7.7",
-  "org.slf4j" % "slf4j-log4j12" % "1.7.7" % "test"
+  "org.slf4j" % "slf4j-api" % slf4jVersion,
+  "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test"
 )
 
 lazy val testDependencies = Seq(
   "junit" % "junit" % "4.12" % "test",
   "org.mockito" % "mockito-all" % "1.10.19" % "test",
-  "org.scalatest" %% "scalatest" % "2.2.3" % "test"
+  "org.scalatest" %% "scalatest" % "2.2.3" % "test",
+  "org.slf4j" % "slf4j-api" % slf4jVersion % "test",
+  "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test"
 )
 
 lazy val tabular = (project in file("libs/tabular"))
   .settings(
     name := "tabular",
     organization := "com.github.ldaniels528",
-    version := "0.1.3",
+    version := appVersion,
     scalaVersion := _scalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
@@ -44,7 +47,7 @@ lazy val commons_helpers = (project in file("libs/commons-helpers"))
   .settings(
     name := "commons-helpers",
     organization := "com.github.ldaniels528",
-    version := "0.1.2",
+    version := appVersion,
     scalaVersion := _scalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
@@ -77,24 +80,16 @@ lazy val trifecta_core = (project in file("."))
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     libraryDependencies ++= testDependencies ++ Seq(
-      //
-      // General Scala Dependencies
-      "net.databinder.dispatch" %% "dispatch-core" % "0.11.2", // 0.11.3
-      //
       // General Java Dependencies
       "commons-io" % "commons-io" % "2.4",
-      "joda-time" % "joda-time" % "2.9.1",
       "net.liftweb" %% "lift-json" % "3.0-M7",
-      "org.apache.httpcomponents" % "httpclient" % "4.5.2",
-      "org.joda" % "joda-convert" % "1.8.1",
-      "org.slf4j" % "slf4j-api" % "1.7.21",
+      //"org.apache.httpcomponents" % "httpclient" % "4.5.2",
       //
       // Typesafe dependencies
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.play" %% "play-json" % playVersion,
       //
       // Avro Dependencies
-      "com.twitter" %% "bijection-core" % twitterBijection,
       "com.twitter" %% "bijection-avro" % twitterBijection,
       "org.apache.avro" % "avro-compiler" % "1.8.1",
       //
@@ -105,8 +100,23 @@ lazy val trifecta_core = (project in file("."))
       "org.apache.kafka" % "kafka-clients" % kafkaVersion
     ))
 
+lazy val trifecta_modules_core = (project in file("app-modules/core"))
+  .dependsOn(trifecta_core)
+  .settings(
+    name := "trifecta-modules-core",
+    organization := "com.github.ldaniels528",
+    version := appVersion,
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
+    scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
+    javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    libraryDependencies ++= testDependencies ++ Seq(
+      "org.slf4j" % "slf4j-api" % "1.7.21"
+    ))
+
 lazy val trifecta_cli = (project in file("app-cli"))
-  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_common)
+  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_common, trifecta_modules_core)
   .settings(
     name := "trifecta-cli",
     organization := "com.github.ldaniels528",
@@ -119,36 +129,20 @@ lazy val trifecta_cli = (project in file("app-cli"))
     mainClass in assembly := Some("com.github.ldaniels528.trifecta.TrifectaShell"),
     test in assembly := {},
     assemblyJarName in assembly := s"${name.value}-${version.value}.bin.jar",
-    assemblyMergeStrategy in assembly <<= (assemblyMergeStrategy in assembly) { (old) => {
-      case PathList("log4j-over-slf4j", xs@_*) => MergeStrategy.discard
+    assemblyMergeStrategy in assembly := {
       case PathList("log4j.properties", xs@_*) => MergeStrategy.discard
       case PathList("META-INF", xs@_*) => MergeStrategy.discard
-      case x => MergeStrategy.first
-    }
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
     },
     libraryDependencies ++= testDependencies ++ Seq(
-      //
-      // General Java Dependencies
       "log4j" % "log4j" % "1.2.17",
-      "org.scala-lang" % "jline" % "2.11.0-M3",
-      "org.slf4j" % "slf4j-api" % "1.7.21",
-      "org.slf4j" % "slf4j-log4j12" % "1.7.21"
+      "org.scala-lang" % "jline" % "2.11.0-M3"
     )
   )
 
-lazy val trifecta_modules_bundle = (project in file("app-modules/bundle"))
-  .dependsOn(trifecta_azure, trifecta_cassandra, trifecta_elasticsearch, trifecta_etl, trifecta_mongodb)
-  .settings(
-    name := "trifecta-modules-bundle",
-    organization := "com.github.ldaniels528",
-    version := appVersion,
-    scalaVersion := _scalaVersion,
-    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
-      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint")
-  )
-
 lazy val trifecta_azure = (project in file("app-modules/azure"))
-  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_cli)
   .settings(
     name := "trifecta-azure",
     organization := "com.github.ldaniels528",
@@ -158,15 +152,27 @@ lazy val trifecta_azure = (project in file("app-modules/azure"))
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    assemblyMergeStrategy in assembly := {
+      case PathList("log4j.properties", xs@_*) => MergeStrategy.discard
+      case PathList("META-INF", xs@_*) => MergeStrategy.discard
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    },
     libraryDependencies ++= testDependencies ++ Seq(
+      "com.github.ldaniels528" %% "commons-helpers" % appVersion % "provided",
+      "com.github.ldaniels528" %% "tabular" % appVersion % "provided",
+      "com.github.ldaniels528" %% "trifecta-core" % appVersion % "provided",
+      "com.github.ldaniels528" %% "trifecta-modules-core" % appVersion % "provided",
       "com.microsoft.azure" % "azure-documentdb" % "1.5.1",
-      "com.microsoft.azure" % "azure-storage" % "4.0.0"
-      //"com.microsoft.sqlserver" % "sqljdbc4" % "4.0"
+      "com.microsoft.azure" % "azure-storage" % "4.0.0",
+      //"com.microsoft.sqlserver" % "sqljdbc4" % "4.0",
+      "org.scala-lang" % "scala-library" % _scalaVersion % "provided",
+      "org.slf4j" % "slf4j-api" % slf4jVersion % "provided"
     )
   )
 
 lazy val trifecta_cassandra = (project in file("app-modules/cassandra"))
-  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_cli)
   .settings(
     name := "trifecta-cassandra",
     organization := "com.github.ldaniels528",
@@ -176,13 +182,26 @@ lazy val trifecta_cassandra = (project in file("app-modules/cassandra"))
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    test in assembly := {},
+    assemblyMergeStrategy in assembly := {
+      case PathList("log4j.properties", xs@_*) => MergeStrategy.discard
+      case PathList("META-INF", xs@_*) => MergeStrategy.discard
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    },
     libraryDependencies ++= testDependencies ++ Seq(
-      "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0"
+      "com.github.ldaniels528" %% "commons-helpers" % appVersion % "provided",
+      "com.github.ldaniels528" %% "tabular" % appVersion % "provided",
+      "com.github.ldaniels528" %% "trifecta-core" % appVersion % "provided",
+      "com.github.ldaniels528" %% "trifecta-modules-core" % appVersion % "provided",
+      "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0",
+      "org.scala-lang" % "scala-library" % _scalaVersion % "provided",
+      "org.slf4j" % "slf4j-api" % "1.7.7" % "provided"
     )
   )
 
 lazy val trifecta_elasticsearch = (project in file("app-modules/elasticsearch"))
-  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_cli)
   .settings(
     name := "trifecta-elasticsearch",
     organization := "com.github.ldaniels528",
@@ -192,13 +211,26 @@ lazy val trifecta_elasticsearch = (project in file("app-modules/elasticsearch"))
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    assemblyMergeStrategy in assembly := {
+      case PathList("log4j.properties", xs@_*) => MergeStrategy.discard
+      case PathList("META-INF", xs@_*) => MergeStrategy.discard
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    },
     libraryDependencies ++= testDependencies ++ Seq(
-      "net.databinder.dispatch" %% "dispatch-core" % "0.11.2" // 0.11.3
+      "com.github.ldaniels528" %% "commons-helpers" % appVersion % "provided",
+      "com.github.ldaniels528" %% "tabular" % appVersion % "provided",
+      "com.github.ldaniels528" %% "trifecta-core" % appVersion % "provided",
+      "com.github.ldaniels528" %% "trifecta-modules-core" % appVersion % "provided",
+      "net.databinder.dispatch" %% "dispatch-core" % "0.11.2", // 0.11.3
+      "org.scala-lang" % "scala-library" % _scalaVersion % "provided",
+      "org.slf4j" % "slf4j-api" % slf4jVersion % "provided"
     )
   )
 
 lazy val trifecta_etl = (project in file("app-modules/etl"))
-  .dependsOn(commons_helpers, trifecta_cli, trifecta_azure, trifecta_cassandra, trifecta_elasticsearch, trifecta_mongodb)
+  .dependsOn(trifecta_azure, trifecta_cassandra, trifecta_elasticsearch, trifecta_mongodb)
   .settings(
     name := "trifecta-etl",
     organization := "com.github.ldaniels528",
@@ -208,13 +240,24 @@ lazy val trifecta_etl = (project in file("app-modules/etl"))
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    assemblyMergeStrategy in assembly := {
+      case PathList("log4j.properties", xs@_*) => MergeStrategy.discard
+      case PathList("META-INF", xs@_*) => MergeStrategy.discard
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    },
     libraryDependencies ++= testDependencies ++ Seq(
-      "net.databinder.dispatch" %% "dispatch-core" % "0.11.2" // 0.11.3
+      "com.github.ldaniels528" %% "commons-helpers" % appVersion % "provided",
+      "com.github.ldaniels528" %% "tabular" % appVersion % "provided",
+      "com.github.ldaniels528" %% "trifecta-core" % appVersion % "provided",
+      "com.github.ldaniels528" %% "trifecta-modules-core" % appVersion % "provided",
+      "org.scala-lang" % "scala-library" % _scalaVersion % "provided",
+      "org.slf4j" % "slf4j-api" % slf4jVersion % "provided"
     )
   )
 
 lazy val trifecta_mongodb = (project in file("app-modules/mongodb"))
-  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_cli)
   .settings(
     name := "trifecta-mongodb",
     organization := "com.github.ldaniels528",
@@ -224,9 +267,22 @@ lazy val trifecta_mongodb = (project in file("app-modules/mongodb"))
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
+    assemblyMergeStrategy in assembly := {
+      case PathList("log4j.properties", xs@_*) => MergeStrategy.discard
+      case PathList("META-INF", xs@_*) => MergeStrategy.discard
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    },
     libraryDependencies ++= testDependencies ++ Seq(
+      "com.github.ldaniels528" %% "commons-helpers" % appVersion % "provided",
+      "com.github.ldaniels528" %% "tabular" % appVersion % "provided",
+      "com.github.ldaniels528" %% "trifecta-core" % appVersion % "provided",
+      "com.github.ldaniels528" %% "trifecta-modules-core" % appVersion % "provided",
       "org.mongodb" %% "casbah-commons" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
-      "org.mongodb" %% "casbah-core" % casbahVersion exclude("org.slf4j", "slf4j-log4j12")
+      "org.mongodb" %% "casbah-core" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
+      "org.scala-lang" % "scala-library" % _scalaVersion % "provided",
+      "org.slf4j" % "slf4j-api" % "1.6.0" % "provided"
     )
   )
 

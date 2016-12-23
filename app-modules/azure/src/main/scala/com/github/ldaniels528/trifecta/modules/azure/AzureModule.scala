@@ -2,13 +2,15 @@ package com.github.ldaniels528.trifecta.modules.azure
 
 import com.github.ldaniels528.commons.helpers.OptionHelper.Risky._
 import com.github.ldaniels528.commons.helpers.StringHelper._
-import com.github.ldaniels528.trifecta.TxResultHandler.Ok
 import com.github.ldaniels528.trifecta.command.{Command, UnixLikeArgs, UnixLikeParams}
 import com.github.ldaniels528.trifecta.modules.Module
+import com.github.ldaniels528.trifecta.modules.azure.AzureBlobStorage.{AzureBlobItem, AzureContainer}
 import com.github.ldaniels528.trifecta.modules.azure.AzureModule._
+import com.github.ldaniels528.trifecta.modules.azure.AzureTableStorage.AzureTable
 import com.github.ldaniels528.trifecta.{TxConfig, TxRuntimeContext}
 import com.microsoft.azure.documentdb.ConsistencyLevel
 import com.microsoft.azure.storage.CloudStorageAccount
+import net.liftweb.json.JValue
 
 import scala.language.{postfixOps, reflectiveCalls}
 import scala.util.Try
@@ -63,7 +65,7 @@ class AzureModule(config: TxConfig) extends Module {
     * @param url the given output URL
     * @return the option of an output source
     */
-  override def getOutputSource(url: String) = {
+  override def getOutputSource(url: String): Option[DocumentDbMessageOutputSource] = {
     for {
       databaseName <- url.extractProperty("documentdb:")
       conn <- documentDB.map(_.connection)
@@ -112,7 +114,7 @@ class AzureModule(config: TxConfig) extends Module {
     * Establishes a connection to a remote DocumentDB cluster
     * @example storageaccount shocktrade
     */
-  def connect(params: UnixLikeArgs) = {
+  def connect(params: UnixLikeArgs): Unit = {
     // determine the connection string
     val connectionString = params.args match {
       case Nil => config.getOrElse(STORAGE_ACCOUNT_URL, dieConfigKey(STORAGE_ACCOUNT_URL))
@@ -124,7 +126,7 @@ class AzureModule(config: TxConfig) extends Module {
     storageAccount = CloudStorageAccount.parse(connectionString)
     blobStorage = storageAccount.map(new AzureBlobStorage(_))
     tableStorage = storageAccount.map(new AzureTableStorage(_))
-    storageAccount map (_ => Ok)
+    storageAccount foreach (_ => ())
   }
 
   ///////////////////////////////////////////////////////////////////////
@@ -135,37 +137,37 @@ class AzureModule(config: TxConfig) extends Module {
     * Counts the blobs in the current container
     * @example blobcount
     */
-  def countBlobs(params: UnixLikeArgs) = blobStorage.flatMap(_.countBlobs(params))
+  def countBlobs(params: UnixLikeArgs): Option[Int] = blobStorage.flatMap(_.countBlobs(params))
 
   /**
     * Displays the current blob directory
     * @example blobpwd
     */
-  def currentBlobDirectory(params: UnixLikeArgs) = blobStorage.flatMap(_.pwd)
+  def currentBlobDirectory(params: UnixLikeArgs): Option[List[AzureContainer]] = blobStorage.flatMap(_.pwd)
 
   /**
     * Downloads file(s) to the current container
     * @example blobget [-r] [prefix] target
     */
-  def downloadBlobs(params: UnixLikeArgs) = blobStorage.flatMap(_.downloadBlobs(params))
+  def downloadBlobs(params: UnixLikeArgs): Option[Any] = blobStorage.flatMap(_.downloadBlobs(params))
 
   /**
     * Lists the blobs in the current container
     * @example blobls
     */
-  def listBlobs(params: UnixLikeArgs) = blobStorage.flatMap(_.listBlobs(params))
+  def listBlobs(params: UnixLikeArgs): Option[List[AzureBlobItem]] = blobStorage.flatMap(_.listBlobs(params))
 
   /**
     * Selects an Azure Blob storage container
     * @example blob test
     */
-  def selectBlobContainer(params: UnixLikeArgs) = blobStorage.flatMap(_.selectBlobContainer(params))
+  def selectBlobContainer(params: UnixLikeArgs): Option[Any] = blobStorage.flatMap(_.selectBlobContainer(params))
 
   /**
     * Recursively uploads files or directories to the current container
     * @example blobput /path/to/file targetname
     */
-  def uploadBlobs(params: UnixLikeArgs) = blobStorage.flatMap(_.uploadBlobs(params))
+  def uploadBlobs(params: UnixLikeArgs): Option[Any] = blobStorage.flatMap(_.uploadBlobs(params))
 
   ///////////////////////////////////////////////////////////////////////
   //    DocumentDB
@@ -175,7 +177,7 @@ class AzureModule(config: TxConfig) extends Module {
     * Establishes a connection to a remote DocumentDB cluster
     * @example dbconnect broadway powerball_history
     */
-  def databaseConnect(params: UnixLikeArgs) = {
+  def databaseConnect(params: UnixLikeArgs): Unit = {
     // determine the requested end-point
     val (host, masterKey, databaseName, collectionName, consistencyLevel) = params.args match {
       case aDatabase :: aCollection :: Nil =>
@@ -191,7 +193,7 @@ class AzureModule(config: TxConfig) extends Module {
 
     // connect to the remote peer
     documentDB.foreach(_.close())
-    documentDB = new AzureDocumentDB(this, config, TxDocumentDbConnection(host, masterKey, databaseName, collectionName, consistencyLevel))
+    documentDB = AzureDocumentDB(this, config, TxDocumentDbConnection(host, masterKey, databaseName, collectionName, consistencyLevel))
   }
 
   /**
@@ -200,19 +202,25 @@ class AzureModule(config: TxConfig) extends Module {
     * @example dbfind "SELECT TOP 10 * FROM powerball_history" -o es:/quotes/quote/AAPL
     * @example dbfind "SELECT TOP 10 * FROM powerball_history" -o topic:com.shocktrade.stocks.avro -a file:avro/quotes.avsc
     */
-  def findDocuments(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = documentDB.flatMap(_.findDocuments(params))
+  def findDocuments(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[JValue] = {
+    documentDB.flatMap(_.findDocuments(params))
+  }
 
   /**
     * Optionally returns the next message
     * @example dnext
     */
-  def getNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = documentDB.flatMap(_.getNextMessage(params))
+  def getNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[JValue] = {
+    documentDB.flatMap(_.getNextMessage(params))
+  }
 
   /**
     * Inserts a document into the database
     * @example dput { "symbol" : "AAPL", "lastTrade":99.56, "exchange":"NYSE" }
     */
-  def insertDocument(params: UnixLikeArgs) = documentDB.flatMap(_.insertDocument(params))
+  def insertDocument(params: UnixLikeArgs): Option[Unit] = {
+    documentDB.flatMap(_.insertDocument(params))
+  }
 
   ///////////////////////////////////////////////////////////////////////
   //    Table Storage
@@ -222,19 +230,19 @@ class AzureModule(config: TxConfig) extends Module {
     * Deletes an existing Azure table
     * @example tablerm [tableName]
     */
-  def deleteTable(params: UnixLikeArgs) = tableStorage.flatMap(_.deleteTable(params))
+  def deleteTable(params: UnixLikeArgs): Option[Boolean] = tableStorage.flatMap(_.deleteTable(params))
 
   /**
     * Lists tables
     * @example tablels [tableName]
     */
-  def listTables(params: UnixLikeArgs) = tableStorage.flatMap(_.listTables(params))
+  def listTables(params: UnixLikeArgs): Option[Iterable[AzureTable]] = tableStorage.flatMap(_.listTables(params))
 
   /**
     * Selects an Azure table
     * @example table tableName
     */
-  def selectTable(params: UnixLikeArgs) = tableStorage.flatMap(_.selectTable(params))
+  def selectTable(params: UnixLikeArgs): Option[Boolean] = tableStorage.flatMap(_.selectTable(params))
 
 }
 
