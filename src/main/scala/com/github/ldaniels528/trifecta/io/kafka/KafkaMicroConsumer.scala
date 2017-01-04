@@ -15,7 +15,8 @@ import com.github.ldaniels528.trifecta.messages.query.KQLRestrictions
 import com.github.ldaniels528.trifecta.util.TryHelper
 import kafka.api._
 import kafka.common._
-import kafka.consumer.SimpleConsumer
+import kafka.consumer.{ConsumerThreadId, SimpleConsumer}
+import kafka.utils.ZkUtils
 import net.liftweb.json._
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
@@ -238,38 +239,38 @@ object KafkaMicroConsumer {
                limit: Option[Int],
                counter: IOCounter)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[MessageData]] = {
     val count = new AtomicLong(0L)
-    val partitions = getTopicPartitions(topic)
-    val tasks = partitions map { partition =>
-      Future {
-        var messages: List[MessageData] = Nil
-        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
-          var offset: Option[Long] = subs.getStartingOffset(restrictions)
-          val lastOffset: Option[Long] = subs.getLastOffset
+    val partitions = getTopicPartitions(topic).distinct
+    val tasks: Future[Seq[MessageData]] = Future.sequence {
+      partitions map { partition =>
+        Future {
+          var matches: List[MessageData] = Nil
+          new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
+            var offset: Option[Long] = subs.getStartingOffset(restrictions)
+            val lastOffset: Option[Long] = subs.getLastOffset
+            while (offset.exists(o => lastOffset.exists(o < _)) && (limit.isEmpty || limit.exists(count.get < _))) {
+              val messages_? = offset.map(ofs => subs.fetch(ofs)(DEFAULT_FETCH_SIZE))
 
-          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || limit.exists(count.get >= _)
-
-          while (!eof) {
-            for {
-              ofs <- offset
-              msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE).headOption
-            } {
-              counter.updateReadCount(1)
-              if (conditions.forall(_.satisfies(msg.message, msg.key))) {
-                messages = msg :: messages
-                count.incrementAndGet()
+              // process the messages, then point to the next available offset
+              messages_? foreach { mds =>
+                counter.updateReadCount(mds.length)
+                mds foreach { md =>
+                  if (conditions.forall(_.satisfies(md.message, md.key))) {
+                    matches = md :: matches
+                    count.incrementAndGet()
+                  }
+                }
               }
+              offset = getNextOffset(messages_?)
             }
-
-            offset = offset map (_ + 1)
+            matches
           }
-          messages.reverse
         }
       }
-    }
+    } map (_.flatten)
 
     // return a promise of the messages
-    val outcome = Future.sequence(tasks) map (_.flatten.sortBy(_.partition))
-    limit.map(n => outcome.map(_.take(n))) getOrElse outcome
+    val sortedMessages = tasks.map(_.sortBy(_.partition))
+    limit.map(n => sortedMessages.map(_.take(n))) getOrElse sortedMessages
   }
 
   /**
@@ -300,17 +301,18 @@ object KafkaMicroConsumer {
     var offset: Option[Long] = subs.getFirstOffset
     val lastOffset: Option[Long] = subs.getLastOffset
 
-    def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || message.get.isDefined
-
-    while (!eof) {
+    // while no message was selected and the offset below the limit ...
+    while (message.get().isEmpty && offset.exists(o => lastOffset.exists(o < _))) {
+      val messages_? = offset.map(ofs => subs.fetch(ofs)(DEFAULT_FETCH_SIZE))
       for {
-        ofs <- offset
-        msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE)
-      } if (conditions.forall(_.satisfies(msg.message, msg.key))) {
-        message.compareAndSet(None, Option((partition, msg)))
+        messages <- messages_?
+        msg <- messages if message.get().isEmpty
+      } {
+        if (conditions.forall(_.satisfies(msg.message, msg.key))) {
+          message.compareAndSet(None, Option((partition, msg)))
+        }
       }
-
-      offset = offset map (_ + 1)
+      offset = getNextOffset(messages_?)
     }
   }
 
@@ -318,17 +320,34 @@ object KafkaMicroConsumer {
     var offset: Option[Long] = subs.getLastOffset
     val firstOffset: Option[Long] = subs.getFirstOffset
 
-    def eof: Boolean = offset.exists(o => firstOffset.exists(o < _)) || message.get.isDefined
-
-    while (!eof) {
+    // while no message was selected and the offset above the limit ...
+    while (message.get().isEmpty && offset.exists(o => firstOffset.exists(o > _))) {
+      val messages_? = offset.map(ofs => subs.fetch(ofs)(DEFAULT_FETCH_SIZE))
       for {
-        ofs <- offset
-        msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE)
-      } if (conditions.forall(_.satisfies(msg.message, msg.key))) {
-        message.compareAndSet(None, Option((partition, msg)))
+        messages <- messages_?
+        msg <- messages if message.get().isEmpty
+      } {
+        if (conditions.forall(_.satisfies(msg.message, msg.key))) {
+          message.compareAndSet(None, Option((partition, msg)))
+        }
       }
+      offset = getPreviousOffset(messages_?)
+    }
+  }
 
-      offset = offset map (_ - 1)
+  private def getNextOffset(messages_? : Option[Seq[MessageData]]): Option[Long] = {
+    messages_? match {
+      case None => None
+      case Some(mds) if mds.isEmpty => None
+      case Some(mds) => Option(mds.map(_.offset).max + 1)
+    }
+  }
+
+  private def getPreviousOffset(messages_? : Option[Seq[MessageData]]): Option[Long] = {
+    messages_? match {
+      case None => None
+      case Some(mds) if mds.isEmpty => None
+      case Some(mds) => Option(mds.map(_.offset).min - 1)
     }
   }
 
@@ -344,19 +363,20 @@ object KafkaMicroConsumer {
     Future.successful {
       new KafkaMicroConsumer(tap, brokers) use { subs =>
         var offset: Option[Long] = subs.getFirstOffset
+        // TODO this should be supplied
         val lastOffset: Option[Long] = subs.getLastOffset
 
-        def eof: Boolean = offset.exists(o => lastOffset.exists(o > _)) || message.get.isDefined
-
-        while (!eof) {
+        while (message.get().isEmpty && offset.exists(o => lastOffset.exists(o < _))) {
+          val messages_? = offset.map(ofs => subs.fetch(ofs)(DEFAULT_FETCH_SIZE))
           for {
-            ofs <- offset
-            msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE)
+            messages <- messages_?
+            msg <- messages if message.get().isEmpty
           } {
-            if (conditions.forall(_.satisfies(msg.message, msg.key))) message.compareAndSet(None, Option(msg))
+            if (conditions.forall(_.satisfies(msg.message, msg.key))) {
+              message.compareAndSet(None, Option(msg))
+            }
           }
-
-          offset = offset map (_ + 1)
+          offset = getNextOffset(messages_?)
         }
       }
       message.get
@@ -367,7 +387,7 @@ object KafkaMicroConsumer {
     * Retrieves the list of bootstrap servers as a comma separated string
     */
   def getBootstrapServers(implicit zk: ZKProxy): String = {
-    getBrokerList map (b => s"${b.host}:${b.port}") mkString ","
+    ZkUtils.getAllBrokersInCluster(zk.clientI0Itec) map (b => s"${b.host}:${b.port}") mkString ","
   }
 
   /**
@@ -385,7 +405,19 @@ object KafkaMicroConsumer {
     }
   }
 
-  def getBrokers(implicit zk: ZKProxy): Seq[Broker] = getBrokerList map (b => Broker(b.host, b.port))
+  def getBrokers(implicit zk: ZKProxy): Seq[Broker] = {
+    ZkUtils.getAllBrokersInCluster(zk.clientI0Itec) map (b => Broker(b.host, b.port, b.id))
+  }
+
+  def getConsumerThreadIds(consumerId: String)(implicit zk: ZKProxy): Option[Seq[ConsumerThreadId]] = {
+    Try {
+      (for {
+        (name, threads) <- ZkUtils.getConsumersPerTopic(zk.clientI0Itec, consumerId, excludeInternalTopics = true)
+        thread <- threads
+        //_ = System.out.println(s"group: $name, id: ${thread.threadId} consumer: ${thread.consumer}")
+      } yield thread).toSeq.sortBy(_.threadId)
+    } toOption
+  }
 
   /**
     * Retrieves the list of internal consumers from Kafka
@@ -394,12 +426,10 @@ object KafkaMicroConsumer {
     val topicList = getTopicList(getBrokers)
     val topicPartitions = topicList.map(t => new TopicPartition(t.topic, t.partitionId)).asJavaCollection
     val topics = topicList map (_.topic) distinct
-    val brokers = getBrokers
-    val bootstrapServers = brokers map (b => s"${b.host}:${b.port}") mkString ","
 
     consumerIds flatMap { consumerId =>
       val props = new Properties()
-      props.put("bootstrap.servers", bootstrapServers)
+      props.put("bootstrap.servers", getBootstrapServers)
       props.put("group.id", consumerId)
       props.put("auto.offset.reset", autoOffsetReset)
       props.put("key.deserializer", classOf[StringDeserializer].getName)
@@ -410,8 +440,10 @@ object KafkaMicroConsumer {
         consumer.poll(0)
         Try(consumer.position(topicPartitions)) match {
           case Success(mapping) =>
+            val threads = getConsumerThreadIds(consumerId)
             mapping.toSeq map { case (tp, offset) =>
-              ConsumerDetails(consumerId, tp.topic(), tp.partition(), offset, lastModified = None)
+              val thread = threads.flatMap(_.find(_.threadId == tp.partition())).map(_.consumer)
+              ConsumerDetails(consumerId, thread, tp.topic(), tp.partition(), offset, lastModified = None)
             }
           case Failure(e) =>
             logger.error("Failed to retrieve Kafka consumers", e)
@@ -437,10 +469,13 @@ object KafkaMicroConsumer {
     }
 
     def getConsumerDetails(consumerId: String, topic: String, partitionId: String, partitionPath: String) = {
+      val threads = getConsumerThreadIds(consumerId)
       for {
         lastModified <- Try(zk.getModificationTime(partitionPath))
         offsets <- Try(zk.readString(partitionPath))
-        details = offsets.toSeq.map(offset => ConsumerDetails(consumerId, topic, partitionId.toInt, offset.toLong, lastModified))
+        partition =  partitionId.toInt
+        threadId = threads.flatMap(_.find(_.threadId == partition)).map(_.consumer)
+        details = offsets.toSeq.map(offset => ConsumerDetails(consumerId, threadId, topic, partition, offset.toLong, lastModified))
       } yield details
     }
 
@@ -570,55 +605,19 @@ object KafkaMicroConsumer {
     */
   def observe(topic: String, brokers: Seq[Broker])(observer: MessageData => Unit)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[Unit]] = {
     Future.sequence(getTopicPartitions(topic) map { partition =>
-      Future.successful {
+      Future {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
           var offset: Option[Long] = subs.getFirstOffset
           val lastOffset: Option[Long] = subs.getLastOffset
 
-          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
-
-          while (!eof) {
-            for (ofs <- offset; msg <- subs.fetch(ofs)(DEFAULT_FETCH_SIZE).headOption) observer(msg)
-            offset = offset map (_ + 1)
+          while (offset.exists(o => lastOffset.exists(o < _))) {
+            val messages_? = offset.map(ofs => subs.fetch(ofs)(DEFAULT_FETCH_SIZE))
+            for {
+              messages <- messages_?
+              md <- messages
+            } observer(md)
+            offset = getNextOffset(messages_?)
           }
-        }
-      }
-    })
-  }
-
-  /**
-    * Returns the promise of the option of a message based on the given search criteria
-    * @param topic                the given topic name
-    * @param brokers              the given replica brokers
-    * @param groupId              the given consumer group ID
-    * @param commitFrequencyMills the commit frequency in milliseconds
-    * @param observer             the given callback function
-    * @return the promise of the option of a message based on the given search criteria
-    */
-  def observe(topic: String, brokers: Seq[Broker], groupId: String, commitFrequencyMills: Long)(observer: MessageData => Unit)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Seq[Unit]] = {
-    Future.sequence(KafkaMicroConsumer.getTopicPartitions(topic) map { partition =>
-      Future.successful {
-        var lastUpdate = System.currentTimeMillis()
-        new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
-          var offset: Option[Long] = subs.getFirstOffset
-          val lastOffset: Option[Long] = subs.getLastOffset
-
-          def eof: Boolean = offset.exists(o => lastOffset.exists(o > _))
-
-          while (!eof) {
-            // allow the observer to process the messages
-            for (ofs <- offset; msg <- subs.fetch(ofs)(fetchSize = 65535).headOption) observer(msg)
-
-            // commit the offset once per second
-            if (System.currentTimeMillis() - lastUpdate >= commitFrequencyMills) {
-              offset.foreach(subs.commitOffsets(groupId, _, ""))
-              lastUpdate = System.currentTimeMillis()
-            }
-            offset = offset map (_ + 1)
-          }
-
-          // commit the final offset for each partition
-          lastOffset.foreach(subs.commitOffsets(groupId, _, ""))
         }
       }
     })
@@ -699,7 +698,7 @@ object KafkaMicroConsumer {
   /**
     * Represents the consumer group details for a given topic partition
     */
-  case class ConsumerDetails(consumerId: String, topic: String, partition: Int, offset: Long, lastModified: Option[Long])
+  case class ConsumerDetails(consumerId: String, threadId: Option[String], topic: String, partition: Int, offset: Long, lastModified: Option[Long])
 
   /**
     * Represents the consumer group details for a given topic partition (Kafka Spout / Partition Manager)

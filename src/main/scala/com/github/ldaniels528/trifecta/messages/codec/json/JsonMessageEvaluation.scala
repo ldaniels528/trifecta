@@ -1,10 +1,10 @@
-package com.github.ldaniels528.trifecta.messages.logic
+package com.github.ldaniels528.trifecta.messages.codec.json
 
 import com.github.ldaniels528.trifecta.messages.BinaryMessage
-import com.github.ldaniels528.trifecta.messages.codec.avro.JsonTransCoding
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonMessageEvaluation._
 import com.github.ldaniels528.trifecta.messages.logic.Expressions._
-import com.github.ldaniels528.trifecta.messages.logic.JsonMessageEvaluation._
 import com.github.ldaniels528.trifecta.messages.logic.MessageEvaluation._
+import com.github.ldaniels528.trifecta.messages.logic.{Condition, ConditionCompiler, MessageEvaluation}
 import net.liftweb.json._
 import org.slf4j.LoggerFactory
 
@@ -18,19 +18,21 @@ trait JsonMessageEvaluation extends MessageEvaluation {
   self: JsonTransCoding =>
 
   /**
-    * Compiles the given operation into a condition
-    * @param operation the given operation
+    * Compiles the given expression into a condition
+    * @param expression the given expression
     * @return a condition
     */
-  override def compile(operation: Expression): Condition = {
-    operation match {
+  override def compile(expression: Expression): Condition = {
+    expression match {
       case EQ(field, value) => JsonEQ(this, field, value)
       case GE(field, value) => JsonGE(this, field, value)
       case GT(field, value) => JsonGT(this, field, value)
       case LE(field, value) => JsonLE(this, field, value)
+      case LIKE(field, pattern) => JsonLIKE(this, field, pattern)
       case LT(field, value) => JsonLT(this, field, value)
+      case MATCHES(field, pattern) => JsonMATCHES(this, field, pattern)
       case NE(field, value) => JsonNE(this, field, value)
-      case _ => throw new IllegalArgumentException(s"Illegal operation '$operation'")
+      case _ => throw new IllegalArgumentException(s"Illegal expression '$expression'")
     }
   }
 
@@ -152,6 +154,53 @@ object JsonMessageEvaluation {
   }
 
   /**
+    * Json Field-Value Less-Than-Or-Equal Condition
+    * @author lawrence.daniels@gmail.com
+    */
+  case class JsonLE(decoder: JsonTransCoding, field: String, value: String) extends Condition {
+    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
+      decoder.decodeAsJson(message) match {
+        case Success(js) =>
+          js \ field match {
+            case JNull => false
+            case JBool(b) => false
+            case JDouble(n) => Try(value.toDouble).toOption.exists(n <= _)
+            case JInt(n) => Try(value.toDouble).toOption.exists(n.toDouble <= _)
+            case JString(s) => s <= value
+            case x =>
+              logger.warn(s"Value '$x' for field '$field' was not recognized")
+              false
+          }
+        case Failure(e) => false
+      }
+    }
+
+    override def toString = s"$field <= '$value'"
+  }
+
+  /**
+    * Json Field-Value Like Condition
+    * @author lawrence.daniels@gmail.com
+    */
+  case class JsonLIKE(decoder: JsonTransCoding, field: String, pattern: String) extends Condition {
+    import ConditionCompiler._
+
+    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
+      decoder.decodeAsJson(message) match {
+        case Success(js) =>
+          js \ field match {
+            case JNull => false
+            case JString(s) => s.like(pattern)
+            case x => x.toString.like(pattern)
+          }
+        case Failure(e) => false
+      }
+    }
+
+    override def toString = s"$field like '$pattern'"
+  }
+
+  /**
     * Json Field-Value Less-Than Condition
     * @author lawrence.daniels@gmail.com
     */
@@ -177,28 +226,23 @@ object JsonMessageEvaluation {
   }
 
   /**
-    * Json Field-Value Less-Than-Or-Equal Condition
+    * Json Field-Value Like Condition
     * @author lawrence.daniels@gmail.com
     */
-  case class JsonLE(decoder: JsonTransCoding, field: String, value: String) extends Condition {
+  case class JsonMATCHES(decoder: JsonTransCoding, field: String, pattern: String) extends Condition {
     override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       decoder.decodeAsJson(message) match {
         case Success(js) =>
           js \ field match {
             case JNull => false
-            case JBool(b) => false
-            case JDouble(n) => Try(value.toDouble).toOption.exists(n <= _)
-            case JInt(n) => Try(value.toDouble).toOption.exists(n.toDouble <= _)
-            case JString(s) => s <= value
-            case x =>
-              logger.warn(s"Value '$x' for field '$field' was not recognized")
-              false
+            case JString(s) => s.matches(pattern)
+            case x => x.toString.matches(pattern)
           }
         case Failure(e) => false
       }
     }
 
-    override def toString = s"$field <= '$value'"
+    override def toString = s"$field matches '$pattern'"
   }
 
   /**

@@ -1,4 +1,4 @@
-<div class="col-md-8" style="height: 525px; border-right: 1px solid #cccccc">
+<div class="inspect_container">
     <div ng-show="brokers.length" class="full_block hide_show_topics">{{ brokers.length }} host(s) found.</div>
     <div ng-repeat="inst in brokers | orderBy:'host'">
         <img class="clickable" ng-click="expandBroker(inst)" ng-src="/assets/images/buttons/{{ inst.expanded ? 'collapse' : 'expand' }}.png"> {{ inst.host }} ({{ inst.details.length }} instances)
@@ -42,7 +42,7 @@
         </div>
     </div>
 </div>
-<div class="col-md-8">
+<div>
     <div ng-include="'/assets/views/partials/hints_and_tips.html'"></div>
     <p><img class="bulb" src="/assets/images/common/bulb-16.png"> Kafka producers send data directly to
         the broker that is the leader for the partition without any intervening routing tier. To help

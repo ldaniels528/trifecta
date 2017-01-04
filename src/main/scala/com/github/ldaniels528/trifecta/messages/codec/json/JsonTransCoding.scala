@@ -1,4 +1,4 @@
-package com.github.ldaniels528.trifecta.messages.codec.avro
+package com.github.ldaniels528.trifecta.messages.codec.json
 
 import net.liftweb.json.JValue
 

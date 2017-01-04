@@ -123,7 +123,7 @@ class KafkaQueryTokenizer(queryString: String) {
   */
 object KafkaQueryTokenizer {
   private val Symbols = "*!,=<>[]"
-  private val Operators = Seq(">=", "<=", "!=", "==")
+  private val Operators = Seq(">=", "<=", "<>", "!=", "==")
   private val WhiteSpace = " \t\r\n".toCharArray
 
   def parse(queryString: String): List[String] = {

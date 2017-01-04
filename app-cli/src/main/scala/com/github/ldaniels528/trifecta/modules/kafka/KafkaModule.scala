@@ -11,13 +11,13 @@ import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.commons.helpers.TimeHelper.Implicits._
 import com.github.ldaniels528.trifecta.command._
 import com.github.ldaniels528.trifecta.io._
-import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{MessageData, contentFilter}
+import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, ReplicaBroker, contentFilter}
 import com.github.ldaniels528.trifecta.io.kafka._
 import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
-import com.github.ldaniels528.trifecta.messages.codec.avro.{AvroCodec, AvroDecoder, JsonTransCoding}
+import com.github.ldaniels528.trifecta.messages.codec.avro.AvroCodec
+import com.github.ldaniels528.trifecta.messages.codec.json.JsonTransCoding
 import com.github.ldaniels528.trifecta.messages.codec.{MessageCodecFactory, MessageDecoder}
-import com.github.ldaniels528.trifecta.messages.logic.Condition
-import com.github.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
+import com.github.ldaniels528.trifecta.messages.logic.{Condition, ConditionCompiler}
 import com.github.ldaniels528.trifecta.messages.{BinaryMessage, KeyAndMessage, MessageInputSource, MessageOutputSource}
 import com.github.ldaniels528.trifecta.modules.Module
 import com.github.ldaniels528.trifecta.modules.ModuleHelper._
@@ -96,7 +96,7 @@ class KafkaModule(config: TxConfig) extends Module {
     // query-related commands
     Command(this, "copy", copyMessages, UnixLikeParams(Nil, Seq("-a" -> "avroSchema", "-i" -> "inputSource", "-o" -> "outputSource", "-n" -> "numRecordsToCopy")), help = "Copies messages from an input source to an output source"),
     Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-t" -> "topic")), help = "Counts the messages matching a given condition"),
-    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
+    Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-t" -> "topic")), "Finds messages matching a given condition and exports them to a topic"),
     Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-b" -> "backwards", "-f" -> "format", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
     Command(this, "kfindnext", findNextMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
     Command(this, "kgetminmax", getMessageMinMaxSize, UnixLikeParams(Seq("topic" -> false, "partition" -> false, "startOffset" -> true, "endOffset" -> true), Seq("-s" -> "fetchSize")), help = "Retrieves the smallest and largest message sizes for a range of offsets for a given partition"),
@@ -313,7 +313,7 @@ class KafkaModule(config: TxConfig) extends Module {
     * @example kfindone volume > 1000000 -t shocktrade.quotes.avro -a file:avro/quotes.avsc
     * @example kfindone lastTrade < 1 and volume > 1000000 -a file:avro/quotes.avsc -b true
     */
-  def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
+  def findOneMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Option[Either[Option[MessageData], Option[Any]]]] = {
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
     val avro_? = getMessageDecoder(params)(config)
@@ -340,7 +340,7 @@ class KafkaModule(config: TxConfig) extends Module {
     * @example kfindnext volume > 1000000 -a file:avro/quotes.avsc
     * @example kfindnext volume > 1000000 -t shocktrade.quotes.avro -p 5 -a file:avro/quotes.avsc
     */
-  def findNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
+  def findNextMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Option[Either[Option[MessageData], Option[Any]]]] = {
     // was a topic, partition and/or Avro decoder specified?
     val topic_? = params("-t")
     val partition_? = params("-p") map parsePartition
@@ -353,6 +353,8 @@ class KafkaModule(config: TxConfig) extends Module {
           topic_?.map(t => (t, partition_? getOrElse 0, avro_?)) getOrElse dieNoCursor
         }
     }
+
+    // TODO need the recorded offsets as a starting point for finding the next record
 
     // get the criteria
     val condition = parseCondition(params, decoder_?)
@@ -383,7 +385,10 @@ class KafkaModule(config: TxConfig) extends Module {
     val conditions = Seq(parseCondition(params, decoder_?))
 
     // get the output handler
-    val outputHandler = params("-o") flatMap rt.getOutputHandler getOrElse die("Output source URL expected")
+    val outputHandler = params("-o") match {
+      case Some(url) => rt.getOutputHandler(url) getOrElse die(s"Unrecognized output source '$url'")
+      case None =>  new ConsoleMessageOutputSource()
+    }
 
     // find the messages
     facade.findMessages(topic, decoder_?, conditions, outputHandler)
@@ -392,12 +397,12 @@ class KafkaModule(config: TxConfig) extends Module {
   /**
     * Retrieves the list of Kafka brokers
     */
-  def getBrokers(params: UnixLikeArgs) = KafkaMicroConsumer.getBrokerList
+  def getBrokers(params: UnixLikeArgs): Seq[BrokerDetails] = KafkaMicroConsumer.getBrokerList
 
   /**
     * Retrieves the list of Kafka replicas for a given topic
     */
-  def getReplicas(params: UnixLikeArgs) = {
+  def getReplicas(params: UnixLikeArgs): Seq[ReplicaBroker] = {
     params.args match {
       case topic :: Nil => KafkaMicroConsumer.getReplicas(topic, brokers) sortBy (_.partition)
       case _ => dieSyntax(params)
@@ -455,7 +460,7 @@ class KafkaModule(config: TxConfig) extends Module {
     * @example kfirst -p 5
     * @example kfirst com.shocktrade.quotes.csv 0
     */
-  def getFirstMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
+  def getFirstMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], Option[Any]]] = {
     // get the arguments
     val (topic, partition0) = extractTopicAndPartition(params.args)
 
@@ -472,7 +477,7 @@ class KafkaModule(config: TxConfig) extends Module {
     * @example klast -p 5
     * @example klast com.shocktrade.alerts 0
     */
-  def getLastMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext) = {
+  def getLastMessage(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[Either[Option[MessageData], Option[Any]]] = {
     // get the arguments
     val (topic, partition0) = extractTopicAndPartition(params.args)
 
@@ -555,7 +560,7 @@ class KafkaModule(config: TxConfig) extends Module {
   private def resolveDecoder(topic: String, params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Option[MessageDecoder[_]] = {
     val specifiedDecoder = getMessageDecoder(params)(config)
     val cursorDecoder = navigableCursors.get(topic) flatMap (_.decoder)
-   specifiedDecoder ?? cursorDecoder
+    specifiedDecoder ?? cursorDecoder
   }
 
   /**
@@ -978,21 +983,7 @@ class KafkaModule(config: TxConfig) extends Module {
     * @return a collection of [[Condition]] objects
     */
   private def parseCondition(params: UnixLikeArgs, decoder: Option[MessageDecoder[_]]): Condition = {
-    import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
-    import com.github.ldaniels528.trifecta.util.ParsingHelper.deQuote
-
-    val it = params.args.iterator
-    var criteria: Option[Expression] = None
-    while (it.hasNext) {
-      val args = it.take(criteria.size + 3).toList
-      criteria = args match {
-        case List("and", field, operator, value) => criteria.map(AND(_, compile(field, operator, deQuote(value))))
-        case List("or", field, operator, value) => criteria.map(OR(_, compile(field, operator, deQuote(value))))
-        case List(field, operator, value) => Option(compile(field, operator, deQuote(value)))
-        case _ => dieSyntax(params)
-      }
-    }
-    criteria.map(compile(_, decoder)).getOrElse(dieSyntax(params))
+    ConditionCompiler.parseCondition(params.args.iterator, decoder).getOrElse(dieSyntax(params))
   }
 
   /**

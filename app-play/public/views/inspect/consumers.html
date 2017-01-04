@@ -1,4 +1,4 @@
-<div class="col-md-8" style="height: 525px; border-right: 1px solid #cccccc">
+<div class="inspect_container">
     <div ng-hide="topicsLoading || consumersLoading" ng-include="'/assets/views/partials/hide_show_empty_topics.html'"></div>
 
     <!-- No Consumers -->
@@ -73,18 +73,19 @@
             <div ng-show="consumer.expanded" class="indent">
                 <table style="width: 90%">
                     <tr>
-                        <th>Partition</th>
-                        <th>Topic Offset</th>
-                        <th>Consumer Offset</th>
-                        <th>Remaining</th>
-                        <th>Last Updated</th>
+                        <th class="col-md-1">Partition</th>
+                        <th class="col-md-2 left">Topic Offset</th>
+                        <th class="col-md-2 left">Consumer Offset</th>
+                        <th class="col-md-3">Thread ID</th>
+                        <th class="col-md-2">Remaining</th>
+                        <th class="col-md-2 center">Last Updated</th>
                     </tr>
 
                     <tr ng-repeat="detail in getConsumersForIdAndTopic(consumer.consumerId, t.topic) | orderBy:'partition'">
                         <td class="center">{{ detail.partition }}</td>
                         <td class="left">
                             <a ng-click="switchToMessage(detail.topic, detail.partition, detail.topicOffset)">
-                                {{ detail.topicOffset | number }}
+                                {{ detail.topicOffset }}
                             </a>
                             <span class="delta_topic" ng-show="detail.deltaT">
                                 <img src="/assets/images/tabs/inspect/arrow_topic.gif"> {{ detail.deltaT | number }}
@@ -92,26 +93,27 @@
                         </td>
                         <td class="left">
                             <a ng-click="switchToMessage(detail.topic, detail.partition, detail.offset)">
-                                {{ detail.offset | number }}
+                                {{ detail.offset }}
                             </a>
                             <span class="delta_consumer" ng-show="detail.deltaC">
                                 <img src="/assets/images/tabs/inspect/arrow_consumer.gif"> {{ detail.deltaC | number }}
                             </span>
                         </td>
-                        <td class="left">{{ detail.messagesLeft | number }}</td>
                         <td>
-                            {{ detail.lastModified | duration }}
+                            <span class="small">{{ fixThreadName(consumer.consumerId, detail.threadId) }}</span>
                         </td>
+                        <td class="center">{{ detail.messagesLeft | number }}</td>
+                        <td>{{ detail.lastModified | duration }}</td>
                     </tr>
                 </table>
             </div>
         </div>
     </div>
 </div>
-<div class="col-md-4">
+<div>
     <div ng-include="'/assets/views/partials/hints_and_tips.html'"></div>
-    <p><img class="bulb" src="/assets/images/common/bulb-16.png"> Kafka uses Consumer Groups to
-        track the current offset individual for individual consumers. This view allows users to view
-        those offsets via web socket in near real-time.</p>
+        <p><img class="bulb" src="/assets/images/common/bulb-16.png"> Kafka uses Consumer Groups to
+            track the current offset individual for individual consumers. This view allows users to view
+            those offsets via web socket in near real-time.</p>
     <div ng-include="'/assets/views/partials/web_socket_refresh.html'"></div>
 </div>

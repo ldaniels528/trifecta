@@ -44,6 +44,9 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
   // queries
   $scope.storedQueries = emptyArray
 
+  // CODEC
+  $scope.topicDecoding = js.Dictionary[Boolean]()
+
   // reference data flags
   $scope.referenceDataLoading = false
   $scope.brokersLoading = false
@@ -150,8 +153,16 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
   }
 
   /////////////////////////////////////////////////////////////////////////////////
-  //        JSON-related Functions
+  //        Deocoding-related Functions
   /////////////////////////////////////////////////////////////////////////////////
+
+  $scope.getDecodingState = (aTopic: js.UndefOr[String]) => aTopic map { topic =>
+    $scope.topicDecoding.getOrElseUpdate(topic, true)
+  }
+
+  $scope.toggleDecodingState = (aTopic: js.UndefOr[String]) => aTopic foreach { topic =>
+    $scope.topicDecoding.update(topic, !$scope.topicDecoding.getOrElse(topic, false))
+  }
 
   /**
     * Formats a JSON object as a color-coded JSON expression
@@ -439,14 +450,13 @@ object MainController {
     */
   @js.native
   trait MainScope extends RootScope
-    with GlobalDataAware with GlobalLoading with GlobalErrorHandling with GlobalNavigation
+    with GlobalDataAware with GlobalLoading with GlobalDecodingState with GlobalErrorHandling with GlobalNavigation
     with MainTabManagement with ReferenceDataAware {
+
     // functions
     var init: js.Function0[Unit] = js.native
     var getDateFormat: js.Function1[js.UndefOr[Int], js.UndefOr[String]] = js.native
     var isActiveTab: js.Function1[js.UndefOr[MainTab], Boolean] = js.native
-    var toPrettyJSON: js.Function2[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[String]] = js.native
-
   }
 
 }

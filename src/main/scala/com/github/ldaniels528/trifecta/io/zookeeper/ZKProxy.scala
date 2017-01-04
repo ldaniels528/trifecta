@@ -1,5 +1,7 @@
 package com.github.ldaniels528.trifecta.io.zookeeper
 
+import org.I0Itec.zkclient.ZkClient
+
 import scala.language.implicitConversions
 
 /**
@@ -34,7 +36,12 @@ trait ZKProxy {
 
   def getCreationTime(path: String): Option[Long]
 
-  def getFamily(path: String): List[String]
+  def getFamily(path: String): List[String] = {
+    def zkKeyToPath(parent: String, child: String): String = (if (parent.endsWith("/")) parent else parent + "/") + child
+
+    val children = Option(getChildren(path)) getOrElse Nil
+    path :: (children flatMap (child => getFamily(zkKeyToPath(path, child)))).toList
+  }
 
   def getModificationTime(path: String): Option[Long]
 
@@ -43,6 +50,8 @@ trait ZKProxy {
   def readString(path: String): Option[String]
 
   def update(path: String, data: Array[Byte]): Option[String]
+
+  def clientI0Itec: ZkClient
 
 }
 

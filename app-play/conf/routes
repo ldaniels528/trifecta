@@ -35,9 +35,9 @@ POST          /api/schema                                        @com.github.lda
 GET           /api/schema/:topic/:name                           @com.github.ldaniels528.trifecta.controllers.DecoderController.getDecoderSchemaByName(topic: String, name: String)
 
 # Messages
-GET           /api/message/data/:topic/:partition/:offset        @com.github.ldaniels528.trifecta.controllers.MessageController.getMessageData(topic: String, partition: Int, offset: Long)
+GET           /api/message/data/:topic/:partition/:offset        @com.github.ldaniels528.trifecta.controllers.MessageController.getMessageData(topic: String, partition: Int, offset: Long, decode: Boolean ?= true)
 POST          /api/message/data/:topic                           @com.github.ldaniels528.trifecta.controllers.MessageController.publishMessage(topic: String)
-GET           /api/message/key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.controllers.MessageController.getMessageKey(topic: String, partition: Int, offset: Long)
+GET           /api/message/key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.controllers.MessageController.getMessageKey(topic: String, partition: Int, offset: Long, decode: Boolean ?= true)
 
 # Queries
 GET           /api/query/:topic                                  @com.github.ldaniels528.trifecta.controllers.QueryController.getQueriesByTopic(topic: String)

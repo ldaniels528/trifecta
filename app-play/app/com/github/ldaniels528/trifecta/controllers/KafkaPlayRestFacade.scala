@@ -16,11 +16,10 @@ import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.io.{IOCounter, _}
 import com.github.ldaniels528.trifecta.messages._
 import com.github.ldaniels528.trifecta.messages.codec.MessageCodecFactory.{LoopBackCodec, PlainTextCodec}
-import com.github.ldaniels528.trifecta.messages.codec.avro.{AvroConversion, AvroDecoder, JsonTransCoding}
-import com.github.ldaniels528.trifecta.messages.codec.json.{JsonMessageDecoder, JsonHelper}
+import com.github.ldaniels528.trifecta.messages.codec.avro.{AvroConversion, AvroDecoder}
+import com.github.ldaniels528.trifecta.messages.codec.json.{JsonHelper, JsonMessageDecoder, JsonTransCoding}
 import com.github.ldaniels528.trifecta.messages.codec.{CompositeMessageDecoder, MessageDecoder}
-import com.github.ldaniels528.trifecta.messages.logic.Condition
-import com.github.ldaniels528.trifecta.messages.logic.Expressions.{AND, Expression, OR}
+import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler
 import com.github.ldaniels528.trifecta.messages.query.KQLResult
 import com.github.ldaniels528.trifecta.messages.query.parser.{KafkaQueryParser, KafkaQueryTokenizer}
 import com.github.ldaniels528.trifecta.models.BrokerDetailsJs._
@@ -92,7 +91,9 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
 
   def findOne(topic: String, criteria: String)(implicit ec: ExecutionContext): Future[MessageJs] = {
     val decoder_? = rt.lookupDecoderByName(topic)
-    val conditions = parseCondition(criteria, decoder_?)
+    val it = KafkaQueryTokenizer.parse(criteria).iterator
+    val conditions = ConditionCompiler.parseCondition(it, decoder_?)
+      .getOrElse(throw new IllegalArgumentException(s"Invalid expression: $criteria"))
 
     // execute the query
     KafkaMicroConsumer.findOne(topic, brokers, forward = true, conditions) map (
@@ -122,7 +123,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
         } yield message
 
         message.foreach(_ => offset.consumerOffset = offset.consumerOffset.map(_ + 1))
-        decodeMessageData(c.topic, message)
+        decodeMessageData(c.topic, message, decode = true) // TODO revisit this
       }
     }
   }
@@ -137,31 +138,6 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
       }
     } sortBy (c => -(c.topicOffset.getOrElse(0L) - c.consumerOffset.getOrElse(0L)))
     SamplingCursor(request.topic, cursorOffsets)
-  }
-
-  /**
-    * Parses a condition statement
-    * @param expression the given expression
-    * @param decoder    the optional [[MessageDecoder]]
-    * @example lastTrade < 1 and volume > 1000000
-    * @return a collection of [[Condition]] objects
-    */
-  private def parseCondition(expression: String, decoder: Option[MessageDecoder[_]]): Condition = {
-    import ParsingHelper.deQuote
-    import com.github.ldaniels528.trifecta.messages.logic.ConditionCompiler._
-
-    val it = KafkaQueryTokenizer.parse(expression).iterator
-    var criteria: Option[Expression] = None
-    while (it.hasNext) {
-      val args = it.take(criteria.size + 3).toList
-      criteria = args match {
-        case List(keyword, field, operator, value) if keyword.equalsIgnoreCase("and") => criteria.map(AND(_, compile(field, operator, deQuote(value))))
-        case List(keyword, field, operator, value) if keyword.equalsIgnoreCase("or") => criteria.map(OR(_, compile(field, operator, deQuote(value))))
-        case List(field, operator, value) => Option(compile(field, operator, deQuote(value)))
-        case unknown => throw new IllegalArgumentException(s"Illegal operand $unknown")
-      }
-    }
-    criteria.map(compile(_, decoder)).getOrElse(throw new IllegalArgumentException(s"Invalid expression: $expression"))
   }
 
   /**
@@ -251,7 +227,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     KafkaMicroConsumer.getConsumersFromKafka(config.getConsumerGroupList, autoOffsetReset) map { c =>
       val topicOffset = Try(getLastOffset(c.topic, c.partition)) getOrElse None
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-      ConsumerDetailJs(c.consumerId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
+      ConsumerDetailJs(c.consumerId, c.threadId, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
     }
   }
 
@@ -263,7 +239,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     KafkaMicroConsumer.getConsumerFromZookeeper() map { cd =>
       val topicOffset = Try(getLastOffset(cd.topic, cd.partition)) getOrElse None
       val delta = topicOffset map (offset => Math.max(0L, offset - cd.offset))
-      ConsumerDetailJs(cd.consumerId, cd.topic, cd.partition, cd.offset, topicOffset, cd.lastModified, delta, rate = None)
+      ConsumerDetailJs(cd.consumerId, cd.threadId, cd.topic, cd.partition, cd.offset, topicOffset, cd.lastModified, delta, rate = None)
     }
   }
 
@@ -275,7 +251,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     KafkaMicroConsumer.getConsumersForStorm() map { c =>
       val topicOffset = getLastOffset(c.topic, c.partition)
       val delta = topicOffset map (offset => Math.max(0L, offset - c.offset))
-      ConsumerDetailJs(c.topologyName, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
+      ConsumerDetailJs(c.topologyName, None, c.topic, c.partition, c.offset, topicOffset, c.lastModified, delta, rate = None)
     }
   }
 
@@ -337,10 +313,10 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * @param offset    the given offset
     * @return the JSON representation of the message
     */
-  def getMessageData(topic: String, partition: Int, offset: Long)(implicit ec: ExecutionContext): MessageJs = {
+  def getMessageData(topic: String, partition: Int, offset: Long, decode: Boolean)(implicit ec: ExecutionContext): MessageJs = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
       getDefinedOffset(consumer, offset) flatMap { theOffset =>
-        decodeMessageData(topic, consumer.fetch(theOffset)(fetchSize = DEFAULT_FETCH_SIZE).headOption)
+        decodeMessageData(topic, consumer.fetch(theOffset)(fetchSize = DEFAULT_FETCH_SIZE).headOption, decode)
       } getOrElse {
         MessageJs(`type` = "error", message = "Offset is undefined")
       }
@@ -354,10 +330,10 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * @param offset    the given offset
     * @return the JSON representation of the message key
     */
-  def getMessageKey(topic: String, partition: Int, offset: Long)(implicit ec: ExecutionContext): MessageJs = {
+  def getMessageKey(topic: String, partition: Int, offset: Long, decode: Boolean)(implicit ec: ExecutionContext): MessageJs = {
     new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { consumer =>
       getDefinedOffset(consumer, offset) flatMap { o =>
-        consumer.fetch(o)(fetchSize = DEFAULT_FETCH_SIZE).headOption map (md => toMessage(md.key))
+        consumer.fetch(o)(fetchSize = DEFAULT_FETCH_SIZE).headOption map (md => toMessage(md.key, decode))
       } getOrElse MessageJs(`type` = "error", message = "Offset is undefined")
     }
   }
@@ -380,11 +356,14 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * @param message_? an option of a [[MessageData]]
     * @return an option of a decoded message
     */
-  private def decodeMessageData(topic: String, message_? : Option[MessageData]): Option[MessageJs] = {
-    message_? flatMap { md =>
-      config.getDecodersByTopic(topic).foldLeft[Option[MessageJs]](None) { (result, d) =>
-        result ?? attemptJsonDecode(md, d)
-      } ?? message_?.map(toMessage)
+  private def decodeMessageData(topic: String, message_? : Option[MessageData], decode: Boolean): Option[MessageJs] = {
+    if (!decode) message_?.map(toMessage(_, decode))
+    else {
+      message_? flatMap { md =>
+        config.getDecodersByTopic(topic).foldLeft[Option[MessageJs]](None) { (result, d) =>
+          result ?? attemptJsonDecode(md, d)
+        } ?? message_?.map(toMessage(_, decode))
+      }
     }
   }
 
@@ -412,12 +391,16 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     }
   }
 
-  private def toMessage(message: Any): MessageJs = message match {
-    case opt: Option[Any] => toMessage(opt.orNull)
+  private def toMessage(message: Any, decode: Boolean): MessageJs = message match {
+    case opt: Option[Any] => toMessage(opt.orNull, decode)
+    case bytes: Array[Byte] if bytes.isPrintable =>
+      MessageJs(`type` = "ascii", payload = JsString(new String(bytes)))
     case bytes: Array[Byte] =>
       MessageJs(`type` = "bytes", payload = toByteArray(bytes))
-    case md: MessageData if JsonHelper.isJson(new String(md.message)) =>
+    case md: MessageData if decode && JsonHelper.isJson(new String(md.message)) =>
       MessageJs(`type` = "json", partition = md.partition, offset = md.offset, payload = Json.parse(new String(md.message)))
+    case md: MessageData if md.message.isPrintable =>
+      MessageJs(`type` = "ascii", partition = md.partition, offset = md.offset, payload = JsString(new String(md.message)))
     case md: MessageData =>
       MessageJs(`type` = "bytes", partition = md.partition, offset = md.offset, payload = toByteArray(md.message))
     case value =>

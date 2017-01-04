@@ -1,13 +1,21 @@
 package com.github.ldaniels528.trifecta.models
 
 import com.github.ldaniels528.trifecta.models.ConsumerDetailJs.ConsumerDeltaKey
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, Reads, Writes}
 
 /**
   * Consumer Detail JSON model
   * @author lawrence.daniels@gmail.com
   */
-case class ConsumerDetailJs(consumerId: String, topic: String, partition: Int, offset: Long, topicOffset: Option[Long], lastModified: Option[Long], messagesLeft: Option[Long], rate: Option[Double]) {
+case class ConsumerDetailJs(consumerId: String,
+                            threadId: Option[String],
+                            topic: String,
+                            partition: Int,
+                            offset: Long,
+                            topicOffset: Option[Long],
+                            lastModified: Option[Long],
+                            messagesLeft: Option[Long],
+                            rate: Option[Double]) {
 
   def getKey = ConsumerDeltaKey(consumerId, topic, partition)
 
@@ -19,9 +27,9 @@ case class ConsumerDetailJs(consumerId: String, topic: String, partition: Int, o
   */
 object ConsumerDetailJs {
 
-  implicit val ConsumerDetailReads = Json.reads[ConsumerDetailJs]
+  implicit val ConsumerDetailReads: Reads[ConsumerDetailJs] = Json.reads[ConsumerDetailJs]
 
-  implicit val ConsumerDetailWrites = Json.writes[ConsumerDetailJs]
+  implicit val ConsumerDetailWrites: Writes[ConsumerDetailJs] = Json.writes[ConsumerDetailJs]
 
   case class ConsumerDeltaKey(consumerId: String, topic: String, partition: Int)
 

@@ -1,6 +1,6 @@
-package org.scalajs.tjs.dom
+package io.scalajs.dom
 
-import org.scalajs.tjs.dom.Window.URL
+import Window.URL
 
 import scala.scalajs.js
 

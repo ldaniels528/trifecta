@@ -1,4 +1,4 @@
-package org.scalajs.tjs
+package io.scalajs
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName

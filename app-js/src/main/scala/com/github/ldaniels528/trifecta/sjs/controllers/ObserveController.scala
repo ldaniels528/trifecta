@@ -40,7 +40,6 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   //////////////////////////////////////////////////////////////////////////
 
   $scope.message = js.undefined
-  $scope.decodingOn = true
   $scope.displayMode = new DisplayMode(state = "message", format = "json")
   $scope.sampling = SamplingStatus(status = SAMPLING_STATUS_STOPPED)
 
@@ -116,7 +115,8 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
       offset <- anOffset
     } {
       clearMessage()
-      messageDataService.getMessageData(topic, partition, offset).withGlobalLoading.withTimer("Retrieving message data") onComplete {
+      val useDecoder = $scope.getDecodingState(topic).isTrue
+      messageDataService.getMessageData(topic, partition, offset, useDecoder).withGlobalLoading.withTimer("Retrieving message data") onComplete {
         case Success(message) =>
           $scope.$apply { () =>
             $scope.message = message
@@ -141,7 +141,8 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
       partition <- aPartition
       offset <- anOffset
     } {
-      messageDataService.getMessageKey(topic, partition, offset) onComplete {
+      val useDecoder = $scope.getDecodingState(topic).isTrue
+      messageDataService.getMessageKey(topic, partition, offset, useDecoder) onComplete {
         case Success(message) =>
           $scope.$apply { () =>
             $scope.message = message
@@ -404,8 +405,16 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
     $scope.displayMode.format = if ($scope.displayMode.format == "json") "avro" else "json"
   }
 
-  $scope.toggleDecodingState = () => {
-    $scope.decodingOn = !$scope.decodingOn
+  $scope.toggleDecodeOnOff = (aTopic: js.UndefOr[String], aMessage: js.UndefOr[Message]) => {
+    for {
+      topic <- aTopic
+      message <- aMessage
+      partition <- message.partition
+      offset <- message.offset
+    } {
+      $scope.toggleDecodingState(topic)
+      $scope.getMessageData(topic, partition, offset)
+    }
   }
 
   $scope.messageAsASCII = (aMessage: js.UndefOr[Message]) => {
@@ -541,11 +550,10 @@ object ObserveController {
     */
   @js.native
   trait ObserveScope extends Scope
-    with GlobalDataAware with GlobalErrorHandling with GlobalLoading
+    with GlobalDataAware with GlobalDecodingState with GlobalErrorHandling with GlobalLoading
     with MainTabManagement with ReferenceDataAware {
 
     // properties
-    var decodingOn: Boolean = js.native
     var displayMode: DisplayMode = js.native
     var message: js.UndefOr[Message] = js.native
     var sampling: SamplingStatus = js.native
@@ -580,7 +588,7 @@ object ObserveController {
     var previousMessage: js.Function0[Unit] = js.native
     var resetMessageState: js.Function4[js.UndefOr[String], js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
     var setMessageData: js.Function1[js.UndefOr[Message], Unit] = js.native
-    var toggleDecodingState: js.Function0[Unit] = js.native
+    var toggleDecodeOnOff: js.Function2[js.UndefOr[String], js.UndefOr[Message], Unit] = js.native
   }
 
 }

@@ -24,15 +24,15 @@ import scala.util.{Failure, Success, Try}
   */
 class MessageController() extends Controller {
 
-  def getMessageData(topic: String, partition: Int, offset: Long) = Action {
-    Try(WebConfig.facade.getMessageData(topic, partition, offset)) match {
+  def getMessageData(topic: String, partition: Int, offset: Long, decode: Boolean) = Action {
+    Try(WebConfig.facade.getMessageData(topic, partition, offset, decode)) match {
       case Success(messageData) => Ok(Json.toJson(messageData))
       case Failure(e) => InternalServerError(e.getMessage)
     }
   }
 
-  def getMessageKey(topic: String, partition: Int, offset: Long) = Action {
-    Try(WebConfig.facade.getMessageKey(topic, partition, offset)) match {
+  def getMessageKey(topic: String, partition: Int, offset: Long, decode: Boolean) = Action {
+    Try(WebConfig.facade.getMessageKey(topic, partition, offset, decode)) match {
       case Success(messageKey) => Ok(Json.toJson(messageKey))
       case Failure(e) => InternalServerError(e.getMessage)
     }
@@ -56,14 +56,14 @@ class MessageController() extends Controller {
   //    Message Sampling
   ///////////////////////////////////////////////////////////////////////////
 
-  def getSamplingSession = Action { implicit request =>
+  def getSamplingSession() = Action { implicit request =>
     request.session.get("sessionId") match {
       case Some(sessionId) => Ok(Json.obj("sessionId" -> sessionId))
       case None => BadRequest("No session found")
     }
   }
 
-  def startSampling = Action.async { implicit request =>
+  def startSampling() = Action.async { implicit request =>
     import akka.pattern.ask
 
     val results = for {

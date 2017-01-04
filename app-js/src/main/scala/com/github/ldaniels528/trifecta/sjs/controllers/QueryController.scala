@@ -8,6 +8,7 @@ import com.github.ldaniels528.trifecta.sjs.models.Query._
 import com.github.ldaniels528.trifecta.sjs.models.QueryRow._
 import com.github.ldaniels528.trifecta.sjs.models.{PartitionDetails, Query, QueryRow, TopicDetails}
 import com.github.ldaniels528.trifecta.sjs.services.QueryService
+import io.scalajs.dom.{Blob, BlobPropertyBag, Element, window}
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.cookies.Cookies
 import org.scalajs.angularjs.toaster.Toaster
@@ -15,7 +16,6 @@ import org.scalajs.dom.browser.console
 import org.scalajs.nodejs.util.ScalaJsHelper._
 import org.scalajs.sjs.JsUnderOrHelper._
 import org.scalajs.sjs.PromiseHelper._
-import org.scalajs.tjs.dom.{Blob, BlobOptions, Element, window}
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -50,7 +50,9 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
     */
   private def downloadResults(savedResult: SavedResult) {
     fileId += 1
-    val blob = new Blob(js.Array(angular.toJson(savedResult, pretty = true)), new BlobOptions(`type` = "application/json;charset=utf-8;"))
+    val blob = new Blob(
+      blobParts = js.Array(angular.toJson(savedResult, pretty = true)),
+      options = new BlobPropertyBag(`type` = "application/json;charset=utf-8;"))
     val downloadLink = angular.dynamic.element("<a></a>").asInstanceOf[Element]
     downloadLink.attr("href", window.URL.createObjectURL(blob))
     downloadLink.attr("download", s"results-$fileId.json")
@@ -132,7 +134,7 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
 
     // handle special columns (e.g. "__partition", "__offset" and "__error")
     val hasErrors = savedResult.rows.exists(_.exists(_.__error.isAssigned))
-    val specialColumns = if(hasErrors) ColumnsWithError else ColumnsWithoutError
+    val specialColumns = if (hasErrors) ColumnsWithError else ColumnsWithoutError
     query.columns = savedResult.columns.map { columns =>
       specialColumns ++ columns.filterNot(_.startsWith("__"))
     }
@@ -260,7 +262,7 @@ object QueryController {
     var expandQueryTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
     var importResults: js.Function2[js.UndefOr[Query], js.UndefOr[SavedResult], Unit] = js.native
     var isSelected: js.Function5[js.UndefOr[TopicDetails], js.UndefOr[PartitionDetails], js.UndefOr[Query], js.UndefOr[QueryRow], js.UndefOr[Int], Boolean] = js.native
-    var offsetAt: js.Function2[js.UndefOr[Query], js.UndefOr[Int], js.UndefOr[Int]] = js.native
+    var offsetAt: js.Function2[js.UndefOr[Query], js.UndefOr[Int], js.UndefOr[Double]] = js.native
     var partitionAt: js.Function2[js.UndefOr[Query], js.UndefOr[Int], js.UndefOr[Int]] = js.native
     var removeResult: js.Function2[js.UndefOr[TopicDetails], js.UndefOr[SavedResult], Unit] = js.native
     var selectQueryTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native

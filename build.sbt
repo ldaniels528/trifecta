@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.22.0rc6"
+val appVersion = "0.22.0rc6b"
 val meanjsVersion = "0.2.3.1"
 
 val _scalaVersion = "2.11.8"
@@ -10,23 +10,22 @@ val apacheCurator = "3.1.0"
 val casbahVersion = "3.1.1"
 val kafkaVersion = "0.8.2.0"
 val paradiseVersion = "2.1.0"
-val playVersion = "2.4.6"
+val playVersion = "2.4.8" // 2.4.8 -> 2.5.10
+val playWebJarsVersion = "2.4.0-2" // 2.4.0-2 -> 2.5.0-4
 val slf4jVersion = "1.7.21"
 val twitterBijection = "0.9.2"
 
 lazy val scalajsOutputDir = Def.settingKey[File]("Directory for Javascript files output by ScalaJS")
 
 lazy val libDependencies = Seq(
-  "log4j" % "log4j" % "1.2.17" % "test",
-  "org.slf4j" % "slf4j-api" % slf4jVersion,
-  "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test"
+  "org.slf4j" % "slf4j-api" % slf4jVersion
 )
 
 lazy val testDependencies = Seq(
   "junit" % "junit" % "4.12" % "test",
+  "log4j" % "log4j" % "1.2.17" % "test",
   "org.mockito" % "mockito-all" % "1.10.19" % "test",
   "org.scalatest" %% "scalatest" % "2.2.3" % "test",
-  "org.slf4j" % "slf4j-api" % slf4jVersion % "test",
   "org.slf4j" % "slf4j-log4j12" % slf4jVersion % "test"
 )
 
@@ -94,6 +93,7 @@ lazy val trifecta_core = (project in file("."))
       "org.apache.avro" % "avro-compiler" % "1.8.1",
       //
       // Kafka and Zookeeper Dependencies
+//      "com.101tec" % "zkclient" % "0.10",
       "org.apache.curator" % "curator-framework" % apacheCurator exclude("org.slf4j", "slf4j-log4j12"),
       "org.apache.curator" % "curator-test" % apacheCurator exclude("org.slf4j", "slf4j-log4j12"),
       "org.apache.kafka" %% "kafka" % kafkaVersion exclude("org.slf4j", "slf4j-log4j12"),
@@ -112,11 +112,25 @@ lazy val trifecta_modules_core = (project in file("app-modules/core"))
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     libraryDependencies ++= testDependencies ++ Seq(
-      "org.slf4j" % "slf4j-api" % "1.7.21"
+      "org.slf4j" % "slf4j-api" % slf4jVersion
     ))
 
+lazy val trifecta_sdk = (project in file("app-sdk"))
+  .aggregate(tabular, commons_helpers, trifecta_core, trifecta_modules_core)
+  .dependsOn(tabular, commons_helpers, trifecta_core, trifecta_modules_core)
+  .settings(
+    name := "trifecta-sdk",
+    organization := "com.github.ldaniels528",
+    version := appVersion,
+    scalaVersion := _scalaVersion,
+    scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+      "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
+    scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
+    scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings")
+  )
+
 lazy val trifecta_cli = (project in file("app-cli"))
-  .dependsOn(commons_helpers, tabular, trifecta_core, trifecta_common, trifecta_modules_core)
+  .dependsOn(trifecta_common, trifecta_sdk)
   .settings(
     name := "trifecta-cli",
     organization := "com.github.ldaniels528",
@@ -130,14 +144,13 @@ lazy val trifecta_cli = (project in file("app-cli"))
     test in assembly := {},
     assemblyJarName in assembly := s"${name.value}-${version.value}.bin.jar",
     assemblyMergeStrategy in assembly := {
-      case PathList("log4j.properties", xs@_*) => MergeStrategy.discard
-      case PathList("META-INF", xs@_*) => MergeStrategy.discard
-      case x =>
-        val oldStrategy = (assemblyMergeStrategy in assembly).value
-        oldStrategy(x)
+      case PathList("log4j.properties", _*) => MergeStrategy.discard
+      case PathList("META-INF", _*) => MergeStrategy.discard
+      case _ => MergeStrategy.first
     },
     libraryDependencies ++= testDependencies ++ Seq(
       "log4j" % "log4j" % "1.2.17",
+      "org.slf4j" % "slf4j-log4j12" % slf4jVersion,
       "org.scala-lang" % "jline" % "2.11.0-M3"
     )
   )
@@ -336,6 +349,9 @@ lazy val trifecta_ui = (project in file("app-play"))
       (compile in Compile) dependsOn (fastOptJS in(trifecta_ui_js, Compile)),
     ivyScala := ivyScala.value map (_.copy(overrideScalaVersion = true)),
     libraryDependencies ++= Seq(cache, filters, json, ws,
+      "log4j" % "log4j" % "1.2.17",
+      "org.slf4j" % "slf4j-log4j12" % slf4jVersion,
+      "org.apache.httpcomponents" % "httpclient" % "4.2.5",
       //
       // Web Jar dependencies
       //
@@ -349,7 +365,7 @@ lazy val trifecta_ui = (project in file("app-play"))
       "org.webjars" % "highlightjs" % "8.7",
       "org.webjars" % "jquery" % "2.1.3",
       "org.webjars" % "nervgh-angular-file-upload" % "2.1.1",
-      "org.webjars" %% "webjars-play" % "2.4.0-2"
+      "org.webjars" %% "webjars-play" % playWebJarsVersion
     ))
 
 // loads the jvm project at sbt startup

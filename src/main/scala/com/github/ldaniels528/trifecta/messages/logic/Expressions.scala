@@ -12,6 +12,10 @@ object Expressions {
     override def toString = s"$a and $b"
   }
 
+  case class NOT(expr: Expression) extends Expression {
+    override def toString = s"not $expr"
+  }
+
   case class OR(a: Expression, b: Expression) extends Expression {
     override def toString = s"$a or $b"
   }
@@ -36,8 +40,16 @@ object Expressions {
     override def toString = s"$field <= $value"
   }
 
+  case class LIKE(field: String, pattern: String) extends Expression {
+    override def toString = s"$field like '$pattern'"
+  }
+
   case class LT(field: String, value: String) extends Expression {
     override def toString = s"$field < $value"
+  }
+
+  case class MATCHES(field: String, pattern: String) extends Expression {
+    override def toString = s"$field matches '$pattern'"
   }
 
   case class NE(field: String, value: String) extends Expression {

@@ -10,6 +10,14 @@
     color: #0000ff;
 }
 
+.inspect_container {
+    border-right: 1px solid #cccccc;
+    clear: both;
+    width: auto;
+    height: 500px;
+    overflow: auto;
+}
+
 .input-mir {
     width: 100px;
     height: 24px;
@@ -55,6 +63,13 @@
 }
 
 .separator { margin-top: 10px }
+
+.streaming_topics_container {
+    clear: both;
+    width: auto;
+    height: 800px;
+    overflow: auto;
+}
 
 .topics_container {
     clear: both;

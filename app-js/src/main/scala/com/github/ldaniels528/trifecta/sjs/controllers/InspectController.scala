@@ -135,6 +135,17 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
     }
   }
 
+  $scope.fixThreadName = (aConsumerId: js.UndefOr[String], aThreadId: js.UndefOr[String]) => {
+    for {
+      consumerId <- aConsumerId
+      threadId <- aThreadId
+    } yield {
+      var name = if (threadId.startsWith(consumerId)) threadId.substring(consumerId.length) else threadId
+      while (name.startsWith("_")) name = name.drop(1)
+      name
+    }
+  }
+
   private def updateConsumerGroups(consumerGroups: js.Array[ConsumerGroup]) {
     consumerGroups foreach { group =>
       group.details foreach { detail =>
@@ -313,6 +324,7 @@ object InspectController {
     var expandItem: js.Function1[js.UndefOr[ZkItem], Unit] = js.native
     var expandReplicas: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
     var expandTopicConsumers: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var fixThreadName: js.Function2[js.UndefOr[String], js.UndefOr[String], js.UndefOr[String]] = js.native
     var formatData: js.Function2[js.UndefOr[String], js.UndefOr[String], Unit] = js.native
     var getInSyncBulbImage: js.Function1[js.UndefOr[Int], Unit] = js.native
     var getInSyncClass: js.Function1[js.UndefOr[Double], js.UndefOr[String]] = js.native

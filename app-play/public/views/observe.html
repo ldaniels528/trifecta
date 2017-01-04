@@ -87,7 +87,7 @@
             </div>
             <div class="input_block" ng-show="displayMode.state == 'message'">
                 <span class="header_label">Decode </span>
-                <i class="header_label clickable fa" ng-class="decodingOn ? 'fa-toggle-on' : 'fa-toggle-off'" onclick="toggleDecodingState()"></i>
+                <i class="header_label clickable fa" ng-class="getDecodingState(topic.topic) ? 'fa-toggle-on' : 'fa-toggle-off'" ng-click="toggleDecodeOnOff(topic.topic, message)"></i>
             </div>
             <div class="input_block" ng-hide="isLimitedControls()">
                 <span class="header_label">Offset</span> <input ng-model="partition.offset" type="text" class="input-mir" ng-change="convertOffsetToInt(partition, partition.offset)">

@@ -1,5 +1,7 @@
 package com.github.ldaniels528.trifecta.io.zookeeper
 
+import kafka.utils.ZKStringSerializer
+import org.I0Itec.zkclient.ZkClient
 import org.apache.curator.RetryPolicy
 import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
 import org.apache.curator.retry.ExponentialBackoffRetry
@@ -80,14 +82,6 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
     Option(client.checkExists().forPath(path)) map (_.getMtime)
   }
 
-  override def getFamily(path: String): List[String] = {
-
-    def zkKeyToPath(parent: String, child: String): String = (if (parent.endsWith("/")) parent else parent + "/") + child
-
-    val children = Option(getChildren(path)) getOrElse Nil
-    path :: (children flatMap (child => getFamily(zkKeyToPath(path, child)))).toList
-  }
-
   override def read(path: String): Option[Array[Byte]] = Option(client.getData.forPath(path))
 
   override def readString(path: String): Option[String] = {
@@ -100,5 +94,7 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
       client.create().forPath(path, bytes)
     }
   }
+
+  override lazy val clientI0Itec = new ZkClient(connectionString, Integer.MAX_VALUE, 5000, ZKStringSerializer)
 
 }

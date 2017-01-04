@@ -1,4 +1,4 @@
-package org.scalajs.tjs.dom
+package io.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSBracketAccess

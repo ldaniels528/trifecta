@@ -46,7 +46,7 @@ object TrifectaShell {
     val messageSourceFactory = new MessageSourceFactory()
     val rt = TxRuntimeContext(config, messageSourceFactory)
     val moduleManager = initModules(config, jobManager, messageSourceFactory, rt)
-    val resultHandler = new TxResultHandler(config, jobManager, args)
+    val resultHandler = getResultsHandler(config, jobManager, args, nonInteractiveMode)
 
     // initialize the console
     val console = new CLIConsole(rt, jobManager, messageSourceFactory, moduleManager, resultHandler)
@@ -60,6 +60,13 @@ object TrifectaShell {
           case None => console.execute(params mkString " ")
         }
     }
+  }
+
+  private def getResultsHandler(config: TxConfig, jobManager: JobManager, args: Array[String], nonInteractiveMode: Boolean) = {
+    if(nonInteractiveMode)
+      new ScriptingResultHandler(config, jobManager, args)
+    else
+      new CLIResultHandler(config, jobManager, args)
   }
 
   private def loadConfiguration(nonInteractiveMode: Boolean) = {
