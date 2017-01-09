@@ -55,6 +55,10 @@ class CLIConsole(rt: TxRuntimeContext,
     * @param line the given command line expression
     */
   def execute(line: String) {
+    if(config.debugOn) {
+      out.println(s"input: |$line|")
+    }
+
     interpret(line) match {
       case Success(result) =>
         // if debug is enabled, display the object value and class name

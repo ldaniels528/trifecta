@@ -8,16 +8,15 @@ import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.trifecta.io.ByteBufferUtils._
 import com.github.ldaniels528.trifecta.io.IOCounter
 import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer._
+import com.github.ldaniels528.trifecta.io.kafka.KafkaZkUtils.{BrokerDetails, ConsumerDetails}
 import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.messages.BinaryMessage
 import com.github.ldaniels528.trifecta.messages.logic.Condition
 import com.github.ldaniels528.trifecta.messages.query.KQLRestrictions
-import com.github.ldaniels528.trifecta.util.TryHelper
 import kafka.api._
 import kafka.common._
-import kafka.consumer.{ConsumerThreadId, SimpleConsumer}
+import kafka.consumer.SimpleConsumer
 import kafka.utils.ZkUtils
-import net.liftweb.json._
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -142,6 +141,12 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
   def getLastOffset: Option[Long] = getOffsetsBefore(OffsetRequest.LatestTime).headOption
 
   /**
+    * Returns the latest offsets
+    * @return an option of an offset
+    */
+  def getLatestOffsets: Seq[Long] = getOffsetsBefore(OffsetRequest.LatestTime)
+
+  /**
     * Returns the offset for an instance in time
     * @param time the given time EPOC in milliseconds
     * @return an option of an offset
@@ -175,11 +180,10 @@ class KafkaMicroConsumer(topicAndPartition: TopicAndPartition, seedBrokers: Seq[
   */
 object KafkaMicroConsumer {
   private lazy val logger = LoggerFactory.getLogger(getClass)
-  private implicit val formats = net.liftweb.json.DefaultFormats
   private val correlationIdGen = new AtomicInteger(-1)
 
-  var rootKafkaPath: String = "/"
   val DEFAULT_FETCH_SIZE: Int = 65536
+  val kafkaUtil = new KafkaZkUtils(rootKafkaPath = "/")
 
   /**
     * Returns the next correlation ID
@@ -386,51 +390,29 @@ object KafkaMicroConsumer {
   /**
     * Retrieves the list of bootstrap servers as a comma separated string
     */
-  def getBootstrapServers(implicit zk: ZKProxy): String = {
-    ZkUtils.getAllBrokersInCluster(zk.clientI0Itec) map (b => s"${b.host}:${b.port}") mkString ","
-  }
+  def getBootstrapServers(implicit zk: ZKProxy): String = kafkaUtil.getBootstrapServers
 
   /**
     * Retrieves the list of defined brokers from Zookeeper
     */
-  def getBrokerList(implicit zk: ZKProxy): Seq[BrokerDetails] = {
-    val sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
-    val basePath = getPrefixedPath("/brokers/ids")
-    zk.getChildren(basePath) flatMap { brokerId =>
-      zk.readString(s"$basePath/$brokerId") map { json =>
-        val details = parse(json).extract[BrokerDetails]
-        Try(details.timestamp = sdf.format(new java.util.Date(details.timestamp.toLong)))
-        details
-      }
-    }
-  }
+  def getBrokerList(implicit zk: ZKProxy): Seq[BrokerDetails] = kafkaUtil.getBrokerList
 
   def getBrokers(implicit zk: ZKProxy): Seq[Broker] = {
     ZkUtils.getAllBrokersInCluster(zk.clientI0Itec) map (b => Broker(b.host, b.port, b.id))
   }
 
-  def getConsumerThreadIds(consumerId: String)(implicit zk: ZKProxy): Option[Seq[ConsumerThreadId]] = {
-    Try {
-      (for {
-        (name, threads) <- ZkUtils.getConsumersPerTopic(zk.clientI0Itec, consumerId, excludeInternalTopics = true)
-        thread <- threads
-        //_ = System.out.println(s"group: $name, id: ${thread.threadId} consumer: ${thread.consumer}")
-      } yield thread).toSeq.sortBy(_.threadId)
-    } toOption
-  }
-
   /**
     * Retrieves the list of internal consumers from Kafka
     */
-  def getConsumersFromKafka(consumerIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
+  def getConsumersFromKafka(groupIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
     val topicList = getTopicList(getBrokers)
     val topicPartitions = topicList.map(t => new TopicPartition(t.topic, t.partitionId)).asJavaCollection
     val topics = topicList map (_.topic) distinct
 
-    consumerIds flatMap { consumerId =>
+    groupIds flatMap { groupId =>
       val props = new Properties()
       props.put("bootstrap.servers", getBootstrapServers)
-      props.put("group.id", consumerId)
+      props.put("group.id", groupId)
       props.put("auto.offset.reset", autoOffsetReset)
       props.put("key.deserializer", classOf[StringDeserializer].getName)
       props.put("value.deserializer", classOf[StringDeserializer].getName)
@@ -440,10 +422,20 @@ object KafkaMicroConsumer {
         consumer.poll(0)
         Try(consumer.position(topicPartitions)) match {
           case Success(mapping) =>
-            val threads = getConsumerThreadIds(consumerId)
+            val owners = Try(kafkaUtil.getConsumerOwners(groupId)).toOption
+            val threads = Try(kafkaUtil.getConsumerThreads(groupId)).toOption
             mapping.toSeq map { case (tp, offset) =>
-              val thread = threads.flatMap(_.find(_.threadId == tp.partition())).map(_.consumer)
-              ConsumerDetails(consumerId, thread, tp.topic(), tp.partition(), offset, lastModified = None)
+              val owner = owners.flatMap(_.find(o => o.topic == tp.topic() && o.partition == tp.partition()))
+              val thread = threads.flatMap(_.find(t => t.topic == tp.topic()))
+              ConsumerDetails(
+                version = thread.map(_.version),
+                groupId,
+                owner.map(_.threadId),
+                tp.topic(),
+                tp.partition(),
+                offset,
+                lastModified = thread.flatMap(t => Try(t.timestamp.toLong).toOption),
+                lastModifiedISO = thread.flatMap(_.timestampISO))
             }
           case Failure(e) =>
             logger.error("Failed to retrieve Kafka consumers", e)
@@ -457,71 +449,13 @@ object KafkaMicroConsumer {
     * Retrieves the list of consumers from Zookeeper
     */
   def getConsumerFromZookeeper(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
-    val basePath = getPrefixedPath("/consumers")
-
-    def getConsumerDetailsSet(consumerId: String, topic: String, topicPath: String) = {
-      for {
-        partitionIds <- Try(zk.getChildren(topicPath))
-        consumerDetails <- TryHelper.sequence(partitionIds map { partitionId =>
-          getConsumerDetails(consumerId, topic, partitionId, partitionPath = s"$topicPath/$partitionId")
-        }) map (_.flatten)
-      } yield consumerDetails
-    }
-
-    def getConsumerDetails(consumerId: String, topic: String, partitionId: String, partitionPath: String) = {
-      val threads = getConsumerThreadIds(consumerId)
-      for {
-        lastModified <- Try(zk.getModificationTime(partitionPath))
-        offsets <- Try(zk.readString(partitionPath))
-        partition =  partitionId.toInt
-        threadId = threads.flatMap(_.find(_.threadId == partition)).map(_.consumer)
-        details = offsets.toSeq.map(offset => ConsumerDetails(consumerId, threadId, topic, partition, offset.toLong, lastModified))
-      } yield details
-    }
-
-    // start with the list of consumer IDs
-    val results = for {
-      consumerIds <- Try(zk.getChildren(basePath))
-      outcomes <- TryHelper.sequence(consumerIds map { consumerId =>
-        val offsetPath = s"$basePath/$consumerId/offsets"
-        for {
-          topics <- Try(zk.getChildren(offsetPath).distinct filter (contentFilter(topicPrefix, _)))
-          results <- TryHelper.sequence(topics map { topic =>
-            getConsumerDetailsSet(consumerId, topic, topicPath = s"$offsetPath/$topic")
-          }) map (_.flatten)
-        } yield results
-      }) map (_.flatten)
-    } yield outcomes
-
-    results match {
-      case Success(details) => details
-      case Failure(e) =>
-        logger.error("Error retrieving consumer details", e)
-        Nil
-    }
+    kafkaUtil.getConsumerDetails filter (cd => contentFilter(topicPrefix, cd.topic))
   }
 
   /**
     * Retrieves the list of consumers from Zookeeper (Kafka-Storm Partition Manager Version)
     */
-  def getConsumersForStorm()(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = {
-    zk.getFamily(path = getPrefixedPath("/")).distinct filter (_.matches( """\S+[/]partition_\d+""")) flatMap { path =>
-      zk.readString(path) flatMap { jsonString =>
-        val lastModified = zk.getModificationTime(path)
-        Try {
-          val json = parse(jsonString)
-          val id = (json \ "topology" \ "id").extract[String]
-          val name = (json \ "topology" \ "name").extract[String]
-          val topic = (json \ "topic").extract[String]
-          val offset = (json \ "offset").extract[Long]
-          val partition = (json \ "partition").extract[Int]
-          val brokerHost = (json \ "broker" \ "host").extract[String]
-          val brokerPort = (json \ "broker" \ "port").extract[Int]
-          ConsumerDetailsPM(id, name, topic, partition, offset, lastModified, s"$brokerHost:$brokerPort")
-        } toOption
-      }
-    }
-  }
+  def getConsumersForStorm()(implicit zk: ZKProxy): Seq[ConsumerDetailsPM] = kafkaUtil.getConsumersForStorm()
 
   def getReplicas(topic: String, brokers: Seq[Broker])(implicit zk: ZKProxy): Seq[ReplicaBroker] = {
     val results = for {
@@ -549,7 +483,7 @@ object KafkaMicroConsumer {
     * Returns the list of partitions for the given topic
     */
   def getTopicPartitions(topic: String)(implicit zk: ZKProxy): Seq[Int] = {
-    zk.getChildren(path = getPrefixedPath(s"/brokers/topics/$topic/partitions")) map (_.toInt)
+    kafkaUtil.getBrokerTopicPartitions(topic)
   }
 
   /**
@@ -557,7 +491,7 @@ object KafkaMicroConsumer {
     */
   def getTopicList(brokers: Seq[Broker])(implicit zk: ZKProxy): Seq[TopicDetails] = {
     // get the list of topics
-    val topics = zk.getChildren(path = getPrefixedPath("/brokers/topics")) filterNot (_ == "__consumer_offsets")
+    val topics = kafkaUtil.getBrokerTopicNames filterNot (_ == "__consumer_offsets")
 
     // capture the meta data for all topics
     brokers.headOption map { broker =>
@@ -663,14 +597,6 @@ object KafkaMicroConsumer {
   }
 
   /**
-    * Prefixes the given path to support instances where the Zookeeper is either multi-tenant or uses
-    * a custom-directory structure.
-    * @param path the given Zookeeper/Kafka path
-    * @return the prefixed path
-    */
-  private def getPrefixedPath(path: String) = s"$rootKafkaPath$path".replaceAllLiterally("//", "/")
-
-  /**
     * Retrieves the partition meta data for the given broker
     */
   private def getTopicMetadata(broker: Broker, topics: Seq[String]): Seq[TopicMetadata] = {
@@ -696,14 +622,11 @@ object KafkaMicroConsumer {
   private def makeClientID(prefix: String): String = s"$prefix${System.nanoTime()}"
 
   /**
-    * Represents the consumer group details for a given topic partition
-    */
-  case class ConsumerDetails(consumerId: String, threadId: Option[String], topic: String, partition: Int, offset: Long, lastModified: Option[Long])
-
-  /**
     * Represents the consumer group details for a given topic partition (Kafka Spout / Partition Manager)
     */
-  case class ConsumerDetailsPM(topologyId: String, topologyName: String, topic: String, partition: Int, offset: Long, lastModified: Option[Long], broker: String)
+  case class ConsumerDetailsPM(topologyId: String, topologyName: String, topic: String, partition: Int, offset: Long, lastModified: Option[Long], broker: String) {
+    lazy val lastModifiedISO: Option[String] = lastModified.flatMap(KafkaZkUtils.toISODateTime(_).toOption)
+  }
 
   /**
     * Represents a message and offset
@@ -722,12 +645,6 @@ object KafkaMicroConsumer {
   case class TopicDetails(topic: String, partitionId: Int, leader: Option[Broker], replicas: Seq[Broker], isr: Seq[Broker], sizeInBytes: Int)
 
   case class TopicSummary(topic: String, partitions: Int)
-
-  /**
-    * Object representation of the broker information JSON
-    * {"jmx_port":9999,"timestamp":"1405818758964","host":"dev502","version":1,"port":9092}
-    */
-  case class BrokerDetails(jmx_port: Int, var timestamp: String, host: String, version: Int, port: Int)
 
   /**
     * Represents a class of exceptions that occur while attempting to fetch data from a Kafka broker

@@ -1,4 +1,4 @@
-<div ng-controller="InspectController" ng-init="expandFirstItem()" class="full_block" style="padding-top: 10px">
+<div ng-controller="InspectController" ng-init="expandFirstItem()" class="row" style="padding-top: 10px">
     <!-- tabs -->
     <div class="col-md-2" style="height: 100%; border-right: 1px solid #cccccc">
         <tabset vertical="true" type="pills">
@@ -9,7 +9,7 @@
     </div>
 
     <div class="col-md-10">
-        <div class="streaming_topics_container">
+        <div class="streaming_topics_container2">
             <div ng-show="inspectTab.name == 'Brokers'" ng-include src="'/assets/views/inspect/brokers.html'"></div>
             <div ng-show="inspectTab.name == 'Consumers'" ng-include src="'/assets/views/inspect/consumers.html'"></div>
             <div ng-show="inspectTab.name == 'Replicas'" ng-include src="'/assets/views/inspect/replicas.html'"></div>

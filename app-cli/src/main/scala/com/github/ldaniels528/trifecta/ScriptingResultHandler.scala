@@ -49,7 +49,9 @@ class ScriptingResultHandler(config: TxConfig, jobManager: JobManager, args: Arr
 
       // unhandled ...
       case x =>
-        logger.info(s"$x (${Option(x).map(_.getClass.getName)}")
+        if(config.debugOn) {
+          logger.info(s"$x (${Option(x).map(_.getClass.getName)}")
+        }
         out.println()
     }
   }

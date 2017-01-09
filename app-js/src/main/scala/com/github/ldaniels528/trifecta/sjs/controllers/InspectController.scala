@@ -1,9 +1,11 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
+import scala.scalajs.js.JSConverters._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.InspectController._
+import com.github.ldaniels528.trifecta.sjs.models.ConsumerRedux.ConsumerOffsetRedux
 import com.github.ldaniels528.trifecta.sjs.models._
-import com.github.ldaniels528.trifecta.sjs.services.{TopicService, ZookeeperService}
+import com.github.ldaniels528.trifecta.sjs.services.{BrokerService, ConsumerGroupService, TopicService, ZookeeperService}
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.toaster.Toaster
 import org.scalajs.dom
@@ -15,6 +17,7 @@ import org.scalajs.sjs.PromiseHelper._
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 import scala.util.{Failure, Success}
 
 /**
@@ -23,12 +26,15 @@ import scala.util.{Failure, Success}
   */
 case class InspectController($scope: InspectScope, $location: Location, $log: Log, $routeParams: InspectRouteParams,
                              $timeout: Timeout, $interval: Interval, toaster: Toaster,
+                             @injected("BrokerService") brokerService: BrokerService,
+                             @injected("ConsumerGroupService") consumerGroupService: ConsumerGroupService,
                              @injected("TopicService") topicService: TopicService,
                              @injected("ZookeeperService") zookeeperService: ZookeeperService)
   extends Controller with PopupMessages {
 
   implicit val scope: Scope with GlobalLoading = $scope
 
+  $scope.versions = js.Dictionary("0" -> "0.7.x", "1" -> "0.8.x", "2" -> "0.9.0.x", "3" -> "0.10.0.x", "4" -> "0.10.1.x")
   $scope.formats = js.Array("auto", "binary", "json", "plain-text")
   $scope.selected = FormatSelection(format = $scope.formats.head)
   $scope.zkItem = js.undefined
@@ -114,25 +120,78 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
     broker.expanded = !broker.expanded.isTrue
   }
 
-  /**
-    * Expands the consumers for the given topic
-    * @@param topic the given topic
-    */
-  $scope.expandTopicConsumers = (aTopic: js.UndefOr[TopicDetails]) => aTopic foreach { topic =>
-    topic.expanded = !topic.expanded.isTrue
-    if (topic.expanded.isTrue) {
-      topic.loadingConsumers = true
-      topicService.getConsumerGroups(topic.topic).withGlobalLoading.withTimer("Retrieving consumers by topic") onComplete {
-        case Success(consumerGroups) =>
-          $scope.$apply { () =>
-            topic.loadingConsumers = false
-            updateConsumerGroups(consumerGroups)
-          }
-        case Failure(e) =>
-          topic.loadingConsumers = false
-          errorPopup("Failed to retrieve consumers", e)
+  $scope.expandConsumer = (aConsumer: js.UndefOr[XConsumer]) => {
+    for {
+      consumer <- aConsumer
+      consumerId <- consumer.consumerId
+    } {
+      consumer.expanded = !consumer.expanded.isTrue
+      if (consumer.expanded.isTrue) {
+        consumer.loading = true
+        consumerGroupService.getConsumer(consumerId) onComplete {
+          case Success(consumerUpdate) =>
+            console.log(s"consumerUpdate = ${angular.toJson(consumerUpdate)}")
+            $timeout(() => consumer.loading = false, 500.millis)
+            $scope.$apply { () =>
+              consumer.offsets = consumerUpdate.offsets
+              consumer.owners = consumerUpdate.owners
+              consumer.threads = consumerUpdate.threads
+              consumer.topics = consumerUpdate.offsets.map(_.groupBy(_.topic.orNull).toJSArray map { case (topic, topicOffsets) =>
+                new ConsumerTopics(topic, topicOffsets)
+              })
+              if (consumer.topics.exists(_.length == 1)) {
+                consumer.topics.foreach(_.headOption.foreach(_.expanded = true))
+              }
+            }
+          case Failure(e) =>
+            $scope.$apply(() => consumer.loading = false)
+            errorPopup("Failed to retrieve consumer offsets", e)
+        }
       }
     }
+  }
+
+  $scope.getConsumerHost = (aConsumer: js.UndefOr[ConsumerRedux], aCOffset: js.UndefOr[ConsumerOffsetRedux]) => {
+    for {
+      consumer <- aConsumer
+      coffset <- aCOffset
+      owners <- consumer.owners
+      cowner <- owners.find(o => o.topic == coffset.topic && o.partition == coffset.partition).orUndefined
+      threadId <- cowner.threadId
+      hostName <- getThreadHostName(consumer.consumerId, threadId)
+    } yield hostName
+  }
+
+  private def getThreadHostName(aConsumerId: js.UndefOr[String], aThreadId: js.UndefOr[String]) = {
+    for {
+      consumerId <- aConsumerId
+      threadId <- aThreadId
+    } yield {
+      var name = if (threadId.startsWith(consumerId)) threadId.substring(consumerId.length) else threadId
+      while (name.startsWith("_")) name = name.drop(1)
+
+      (1 to 3).foreach { _ =>
+        name.lastIndexOf("-") match {
+          case -1 =>
+          case limit => name = name.substring(0, limit)
+        }
+      }
+      name
+    }
+  }
+
+  $scope.getConsumerVersion = (aConsumer: js.UndefOr[ConsumerRedux], aCOffset: js.UndefOr[ConsumerOffsetRedux]) => {
+    for {
+      consumer <- aConsumer
+      coffset <- aCOffset
+      owners <- consumer.owners
+      cowner <- owners.find(o => o.topic == coffset.topic && o.partition == coffset.partition).orUndefined
+      threadId <- cowner.threadId
+
+      threads <- consumer.threads
+      thread <- threads.find(t => threadId.startsWith(t.threadId.getOrElse(""))).orUndefined
+      version <- thread.version.map(_.toString)
+    } yield $scope.versions.getOrElse(version, version)
   }
 
   $scope.fixThreadName = (aConsumerId: js.UndefOr[String], aThreadId: js.UndefOr[String]) => {
@@ -146,20 +205,27 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
     }
   }
 
-  private def updateConsumerGroups(consumerGroups: js.Array[ConsumerGroup]) {
-    consumerGroups foreach { group =>
-      group.details foreach { detail =>
-        $scope.consumers.find(c =>
-          (c.consumerId ?== group.consumerId) &&
-            (c.topic ?== detail.topic) &&
-            (c.partition ?== detail.partition)) match {
-          case Some(consumer) =>
-            consumer.update(detail)
-          case None =>
-            $scope.consumers.push(detail)
-            $scope.consumerGroupCache.clear()
-        }
-      }
+  $scope.getMessagesLeft = (aCOffset: js.UndefOr[ConsumerOffsetRedux]) => {
+    for {
+      coffset <- aCOffset
+      offset <- coffset.offset
+      topicOffset <- coffset.topicEndOffset
+    } yield Math.max(topicOffset - offset, 0)
+  }
+
+  $scope.getTotalMessageCount = (aTopicName: js.UndefOr[String]) => {
+    for {
+      topicName <- aTopicName
+      topic <- $scope.topics.find(_.topic == topicName).orUndefined
+    } yield topic.totalMessages
+  }
+
+  private def updateConsumerGroups(deltaSet: js.Array[ConsumerGroup]) {
+    for {
+      group <- deltaSet
+      delta <- group.details
+    } {
+      $scope.consumers.updateDelta(delta)
     }
   }
 
@@ -235,7 +301,7 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
     topic.replicaExpanded = !topic.replicaExpanded.isTrue
     if (topic.replicaExpanded.isTrue) {
       topic.loading = true
-      topicService.getReplicas(topic.topic).withGlobalLoading.withTimer("Retrieving replicas") onComplete {
+      brokerService.getReplicas(topic.topic).withGlobalLoading.withTimer("Retrieving replicas") onComplete {
         case Success(replicas) =>
           $timeout(() => topic.loading = false, 0.5.seconds)
           $scope.$apply { () =>
@@ -312,6 +378,7 @@ object InspectController {
     var inspectTab: MainTab = js.native
     var inspectTabs: js.Array[MainTab] = js.native
     var selected: FormatSelection = js.native
+    var versions: js.Dictionary[String] = js.native
     var zkItem: js.UndefOr[ZkItem] = js.native
     var zkItems: js.Array[ZkItem] = js.native
 
@@ -323,15 +390,29 @@ object InspectController {
     var expandFirstItem: js.Function0[Unit] = js.native
     var expandItem: js.Function1[js.UndefOr[ZkItem], Unit] = js.native
     var expandReplicas: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
-    var expandTopicConsumers: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
+    var expandConsumer: js.Function1[js.UndefOr[XConsumer], Unit] = js.native
     var fixThreadName: js.Function2[js.UndefOr[String], js.UndefOr[String], js.UndefOr[String]] = js.native
     var formatData: js.Function2[js.UndefOr[String], js.UndefOr[String], Unit] = js.native
+    var getConsumerHost: js.Function2[js.UndefOr[ConsumerRedux], js.UndefOr[ConsumerOffsetRedux], js.UndefOr[String]] = js.native
+    var getConsumerVersion: js.Function2[js.UndefOr[ConsumerRedux], js.UndefOr[ConsumerOffsetRedux], js.UndefOr[String]] = js.native
     var getInSyncBulbImage: js.Function1[js.UndefOr[Int], Unit] = js.native
     var getInSyncClass: js.Function1[js.UndefOr[Double], js.UndefOr[String]] = js.native
     var getItemInfo: js.Function1[js.UndefOr[ZkItem], Unit] = js.native
+    var getMessagesLeft: js.Function1[js.UndefOr[ConsumerOffsetRedux], js.UndefOr[Double]] = js.native
+    var getTotalMessageCount: js.Function1[js.UndefOr[String], js.UndefOr[Int]] = js.native
     var isActiveInspectTab: js.Function1[js.UndefOr[MainTab], Boolean] = js.native
     var isConsumerUpToDate: js.Function1[js.UndefOr[Consumer], Boolean] = js.native
 
+  }
+
+  @ScalaJSDefined
+  trait XConsumer extends ConsumerRedux {
+    var topics: js.UndefOr[js.Array[ConsumerTopics]] = js.undefined
+  }
+
+  @ScalaJSDefined
+  class ConsumerTopics(var topic: String, var offsets: js.Array[ConsumerOffsetRedux]) extends js.Object {
+    var expanded: js.UndefOr[Boolean] = js.undefined
   }
 
 }

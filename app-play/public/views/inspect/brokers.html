@@ -4,19 +4,22 @@
         <img class="clickable" ng-click="expandBroker(inst)" ng-src="/assets/images/buttons/{{ inst.expanded ? 'collapse' : 'expand' }}.png"> {{ inst.host }} ({{ inst.details.length }} instances)
         <table ng-show="inst.expanded" class="full_width indent">
             <tr>
+                <th class="left">Version</th>
                 <th>Port</th>
-                <th class="center">Version</th>
-                <th class="center">Timestamp</th>
                 <th class="center">JMX Port</th>
+                <th class="center">Last Updated</th>
             </tr>
             <tr ng-repeat="b in inst.details | orderBy:'port'">
+                <td class="left">
+                    <span ng-show="versions[b.version]">{{ versions[b.version] }}</span>
+                    <span ng-hide="versions[b.version]">{{ b.version }}</span>
+                </td>
                 <td>{{ b.port }}</td>
-                <td class="center">{{ b.version }}</td>
-                <td class="center">{{ b.timestamp }}</td>
                 <td class="center">
                     <span ng-show="b.jmxPort">{{ b.jmxPort }}</span>
                     <span ng-hide="b.jmxPort" class="inactive">N/A</span>
                 </td>
+                <td class="center">{{ b.timestampISO }}</td>
             </tr>
         </table>
     </div>

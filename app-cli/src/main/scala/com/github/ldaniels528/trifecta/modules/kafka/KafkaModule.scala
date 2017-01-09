@@ -11,7 +11,8 @@ import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.commons.helpers.TimeHelper.Implicits._
 import com.github.ldaniels528.trifecta.command._
 import com.github.ldaniels528.trifecta.io._
-import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{BrokerDetails, MessageData, ReplicaBroker, contentFilter}
+import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{MessageData, ReplicaBroker, contentFilter}
+import com.github.ldaniels528.trifecta.io.kafka.KafkaZkUtils.BrokerDetails
 import com.github.ldaniels528.trifecta.io.kafka._
 import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.messages.codec.avro.AvroCodec

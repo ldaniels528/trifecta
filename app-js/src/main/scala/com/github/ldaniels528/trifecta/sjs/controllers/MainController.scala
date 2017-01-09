@@ -4,7 +4,7 @@ import com.github.ldaniels528.trifecta.sjs.RootScope
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.MainController._
 import com.github.ldaniels528.trifecta.sjs.models._
-import com.github.ldaniels528.trifecta.sjs.services.TopicService
+import com.github.ldaniels528.trifecta.sjs.services.{BrokerService, _}
 import org.scalajs.angularjs.AngularJsHelper._
 import org.scalajs.angularjs._
 import org.scalajs.angularjs.toaster.Toaster
@@ -26,6 +26,8 @@ import scala.util.{Failure, Success}
   * @author lawrence.daniels@gmail.com
   */
 case class MainController($scope: MainScope, $location: Location, $timeout: Timeout, toaster: Toaster,
+                          @injected("BrokerService") brokerService: BrokerService,
+                          @injected("ConsumerGroupService") consumerGroupService: ConsumerGroupService,
                           @injected("TopicService") topicService: TopicService)
   extends Controller with PopupMessages {
 
@@ -40,6 +42,7 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
   $scope.replicas = emptyArray
   $scope.topics = emptyArray
   $scope.hideEmptyTopics = true
+  $scope.hideConsoleConsumers = true
 
   // queries
   $scope.storedQueries = emptyArray
@@ -216,20 +219,15 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
   //        Consumer Functions
   /////////////////////////////////////////////////////////////////////////////////
 
-  $scope.getConsumers = () => $scope.consumers
-
-  $scope.getConsumersForTopic = (aTopic: js.UndefOr[String]) => aTopic map { topic =>
-    $scope.consumerGroupCache.getOrElseUpdate(topic,
-      js.Array($scope.consumers
-        .filter(c => aTopic ?== c.topic)
-        .groupBy(_.consumerId.orNull) map { case (consumerId, details) => ConsumerGroup(consumerId, details) } toSeq: _*))
+  $scope.getConsumers = () => {
+    if ($scope.hideConsoleConsumers)
+      $scope.consumers.filterNot(_.consumerId.exists(_.startsWith("console-consumer")))
+    else
+      $scope.consumers
   }
 
-  $scope.getConsumersForIdAndTopic = (aConsumerId: js.UndefOr[String], aTopic: js.UndefOr[String]) => {
-    for {
-      consumerId <- aConsumerId
-      topic <- aTopic
-    } yield $scope.consumers.filter(c => c.consumerId.contains(consumerId) && c.topic.contains(topic))
+  $scope.toggleHideShowConsoleConsumers = () => {
+    $scope.hideConsoleConsumers = !$scope.hideConsoleConsumers
   }
 
   /////////////////////////////////////////////////////////////////////////////////
@@ -285,25 +283,7 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
 
   private def updateConsumerDeltas(deltas: js.Array[ConsumerDelta]) = {
     console.log(s"Received consumer deltas => ${angular.toJson(deltas)}")
-    deltas foreach updateConsumerDelta
-  }
-
-  private def updateConsumerDelta(delta: ConsumerDelta) = {
-    $scope.consumers.find(c => c.consumerId == delta.consumerId && c.topic == delta.topic && c.partition == delta.partition) match {
-      case Some(consumer) =>
-        console.log(s"Updating consumer => ${angular.toJson(consumer)}")
-        consumer.update(delta)
-
-        // clear the delta after 5 seconds
-        $timeout(() => {
-          consumer.deltaC = js.undefined
-          consumer.deltaT = js.undefined
-        }, 5.seconds)
-      case None =>
-        console.log(s"Adding new consumer => ${angular.toJson(delta)}")
-        $scope.consumers.push(Consumer(delta))
-        $scope.consumerGroupCache.clear()
-    }
+    deltas foreach (delta => $scope.consumers.updateDelta(delta))
   }
 
   private def updateTopicDeltas(deltas: js.Array[PartitionDelta]) = {
@@ -312,7 +292,8 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
       partitionId <- delta.partition
       topic <- $scope.topics.find(t => delta.topic.contains(t.topic)).orUndefined
     } {
-      topic.replace(delta)
+      console.log(s"Updating topic delta => ${angular.toJson(delta)}")
+      $scope.$apply(() => topic.replace(delta))
 
       // clear the delta after 5 seconds
       $timeout(() => topic(partitionId).foreach(_.delta = js.undefined), 5.seconds)
@@ -322,21 +303,23 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
   /**
     * React to incoming consumer deltas
     */
-  $scope.onConsumerDeltas { deltas => $scope.$apply(() => updateConsumerDeltas(deltas)) }
+  $scope.onConsumerDeltas { deltas => updateConsumerDeltas(deltas) }
 
   /**
     * React to incoming topic deltas
     */
-  $scope.onTopicDeltas { deltas => $scope.$apply(() => updateTopicDeltas(deltas)) }
+  $scope.onTopicDeltas { deltas => updateTopicDeltas(deltas) }
 
   /////////////////////////////////////////////////////////////////////////////////
   //        Initialization
   /////////////////////////////////////////////////////////////////////////////////
 
+  $scope.init = () => init()
+
   /**
     * Pre-load the reference data
     */
-  $scope.init = () => {
+  def init() {
     $scope.referenceDataLoading = true
 
     val promisedBrokers = loadBrokers()
@@ -370,7 +353,7 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
 
   private def loadBrokers() = {
     $scope.brokersLoading = true
-    val promisedBrokers = topicService.getBrokerGroups.withGlobalLoading.withTimer("Retrieving brokers")
+    val promisedBrokers = brokerService.getBrokerGroups.withGlobalLoading.withTimer("Retrieving brokers")
     promisedBrokers onComplete {
       case Success(brokers) =>
         console.info(s"Loaded ${brokers.length} broker(s)")
@@ -388,7 +371,7 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
 
   private def loadConsumers() = {
     $scope.consumersLoading = true
-    val promisedConsumers = topicService.getConsumers.withGlobalLoading.withTimer("Retrieving consumers")
+    val promisedConsumers = consumerGroupService.getConsumersLite.withGlobalLoading.withTimer("Retrieving consumers")
     promisedConsumers onComplete {
       case Success(consumers) =>
         console.info(s"Loaded ${consumers.length} consumer(s)")

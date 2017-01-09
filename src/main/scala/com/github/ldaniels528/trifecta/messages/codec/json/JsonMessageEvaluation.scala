@@ -191,7 +191,7 @@ object JsonMessageEvaluation {
           js \ field match {
             case JNull => false
             case JString(s) => s.like(pattern)
-            case x => x.toString.like(pattern)
+            case x => JsonHelper.renderJson(x, pretty = false).like(pattern)
           }
         case Failure(e) => false
       }
@@ -236,7 +236,7 @@ object JsonMessageEvaluation {
           js \ field match {
             case JNull => false
             case JString(s) => s.matches(pattern)
-            case x => x.toString.matches(pattern)
+            case chunk => JsonHelper.renderJson(chunk, pretty = false).matches(pattern)
           }
         case Failure(e) => false
       }

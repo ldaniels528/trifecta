@@ -59,7 +59,7 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
   }
 
   override def exists(path: String): Boolean = {
-    Option(client.checkExists().forPath(path)).isDefined
+    Option(client.checkExists().forPath(path)).nonEmpty
   }
 
   override def ensurePath(path: String): List[String] = {

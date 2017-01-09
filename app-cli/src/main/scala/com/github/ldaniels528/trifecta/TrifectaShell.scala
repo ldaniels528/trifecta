@@ -36,6 +36,11 @@ object TrifectaShell {
     // load the configuration
     val config = loadConfiguration(nonInteractiveMode)
 
+    // activate debugging mode?
+    if(args.isDebug) {
+      config.debugOn = true
+    }
+
     // startup the Kafka Sandbox?
     if (args.isKafkaSandbox) {
       initKafkaSandbox(config)

@@ -154,7 +154,9 @@ object Module {
         JsonHelper.transformTo[List[UserModule]](jsonString)
       } match {
         case Success(modules) => modules flatMap { umd =>
-          logger.info(s"Loading module '${umd.name}'...")
+          if(config.debugOn) {
+            logger.info(s"Loading module '${umd.name}'...")
+          }
           Try {
             val `class` = classLoader.loadClass(umd.`class`)
             val constructor = `class`.getConstructor(classOf[TxConfig])

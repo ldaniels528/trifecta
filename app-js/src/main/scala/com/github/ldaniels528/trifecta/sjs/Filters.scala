@@ -23,7 +23,7 @@ object Filters {
   /**
     * Duration: Converts a given time stamp to a more human readable expression (e.g. "5 mins ago")
     */
-  val duration: js.Function = () => { (time: js.Dynamic) => toDuration(time, noFuture = false) }: js.Function
+  val duration: js.Function = () => { (time: js.Dynamic) => toDuration(time) }: js.Function
 
   /**
     * Yes/No: Converts a boolean value into 'Yes' or 'No'
