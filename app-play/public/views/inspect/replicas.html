@@ -1,4 +1,4 @@
-<div class="col-md-8">
+<div class="inspect_container">
     <div ng-include="'/assets/views/partials/hide_show_empty_topics.html'"></div>
     <div ng-repeat="t in getTopics() | orderBy:'topic'">
         <a ng-click="expandReplicas(t)">
@@ -25,7 +25,7 @@
         </div>
     </div>
 </div>
-<div class="col-md-4" style="height: 100%; border-left: 1px solid #cccccc">
+<div>
     <div ng-include="'/assets/views/partials/hints_and_tips.html'"></div>
     <p><img class="bulb" src="/assets/images/common/bulb-16.png"> This view provides the user
         with information about the replication of topic partitions. The replication state of each partition

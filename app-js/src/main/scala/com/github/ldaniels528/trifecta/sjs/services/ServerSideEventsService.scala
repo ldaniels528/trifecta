@@ -4,9 +4,8 @@ import com.github.ldaniels528.trifecta.sjs.RootScope
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.ServerSideEventsService._
 import org.scalajs.angularjs._
-import org.scalajs.angularjs.http.Http
-import org.scalajs.dom.Event
-import org.scalajs.dom.raw.EventSource
+import org.scalajs.angularjs.http.{Http, HttpResponse}
+import org.scalajs.dom.{Event, EventSource}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON
@@ -34,32 +33,32 @@ class ServerSideEventsService($rootScope: RootScope, $http: Http, $log: Log) ext
   /**
     * Retrieves the current message sampling session
     */
-  def getSamplingSession = {
+  def getSamplingSession: HttpResponse[SubmittedResult] = {
     $http.get[SubmittedResult](url = "/api/sse/sampling")
   }
 
   /**
     * Starts message sampling
     */
-  def startSampling(topic: String, partitionOffsets: js.Array[Int]) = {
+  def startSampling(topic: String, partitionOffsets: js.Array[Int]): HttpResponse[SubmittedResult] = {
     $http.put[SubmittedResult](url = "/api/sse/sampling", data = SamplingRequest(topic, partitionOffsets))
   }
 
   /**
     * Stops message sampling
     */
-  def stopSampling(sessionId: String) = {
+  def stopSampling(sessionId: String): HttpResponse[OperationResult] = {
     $http.delete[OperationResult](url = s"/api/sse/sampling/$sessionId")
   }
 
   /**
     * Handles the incoming SSE message event
     */
-  private def handleMessage: js.Function1[SSEMessageEvent, Any] = (event: SSEMessageEvent) => {
+  def handleMessage: js.Function1[SSEMessageEvent, Any] = (event: SSEMessageEvent) => {
     event.data foreach { evtData =>
       JSON.parse(evtData).asInstanceOf[ReactiveMessage] match {
         // is it an action command?
-        case evt if evt.`type`.isDefined =>
+        case evt if evt.`type`.nonEmpty =>
           for (action <- evt.`type`; message <- evt.message) $rootScope.$broadcast(action, message)
 
         // unrecognized message

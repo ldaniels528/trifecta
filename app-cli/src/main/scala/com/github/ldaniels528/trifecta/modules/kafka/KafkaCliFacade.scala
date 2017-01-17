@@ -27,7 +27,7 @@ class KafkaCliFacade(config: TxConfig) {
   private var publisher_? : Option[KafkaPublisher] = None
 
   // set user defined Kafka root directory
-  KafkaMicroConsumer.rootKafkaPath = config.kafkaRootPath
+  KafkaMicroConsumer.kafkaUtil.rootKafkaPath = config.kafkaRootPath
 
   /**
     * Returns a collection of brokers

@@ -1,15 +1,15 @@
+import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.Results._
 import play.api.mvc.{Filter, RequestHeader, Result, WithFilters}
 import play.api.{Application, GlobalSettings, Logger}
 import play.filters.gzip.GzipFilter
 
-import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 
 /**
- * Global Settings
- * @author lawrence.daniels@gmail.com
- */
+  * Global Settings
+  * @author lawrence.daniels@gmail.com
+  */
 object Global extends WithFilters(LoggingFilter, new GzipFilter()) with GlobalSettings {
 
   override def onStart(app: Application) = Logger.info("Application has started")
@@ -25,10 +25,10 @@ object Global extends WithFilters(LoggingFilter, new GzipFilter()) with GlobalSe
 }
 
 /**
- * Logging Filter
- * @author lawrence.daniels@gmail.com
- *         http://www.playframework.com/documentation/2.2.3/ScalaHttpFilters
- */
+  * Logging Filter
+  * @author lawrence.daniels@gmail.com
+  *         http://www.playframework.com/documentation/2.2.3/ScalaHttpFilters
+  */
 object LoggingFilter extends Filter {
 
   def apply(nextFilter: (RequestHeader) => Future[Result])(requestHeader: RequestHeader): Future[Result] = {

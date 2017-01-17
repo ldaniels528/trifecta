@@ -13,7 +13,7 @@ object Conditions extends BinaryMessaging {
    * @author lawrence.daniels@gmail.com
    */
   case class KeyIs(myKey: Array[Byte]) extends Condition {
-    override def satisfies(message: Array[Byte], key: Array[Byte]) = myKey sameElements key
+    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = myKey sameElements key
   }
 
   /**
@@ -43,6 +43,12 @@ object Conditions extends BinaryMessaging {
   case class FORALL(conditions: Condition*) extends Condition {
     override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
       conditions.forall(_.satisfies(message, key))
+    }
+  }
+
+  case class NOT(condition: Condition) extends Condition {
+    override def satisfies(message: Array[Byte], key: Array[Byte]): Boolean = {
+      !condition.satisfies(message, key)
     }
   }
 

@@ -3,28 +3,12 @@ package com.github.ldaniels528.trifecta.sjs.models
 import org.scalajs.nodejs.util.ScalaJsHelper._
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Represents a Set of Consumers grouped by consumer ID
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait ConsumerGroup extends js.Object {
-  var consumerId: js.UndefOr[String] = js.native
-  var details: js.Array[Consumer] = js.native
-}
-
-/**
-  * Consumer Group Companion Object
-  * @author lawrence.daniels@gmail.com
-  */
-object ConsumerGroup {
-
-  def apply(consumerId: String, details: js.Array[Consumer] = emptyArray) = {
-    val group = New[ConsumerGroup]
-    group.consumerId = consumerId
-    group.details = details
-    group
-  }
-
-}
+@ScalaJSDefined
+class ConsumerGroup(var consumerId: String,
+                    var details: js.Array[Consumer] = emptyArray) extends js.Object

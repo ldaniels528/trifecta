@@ -43,11 +43,12 @@ case class KafkaQuerySource(topic: String, brokers: Seq[Broker], correlationId: 
     KafkaMicroConsumer.findMany(topic, brokers, correlationId, conditions, restrictions, limit, counter) map {
       _ map { md =>
         counter.updateWriteCount(1)
+        val specials = Map(Partition -> md.partition, Offset -> md.offset, Key -> decodeKey(md.key))
         val mapping = evaluate(md, decoder, fields) match {
           case Success(results) => results
           case Failure(e) => Map("__error" -> e.getMessage)
         }
-        mapping ++ Map(Partition -> md.partition, Offset -> md.offset, Key -> decodeKey(md.key))
+        mapping ++ specials
       }
     } map { values =>
       val elapsedTimeMillis = (System.currentTimeMillis() - startTime).toDouble

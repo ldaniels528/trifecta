@@ -1,21 +1,18 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
 import org.scalajs.angularjs._
-import org.scalajs.nodejs.util.ScalaJsHelper._
 
 import scala.concurrent.duration._
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Represents Consumer Details
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait Consumer extends ConsumerDelta {
-  // ui properties
-  var deltaC: js.UndefOr[Int] = js.native
-  var deltaT: js.UndefOr[Int] = js.native
-}
+@ScalaJSDefined
+class Consumer(var deltaC: js.UndefOr[Int] = js.undefined,
+               var deltaT: js.UndefOr[Int] = js.undefined) extends ConsumerDelta
 
 /**
   * Consumer Companion Object
@@ -23,16 +20,17 @@ trait Consumer extends ConsumerDelta {
   */
 object Consumer {
 
-  def apply(delta: ConsumerDelta) = {
-    val consumer = New[Consumer]
-    consumer.consumerId = delta.consumerId
-    consumer.topic = delta.topic
-    consumer.partition = delta.partition
-    consumer.offset = delta.offset
-    consumer.lastModified = delta.lastModified
-    consumer.messagesLeft = delta.messagesLeft
-    consumer.topicOffset = delta.topicOffset
-    consumer
+  def apply(delta: ConsumerDelta): Consumer = {
+    new ConsumerDelta(
+      consumerId = delta.consumerId,
+      topic = delta.topic,
+      partition = delta.partition,
+      offset = delta.offset,
+      lastModified = delta.lastModified,
+      lastModifiedISO = delta.lastModifiedISO,
+      messagesLeft = delta.messagesLeft,
+      topicOffset = delta.topicOffset
+    ).asInstanceOf[Consumer]
   }
 
   /**
@@ -43,13 +41,14 @@ object Consumer {
 
     def isUpdatedSince(duration: FiniteDuration): Boolean = {
       val cutOffTime = new js.Date().getTime() - duration
-      consumer.lastModified.map(_.asInstanceOf[ Double]).exists(_ >= cutOffTime)
+      consumer.lastModified.exists(_ >= cutOffTime)
     }
 
     def update(delta: ConsumerDelta) {
-      consumer.deltaC = for(dOffset <- delta.offset; cOffset <- consumer.offset) yield Math.abs(dOffset - cOffset)
-      consumer.deltaT = for(dOffset <- delta.topicOffset; cOffset <- consumer.topicOffset) yield Math.abs(dOffset - cOffset)
+      consumer.deltaC = for (dOffset <- delta.offset; cOffset <- consumer.offset) yield Math.abs(dOffset - cOffset)
+      consumer.deltaT = for (dOffset <- delta.topicOffset; cOffset <- consumer.topicOffset) yield Math.abs(dOffset - cOffset)
       consumer.lastModified = delta.lastModified
+      consumer.lastModifiedISO = delta.lastModifiedISO
       consumer.messagesLeft = delta.messagesLeft
       consumer.offset = delta.offset
       consumer.topicOffset = delta.topicOffset

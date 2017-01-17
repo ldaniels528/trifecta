@@ -17,6 +17,9 @@ object CommandLineHelper {
     def isNonInteractive: Boolean = args.exists(!_.startsWith("--"))
 
     @inline
+    def isDebug: Boolean = args.contains("--debug")
+
+    @inline
     def isPrettyJson: Boolean = args.contains("--pretty-json")
 
     @inline

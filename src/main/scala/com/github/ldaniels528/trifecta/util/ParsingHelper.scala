@@ -10,6 +10,7 @@ object ParsingHelper {
 
   def deQuote(quotedString: String): String = {
     quotedString match {
+      case s if s.startsWith("`") && s.endsWith("`") => s.drop(1).dropRight(1)
       case s if s.startsWith("\"") && s.endsWith("\"") => s.drop(1).dropRight(1)
       case s if s.startsWith("'") && s.endsWith("'") => s.drop(1).dropRight(1)
       case s if s.contains(",") && s.replaceAll(",", "").matches("\\d+") => s.replaceAll(",", "")

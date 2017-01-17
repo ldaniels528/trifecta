@@ -1,9 +1,7 @@
 package com.github.ldaniels528.trifecta.messages.codec.apache
 
 import com.github.ldaniels528.trifecta.messages.codec.MessageDecoder
-import com.github.ldaniels528.trifecta.messages.codec.avro.JsonTransCoding
-import com.github.ldaniels528.trifecta.messages.codec.json.JsonHelper
-import com.github.ldaniels528.trifecta.messages.logic.JsonMessageEvaluation
+import com.github.ldaniels528.trifecta.messages.codec.json.{JsonHelper, JsonMessageEvaluation, JsonTransCoding}
 import net.liftweb.json.JValue
 
 import scala.util.Try

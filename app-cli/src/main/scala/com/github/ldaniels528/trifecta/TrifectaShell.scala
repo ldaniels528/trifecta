@@ -1,15 +1,10 @@
 package com.github.ldaniels528.trifecta
 
-import com.github.ldaniels528.trifecta.AppConstants.VERSION
+import com.github.ldaniels528.trifecta.AppConstants._
 import com.github.ldaniels528.trifecta.io.kafka.KafkaSandbox
 import com.github.ldaniels528.trifecta.messages.{MessageReader, MessageSourceFactory, MessageWriter}
-import com.github.ldaniels528.trifecta.modules.azure.AzureModule
-import com.github.ldaniels528.trifecta.modules.cassandra.CassandraModule
 import com.github.ldaniels528.trifecta.modules.core.CoreModule
-import com.github.ldaniels528.trifecta.modules.elasticsearch.ElasticSearchModule
-import com.github.ldaniels528.trifecta.modules.etl.ETLModule
 import com.github.ldaniels528.trifecta.modules.kafka.KafkaModule
-import com.github.ldaniels528.trifecta.modules.mongodb.MongoModule
 import com.github.ldaniels528.trifecta.modules.zookeeper.ZookeeperModule
 import com.github.ldaniels528.trifecta.modules.{Module, ModuleManager}
 import com.github.ldaniels528.trifecta.CommandLineHelper._
@@ -35,11 +30,16 @@ object TrifectaShell {
     // interactive mode?
     val nonInteractiveMode = args.isNonInteractive
     if(!nonInteractiveMode) {
-      println(s"Trifecta v$VERSION")
+      println(s"Trifecta v$VERSION ($KAFKA_VERSION)")
     }
 
     // load the configuration
     val config = loadConfiguration(nonInteractiveMode)
+
+    // activate debugging mode?
+    if(args.isDebug) {
+      config.debugOn = true
+    }
 
     // startup the Kafka Sandbox?
     if (args.isKafkaSandbox) {
@@ -51,7 +51,7 @@ object TrifectaShell {
     val messageSourceFactory = new MessageSourceFactory()
     val rt = TxRuntimeContext(config, messageSourceFactory)
     val moduleManager = initModules(config, jobManager, messageSourceFactory, rt)
-    val resultHandler = new TxResultHandler(config, jobManager, args)
+    val resultHandler = getResultsHandler(config, jobManager, args, nonInteractiveMode)
 
     // initialize the console
     val console = new CLIConsole(rt, jobManager, messageSourceFactory, moduleManager, resultHandler)
@@ -65,6 +65,13 @@ object TrifectaShell {
           case None => console.execute(params mkString " ")
         }
     }
+  }
+
+  private def getResultsHandler(config: TxConfig, jobManager: JobManager, args: Array[String], nonInteractiveMode: Boolean) = {
+    if(nonInteractiveMode)
+      new ScriptingResultHandler(config, jobManager, args)
+    else
+      new CLIResultHandler(config, jobManager, args)
   }
 
   private def loadConfiguration(nonInteractiveMode: Boolean) = {
@@ -106,12 +113,7 @@ object TrifectaShell {
     val moduleManager = new ModuleManager()(rt)
     moduleManager ++= Seq(
       new CoreModule(config, jobManager, moduleManager),
-      new AzureModule(config),
-      new CassandraModule(config),
-      new ElasticSearchModule(config),
-      new ETLModule(config),
       new KafkaModule(config),
-      new MongoModule(config),
       new ZookeeperModule(config))
 
     // set the "active" module

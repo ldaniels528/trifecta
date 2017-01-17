@@ -10,8 +10,16 @@
     color: #0000ff;
 }
 
+.inspect_container {
+    border-right: 1px solid #cccccc;
+    clear: both;
+    width: auto;
+    height: 500px;
+    overflow: auto;
+}
+
 .input-mir {
-    width: 125px;
+    width: 100px;
     height: 24px;
 }
 
@@ -23,6 +31,16 @@
     background: #eeeeee;
     padding: 3px;
     margin-right: 3px
+}
+
+.kafkaProtocolVersion { color: #dd00dd }
+
+.kmr_controls {
+    display: inline;
+    border: 1px solid #888888;
+    background: white;
+    width: 300px;
+    height: 100%;
 }
 
 .messages_and_offsets {
@@ -46,15 +64,14 @@
     overflow: auto;
 }
 
-.kmr_controls {
-    display: inline;
-    border: 1px solid #888888;
-    background: white;
-    width: 300px;
-    height: 100%;
-}
-
 .separator { margin-top: 10px }
+
+.streaming_topics_container {
+    clear: both;
+    width: auto;
+    height: 800px;
+    overflow: auto;
+}
 
 .topics_container {
     clear: both;
@@ -62,4 +79,11 @@
     height: 250px;
     overflow: auto;
     border-bottom: 1px solid #cccccc;
+}
+
+.zk_item_container {
+    clear: both;
+    width: auto;
+    height: 800px;
+    overflow: auto;
 }
