@@ -1,0 +1,13 @@
+<div ng-hide="consumersLoading" class="full_block hide_show_topics">
+    <span>
+        {{ getConsumers().length | number }} of {{ consumers.length }} Consumer(s) shown
+    </span>
+    <span ng-click="toggleHideShowConsoleConsumers()" class="clickable" style="float: right">
+        <span ng-show="hideConsoleConsumers">[Show console consumers]</span>
+        <span ng-hide="hideConsoleConsumers">[Hide console consumers]</span>
+    </span>
+    <br style="clear: both">
+</div>
+<div ng-hide="consumersLoading || consumers.length" class="warning bold">
+    <img src="/assets/images/status/yellowlight.gif"> No consumers found
+</div>

@@ -61,10 +61,10 @@ object MessageCodecFactory {
     encoders.find(_._1 == url).map(_._2)
   }
 
-  def loadUserDefinedCodecs(classLoader: ClassLoader, file: File) {
-    if (file.exists()) {
+  def loadUserDefinedCodecs(classLoader: ClassLoader, codecsFile: File) {
+    if (codecsFile.exists()) {
       Try {
-        val jsonString = Source.fromFile(file).getLines() mkString "\n"
+        val jsonString = Source.fromFile(codecsFile).getLines() mkString "\n"
         JsonHelper.transformTo[List[UserDecoder]](jsonString)
       } match {
         case Success(codecDefs) =>
@@ -74,29 +74,33 @@ object MessageCodecFactory {
             codec <- Try(Class.forName(codecDef.`class`, true, classLoader).newInstance()) match {
               case Success(potentialCodec) => List(potentialCodec)
               case Failure(e) =>
-                logger.warn(s"Failed to load message CODEC '${codecDef.name}' (${codecDef.`class`}): ${e.getMessage}")
+                logger.warn(s"Failed to load message CODEC '${codecDef.name}' (${codecDef.`class`}): ${e.getMessage}", e)
                 Nil
             }
           } {
-            count += (codec match {
-              case de: MessageDecoder[_] with MessageEncoder[_] =>
-                decoders.put(codecDef.name, de)
-                encoders.put(codecDef.name, de)
-                2
-              case d: MessageDecoder[_] =>
-                decoders.put(codecDef.name, d)
-                1
-              case e: MessageEncoder[_] =>
-                encoders.put(codecDef.name, e)
-                1
-              case _ =>
-                logger.warn(s"${codecDef.name} (${codecDef.`class`}) was neither a message decoder or encoder")
-                0
-            })
+            count += addCodec(codecDef, codec)
           }
         case Failure(e) =>
           logger.warn(s"Failed to load user-defined message CODECs: ${e.getMessage}")
       }
+    }
+  }
+  
+  private def addCodec(codecDef: UserDecoder, codec: Any) = {
+    codec match {
+      case de: MessageDecoder[_] with MessageEncoder[_] =>
+        decoders.put(codecDef.name, de)
+        encoders.put(codecDef.name, de)
+        2
+      case d: MessageDecoder[_] =>
+        decoders.put(codecDef.name, d)
+        1
+      case e: MessageEncoder[_] =>
+        encoders.put(codecDef.name, e)
+        1
+      case _ =>
+        logger.warn(s"${codecDef.name} (${codecDef.`class`}) was neither a message decoder or encoder")
+        0
     }
   }
 

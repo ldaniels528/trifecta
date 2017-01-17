@@ -15,7 +15,7 @@ trait ReferenceDataAware extends js.Object {
 
   // properties
   var brokers: js.Array[BrokerGroup] = js.native
-  var consumers: js.Array[Consumer] = js.native
+  var consumers: js.Array[ConsumerRedux] = js.native
   var consumerGroupCache: js.Dictionary[js.Array[ConsumerGroup]] = js.native
   var messageBlob: MessageBlob = js.native
   var replicas: js.Array[ReplicaGroup] = js.native
@@ -30,9 +30,7 @@ trait ReferenceDataAware extends js.Object {
   var topicsLoading: js.UndefOr[Boolean] = js.native
 
   // consumer functions
-  var getConsumers: js.Function0[js.Array[Consumer]] = js.native
-  var getConsumersForTopic: js.Function1[js.UndefOr[String], js.UndefOr[js.Array[ConsumerGroup]]] = js.native
-  var getConsumersForIdAndTopic: js.Function2[js.UndefOr[String], js.UndefOr[String], js.UndefOr[js.Array[Consumer]]] = js.native
+  var getConsumers: js.Function0[js.Array[ConsumerRedux]] = js.native
 
   // topic functions
   var findNonEmptyTopic: js.Function0[js.UndefOr[TopicDetails]] = js.native

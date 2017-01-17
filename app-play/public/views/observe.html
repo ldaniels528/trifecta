@@ -85,6 +85,10 @@
                 <input ng-model="displayMode.state" type="radio" value="key" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Key</span>
                 <input ng-model="displayMode.state" type="radio" value="message" ng-change="resetMessageState(displayMode.state, topic.topic, partition.partition, partition.offset)"> <span class="header_item">Message</span>
             </div>
+            <div class="input_block" ng-show="displayMode.state == 'message'">
+                <span class="header_label">Decode </span>
+                <i class="header_label clickable fa" ng-class="getDecodingState(topic.topic) ? 'fa-toggle-on' : 'fa-toggle-off'" ng-click="toggleDecodeOnOff(topic.topic, message)"></i>
+            </div>
             <div class="input_block" ng-hide="isLimitedControls()">
                 <span class="header_label">Offset</span> <input ng-model="partition.offset" type="text" class="input-mir" ng-change="convertOffsetToInt(partition, partition.offset)">
                 <img class="clickable" src="/assets/images/tabs/observe/message-first.gif" ng-click="firstMessage()" title="move to first message">

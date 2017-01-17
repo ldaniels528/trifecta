@@ -1,9 +1,11 @@
-<div class="col-md-5 zk_item_container" style="border-right: 1px solid #cccccc">
-    <div ng-repeat="item in zkItems" ng-include="'zk_item_tree.htm'"></div>
+<div class="pull-left" style="width: 36%">
+    <div class="zk_item_container">
+        <div ng-repeat="item in zkItems" ng-include="'zk_item_tree.htm'"></div>
+    </div>
 </div>
-<div class="col-md-7">
-    <div class="full_block" style="margin-left: 5px">
-        <table ng-show="zkItem" style="border-collapse: separate; border-spacing: 4px;">
+<div class="pull-right" style="width: 63%">
+    <div class="zk_item_container" style="border-left: 1px solid #cccccc; padding-left: 5px">
+        <table ng-show="zkItem">
             <tr>
                 <th>Path:</th>
                 <td>{{ zkItem.path }}</td>
@@ -40,3 +42,4 @@
         </div>
     </div>
 </div>
+<br style="clear: both" />

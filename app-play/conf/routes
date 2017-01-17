@@ -2,7 +2,7 @@
 #       Application Views and API Routes
 ########################################################################################################################
 
-GET           /                                                  com.github.ldaniels528.trifecta.controllers.Application.index
+GET           /                                                  com.github.ldaniels528.trifecta.ui.controllers.Application.index
 
 GET           /assets/*file                                      controllers.Assets.versioned(path="/public", file: Asset)
 GET           /webjars/*file                                     controllers.WebJarAssets.at(file)
@@ -12,48 +12,50 @@ GET           /webjars/*file                                     controllers.Web
 ########################################################################################################################
 
 # Server Side Events
-GET           /api/sse/connect                                   com.github.ldaniels528.trifecta.controllers.Application.sseConnect
-GET           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.controllers.MessageController.getSamplingSession
-PUT           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.controllers.MessageController.startSampling
-DELETE        /api/sse/sampling/:sessionId                       @com.github.ldaniels528.trifecta.controllers.MessageController.stopSampling(sessionId)
+GET           /api/sse/connect                                   com.github.ldaniels528.trifecta.ui.controllers.Application.sseConnect
+GET           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.ui.controllers.MessageController.getSamplingSession
+PUT           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.ui.controllers.MessageController.startSampling
+DELETE        /api/sse/sampling/:sessionId                       @com.github.ldaniels528.trifecta.ui.controllers.MessageController.stopSampling(sessionId)
 
 # Brokers & Replicas
-GET           /api/brokers                                       @com.github.ldaniels528.trifecta.controllers.KafkaController.getBrokers
-GET           /api/brokers/grouped                               @com.github.ldaniels528.trifecta.controllers.KafkaController.getBrokerDetails
-GET           /api/replicas/:topic                               @com.github.ldaniels528.trifecta.controllers.KafkaController.getReplicas(topic: String)
+GET           /api/brokers                                       @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getBrokers
+GET           /api/brokers/grouped                               @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getBrokerDetails
+GET           /api/replicas/:topic                               @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getReplicas(topic: String)
 
 # Consumers
-GET           /api/consumers                                     @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumers
-GET           /api/consumers/deltas                              @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumerDeltas
-GET           /api/consumers/details                             @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumerDetails
-GET           /api/consumers/topic/:topic                        @com.github.ldaniels528.trifecta.controllers.KafkaController.getConsumersByTopic(topic: String)
+GET           /api/consumer/:groupId                             @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerGroup(groupId: String)
+GET           /api/consumer/:groupId/offsets                     @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerOffsets(groupId: String)
+GET           /api/consumers/lite                                @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumersLite
+GET           /api/consumers                                     @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumers
+GET           /api/consumers/deltas                              @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerDeltas
+GET           /api/consumers/details                             @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerDetails
+GET           /api/consumers/topic/:topic                        @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumersByTopic(topic: String)
 
 # Decoders & Schemas
-GET           /api/decoders                                      @com.github.ldaniels528.trifecta.controllers.DecoderController.getDecoders
-GET           /api/decoders/topic/:topic                         @com.github.ldaniels528.trifecta.controllers.DecoderController.getDecoderByTopic(topic: String)
-POST          /api/schema                                        @com.github.ldaniels528.trifecta.controllers.DecoderController.saveDecoderSchema
-GET           /api/schema/:topic/:name                           @com.github.ldaniels528.trifecta.controllers.DecoderController.getDecoderSchemaByName(topic: String, name: String)
+GET           /api/decoders                                      @com.github.ldaniels528.trifecta.ui.controllers.DecoderController.getDecoders
+GET           /api/decoders/topic/:topic                         @com.github.ldaniels528.trifecta.ui.controllers.DecoderController.getDecoderByTopic(topic: String)
+GET           /api/schema/:topic/:name                           @com.github.ldaniels528.trifecta.ui.controllers.DecoderController.getDecoderSchemaByName(topic: String, name: String)
 
 # Messages
-GET           /api/message/data/:topic/:partition/:offset        @com.github.ldaniels528.trifecta.controllers.MessageController.getMessageData(topic: String, partition: Int, offset: Long)
-POST          /api/message/data/:topic                           @com.github.ldaniels528.trifecta.controllers.MessageController.publishMessage(topic: String)
-GET           /api/message/key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.controllers.MessageController.getMessageKey(topic: String, partition: Int, offset: Long)
+GET           /api/message/data/:topic/:partition/:offset        @com.github.ldaniels528.trifecta.ui.controllers.MessageController.getMessageData(topic: String, partition: Int, offset: Long, decode: Boolean ?= true)
+POST          /api/message/data/:topic                           @com.github.ldaniels528.trifecta.ui.controllers.MessageController.publishMessage(topic: String)
+GET           /api/message/key/:topic/:partition/:offset         @com.github.ldaniels528.trifecta.ui.controllers.MessageController.getMessageKey(topic: String, partition: Int, offset: Long, decode: Boolean ?= true)
 
 # Queries
-GET           /api/query/:topic                                  @com.github.ldaniels528.trifecta.controllers.QueryController.getQueriesByTopic(topic: String)
-POST          /api/query/many                                    @com.github.ldaniels528.trifecta.controllers.QueryController.executeQuery
-POST          /api/query/one/:topic                              @com.github.ldaniels528.trifecta.controllers.QueryController.findOne(topic: String)
-GET           /api/queries                                       @com.github.ldaniels528.trifecta.controllers.QueryController.getQueries
+GET           /api/query/:topic                                  @com.github.ldaniels528.trifecta.ui.controllers.QueryController.getQueriesByTopic(topic: String)
+POST          /api/query/many                                    @com.github.ldaniels528.trifecta.ui.controllers.QueryController.executeQuery
+POST          /api/query/one/:topic                              @com.github.ldaniels528.trifecta.ui.controllers.QueryController.findOne(topic: String)
+GET           /api/queries                                       @com.github.ldaniels528.trifecta.ui.controllers.QueryController.getQueries
 
 # Topics
-GET           /api/topic/:topic                                  @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopicByName(topic: String)
-GET           /api/topics                                        @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopics
-GET           /api/topics/deltas                                 @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopicDeltas
-GET           /api/topics/details                                @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopicSummaries
-GET           /api/topics/details/:topic                         @com.github.ldaniels528.trifecta.controllers.KafkaController.getTopicDetailsByName(topic: String)
+GET           /api/topic/:topic                                  @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getTopicByName(topic: String)
+GET           /api/topics                                        @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getTopics
+GET           /api/topics/deltas                                 @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getTopicDeltas
+GET           /api/topics/details                                @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getTopicSummaries
+GET           /api/topics/details/:topic                         @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getTopicDetailsByName(topic: String)
 
 # Zookeeper
-GET           /api/zookeeper/data                                @com.github.ldaniels528.trifecta.controllers.ZookeeperController.getZkData(path: String, format: String)
-GET           /api/zookeeper/info                                @com.github.ldaniels528.trifecta.controllers.ZookeeperController.getZkInfo(path: String)
-GET           /api/zookeeper/path                                @com.github.ldaniels528.trifecta.controllers.ZookeeperController.getZkPath(path: String)
+GET           /api/zookeeper/data                                @com.github.ldaniels528.trifecta.ui.controllers.ZookeeperController.getZkData(path: String, format: String)
+GET           /api/zookeeper/info                                @com.github.ldaniels528.trifecta.ui.controllers.ZookeeperController.getZkInfo(path: String)
+GET           /api/zookeeper/path                                @com.github.ldaniels528.trifecta.ui.controllers.ZookeeperController.getZkPath(path: String)
 

@@ -34,7 +34,12 @@ trait ZKProxy {
 
   def getCreationTime(path: String): Option[Long]
 
-  def getFamily(path: String): List[String]
+  def getFamily(path: String): List[String] = {
+    def zkKeyToPath(parent: String, child: String): String = (if (parent.endsWith("/")) parent else parent + "/") + child
+
+    val children = Option(getChildren(path)) getOrElse Nil
+    path :: (children flatMap (child => getFamily(zkKeyToPath(path, child)))).toList
+  }
 
   def getModificationTime(path: String): Option[Long]
 

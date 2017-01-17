@@ -34,6 +34,8 @@ object TrifectaJsApp extends js.JSApp {
     module.controllerOf[QueryController]("QueryController")
 
     // configure the services
+    module.serviceOf[BrokerService]("BrokerService")
+    module.serviceOf[ConsumerGroupService]("ConsumerGroupService")
     module.serviceOf[DecoderService]("DecoderService")
     module.serviceOf[MessageDataService]("MessageDataService")
     module.serviceOf[QueryService]("QueryService")

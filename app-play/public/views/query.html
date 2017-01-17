@@ -98,7 +98,7 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat="row in query.rows" ng-class="isSelected(topic, partition, query, row, $index) ? 'highlighted' : $index % 2 == 0 ? '' : 'q_odd'">
+                        <tr ng-repeat="row in query.rows track by $index" ng-class="isSelected(topic, partition, query, row, $index) ? 'highlighted' : $index % 2 == 0 ? '' : 'q_odd'">
                             <td ng-repeat="column in query.columns">
                                 <span ng-show="column == '__offset'">
                                     <a ng-click="switchToMessage(query.topic, partitionAt(query, $parent.$index), offsetAt(query, $parent.$index))">
