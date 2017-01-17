@@ -82,7 +82,6 @@ lazy val trifecta_core = (project in file("."))
       // General Java Dependencies
       "commons-io" % "commons-io" % "2.4",
       "net.liftweb" %% "lift-json" % "3.0-M7",
-      //"org.apache.httpcomponents" % "httpclient" % "4.5.2",
       //
       // Typesafe dependencies
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
@@ -93,7 +92,6 @@ lazy val trifecta_core = (project in file("."))
       "org.apache.avro" % "avro-compiler" % "1.8.1",
       //
       // Kafka and Zookeeper Dependencies
-//      "com.101tec" % "zkclient" % "0.10",
       "org.apache.curator" % "curator-framework" % apacheCurator exclude("org.slf4j", "slf4j-log4j12"),
       "org.apache.curator" % "curator-test" % apacheCurator exclude("org.slf4j", "slf4j-log4j12"),
       "org.apache.kafka" %% "kafka" % kafkaVersion exclude("org.slf4j", "slf4j-log4j12"),

@@ -1,7 +1,5 @@
 package com.github.ldaniels528.trifecta.io.zookeeper
 
-import org.I0Itec.zkclient.ZkClient
-
 import scala.language.implicitConversions
 
 /**
@@ -50,8 +48,6 @@ trait ZKProxy {
   def readString(path: String): Option[String]
 
   def update(path: String, data: Array[Byte]): Option[String]
-
-  def clientI0Itec: ZkClient
 
 }
 

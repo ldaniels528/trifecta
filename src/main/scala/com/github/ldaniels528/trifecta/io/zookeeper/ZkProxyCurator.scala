@@ -1,7 +1,5 @@
 package com.github.ldaniels528.trifecta.io.zookeeper
 
-import kafka.utils.ZKStringSerializer
-import org.I0Itec.zkclient.ZkClient
 import org.apache.curator.RetryPolicy
 import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
 import org.apache.curator.retry.ExponentialBackoffRetry
@@ -94,7 +92,5 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
       client.create().forPath(path, bytes)
     }
   }
-
-  override lazy val clientI0Itec = new ZkClient(connectionString, Integer.MAX_VALUE, 5000, ZKStringSerializer)
 
 }

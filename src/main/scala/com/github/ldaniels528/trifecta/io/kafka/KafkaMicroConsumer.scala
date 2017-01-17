@@ -16,7 +16,6 @@ import com.github.ldaniels528.trifecta.messages.query.KQLRestrictions
 import kafka.api._
 import kafka.common._
 import kafka.consumer.SimpleConsumer
-import kafka.utils.ZkUtils
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -398,7 +397,7 @@ object KafkaMicroConsumer {
   def getBrokerList(implicit zk: ZKProxy): Seq[BrokerDetails] = kafkaUtil.getBrokerList
 
   def getBrokers(implicit zk: ZKProxy): Seq[Broker] = {
-    ZkUtils.getAllBrokersInCluster(zk.clientI0Itec) map (b => Broker(b.host, b.port, b.id))
+    kafkaUtil.getBrokerList map (b => Broker(b.host, b.port))
   }
 
   /**
