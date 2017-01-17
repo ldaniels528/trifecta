@@ -76,16 +76,19 @@ object TopicDetails {
     }
 
     def replace(delta: PartitionDelta) {
-      details.partitions.indexWhere(p => p.partition ?== delta.partition) match {
+      details.partitions.indexWhere(_.partition ?== delta.partition) match {
         case -1 =>
           details.partitions.push(PartitionDetails(delta))
         case index =>
-          details.partitions(index) = details.partitions(index).copy(
-            startOffset = delta.startOffset,
-            endOffset = delta.endOffset,
-            messages = delta.messages,
-            totalMessages = delta.totalMessages
-          )
+          // set the total messages
+          delta.totalMessages.foreach(details.totalMessages = _)
+
+          // update the partition detail
+          val myDelta = details.partitions(index)
+          myDelta.startOffset = delta.startOffset
+          myDelta.endOffset = delta.endOffset
+          myDelta.messages = delta.messages
+          myDelta.totalMessages = delta.totalMessages
       }
     }
 
@@ -97,7 +100,7 @@ object TopicDetails {
           case -1 =>
             console.warn(s"Partition $partitionId does not exist for topic ${details.topic}")
           case index =>
-            details.partitions(index) = details.partitions(index).copy(offset = message.offset)
+            details.partitions(index).offset = message.offset
         }
       }
     }

@@ -57,7 +57,7 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
   }
 
   override def exists(path: String): Boolean = {
-    Option(client.checkExists().forPath(path)).isDefined
+    Option(client.checkExists().forPath(path)).nonEmpty
   }
 
   override def ensurePath(path: String): List[String] = {
@@ -78,14 +78,6 @@ case class ZkProxyCurator(connectionString: String) extends ZKProxy {
 
   override def getModificationTime(path: String): Option[Long] = {
     Option(client.checkExists().forPath(path)) map (_.getMtime)
-  }
-
-  override def getFamily(path: String): List[String] = {
-
-    def zkKeyToPath(parent: String, child: String): String = (if (parent.endsWith("/")) parent else parent + "/") + child
-
-    val children = Option(getChildren(path)) getOrElse Nil
-    path :: (children flatMap (child => getFamily(zkKeyToPath(path, child)))).toList
   }
 
   override def read(path: String): Option[Array[Byte]] = Option(client.getData.forPath(path))

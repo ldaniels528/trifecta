@@ -4,23 +4,20 @@ import org.scalajs.nodejs.util.ScalaJsHelper._
 import org.scalajs.sjs.JsUnderOrHelper._
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Partition Details
   * @author lawrence.daniels@gmail.com
   */
-@js.native
-trait PartitionDetails extends js.Object {
-  var partition: js.UndefOr[Int] = js.native
-  var startOffset: js.UndefOr[Int] = js.native
-  var endOffset: js.UndefOr[Int] = js.native
-  var messages: js.UndefOr[Int] = js.native
-  var totalMessages: js.UndefOr[Int] = js.native
-
-  // ui properties
-  var offset: js.UndefOr[Int] = js.native
-  var delta: js.UndefOr[Int] = js.native
-}
+@ScalaJSDefined
+class PartitionDetails(var partition: js.UndefOr[Int] = js.undefined,
+                       var startOffset: js.UndefOr[Int] = js.undefined,
+                       var endOffset: js.UndefOr[Int] = js.undefined,
+                       var offset: js.UndefOr[Int] = js.undefined,
+                       var delta: js.UndefOr[Int] = js.undefined,
+                       var messages: js.UndefOr[Int] = js.undefined,
+                       var totalMessages: js.UndefOr[Int] = js.undefined) extends js.Object
 
 /**
   * Partition Details Companion Object
@@ -28,16 +25,14 @@ trait PartitionDetails extends js.Object {
   */
 object PartitionDetails {
 
-  def apply(delta: PartitionDelta) = {
-    val partition = New[PartitionDetails]
-    partition.partition = delta.partition
-    partition.offset = delta.startOffset
-    partition.startOffset = delta.startOffset
-    partition.endOffset = delta.endOffset
-    partition.messages = delta.messages
-    partition.totalMessages = delta.totalMessages
-    partition
-  }
+  def apply(delta: PartitionDelta) = new PartitionDetails(
+    partition = delta.partition,
+    offset = delta.startOffset,
+    startOffset = delta.startOffset,
+    endOffset = delta.endOffset,
+    messages = delta.messages,
+    totalMessages = delta.totalMessages
+  )
 
   /**
     * Partition Details Enrichment
@@ -45,6 +40,7 @@ object PartitionDetails {
     */
   implicit class PartitionDetailsEnrichment(val aPartition: PartitionDetails) extends AnyVal {
 
+    @inline
     def copy(topic: js.UndefOr[String] = js.undefined,
              partition: js.UndefOr[Int] = js.undefined,
              startOffset: js.UndefOr[Int] = js.undefined,
@@ -52,7 +48,7 @@ object PartitionDetails {
              messages: js.UndefOr[Int] = js.undefined,
              totalMessages: js.UndefOr[Int] = js.undefined,
              offset: js.UndefOr[Int] = js.undefined,
-             delta: js.UndefOr[Int] = js.undefined) = {
+             delta: js.UndefOr[Int] = js.undefined): PartitionDetails = {
       val newPartition = New[PartitionDetails]
       newPartition.partition = partition ?? aPartition.partition
       newPartition.offset = offset ?? aPartition.offset

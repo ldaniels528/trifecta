@@ -14,8 +14,10 @@ trait GlobalDataAware extends js.Object {
 
   // properties
   var hideEmptyTopics: Boolean = js.native
+  var hideConsoleConsumers: Boolean = js.native
 
   // functions
   var toggleHideShowEmptyTopics: js.Function0[Unit] = js.native
+  var toggleHideShowConsoleConsumers: js.Function0[Unit] = js.native
 
 }

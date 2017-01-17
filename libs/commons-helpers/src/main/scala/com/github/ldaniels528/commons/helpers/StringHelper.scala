@@ -8,7 +8,7 @@ object StringHelper {
 
   implicit class ByteArrayExtensions(val bytes: Array[Byte]) extends AnyVal {
 
-    def isPrintable: Boolean = bytes forall (b => b >= 32 && b <= 127)
+    def isPrintable: Boolean = bytes forall(b => b == '\n' || b == '\t' || (b >= 32 && b <= 127))
 
   }
 
