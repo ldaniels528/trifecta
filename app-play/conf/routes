@@ -26,10 +26,7 @@ GET           /api/replicas/:topic                               @com.github.lda
 GET           /api/consumer/:groupId                             @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerGroup(groupId: String)
 GET           /api/consumer/:groupId/offsets                     @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerOffsets(groupId: String)
 GET           /api/consumers/lite                                @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumersLite
-GET           /api/consumers                                     @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumers
 GET           /api/consumers/deltas                              @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerDeltas
-GET           /api/consumers/details                             @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerDetails
-GET           /api/consumers/topic/:topic                        @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumersByTopic(topic: String)
 
 # Decoders & Schemas
 GET           /api/decoders                                      @com.github.ldaniels528.trifecta.ui.controllers.DecoderController.getDecoders
