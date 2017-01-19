@@ -37,7 +37,6 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
   // reference data
   $scope.brokers = emptyArray
   $scope.consumers = emptyArray
-  $scope.consumerGroupCache = js.Dictionary[js.Array[ConsumerGroup]]()
   $scope.messageBlob = MessageBlob(keyFormat = "UUID", keyAuto = true)
   $scope.replicas = emptyArray
   $scope.topics = emptyArray
@@ -264,6 +263,23 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
     if ($scope.hideEmptyTopics) $scope.topics.filter(_.totalMessages > 0) else $scope.topics
   }
 
+  $scope.getTopicPartitionDelta = (aTopic: js.UndefOr[String], aPartition: js.UndefOr[Int]) => {
+    for {
+      topicName <- aTopic
+      partitionId <- aPartition
+      topic <- $scope.topics.find(_.topic == topicName).orUndefined
+      partition <- topic.partitions.find(_.partition == partitionId).orUndefined
+      delta <- partition.delta
+    } yield delta
+  }
+
+  $scope.getTopicMessagesDelta = (aTopic: js.UndefOr[TopicDetails]) => {
+    for {
+      topic <- aTopic
+      totalMessagesDelta <- topic.totalMessagesDelta
+    } yield totalMessagesDelta
+  }
+
   $scope.isSelectedTopic = (aTopic: js.UndefOr[TopicDetails]) => {
     aTopic.exists(t => $scope.topic.exists(_.topic == t.topic))
   }
@@ -282,8 +298,9 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
   ///////////////////////////////////////////////////////////////////////////
 
   private def updateConsumerDeltas(deltas: js.Array[ConsumerDelta]) = {
-    console.log(s"Received consumer deltas => ${angular.toJson(deltas)}")
-    deltas foreach (delta => $scope.consumers.updateDelta(delta))
+    deltas foreach { delta =>
+      $scope.$apply(() => $scope.consumers.updateDelta(delta))
+    }
   }
 
   private def updateTopicDeltas(deltas: js.Array[PartitionDelta]) = {
@@ -292,11 +309,17 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
       partitionId <- delta.partition
       topic <- $scope.topics.find(t => delta.topic.contains(t.topic)).orUndefined
     } {
-      console.log(s"Updating topic delta => ${angular.toJson(delta)}")
+      // update the topic object
       $scope.$apply(() => topic.replace(delta))
 
-      // clear the delta after 5 seconds
-      $timeout(() => topic(partitionId).foreach(_.delta = js.undefined), 5.seconds)
+      // clear the delta after 15 seconds
+      val totalMessagesDelta = topic.totalMessagesDelta
+      $timeout(() => {
+        if (totalMessagesDelta == topic.totalMessagesDelta) {
+          topic.totalMessagesDelta = js.undefined
+          topic(partitionId).foreach(_.delta = js.undefined)
+        }
+      }, 15.seconds)
     }
   }
 
@@ -378,7 +401,6 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
         $scope.$apply { () =>
           $scope.consumersLoading = false
           $scope.consumers = consumers
-          $scope.consumerGroupCache.clear()
         }
         $scope.broadcastConsumersLoaded(consumers)
       case Failure(e) =>

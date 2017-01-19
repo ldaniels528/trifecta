@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 import play.api.libs.json.{JsValue, Json}
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -32,6 +32,7 @@ class ScriptingResultHandler(config: TxConfig, jobManager: JobManager, args: Arr
 
       // handle the asynchronous I/O cases
       case a: AsyncIO => handleAsyncResult(a, input)
+      case a: Future[_] => handleAsyncResult(a, input)
 
       // intercept intermediate results
       case e: Either[_, _] => e match {
@@ -50,7 +51,7 @@ class ScriptingResultHandler(config: TxConfig, jobManager: JobManager, args: Arr
       // unhandled ...
       case x =>
         if(config.debugOn) {
-          logger.info(s"$x (${Option(x).map(_.getClass.getName)}")
+          logger.info(s"UNHANDLED: $x (${Option(x).map(_.getClass.getName)}")
         }
         out.println()
     }
@@ -63,6 +64,20 @@ class ScriptingResultHandler(config: TxConfig, jobManager: JobManager, args: Arr
     */
   private def handleAsyncResult(asyncIO: AsyncIO, input: String)(implicit ec: ExecutionContext) {
     val task = asyncIO.task
+    Try(Await.result(task, 1.hour)) match {
+      case Success(value) =>
+        handleResult(value, input)
+      case Failure(e) =>
+        out.println(s"Expected error: ${e.getMessage}")
+    }
+  }
+
+  /**
+    * Handles an asynchronous I/O result
+    * @param task the given asynchronous I/O task
+    * @param input   the executing command
+    */
+  private def handleAsyncResult(task: Future[_], input: String)(implicit ec: ExecutionContext) {
     Try(Await.result(task, 1.hour)) match {
       case Success(value) =>
         handleResult(value, input)

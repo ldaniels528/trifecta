@@ -45,7 +45,7 @@ package object controllers {
     ///////////////////////////////////////////////////////////////////////////////
 
     @inline
-    def broadcastConsumersLoaded(consumers: js.Array[ConsumerRedux]) {
+    def broadcastConsumersLoaded(consumers: js.Array[Consumer]) {
       console.log(s"Broadcasting '$CONSUMERS_LOADED' event...")
       scope.$broadcast(CONSUMERS_LOADED, consumers)
     }

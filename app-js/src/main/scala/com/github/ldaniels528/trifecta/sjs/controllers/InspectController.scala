@@ -1,9 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import scala.scalajs.js.JSConverters._
 import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.InspectController._
-import com.github.ldaniels528.trifecta.sjs.models.ConsumerRedux.ConsumerOffsetRedux
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.{BrokerService, ConsumerGroupService, TopicService, ZookeeperService}
 import org.scalajs.angularjs._
@@ -17,6 +15,7 @@ import org.scalajs.sjs.PromiseHelper._
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.annotation.ScalaJSDefined
 import scala.util.{Failure, Success}
 
@@ -130,7 +129,6 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
         consumer.loading = true
         consumerGroupService.getConsumer(consumerId) onComplete {
           case Success(consumerUpdate) =>
-            console.log(s"consumerUpdate = ${angular.toJson(consumerUpdate)}")
             $timeout(() => consumer.loading = false, 500.millis)
             $scope.$apply { () =>
               consumer.offsets = consumerUpdate.offsets
@@ -151,7 +149,7 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
     }
   }
 
-  $scope.getConsumerHost = (aConsumer: js.UndefOr[ConsumerRedux], aCOffset: js.UndefOr[ConsumerOffsetRedux]) => {
+  $scope.getConsumerHost = (aConsumer: js.UndefOr[Consumer], aCOffset: js.UndefOr[ConsumerOffset]) => {
     for {
       consumer <- aConsumer
       coffset <- aCOffset
@@ -180,7 +178,7 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
     }
   }
 
-  $scope.getConsumerVersion = (aConsumer: js.UndefOr[ConsumerRedux], aCOffset: js.UndefOr[ConsumerOffsetRedux]) => {
+  $scope.getConsumerVersion = (aConsumer: js.UndefOr[Consumer], aCOffset: js.UndefOr[ConsumerOffset]) => {
     for {
       consumer <- aConsumer
       coffset <- aCOffset
@@ -205,7 +203,7 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
     }
   }
 
-  $scope.getMessagesLeft = (aCOffset: js.UndefOr[ConsumerOffsetRedux]) => {
+  $scope.getMessagesLeft = (aCOffset: js.UndefOr[ConsumerOffset]) => {
     for {
       coffset <- aCOffset
       offset <- coffset.offset
@@ -218,15 +216,6 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
       topicName <- aTopicName
       topic <- $scope.topics.find(_.topic == topicName).orUndefined
     } yield topic.totalMessages
-  }
-
-  private def updateConsumerGroups(deltaSet: js.Array[ConsumerGroup]) {
-    for {
-      group <- deltaSet
-      delta <- group.details
-    } {
-      $scope.consumers.updateDelta(delta)
-    }
   }
 
   /**
@@ -393,12 +382,12 @@ object InspectController {
     var expandConsumer: js.Function1[js.UndefOr[XConsumer], Unit] = js.native
     var fixThreadName: js.Function2[js.UndefOr[String], js.UndefOr[String], js.UndefOr[String]] = js.native
     var formatData: js.Function2[js.UndefOr[String], js.UndefOr[String], Unit] = js.native
-    var getConsumerHost: js.Function2[js.UndefOr[ConsumerRedux], js.UndefOr[ConsumerOffsetRedux], js.UndefOr[String]] = js.native
-    var getConsumerVersion: js.Function2[js.UndefOr[ConsumerRedux], js.UndefOr[ConsumerOffsetRedux], js.UndefOr[String]] = js.native
+    var getConsumerHost: js.Function2[js.UndefOr[Consumer], js.UndefOr[ConsumerOffset], js.UndefOr[String]] = js.native
+    var getConsumerVersion: js.Function2[js.UndefOr[Consumer], js.UndefOr[ConsumerOffset], js.UndefOr[String]] = js.native
     var getInSyncBulbImage: js.Function1[js.UndefOr[Int], Unit] = js.native
     var getInSyncClass: js.Function1[js.UndefOr[Double], js.UndefOr[String]] = js.native
     var getItemInfo: js.Function1[js.UndefOr[ZkItem], Unit] = js.native
-    var getMessagesLeft: js.Function1[js.UndefOr[ConsumerOffsetRedux], js.UndefOr[Double]] = js.native
+    var getMessagesLeft: js.Function1[js.UndefOr[ConsumerOffset], js.UndefOr[Double]] = js.native
     var getTotalMessageCount: js.Function1[js.UndefOr[String], js.UndefOr[Int]] = js.native
     var isActiveInspectTab: js.Function1[js.UndefOr[MainTab], Boolean] = js.native
     var isConsumerUpToDate: js.Function1[js.UndefOr[Consumer], Boolean] = js.native
@@ -406,12 +395,12 @@ object InspectController {
   }
 
   @ScalaJSDefined
-  trait XConsumer extends ConsumerRedux {
+  trait XConsumer extends Consumer {
     var topics: js.UndefOr[js.Array[ConsumerTopics]] = js.undefined
   }
 
   @ScalaJSDefined
-  class ConsumerTopics(var topic: String, var offsets: js.Array[ConsumerOffsetRedux]) extends js.Object {
+  class ConsumerTopics(var topic: String, var offsets: js.Array[ConsumerOffset]) extends js.Object {
     var expanded: js.UndefOr[Boolean] = js.undefined
   }
 

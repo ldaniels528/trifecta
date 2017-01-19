@@ -10,6 +10,7 @@ import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.commons.helpers.StringHelper._
 import com.github.ldaniels528.trifecta.TxConfig.{TxDecoder, TxFailedSchema, TxSuccessSchema}
 import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer.{DEFAULT_FETCH_SIZE, MessageData}
+import com.github.ldaniels528.trifecta.io.kafka.KafkaZkUtils.{ConsumerGroup, ConsumerOffset}
 import com.github.ldaniels528.trifecta.io.kafka._
 import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.io.{IOCounter, _}
@@ -24,7 +25,7 @@ import com.github.ldaniels528.trifecta.messages.query.parser.{KafkaQueryParser, 
 import com.github.ldaniels528.trifecta.ui.controllers.KafkaPlayRestFacade._
 import com.github.ldaniels528.trifecta.ui.models.BrokerDetailsJs._
 import com.github.ldaniels528.trifecta.ui.models.BrokerJs._
-import com.github.ldaniels528.trifecta.ui.models.ConsumerDetailJs.{ConsumerDeltaKey, _}
+import com.github.ldaniels528.trifecta.ui.models.ConsumerDetailJs._
 import com.github.ldaniels528.trifecta.ui.models.QueryDetailsJs._
 import com.github.ldaniels528.trifecta.ui.models.TopicDetailsJs._
 import com.github.ldaniels528.trifecta.ui.models._
@@ -37,6 +38,7 @@ import play.api.libs.json.{JsString, Json}
 import scala.collection.concurrent.TrieMap
 import scala.collection.immutable.Iterable
 import scala.concurrent.{ExecutionContext, Future, blocking}
+import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -48,7 +50,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
   private implicit val zkProxy: ZKProxy = zk
 
   // caches
-  private val consumerCache = TrieMap[ConsumerDeltaKey, ConsumerDetailJs]()
+  private val consumerCache = TrieMap[(String, String, Int), ConsumerOffset]()
   private val cachedBrokers = TrieMap[Unit, Seq[Broker]]()
   private val cachedRuntime = TrieMap[Unit, TxRuntimeContext]()
   private val cachedDeltaTopics = TrieMap[(String, Int), TopicDeltaJs]()
@@ -160,14 +162,14 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns a collection of consumers that have changed since the last call
     * @return a promise of a collection of [[ConsumerDetailJs]]
     */
-  def getConsumerDeltas(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
-    val consumers = getConsumerDetails
+  def getConsumerDeltas(implicit ec: ExecutionContext): Seq[ConsumerOffsetUpdateJs] = {
+    val consumers = getConsumerGroupsNativeOffsets() ++ getConsumerGroupsZookeeperOffsets
 
     // extract and return only the consumers that have changed
     val deltas = if (consumerCache.isEmpty) consumers
     else {
       consumers.flatMap { c =>
-        consumerCache.get(c.getKey) match {
+        consumerCache.get((c.groupId, c.topic, c.partition)) match {
           // Option(c.copy(rate = computeTransferRate(prev, c)))
           case Some(prev) => if (prev != c) Option(c) else None
           case None => Option(c)
@@ -177,46 +179,40 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
 
     // update the cache
     deltas.foreach { c =>
-      consumerCache(c.getKey) = c
+      consumerCache((c.groupId, c.topic, c.partition)) = c
     }
 
-    deltas
-  }
-
-  private def computeTransferRate(a: ConsumerDetailJs, b: ConsumerDetailJs): Option[Double] = {
-    for {
-    // compute the delta of the messages
-      messages0 <- a.messagesLeft
-      messages1 <- b.messagesLeft
-      msgDelta = (messages1 - messages0).toDouble
-
-      // compute the time delta
-      time0 <- a.lastModified
-      time1 <- b.lastModified
-      timeDelta = (time1 - time0).toDouble / 1000d
-
-      // compute the rate
-      rate = if (timeDelta > 0) msgDelta / timeDelta else msgDelta
-    } yield rate
-  }
-
-  /**
-    * Returns the consumer details for all topics
-    * @return a list of consumers
-    */
-  def getConsumerDetails(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
-    getConsumerGroupsNative() ++
-      (if (config.isZookeeperConsumers) getConsumerGroupsZookeeper() else Nil) ++
-      (if (config.isStormConsumers) getConsumerGroupsPM else Nil)
+    deltas map { o =>
+      ConsumerOffsetUpdateJs(
+        consumerId = o.groupId,
+        topic = o.topic,
+        partition = o.partition,
+        offset = o.offset,
+        lastModifiedTime = o.lastModifiedTime)
+    }
   }
 
   def getConsumerGroup(groupId: String): Option[ConsumerGroupJs] = {
+    if (config.getConsumerGroupList.contains(groupId))
+      getConsumerGroupNative(groupId)
+    else
+      getConsumerGroupZookeeper(groupId)
+  }
+
+  def getConsumerGroupsZookeeperOffsets: Seq[ConsumerOffset] = {
+    KafkaMicroConsumer.kafkaUtil.getConsumerGroupIds.flatMap { groupId =>
+      Try(KafkaMicroConsumer.kafkaUtil.getConsumerOffsets(groupId)) getOrElse Nil
+    }
+  }
+
+  def getConsumerGroupZookeeper(groupId: String): Option[ConsumerGroupJs] = {
     KafkaMicroConsumer.kafkaUtil.getConsumerGroup(groupId) map { cg =>
       ConsumerGroupJs(
         consumerId = cg.consumerId,
         offsets = cg.offsets.map { o =>
           val limits = getLimitOffsets(o.topic, o.partition)
           ConsumerOffsetJs(
+            groupId = groupId,
             topic = o.topic,
             partition = o.partition,
             offset = o.offset,
@@ -230,24 +226,13 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     }
   }
 
-  def getConsumersGroupedByID(implicit ec: ExecutionContext): Map[String, Seq[ConsumerDetailJs]] = {
-    getConsumerDetails groupBy (_.consumerId)
-  }
-
   def getConsumerSkeletons: Seq[ConsumerSkeletonJs] = {
     KafkaMicroConsumer.kafkaUtil.getConsumerGroupIds map (ConsumerSkeletonJs(_))
   }
 
-  def getConsumersByTopic(topic: String)(implicit ec: ExecutionContext): Iterable[ConsumerByTopicJs] = {
-    getConsumerDetails
-      .filter(_.topic == topic)
-      .groupBy(_.consumerId)
-      .map { case (consumerId, details) => ConsumerByTopicJs(consumerId, details) }
-  }
-
-  def getConsumerOffsets(groupId: String): Seq[ConsumerOffsetsJs] = {
+  def getConsumerOffsets(groupId: String): Seq[ConsumerOffsetUpdateJs] = {
     KafkaMicroConsumer.kafkaUtil.getConsumerOffsets(groupId) map { o =>
-      ConsumerOffsetsJs(
+      ConsumerOffsetUpdateJs(
         consumerId = groupId,
         topic = o.topic,
         partition = o.partition,
@@ -260,24 +245,16 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     * Returns the Kafka-native consumer groups
     * @return the Kafka-native consumer groups
     */
-  private def getConsumerGroupsNative(autoOffsetReset: String = "earliest")(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
-    KafkaMicroConsumer.getConsumersFromKafka(config.getConsumerGroupList, autoOffsetReset) map { c =>
-      val topicOffset = Try(getLastOffset(c.topic, c.partition)) getOrElse None
-      val messagesLeft = topicOffset map (offset => Math.max(0L, offset - c.offset))
-      c.toJson(topicOffset, messagesLeft)
-    }
+  private def getConsumerGroupNative(groupId: String, autoOffsetReset: String = "earliest"): Option[ConsumerGroupJs] = {
+    KafkaMicroConsumer.getConsumerGroupsFromKafka(Seq(groupId), autoOffsetReset) map (_.toJson(getLimitOffsets)) headOption
   }
 
   /**
-    * Returns the Kafka-Zookeeper consumer groups
-    * @return the Kafka-Zookeeper consumer groups
+    * Returns the Kafka-native consumer groups
+    * @return the Kafka-native consumer groups
     */
-  private def getConsumerGroupsZookeeper(topicPrefix: Option[String] = None)(implicit ec: ExecutionContext): Seq[ConsumerDetailJs] = {
-    KafkaMicroConsumer.getConsumerFromZookeeper() map { c =>
-      val topicOffset = Try(getLastOffset(c.topic, c.partition)) getOrElse None
-      val messagesLeft = topicOffset map (offset => Math.max(0L, offset - c.offset))
-      c.toJson(topicOffset, messagesLeft)
-    }
+  private def getConsumerGroupsNativeOffsets(autoOffsetReset: String = "earliest")(implicit ec: ExecutionContext): Seq[ConsumerOffset] = {
+    KafkaMicroConsumer.getConsumerGroupOffsetsFromKafka(config.getConsumerGroupList, autoOffsetReset)
   }
 
   /**
@@ -726,6 +703,28 @@ object KafkaPlayRestFacade {
       MessageSourceFactory.parseSourceURL(url) map { case (_, topic) =>
         new KafkaTopicMessageOutputSource(brokers, topic)
       }
+    }
+  }
+
+  implicit class ConsumerGroupJsExtensions(val cg: ConsumerGroup) extends AnyVal {
+
+    def toJson(getLimitOffsets: (String, Int) => Option[(Long, Long)]): ConsumerGroupJs = {
+      ConsumerGroupJs(
+        consumerId = cg.consumerId,
+        offsets = cg.offsets.map { o =>
+          val limits = getLimitOffsets(o.topic, o.partition)
+          ConsumerOffsetJs(
+            groupId = o.groupId,
+            topic = o.topic,
+            partition = o.partition,
+            offset = o.offset,
+            topicStartOffset = limits.map(_._1),
+            topicEndOffset = limits.map(_._2),
+            messages = limits map { case (start, end) => Math.max(end - start, 0L) },
+            lastModifiedTime = o.lastModifiedTime)
+        },
+        owners = cg.owners,
+        threads = cg.threads)
     }
   }
 
