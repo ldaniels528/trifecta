@@ -25,7 +25,7 @@ class KafkaController() extends Controller {
   // one-time initialization
   if(initialized.compareAndSet(false, true)) {
     // push topic offset updates to clients
-    Akka.system.scheduler.schedule(initialDelay = 15.minutes, interval = WebConfig.getTopicOffsetsPushInterval) {
+    Akka.system.scheduler.schedule(initialDelay = 15.seconds, interval = WebConfig.getTopicOffsetsPushInterval) {
       val deltas = WebConfig.facade.getConsumerDeltas
       if (deltas.nonEmpty) {
         Logger.debug(s"Sending ${deltas.size} consumer offset updates...")
@@ -59,35 +59,10 @@ class KafkaController() extends Controller {
     }
   }
 
-  def getConsumers = Action {
-    Try(WebConfig.facade.getConsumersGroupedByID) match {
-      case Success(details) => Ok(Json.toJson(details))
-      case Failure(e) =>
-        Logger.error("Internal server error", e)
-        InternalServerError(e.getMessage)
-    }
-  }
-
-  def getConsumersByTopic(topic: String) = Action {
-    Try(WebConfig.facade.getConsumersByTopic(topic)) match {
-      case Success(details) => Ok(Json.toJson(details))
-      case Failure(e) => InternalServerError(e.getMessage)
-    }
-  }
-
   def getConsumerDeltas = Action {
     Try(WebConfig.facade.getConsumerDeltas) match {
       case Success(deltas) => Ok(Json.toJson(deltas))
       case Failure(e) => InternalServerError(e.getMessage)
-    }
-  }
-
-  def getConsumerDetails = Action {
-    Try(WebConfig.facade.getConsumerDetails) match {
-      case Success(details) => Ok(Json.toJson(details))
-      case Failure(e) =>
-        Logger.error("Internal server error", e)
-        InternalServerError(e.getMessage)
     }
   }
 

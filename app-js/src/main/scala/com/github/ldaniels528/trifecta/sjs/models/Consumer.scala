@@ -1,58 +1,68 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import org.scalajs.angularjs._
+import org.scalajs.angularjs.angular
+import org.scalajs.dom.browser.console
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js
 import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
-  * Represents Consumer Details
+  * Represents a Kafka Consumer Group
   * @author lawrence.daniels@gmail.com
   */
 @ScalaJSDefined
-class Consumer(var deltaC: js.UndefOr[Int] = js.undefined,
-               var deltaT: js.UndefOr[Int] = js.undefined) extends ConsumerDelta
+class Consumer(var consumerId: js.UndefOr[String] = js.undefined,
+               var offsets: js.UndefOr[js.Array[ConsumerOffset]] = js.undefined,
+               var owners: js.UndefOr[js.Array[ConsumerOwner]] = js.undefined,
+               var threads: js.UndefOr[js.Array[ConsumerThread]] = js.undefined) extends js.Object {
+
+  var expanded: js.UndefOr[Boolean] = js.undefined
+  var loading: js.UndefOr[Boolean] = js.undefined
+
+}
 
 /**
-  * Consumer Companion Object
+  * Consumer Companion
   * @author lawrence.daniels@gmail.com
   */
 object Consumer {
 
-  def apply(delta: ConsumerDelta): Consumer = {
-    new ConsumerDelta(
-      consumerId = delta.consumerId,
-      topic = delta.topic,
-      partition = delta.partition,
-      offset = delta.offset,
-      lastModified = delta.lastModified,
-      lastModifiedISO = delta.lastModifiedISO,
-      messagesLeft = delta.messagesLeft,
-      topicOffset = delta.topicOffset
-    ).asInstanceOf[Consumer]
-  }
-
-  /**
-    * Consumer Enrichment
-    * @param consumer the given [[Consumer consumer]]
-    */
   implicit class ConsumerEnrichment(val consumer: Consumer) extends AnyVal {
 
     def isUpdatedSince(duration: FiniteDuration): Boolean = {
-      val cutOffTime = new js.Date().getTime() - duration
-      consumer.lastModified.exists(_ >= cutOffTime)
+      val cutOffTime = js.Date.now() - duration.toMillis
+      (for {
+        offsets <- consumer.offsets.toList
+        offset <- offsets.toList
+        lastModified <- offset.lastModifiedTime.toList
+      } yield lastModified >= cutOffTime).contains(true)
     }
 
-    def update(delta: ConsumerDelta) {
-      consumer.deltaC = for (dOffset <- delta.offset; cOffset <- consumer.offset) yield Math.abs(dOffset - cOffset)
-      consumer.deltaT = for (dOffset <- delta.topicOffset; cOffset <- consumer.topicOffset) yield Math.abs(dOffset - cOffset)
-      consumer.lastModified = delta.lastModified
-      consumer.lastModifiedISO = delta.lastModifiedISO
-      consumer.messagesLeft = delta.messagesLeft
-      consumer.offset = delta.offset
-      consumer.topicOffset = delta.topicOffset
+  }
+
+  implicit class ConsumerArrayEnrichment(val consumers: js.Array[Consumer]) extends AnyVal {
+
+    def updateDelta(delta: ConsumerDelta) {
+      // attempt to find the consumer offset to update
+      val result = for {
+        consumer <- consumers.find(_.consumerId == delta.consumerId)
+        offsets <- consumer.offsets.toOption
+        offset <- offsets.find(o => o.topic == delta.topic && o.partition == delta.partition)
+      } yield (consumer, offset)
+
+      result match {
+        case Some((consumer, offset)) =>
+          console.log(s"delta = ${angular.toJson(delta)}")
+          offset.deltaC = for (offset1 <- delta.offset.map(_.toDouble); offset0 <- offset.offset) yield Math.abs(offset1 - offset0)
+          offset.deltaT = for (offset1 <- delta.topicOffset.map(_.toDouble); offset0 <- offset.topicEndOffset) yield Math.abs(offset1 - offset0)
+          offset.offset = delta.offset.map(_.toDouble)
+          console.log(s"${consumer.consumerId}: offset = ${offset.offset}, deltaC = ${offset.deltaC}, deltaT = ${offset.deltaT}")
+        case None =>
+          console.warn(s"${delta.consumerId} could not be updated: ${angular.toJson(delta)}")
+      }
     }
+
   }
 
 }

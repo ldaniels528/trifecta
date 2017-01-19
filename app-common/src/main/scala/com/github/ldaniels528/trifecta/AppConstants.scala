@@ -5,7 +5,7 @@ package com.github.ldaniels528.trifecta
   * @author lawrence.daniels@gmail.com
   */
 object AppConstants {
-  val VERSION = "0.22.0rc6h"
+  val VERSION = "0.22.0rc7"
   val KAFKA_VERSION = "0.10.1.0"
 
   /////////////////////////////////////////////////////////
