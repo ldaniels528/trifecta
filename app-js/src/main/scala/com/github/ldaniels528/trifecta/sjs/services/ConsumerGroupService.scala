@@ -21,19 +21,19 @@ class ConsumerGroupService($http: Http)  extends Service {
   }
 
   /**
-    * Retrieves the consumer group skeletons for the given topic
-    * @return a promise of an array of [[Consumer]]s
-    */
-  def getConsumersLite: HttpResponse[js.Array[Consumer]] = {
-    $http.get[js.Array[Consumer]]("/api/consumers/lite")
-  }
-
-  /**
     * Retrieves the consumer group offsets for the given group ID
     * @return a promise of an array of [[ConsumerOffset consumer offsets]]
     */
   def getConsumerOffsets(groupId: String): HttpResponse[js.Array[ConsumerOffset]] = {
     $http.get[js.Array[ConsumerOffset]](s"/api/consumer/${groupId.encode}/offsets")
+  }
+
+  /**
+    * Retrieves the consumer group skeletons for the given topic
+    * @return a promise of an array of [[Consumer]]s
+    */
+  def getConsumers: HttpResponse[js.Array[Consumer]] = {
+    $http.get[js.Array[Consumer]]("/api/consumers")
   }
 
 }

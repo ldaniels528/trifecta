@@ -155,6 +155,12 @@ th { text-align: left }
 
 .title3 { color: #00a000 }
 
+.title4 {
+    color: #1e90ff;
+    font-size: 11pt;
+    vertical-align: bottom;
+}
+
 .top { vertical-align: top }
 
 .version { font-size: 12pt }

@@ -53,7 +53,7 @@ object SSE {
     */
   def !(message: SSEMessage): Unit = {
     val js = Json.toJson(message)
-    Logger.debug(s"Sending [${sessions.size} clients] $js")
+    Logger.debug(s"Sending ${js.toString().length} bytes to ${sessions.size} clients")
     sessions.foreach { case (_, SSESession(_, actor)) =>
       actor ! js
     }

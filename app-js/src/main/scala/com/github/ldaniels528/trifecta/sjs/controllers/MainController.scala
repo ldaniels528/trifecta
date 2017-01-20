@@ -394,7 +394,7 @@ case class MainController($scope: MainScope, $location: Location, $timeout: Time
 
   private def loadConsumers() = {
     $scope.consumersLoading = true
-    val promisedConsumers = consumerGroupService.getConsumersLite.withGlobalLoading.withTimer("Retrieving consumers")
+    val promisedConsumers = consumerGroupService.getConsumers.withGlobalLoading.withTimer("Retrieving consumers")
     promisedConsumers onComplete {
       case Success(consumers) =>
         console.info(s"Loaded ${consumers.length} consumer(s)")

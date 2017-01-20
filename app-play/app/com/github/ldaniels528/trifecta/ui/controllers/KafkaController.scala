@@ -14,7 +14,6 @@ import play.libs.Akka
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
 
 /**
   * Kafka Controller
@@ -23,9 +22,9 @@ import scala.util.{Failure, Success, Try}
 class KafkaController() extends Controller {
 
   // one-time initialization
-  if(initialized.compareAndSet(false, true)) {
-    // push topic offset updates to clients
-    Akka.system.scheduler.schedule(initialDelay = 15.seconds, interval = WebConfig.getTopicOffsetsPushInterval) {
+  if (initialized.compareAndSet(false, true)) {
+    // push consumer offset updates to clients
+    Akka.system.scheduler.schedule(initialDelay = 15.seconds, interval = WebConfig.getConsumerPushInterval) {
       val deltas = WebConfig.facade.getConsumerDeltas
       if (deltas.nonEmpty) {
         Logger.debug(s"Sending ${deltas.size} consumer offset updates...")
@@ -33,8 +32,8 @@ class KafkaController() extends Controller {
       }
     }
 
-    // push consumer offset updates to clients
-    Akka.system.scheduler.schedule(initialDelay = 1.minute, interval = WebConfig.getConsumerPushInterval) {
+    // push topic offset updates to clients
+    Akka.system.scheduler.schedule(initialDelay = 1.minute, interval = WebConfig.getTopicOffsetsPushInterval) {
       val deltas = WebConfig.facade.getTopicDeltas
       if (deltas.nonEmpty) {
         Logger.debug(s"Sending ${deltas.size} topic offset updates...")
@@ -43,85 +42,95 @@ class KafkaController() extends Controller {
     }
   }
 
-  def getBrokers = Action {
-    Try(WebConfig.facade.getBrokers) match {
-      case Success(brokers) => Ok(Json.toJson(brokers))
-      case Failure(e) => InternalServerError(e.getMessage)
+  def getBrokers = Action.async {
+    Future(WebConfig.facade.getBrokers) map { brokers =>
+      Ok(Json.toJson(brokers))
+    } recover { case e: Throwable =>
+      e.printStackTrace()
+      InternalServerError(e.getMessage)
     }
   }
 
-  def getBrokerDetails = Action {
-    Try(WebConfig.facade.getBrokerDetails) match {
-      case Success(details) => Ok(Json.toJson(details))
-      case Failure(e) =>
-        e.printStackTrace()
-        InternalServerError(e.getMessage)
+  def getBrokerDetails = Action.async {
+    Future(WebConfig.facade.getBrokerDetails) map { details =>
+      Ok(Json.toJson(details))
+    } recover { case e: Throwable =>
+      e.printStackTrace()
+      InternalServerError(e.getMessage)
     }
   }
 
-  def getConsumerDeltas = Action {
-    Try(WebConfig.facade.getConsumerDeltas) match {
-      case Success(deltas) => Ok(Json.toJson(deltas))
-      case Failure(e) => InternalServerError(e.getMessage)
+  def getConsumerDeltas = Action.async {
+    Future(WebConfig.facade.getConsumerDeltas) map { deltas =>
+      Ok(Json.toJson(deltas))
+    } recover { case e: Throwable =>
+      e.printStackTrace()
+      InternalServerError(e.getMessage)
     }
   }
 
-  def getConsumerGroup(groupId: String) = Action {
-    Try(WebConfig.facade.getConsumerGroup(groupId)) match {
-      case Success(Some(group)) => Ok(Json.toJson(group))
-      case Success(None) => NotFound(groupId)
-      case Failure(e) =>
-        Logger.error("Internal server error", e)
-        InternalServerError(e.getMessage)
+  def getConsumerGroup(groupId: String) = Action.async {
+    Future(WebConfig.facade.getConsumerGroup(groupId)) map {
+      case Some(group) => Ok(Json.toJson(group))
+      case None => NotFound(groupId)
+    } recover { case e: Throwable =>
+      e.printStackTrace()
+      InternalServerError(e.getMessage)
     }
   }
 
-  def getConsumerOffsets(groupId: String) = Action {
-    Try(WebConfig.facade.getConsumerOffsets(groupId)) match {
-      case Success(offsets) => Ok(Json.toJson(offsets))
-      case Failure(e) =>
-        Logger.error("Internal server error", e)
-        InternalServerError(e.getMessage)
+  def getConsumerOffsets(groupId: String) = Action.async {
+    Future(WebConfig.facade.getConsumerOffsets(groupId)) map { offsets =>
+      Ok(Json.toJson(offsets))
+    } recover { case e: Throwable =>
+      e.printStackTrace()
+      InternalServerError(e.getMessage)
     }
   }
 
-  def getConsumersLite = Action {
-    Try(WebConfig.facade.getConsumerSkeletons) match {
-      case Success(skeletons) => Ok(Json.toJson(skeletons))
-      case Failure(e) =>
-        Logger.error("Internal server error", e)
-        InternalServerError(e.getMessage)
+  def getConsumersLite = Action.async {
+    Future(WebConfig.facade.getConsumerSkeletons) map { skeletons =>
+      Ok(Json.toJson(skeletons))
+    } recover { case e: Throwable =>
+      e.printStackTrace()
+      InternalServerError(e.getMessage)
     }
   }
 
-  def getReplicas(topic: String) = Action {
-    Try(WebConfig.facade.getReplicas(topic)) match {
-      case Success(replicas) => Ok(Json.toJson(replicas))
-      case Failure(e) => InternalServerError(e.getMessage)
+  def getReplicas(topic: String) = Action.async {
+    Future(WebConfig.facade.getReplicas(topic)) map { replicas =>
+      Ok(Json.toJson(replicas))
+    } recover { case e: Throwable =>
+      e.printStackTrace()
+      InternalServerError(e.getMessage)
     }
   }
 
-  def getTopicByName(topic: String) = Action {
-    Try(WebConfig.facade.getTopicByName(topic)) match {
-      case Success(Some(details)) => Ok(Json.toJson(details))
-      case Success(None) => NotFound(topic)
-      case Failure(e) => InternalServerError(e.getMessage)
+  def getTopicByName(topic: String) = Action.async {
+    Future(WebConfig.facade.getTopicByName(topic)) map {
+      case Some(details) => Ok(Json.toJson(details))
+      case None => NotFound(topic)
+    } recover { case e: Throwable =>
+      e.printStackTrace()
+      InternalServerError(e.getMessage)
     }
   }
 
-  def getTopicDeltas = Action {
-    Try(WebConfig.facade.getTopicDeltas) match {
-      case Success(deltas) => Ok(Json.toJson(deltas))
-      case Failure(e) =>
-        e.printStackTrace()
-        InternalServerError(e.getMessage)
+  def getTopicDeltas = Action.async {
+    Future(WebConfig.facade.getTopicDeltas) map { deltas =>
+      Ok(Json.toJson(deltas))
+    } recover { case e: Throwable =>
+      e.printStackTrace()
+      InternalServerError(e.getMessage)
     }
   }
 
-  def getTopicDetailsByName(topic: String) = Action {
-    Try(WebConfig.facade.getTopicDetailsByName(topic)) match {
-      case Success(deltas) => Ok(Json.toJson(deltas))
-      case Failure(e) => InternalServerError(e.getMessage)
+  def getTopicDetailsByName(topic: String) = Action.async {
+    Future(WebConfig.facade.getTopicDetailsByName(topic)) map { deltas =>
+      Ok(Json.toJson(deltas))
+    } recover { case e: Throwable =>
+      e.printStackTrace()
+      InternalServerError(e.getMessage)
     }
   }
 
