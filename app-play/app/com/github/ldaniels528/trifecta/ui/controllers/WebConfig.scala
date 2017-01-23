@@ -2,12 +2,9 @@ package com.github.ldaniels528.trifecta.ui.controllers
 
 import java.util.concurrent.atomic.AtomicBoolean
 
-import akka.actor.Props
 import com.github.ldaniels528.trifecta.TxConfig
 import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
-import com.github.ldaniels528.trifecta.ui.actors.ReactiveEventsActor
 import play.api.Logger
-import play.libs.Akka
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -18,7 +15,6 @@ import scala.util.{Failure, Success, Try}
   * @author lawrence.daniels@gmail.com
   */
 object WebConfig {
-  private val reactiveActor = Akka.system.actorOf(Props[ReactiveEventsActor])
   private val once = new AtomicBoolean(true)
   // TODO make this an injectable class
 
@@ -42,16 +38,12 @@ object WebConfig {
   // create the REST API facade
   lazy val facade = new KafkaPlayRestFacade(config, zk)
 
-  def getTopicPushInterval: FiniteDuration = {
-    Try(config.getOrElse("trifecta.web.push.interval.topic", "60").toInt).getOrElse(60).seconds
+  def getTopicOffsetsPushInterval: Option[FiniteDuration] = {
+    config.get("trifecta.web.push.interval.topic") flatMap (value => Try(value.toInt.seconds).toOption)
   }
 
-  def getTopicOffsetsPushInterval: FiniteDuration = {
-    Try(config.getOrElse("trifecta.web.push.interval.topic.offsets", "30").toInt).getOrElse(30).seconds
-  }
-
-  def getConsumerPushInterval: FiniteDuration = {
-    Try(config.getOrElse("trifecta.web.push.interval.topic", "60").toInt).getOrElse(60).seconds
+  def getConsumerOffsetsPushInterval: Option[FiniteDuration] = {
+    config.get("trifecta.web.push.interval.consumer") flatMap (value => Try(value.toInt.seconds).toOption)
   }
 
   /**
@@ -61,11 +53,6 @@ object WebConfig {
     if (once.compareAndSet(true, false)) {
       Logger.info("Initializing Trifecta REST facade...")
       facade.init
-
-      // schedule streaming updates
-      Logger.info("Scheduling streaming updates...")
-      //reactiveActor ! StreamingConsumerUpdateRequest(WebConfig.getConsumerPushInterval)
-      //reactiveActor ! StreamingTopicUpdateRequest(WebConfig.getTopicPushInterval)
     }
   }
 

@@ -1,10 +1,7 @@
 package com.github.ldaniels528.trifecta.ui.controllers
 
-import java.util.concurrent.atomic.AtomicBoolean
-
-import com.github.ldaniels528.trifecta.AppConstants._
+import com.github.ldaniels528.trifecta.AppConstants.{CONSUMER_DELTAS, TOPIC_DELTAS}
 import com.github.ldaniels528.trifecta.ui.actors.{SSE, SSEMessage}
-import com.github.ldaniels528.trifecta.ui.controllers.KafkaController._
 import com.github.ldaniels528.trifecta.ui.models.ConsumerGroupJs._
 import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits._
@@ -13,34 +10,12 @@ import play.api.mvc.{Action, Controller}
 import play.libs.Akka
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 /**
   * Kafka Controller
   * @author lawrence.daniels@gmail.com
   */
 class KafkaController() extends Controller {
-
-  // one-time initialization
-  if (initialized.compareAndSet(false, true)) {
-    // push consumer offset updates to clients
-    Akka.system.scheduler.schedule(initialDelay = 15.seconds, interval = WebConfig.getConsumerPushInterval) {
-      val deltas = WebConfig.facade.getConsumerDeltas
-      if (deltas.nonEmpty) {
-        Logger.debug(s"Sending ${deltas.size} consumer offset updates...")
-        SSE ! SSEMessage(`type` = CONSUMER_DELTAS, message = Json.toJson(deltas))
-      }
-    }
-
-    // push topic offset updates to clients
-    Akka.system.scheduler.schedule(initialDelay = 1.minute, interval = WebConfig.getTopicOffsetsPushInterval) {
-      val deltas = WebConfig.facade.getTopicDeltas
-      if (deltas.nonEmpty) {
-        Logger.debug(s"Sending ${deltas.size} topic offset updates...")
-        SSE ! SSEMessage(`type` = TOPIC_DELTAS, message = Json.toJson(deltas))
-      }
-    }
-  }
 
   def getBrokers = Action.async {
     Future(WebConfig.facade.getBrokers) map { brokers =>
@@ -154,10 +129,31 @@ class KafkaController() extends Controller {
 }
 
 /**
-  * KafkaController Companion
+  * Kafka Controller Singleton
   * @author lawrence.daniels@gmail.com
   */
 object KafkaController {
-  private val initialized = new AtomicBoolean(false)
+
+  // push consumer offset updates to clients
+  WebConfig.getConsumerOffsetsPushInterval foreach { interval =>
+    Akka.system.scheduler.schedule(initialDelay = interval, interval = interval) {
+      val deltas = WebConfig.facade.getConsumerDeltas
+      if (deltas.nonEmpty) {
+        Logger.debug(s"Sending ${deltas.size} consumer offset updates...")
+        SSE ! SSEMessage(`type` = CONSUMER_DELTAS, message = Json.toJson(deltas))
+      }
+    }
+  }
+
+  // push topic offset updates to clients
+  WebConfig.getTopicOffsetsPushInterval foreach { interval =>
+    Akka.system.scheduler.schedule(initialDelay = interval, interval = interval) {
+      val deltas = WebConfig.facade.getTopicDeltas
+      if (deltas.nonEmpty) {
+        Logger.debug(s"Sending ${deltas.size} topic offset updates...")
+        SSE ! SSEMessage(`type` = TOPIC_DELTAS, message = Json.toJson(deltas))
+      }
+    }
+  }
 
 }

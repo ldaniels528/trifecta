@@ -16,9 +16,9 @@ GET           /api/config                                        com.github.ldan
 
 # Server Side Events
 GET           /api/sse/connect                                   com.github.ldaniels528.trifecta.ui.controllers.Application.sseConnect
-GET           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.ui.controllers.MessageController.getSamplingSession
-PUT           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.ui.controllers.MessageController.startSampling
-DELETE        /api/sse/sampling/:sessionId                       @com.github.ldaniels528.trifecta.ui.controllers.MessageController.stopSampling(sessionId)
+GET           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.ui.controllers.StreamingController.getSamplingSession
+PUT           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.ui.controllers.StreamingController.startSampling
+DELETE        /api/sse/sampling/:sessionId                       @com.github.ldaniels528.trifecta.ui.controllers.StreamingController.stopSampling(sessionId)
 
 # Brokers & Replicas
 GET           /api/brokers                                       @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getBrokers
