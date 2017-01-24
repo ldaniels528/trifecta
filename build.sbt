@@ -2,7 +2,7 @@ import sbt.Keys._
 import sbt._
 
 val appVersion = "0.22.0rc8b"
-val meanjsVersion = "0.2.3.2"
+val scalaJsIOVersion = "0.3.0.0-RC3"
 
 val _scalaVersion = "2.11.8"
 val akkaVersion = "2.3.14"
@@ -304,24 +304,16 @@ lazy val trifecta_ui_js = (project in file("app-js"))
     name := "trifecta-ui-js",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+	scalaVersion := _scalaVersion,
     relativeSourceMaps := true,
     persistLauncher := true,
     persistLauncher in Test := false,
     resolvers += Resolver.sonatypeRepo("releases"),
     libraryDependencies ++= Seq(
-      "com.github.ldaniels528" %%% "scalajs-angularjs-core" % meanjsVersion,
-      "com.github.ldaniels528" %%% "scalajs-angularjs-animate" % meanjsVersion,
-      "com.github.ldaniels528" %%% "scalajs-angularjs-cookies" % meanjsVersion,
-      "com.github.ldaniels528" %%% "scalajs-angularjs-nervgh-fileupload" % meanjsVersion,
-      "com.github.ldaniels528" %%% "scalajs-angularjs-sanitize" % meanjsVersion,
-      "com.github.ldaniels528" %%% "scalajs-angularjs-toaster" % meanjsVersion,
-      "com.github.ldaniels528" %%% "scalajs-angularjs-ui-bootstrap" % meanjsVersion,
-      "com.github.ldaniels528" %%% "scalajs-angularjs-ui-router" % meanjsVersion,
+      "io.scalajs" %%% "angularjs-bundle" % scalaJsIOVersion,
       //
-      // ScalaJS dependencies
-      "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11"),
-      "org.scala-js" %%% "scalajs-dom" % "0.9.0"
+      // Play-ScalaJS dependencies
+      "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11")
     ))
 
 lazy val trifecta_ui = (project in file("app-play"))

@@ -2,14 +2,14 @@ package com.github.ldaniels528.trifecta.sjs
 
 import scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js.JSConverters._
-import org.scalajs.angularjs.AngularJsHelper._
+import io.scalajs.npm.angularjs.AngularJsHelper._
 import com.github.ldaniels528.trifecta.AppConstants._
 import com.github.ldaniels528.trifecta.sjs.controllers._
 import com.github.ldaniels528.trifecta.sjs.services._
-import org.scalajs.angularjs.angular
-import org.scalajs.angularjs.http.HttpProvider
-import org.scalajs.angularjs.uirouter.{RouteProvider, RouteTo}
-import org.scalajs.dom.browser.console
+import io.scalajs.npm.angularjs.angular
+import io.scalajs.npm.angularjs.http.HttpProvider
+import io.scalajs.npm.angularjs.uirouter.{RouteProvider, RouteTo}
+import io.scalajs.dom.html.browser.console
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
@@ -60,12 +60,12 @@ object TrifectaJsApp extends js.JSApp {
     // configure the application
     module.config({ ($httpProvider: HttpProvider, $routeProvider: RouteProvider) =>
       $routeProvider
-        .when("/decoders", RouteTo(templateUrl = "/assets/views/decoders.html"))
-        .when("/inspect", RouteTo(templateUrl = "/assets/views/inspect/index.html", reloadOnSearch = false))
-        .when("/observe", RouteTo(templateUrl = "/assets/views/observe.html", reloadOnSearch = false, controller = classOf[ObserveController].getSimpleName))
-        .when("/publish", RouteTo(templateUrl = "/assets/views/publish.html"))
-        .when("/query", RouteTo(templateUrl = "/assets/views/query.html"))
-        .otherwise(RouteTo(redirectTo = "/inspect/brokers"))
+        .when("/decoders", new RouteTo(templateUrl = "/assets/views/decoders.html"))
+        .when("/inspect", new RouteTo(templateUrl = "/assets/views/inspect/index.html", reloadOnSearch = false))
+        .when("/observe", new RouteTo(templateUrl = "/assets/views/observe.html", reloadOnSearch = false, controller = classOf[ObserveController].getSimpleName))
+        .when("/publish", new RouteTo(templateUrl = "/assets/views/publish.html"))
+        .when("/query", new RouteTo(templateUrl = "/assets/views/query.html"))
+        .otherwise(new RouteTo(redirectTo = "/inspect/brokers"))
       ()
     })
 

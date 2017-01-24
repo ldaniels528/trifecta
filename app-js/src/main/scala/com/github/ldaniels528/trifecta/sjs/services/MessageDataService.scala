@@ -2,8 +2,8 @@ package com.github.ldaniels528.trifecta.sjs.services
 
 import com.github.ldaniels528.trifecta.sjs.models.Message
 import com.github.ldaniels528.trifecta.sjs.services.MessageDataService.{PublishMessageRequest, PublishMessageResponse}
-import org.scalajs.angularjs.Service
-import org.scalajs.angularjs.http.{Http, HttpResponse}
+import io.scalajs.npm.angularjs.Service
+import io.scalajs.npm.angularjs.http.{Http, HttpResponse}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.ScalaJSDefined

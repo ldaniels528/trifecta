@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
 import com.github.ldaniels528.trifecta.sjs.models._
-import org.scalajs.angularjs.Service
-import org.scalajs.angularjs.http.{Http, HttpResponse}
+import io.scalajs.npm.angularjs.Service
+import io.scalajs.npm.angularjs.http.{Http, HttpResponse}
 
 import scala.scalajs.js
 

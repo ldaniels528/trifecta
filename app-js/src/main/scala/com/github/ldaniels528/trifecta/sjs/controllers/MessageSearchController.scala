@@ -3,12 +3,12 @@ package com.github.ldaniels528.trifecta.sjs.controllers
 import com.github.ldaniels528.trifecta.sjs.controllers.MessageSearchController._
 import com.github.ldaniels528.trifecta.sjs.models.TopicDetails
 import com.github.ldaniels528.trifecta.sjs.services.TopicService
-import org.scalajs.angularjs.AngularJsHelper._
-import org.scalajs.angularjs.toaster.Toaster
-import org.scalajs.angularjs.uibootstrap.ModalInstance
-import org.scalajs.angularjs.{Controller, Scope, injected}
-import org.scalajs.dom.browser.console
-import org.scalajs.nodejs.util.ScalaJsHelper._
+import io.scalajs.npm.angularjs.AngularJsHelper._
+import io.scalajs.npm.angularjs.toaster.Toaster
+import io.scalajs.npm.angularjs.uibootstrap.ModalInstance
+import io.scalajs.npm.angularjs.{Controller, Scope, injected}
+import io.scalajs.dom.html.browser.console
+import io.scalajs.util.ScalaJsHelper._
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js

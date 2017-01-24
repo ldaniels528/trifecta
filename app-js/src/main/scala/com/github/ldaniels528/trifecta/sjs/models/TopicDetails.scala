@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
 import com.github.ldaniels528.trifecta.sjs.models.Query.SavedResult
-import org.scalajs.dom.browser.console
-import org.scalajs.sjs.JsUnderOrHelper._
+import io.scalajs.dom.html.browser.console
+import io.scalajs.util.JsUnderOrHelper._
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
