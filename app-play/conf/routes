@@ -11,11 +11,14 @@ GET           /webjars/*file                                     controllers.Web
 #       REST API Routes
 ########################################################################################################################
 
+# Configuration Properties
+GET           /api/config                                        com.github.ldaniels528.trifecta.ui.controllers.Application.getConfig
+
 # Server Side Events
 GET           /api/sse/connect                                   com.github.ldaniels528.trifecta.ui.controllers.Application.sseConnect
-GET           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.ui.controllers.MessageController.getSamplingSession
-PUT           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.ui.controllers.MessageController.startSampling
-DELETE        /api/sse/sampling/:sessionId                       @com.github.ldaniels528.trifecta.ui.controllers.MessageController.stopSampling(sessionId)
+GET           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.ui.controllers.StreamingController.getSamplingSession
+PUT           /api/sse/sampling                                  @com.github.ldaniels528.trifecta.ui.controllers.StreamingController.startSampling
+DELETE        /api/sse/sampling/:sessionId                       @com.github.ldaniels528.trifecta.ui.controllers.StreamingController.stopSampling(sessionId)
 
 # Brokers & Replicas
 GET           /api/brokers                                       @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getBrokers
@@ -25,11 +28,8 @@ GET           /api/replicas/:topic                               @com.github.lda
 # Consumers
 GET           /api/consumer/:groupId                             @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerGroup(groupId: String)
 GET           /api/consumer/:groupId/offsets                     @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerOffsets(groupId: String)
-GET           /api/consumers/lite                                @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumersLite
-GET           /api/consumers                                     @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumers
+GET           /api/consumers                                     @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumersLite
 GET           /api/consumers/deltas                              @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerDeltas
-GET           /api/consumers/details                             @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumerDetails
-GET           /api/consumers/topic/:topic                        @com.github.ldaniels528.trifecta.ui.controllers.KafkaController.getConsumersByTopic(topic: String)
 
 # Decoders & Schemas
 GET           /api/decoders                                      @com.github.ldaniels528.trifecta.ui.controllers.DecoderController.getDecoders

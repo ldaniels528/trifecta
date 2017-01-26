@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
-import org.scalajs.angularjs.Service
-import org.scalajs.angularjs.http.Http
+import io.scalajs.npm.angularjs.Service
+import io.scalajs.npm.angularjs.http.Http
 import com.github.ldaniels528.trifecta.sjs.models.{ZkData, ZkItem}
 
 import scala.scalajs.js

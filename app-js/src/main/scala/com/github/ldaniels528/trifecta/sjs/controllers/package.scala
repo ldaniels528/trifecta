@@ -2,9 +2,9 @@ package com.github.ldaniels528.trifecta.sjs
 
 import com.github.ldaniels528.trifecta.AppConstants._
 import com.github.ldaniels528.trifecta.sjs.models._
-import org.scalajs.angularjs.Scope
-import org.scalajs.dom
-import org.scalajs.dom.browser.console
+import io.scalajs.npm.angularjs.Scope
+import io.scalajs.dom
+import io.scalajs.dom.html.browser.console
 
 import scala.scalajs.js
 
@@ -45,7 +45,7 @@ package object controllers {
     ///////////////////////////////////////////////////////////////////////////////
 
     @inline
-    def broadcastConsumersLoaded(consumers: js.Array[ConsumerRedux]) {
+    def broadcastConsumersLoaded(consumers: js.Array[Consumer]) {
       console.log(s"Broadcasting '$CONSUMERS_LOADED' event...")
       scope.$broadcast(CONSUMERS_LOADED, consumers)
     }

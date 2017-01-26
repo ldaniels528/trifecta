@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import org.scalajs.nodejs.util.ScalaJsHelper._
+import io.scalajs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 
@@ -11,7 +11,7 @@ import scala.scalajs.js
 @js.native
 trait ReferenceData extends js.Object {
   var brokers: js.Array[BrokerGroup] = js.native
-  var consumers: js.Array[ConsumerRedux] = js.native
+  var consumers: js.Array[Consumer] = js.native
   var topic: js.UndefOr[TopicDetails] = js.native
   var topics: js.Array[TopicDetails] = js.native
 
@@ -24,7 +24,7 @@ trait ReferenceData extends js.Object {
 object ReferenceData {
 
   def apply(brokers: js.Array[BrokerGroup],
-            consumers: js.Array[ConsumerRedux],
+            consumers: js.Array[Consumer],
             topics: js.Array[TopicDetails],
             topic: js.UndefOr[TopicDetails]) = {
     val data = New[ReferenceData]

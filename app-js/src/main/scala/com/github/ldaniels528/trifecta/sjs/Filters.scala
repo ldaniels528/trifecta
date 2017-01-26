@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs
 
-import org.scalajs.angularjs._
-import org.scalajs.nodejs.util.ScalaJsHelper._
+import io.scalajs.npm.angularjs._
+import io.scalajs.util.ScalaJsHelper._
 
 import scala.scalajs.js
 

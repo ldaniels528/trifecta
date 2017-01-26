@@ -3,8 +3,8 @@ package com.github.ldaniels528.trifecta.sjs.services
 import com.github.ldaniels528.trifecta.sjs.models.Query.QueryResultSet
 import com.github.ldaniels528.trifecta.sjs.models.{Message, Query}
 import com.github.ldaniels528.trifecta.sjs.services.QueryService._
-import org.scalajs.angularjs.Service
-import org.scalajs.angularjs.http.{Http, HttpResponse}
+import io.scalajs.npm.angularjs.Service
+import io.scalajs.npm.angularjs.http.{Http, HttpResponse}
 
 import scala.scalajs.js
 import scala.scalajs.js.Array

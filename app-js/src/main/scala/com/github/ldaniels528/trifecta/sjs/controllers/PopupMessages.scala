@@ -1,9 +1,9 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import org.scalajs.angularjs.AngularJsHelper._
-import org.scalajs.angularjs.Controller
-import org.scalajs.angularjs.toaster.Toaster
-import org.scalajs.dom.browser.console
+import io.scalajs.npm.angularjs.AngularJsHelper._
+import io.scalajs.npm.angularjs.Controller
+import io.scalajs.npm.angularjs.toaster.Toaster
+import io.scalajs.dom.html.browser.console
 
 /**
   * Popup Messages

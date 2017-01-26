@@ -8,7 +8,7 @@ import com.github.ldaniels528.commons.helpers.ResourceHelper._
 import com.github.ldaniels528.trifecta.io.ByteBufferUtils._
 import com.github.ldaniels528.trifecta.io.IOCounter
 import com.github.ldaniels528.trifecta.io.kafka.KafkaMicroConsumer._
-import com.github.ldaniels528.trifecta.io.kafka.KafkaZkUtils.{BrokerDetails, ConsumerDetails}
+import com.github.ldaniels528.trifecta.io.kafka.KafkaZkUtils.{BrokerDetails, ConsumerDetails, ConsumerGroup, ConsumerOffset}
 import com.github.ldaniels528.trifecta.io.zookeeper.ZKProxy
 import com.github.ldaniels528.trifecta.messages.BinaryMessage
 import com.github.ldaniels528.trifecta.messages.logic.Condition
@@ -401,28 +401,75 @@ object KafkaMicroConsumer {
   }
 
   /**
-    * Retrieves the list of internal consumers from Kafka
+    * Retrieves the list of internal consumers from Kafka (Play version)
     */
-  def getConsumersFromKafka(groupIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
-    val topicList = getTopicList(getBrokers)
+  def getConsumerGroupsFromKafka(groupIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerGroup] = {
+    val topicList = KafkaMicroConsumer.getTopicList(KafkaMicroConsumer.getBrokers)
     val topicPartitions = topicList.map(t => new TopicPartition(t.topic, t.partitionId)).asJavaCollection
-    val topics = topicList map (_.topic) distinct
+    val topics = topicList.map(_.topic).distinct
 
     groupIds flatMap { groupId =>
       val props = new Properties()
-      props.put("bootstrap.servers", getBootstrapServers)
+      props.put("bootstrap.servers", KafkaMicroConsumer.getBootstrapServers)
       props.put("group.id", groupId)
       props.put("auto.offset.reset", autoOffsetReset)
       props.put("key.deserializer", classOf[StringDeserializer].getName)
       props.put("value.deserializer", classOf[StringDeserializer].getName)
+
+      // lookup the owners and consumer threads
+      val owners = Try(KafkaMicroConsumer.kafkaUtil.getConsumerOwners(groupId)).toOption
+      val threads = Try(KafkaMicroConsumer.kafkaUtil.getConsumerThreads(groupId)).toOption
 
       new KafkaConsumer[Array[Byte], Array[Byte]](props) use { consumer =>
         consumer.subscribe(topics: _*)
         consumer.poll(0)
         Try(consumer.position(topicPartitions)) match {
           case Success(mapping) =>
-            val owners = Try(kafkaUtil.getConsumerOwners(groupId)).toOption
-            val threads = Try(kafkaUtil.getConsumerThreads(groupId)).toOption
+            Some(ConsumerGroup(
+              consumerId = groupId,
+              offsets = mapping.toSeq map { case (tp, offset) =>
+                val thread = threads.flatMap(_.find(t => t.topic == tp.topic()))
+                val lastModified = thread.flatMap(t => Try(t.timestamp.toLong).toOption)
+                ConsumerOffset(groupId = groupId, topic = tp.topic(), partition = tp.partition(), offset = offset, lastModifiedTime = lastModified)
+              },
+              owners = owners getOrElse Nil,
+              threads = threads getOrElse Nil
+            ))
+          case Failure(e) =>
+            logger.error("Failed to retrieve Kafka consumers", e)
+            None
+        }
+      }
+    }
+  }
+
+  /**
+    * Retrieves the list of internal consumers from Kafka
+    * TODO consolidate with Play version and remove this method
+    */
+  def getConsumersFromKafka(groupIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
+    val topicList = getTopicList(getBrokers)
+    val topicPartitions = topicList.map(t => new TopicPartition(t.topic, t.partitionId)).asJavaCollection
+    val topics = topicList map (_.topic) distinct
+    val bootstrapServers = KafkaMicroConsumer.getBootstrapServers
+
+    groupIds flatMap { groupId =>
+      val props = new Properties()
+      props.put("bootstrap.servers", bootstrapServers)
+      props.put("group.id", groupId)
+      props.put("auto.offset.reset", autoOffsetReset)
+      props.put("key.deserializer", classOf[StringDeserializer].getName)
+      props.put("value.deserializer", classOf[StringDeserializer].getName)
+
+      // lookup the owners and consumer threads
+      val owners = Try(kafkaUtil.getConsumerOwners(groupId)).toOption
+      val threads = Try(kafkaUtil.getConsumerThreads(groupId)).toOption
+
+      new KafkaConsumer[Array[Byte], Array[Byte]](props) use { consumer =>
+        consumer.subscribe(topics: _*)
+        consumer.poll(0)
+        Try(consumer.position(topicPartitions)) match {
+          case Success(mapping) =>
             mapping.toSeq map { case (tp, offset) =>
               val owner = owners.flatMap(_.find(o => o.topic == tp.topic() && o.partition == tp.partition()))
               val thread = threads.flatMap(_.find(t => t.topic == tp.topic()))
@@ -445,7 +492,46 @@ object KafkaMicroConsumer {
   }
 
   /**
+    * Retrieves the list of internal consumers' offsets from Kafka (Play version)
+    */
+  def getConsumerGroupOffsetsFromKafka(groupIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerOffset] = {
+    val topicList = KafkaMicroConsumer.getTopicList(KafkaMicroConsumer.getBrokers)
+    val topicPartitions = topicList.map(t => new TopicPartition(t.topic, t.partitionId)).asJavaCollection
+    val topics = topicList.map(_.topic).distinct
+    val bootstrapServers = KafkaMicroConsumer.getBootstrapServers
+
+    groupIds flatMap { groupId =>
+      val props = new Properties()
+      props.put("bootstrap.servers", bootstrapServers)
+      props.put("group.id", groupId)
+      props.put("auto.offset.reset", autoOffsetReset)
+      props.put("key.deserializer", classOf[StringDeserializer].getName)
+      props.put("value.deserializer", classOf[StringDeserializer].getName)
+
+      // lookup the consumer threads
+      val threads = Try(KafkaMicroConsumer.kafkaUtil.getConsumerThreads(groupId)).toOption
+
+      new KafkaConsumer[Array[Byte], Array[Byte]](props) use { consumer =>
+        consumer.subscribe(topics: _*)
+        consumer.poll(0)
+        Try(consumer.position(topicPartitions)) match {
+          case Success(mapping) =>
+            mapping.toSeq map { case (tp, offset) =>
+              val thread = threads.flatMap(_.find(t => t.topic == tp.topic()))
+              val lastModified = thread.flatMap(t => Try(t.timestamp.toLong).toOption)
+              ConsumerOffset(groupId = groupId, topic = tp.topic(), partition = tp.partition(), offset = offset, lastModifiedTime = lastModified)
+            }
+          case Failure(e) =>
+            logger.error("Failed to retrieve Kafka consumers", e)
+            Nil
+        }
+      }
+    }
+  }
+
+  /**
     * Retrieves the list of consumers from Zookeeper
+    * TODO consolidate with Play version and remove this method
     */
   def getConsumerFromZookeeper(topicPrefix: Option[String] = None)(implicit zk: ZKProxy): Seq[ConsumerDetails] = {
     kafkaUtil.getConsumerDetails filter (cd => contentFilter(topicPrefix, cd.topic))

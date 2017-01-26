@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs
 
-import org.scalajs.dom.browser.encodeURI
+import io.scalajs.dom.html.browser.encodeURI
 
 /**
   * services package object
@@ -15,7 +15,7 @@ package object services {
   implicit class EncodeURIExtension(val url: String) extends AnyVal {
 
     @inline
-    def encode = encodeURI(url)
+    def encode: String = encodeURI(url)
 
   }
 

@@ -5,15 +5,16 @@ import com.github.ldaniels528.trifecta.sjs.controllers.ObserveController._
 import com.github.ldaniels528.trifecta.sjs.models.SamplingStatus._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services._
-import org.scalajs.angularjs.AngularJsHelper._
-import org.scalajs.angularjs._
-import org.scalajs.angularjs.toaster.Toaster
-import org.scalajs.dom.browser.console
-import org.scalajs.jquery.jQuery
-import org.scalajs.sjs.JsUnderOrHelper._
-import org.scalajs.sjs.OptionHelper._
-import org.scalajs.sjs.PromiseHelper._
+import io.scalajs.npm.angularjs.AngularJsHelper._
+import io.scalajs.npm.angularjs._
+import io.scalajs.npm.angularjs.toaster.Toaster
+import io.scalajs.dom.html.browser.console
+import io.scalajs.jquery.JQuery._
+import io.scalajs.util.JsUnderOrHelper._
+import io.scalajs.util.OptionHelper._
+import io.scalajs.util.PromiseHelper._
 
+import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -34,6 +35,8 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   extends Controller with PopupMessages {
 
   implicit val scope: Scope with GlobalLoading = $scope
+  private var lastOffsetChange: Double = 0
+  private var delayedLoading = false
 
   ///////////////////////////////////////////////////////////////////////////
   //    Properties
@@ -79,13 +82,29 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   /**
     * Converts the given offset from a string value to an integer
     * @@param partition the partition that the offset value will be updated within
-    * @@param offset the given offset string value
     */
-  $scope.convertOffsetToInt = (aPartition: js.UndefOr[PartitionDetails], anOffset: js.UndefOr[Int]) => {
+  $scope.updatePartitionOffset = (aPartition: js.UndefOr[PartitionDetails]) => {
     for {
       partition <- aPartition
-      offset <- anOffset
-    } partition.offset = offset
+      offset <- partition.offset
+    } {
+      lastOffsetChange = js.Date.now()
+      if(!delayedLoading) delayedMessageLoading()
+    }
+  }
+
+  private def delayedMessageLoading(): Unit = {
+    js.Date.now() - lastOffsetChange match {
+      case t if t >= 200 && t < 1000 =>
+        delayedLoading = false
+        loadMessage()
+      case t if t < 200 => $timeout(() => {
+        delayedLoading = true
+        delayedMessageLoading()
+      }, 25.millis)
+      case _ =>
+        delayedLoading = false
+    }
   }
 
   private def ensureOffset(aPartition: js.UndefOr[PartitionDetails]) = aPartition foreach { partition =>
@@ -225,7 +244,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   }
 
   $scope.gotoDecoder = (aTopic: js.UndefOr[TopicDetails]) => {
-    val scope = angular.element(jQuery("#Decoders")).scope().asInstanceOf[ObserveController]
+    val scope = angular.element($("#Decoders")).scope().asInstanceOf[ObserveController]
     // TODO switchToDecoderByTopic?
     /*
     if (scope.switchToDecoderByTopic(topic)) {
@@ -519,7 +538,7 @@ object ObserveController {
 
   /**
     * Display Mode
-    * @param state the current display mode (e.g. "key" or "message")
+    * @param state  the current display mode (e.g. "key" or "message")
     * @param format the current format
     */
   @ScalaJSDefined
@@ -560,7 +579,6 @@ object ObserveController {
     var partition: js.UndefOr[PartitionDetails] = js.native
 
     // functions
-    var convertOffsetToInt: js.Function2[js.UndefOr[PartitionDetails], js.UndefOr[Int], Unit] = js.native
     var gotoDecoder: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
     var isLimitedControls: js.Function0[Boolean] = js.native
     var isSelected: js.Function1[js.UndefOr[PartitionDetails], Boolean] = js.native
@@ -588,6 +606,7 @@ object ObserveController {
     var previousMessage: js.Function0[Unit] = js.native
     var resetMessageState: js.Function4[js.UndefOr[String], js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int], Unit] = js.native
     var setMessageData: js.Function1[js.UndefOr[Message], Unit] = js.native
+    var updatePartitionOffset: js.Function1[js.UndefOr[PartitionDetails], Unit] = js.native
     var toggleDecodeOnOff: js.Function2[js.UndefOr[String], js.UndefOr[Message], Unit] = js.native
   }
 

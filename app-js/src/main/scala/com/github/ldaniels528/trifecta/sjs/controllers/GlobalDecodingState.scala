@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
-import org.scalajs.angularjs.Scope
+import io.scalajs.npm.angularjs.Scope
 
 import scala.scalajs.js
 

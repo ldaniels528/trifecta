@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.controllers
 
 import com.github.ldaniels528.trifecta.sjs.models._
-import org.scalajs.angularjs.Scope
+import io.scalajs.npm.angularjs.Scope
 
 import scala.scalajs.js
 
@@ -15,8 +15,7 @@ trait ReferenceDataAware extends js.Object {
 
   // properties
   var brokers: js.Array[BrokerGroup] = js.native
-  var consumers: js.Array[ConsumerRedux] = js.native
-  var consumerGroupCache: js.Dictionary[js.Array[ConsumerGroup]] = js.native
+  var consumers: js.Array[Consumer] = js.native
   var messageBlob: MessageBlob = js.native
   var replicas: js.Array[ReplicaGroup] = js.native
   var topic: js.UndefOr[TopicDetails] = js.native
@@ -30,7 +29,7 @@ trait ReferenceDataAware extends js.Object {
   var topicsLoading: js.UndefOr[Boolean] = js.native
 
   // consumer functions
-  var getConsumers: js.Function0[js.Array[ConsumerRedux]] = js.native
+  var getConsumers: js.Function0[js.Array[Consumer]] = js.native
 
   // topic functions
   var findNonEmptyTopic: js.Function0[js.UndefOr[TopicDetails]] = js.native
@@ -39,6 +38,8 @@ trait ReferenceDataAware extends js.Object {
   var getTopicIconSelection: js.Function1[js.UndefOr[Boolean], String] = js.native
   var getTopicNames: js.Function0[js.Array[String]] = js.native
   var getTopics: js.Function0[js.Array[TopicDetails]] = js.native
+  var getTopicMessagesDelta: js.Function1[js.UndefOr[TopicDetails], js.UndefOr[Int]] = js.native
+  var getTopicPartitionDelta: js.Function2[js.UndefOr[String], js.UndefOr[Int], js.UndefOr[Int]] = js.native
   var isSelectedTopic: js.Function1[js.UndefOr[TopicDetails], Boolean] = js.native
   var selectTopic: js.Function1[js.UndefOr[TopicDetails], Unit] = js.native
 

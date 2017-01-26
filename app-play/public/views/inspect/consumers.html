@@ -77,10 +77,11 @@
                 <div ng-show="t.expanded" class="ident">
                     <table style="width: 100%; border: 1px solid #dddddd">
                         <tr style="border-bottom: 1px solid #dddddd">
-                            <th class="col-md-4 left">Partition / Owner</th>
-                            <th class="col-md-3 right">Offset</th>
-                            <th class="col-md-2 right">Remaining</th>
-                            <th class="col-md-3 center">Last Updated</th>
+                            <th class="col-md-3 left">Partition / Owner</th>
+                            <th class="col-md-3 left">Topic</th>
+                            <th class="col-md-3 left">Consumer</th>
+                            <th class="col-md-2 left">Remaining</th>
+                            <th class="col-md-1 center">Last Updated</th>
                         </tr>
 
                         <tr ng-repeat="coffset in t.offsets | orderBy:'partition'">
@@ -94,23 +95,25 @@
                                     : Consumer information unavailable
                                 </span>
                             </td>
-                            <td class="right">
-                                <span class="pull-left">
-                                    <span class="delta_topic" ng-show="coffset.deltaT">
-                                        <img src="/assets/images/tabs/inspect/arrow_topic.gif"> {{ coffset.deltaT | number }}
-                                    </span>
-                                    <span class="delta_consumer" ng-show="coffset.deltaC">
-                                        <img src="/assets/images/tabs/inspect/arrow_consumer.gif"> {{ coffset.deltaC | number }}
-                                    </span>
-                                </span>
-                                <span class="pull-right">
-                                    <a ng-click="switchToMessage(coffset.topic, coffset.partition, coffset.offset)">{{ coffset.offset || 0 }}</a>
+                            <td class="left">
+                                {{ coffset.topicEndOffset }}
+                                <span class="delta_topic small" ng-show="getTopicPartitionDelta(t.topic, coffset.partition)">
+                                    <img src="/assets/images/tabs/inspect/arrow_topic.gif"> {{ getTopicPartitionDelta(t.topic, coffset.partition) | number }}
                                 </span>
                             </td>
-                            <td class="right">
+                            <td class="left">
+                                <a ng-click="switchToMessage(coffset.topic, coffset.partition, coffset.offset)">{{ coffset.offset || 0 }}</a>
+                                <span class="delta_topic small" ng-show="coffset.deltaC">
+                                    <img src="/assets/images/tabs/inspect/arrow_topic.gif"> {{ coffset.deltaC | number }}
+                                </span>
+                            </td>
+                            <td class="left">
                                 {{ getMessagesLeft(coffset) | number }}
+                                <span class="delta_consumer small" ng-show="coffset.deltaC">
+                                    <img src="/assets/images/tabs/inspect/arrow_consumer.gif"> {{ coffset.deltaC | number }}
+                                </span>
                             </td>
-                            <td class="center">
+                            <td class="center small">
                                 <span ng-show="coffset.lastModifiedTime">{{ coffset.lastModifiedTime | duration }}</span>
                                 <span ng-hide="coffset.lastModifiedTime" class="null">N/A</span>
                             </td>
