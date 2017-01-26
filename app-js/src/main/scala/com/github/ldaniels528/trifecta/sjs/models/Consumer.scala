@@ -1,7 +1,7 @@
 package com.github.ldaniels528.trifecta.sjs.models
 
-import org.scalajs.angularjs.angular
-import org.scalajs.dom.browser.console
+import io.scalajs.npm.angularjs.angular
+import io.scalajs.dom.html.browser.console
 
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js

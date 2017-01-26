@@ -37,7 +37,7 @@ object LoggingFilter extends Filter {
       val endTime = System.nanoTime
       val requestTime = (endTime - startTime) / 1e+6f
       if (requestHeader.uri.startsWith("/api")) {
-        Logger.info(f"${requestHeader.method} ${requestHeader.uri} ~> ${result.header.status} [$requestTime%.1f ms]")
+        Logger.info(f"${requestHeader.method} ${requestHeader.uri} => ${result.header.status} [$requestTime%.1f ms]")
       }
       result.withHeaders("Request-Time" -> requestTime.toString)
     }

@@ -3,9 +3,9 @@ package com.github.ldaniels528.trifecta.sjs.services
 import com.github.ldaniels528.trifecta.sjs.RootScope
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services.ServerSideEventsService._
-import org.scalajs.angularjs._
-import org.scalajs.angularjs.http.{Http, HttpResponse}
-import org.scalajs.dom.{Event, EventSource}
+import io.scalajs.npm.angularjs._
+import io.scalajs.npm.angularjs.http.{Http, HttpResponse}
+import io.scalajs.dom.{Event, EventSource}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON

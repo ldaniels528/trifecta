@@ -1,8 +1,8 @@
 package com.github.ldaniels528.trifecta.sjs.services
 
 import com.github.ldaniels528.trifecta.sjs.controllers.MessageSearchController.MessageSearchForm
-import org.scalajs.angularjs.Service
-import org.scalajs.angularjs.uibootstrap.{Modal, ModalOptions}
+import io.scalajs.npm.angularjs.Service
+import io.scalajs.npm.angularjs.uibootstrap.{Modal, ModalOptions}
 
 /**
   * Message Search Service

@@ -50,10 +50,10 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
   private implicit val zkProxy: ZKProxy = zk
 
   // caches
-  private val consumerCache = TrieMap[(String, String, Int), ConsumerOffset]()
   private val cachedBrokers = TrieMap[Unit, Seq[Broker]]()
-  private val cachedRuntime = TrieMap[Unit, TxRuntimeContext]()
+  private val cachedDeltaConsumers = TrieMap[(String, String, Int), ConsumerOffset]()
   private val cachedDeltaTopics = TrieMap[(String, Int), TopicDeltaJs]()
+  private val cachedRuntime = TrieMap[Unit, TxRuntimeContext]()
   private val cachedPublisher = TrieMap[Unit, KafkaPublisher]()
 
   // set user defined Kafka root directory
@@ -164,12 +164,13 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
     */
   def getConsumerDeltas(implicit ec: ExecutionContext): Seq[ConsumerOffsetUpdateJs] = {
     val consumers = getConsumerGroupsNativeOffsets() ++ getConsumerGroupsZookeeperOffsets
+    val firstCall = cachedDeltaConsumers.isEmpty
 
     // extract and return only the consumers that have changed
-    val deltas = if (consumerCache.isEmpty) consumers
+    val deltas = if (cachedDeltaConsumers.isEmpty) consumers
     else {
       consumers.flatMap { c =>
-        consumerCache.get((c.groupId, c.topic, c.partition)) match {
+        cachedDeltaConsumers.get((c.groupId, c.topic, c.partition)) match {
           // Option(c.copy(rate = computeTransferRate(prev, c)))
           case Some(prev) => if (prev != c) Option(c) else None
           case None => Option(c)
@@ -179,16 +180,20 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
 
     // update the cache
     deltas.foreach { c =>
-      consumerCache((c.groupId, c.topic, c.partition)) = c
+      cachedDeltaConsumers((c.groupId, c.topic, c.partition)) = c
     }
 
-    deltas map { o =>
-      ConsumerOffsetUpdateJs(
-        consumerId = o.groupId,
-        topic = o.topic,
-        partition = o.partition,
-        offset = o.offset,
-        lastModifiedTime = o.lastModifiedTime)
+    // if the cache was previously empty, send nothing
+    if(firstCall) Nil
+    else {
+      deltas map { o =>
+        ConsumerOffsetUpdateJs(
+          consumerId = o.groupId,
+          topic = o.topic,
+          partition = o.partition,
+          offset = o.offset,
+          lastModifiedTime = o.lastModifiedTime)
+      }
     }
   }
 
@@ -453,7 +458,9 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
 
   def getTopics: Seq[TopicDetailsJs] = KafkaMicroConsumer.getTopicList(brokers).map(_.asJson)
 
-  def getTopicDeltas: Iterable[TopicDeltaJs] = {
+  def getTopicDeltas: List[TopicDeltaJs] = {
+    val firstCall = cachedDeltaTopics.isEmpty
+
     val rawDeltas = for {
       state <- KafkaMicroConsumer.kafkaUtil.getBrokerTopics
       (startOffset, endOffset) <- getLimitOffsets(state.topic, state.partition)
@@ -470,7 +477,9 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
 
     // add the filtered deltas to the cache
     filteredDeltas.foreach(d => cachedDeltaTopics.put(d.topic -> d.partition, d))
-    filteredDeltas
+
+    // if the cache was previously empty, send nothing
+    if(firstCall) Nil else filteredDeltas.toList
   }
 
   def getTopicSummaries: Seq[TopicSummaryJs] = {
