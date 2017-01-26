@@ -1,6 +1,6 @@
 package com.github.ldaniels528.trifecta.sjs
 
-import org.scalajs.angularjs.Scope
+import io.scalajs.npm.angularjs.Scope
 
 import scala.scalajs.js
 
@@ -12,5 +12,5 @@ import scala.scalajs.js
 trait RootScope extends Scope {
   var version: js.UndefOr[String] = js.native
   var kafkaVersion: js.UndefOr[String] = js.native
-
+  var zookeeper: js.UndefOr[String] = js.native
 }

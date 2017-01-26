@@ -5,14 +5,14 @@ import com.github.ldaniels528.trifecta.sjs.controllers.ObserveController._
 import com.github.ldaniels528.trifecta.sjs.models.SamplingStatus._
 import com.github.ldaniels528.trifecta.sjs.models._
 import com.github.ldaniels528.trifecta.sjs.services._
-import org.scalajs.angularjs.AngularJsHelper._
-import org.scalajs.angularjs._
-import org.scalajs.angularjs.toaster.Toaster
-import org.scalajs.dom.browser.console
-import org.scalajs.jquery.jQuery
-import org.scalajs.sjs.JsUnderOrHelper._
-import org.scalajs.sjs.OptionHelper._
-import org.scalajs.sjs.PromiseHelper._
+import io.scalajs.npm.angularjs.AngularJsHelper._
+import io.scalajs.npm.angularjs._
+import io.scalajs.npm.angularjs.toaster.Toaster
+import io.scalajs.dom.html.browser.console
+import io.scalajs.jquery.JQuery._
+import io.scalajs.util.JsUnderOrHelper._
+import io.scalajs.util.OptionHelper._
+import io.scalajs.util.PromiseHelper._
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -244,7 +244,7 @@ case class ObserveController($scope: ObserveScope, $interval: Interval, $locatio
   }
 
   $scope.gotoDecoder = (aTopic: js.UndefOr[TopicDetails]) => {
-    val scope = angular.element(jQuery("#Decoders")).scope().asInstanceOf[ObserveController]
+    val scope = angular.element($("#Decoders")).scope().asInstanceOf[ObserveController]
     // TODO switchToDecoderByTopic?
     /*
     if (scope.switchToDecoderByTopic(topic)) {

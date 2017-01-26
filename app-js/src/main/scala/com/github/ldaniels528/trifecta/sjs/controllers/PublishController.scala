@@ -6,10 +6,10 @@ import com.github.ldaniels528.trifecta.sjs.controllers.GlobalLoading._
 import com.github.ldaniels528.trifecta.sjs.controllers.PublishController._
 import com.github.ldaniels528.trifecta.sjs.models.MessageBlob
 import com.github.ldaniels528.trifecta.sjs.services.{MessageDataService, TopicService}
-import org.scalajs.angularjs._
-import org.scalajs.angularjs.toaster.Toaster
-import org.scalajs.dom.browser.console
-import org.scalajs.sjs.PromiseHelper._
+import io.scalajs.npm.angularjs._
+import io.scalajs.npm.angularjs.toaster.Toaster
+import io.scalajs.dom.html.browser.console
+import io.scalajs.util.PromiseHelper._
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
