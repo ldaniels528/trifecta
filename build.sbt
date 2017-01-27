@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.22.0rc8b"
+val appVersion = "0.22.0rc9"
 val scalaJsIOVersion = "0.3.0.0-RC3"
 
 val _scalaVersion = "2.11.8"
@@ -81,7 +81,7 @@ lazy val trifecta_core = (project in file("."))
     libraryDependencies ++= testDependencies ++ Seq(
       // General Java Dependencies
       "commons-io" % "commons-io" % "2.4",
-      "net.liftweb" %% "lift-json" % "3.0-M7",
+      "net.liftweb" %% "lift-json" % "3.0.1",
       //
       // Typesafe dependencies
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,

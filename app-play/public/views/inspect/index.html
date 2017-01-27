@@ -10,6 +10,7 @@
 
     <div class="col-md-10">
         <div class="streaming_topics_container2">
+            <div ng-show="inspectTab.name == 'Configuration'" ng-include src="'/assets/views/inspect/config.html'"></div>
             <div ng-show="inspectTab.name == 'Brokers'" ng-include src="'/assets/views/inspect/brokers.html'"></div>
             <div ng-show="inspectTab.name == 'Consumers'" ng-include src="'/assets/views/inspect/consumers.html'"></div>
             <div ng-show="inspectTab.name == 'Replicas'" ng-include src="'/assets/views/inspect/replicas.html'"></div>
