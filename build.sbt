@@ -154,8 +154,7 @@ lazy val trifecta_cli = (project in file("app-cli"))
       "log4j" % "log4j" % "1.2.17",
       "org.slf4j" % "slf4j-log4j12" % slf4jVersion,
       "org.scala-lang" % "jline" % "2.11.0-M3"
-    )
-  )
+    ))
 
 lazy val trifecta_azure = (project in file("app-modules/azure"))
   .settings(
@@ -184,8 +183,7 @@ lazy val trifecta_azure = (project in file("app-modules/azure"))
       //"com.microsoft.sqlserver" % "sqljdbc4" % "4.0",
       "org.scala-lang" % "scala-library" % scalaJVMVersion % "provided",
       "org.slf4j" % "slf4j-api" % slf4jVersion % "provided"
-    )
-  )
+    ))
 
 lazy val trifecta_cassandra = (project in file("app-modules/cassandra"))
   .settings(
@@ -213,8 +211,7 @@ lazy val trifecta_cassandra = (project in file("app-modules/cassandra"))
       "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0",
       "org.scala-lang" % "scala-library" % scalaJVMVersion % "provided",
       "org.slf4j" % "slf4j-api" % "1.7.7" % "provided"
-    )
-  )
+    ))
 
 lazy val trifecta_elasticsearch = (project in file("app-modules/elasticsearch"))
   .settings(
@@ -241,8 +238,7 @@ lazy val trifecta_elasticsearch = (project in file("app-modules/elasticsearch"))
       "net.databinder.dispatch" %% "dispatch-core" % "0.11.2", // 0.11.3
       "org.scala-lang" % "scala-library" % scalaJVMVersion % "provided",
       "org.slf4j" % "slf4j-api" % slf4jVersion % "provided"
-    )
-  )
+    ))
 
 lazy val trifecta_etl = (project in file("app-modules/etl"))
   .dependsOn(trifecta_azure, trifecta_cassandra, trifecta_elasticsearch, trifecta_mongodb)
@@ -269,8 +265,7 @@ lazy val trifecta_etl = (project in file("app-modules/etl"))
       "com.github.ldaniels528" %% "trifecta-modules-core" % appVersion % "provided",
       "org.scala-lang" % "scala-library" % scalaJVMVersion % "provided",
       "org.slf4j" % "slf4j-api" % slf4jVersion % "provided"
-    )
-  )
+    ))
 
 lazy val trifecta_mongodb = (project in file("app-modules/mongodb"))
   .settings(
@@ -298,8 +293,7 @@ lazy val trifecta_mongodb = (project in file("app-modules/mongodb"))
       "org.mongodb" %% "casbah-core" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
       "org.scala-lang" % "scala-library" % scalaJVMVersion % "provided",
       "org.slf4j" % "slf4j-api" % "1.6.0" % "provided"
-    )
-  )
+    ))
 
 lazy val trifecta_ui_js = (project in file("app-js"))
   .dependsOn(trifecta_common_js)
@@ -308,17 +302,27 @@ lazy val trifecta_ui_js = (project in file("app-js"))
     name := "trifecta-ui-js",
     organization := "com.github.ldaniels528",
     version := appVersion,
-	  scalaVersion := scalaJSVersion,
+    scalaVersion := scalaJSVersion,
     relativeSourceMaps := true,
     persistLauncher := true,
     persistLauncher in Test := false,
     resolvers += Resolver.sonatypeRepo("releases"),
     libraryDependencies ++= Seq(
-      "io.scalajs" %%% "angularjs-bundle" % scalaJsIOVersion//,
-      //
-      // Play-ScalaJS dependencies
-      //"com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11")
-    ))
+      "io.scalajs" %%% "angularjs-bundle" % scalaJsIOVersion
+    ),
+	skip in packageJSDependencies := false,
+	jsDependencies ++= Seq(
+		"org.webjars" % "jquery" % "2.1.4" / "jquery.min.js",
+		"org.webjars" % "angularjs" % "1.4.8" / "angular.min.js" dependsOn "jquery.min.js",
+		"org.webjars" % "angularjs" % "1.4.8" / "angular-animate.min.js" dependsOn "angular.min.js",
+		"org.webjars" % "angularjs" % "1.4.8" / "angular-cookies.min.js" dependsOn "angular.min.js",
+		"org.webjars" % "angular-ui-bootstrap" % "0.14.3" / "ui-bootstrap-tpls.min.js" dependsOn "angular.min.js",
+		"org.webjars" % "angular-ui-router" % "0.2.13" / "angular-route.min.js" dependsOn "angular.min.js",	
+		"org.webjars" % "angularjs-toaster" % "0.4.8" / "toaster.js" dependsOn "angular.min.js",
+		"org.webjars" % "highlightjs" % "8.7" / "highlight.min.js",
+		"org.webjars" % "angular-highlightjs" % "0.4.3" / "angular-highlightjs.min.js" dependsOn "angular.min.js",
+		"org.webjars" % "nervgh-angular-file-upload" % "2.1.1" / "angular-file-upload.min.js" dependsOn "angular.min.js"
+  ))
 
 lazy val trifecta_ui = (project in file("app-play"))
   .dependsOn(commons_helpers, trifecta_core, trifecta_common_jvm)

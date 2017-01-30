@@ -13,16 +13,16 @@
     <link href='@routes.WebJarAssets.at(WebJarAssets.locate("tomorrow.min.css"))' type="text/css" rel="stylesheet" media="screen">
 
     <!-- Application-specific Stylesheets -->
-    <link href='@routes.Assets.versioned("stylesheets/decoders.css")' type="text/css" rel="stylesheet" media=screen>
-    <link href='@routes.Assets.versioned("stylesheets/index.css")' type="text/css" rel="stylesheet" media=screen>
-    <link href='@routes.Assets.versioned("stylesheets/inspect.css")' type="text/css" rel="stylesheet" media=screen>
-    <link href='@routes.Assets.versioned("stylesheets/observe.css")' type="text/css" rel="stylesheet" media=screen>
-    <link href='@routes.Assets.versioned("stylesheets/publish.css")' type="text/css" rel="stylesheet" media=screen>
-    <link href='@routes.Assets.versioned("stylesheets/query.css")' type="text/css" rel="stylesheet" media=screen>
+    <link href='@routes.Assets.versioned("stylesheets/decoders.css")' type="text/css" rel="stylesheet" media="screen">
+    <link href='@routes.Assets.versioned("stylesheets/index.css")' type="text/css" rel="stylesheet" media="screen">
+    <link href='@routes.Assets.versioned("stylesheets/inspect.css")' type="text/css" rel="stylesheet" media="screen">
+    <link href='@routes.Assets.versioned("stylesheets/observe.css")' type="text/css" rel="stylesheet" media="screen">
+    <link href='@routes.Assets.versioned("stylesheets/publish.css")' type="text/css" rel="stylesheet" media="screen">
+    <link href='@routes.Assets.versioned("stylesheets/query.css")' type="text/css" rel="stylesheet" media="screen">
 
     <!-- WebJar JS Libraries -->
     <script src='@routes.WebJarAssets.at(WebJarAssets.locate("jquery.min.js"))' type="text/javascript"></script>
-    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular.min.js"))' type="text/javascript"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular.min.js"))' type="text/javascript"></script>    
     <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-animate.min.js"))' type="text/javascript"></script>
     <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-cookies.min.js"))' type="text/javascript"></script>
     <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-file-upload.min.js"))' type="text/javascript"></script>
@@ -32,11 +32,14 @@
     <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-route.min.js"))' type="text/javascript"></script>
     <script src='@routes.WebJarAssets.at(WebJarAssets.locate("angular-sanitize.min.js"))' type="text/javascript"></script>
     <script src='@routes.WebJarAssets.at(WebJarAssets.locate("toaster.js"))' type="text/javascript"></script>
-    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("ui-bootstrap-tpls.min.js"))' type="text/javascript"></script>
-
-    <!-- Scala.js Resources -->
-    <script src="@routes.Assets.versioned("javascripts/trifecta-ui-js-fastopt.js")"></script>
-    <script src="@routes.Assets.versioned("javascripts/trifecta-ui-js-launcher.js")"></script>
+    <script src='@routes.WebJarAssets.at(WebJarAssets.locate("ui-bootstrap-tpls.min.js"))' type="text/javascript"></script>	
+		
+	<!-- Scala.js Resources -->
+	<!--
+	<script src='@routes.Assets.versioned("javascripts/trifecta-ui-js-jsdeps.js")'></script>
+	-->
+    <script src='@routes.Assets.versioned("javascripts/trifecta-ui-js-fastopt.js")'></script>
+    <script src='@routes.Assets.versioned("javascripts/trifecta-ui-js-launcher.js")'></script>
 </head>
 
 <body id="TrifectaMain" ng-controller="MainController" ng-init="init()">
