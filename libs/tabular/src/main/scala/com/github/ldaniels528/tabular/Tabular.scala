@@ -1,5 +1,7 @@
 package com.github.ldaniels528.tabular
 
+import java.util.UUID
+
 import com.github.ldaniels528.tabular.formatters.FormatHandler
 import org.slf4j.LoggerFactory
 
@@ -216,7 +218,7 @@ class Tabular() {
  */
 object Tabular {
 
-  def isPrimitives[A](values: GenSeq[A]) = {
+  def isPrimitives[A](values: GenSeq[A]): Boolean = {
     if (values.isEmpty) true
     else {
       values.head match {
@@ -228,12 +230,13 @@ object Tabular {
         case n: Number => true
         case s: Short => true
         case s: String => true
+        case u: UUID => true
         case _ => false
       }
     }
   }
 
-  def isPrimitives[A](values: Option[A]) = {
+  def isPrimitives[A](values: Option[A]): Boolean = {
     if (values.isEmpty) true
     else {
       values.head match {
@@ -245,6 +248,7 @@ object Tabular {
         case n: Number => true
         case s: Short => true
         case s: String => true
+        case u: UUID => true
         case _ => false
       }
     }
