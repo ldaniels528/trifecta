@@ -56,6 +56,29 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
         limit = Some(50))
     }
 
+    scenario("A query using function - no where clause") {
+      val queryString =
+        """
+          |Select parsejson(request)
+          |From "com.shocktrade.accesslogs" With default
+          |Limit 50
+          |""".stripMargin
+
+      Given(s"KQL query: $queryString")
+
+      When("The queries is parsed into a KQL object")
+      val query = KafkaQueryParser(queryString)
+
+      Then("The arguments should be successfully verified")
+      query shouldBe KQLSelection(
+        source = IOSource(deviceURL = "shocktrade.quotes.avro", decoderURL = Some("default")),
+        destination = None,
+        fields = List("parsejson(request)"),
+        criteria = None,
+        restrictions = KQLRestrictions(),
+        limit = Some(50))
+    }
+
     scenario("A query using 'with default' with a where clause") {
       val queryString =
         """
