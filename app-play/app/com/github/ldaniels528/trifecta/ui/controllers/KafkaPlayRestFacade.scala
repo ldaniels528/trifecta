@@ -100,7 +100,7 @@ case class KafkaPlayRestFacade(config: TxConfig, zk: ZKProxy) {
       .getOrElse(throw new IllegalArgumentException(s"Invalid expression: $criteria"))
 
     // execute the query
-    KafkaMicroConsumer.findOne(topic, brokers, forward = true, conditions) map (
+    KafkaMicroConsumer.findOne(topic, brokers, conditions) map (
       _ map { case (partition, md) => (partition, md.offset, decoder_?.map(_.decode(md.message)))
       }) map {
       case Some((partition, offset, Some(Success(message)))) =>
