@@ -30,6 +30,7 @@ object TrifectaJsApp extends js.JSApp {
     ))
 
     // configure the controllers
+    module.controllerOf[ConfigController]("ConfigController")
     module.controllerOf[DecoderController]("DecoderController")
     module.controllerOf[InspectController]("InspectController")
     module.controllerOf[MainController]("MainController")

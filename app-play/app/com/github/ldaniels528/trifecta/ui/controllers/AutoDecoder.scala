@@ -9,6 +9,7 @@ import scala.util.Try
 
 /**
   * Automatic Type-Sensing Message Decoder
+  * @author lawrence.daniels@gmail.com
   */
 object AutoDecoder extends MessageDecoder[AnyRef] {
 
