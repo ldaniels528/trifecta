@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.22.0rc9"
+val appVersion = "0.22.0rc10c"
 val scalaJsIOVersion = "0.3.0.1"
 
 val scalaJSVersion = "2.12.1"

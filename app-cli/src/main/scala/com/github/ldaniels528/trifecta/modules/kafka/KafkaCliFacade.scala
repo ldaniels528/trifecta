@@ -49,8 +49,13 @@ class KafkaCliFacade(config: TxConfig) {
   /**
     * Counts the messages matching a given condition [references cursor]
     */
-  def countMessages(topic: String, conditions: Seq[Condition], decoder: Option[MessageDecoder[_]])(implicit zk: ZKProxy, ec: ExecutionContext): Future[Long] = {
-    KafkaMicroConsumer.count(topic, brokers, conditions: _*)
+  def countMessages(topic: String, conditions: Seq[Condition], decoder: Option[MessageDecoder[_]])(implicit zk: ZKProxy, ec: ExecutionContext): AsyncIO = {
+    // define the counter
+    val counter = IOCounter(System.currentTimeMillis())
+
+    // perform the count
+    val task = KafkaMicroConsumer.count(topic, brokers, counter, conditions: _*)
+    AsyncIO(task, counter)
   }
 
   /**
@@ -166,7 +171,7 @@ class KafkaCliFacade(config: TxConfig) {
       md <- messageData
       rec = decoder.decode(md.message) match {
         case Success(record) =>
-          val fields = record.getSchema.getFields.asScala.map(_.name.trim).toSeq
+          val fields = record.getSchema.getFields.asScala.map(_.name.trim)//.toSeq
           fields map { f =>
             val v = record.get(f)
             AvroRecord(f, v, Option(v) map (_.getClass.getSimpleName) getOrElse "")

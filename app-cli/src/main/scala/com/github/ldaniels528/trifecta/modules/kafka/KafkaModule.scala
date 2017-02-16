@@ -96,7 +96,7 @@ class KafkaModule(config: TxConfig) extends Module {
 
     // query-related commands
     Command(this, "copy", copyMessages, UnixLikeParams(Nil, Seq("-a" -> "avroSchema", "-i" -> "inputSource", "-o" -> "outputSource", "-n" -> "numRecordsToCopy")), help = "Copies messages from an input source to an output source"),
-    Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-t" -> "topic")), help = "Counts the messages matching a given condition"),
+    Command(this, "kcount", countMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-t" -> "topic")), help = "Counts the messages matching a given condition"),
     Command(this, "kfind", findMessages, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-t" -> "topic", "-n" -> "limit")), "Finds messages matching a given condition and exports them to a topic"),
     Command(this, "kfindone", findOneMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
     Command(this, "kfindnext", findNextMessage, UnixLikeParams(Seq("field" -> true, "operator" -> true, "value" -> true), Seq("-a" -> "avroCodec", "-f" -> "format", "-o" -> "outputSource", "-p" -> "partition", "-t" -> "topic")), "Returns the first occurrence of a message matching a given condition"),
@@ -260,7 +260,7 @@ class KafkaModule(config: TxConfig) extends Module {
     * Counts the messages matching a given condition [references cursor]
     * @example kcount frequency >= 1200
     */
-  def countMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): Future[Long] = {
+  def countMessages(params: UnixLikeArgs)(implicit rt: TxRuntimeContext): AsyncIO = {
     // was a topic and/or Avro decoder specified?
     val topic_? = params("-t")
 

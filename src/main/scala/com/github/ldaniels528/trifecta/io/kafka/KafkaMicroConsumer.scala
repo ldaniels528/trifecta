@@ -181,7 +181,8 @@ object KafkaMicroConsumer {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val correlationIdGen = new AtomicInteger(-1)
 
-  val DEFAULT_FETCH_SIZE: Int = 1024*1024 // 1MB
+  val DEFAULT_FETCH_SIZE: Int = 1024 * 1024
+  // 1MB
   val kafkaUtil = new KafkaZkUtils(rootKafkaPath = "/")
 
   /**
@@ -197,7 +198,10 @@ object KafkaMicroConsumer {
     * @param conditions the given search criteria
     * @return the promise of the total number of messages that match the given search criteria
     */
-  def count(topic: String, brokers: Seq[Broker], conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Long] = {
+  def count(topic: String,
+            brokers: Seq[Broker],
+            counter: IOCounter,
+            conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Long] = {
     val tasks = getTopicPartitions(topic) map { partition =>
       Future.successful {
         var counter = 0L
@@ -250,6 +254,8 @@ object KafkaMicroConsumer {
           new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
             var offset: Option[Long] = subs.getStartingOffset(restrictions)
             val lastOffset: Option[Long] = subs.getLastOffset
+            println(s"findMany: partition: $partition, start: ${offset.orNull}, end: ${lastOffset.orNull}")
+
             while (offset.exists(o => lastOffset.exists(o < _)) && (limit.isEmpty || limit.exists(count.get < _))) {
               val messages_? = offset.map(ofs => subs.fetch(ofs)(DEFAULT_FETCH_SIZE))
 
@@ -753,26 +759,25 @@ object KafkaMicroConsumer {
 
     def getStartingOffset(restrictions: KQLRestrictions): Option[Long] = {
       val minimumOffset = subs.getFirstOffset.map(Math.max(0L, _))
+      val maximumOffset = subs.getLastOffset.map(Math.max(0L, _))
 
       // was a consumer group specified?
       val consumerOffset = for {
         groupId <- restrictions.groupId
         offset <- subs.fetchOffset(groupId)
-        safeOffset <- if (offset == -1) minimumOffset else Some(offset)
-      } yield safeOffset
+      } yield offset
 
-      // get the base offset
-      val baseOffset = consumerOffset ?? minimumOffset
-
-      // was an offset delta specified?
-      val adjustedOffset = for {
-        minimum <- minimumOffset
-        offset <- baseOffset
+      // compute the relative offset
+      val relativeOffset = for {
         delta <- restrictions.delta
-      } yield Math.max(minimum, offset - delta)
+        offset <- consumerOffset ?? (if(delta > 0) minimumOffset else maximumOffset)
+      } yield offset + delta
 
-      // use either the adjusted offset or the base offset
-      adjustedOffset ?? baseOffset
+      // return the appropriate offset
+      for {
+        minimum <- minimumOffset
+        offset <- relativeOffset ?? consumerOffset ?? minimumOffset
+      } yield Math.max(minimum, offset)
     }
   }
 
