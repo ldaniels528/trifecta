@@ -44,6 +44,7 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
   ///////////////////////////////////////////////////////////////////////////
 
   $scope.inspectTabs = js.Array(
+    MainTab(name = "Configuration", contentURL = "/inspect?mode=configuration", imageURL = "/assets/images/tabs/inspect/config.png"),
     MainTab(name = "Brokers", contentURL = "/inspect?mode=brokers", imageURL = "/assets/images/tabs/inspect/brokers.png"),
     MainTab(name = "Consumers", contentURL = "/inspect?mode=consumers", imageURL = "/assets/images/tabs/inspect/consumers.png"),
     MainTab(name = "Leaders", contentURL = "/inspect?mode=leaders", imageURL = "/assets/images/tabs/inspect/topics.png"),
@@ -59,12 +60,12 @@ case class InspectController($scope: InspectScope, $location: Location, $log: Lo
     * Sets the active tab
     */
   $scope.changeInspectTab = (aTab: js.UndefOr[MainTab], anEvent: js.UndefOr[dom.Event]) => {
-    aTab.foreach(tab => {
+    aTab.foreach { tab =>
       console.log(s"Setting Inspect tab to '${tab.name}' (${tab.contentURL})...")
       $location.search("mode", tab.name.toLowerCase)
       $scope.inspectTab = tab
       $scope.inspectTabs.foreach(t => t.active = t == tab)
-    })
+    }
     anEvent.foreach(_.preventDefault())
   }
 

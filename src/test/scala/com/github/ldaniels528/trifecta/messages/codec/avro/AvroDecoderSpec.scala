@@ -25,7 +25,7 @@ class AvroDecoderSpec() extends FeatureSpec with GivenWhenThen {
       val schemaString = Source.fromURL(getClass.getResource("/avro/quotes.avsc")).getLines() mkString "\n"
 
       And("an Avro Decoder")
-      val decoder = AvroDecoder("myDecoder", schemaString)
+      val decoder = AvroDecoder("quotes.avsc", schemaString)
 
       When("an Avro-encoded record is loaded")
       val encoded = (JSONFileMessageInputSource("/GDF.bin") use (_.read))

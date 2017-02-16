@@ -340,7 +340,6 @@ object TxConfig {
       "trifecta.zookeeper.host" -> "localhost:2181",
       "trifecta.elasticsearch.hosts" -> "localhost",
       "trifecta.cassandra.hosts" -> "localhost ",
-      "trifecta.storm.hosts" -> "localhost",
       "trifecta.common.autoSwitching" -> "true",
       "trifecta.common.columns" -> "25",
       "trifecta.common.debugOn" -> "false",
