@@ -197,7 +197,7 @@ case class QueryController($scope: QueryScope, $cookies: Cookies, $log: Log, $ti
     $scope.selectTopic(aTopic)
     aTopic foreach { topic =>
       if (topic.query.nonAssigned) {
-        topic.query = new Query(s"select * from ${topic.topic} with default")
+        topic.query = new Query(s"select * from '${topic.topic}' with default")
       }
     }
     $scope.query = aTopic.flatMap(_.query)
