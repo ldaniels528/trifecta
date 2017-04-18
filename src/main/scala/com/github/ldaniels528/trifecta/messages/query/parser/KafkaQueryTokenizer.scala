@@ -85,7 +85,7 @@ class KafkaQueryTokenizer(queryString: String) {
 
   private def parseNumeric(tokens: ListBuffer[Token]): Boolean = {
     if (!hasNext) true
-    else if (!currentChar.isDigit) false
+    else if (currentChar != '-' && !currentChar.isDigit) false
     else {
       val start = pos
       pos += 1

@@ -90,15 +90,19 @@
                         <tr style="border-bottom: 1px solid #aaaaaa">
                             <th ng-repeat="column in query.columns">
                                 <a ng-click="toggleSortField(query, column)" title="sort by {{ displayLabel(column) }}">
-                                    {{ displayLabel(column) }}
-                                    <img ng-show="query.sortField == column" class="middle clickable"
-                                         ng-src="/assets/images/buttons/sort_{{ query.ascending ? 'up' : 'down' }}.gif">
+                                    <nobr>
+                                        {{ displayLabel(column) }}
+                                        <img ng-show="query.sortField == column"
+                                             ng-src="/assets/images/buttons/sort_{{ query.ascending ? 'up' : 'down' }}.gif"
+                                             class="middle clickable">
+                                    </nobr>
                                 </a>
                             </th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr ng-repeat="row in query.rows track by $index" ng-class="isSelected(topic, partition, query, row, $index) ? 'highlighted' : $index % 2 == 0 ? '' : 'q_odd'">
+                        <tr ng-repeat="row in query.rows | orderBy: (query.ascending ? '-' : '') + query.sortField"
+                            ng-class="isSelected(topic, partition, query, row, $index) ? 'highlighted' : $index % 2 == 0 ? '' : 'q_odd'">
                             <td ng-repeat="column in query.columns">
                                 <span ng-show="column == '__offset'">
                                     <a ng-click="switchToMessage(query.topic, partitionAt(query, $parent.$index), offsetAt(query, $parent.$index))">

@@ -1,10 +1,11 @@
 import sbt.Keys._
 import sbt._
 
-val appVersion = "0.22.0rc8b"
-val scalaJsIOVersion = "0.3.0.0-RC3"
+val appVersion = "0.22.0rc10c"
+val scalaJsIOVersion = "0.3.0.1"
 
-val _scalaVersion = "2.11.8"
+val scalaJSVersion = "2.12.1"
+val scalaJVMVersion = "2.11.8"
 val akkaVersion = "2.3.14"
 val apacheCurator = "3.1.0"
 val casbahVersion = "3.1.1"
@@ -34,7 +35,7 @@ lazy val tabular = (project in file("libs/tabular"))
     name := "tabular",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -47,7 +48,7 @@ lazy val commons_helpers = (project in file("libs/commons-helpers"))
     name := "commons-helpers",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -61,11 +62,14 @@ lazy val trifecta_common = (project in file("app-common"))
     name := "trifecta-common",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings")
-  )
+  ).cross
+
+lazy val trifecta_common_js = trifecta_common(scalaJSVersion)
+
+lazy val trifecta_common_jvm = trifecta_common(scalaJVMVersion)
 
 lazy val trifecta_core = (project in file("."))
   .dependsOn(tabular, commons_helpers)
@@ -73,7 +77,7 @@ lazy val trifecta_core = (project in file("."))
     name := "trifecta-core",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -81,7 +85,7 @@ lazy val trifecta_core = (project in file("."))
     libraryDependencies ++= testDependencies ++ Seq(
       // General Java Dependencies
       "commons-io" % "commons-io" % "2.4",
-      "net.liftweb" %% "lift-json" % "3.0-M7",
+      "net.liftweb" %% "lift-json" % "3.0.1",
       //
       // Typesafe dependencies
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
@@ -104,7 +108,7 @@ lazy val trifecta_modules_core = (project in file("app-modules/core"))
     name := "trifecta-modules-core",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -120,7 +124,7 @@ lazy val trifecta_sdk = (project in file("app-sdk"))
     name := "trifecta-sdk",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -128,12 +132,12 @@ lazy val trifecta_sdk = (project in file("app-sdk"))
   )
 
 lazy val trifecta_cli = (project in file("app-cli"))
-  .dependsOn(trifecta_common, trifecta_sdk)
+  .dependsOn(trifecta_common_jvm, trifecta_sdk)
   .settings(
     name := "trifecta-cli",
     organization := "com.github.ldaniels528",
     version := appVersion + "-" + kafkaVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -150,15 +154,14 @@ lazy val trifecta_cli = (project in file("app-cli"))
       "log4j" % "log4j" % "1.2.17",
       "org.slf4j" % "slf4j-log4j12" % slf4jVersion,
       "org.scala-lang" % "jline" % "2.11.0-M3"
-    )
-  )
+    ))
 
 lazy val trifecta_azure = (project in file("app-modules/azure"))
   .settings(
     name := "trifecta-azure",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -178,17 +181,16 @@ lazy val trifecta_azure = (project in file("app-modules/azure"))
       "com.microsoft.azure" % "azure-documentdb" % "1.5.1",
       "com.microsoft.azure" % "azure-storage" % "4.0.0",
       //"com.microsoft.sqlserver" % "sqljdbc4" % "4.0",
-      "org.scala-lang" % "scala-library" % _scalaVersion % "provided",
+      "org.scala-lang" % "scala-library" % scalaJVMVersion % "provided",
       "org.slf4j" % "slf4j-api" % slf4jVersion % "provided"
-    )
-  )
+    ))
 
 lazy val trifecta_cassandra = (project in file("app-modules/cassandra"))
   .settings(
     name := "trifecta-cassandra",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -207,17 +209,16 @@ lazy val trifecta_cassandra = (project in file("app-modules/cassandra"))
       "com.github.ldaniels528" %% "trifecta-core" % appVersion % "provided",
       "com.github.ldaniels528" %% "trifecta-modules-core" % appVersion % "provided",
       "com.datastax.cassandra" % "cassandra-driver-core" % "3.0.0",
-      "org.scala-lang" % "scala-library" % _scalaVersion % "provided",
+      "org.scala-lang" % "scala-library" % scalaJVMVersion % "provided",
       "org.slf4j" % "slf4j-api" % "1.7.7" % "provided"
-    )
-  )
+    ))
 
 lazy val trifecta_elasticsearch = (project in file("app-modules/elasticsearch"))
   .settings(
     name := "trifecta-elasticsearch",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -235,10 +236,9 @@ lazy val trifecta_elasticsearch = (project in file("app-modules/elasticsearch"))
       "com.github.ldaniels528" %% "trifecta-core" % appVersion % "provided",
       "com.github.ldaniels528" %% "trifecta-modules-core" % appVersion % "provided",
       "net.databinder.dispatch" %% "dispatch-core" % "0.11.2", // 0.11.3
-      "org.scala-lang" % "scala-library" % _scalaVersion % "provided",
+      "org.scala-lang" % "scala-library" % scalaJVMVersion % "provided",
       "org.slf4j" % "slf4j-api" % slf4jVersion % "provided"
-    )
-  )
+    ))
 
 lazy val trifecta_etl = (project in file("app-modules/etl"))
   .dependsOn(trifecta_azure, trifecta_cassandra, trifecta_elasticsearch, trifecta_mongodb)
@@ -246,7 +246,7 @@ lazy val trifecta_etl = (project in file("app-modules/etl"))
     name := "trifecta-etl",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -263,17 +263,16 @@ lazy val trifecta_etl = (project in file("app-modules/etl"))
       "com.github.ldaniels528" %% "tabular" % appVersion % "provided",
       "com.github.ldaniels528" %% "trifecta-core" % appVersion % "provided",
       "com.github.ldaniels528" %% "trifecta-modules-core" % appVersion % "provided",
-      "org.scala-lang" % "scala-library" % _scalaVersion % "provided",
+      "org.scala-lang" % "scala-library" % scalaJVMVersion % "provided",
       "org.slf4j" % "slf4j-api" % slf4jVersion % "provided"
-    )
-  )
+    ))
 
 lazy val trifecta_mongodb = (project in file("app-modules/mongodb"))
   .settings(
     name := "trifecta-mongodb",
     organization := "com.github.ldaniels528",
     version := appVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
@@ -292,46 +291,53 @@ lazy val trifecta_mongodb = (project in file("app-modules/mongodb"))
       "com.github.ldaniels528" %% "trifecta-modules-core" % appVersion % "provided",
       "org.mongodb" %% "casbah-commons" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
       "org.mongodb" %% "casbah-core" % casbahVersion exclude("org.slf4j", "slf4j-log4j12"),
-      "org.scala-lang" % "scala-library" % _scalaVersion % "provided",
+      "org.scala-lang" % "scala-library" % scalaJVMVersion % "provided",
       "org.slf4j" % "slf4j-api" % "1.6.0" % "provided"
-    )
-  )
+    ))
 
 lazy val trifecta_ui_js = (project in file("app-js"))
-  .dependsOn(trifecta_common)
+  .dependsOn(trifecta_common_js)
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "trifecta-ui-js",
     organization := "com.github.ldaniels528",
     version := appVersion,
-	scalaVersion := _scalaVersion,
+    scalaVersion := scalaJSVersion,
     relativeSourceMaps := true,
     persistLauncher := true,
     persistLauncher in Test := false,
     resolvers += Resolver.sonatypeRepo("releases"),
     libraryDependencies ++= Seq(
-      "io.scalajs" %%% "angularjs-bundle" % scalaJsIOVersion,
-      //
-      // Play-ScalaJS dependencies
-      "com.vmunier" %% "play-scalajs-sourcemaps" % "0.1.0" exclude("com.typesafe.play", "play_2.11")
-    ))
+      "io.scalajs" %%% "angularjs-bundle" % scalaJsIOVersion
+    ),
+	skip in packageJSDependencies := false,
+	jsDependencies ++= Seq(
+		"org.webjars" % "jquery" % "2.1.4" / "jquery.min.js",
+		"org.webjars" % "angularjs" % "1.4.8" / "angular.min.js" dependsOn "jquery.min.js",
+		"org.webjars" % "angularjs" % "1.4.8" / "angular-animate.min.js" dependsOn "angular.min.js",
+		"org.webjars" % "angularjs" % "1.4.8" / "angular-cookies.min.js" dependsOn "angular.min.js",
+		"org.webjars" % "angular-ui-bootstrap" % "0.14.3" / "ui-bootstrap-tpls.min.js" dependsOn "angular.min.js",
+		"org.webjars" % "angular-ui-router" % "0.2.13" / "angular-route.min.js" dependsOn "angular.min.js",	
+		"org.webjars" % "angularjs-toaster" % "0.4.8" / "toaster.js" dependsOn "angular.min.js",
+		"org.webjars" % "highlightjs" % "8.7" / "highlight.min.js",
+		"org.webjars" % "angular-highlightjs" % "0.4.3" / "angular-highlightjs.min.js" dependsOn "angular.min.js",
+		"org.webjars" % "nervgh-angular-file-upload" % "2.1.1" / "angular-file-upload.min.js" dependsOn "angular.min.js"
+  ))
 
 lazy val trifecta_ui = (project in file("app-play"))
-  .aggregate(trifecta_ui_js)
-  .dependsOn(commons_helpers, trifecta_core, trifecta_common)
+  .dependsOn(commons_helpers, trifecta_core, trifecta_common_jvm)
   .enablePlugins(PlayScala, play.twirl.sbt.SbtTwirl, SbtWeb)
   .settings(
     name := "trifecta-ui",
     organization := "com.github.ldaniels528",
     version := appVersion + "-" + kafkaVersion,
-    scalaVersion := _scalaVersion,
+    scalaVersion := scalaJVMVersion,
     scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
       "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint"),
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     relativeSourceMaps := true,
     scalajsOutputDir := (crossTarget in Compile).value / "classes" / "public" / "javascripts",
-    pipelineStages := Seq(gzip),
     Seq(packageScalaJSLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
       crossTarget in(trifecta_ui_js, Compile, packageJSKey) := scalajsOutputDir.value
     },

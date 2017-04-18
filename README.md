@@ -72,14 +72,14 @@ make use of Kafka and ZooKeeper via a console-based tool using simple Unix-like 
 <a name="build-requirements"></a>
 ### Build Requirements
 
-* [Java SDK 1.7] (http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
-* [Scala 2.11.6] (http://scala-lang.org/download/)
-* [SBT 0.13+] (http://www.scala-sbt.org/download.html)
+* [Java SDK 1.7](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
+* [Scala 2.11.8](http://scala-lang.org/download/)
+* [SBT 0.13.13](http://www.scala-sbt.org/download.html)
 
 <a name="external-dependencies"></a>
 ### External Dependencies
 
-* [MEANS.js 0.1.8] (https://github.com/ldaniels528/MEANS.js)
+* [Scalajs.io 0.3.0.1](https://github.com/scalajs-io)
 
 In order to build from the source, you'll need to download the above dependencies and issue
 the following command for each of them:
@@ -426,7 +426,7 @@ To see the syntax/usage of a command, use the `syntax` command:
     Usage: kget [-o outputSource] [-d YYYY-MM-DDTHH:MM:SS] [-a avroSchema] [topic] [partition] [offset]
 
 <a name="kafka-module"></a>
-#### Kakfa Module
+#### Kafka Module
 
 To view all of the Kafka commands, use the `-m` switch and the module name
 

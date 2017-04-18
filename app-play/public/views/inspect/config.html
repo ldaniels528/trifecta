@@ -1,0 +1,18 @@
+<div ng-controller="ConfigController" class="inspect_container" ng-init="init()">
+    <h4>Trifecta Configuration</h4>
+
+    <div ng-show="loadingConfig">
+        <img src="/assets/images/status/loading.gif"> Retrieving configuration information...
+    </div>
+
+    <table ng-hide="loadingConfig" class="col-md-12">
+        <tr ng-repeat="(key, value) in configProps">
+            <td class="col-md-4">
+                <span ng-class="isConfigKey(key) ? '' : 'null'">{{ key }}</span>
+            </td>
+            <td class="col-md-8">
+                <span ng-class="isConfigKey(key) ? '' : 'null'">{{ value }}</span>
+            </td>
+        </tr>
+    </table>
+</div>

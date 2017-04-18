@@ -23,6 +23,7 @@ class KafkaQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
           |where exchange = 'OTCBB'
           |and lastTrade <= 1.0
           |and volume >= 1,000,000
+          |using consumer test123
           |limit 10
           | """.stripMargin
 
@@ -34,8 +35,12 @@ class KafkaQueryTokenizerSpec() extends FeatureSpec with GivenWhenThen {
       tokens shouldBe Seq(
         "select", "symbol", ",", "exchange", ",", "lastTrade", ",", "volume", "from",
         "shocktrade.quotes.avro", "with", "\"avro:file:~/avro/quotes.avsc\"",
-        "into", "elastic_search_quotes", "where", "exchange", "=", "'OTCBB'", "and", "lastTrade", "<=",
-        "1.0", "and", "volume", ">=", "1,000,000", "limit", "10")
+        "into", "elastic_search_quotes",
+        "where", "exchange", "=", "'OTCBB'",
+        "and", "lastTrade", "<=", "1.0",
+        "and", "volume", ">=", "1,000,000",
+        "using", "consumer", "test123",
+        "limit", "10")
     }
   }
 

@@ -30,7 +30,7 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
         fields = List("*"),
         criteria = None,
         restrictions = KQLRestrictions(),
-        limit = Some(50))
+        limit = None)
     }
 
     scenario("A query using 'with default' without a where clause") {
@@ -55,6 +55,30 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
         restrictions = KQLRestrictions(),
         limit = Some(50))
     }
+
+    /*
+    scenario("A query using function - no where clause") {
+      val queryString =
+        """
+          |Select parsejson(request)
+          |From "com.shocktrade.accesslogs" With default
+          |Limit 50
+          |""".stripMargin
+
+      Given(s"KQL query: $queryString")
+
+      When("The queries is parsed into a KQL object")
+      val query = KafkaQueryParser(queryString)
+
+      Then("The arguments should be successfully verified")
+      query shouldBe KQLSelection(
+        source = IOSource(deviceURL = "shocktrade.quotes.avro", decoderURL = Some("default")),
+        destination = None,
+        fields = List("parsejson(request)"),
+        criteria = None,
+        restrictions = KQLRestrictions(),
+        limit = Some(50))
+    }*/
 
     scenario("A query using 'with default' with a where clause") {
       val queryString =
@@ -131,6 +155,35 @@ class KafkaQueryParserSpec() extends FeatureSpec with GivenWhenThen {
         fields = List("symbol", "exchange", "lastTrade", "volume"),
         criteria = Some(AND(AND(EQ("exchange", "OTCBB"), LE("lastTrade", "1.0")), GE("volume", "1000000"))),
         restrictions = KQLRestrictions(),
+        limit = Some(10))
+    }
+  }
+
+  feature("Ability to parse KQL queries with a relative offset restriction") {
+    scenario("A string containing a KQL selection query with a relative offset restriction") {
+      val queryString =
+        """
+          |select symbol, exchange, lastTrade, volume
+          |from quotes with "avro:file:avro/quotes.avsc"
+          |into "es:/quotes/quote/AAPL" with json
+          |where exchange == "OTCBB"
+          |and lastTrade <= 1.0
+          |and volume >= 1,000,000
+          |using delta -1000
+          |limit 10
+          |""".stripMargin
+      Given(s"KQL query: $queryString")
+
+      When("The queries is parsed into a KQL object")
+      val query = KafkaQueryParser(queryString)
+
+      Then("The arguments should be successfully verified")
+      query shouldBe KQLSelection(
+        source = IOSource(deviceURL = "quotes", decoderURL = Some("avro:file:avro/quotes.avsc")),
+        destination = Some(IOSource(deviceURL = "es:/quotes/quote/AAPL", decoderURL = Some("json"))),
+        fields = List("symbol", "exchange", "lastTrade", "volume"),
+        criteria = Some(AND(AND(EQ("exchange", "OTCBB"), LE("lastTrade", "1.0")), GE("volume", "1000000"))),
+        restrictions = KQLRestrictions(delta = Some(-1000)),
         limit = Some(10))
     }
   }

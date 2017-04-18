@@ -181,7 +181,8 @@ object KafkaMicroConsumer {
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private val correlationIdGen = new AtomicInteger(-1)
 
-  val DEFAULT_FETCH_SIZE: Int = 65536
+  val DEFAULT_FETCH_SIZE: Int = 1024 * 1024
+  // 1MB
   val kafkaUtil = new KafkaZkUtils(rootKafkaPath = "/")
 
   /**
@@ -197,7 +198,10 @@ object KafkaMicroConsumer {
     * @param conditions the given search criteria
     * @return the promise of the total number of messages that match the given search criteria
     */
-  def count(topic: String, brokers: Seq[Broker], conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Long] = {
+  def count(topic: String,
+            brokers: Seq[Broker],
+            counter: IOCounter,
+            conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Long] = {
     val tasks = getTopicPartitions(topic) map { partition =>
       Future.successful {
         var counter = 0L
@@ -250,6 +254,8 @@ object KafkaMicroConsumer {
           new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
             var offset: Option[Long] = subs.getStartingOffset(restrictions)
             val lastOffset: Option[Long] = subs.getLastOffset
+            println(s"findMany: partition: $partition, start: ${offset.orNull}, end: ${lastOffset.orNull}")
+
             while (offset.exists(o => lastOffset.exists(o < _)) && (limit.isEmpty || limit.exists(count.get < _))) {
               val messages_? = offset.map(ofs => subs.fetch(ofs)(DEFAULT_FETCH_SIZE))
 
@@ -263,7 +269,7 @@ object KafkaMicroConsumer {
                   }
                 }
               }
-              offset = getNextOffset(messages_?)
+              offset = getNextOffset(offset, messages_?)
             }
             matches
           }
@@ -283,15 +289,27 @@ object KafkaMicroConsumer {
     * @param conditions the given search criteria
     * @return the promise of the option of a message based on the given search criteria
     */
-  def findOne(topic: String, brokers: Seq[Broker], forward: Boolean, conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[(Int, MessageData)]] = {
+  def findOne(topic: String, brokers: Seq[Broker], conditions: Condition*)(implicit ec: ExecutionContext, zk: ZKProxy): Future[Option[(Int, MessageData)]] = {
     val message = new AtomicReference[Option[(Int, MessageData)]](None)
     val tasks = getTopicPartitions(topic) map { partition =>
       Future {
         new KafkaMicroConsumer(TopicAndPartition(topic, partition), brokers) use { subs =>
-          if (forward)
-            findOneForward(subs, partition, message, conditions: _*)
-          else
-            findOneBackward(subs, partition, message, conditions: _*)
+          var offset: Option[Long] = subs.getFirstOffset
+          val lastOffset: Option[Long] = subs.getLastOffset
+
+          // while no message was selected and the offset below the limit ...
+          while (message.get().isEmpty && offset.exists(o => lastOffset.exists(o < _))) {
+            val messages_? = offset.map(ofs => subs.fetch(ofs)(DEFAULT_FETCH_SIZE))
+            for {
+              messages <- messages_?
+              msg <- messages if message.get().isEmpty
+            } {
+              if (conditions.forall(_.satisfies(msg.message, msg.key))) {
+                message.compareAndSet(None, Option(partition -> msg))
+              }
+            }
+            offset = getNextOffset(offset, messages_?)
+          }
         }
       }
     }
@@ -300,48 +318,10 @@ object KafkaMicroConsumer {
     Future.sequence(tasks) map (_ => message.get)
   }
 
-  private def findOneForward(subs: KafkaMicroConsumer, partition: Int, message: AtomicReference[Option[(Int, MessageData)]], conditions: Condition*) = {
-    var offset: Option[Long] = subs.getFirstOffset
-    val lastOffset: Option[Long] = subs.getLastOffset
-
-    // while no message was selected and the offset below the limit ...
-    while (message.get().isEmpty && offset.exists(o => lastOffset.exists(o < _))) {
-      val messages_? = offset.map(ofs => subs.fetch(ofs)(DEFAULT_FETCH_SIZE))
-      for {
-        messages <- messages_?
-        msg <- messages if message.get().isEmpty
-      } {
-        if (conditions.forall(_.satisfies(msg.message, msg.key))) {
-          message.compareAndSet(None, Option((partition, msg)))
-        }
-      }
-      offset = getNextOffset(messages_?)
-    }
-  }
-
-  private def findOneBackward(subs: KafkaMicroConsumer, partition: Int, message: AtomicReference[Option[(Int, MessageData)]], conditions: Condition*) = {
-    var offset: Option[Long] = subs.getLastOffset
-    val firstOffset: Option[Long] = subs.getFirstOffset
-
-    // while no message was selected and the offset above the limit ...
-    while (message.get().isEmpty && offset.exists(o => firstOffset.exists(o > _))) {
-      val messages_? = offset.map(ofs => subs.fetch(ofs)(DEFAULT_FETCH_SIZE))
-      for {
-        messages <- messages_?
-        msg <- messages if message.get().isEmpty
-      } {
-        if (conditions.forall(_.satisfies(msg.message, msg.key))) {
-          message.compareAndSet(None, Option((partition, msg)))
-        }
-      }
-      offset = getPreviousOffset(messages_?)
-    }
-  }
-
-  private def getNextOffset(messages_? : Option[Seq[MessageData]]): Option[Long] = {
+  private def getNextOffset(offset_? : Option[Long], messages_? : Option[Seq[MessageData]]): Option[Long] = {
     messages_? match {
       case None => None
-      case Some(mds) if mds.isEmpty => None
+      case Some(mds) if mds.isEmpty => offset_?.map(_ + 1)
       case Some(mds) => Option(mds.map(_.offset).max + 1)
     }
   }
@@ -379,7 +359,7 @@ object KafkaMicroConsumer {
               message.compareAndSet(None, Option(msg))
             }
           }
-          offset = getNextOffset(messages_?)
+          offset = getNextOffset(offset, messages_?)
         }
       }
       message.get
@@ -495,18 +475,13 @@ object KafkaMicroConsumer {
     * Retrieves the list of internal consumers' offsets from Kafka (Play version)
     */
   def getConsumerGroupOffsetsFromKafka(groupIds: Seq[String], autoOffsetReset: String)(implicit zk: ZKProxy): Seq[ConsumerOffset] = {
-    val topicList = KafkaMicroConsumer.getTopicList(KafkaMicroConsumer.getBrokers)
+    val brokers = KafkaMicroConsumer.getBrokers
+    val topicList = KafkaMicroConsumer.getTopicList(brokers)
     val topicPartitions = topicList.map(t => new TopicPartition(t.topic, t.partitionId)).asJavaCollection
     val topics = topicList.map(_.topic).distinct
-    val bootstrapServers = KafkaMicroConsumer.getBootstrapServers
 
     groupIds flatMap { groupId =>
-      val props = new Properties()
-      props.put("bootstrap.servers", bootstrapServers)
-      props.put("group.id", groupId)
-      props.put("auto.offset.reset", autoOffsetReset)
-      props.put("key.deserializer", classOf[StringDeserializer].getName)
-      props.put("value.deserializer", classOf[StringDeserializer].getName)
+      val props = KafkaConfigGenerator.getConsumerProperties(brokers = getBrokerList, groupId, Some(autoOffsetReset))
 
       // lookup the consumer threads
       val threads = Try(KafkaMicroConsumer.kafkaUtil.getConsumerThreads(groupId)).toOption
@@ -635,7 +610,7 @@ object KafkaMicroConsumer {
               messages <- messages_?
               md <- messages
             } observer(md)
-            offset = getNextOffset(messages_?)
+            offset = getNextOffset(offset, messages_?)
           }
         }
       }
@@ -784,26 +759,25 @@ object KafkaMicroConsumer {
 
     def getStartingOffset(restrictions: KQLRestrictions): Option[Long] = {
       val minimumOffset = subs.getFirstOffset.map(Math.max(0L, _))
+      val maximumOffset = subs.getLastOffset.map(Math.max(0L, _))
 
       // was a consumer group specified?
       val consumerOffset = for {
         groupId <- restrictions.groupId
         offset <- subs.fetchOffset(groupId)
-        safeOffset <- if (offset == -1) minimumOffset else Some(offset)
-      } yield safeOffset
+      } yield offset
 
-      // get the base offset
-      val baseOffset = consumerOffset ?? minimumOffset
-
-      // was an offset delta specified?
-      val adjustedOffset = for {
-        minimum <- minimumOffset
-        offset <- baseOffset
+      // compute the relative offset
+      val relativeOffset = for {
         delta <- restrictions.delta
-      } yield Math.max(minimum, offset - delta)
+        offset <- consumerOffset ?? (if(delta > 0) minimumOffset else maximumOffset)
+      } yield offset + delta
 
-      // use either the adjusted offset or the base offset
-      adjustedOffset ?? baseOffset
+      // return the appropriate offset
+      for {
+        minimum <- minimumOffset
+        offset <- relativeOffset ?? consumerOffset ?? minimumOffset
+      } yield Math.max(minimum, offset)
     }
   }
 
