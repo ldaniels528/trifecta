@@ -99,7 +99,11 @@ the Web-based user interface (trifecta_ui)
 #### Building Trifecta UI (Typesafe Play application)
 
     $ sbt "project trifecta_ui" dist
-        
+
+#### Building Trifecta UI Debian Package
+
+    $ sbt "project trifecta_ui" debian:packageBin
+
 <a name="testing-the-code"></a>    
 ### Running the tests
 

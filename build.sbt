@@ -326,7 +326,7 @@ lazy val trifecta_ui_js = (project in file("app-js"))
 
 lazy val trifecta_ui = (project in file("app-play"))
   .dependsOn(commons_helpers, trifecta_core, trifecta_common_jvm)
-  .enablePlugins(PlayScala, play.twirl.sbt.SbtTwirl, SbtWeb)
+  .enablePlugins(PlayScala, play.twirl.sbt.SbtTwirl, SbtWeb, SbtNativePackager, SystemdPlugin)
   .settings(
     name := "trifecta-ui",
     organization := "com.github.ldaniels528",
@@ -337,6 +337,10 @@ lazy val trifecta_ui = (project in file("app-play"))
     scalacOptions in(Compile, doc) ++= Seq("-no-link-warnings"),
     javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars"),
     relativeSourceMaps := true,
+    packageSummary := "Trifecta UI is a web-based tool that simplifies inspecting Kafka messages and Zookeeper data.",
+    packageDescription := "Trifecta UI is a web-based tool that simplifies inspecting Kafka messages and Zookeeper data.",
+    maintainer := "lawrence.daniels@gmail.com",
+    daemonUser in Linux := "root",
     scalajsOutputDir := (crossTarget in Compile).value / "classes" / "public" / "javascripts",
     Seq(packageScalaJSLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
       crossTarget in(trifecta_ui_js, Compile, packageJSKey) := scalajsOutputDir.value

@@ -17,6 +17,8 @@ addSbtPlugin("com.lucidchart" % "sbt-cross" % "3.0")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.14")
 
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.3")
+
 // Resolvers
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
